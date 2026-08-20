@@ -1,0 +1,44 @@
+/*
+ * SchoolCore panel-wide Tailwind utilities.
+ *
+ * The Filament App Panel only loads Filament's own compiled CSS plus
+ * filament-custom.css, so arbitrary Tailwind utility classes used inside
+ * custom Blade views (dashboards, jumbotrons, KPI cards, etc.) were never
+ * generated for the panel. That produced broken visuals such as white text
+ * on light backgrounds.
+ *
+ * This stylesheet compiles every utility class found in the app's Blade
+ * templates, PHP files and modules so those views render correctly in both
+ * light and dark mode.
+ *
+ * The output is deliberately emitted UNLAYERED: Filament ships its CSS as
+ * plain (unlayered) rules, and any Tailwind rule emitted inside `@layer`
+ * would lose to Filament's unlayered preflight (e.g. `a { color: inherit }`),
+ * re-introducing invisible/white text. Unlayered utilities beat that
+ * preflight by normal specificity.
+ *
+ * Preflight is intentionally not included here — Filament already provides a
+ * full preflight; we only want the theme variables + utilities.
+ */
+@import 'tailwindcss/theme.css';
+
+@theme {
+    --font-sans: system-ui, ui-sans-serif, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+/*
+ * Filament toggles dark mode with a `.dark` class on <html>, not with the OS
+ * `prefers-color-scheme` media query. Tailwind v4's default `dark:` variant
+ * follows the media query, which desyncs our custom Blade utilities from the
+ * panel's actual theme (e.g. `dark:text-white` stays ON in panel light mode
+ * whenever the OS is dark, producing invisible white-on-white text).
+ * Re-register `dark:` to key off the `.dark` class so the two stay in sync.
+ */
+@custom-variant dark (&:is(.dark *));
+
+@source '../../resources/views/**/*.blade.php';
+@source '../../app/**/*.php';
+@source '../../Modules/**/*.blade.php';
+@source '../../Modules/**/*.php';
+
+@tailwind utilities;

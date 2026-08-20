@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800" role="img" aria-label="Placeholder: Assembly Hall"><defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ecd9d4"/><stop offset="1" stop-color="#f8f1ef"/></linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.3" r="0.7"><stop offset="0" stop-color="#9c4a3a" stop-opacity="0.14"/><stop offset="1" stop-color="#9c4a3a" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#bg)"/><rect width="1200" height="800" fill="url(#glow)"/>
+  <path d="M0 330h1200v-40q0-70-70-70H70Q0 220 0 290z" fill="#9c4a3a" fill-opacity="0.85"/>
+  <path d="M0 292l1200 0" stroke="#d9a05b" stroke-opacity="0.9" stroke-width="10"/>
+  <path d="M0 250h1200v40q-90 0-160-20 60-8 130-20t30 0z" fill="#9c4a3a" fill-opacity="0.9"/>
+  <path d="M0 200c130 34 260 34 390 0M390 200c130 34 260 34 390 0M780 200c130 34 260 34 390 0" stroke="#9c4a3a" stroke-opacity="0.5" stroke-width="8" fill="none"/>
+  <path d="M0 360l300 0 -40 120L0 480z" fill="#9c4a3a" fill-opacity="0.75"/>
+  <path d="M1200 360l-300 0 40 120 260 0z" fill="#9c4a3a" fill-opacity="0.75"/>
+  <rect x="300" y="360" width="600" height="130" fill="#9c4a3a" fill-opacity="0.85"/>
+  <path d="M300 360h600l-70-80h-460z" fill="#9c4a3a" fill-opacity="0.9"/>
+  <rect x="560" y="400" width="80" height="90" fill="#8a3f31" rx="6"/>
+  <rect x="578" y="380" width="44" height="30" rx="8" fill="#d9a05b" fill-opacity="0.9"/>
+  <rect x="0" y="490" width="1200" height="60" fill="#8a3f31"/>
+  <path d="M0 510h1200" stroke="#d9a05b" stroke-opacity="0.8" stroke-width="8"/>
+  <ellipse cx="600" cy="560" rx="520" ry="60" fill="#7d3629" fill-opacity="0.5"/>
+  <path d="M140 660h-100c0-60 45-100 100-100s100 40 100 100z" fill="#9c4a3a" fill-opacity="0.75"/>
+  <path d="M420 660h-100c0-60 45-100 100-100s100 40 100 100z" fill="#9c4a3a" fill-opacity="0.75"/>
+  <path d="M700 660h-100c0-60 45-100 100-100s100 40 100 100z" fill="#9c4a3a" fill-opacity="0.75"/>
+  <path d="M980 660h-100c0-60 45-100 100-100s100 40 100 100z" fill="#9c4a3a" fill-opacity="0.75"/>
+  <rect x="0" y="700" width="1200" height="100" fill="#7d3629" fill-opacity="0.4"/><rect x="0" y="0" width="1200" height="800" fill="none" stroke="#9c4a3a" stroke-opacity="0.25" stroke-width="3"/><rect x="1016" y="28" width="156" height="34" rx="17" fill="#9c4a3a" fill-opacity="0.1" stroke="#9c4a3a" stroke-opacity="0.35"/><text x="1094" y="51" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="15" font-weight="600" letter-spacing="1" fill="#9c4a3a">ASSEMBLY HALL</text><text x="600" y="764" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="17" fill="#9c4a3a" fill-opacity="0.6">Add your photo here</text></svg>

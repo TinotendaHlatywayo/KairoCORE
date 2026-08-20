@@ -1,0 +1,50 @@
+{
+    "arial": {
+        "normal": "\/opt\/lampp\/htdocs\/SchoolManagementSystem\/schoolcore\/storage\/fonts\/arial_normal_c8311ffc73c35184347f00306b54ae36",
+        "bold": "\/opt\/lampp\/htdocs\/SchoolManagementSystem\/schoolcore\/storage\/fonts\/arial_bold_7fa79c3116aa2f4cfeb4ff9e206ec83b",
+        "italic": "\/opt\/lampp\/htdocs\/SchoolManagementSystem\/schoolcore\/storage\/fonts\/arial_italic_0855760597aaf4675c5b36b3c6c445b6",
+        "bold_italic": "arial_bold_italic_846520effe2b72adae3e20067c62a1be"
+    },
+    "arial black": {
+        "normal": "\/opt\/lampp\/htdocs\/SchoolManagementSystem\/schoolcore\/storage\/fonts\/arial_black_normal_9dc9b9f58fc3dc7ba44336d137a7110e",
+        "bold": "arial_black_bold_9dc9b9f58fc3dc7ba44336d137a7110e"
+    },
+    "verdana": {
+        "normal": "\/opt\/lampp\/htdocs\/SchoolManagementSystem\/schoolcore\/storage\/fonts\/verdana_normal_0aaa060af5e0878ad02277ffa5c0ae1f",
+        "bold": "\/opt\/lampp\/htdocs\/SchoolManagementSystem\/schoolcore\/storage\/fonts\/verdana_bold_b9b10fa486675becc0d6d688595d3360",
+        "italic": "\/opt\/lampp\/htdocs\/SchoolManagementSystem\/schoolcore\/storage\/fonts\/verdana_italic_37af3a05b802d91d56def996caa6d17d",
+        "bold_italic": "verdana_bold_italic_63b096ce0f7d4c1c48d3623c92a74dc2"
+    },
+    "times new roman": {
+        "normal": "\/opt\/lampp\/htdocs\/SchoolManagementSystem\/schoolcore\/storage\/fonts\/times_new_roman_normal_b13936896ae0b3f7c51ad57f2bb2038d",
+        "bold": "\/opt\/lampp\/htdocs\/SchoolManagementSystem\/schoolcore\/storage\/fonts\/times_new_roman_bold_087287c241048a8dbf630569a45e6cf3",
+        "italic": "\/opt\/lampp\/htdocs\/SchoolManagementSystem\/schoolcore\/storage\/fonts\/times_new_roman_italic_8bba185d75ab5bab6df65ce6a35a5825",
+        "bold_italic": "times_new_roman_bold_italic_a9568076fee5b65537b3c794f3c9832f"
+    },
+    "georgia": {
+        "normal": "\/opt\/lampp\/htdocs\/SchoolManagementSystem\/schoolcore\/storage\/fonts\/georgia_normal_9bebde214d366a23c084b93d021b6de0",
+        "bold": "\/opt\/lampp\/htdocs\/SchoolManagementSystem\/schoolcore\/storage\/fonts\/georgia_bold_f6d126d485f211c01796162a0b85f82d",
+        "italic": "\/opt\/lampp\/htdocs\/SchoolManagementSystem\/schoolcore\/storage\/fonts\/georgia_italic_a61fd33cc4e3d5bee06036a281936fe8",
+        "bold_italic": "georgia_bold_italic_a122b76f7e47323c9fe28a59930a6016"
+    },
+    "trebuchet ms": {
+        "normal": "\/opt\/lampp\/htdocs\/SchoolManagementSystem\/schoolcore\/storage\/fonts\/trebuchet_ms_normal_31c3758dcfae3a64164c9fdabc112fd1",
+        "bold": "\/opt\/lampp\/htdocs\/SchoolManagementSystem\/schoolcore\/storage\/fonts\/trebuchet_ms_bold_de1ddd96799c72f73ced6619dbb7cd53",
+        "italic": "\/opt\/lampp\/htdocs\/SchoolManagementSystem\/schoolcore\/storage\/fonts\/trebuchet_ms_italic_d690daa034f63ad745df8058e48094c6",
+        "bold_italic": "trebuchet_ms_bold_italic_99ee4b5eae480b60c636c1d5ba7f40d0"
+    },
+    "courier new": {
+        "normal": "\/opt\/lampp\/htdocs\/SchoolManagementSystem\/schoolcore\/storage\/fonts\/courier_new_normal_5e24238469a2e25d841576279b15e600",
+        "bold": "\/opt\/lampp\/htdocs\/SchoolManagementSystem\/schoolcore\/storage\/fonts\/courier_new_bold_540f740730ceb33a87c521ef9d175916",
+        "italic": "\/opt\/lampp\/htdocs\/SchoolManagementSystem\/schoolcore\/storage\/fonts\/courier_new_italic_300c27932b40e3367731c1b833b459ba",
+        "bold_italic": "courier_new_bold_italic_1e922d018a13ff7127ba81d890031051"
+    },
+    "comic sans ms": {
+        "normal": "\/opt\/lampp\/htdocs\/SchoolManagementSystem\/schoolcore\/storage\/fonts\/comic_sans_ms_normal_12113f35e050586188dbc441fde3212d",
+        "bold": "comic_sans_ms_bold_5f0396a089a50dd3e99cd47b0ce25816"
+    },
+    "impact": {
+        "normal": "\/opt\/lampp\/htdocs\/SchoolManagementSystem\/schoolcore\/storage\/fonts\/impact_normal_f6f0c79b3570b72340e0e7ee5b1d7d3f",
+        "bold": "impact_bold_f6f0c79b3570b72340e0e7ee5b1d7d3f"
+    }
+}

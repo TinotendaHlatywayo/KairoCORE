@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800" role="img" aria-label="Placeholder: Library"><defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e4ddf0"/><stop offset="1" stop-color="#f4f1f9"/></linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.3" r="0.7"><stop offset="0" stop-color="#6b5b95" stop-opacity="0.15"/><stop offset="1" stop-color="#6b5b95" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#bg)"/><rect width="1200" height="800" fill="url(#glow)"/>
+  <rect x="180" y="170" width="840" height="430" fill="#8b7bb0" fill-opacity="0.18" rx="10"/>
+  <rect x="180" y="170" width="210" height="430" fill="#6b5b95" fill-opacity="0.3" rx="10"/>
+  <rect x="405" y="170" width="210" height="430" fill="#6b5b95" fill-opacity="0.3" rx="10"/>
+  <rect x="630" y="170" width="210" height="430" fill="#6b5b95" fill-opacity="0.3" rx="10"/>
+  <rect x="855" y="170" width="165" height="430" fill="#6b5b95" fill-opacity="0.3" rx="10"/>
+  <rect x="196" y="186" width="36" height="130" fill="#f6c177" rx="4"/>
+  <rect x="242" y="186" width="36" height="130" fill="#88b3d9" rx="4"/>
+  <rect x="288" y="186" width="36" height="130" fill="#e0a5b0" rx="4"/>
+  <rect x="334" y="186" width="40" height="130" fill="#a8c686" rx="4"/>
+  <rect x="196" y="332" width="36" height="120" fill="#a8c686" rx="4"/>
+  <rect x="242" y="332" width="36" height="120" fill="#f0c98a" rx="4"/>
+  <rect x="288" y="332" width="36" height="120" fill="#9fb4d8" rx="4"/>
+  <rect x="334" y="332" width="40" height="120" fill="#dca6b4" rx="4"/>
+  <rect x="196" y="468" width="36" height="116" fill="#c9a4d8" rx="4"/>
+  <rect x="242" y="468" width="36" height="116" fill="#e0b96c" rx="4"/>
+  <rect x="288" y="468" width="36" height="116" fill="#7fb3a6" rx="4"/>
+  <rect x="334" y="468" width="40" height="116" fill="#b0b8e0" rx="4"/>
+  <rect x="421" y="186" width="36" height="130" fill="#7fb3a6" rx="4"/>
+  <rect x="467" y="186" width="36" height="130" fill="#e0a5b0" rx="4"/>
+  <rect x="513" y="186" width="36" height="130" fill="#f6c177" rx="4"/>
+  <rect x="559" y="186" width="40" height="130" fill="#88b3d9" rx="4"/>
+  <rect x="421" y="332" width="36" height="120" fill="#dca6b4" rx="4"/>
+  <rect x="467" y="332" width="36" height="120" fill="#c9a4d8" rx="4"/>
+  <rect x="513" y="332" width="36" height="120" fill="#7fb3a6" rx="4"/>
+  <rect x="559" y="332" width="40" height="120" fill="#e0b96c" rx="4"/>
+  <rect x="421" y="468" width="36" height="116" fill="#b0b8e0" rx="4"/>
+  <rect x="467" y="468" width="36" height="116" fill="#f0c98a" rx="4"/>
+  <rect x="513" y="468" width="36" height="116" fill="#dca6b4" rx="4"/>
+  <rect x="559" y="468" width="40" height="116" fill="#a8c686" rx="4"/>
+  <rect x="646" y="186" width="36" height="130" fill="#e0b96c" rx="4"/>
+  <rect x="692" y="186" width="36" height="130" fill="#9fb4d8" rx="4"/>
+  <rect x="738" y="186" width="36" height="130" fill="#a8c686" rx="4"/>
+  <rect x="784" y="186" width="40" height="130" fill="#dca6b4" rx="4"/>
+  <rect x="646" y="332" width="36" height="120" fill="#f6c177" rx="4"/>
+  <rect x="692" y="332" width="36" height="120" fill="#88b3d9" rx="4"/>
+  <rect x="738" y="332" width="36" height="120" fill="#dca6b4" rx="4"/>
+  <rect x="784" y="332" width="40" height="120" fill="#c9a4d8" rx="4"/>
+  <rect x="646" y="468" width="36" height="116" fill="#7fb3a6" rx="4"/>
+  <rect x="692" y="468" width="36" height="116" fill="#f0c98a" rx="4"/>
+  <rect x="738" y="468" width="36" height="116" fill="#b0b8e0" rx="4"/>
+  <rect x="784" y="468" width="40" height="116" fill="#e0a5b0" rx="4"/>
+  <rect x="871" y="186" width="36" height="130" fill="#c9a4d8" rx="4"/>
+  <rect x="917" y="186" width="36" height="130" fill="#88b3d9" rx="4"/>
+  <rect x="963" y="186" width="36" height="130" fill="#f6c177" rx="4"/>
+  <rect x="871" y="332" width="36" height="120" fill="#e0b96c" rx="4"/>
+  <rect x="917" y="332" width="36" height="120" fill="#a8c686" rx="4"/>
+  <rect x="963" y="332" width="36" height="120" fill="#dca6b4" rx="4"/>
+  <rect x="871" y="468" width="36" height="116" fill="#9fb4d8" rx="4"/>
+  <rect x="917" y="468" width="36" height="116" fill="#7fb3a6" rx="4"/>
+  <rect x="963" y="468" width="36" height="116" fill="#f0c98a" rx="4"/>
+  <rect x="120" y="600" width="960" height="34" rx="8" fill="#6b5b95" fill-opacity="0.75"/>
+  <rect x="152" y="634" width="120" height="56" rx="6" fill="#fdfcfb" stroke="#6b5b95" stroke-opacity="0.4"/>
+  <rect x="480" y="634" width="200" height="56" rx="6" fill="#fdfcfb" stroke="#6b5b95" stroke-opacity="0.4"/>
+  <path d="M540 634v-58l80 0v58z" fill="#fdfcfb" stroke="#6b5b95" stroke-opacity="0.4"/>
+  <rect x="560" y="592" width="40" height="30" rx="4" fill="#6b5b95" fill-opacity="0.3"/><rect x="0" y="0" width="1200" height="800" fill="none" stroke="#6b5b95" stroke-opacity="0.25" stroke-width="3"/><rect x="1016" y="28" width="156" height="34" rx="17" fill="#6b5b95" fill-opacity="0.1" stroke="#6b5b95" stroke-opacity="0.35"/><text x="1094" y="51" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="15" font-weight="600" letter-spacing="1" fill="#6b5b95">LIBRARY</text><text x="600" y="764" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="17" fill="#6b5b95" fill-opacity="0.6">Add your photo here</text></svg>

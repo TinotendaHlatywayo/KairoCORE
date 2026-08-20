@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800" role="img" aria-label="Placeholder: Students Library"><defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dde4f2"/><stop offset="1" stop-color="#f2f5fb"/></linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.3" r="0.7"><stop offset="0" stop-color="#46588c" stop-opacity="0.14"/><stop offset="1" stop-color="#46588c" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#bg)"/><rect width="1200" height="800" fill="url(#glow)"/>
+  <rect x="120" y="560" width="960" height="26" rx="6" fill="#46588c" fill-opacity="0.85"/>
+  <rect x="300" y="586" width="600" height="60" fill="#46588c" fill-opacity="0.35"/>
+  <path d="M520 240c64 0 100 44 100 110 0 66-44 110-100 110s-100-44-100-110c0-66 36-110 100-110z" fill="#f2b28c"/>
+  <circle cx="520" cy="300" r="42" fill="#e8a37e"/>
+  <path d="M400 586l30-160 180 0 30 160z" fill="#5b6fb0"/>
+  <rect x="520" y="320" width="0" height="0"/>
+  <circle cx="520" cy="296" r="10" fill="#46588c" fill-opacity="0.6"/>
+  <path d="M480 470c-36 30-84 44-140 44" fill="none" stroke="#46588c" stroke-opacity="0.5" stroke-width="14" stroke-linecap="round"/>
+  <path d="M560 470c36 30 84 44 140 44" fill="none" stroke="#46588c" stroke-opacity="0.5" stroke-width="14" stroke-linecap="round"/>
+  <circle cx="220" cy="330" r="46" fill="#f2b28c"/>
+  <path d="M152 586l26-200 84 0 26 200z" fill="#6e82c2"/>
+  <path d="M180 470c-30 20-70 30-116 30" fill="none" stroke="#46588c" stroke-opacity="0.4" stroke-width="12" stroke-linecap="round"/>
+  <rect x="640" y="440" width="200" height="120" rx="8" fill="#ffffff" stroke="#46588c" stroke-opacity="0.4" stroke-width="4"/>
+  <rect x="660" y="462" width="120" height="10" rx="5" fill="#46588c" fill-opacity="0.5"/>
+  <rect x="660" y="484" width="140" height="10" rx="5" fill="#46588c" fill-opacity="0.3"/>
+  <rect x="660" y="506" width="100" height="10" rx="5" fill="#46588c" fill-opacity="0.3"/>
+  <rect x="700" y="380" width="80" height="60" rx="8" fill="#46588c" fill-opacity="0.25"/>
+  <path d="M700 380l-40-70 40 0zM780 380l-40-70 40 0z" fill="#46588c" fill-opacity="0.4"/><rect x="0" y="0" width="1200" height="800" fill="none" stroke="#46588c" stroke-opacity="0.25" stroke-width="3"/><rect x="1016" y="28" width="156" height="34" rx="17" fill="#46588c" fill-opacity="0.1" stroke="#46588c" stroke-opacity="0.35"/><text x="1094" y="51" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="15" font-weight="600" letter-spacing="1" fill="#46588c">STUDENTS LIBRARY</text><text x="600" y="764" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="17" fill="#46588c" fill-opacity="0.6">Add your photo here</text></svg>

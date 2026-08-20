@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800" role="img" aria-label="Placeholder: Campus Quad"><defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dcebda"/><stop offset="1" stop-color="#f1f7f0"/></linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.34" r="0.7"><stop offset="0" stop-color="#4f7942" stop-opacity="0.16"/><stop offset="1" stop-color="#4f7942" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#bg)"/><rect width="1200" height="800" fill="url(#glow)"/>
+  <circle cx="1010" cy="150" r="56" fill="#f5d76e" fill-opacity="0.85"/>
+  <circle cx="1010" cy="150" r="56" fill="#fff6d0" fill-opacity="0.35"/>
+  <rect x="0" y="520" width="1200" height="280" fill="#d9ecd6"/>
+  <path d="M520 560h160l-40-260h-80z" fill="#c6e2c2"/>
+  <ellipse cx="600" cy="700" rx="520" ry="40" fill="#4f7942" fill-opacity="0.08"/>
+  <path d="M180 560h90c-4 46-40 84-90 84s-86-38-90-84z" fill="#4f7942" fill-opacity="0.22"/>
+  <path d="M1030 560h90c-4 46-40 84-90 84s-86-38-90-84z" fill="#4f7942" fill-opacity="0.22"/>
+  <path d="M300 520l120 0-30-180h-60z" fill="#4f7942" fill-opacity="0.4"/>
+  <path d="M780 520l120 0-30-180h-60z" fill="#4f7942" fill-opacity="0.4"/>
+  <path d="M420 540l360 0-30-220h-300z" fill="#4f7942" fill-opacity="0.28"/>
+  <ellipse cx="460" cy="610" rx="74" ry="20" fill="#4f7942" fill-opacity="0.14"/>
+  <path d="M428 610c-4-66 28-98 66-98s70 32 66 98z" fill="none" stroke="#4f7942" stroke-opacity="0.5" stroke-width="8"/>
+  <ellipse cx="740" cy="610" rx="74" ry="20" fill="#4f7942" fill-opacity="0.14"/>
+  <path d="M708 610c-4-66 28-98 66-98s70 32 66 98z" fill="none" stroke="#4f7942" stroke-opacity="0.5" stroke-width="8"/>
+  <rect x="540" y="640" width="120" height="52" rx="26" fill="#4f7942" fill-opacity="0.75"/>
+  <rect x="540" y="640" width="120" height="20" rx="10" fill="#fff" fill-opacity="0.6"/>
+  <rect x="390" y="700" width="150" height="10" rx="5" fill="#4f7942" fill-opacity="0.5"/>
+  <rect x="660" y="700" width="150" height="10" rx="5" fill="#4f7942" fill-opacity="0.5"/><rect x="0" y="0" width="1200" height="800" fill="none" stroke="#4f7942" stroke-opacity="0.25" stroke-width="3"/><rect x="1016" y="28" width="156" height="34" rx="17" fill="#4f7942" fill-opacity="0.1" stroke="#4f7942" stroke-opacity="0.35"/><text x="1094" y="51" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="15" font-weight="600" letter-spacing="1" fill="#4f7942">CAMPUS QUAD</text><text x="600" y="764" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="17" fill="#4f7942" fill-opacity="0.6">Add your photo here</text></svg>

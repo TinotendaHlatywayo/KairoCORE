@@ -1,0 +1,266 @@
+<?php
+
+namespace App\Filament\App\Resources;
+
+use App\Filament\App\Resources\AcademicReportResource\Pages;
+use Filament\Forms;
+use Filament\Forms\Form;
+use Filament\Resources\Resource;
+use Filament\Tables;
+use Filament\Tables\Table;
+use Modules\Academics\Models\AcademicReport;
+use Modules\Academics\Models\Section;
+use Modules\Academics\Models\Term;
+use Modules\Academics\Models\AcademicYear;
+use Modules\Students\Models\Student;
+use Illuminate\Database\Eloquent\Builder;
+
+class AcademicReportResource extends Resource
+{
+    protected static ?string $model = AcademicReport::class; 
+    protected static ?string $navigationGroup = 'Academic Setup';
+    protected static ?string $navigationIcon = 'heroicon-o-chat-bubble-left-right';
+    protected static ?string $navigationLabel = 'Academic Reports';
+
+    public static function form(Form $form): Form
+    {
+        $ratingOptions = [
+            'outstanding'       => 'Outstanding (10.0)',
+            'excellent'         => 'Excellent (8.5)',
+            'very_good'         => 'Very Good (7.0)',
+            'good'              => 'Good (5.5)',
+            'satisfactory'      => 'Satisfactory (4.0)',
+            'needs_improvement' => 'Needs Improvement (2.0)',
+        ];
+
+        return $form
+            ->schema([
+                Forms\Components\Grid::make(3)
+                    ->schema([
+                        Forms\Components\Section::make('Class & Student Selection')
+                            ->description('Select the class stream first to load enrolled students.')
+                            ->schema([
+                                Forms\Components\Select::make('section_id')
+                                    ->label('Class Stream')
+                                    ->options(function () {
+                                        return Section::with('course')->get()->pluck('full_name', 'id');
+                                    })
+                                    ->required()
+                                    ->live()
+                                    ->searchable()
+                                    ->preload()
+                                    ->placeholder('Select Class Stream (e.g. Form 2A)...'),
+
+                                Forms\Components\Select::make('student_id')
+                                    ->label('Student')
+                                    ->options(function (Forms\Get $get) {
+                                        $sectionId = $get('section_id');
+                                        if (!$sectionId) {
+                                            return [];
+                                        }
+                                        return Student::whereHas('enrollments', fn ($q) => $q->where('section_id', $sectionId))
+                                            ->get()
+                                            ->pluck('full_name', 'id');
+                                    })
+                                    ->required()
+                                    ->searchable()
+                                    ->preload()
+                                    ->placeholder('Select Student...'),
+
+                                Forms\Components\Select::make('term_id')
+                                    ->label('Academic Term')
+                                    ->options(function () {
+                                        $activeYear = AcademicYear::where('is_active', true)->first();
+                                        if (!$activeYear) {
+                                            return [];
+                                        }
+                                        return Term::where('academic_year_id', $activeYear->id)
+                                            ->get()
+                                            ->mapWithKeys(function ($term) {
+                                                return [$term->id => ucwords(strtolower($term->name))];
+                                            });
+                                    })
+                                    ->required()
+                                    ->preload()
+                                    ->placeholder('Select Term...'),
+
+                                Forms\Components\Select::make('status')
+                                    ->options([
+                                        'approved' => 'Approved',
+                                        'draft'    => 'Draft',
+                                    ])
+                                    ->default('approved')
+                                    ->required(),
+
+                                Forms\Components\Textarea::make('teacher_comment')
+                                    ->label('Class Teacher Remarks')
+                                    ->placeholder('Write overall progress observation...')
+                                    ->rows(3),
+
+                                Forms\Components\Textarea::make('headmaster_comment')
+                                    ->label('Headmaster Remarks')
+                                    ->placeholder('Principal review notes...')
+                                    ->rows(3),
+                            ])->columnSpan(1),
+
+                        Forms\Components\Section::make('Heritage-Based Curriculum (HBC) Competencies')
+                            ->description('Assess the student\'s values and practical competencies.')
+                            ->schema([
+                                // Top 10 Core Competencies (Now fully dynamically labeled using Model labels)
+                                Forms\Components\Fieldset::make('Top 10 Core Competencies')
+                                    ->schema([
+                                        Forms\Components\Select::make('unhu_competencies.respect')->label('1. ' . AcademicReport::$competencyLabels['respect'])->options($ratingOptions)->default('good')->required(),
+                                        Forms\Components\Select::make('unhu_competencies.honesty')->label('2. ' . AcademicReport::$competencyLabels['honesty'])->options($ratingOptions)->default('good')->required(),
+                                        Forms\Components\Select::make('unhu_competencies.responsibility')->label('3. ' . AcademicReport::$competencyLabels['responsibility'])->options($ratingOptions)->default('good')->required(),
+                                        Forms\Components\Select::make('unhu_competencies.discipline')->label('4. ' . AcademicReport::$competencyLabels['discipline'])->options($ratingOptions)->default('good')->required(),
+                                        Forms\Components\Select::make('unhu_competencies.patriotism')->label('5. ' . AcademicReport::$competencyLabels['patriotism'])->options($ratingOptions)->default('good')->required(),
+                                        Forms\Components\Select::make('unhu_competencies.cooperation')->label('6. ' . AcademicReport::$competencyLabels['cooperation'])->options($ratingOptions)->default('good')->required(),
+                                        Forms\Components\Select::make('unhu_competencies.leadership')->label('7. ' . AcademicReport::$competencyLabels['leadership'])->options($ratingOptions)->default('good')->required(),
+                                        Forms\Components\Select::make('unhu_competencies.critical_thinking')->label('8. ' . AcademicReport::$competencyLabels['critical_thinking'])->options($ratingOptions)->default('good')->required(),
+                                        Forms\Components\Select::make('unhu_competencies.creativity')->label('9. ' . AcademicReport::$competencyLabels['creativity'])->options($ratingOptions)->default('good')->required(),
+                                        Forms\Components\Select::make('unhu_competencies.environment')->label('10. ' . AcademicReport::$competencyLabels['environment'])->options($ratingOptions)->default('good')->required(),
+                                    ])->columns(2),
+
+                                // Additional 10 Competencies (Now fully dynamically labeled using Model labels)
+                                Forms\Components\Section::make('Additional 10 Competencies')
+                                    ->description('Expand to grade optional competencies.')
+                                    ->collapsed()
+                                    ->schema([
+                                        Forms\Components\Select::make('unhu_competencies.communication')->label('11. ' . AcademicReport::$competencyLabels['communication'])->options($ratingOptions)->placeholder('Skip / Not Graded'),
+                                        Forms\Components\Select::make('unhu_competencies.digital_literacy')->label('12. ' . AcademicReport::$competencyLabels['digital_literacy'])->options($ratingOptions)->placeholder('Skip / Not Graded'),
+                                        Forms\Components\Select::make('unhu_competencies.entrepreneurship')->label('13. ' . AcademicReport::$competencyLabels['entrepreneurship'])->options($ratingOptions)->placeholder('Skip / Not Graded'),
+                                        Forms\Components\Select::make('unhu_competencies.cultural_appreciation')->label('14. ' . AcademicReport::$competencyLabels['cultural_appreciation'])->options($ratingOptions)->placeholder('Skip / Not Graded'),
+                                        Forms\Components\Select::make('unhu_competencies.community_service')->label('15. ' . AcademicReport::$competencyLabels['community_service'])->options($ratingOptions)->placeholder('Skip / Not Graded'),
+                                        Forms\Components\Select::make('unhu_competencies.perseverance')->label('16. ' . AcademicReport::$competencyLabels['perseverance'])->options($ratingOptions)->placeholder('Skip / Not Graded'),
+                                        Forms\Components\Select::make('unhu_competencies.compassion')->label('17. ' . AcademicReport::$competencyLabels['compassion'])->options($ratingOptions)->placeholder('Skip / Not Graded'),
+                                        Forms\Components\Select::make('unhu_competencies.time_management')->label('18. ' . AcademicReport::$competencyLabels['time_management'])->options($ratingOptions)->placeholder('Skip / Not Graded'),
+                                        Forms\Components\Select::make('unhu_competencies.self_confidence')->label('19. ' . AcademicReport::$competencyLabels['self_confidence'])->options($ratingOptions)->placeholder('Skip / Not Graded'),
+                                        Forms\Components\Select::make('unhu_competencies.adaptability')->label('20. ' . AcademicReport::$competencyLabels['adaptability'])->options($ratingOptions)->placeholder('Skip / Not Graded'),
+                                    ])->columns(2),
+                            ])->columnSpan(2),
+                    ])
+            ]);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return $table
+            ->columns([
+                Tables\Columns\TextColumn::make('student.full_name')
+                    ->label('Student')
+                    ->searchable(['first_name', 'last_name', 'admission_number'])
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('section.name')
+                    ->label('Class')
+                    ->formatStateUsing(fn ($record) => ($record->section?->course?->name ?? '') . ' ' . ($record->section?->name ?? ''))
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('term.academicYear.name')
+                    ->label('Year')
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('term.name')
+                    ->label('Term')
+                    ->formatStateUsing(fn ($state) => ucwords(strtolower($state))),
+
+                Tables\Columns\TextColumn::make('status')
+                    ->label('Status')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'approved' => 'success',
+                        'draft'    => 'warning',
+                        default    => 'gray',
+                    })
+                    ->formatStateUsing(fn ($state) => ucfirst($state)),
+
+                Tables\Columns\TextColumn::make('overall_score')
+                    ->label('Overall')
+                    ->numeric(2)
+                    ->badge()
+                    ->color(fn ($state) => $state >= 8.5 ? 'success' : ($state >= 4.0 ? 'info' : 'danger'))
+                    ->sortable()
+                    ->alignCenter(),
+
+                Tables\Columns\TextColumn::make('strength')
+                    ->label('Strength')
+                    ->wrap()
+                    ->html()
+                    ->width('220px')
+                    ->formatStateUsing(fn ($state) => nl2br(e($state)))
+                    ->tooltip(fn ($record) => strip_tags(str_replace("<br />", "\n", $record->strength))),
+
+                Tables\Columns\TextColumn::make('needs_improvement')
+                    ->label('Needs Improvement')
+                    ->wrap()
+                    ->html()
+                    ->width('220px')
+                    ->formatStateUsing(fn ($state) => nl2br(e($state)))
+                    ->tooltip(fn ($record) => strip_tags(str_replace("<br />", "\n", $record->needs_improvement))),
+
+                Tables\Columns\TextColumn::make('teacher.name')
+                    ->label('Teacher')
+                    ->default('System Admin'),
+            ])
+            ->filters([
+                Tables\Filters\SelectFilter::make('section_id')
+                    ->label('Class Stream')
+                    ->options(fn () => Section::with('course')->get()->pluck('full_name', 'id')),
+
+                Tables\Filters\SelectFilter::make('status')
+                    ->options([
+                        'approved' => 'Approved',
+                        'draft'    => 'Draft',
+                    ]),
+
+                Tables\Filters\SelectFilter::make('academic_year_id')
+                    ->label('Academic Year')
+                    ->relationship('term.academicYear', 'name'),
+
+                Tables\Filters\SelectFilter::make('term_id')
+                    ->label('Term')
+                    ->options(fn () => Term::all()->mapWithKeys(function ($term) {
+                        return [$term->id => ucwords(strtolower($term->name))];
+                    })),
+
+                Tables\Filters\Filter::make('overall_score')
+                    ->form([
+                        Forms\Components\Select::make('performance_band')
+                            ->label('Performance Band')
+                            ->options([
+                                'outstanding' => 'Outstanding (>= 8.5)',
+                                'satisfactory' => 'Satisfactory (4.0 - 8.4)',
+                                'at_risk' => 'At Risk (< 4.0)',
+                            ]),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['performance_band'] === 'outstanding',
+                                fn (Builder $query): Builder => $query->where('overall_score', '>=', 8.5),
+                            )
+                            ->when(
+                                $data['performance_band'] === 'satisfactory',
+                                fn (Builder $query): Builder => $query->whereBetween('overall_score', [4.0, 8.49]),
+                            )
+                            ->when(
+                                $data['performance_band'] === 'at_risk',
+                                fn (Builder $query): Builder => $query->where('overall_score', '<', 4.0),
+                            );
+                    })
+            ])
+            ->actions([
+                Tables\Actions\EditAction::make()
+                    ->iconButton()
+                    ->tooltip('Edit Report'),
+                Tables\Actions\DeleteAction::make()
+                    ->iconButton()
+                    ->tooltip('Delete Report'),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
+            ]);
+    }
+}

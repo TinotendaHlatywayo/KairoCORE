@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800" role="img" aria-label="Placeholder: Classroom"><defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f0ead6"/><stop offset="1" stop-color="#faf6ea"/></linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.3" r="0.7"><stop offset="0" stop-color="#8a7a3a" stop-opacity="0.14"/><stop offset="1" stop-color="#8a7a3a" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#bg)"/><rect width="1200" height="800" fill="url(#glow)"/>
+  <rect x="0" y="560" width="1200" height="240" fill="#e7dfc6"/>
+  <rect x="150" y="190" width="300" height="230" rx="12" fill="#cfe6f2" stroke="#8a7a3a" stroke-opacity="0.4"/>
+  <rect x="172" y="214" width="256" height="18" fill="#fff" fill-opacity="0.7"/>
+  <rect x="172" y="250" width="256" height="18" fill="#fff" fill-opacity="0.7"/>
+  <rect x="172" y="286" width="256" height="18" fill="#fff" fill-opacity="0.7"/>
+  <rect x="172" y="322" width="256" height="18" fill="#fff" fill-opacity="0.7"/>
+  <rect x="172" y="358" width="256" height="18" fill="#fff" fill-opacity="0.7"/>
+  <rect x="480" y="196" width="420" height="170" rx="8" fill="#fdfdfb" stroke="#8a7a3a" stroke-opacity="0.5" stroke-width="4"/>
+  <rect x="500" y="220" width="200" height="8" rx="4" fill="#8a7a3a" fill-opacity="0.6"/>
+  <rect x="500" y="244" width="240" height="8" rx="4" fill="#8a7a3a" fill-opacity="0.35"/>
+  <rect x="500" y="268" width="180" height="8" rx="4" fill="#8a7a3a" fill-opacity="0.35"/>
+  <circle cx="660" cy="330" r="22" fill="#8a7a3a" fill-opacity="0.4"/>
+  <rect x="500" y="520" width="260" height="30" rx="6" fill="#8a7a3a" fill-opacity="0.85"/>
+  <path d="M520 520v-60l220 0v60z" fill="#fdf4d8" stroke="#8a7a3a" stroke-opacity="0.5"/>
+  <path d="M760 520l-140 0v-44l100-26 40 34z" fill="#fdf4d8" stroke="#8a7a3a" stroke-opacity="0.5"/>
+  <rect x="770" y="536" width="40" height="44" rx="6" fill="#8a7a3a" fill-opacity="0.8"/>
+  <rect x="806" y="504" width="40" height="44" rx="6" fill="#8a7a3a" fill-opacity="0.8"/>
+  <rect x="922" y="540" width="170" height="24" rx="6" fill="#8a7a3a" fill-opacity="0.35"/>
+  <path d="M934 540l-16-56h120l-16 56z" fill="#8a7a3a" fill-opacity="0.22"/><rect x="0" y="0" width="1200" height="800" fill="none" stroke="#8a7a3a" stroke-opacity="0.25" stroke-width="3"/><rect x="1016" y="28" width="156" height="34" rx="17" fill="#8a7a3a" fill-opacity="0.1" stroke="#8a7a3a" stroke-opacity="0.35"/><text x="1094" y="51" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="15" font-weight="600" letter-spacing="1" fill="#8a7a3a">CLASSROOM</text><text x="600" y="764" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="17" fill="#8a7a3a" fill-opacity="0.6">Add your photo here</text></svg>
