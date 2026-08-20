@@ -1,0 +1,81 @@
+# =============================================================================
+# Laravel multi-container Docker environment
+#
+# Services:
+#   app       - PHP-FPM 8.3 (built from the local Dockerfile)
+#   webserver - Nginx (routes public requests to the app on port 9000)
+#   db        - MySQL 8.0 (named volume "dbdata" for persistence)
+#
+# All three services share the "laravel_network" bridge network.
+# =============================================================================
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laravel_app
+    restart: unless-stopped
+    # Run PHP-FPM as the host user so the bind-mounted storage/ and
+    # bootstrap/cache (owned by the host) stay writable by the workers.
+    # On Docker Desktop (Windows/macOS) UID/GID are virtualized, so the
+    # 1000 defaults are fine there too.
+    user: "${USER_ID:-1000}:${GROUP_ID:-1000}"
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+    environment:
+      # These override the .env file inside the container so the app always
+      # talks to the "db" service on the shared network (fallbacks in .env).
+      APP_ENV: ${APP_ENV:-local}
+      APP_DEBUG: ${APP_DEBUG:-true}
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE:-schoolcore}
+      DB_USERNAME: ${DB_USERNAME:-schooluser}
+      DB_PASSWORD: ${DB_PASSWORD:-secret}
+    depends_on:
+      - db
+    networks:
+      - laravel_network
+
+  webserver:
+    image: nginx:alpine
+    container_name: laravel_webserver
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d
+    depends_on:
+      - app
+    networks:
+      - laravel_network
+
+  db:
+    image: mysql:8.0
+    container_name: laravel_db
+    restart: unless-stopped
+    environment:
+      # NOTE: MYSQL_USER must NEVER be mapped from DB_USERNAME. If the project
+      # .env still carries an old value like "root" (e.g. from XAMPP), the
+      # official MySQL image aborts startup: MYSQL_USER is only for creating a
+      # regular, non-root user. It is therefore wired to its own variable
+      # (MYSQL_USER) and defaults to a non-root account.
+      MYSQL_DATABASE: ${DB_DATABASE:-schoolcore}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_USER: ${MYSQL_USER:-schooluser}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
+    volumes:
+      - dbdata:/var/lib/mysql
+    networks:
+      - laravel_network
+
+volumes:
+  dbdata:
+    driver: local
+
+networks:
+  laravel_network:
+    driver: bridge

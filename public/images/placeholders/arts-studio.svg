@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800" role="img" aria-label="Placeholder: Arts Studio"><defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ecdcf0"/><stop offset="1" stop-color="#f8f2fa"/></linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.3" r="0.7"><stop offset="0" stop-color="#8a4a8a" stop-opacity="0.15"/><stop offset="1" stop-color="#8a4a8a" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#bg)"/><rect width="1200" height="800" fill="url(#glow)"/>
+  <rect x="120" y="560" width="960" height="26" rx="6" fill="#8a4a8a" fill-opacity="0.8"/>
+  <path d="M520 300l180 0 0 260-180 0z" fill="#ffffff" stroke="#8a4a8a" stroke-opacity="0.5" stroke-width="8"/>
+  <path d="M610 300v-70l-70 70zM700 300v-70l-90 70z" fill="#8a4a8a" fill-opacity="0.7"/>
+  <path d="M520 300h180v260h-180z" fill="none" stroke="#8a4a8a" stroke-opacity="0.4" stroke-width="4"/>
+  <path d="M360 220l180 320" stroke="#8a4a8a" stroke-opacity="0.5" stroke-width="8"/>
+  <circle cx="360" cy="220" r="18" fill="#8a4a8a" fill-opacity="0.5"/>
+  <rect x="520" y="560" width="180" height="40" fill="#8a4a8a" fill-opacity="0.35"/>
+  <circle cx="560" cy="420" r="46" fill="#f2c94c" fill-opacity="0.9"/>
+  <path d="M600 300c40 60 40 120 0 180l-40-40z" fill="#6cc3dd" fill-opacity="0.85"/>
+  <path d="M640 420l60 60" stroke="#f26d6d" stroke-opacity="0.85" stroke-width="22" stroke-linecap="round"/>
+  <rect x="800" y="470" width="200" height="90" rx="14" fill="#fdfcfb" stroke="#8a4a8a" stroke-opacity="0.4"/>
+  <circle cx="846" cy="500" r="16" fill="#f26d6d"/>
+  <circle cx="892" cy="506" r="16" fill="#f2c94c"/>
+  <circle cx="938" cy="500" r="16" fill="#6cc3dd"/>
+  <circle cx="872" cy="532" r="16" fill="#8a4a8a"/>
+  <circle cx="918" cy="534" r="16" fill="#7cb66a"/>
+  <rect x="956" y="430" width="44" height="56" rx="8" fill="#f6c177" fill-opacity="0.9"/>
+  <path d="M964 430l-10-30h26l-12 30z" fill="#d9a05b" fill-opacity="0.9"/>
+  <rect x="872" y="430" width="44" height="56" rx="8" fill="#6cc3dd" fill-opacity="0.9"/>
+  <path d="M880 430l-10-30h26l-12 30z" fill="#4fa9c9" fill-opacity="0.9"/>
+  <path d="M130 300c40-30 100-30 140 0" stroke="#8a4a8a" stroke-opacity="0.4" stroke-width="8" stroke-linecap="round"/><rect x="0" y="0" width="1200" height="800" fill="none" stroke="#8a4a8a" stroke-opacity="0.25" stroke-width="3"/><rect x="1016" y="28" width="156" height="34" rx="17" fill="#8a4a8a" fill-opacity="0.1" stroke="#8a4a8a" stroke-opacity="0.35"/><text x="1094" y="51" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="15" font-weight="600" letter-spacing="1" fill="#8a4a8a">ARTS STUDIO</text><text x="600" y="764" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="17" fill="#8a4a8a" fill-opacity="0.6">Add your photo here</text></svg>

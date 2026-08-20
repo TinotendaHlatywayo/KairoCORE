@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800" role="img" aria-label="Placeholder: Students Outdoor"><defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3ead6"/><stop offset="1" stop-color="#faf6ea"/></linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.3" r="0.7"><stop offset="0" stop-color="#a8782c" stop-opacity="0.14"/><stop offset="1" stop-color="#a8782c" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#bg)"/><rect width="1200" height="800" fill="url(#glow)"/>
+  <circle cx="1030" cy="150" r="54" fill="#f2c94c" fill-opacity="0.9"/>
+  <circle cx="1030" cy="150" r="30" fill="#fdf1c0" fill-opacity="0.8"/>
+  <rect x="0" y="560" width="1200" height="240" fill="#efe4c6"/>
+  <path d="M320 560c-20-96 8-150 70-150s90 54 70 150z" fill="#a8782c" fill-opacity="0.55"/>
+  <path d="M860 560c-20-96 8-150 70-150s90 54 70 150z" fill="#a8782c" fill-opacity="0.55"/>
+  <path d="M600 560l140 0 -40-320h-60z" fill="#a8782c" fill-opacity="0.35"/>
+  <circle cx="492" cy="330" r="40" fill="#f2b28c"/>
+  <path d="M420 560l34-170 76 0 34 170z" fill="#5b6fb0"/>
+  <path d="M460 470c-34 30-80 44-136 44" fill="none" stroke="#a8782c" stroke-opacity="0.4" stroke-width="12" stroke-linecap="round"/>
+  <rect x="534" y="396" width="46" height="54" rx="10" fill="#3c4a80" stroke="#ffffff" stroke-opacity="0.6" stroke-width="4"/>
+  <circle cx="642" cy="330" r="40" fill="#eab285"/>
+  <path d="M574 560l30-160 76 0 30 160z" fill="#c97d45"/>
+  <path d="M616 470c-32 30-76 44-130 44" fill="none" stroke="#a8782c" stroke-opacity="0.4" stroke-width="12" stroke-linecap="round"/>
+  <rect x="684" y="396" width="46" height="54" rx="10" fill="#5b6fb0" stroke="#ffffff" stroke-opacity="0.6" stroke-width="4"/>
+  <circle cx="772" cy="336" r="36" fill="#f2b28c"/>
+  <path d="M712 560l28-152 64 0 28 152z" fill="#7c9a3f"/>
+  <path d="M750 474c-30 26-72 38-122 38" fill="none" stroke="#a8782c" stroke-opacity="0.4" stroke-width="12" stroke-linecap="round"/>
+  <ellipse cx="590" cy="560" rx="340" ry="16" fill="#a8782c" fill-opacity="0.08"/>
+  <path d="M150 400c10 20 10 40 0 60" stroke="#fff" stroke-opacity="0.5" stroke-width="6" stroke-linecap="round"/>
+  <path d="M1050 400c10 20 10 40 0 60" stroke="#fff" stroke-opacity="0.5" stroke-width="6" stroke-linecap="round"/><rect x="0" y="0" width="1200" height="800" fill="none" stroke="#a8782c" stroke-opacity="0.25" stroke-width="3"/><rect x="1016" y="28" width="156" height="34" rx="17" fill="#a8782c" fill-opacity="0.1" stroke="#a8782c" stroke-opacity="0.35"/><text x="1094" y="51" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="15" font-weight="600" letter-spacing="1" fill="#a8782c">STUDENTS OUTDOOR</text><text x="600" y="764" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="17" fill="#a8782c" fill-opacity="0.6">Add your photo here</text></svg>

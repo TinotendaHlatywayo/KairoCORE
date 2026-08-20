@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800" role="img" aria-label="Placeholder: Campus Exterior"><defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dbe6f2"/><stop offset="1" stop-color="#eef4fa"/></linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.3" r="0.7"><stop offset="0" stop-color="#4a6fa5" stop-opacity="0.14"/><stop offset="1" stop-color="#4a6fa5" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#bg)"/><rect width="1200" height="800" fill="url(#glow)"/>
+  <ellipse cx="600" cy="716" rx="430" ry="52" fill="#4a6fa5" fill-opacity="0.1"/>
+  <circle cx="180" cy="210" r="62" fill="#4a6fa5" fill-opacity="0.5"/>
+  <circle cx="1010" cy="210" r="62" fill="#4a6fa5" fill-opacity="0.5"/>
+  <path d="M520 400l80-42 80 42v180h-160z" fill="#4a6fa5" fill-opacity="0.9"/>
+  <rect x="286" y="330" width="628" height="300" fill="#ffffff" stroke="#4a6fa5" stroke-opacity="0.35"/>
+  <rect x="300" y="330" width="600" height="16" fill="#4a6fa5" fill-opacity="0.85"/>
+  <rect x="432" y="372" width="336" height="258" fill="#4a6fa5" fill-opacity="0.08"/>
+  <rect x="446" y="392" width="52" height="34" fill="#4a6fa5" fill-opacity="0.35" rx="4"/>
+  <rect x="510" y="392" width="52" height="34" fill="#4a6fa5" fill-opacity="0.35" rx="4"/>
+  <rect x="574" y="392" width="52" height="34" fill="#4a6fa5" fill-opacity="0.35" rx="4"/>
+  <rect x="638" y="392" width="52" height="34" fill="#4a6fa5" fill-opacity="0.35" rx="4"/>
+  <rect x="702" y="392" width="52" height="34" fill="#4a6fa5" fill-opacity="0.35" rx="4"/>
+  <rect x="524" y="452" width="152" height="178" fill="#ffffff" stroke="#4a6fa5" stroke-opacity="0.35"/>
+  <rect x="534" y="556" width="44" height="74" fill="#4a6fa5" fill-opacity="0.8" rx="22"/>
+  <rect x="622" y="556" width="44" height="74" fill="#4a6fa5" fill-opacity="0.8" rx="22"/>
+  <path d="M512 452h176l-20-22h-136z" fill="#4a6fa5" fill-opacity="0.75"/>
+  <rect x="574" y="466" width="52" height="40" fill="#4a6fa5" fill-opacity="0.28" rx="3"/>
+  <path d="M386 358l64-56h78l64 56z" fill="#4a6fa5" fill-opacity="0.14"/>
+  <rect x="676" y="372" width="118" height="150" fill="#ffffff" stroke="#4a6fa5" stroke-opacity="0.3"/>
+  <path d="M688 430l47-40 47 40v-6l-47-40-47 40z" fill="#4a6fa5" fill-opacity="0.3"/>
+  <path d="M176 600l0 88 60-60z" fill="#4a6fa5" fill-opacity="0.7"/>
+  <path d="M192 668c-44 26-96 34-148 28" fill="none" stroke="#4a6fa5" stroke-opacity="0.5" stroke-width="10" stroke-linecap="round"/>
+  <path d="M1024 600l0 88 60-60z" fill="#4a6fa5" fill-opacity="0.7"/>
+  <path d="M1008 668c44 26 96 34 148 28" fill="none" stroke="#4a6fa5" stroke-opacity="0.5" stroke-width="10" stroke-linecap="round"/>
+  <path d="M470 610l130 0 0 106-260 0z" fill="none" stroke="#4a6fa5" stroke-opacity="0.3" stroke-width="5"/><rect x="0" y="0" width="1200" height="800" fill="none" stroke="#4a6fa5" stroke-opacity="0.25" stroke-width="3"/><rect x="1016" y="28" width="156" height="34" rx="17" fill="#4a6fa5" fill-opacity="0.1" stroke="#4a6fa5" stroke-opacity="0.35"/><text x="1094" y="51" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="15" font-weight="600" letter-spacing="1" fill="#4a6fa5">CAMPUS EXTERIOR</text><text x="600" y="764" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="17" fill="#4a6fa5" fill-opacity="0.6">Add your photo here</text></svg>

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800" role="img" aria-label="Placeholder: Logo Placeholder"><defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8edf3"/><stop offset="1" stop-color="#f6f8fb"/></linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.4" r="0.7"><stop offset="0" stop-color="#94a3b8" stop-opacity="0.2"/><stop offset="1" stop-color="#94a3b8" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#bg)"/><rect width="1200" height="800" fill="url(#glow)"/>
+  <ellipse cx="600" cy="620" rx="260" ry="26" fill="#94a3b8" fill-opacity="0.12"/>
+  <path d="M600 210l52 106 118 17-85 83 20 118-105-55-105 55 20-118-85-83 118-17z" fill="#94a3b8" fill-opacity="0.9"/>
+  <circle cx="600" cy="330" r="52" fill="#ffffff" fill-opacity="0.95"/>
+  <path d="M600 284l20 40 45 6-32 32 8 45-40-21-40 21 8-45-32-32 45-6z" fill="#94a3b8" fill-opacity="0.9"/>
+  <path d="M600 176l30 60 67 10-48 47 11 66-60-31-60 31 11-66-48-47 67-10z" fill="none" stroke="#94a3b8" stroke-opacity="0.45" stroke-width="4"/><rect x="0" y="0" width="1200" height="800" fill="none" stroke="#94a3b8" stroke-opacity="0.25" stroke-width="3"/><rect x="1016" y="28" width="156" height="34" rx="17" fill="#94a3b8" fill-opacity="0.1" stroke="#94a3b8" stroke-opacity="0.35"/><text x="1094" y="51" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="15" font-weight="600" letter-spacing="1" fill="#94a3b8">LOGO PLACEHOLDER</text><text x="600" y="764" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="17" fill="#94a3b8" fill-opacity="0.6">Add your photo here</text></svg>
