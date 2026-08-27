@@ -21,13 +21,15 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-# Install deps first (cacheable layer)
+# Step 1: Install dependencies (no scripts, no autoload — app code not here yet)
 COPY composer.json composer.lock ./
-RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist \
-    && composer dump-autoload --optimize --no-dev
+RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
 
-# Copy app code
+# Step 2: Copy application code (now helpers.php, config/, etc. exist)
 COPY . .
+
+# Step 3: Generate autoloader (needs app/Helpers/helpers.php from composer.json autoload.files)
+RUN composer dump-autoload --optimize --no-dev
 
 # Copy Railway configs
 COPY docker/railway/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
