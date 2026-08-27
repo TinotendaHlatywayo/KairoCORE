@@ -1,35 +1,37 @@
 FROM php:8.3-fpm-alpine
 
-# System deps
+# System deps (keep runtime libs on Alpine — gd needs them loaded)
 RUN apk add --no-cache \
         nginx \
         supervisor \
-        libpng-dev \
-        libjpeg-turbo-dev \
-        freetype-dev \
-        oniguruma-dev \
-        libzip-dev \
-        icu-dev \
-        zlib-dev \
+        libpng \
+        libjpeg-turbo \
+        freetype \
+        libonig \
+        libzip \
+        icu-libs \
+        zlib \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
-        pdo_mysql mbstring exif pcntl bcmath gd zip intl opcache \
-    && apk del --no-cache freetype-dev libjpeg-turbo-dev zlib-dev
+        pdo_mysql mbstring exif pcntl bcmath gd zip intl opcache
 
 # Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-# Step 1: Install dependencies (no scripts, no autoload — app code not here yet)
+# Step 1: Install deps only (no scripts, no autoload — app code not here yet)
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
 
-# Step 2: Copy application code (now helpers.php, config/, etc. exist)
+# Step 2: Copy application code
 COPY . .
 
-# Step 3: Generate autoloader (needs app/Helpers/helpers.php from composer.json autoload.files)
-RUN composer dump-autoload --optimize --no-dev
+# Step 3: Generate autoloader WITHOUT running scripts (scripts run in start.sh)
+RUN composer dump-autoload --optimize --no-dev --no-scripts
+
+# Step 4: Create Vite build placeholder (so artisan doesn't crash during cache:build)
+RUN mkdir -p public/build && echo '{}' > public/build/manifest.json
 
 # Copy Railway configs
 COPY docker/railway/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
