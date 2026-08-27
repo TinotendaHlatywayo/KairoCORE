@@ -3,6 +3,12 @@ set -e
 
 echo "==> Kairo CORE — Railway Deployment"
 
+# ── Vite build placeholder (must exist before ANY artisan command) ──────
+mkdir -p public/build
+echo '{}' > public/build/manifest.json
+# Vite also checks for this directory structure
+mkdir -p public/build/.vite
+
 # ── Generate APP_KEY if missing ────────────────────────────────────────
 if [ -z "$APP_KEY" ]; then
     echo "==> Generating APP_KEY..."
@@ -13,10 +19,6 @@ fi
 if [ ! -f .env ]; then
     cp .env.railway .env 2>/dev/null || touch .env
 fi
-
-# ── Vite build placeholder (prevents Vite manifest errors) ─────────────
-mkdir -p public/build
-echo '{}' > public/build/manifest.json
 
 # ── Link storage ───────────────────────────────────────────────────────
 php artisan storage:link --force 2>/dev/null || true
