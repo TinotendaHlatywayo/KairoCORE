@@ -7,7 +7,7 @@
     <div class="relative group">
         <!-- Search Icon -->
         <div x-on:click="$store.sidebar.isOpen ? $refs.searchInput.focus() : $store.sidebar.open()"
-             title="Search workspace"
+             title="{{ __('Search workspace') }}"
              class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 transition-all duration-300 group-focus-within:text-primary-500 group-hover:text-primary-400 cursor-pointer">
             <svg class="w-4.5 h-4.5 transition-transform duration-300 group-focus-within:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -22,7 +22,7 @@
             x-on:focus="isFocused = true"
             x-on:blur="setTimeout(() => isFocused = false, 200)"
             type="text" 
-            placeholder="Search workspace..." 
+            placeholder="{{ __('Search workspace...') }}" 
             class="w-full pl-10 pr-12 py-2.5 text-sm bg-white/90 dark:bg-gray-900/90 border-2 border-gray-200/60 dark:border-gray-800/60 rounded-xl focus:outline-none focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-300 placeholder:text-gray-400 dark:placeholder:text-gray-500 text-gray-700 dark:text-gray-200 shadow-sm hover:shadow-md hover:border-primary-300/50"
             style="transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);"
         />
@@ -181,7 +181,32 @@
     }
 </style>
 
+@php
+    $workspaceSearchIndex = collect($serverItems ?? [])
+        ->map(function ($item) {
+            $iconHtml = '';
+            try {
+                if (\Filament\Support\Icons\Heroicon::tryFrom($item['icon'] ?? '')) {
+                    $iconHtml = svg($item['icon'], 'w-5 h-5')->toHtml();
+                }
+            } catch (\Throwable) {
+                $iconHtml = '';
+            }
+
+            return [
+                'label' => $item['label'],
+                'group' => $item['group'],
+                'url' => $item['url'],
+                'iconHtml' => $iconHtml,
+            ];
+        })
+        ->values()
+        ->all();
+@endphp
 <script>
+    // Server-side registry: every accessible page, including pages that are
+    // not present in the sidebar DOM (shouldRegisterNavigation=false etc.).
+    window.__workspaceSearchIndex = @json($workspaceSearchIndex);
     document.addEventListener('alpine:init', () => {
         Alpine.data('searchBar', () => ({
             search: '',
@@ -192,7 +217,7 @@
             init() {
                 // Wait for DOM to be fully loaded
                 this.$nextTick(() => {
-                    this.menuItems = this.collectMenuItems();
+                    this.menuItems = this.mergeServerItems(this.collectMenuItems(), window.__workspaceSearchIndex || []);
                 });
                 
                 // Keyboard shortcut: Cmd+K / Ctrl+K
@@ -270,44 +295,197 @@
                 return items;
             },
             
+            // Merge the server-side page registry (covers pages that are NOT
+            // in the sidebar or module tabs, e.g. Kairo CORE Messages) with
+            // DOM-collected entries, deduped by URL path.
+            mergeServerItems(domItems, serverItems) {
+                const seen = new Set(
+                    domItems
+                        .filter((i) => i.url && i.url !== '#')
+                        .map((i) => {
+                            try { return new URL(i.url, window.location.origin).pathname; }
+                            catch (e) { return i.url; }
+                        })
+                );
+                
+                serverItems.forEach((item, index) => {
+                    let path = item.url;
+                    try { path = new URL(item.url, window.location.origin).pathname; } catch (e) {}
+                    if (!path || path === '#' || seen.has(path)) return;
+                    seen.add(path);
+                    domItems.push({
+                        id: 'srv-' + index,
+                        label: item.label,
+                        group: item.group,
+                        url: item.url,
+                        icon: item.iconHtml,
+                        element: null,
+                    });
+                });
+                
+                return domItems;
+            },
+            
             // ──────────────────────────────────────────────────────────────
-            // 🔍 FUZZY STRING MATCHING
+            // 🔍 ROBUST MATCHING ENGINE
+            // Layered scoring: exact → prefix → typo-tolerant (Levenshtein)
+            // → synonym-aware → URL slug → character subsequence.
             // ──────────────────────────────────────────────────────────────
-            fuzzyMatch(query, text) {
-                if (!query || query.length === 0) return true;
-                
-                const q = query.toLowerCase().trim();
-                const t = text.toLowerCase().trim();
-                
-                // Exact match check (case insensitive)
-                if (t.includes(q)) return true;
-                
-                // Check if query characters appear in order in text (fuzzy)
-                let qIndex = 0;
-                for (let i = 0; i < t.length && qIndex < q.length; i++) {
-                    if (t[i] === q[qIndex]) {
-                        qIndex++;
+
+            // Education-domain synonyms so "clinic" also finds "Health &
+            // Safety", "fees" finds Finance pages, etc.
+            synonyms: {
+                clinic: ['health', 'medical', 'nurse', 'sickbay', 'infirmary'],
+                medical: ['clinic', 'health', 'nurse'],
+                health: ['clinic', 'medical'],
+                fees: ['fee', 'invoice', 'billing', 'payment', 'ledger'],
+                fee: ['fees', 'invoice', 'billing'],
+                invoice: ['billing', 'fees'],
+                finance: ['fees', 'billing', 'accounting', 'expenses', 'revenue'],
+                payroll: ['salary', 'salaries', 'wages', 'payslip'],
+                salary: ['payroll', 'wages'],
+                hr: ['human resources', 'staff', 'employees', 'personnel', 'leave', 'disciplinary', 'payroll'],
+                staff: ['employee', 'employees', 'hr', 'teachers', 'personnel'],
+                employee: ['staff', 'hr'],
+                students: ['student', 'pupils', 'pupil', 'learners', 'learner', 'enrollment', 'enrolment', 'sis'],
+                pupil: ['students', 'learner'],
+                learner: ['students', 'pupil'],
+                exams: ['exam', 'examination', 'tests', 'marks', 'grading', 'assessments', 'results'],
+                exam: ['exams', 'marks', 'grades', 'assessment'],
+                grades: ['grade', 'grading', 'marks', 'scores', 'reports'],
+                attendance: ['register', 'presence', 'absence'],
+                timetable: ['schedule', 'scheduling', 'periods', 'lessons'],
+                library: ['books', 'book', 'e-resources', 'eresource', 'reading', 'catalogue'],
+                book: ['library', 'catalogue'],
+                inventory: ['stock', 'stores', 'supplies', 'assets'],
+                stock: ['inventory', 'stores', 'adjustment'],
+                assets: ['asset', 'fixed assets', 'equipment', 'depreciation'],
+                procurement: ['purchase', 'purchases', 'supplier', 'suppliers', 'orders', 'goods received', 'requisition'],
+                supplier: ['procurement', 'vendors', 'purchase'],
+                hostel: ['hostels', 'boarding', 'dormitory', 'dorms', 'rooms', 'beds', 'allocation'],
+                boarding: ['hostel', 'dormitory'],
+                communication: ['messages', 'message', 'announcements', 'chat', 'sms', 'email', 'newsletter', 'notifications'],
+                message: ['communication', 'chat', 'inbox', 'messaging'],
+                reports: ['report', 'analytics', 'dashboards', 'statistics', 'insights', 'intelligence'],
+                report: ['reports', 'analytics'],
+                admissions: ['admission', 'applications', 'application', 'apply', 'applicants', 'enrollment'],
+                admission: ['admissions', 'applications', 'apply'],
+                homework: ['assignment', 'assignments', 'lessons', 'lms', 'classwork'],
+                lms: ['homework', 'lessons', 'e-learning', 'courses'],
+                website: ['cms', 'pages', 'builder', 'public site', 'content'],
+                cms: ['website', 'pages', 'builder'],
+                users: ['user', 'accounts', 'roles', 'permissions', 'administrators'],
+                user: ['users', 'accounts', 'roles'],
+                settings: ['configuration', 'configure', 'preferences', 'system', 'setup'],
+                billing: ['subscription', 'subscriptions', 'plans', 'saas', 'payments'],
+                subscription: ['billing', 'plans', 'saas'],
+                tasks: ['task', 'todo', 'my day', 'calendar', 'schedule'],
+                task: ['tasks', 'todo'],
+                academics: ['academic', 'courses', 'classes', 'subjects', 'terms', 'promotions'],
+                academic: ['academics', 'courses', 'subjects'],
+                welfare: ['wellbeing', 'pastoral'],
+                knowledge: ['knowledge base', 'gallery', 'resources', 'documents'],
+            },
+
+            normalize(text) {
+                return (text || '').toLowerCase().replace(/[^a-z0-9\s&\/]/g, ' ').replace(/\s+/g, ' ').trim();
+            },
+
+            // Bounded Levenshtein edit distance with early exit.
+            editDistance(a, b, max) {
+                if (Math.abs(a.length - b.length) > max) return max + 1;
+                const prev = new Array(b.length + 1);
+                const curr = new Array(b.length + 1);
+                for (let j = 0; j <= b.length; j++) prev[j] = j;
+                for (let i = 1; i <= a.length; i++) {
+                    curr[0] = i;
+                    let rowMin = curr[0];
+                    for (let j = 1; j <= b.length; j++) {
+                        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+                        curr[j] = Math.min(prev[j] + 1, curr[j - 1] + 1, prev[j - 1] + cost);
+                        if (curr[j] < rowMin) rowMin = curr[j];
+                    }
+                    if (rowMin > max) return max + 1;
+                    for (let j = 0; j <= b.length; j++) prev[j] = curr[j];
+                }
+                return prev[b.length];
+            },
+
+            // All acceptable alternative needles for the typed query.
+            expandQuery(query) {
+                const q = this.normalize(query);
+                const needles = new Set([q]);
+                // Whole query and each word may be a known synonym key.
+                const keys = [q, ...q.split(' ')];
+                for (const key of keys) {
+                    if (this.synonyms[key]) {
+                        this.synonyms[key].forEach(s => needles.add(this.normalize(s)));
                     }
                 }
-                
-                // If all characters in query were found in order
-                if (qIndex === q.length) return true;
-                
-                // Check if query is a substring of any word (e.g., "rport" matches "report")
-                const words = t.split(/\s+/);
-                for (const word of words) {
-                    let wordIndex = 0;
-                    let queryIndex = 0;
-                    while (wordIndex < word.length && queryIndex < q.length) {
-                        if (word[wordIndex] === q[queryIndex]) {
-                            queryIndex++;
+                return [...needles].filter(n => n.length > 1);
+            },
+
+            /**
+             * Score an item against the query. Higher is better; 0 = no match.
+             */
+            scoreItem(query, item) {
+                const q = this.normalize(query);
+                if (!q) return 0;
+
+                const label = this.normalize(item.label);
+                const group = this.normalize(item.group);
+                let urlPath = '';
+                try { urlPath = this.normalize(new URL(item.url, window.location.origin).pathname); }
+                catch (e) { urlPath = this.normalize(item.url); }
+
+                const haystacks = [label, group, urlPath];
+
+                // 1. Exact substring — strongest signal.
+                if (label.includes(q)) return 100 - Math.min(label.indexOf(q), 20);
+                if (group.includes(q)) return 85;
+
+                // 2. Word-prefix match (query starts a word in the label).
+                const labelWords = label.split(' ');
+                if (labelWords.some(w => w.startsWith(q))) return 92;
+
+                // 3. Synonym-expanded substring/prefix.
+                const needles = this.expandQuery(q);
+                for (const needle of needles) {
+                    if (label.includes(needle)) return 80;
+                    if (group.includes(needle)) return 70;
+                    if (urlPath.includes(needle)) return 68;
+                    if (labelWords.some(w => w.startsWith(needle))) return 75;
+                }
+
+                // 4. Typo tolerance — Levenshtein against each label word and
+                //    each needle (handles "clnic" → "clinic", "studen" → "student").
+                const tolerance = w => w.length >= 7 ? 2 : 1;
+                for (const needle of [q, ...needles]) {
+                    for (const word of labelWords) {
+                        if (Math.abs(word.length - needle.length) <= 2 &&
+                            this.editDistance(word, needle, tolerance(word)) <= tolerance(word)) {
+                            return 72;
                         }
-                        wordIndex++;
                     }
-                    if (queryIndex === q.length) return true;
                 }
-                
-                return false;
+
+                // 5. Loose subsequence fallback (existing behaviour).
+                const subseq = (needle, text) => {
+                    let i = 0;
+                    for (let c = 0; c < text.length && i < needle.length; c++) {
+                        if (text[c] === needle[i]) i++;
+                    }
+                    return i === needle.length;
+                };
+                if (subseq(q, label)) return 40;
+                if (subseq(q, group)) return 35;
+
+                return 0;
+            },
+
+            /** Backwards-compatible helper used elsewhere in this component. */
+            fuzzyMatch(query, text) {
+                return this.scoreItem(query, { label: text, group: '', url: '' }) > 0;
             },
             
             // ──────────────────────────────────────────────────────────────
@@ -359,9 +537,9 @@
             },
             
             filterMenu() {
-                const query = this.search.toLowerCase().trim();
+                const query = this.search;
                 
-                if (query === '') {
+                if (query.trim() === '') {
                     this.filteredItems = [];
                     // Show all items
                     document.querySelectorAll('.fi-sidebar-item').forEach(el => {
@@ -373,28 +551,23 @@
                     return;
                 }
                 
-                // Filter items using fuzzy matching
-                this.filteredItems = this.menuItems.filter(item => {
-                    return this.fuzzyMatch(query, item.label) || 
-                           this.fuzzyMatch(query, item.group);
-                });
+                // Score every indexed item and keep genuine matches.
+                const scored = this.menuItems
+                    .map(item => ({ item, score: this.scoreItem(query, item) }))
+                    .filter(entry => entry.score > 0);
                 
-                // Sort by match quality (items with exact matches first)
-                this.filteredItems.sort((a, b) => {
-                    const aLabel = a.label.toLowerCase();
-                    const bLabel = b.label.toLowerCase();
-                    const aScore = aLabel.includes(query) ? 0 : 1;
-                    const bScore = bLabel.includes(query) ? 0 : 1;
-                    return aScore - bScore;
-                });
+                // Best matches first; stable tie-break on original order.
+                scored.sort((a, b) => b.score - a.score || a.item.id - b.item.id);
+                this.filteredItems = scored.map(entry => entry.item);
                 
-                // Get IDs of visible items
-                const visibleIds = new Set(this.filteredItems.map(i => i.id));
-                
-                // Hide/show items
+                // Live-highlight matching sidebar items (by element reference —
+                // dataset indexes were never assigned, so the old id lookup
+                // silently filtered everything to item 0).
+                const visibleElements = new Set(
+                    scored.filter(e => e.item.element).map(e => e.item.element)
+                );
                 document.querySelectorAll('.fi-sidebar-item').forEach(el => {
-                    const id = parseInt(el.dataset.index || '0');
-                    if (visibleIds.has(id)) {
+                    if (visibleElements.has(el)) {
                         el.style.setProperty('display', '', 'important');
                     } else {
                         el.style.setProperty('display', 'none', 'important');
@@ -404,7 +577,7 @@
                 // Show/hide groups with visible items
                 document.querySelectorAll('.fi-sidebar-group').forEach(group => {
                     const hasVisible = group.querySelector('.fi-sidebar-item:not([style*="display: none"])');
-                    if (hasVisible || query === '') {
+                    if (hasVisible || query.trim() === '') {
                         group.style.setProperty('display', '', 'important');
                     } else {
                         group.style.setProperty('display', 'none', 'important');

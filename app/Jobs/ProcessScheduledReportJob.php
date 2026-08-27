@@ -40,6 +40,11 @@ class ProcessScheduledReportJob implements ShouldQueue
         session(['current_tenant' => $school]);
         app()->instance('current_tenant', $school);
 
+        // Apply the school's locale so scheduled report output is generated in
+        // the correct language instead of the queue worker's default 'en'.
+        $locale = $school->locale;
+        app()->setLocale(in_array($locale, ['en', 'sn', 'sw', 'fr', 'pt', 'es'], true) ? $locale : 'en');
+
         $template = $this->schedule->template;
         if (! $template) {
             return;
@@ -69,7 +74,7 @@ class ProcessScheduledReportJob implements ShouldQueue
         $filePath = Storage::disk('public')->path($report->file_path);
 
         Mail::raw(
-            "Greetings,\n\nPlease find attached the scheduled enterprise report [{$template->name}] generated on ".now()->format('Y-m-d H:i').".\n\nBest Regards,\nSchoolCore Automated Distribution Service",
+            "Greetings,\n\nPlease find attached the scheduled enterprise report [{$template->name}] generated on ".now()->format('Y-m-d H:i').".\n\nBest Regards,\nKairo CORE Automated Distribution Service",
             function ($message) use ($recipients, $template, $filePath) {
                 $message->to($recipients)
                     ->subject("Scheduled Enterprise Report: [{$template->name}]")

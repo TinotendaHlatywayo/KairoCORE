@@ -53,8 +53,8 @@ class HostelInspectionResource extends Resource
                             ->required(),
                         Forms\Components\Select::make('passes_inspection')
                             ->options([
-                                1 => 'Pass',
-                                0 => 'Fail',
+                                1 => __('Pass'),
+                                0 => __('Fail'),
                             ])
                             ->required(),
                         Forms\Components\Textarea::make('notes')->columnSpanFull(),

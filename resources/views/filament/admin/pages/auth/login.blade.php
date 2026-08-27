@@ -1,18 +1,15 @@
 @php
-    $logoUrl = asset('images/Transparent Logo.png');
-    if (! file_exists(public_path('images/Transparent Logo.png')) && file_exists(public_path('images/TransparentLogo.png'))) {
-        $logoUrl = asset('images/TransparentLogo.png');
-    }
+    $logoUrl = asset('images/logo-transparent.png');
 @endphp
 
 <div>
     <x-auth-login-panel
         variant="admin"
         :logo="$logoUrl"
-        brand="SchoolCore Enterprise"
+        brand="Kairo CORE Enterprise"
         badge="Platform Control"
         title="Super Admin"
-        :subtitle="__('Sign in to the SchoolCore platform control center.')"
+        :subtitle="__('Sign in to the Kairo CORE platform control center.')"
         :actions="$this->getCachedFormActions()"
         footer="Secure Multi-Tenant SaaS Architecture"
     >

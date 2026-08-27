@@ -5,8 +5,6 @@ namespace App\Notifications;
 use App\Filament\Admin\Resources\SchoolResource;
 use App\Models\School;
 use App\Models\User;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -17,10 +15,8 @@ use Illuminate\Notifications\Notification;
  *
  * Never contains passwords or auto-generated credentials.
  */
-class SchoolRegisteredNotification extends Notification implements ShouldQueue
+class SchoolRegisteredNotification extends Notification
 {
-    use Queueable;
-
     public function __construct(
         public School $school,
         public User $contact,
@@ -34,22 +30,45 @@ class SchoolRegisteredNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
+        $branding = email_branding(); // platform identity
+
+        $rows = [
+            __('Institution') => $this->school->name,
+            __('Workspace') => ($this->school->subdomain ?? '—'),
+            __('Country') => ($this->school->country ?? '—'),
+            __('Address') => ($this->school->physical_address ?? '—'),
+            __('Phone') => ($this->school->phone ?? '—'),
+            __('Language') => strtoupper($this->school->language ?? '—'),
+            __('Institution Type') => $this->school->other_institution_type
+                ?: ($this->school->institution_type ?? '—'),
+            __('Contact Person') => $this->contact->name,
+            __('Contact Email') => $this->contact->email,
+        ];
+
         return (new MailMessage)
-            ->subject(__('New School Registration: ').$this->school->name)
-            ->greeting(__('Hello '.($notifiable->name ?? 'Platform Administrator').','))
-            ->line(__('A new institution has registered on SchoolCore and is awaiting approval.'))
-            ->line(__('Institution: ').$this->school->name)
-            ->line(__('Subdomain: ').($this->school->subdomain ?? '—'))
-            ->line(__('Country: ').($this->school->country ?? '—'))
-            ->line(__('Physical Address: ').($this->school->physical_address ?? '—'))
-            ->line(__('Phone: ').($this->school->phone ?? '—'))
-            ->line(__('Language: ').($this->school->language ?? '—'))
-            ->line(__('Institution Type: ').($this->school->institution_type ?? '—'))
-            ->when($this->school->other_institution_type, fn (MailMessage $m) => $m->line(__('Other Institution Type: ').$this->school->other_institution_type))
-            ->line(__('Contact Person: ').$this->contact->name)
-            ->line(__('Contact Email: ').$this->contact->email)
-            ->action(__('Review & Approve Institution'), $this->reviewUrl())
-            ->line(__('Approving the institution emails an activation link to the contact so they can set up their administrator account.'));
+            ->subject(__('New school registration on Kairo CORE: ').$this->school->name)
+            ->view('emails.brand', brand_email_view_data([
+                'logoUrl' => $branding['logo_url'],
+                'companyName' => $branding['company_name'],
+                'companyAddress' => $branding['company_address'],
+                'companyPhone' => $branding['company_phone'],
+                'companyEmail' => $branding['company_email'],
+                'heading' => __('New school awaiting approval'),
+                'greeting' => __('Hello :name,', ['name' => $notifiable->name ?? __('Platform Administrator')]),
+                'introLines' => [
+                    __('A new institution has just registered on Kairo CORE and is waiting for your review.'),
+                    collect($rows)
+                        ->map(fn ($v, $k) => '<strong>'.e($k).':</strong> '.e((string) $v))
+                        ->implode('<br>'),
+                ],
+                'actionUrl' => $this->reviewUrl(),
+                'actionText' => __('Review & approve institution'),
+                'outroLines' => [
+                    __('Approving the institution emails the contact an activation link so they can set up their administrator account.'),
+                ],
+                'signature' => __('The ').platform_name().__(' Platform Team'),
+                'footerNote' => __('You received this alert because you are a platform administrator.'),
+            ]));
     }
 
     public function toArray(object $notifiable): array

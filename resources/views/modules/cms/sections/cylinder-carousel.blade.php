@@ -35,7 +35,8 @@
 
     <div class="sc-section-head is-center">
         <span class="sc-eyebrow">{{ __('Featured Highlights') }}</span>
-        <h2 class="sc-section-title" style="color: var(--sc-text);">{{ __('Inside Our Campus') }}</h2>
+        @php $cylTitle = trim((string) ($block['title'] ?? '')) !== '' ? $block['title'] : __('Inside Our Campus'); @endphp
+        <h2 class="sc-section-title" style="color: var(--sc-text); {{ $v['titleStyle'] ?? '' }}">{{ $cylTitle }}</h2>
     </div>
 
     <div class="sc-cylinder-stage"

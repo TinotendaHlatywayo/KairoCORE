@@ -21,8 +21,10 @@ use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\Mechanisms\ExtendBlade\ExtendBlade;
 use Modules\Finance\Models\FinanceDocumentTemplate;
 use Modules\Finance\Models\Invoice;
+use Modules\Finance\Models\InvoiceItem;
 use Modules\Finance\Models\Payment;
 use Modules\Finance\Services\BillingDocumentSettingsService;
+use Modules\Students\Models\Student;
 
 class FinanceDocumentTemplateResource extends Resource
 {
@@ -445,10 +447,12 @@ class FinanceDocumentTemplateResource extends Resource
             // Tenant unavailable — the preview falls back to a placeholder.
         }
 
-        if (! $school) {
+                if (! $school) {
             return '<div style="padding:16px;color:#94a3b8;font-size:13px;">Preview is unavailable outside a school workspace.</div>';
         }
 
+        // Route URLs inside the preview (e.g. the QR verification link) need
+        // the {tenant} default parameter for this render cycle.
         URL::defaults(['tenant' => $school->subdomain]);
 
         $documentType = $get('document_type') ?? 'invoice';
@@ -567,11 +571,14 @@ class FinanceDocumentTemplateResource extends Resource
         $invoice = Invoice::with(['student', 'term.academicYear', 'items'])
             ->where('school_id', $school->id)
             ->whereHas('items')
+            ->whereHas('student')
             ->orderBy('id', 'desc')
             ->first();
 
+        // Fresh schools (or schools whose sample invoices lost their student
+        // link) still deserve a live preview — synthesise a sample document.
         if (! $invoice) {
-            throw new \RuntimeException('No sample invoice found for this school.');
+            $invoice = self::makeSampleInvoice($school);
         }
 
         return self::renderPreviewView('modules.finance.invoice-pdf', [
@@ -581,6 +588,65 @@ class FinanceDocumentTemplateResource extends Resource
             'config' => self::previewBillingConfig($school),
             'template' => $template,
         ]);
+    }
+
+    /**
+     * A non-persisted sample invoice built from the school's newest enrolled
+     * student, used when no real invoice can seed the template preview.
+     */
+    protected static function makeSampleInvoice($school): Invoice
+    {
+        $student = Student::withoutGlobalScopes()
+            ->where('school_id', $school->id)
+            ->orderBy('id')
+            ->first();
+
+        if (! $student) {
+            throw new \RuntimeException('No sample invoice or student found for this school.');
+        }
+
+        // Term context for the "Term Billing Period" line — reuse the school's
+        // active term when available, otherwise synthesise one.
+        $term = \Modules\Academics\Models\Term::withoutGlobalScopes()
+            ->where('school_id', $school->id)
+            ->with('academicYear')
+            ->orderBy('id')
+            ->first();
+
+        if (! $term) {
+            $year = new \Modules\Academics\Models\AcademicYear([
+                'school_id' => $school->id,
+                'name' => now()->format('Y').' Academic Year',
+            ]);
+            $term = new \Modules\Academics\Models\Term([
+                'school_id' => $school->id,
+                'name' => 'Term 1',
+            ]);
+            $term->setRelation('academicYear', $year);
+        }
+
+        $invoice = new Invoice([
+            'school_id' => $school->id,
+            'student_id' => $student->id,
+            'term_id' => $term?->id,
+            'invoice_number' => 'SAMPLE-'.date('y'),
+            'currency' => config('app.currency', 'USD'),
+            'subtotal_amount' => 120,
+            'discount_amount' => 0,
+            'total_amount' => 120,
+            'paid_amount' => 40,
+            'balance_amount' => 80,
+            'status' => 'partial',
+            'due_date' => now()->addDays(30)->toDateString(),
+        ]);
+        $invoice->created_at = now();
+        $invoice->setRelation('student', $student);
+        $invoice->setRelation('term', $term);
+        $invoice->setRelation('items', collect([
+            new InvoiceItem(['name' => 'Tuition Fees (sample)', 'amount' => 120]),
+        ]));
+
+        return $invoice;
     }
 
     protected static function renderReceiptPreview($school, FinanceDocumentTemplate $template): string

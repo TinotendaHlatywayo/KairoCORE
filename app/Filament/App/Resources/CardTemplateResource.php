@@ -42,14 +42,14 @@ class CardTemplateResource extends Resource
     {
         // High-fidelity distinct font selections
         $fontOptions = [
-            'sans-serif' => 'Helvetica / Arial (Modern Clean)',
-            'serif' => 'Georgia / Times New Roman (Formal Academic)',
-            'monospace' => 'Courier New / Consolas (Retro Tech)',
-            'Brush Script MT, cursive' => 'Brush Script (Fancy Cursive)',
-            'Impact, Charcoal, sans-serif' => 'Impact (Bold Block)',
-            'Trebuchet MS, sans-serif' => 'Trebuchet MS (Geometric Clean)',
-            'Copperplate, serif' => 'Copperplate (Engraved Header)',
-            'Palatino, serif' => 'Palatino (Elegant Literary)',
+            'sans-serif' => __('Helvetica / Arial (Modern Clean)'),
+            'serif' => __('Georgia / Times New Roman (Formal Academic)'),
+            'monospace' => __('Courier New / Consolas (Retro Tech)'),
+            'Brush Script MT, cursive' => __('Brush Script (Fancy Cursive)'),
+            'Impact, Charcoal, sans-serif' => __('Impact (Bold Block)'),
+            'Trebuchet MS, sans-serif' => __('Trebuchet MS (Geometric Clean)'),
+            'Copperplate, serif' => __('Copperplate (Engraved Header)'),
+            'Palatino, serif' => __('Palatino (Elegant Literary)'),
         ];
 
         return $form
@@ -58,7 +58,7 @@ class CardTemplateResource extends Resource
                     ->schema([
                         // Left Column: Controls & Styling Fields (Span 2)
                         Forms\Components\Group::make([
-                            Forms\Components\Section::make('Template Details')
+                            Forms\Components\Section::make(__('Template Details'))
                                 ->schema([
                                     Forms\Components\TextInput::make('name')
                                         ->required()
@@ -99,8 +99,8 @@ class CardTemplateResource extends Resource
 
                                     Forms\Components\Select::make('orientation')
                                         ->options([
-                                            'portrait' => 'Portrait (Vertical)',
-                                            'landscape' => 'Landscape (Horizontal)',
+                                            'portrait' => __('Portrait (Vertical)'),
+                                            'landscape' => __('Landscape (Horizontal)'),
                                         ])
                                         ->default('portrait')
                                         ->live()
@@ -108,9 +108,9 @@ class CardTemplateResource extends Resource
 
                                     Forms\Components\Select::make('barcode_format')
                                         ->options([
-                                            'Code128' => 'Code 128 (Standard)',
-                                            'Code39' => 'Code 39',
-                                            'EAN13' => 'EAN-13',
+                                            'Code128' => __('Code 128 (Standard)'),
+                                            'Code39' => __('Code 39'),
+                                            'EAN13' => __('EAN-13'),
                                         ])
                                         ->default('Code128')
                                         ->live()
@@ -122,7 +122,7 @@ class CardTemplateResource extends Resource
                                         ->default(false),
                                 ])->columns(2),
 
-                            Forms\Components\Section::make('Included Information on ID Card')
+                            Forms\Components\Section::make(__('Included Information on ID Card'))
                                 ->description(__('Select elements to render.'))
                                 ->schema([
                                     Forms\Components\Toggle::make('layout_config.show_school_header')->label(__('Show School Header'))->default(true)->live(),
@@ -137,7 +137,7 @@ class CardTemplateResource extends Resource
                                     Forms\Components\Toggle::make('layout_config.show_barcode')->label(__('Show Barcode'))->default(true)->live(),
                                 ])->columns(3),
 
-                            Forms\Components\Section::make('Layout Canvas Spacing & Border Settings')
+                            Forms\Components\Section::make(__('Layout Canvas Spacing & Border Settings'))
                                 ->schema([
                                     Forms\Components\TextInput::make('layout_config.card_padding')
                                         ->label(__('Inner Padding (px)'))
@@ -192,11 +192,11 @@ class CardTemplateResource extends Resource
                                         ->required(),
                                 ])->columns(3),
 
-                            Forms\Components\Section::make('Element Position, Color & Font Controls')
+                            Forms\Components\Section::make(__('Element Position, Color & Font Controls'))
                                 ->schema([
-                                    Forms\Components\Tabs::make('Elements Layout Configuration')
+                                    Forms\Components\Tabs::make(__('Elements Layout Configuration'))
                                         ->tabs([
-                                            Forms\Components\Tabs\Tab::make('Name Text')
+                                            Forms\Components\Tabs\Tab::make(__('Name Text'))
                                                 ->schema([
                                                     Forms\Components\Select::make('layout_config.name_font_family')
                                                         ->label(__('Font Style'))
@@ -209,7 +209,7 @@ class CardTemplateResource extends Resource
                                                     Forms\Components\Toggle::make('layout_config.name_is_italic')->label(__('Italic Text'))->default(false)->live(),
                                                 ])->columns(2),
 
-                                            Forms\Components\Tabs\Tab::make('Class Text')
+                                            Forms\Components\Tabs\Tab::make(__('Class Text'))
                                                 ->schema([
                                                     Forms\Components\Select::make('layout_config.class_font_family')
                                                         ->label(__('Font Style'))
@@ -222,7 +222,7 @@ class CardTemplateResource extends Resource
                                                     Forms\Components\Toggle::make('layout_config.class_is_italic')->label(__('Italic Text'))->default(false)->live(),
                                                 ])->columns(2),
 
-                                            Forms\Components\Tabs\Tab::make('School Motto')
+                                            Forms\Components\Tabs\Tab::make(__('School Motto'))
                                                 ->schema([
                                                     Forms\Components\Select::make('layout_config.motto_font_family')
                                                         ->label(__('Font Style'))
@@ -235,7 +235,7 @@ class CardTemplateResource extends Resource
                                                     Forms\Components\Toggle::make('layout_config.motto_is_italic')->label(__('Italic Text'))->default(true)->live(),
                                                 ])->columns(2),
 
-                                            Forms\Components\Tabs\Tab::make('Photo Frame')
+                                            Forms\Components\Tabs\Tab::make(__('Photo Frame'))
                                                 ->schema([
                                                     Forms\Components\TextInput::make('layout_config.photo_x')->label(__('X Offset (%)'))->numeric()->default(35)->live()->required(),
                                                     Forms\Components\TextInput::make('layout_config.photo_y')->label(__('Y Offset (%)'))->numeric()->default(15)->live()->required(),
@@ -244,16 +244,16 @@ class CardTemplateResource extends Resource
                                                     Forms\Components\TextInput::make('layout_config.photo_rounded_corners')->label(__('Corner Radius (px)'))->numeric()->default(8)->live()->required(),
                                                 ])->columns(3),
 
-                                            Forms\Components\Tabs\Tab::make('QR & Barcode Layout')
+                                            Forms\Components\Tabs\Tab::make(__('QR & Barcode Layout'))
                                                 ->schema([
-                                                    Forms\Components\Fieldset::make('QR Security Verification')
+                                                    Forms\Components\Fieldset::make(__('QR Security Verification'))
                                                         ->schema([
                                                             Forms\Components\TextInput::make('layout_config.qr_x')->label(__('X Offset (%)'))->numeric()->default(10)->live()->required(),
                                                             Forms\Components\TextInput::make('layout_config.qr_y')->label(__('Y Offset (%)'))->numeric()->default(70)->live()->required(),
                                                             Forms\Components\TextInput::make('layout_config.qr_size')->label(__('QR Dimension (px)'))->numeric()->default(50)->live()->required(),
                                                         ])->columns(3),
 
-                                                    Forms\Components\Fieldset::make('Barcode Coordinates')
+                                                    Forms\Components\Fieldset::make(__('Barcode Coordinates'))
                                                         ->schema([
                                                             Forms\Components\TextInput::make('layout_config.barcode_x')->label(__('X Offset (%)'))->numeric()->default(10)->live()->required(),
                                                             Forms\Components\TextInput::make('layout_config.barcode_y')->label(__('Y Offset (%)'))->numeric()->default(82)->live()->required(),
@@ -263,7 +263,7 @@ class CardTemplateResource extends Resource
                                                         ])->columns(3),
                                                 ]),
 
-                                            Forms\Components\Tabs\Tab::make('Metadata Text block')
+                                            Forms\Components\Tabs\Tab::make(__('Metadata Text block'))
                                                 ->schema([
                                                     Forms\Components\Select::make('layout_config.meta_font_family')
                                                         ->label(__('Font Style'))
@@ -276,7 +276,7 @@ class CardTemplateResource extends Resource
                                                     Forms\Components\Toggle::make('layout_config.meta_is_italic')->label(__('Italic Text'))->default(false)->live(),
                                                 ])->columns(2),
 
-                                            Forms\Components\Tabs\Tab::make('Custom Text Lines')
+                                            Forms\Components\Tabs\Tab::make(__('Custom Text Lines'))
                                                 ->schema([
                                                     Forms\Components\Repeater::make('layout_config.custom_texts')
                                                         ->label(__('Add Custom Labels / Mottos / Text Elements'))
@@ -301,7 +301,7 @@ class CardTemplateResource extends Resource
 
                         // Right Column: Interactive WYSIWYG Realtime Preview Panel (Span 1)
                         Forms\Components\Group::make([
-                            Forms\Components\Section::make('Interactive Live Simulator')
+                            Forms\Components\Section::make(__('Interactive Live Simulator'))
                                 ->description(__('Simulates theme styling on edit changes.'))
                                 ->schema([
                                     Forms\Components\Placeholder::make('live_preview')

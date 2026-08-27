@@ -121,9 +121,6 @@
             mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
             -webkit-mask-composite: xor;
             mask-composite: exclude;
-
-            -webkit-mask-composite: xor;
-            mask-composite: exclude;
             opacity: 0;
             transition: opacity 0.35s ease;
             animation: glow-pulse 3s ease-in-out infinite;
@@ -421,7 +418,9 @@
                 });
 
                 canvas.querySelectorAll('.sc-coverflow-stage').forEach(function (el) {
-                    if (el.__x && typeof el.__x.$data.resize === 'function') {
+                    if (el._x_dataStack && typeof el._x_dataStack[0].resize === 'function') {
+                        el._x_dataStack[0].resize();
+                    } else if (el.__x && typeof el.__x.$data.resize === 'function') {
                         el.__x.$data.resize();
                     }
                 });
@@ -476,7 +475,7 @@
             </div>
 
             <div class="hidden xl:flex items-center gap-2 whitespace-nowrap text-sm font-semibold">
-                <span class="text-slate-400">{{ __('SchoolCore') }}</span>
+                <span class="text-slate-400">{{ __('Kairo CORE') }}</span>
                 <span class="text-slate-600">{{ __('/') }}</span>
                 <span class="text-slate-400">{{ __('Website Studio') }}</span>
                 <span class="text-slate-600">{{ __('/') }}</span>
@@ -510,13 +509,36 @@
                     </div>
                 </div>
 
-                <!-- Per-Page Template Switcher -->
-                <select wire:change="switchPageTemplate($event.target.value)"
-                        class="hidden sm:block text-xs rounded-lg border border-slate-200 bg-white/90 text-slate-700 focus:ring-2 focus:ring-[color:var(--sc-accent)] focus:outline-none px-2.5 py-1.5">
-                    @foreach(\Modules\CMS\Services\CmsTemplateService::getTemplates() as $key => $tpl)
-                        <option value="{{ $key }}" {{ ($pageTemplate === $key) ? 'selected' : '' }}>{{ $tpl['name'] }}</option>
-                    @endforeach
-                </select>
+                <!-- Per-Page Theme Switcher -->
+                <div class="flex items-center gap-2">
+                    <select wire:change="switchPageTemplate($event.target.value)"
+                            class="hidden sm:block text-xs rounded-lg border border-slate-200 bg-white/90 text-slate-700 focus:ring-2 focus:ring-[color:var(--sc-accent)] focus:outline-none px-2.5 py-1.5"
+                            title="{{ $pageHasThemeOverride ? 'Page theme override active' : 'Using site-wide theme' }}">
+                        @foreach(\Modules\CMS\Services\CmsTemplateService::getTemplates() as $key => $tpl)
+                            <option value="{{ $key }}" {{ ($pageTemplate === $key) ? 'selected' : '' }}>{{ $tpl['name'] }}</option>
+                        @endforeach
+                    </select>
+                    @php
+                        $pageLayouts = \Modules\CMS\Services\CmsTemplateService::pageLayoutsFor($page->slug, $page->is_homepage);
+                    @endphp
+                    @if(count($pageLayouts) > 0)
+                        <select wire:change="if($event.target.value === '') { $wire.resetPageLayout(); } else { $wire.applyPageTemplate($event.target.value); }"
+                                class="hidden sm:block text-xs rounded-lg border border-slate-200 bg-white/90 text-slate-700 focus:ring-2 focus:ring-[color:var(--sc-accent)] focus:outline-none px-2.5 py-1.5"
+                                title="Page layout (block structure)">
+                            <option value="" {{ empty($pageLayout) ? 'selected' : '' }}>{{ __('Layout: Auto') }}</option>
+                            @foreach($pageLayouts as $layoutKey => $layout)
+                                <option value="{{ $layoutKey }}" {{ ($pageLayout === $layoutKey) ? 'selected' : '' }}>{{ $layout['name'] }}</option>
+                            @endforeach
+                        </select>
+                    @endif
+                    @if($pageHasThemeOverride)
+                        <button wire:click="resetPageTheme"
+                                class="hidden sm:flex items-center gap-1 text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5 hover:bg-amber-100 transition"
+                                title="Remove per-page theme override">
+                            {{ __('↩ Site-wide') }}
+                        </button>
+                    @endif
+                </div>
             </div>
 
             <button wire:click="$set('showSeoModal', true)"
@@ -855,7 +877,7 @@
                             </select>
                         </div>
                         <div class="space-y-1">
-                            <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Heading Font') }}</label>
+                            <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Display / Brand Font') }}</label>
                             <select wire:model.live="font_secondary" class="studio-select-field w-full text-xs">
                                 @foreach(\Modules\CMS\Services\CmsTemplateService::availableFontsByCategory() as $category => $fonts)
                                     <optgroup label="{{ $category }}">
@@ -865,6 +887,20 @@
                                     </optgroup>
                                 @endforeach
                             </select>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Title Heading Font (all section titles)') }}</label>
+                            <select wire:model.live="font_heading" class="studio-select-field w-full text-xs">
+                                <option value="">{{ __('Same as Display Font') }}</option>
+                                @foreach(\Modules\CMS\Services\CmsTemplateService::availableFontsByCategory() as $category => $fonts)
+                                    <optgroup label="{{ $category }}">
+                                        @foreach($fonts as $f)
+                                            <option value="{{ $f }}" style="font-family: '{{ $f }}', sans-serif;">{{ $f }}</option>
+                                        @endforeach
+                                    </optgroup>
+                                @endforeach
+                            </select>
+                            <p class="text-[10px] text-[color:var(--sc-text-muted)] leading-snug">{{ __('Applies to every H1–H6 heading across the live website instantly.') }}</p>
                         </div>
                     </div>
 
@@ -1082,6 +1118,26 @@
                                                 'rtValue' => $selectedBlockData['description'] ?? '',
                                                 'rtPlaceholder' => 'Write your description… supports bold, italic, lists & emoji',
                                             ])
+                                        </div>
+                                    @endif
+
+                                    {{-- Hero-only: editable enrollment badge. Empty = dynamic "Enrollment Open for YYYY/YY". --}}
+                                    @if(($selectedBlockData['type'] ?? '') === 'hero')
+                                        <div class="space-y-1">
+                                            <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Badge Text (top ribbon)') }}</label>
+                                            <input type="text" wire:model.blur="selectedBlockData.badge_text"
+                                                   placeholder="Leave empty for automatic 'Enrollment Open for {{ now()->format('Y') }}/{{ str_pad((string) ((int) now()->format('Y') + 1) % 100, 2, '0', STR_PAD_LEFT) }}'"
+                                                   class="studio-input-field w-full text-xs">
+                                        </div>
+                                    @endif
+
+                                    {{-- Staff Directory: members live in HR, not the page. --}}
+                                    @if(($selectedBlockData['type'] ?? '') === 'team_directory')
+                                        <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-[11px] leading-relaxed text-amber-800">
+                                            <strong>{{ __('Staff are managed in the HR module.') }}</strong><br>
+                                            {{ __('Go to HR & Payroll → Employees to add or remove staff, upload photos and edit names/designations. Active employees appear here automatically.') }}
+                                            <a href="{{ \App\Filament\App\Resources\EmployeeResource::getUrl('index') }}" target="_blank" rel="noopener noreferrer"
+                                               class="mt-1 inline-block font-bold underline">{{ __('Open Employee Manager →') }}</a>
                                         </div>
                                     @endif
 
@@ -1832,8 +1888,27 @@
                                         <div class="min-w-0 pr-2">
                                             <span class="text-sm font-bold text-[color:var(--sc-text)] block truncate">{{ $p['title'] }}</span>
                                             <span class="text-xs text-slate-400 truncate sc-mono">/{{ $p['slug'] }} {{ $p['is_homepage'] ? '🏠' : '' }}</span>
+                                            @if(!empty($p['page_theme']))
+                                                @php $themeName = (\Modules\CMS\Services\CmsTemplateService::getTemplates()[$p['page_theme']] ?? [])['name'] ?? $p['page_theme']; @endphp
+                                                <span class="inline-flex items-center gap-1 mt-1 text-[9px] font-bold text-purple-700 bg-purple-50 border border-purple-200 rounded-full px-2 py-0.5">
+                                                    🎨 {{ $themeName }}
+                                                </span>
+                                            @endif
+                                            @if(!empty($p['page_layout']))
+                                                <span class="inline-flex items-center gap-1 mt-1 ml-1 text-[9px] font-bold text-blue-700 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5">
+                                                    ▤ {{ $p['page_layout'] }}
+                                                </span>
+                                            @endif
                                         </div>
                                         <div class="flex items-center gap-1.5 shrink-0">
+                                            <button wire:click="movePage({{ $p['id'] }}, 'up')"
+                                                    class="btn-secondary !h-9 !px-2.5 !text-xs" title="Move up in navigation">
+                                                ↑
+                                            </button>
+                                            <button wire:click="movePage({{ $p['id'] }}, 'down')"
+                                                    class="btn-secondary !h-9 !px-2.5 !text-xs" title="Move down in navigation">
+                                                ↓
+                                            </button>
                                             @if(!$p['is_homepage'])
                                                 <button wire:click="setHomepage({{ $p['id'] }})"
                                                         class="btn-secondary !h-9 !px-2.5 !text-xs" title="Set as Homepage">
@@ -1900,7 +1975,7 @@
                     </div>
                     <div class="bg-white/[0.07] border border-white/10 px-4 py-1 rounded-full text-xs sc-mono text-slate-300 flex items-center space-x-2">
                         <span class="text-[#3fe0a4]">{{ __('🔒') }}</span>
-                        <span>https://{{ $website->school->slug ?? 'school' }}.schoolcore.edu/{{ $page->is_homepage ? '' : $page->slug }}</span>
+                        <span>https://{{ $website->school->slug ?? 'school' }}.kairocore.edu/{{ $page->is_homepage ? '' : $page->slug }}</span>
                     </div>
                     <span class="text-[10px] uppercase font-black text-slate-500">{{ str_replace(['full', 'tablet', 'mobile'], ['Desktop Canvas', 'Tablet Mode', 'Mobile Mode'], $previewSize) }}</span>
                 </div>
@@ -1914,7 +1989,7 @@
                                  class="h-9 w-9 object-contain rounded-full border shrink-0" alt="School logo">
                         @endif
                         <span class="text-xl font-black tracking-tight truncate" style="color: var(--theme-primary);">
-                            {{ $website->school->name ?? 'SchoolCore Academy' }}
+                            {{ $website->school->name ?? 'Kairo Demo Academy' }}
                         </span>
                     </div>
                     <nav class="hidden lg:flex items-center justify-center gap-5 text-sm font-bold flex-1 min-w-0" style="color: var(--theme-text);">
@@ -2008,7 +2083,8 @@
                                         --sc-shadow-lg: {{ \Modules\CMS\Services\CmsTemplateService::SHADOW_SCALE[$design_shadow === 'xl' ? 'xl' : 'lg'] ?? '0 20px 40px -15px rgba(15,23,42,0.12)' }};
                                         --sc-container: {{ ($design_container === 'full') ? 'none' : '80rem' }};
                                         --sc-font-sans: '{{ $font_primary }}', ui-sans-serif, system-ui, sans-serif;
-                                        --sc-font-display: '{{ $font_secondary }}', ui-sans-serif, system-ui, sans-serif;">
+                                        --sc-font-display: '{{ $font_secondary }}', ui-sans-serif, system-ui, sans-serif;
+                                        --sc-font-heading: '{{ $font_heading ?: $font_secondary }}', ui-sans-serif, system-ui, sans-serif;">
                                 @include('modules.cms.sections.preview-block', [
                                     'block' => $block,
                                     'stats' => $stats,
@@ -2049,7 +2125,7 @@
 
                 <!-- Footer -->
                 <footer class="mt-auto py-6 bg-slate-50 text-slate-500 text-center text-xs border-t select-none">
-                    &copy; {{ date('Y') }} {{ $website->school->name ?? 'SchoolCore Academy' }}. All Rights Reserved.
+                    &copy; {{ date('Y') }} {{ $website->school->name ?? 'Kairo Demo Academy' }}. All Rights Reserved.
                 </footer>
             </div>
         </main>

@@ -8,19 +8,19 @@ class LmsProvider extends AbstractDatasetProvider
 {
     public function module(): string
     {
-        return 'LMS';
+        return __('LMS');
     }
 
     public function datasets(): array
     {
         return [
-            $this->d('lms.homework', 'Homework Assignments', 'homeworks', [
-                $this->f('title', 'Title'),
-                $this->f('description', 'Description'),
-                $this->f('due_date', 'Due Date', 'datetime'),
-                $this->f('created_at', 'Assigned At', 'datetime'),
-                $this->f('section_name', 'Section', 'string', 'lms_homework_section.name'),
-                $this->f('subject_name', 'Subject', 'string', 'lms_homework_subject.name'),
+            $this->d('lms.homework', __('Homework Assignments'), 'homeworks', [
+                $this->f('title', __('Title')),
+                $this->f('description', __('Description')),
+                $this->f('due_date', __('Due Date'), 'datetime'),
+                $this->f('created_at', __('Assigned At'), 'datetime'),
+                $this->f('section_name', __('Section'), 'string', 'lms_homework_section.name'),
+                $this->f('subject_name', __('Subject'), 'string', 'lms_homework_subject.name'),
             ], [
                 'description' => __('Homework tasks assigned to sections.'),
                 'autoJoins' => [
@@ -32,13 +32,13 @@ class LmsProvider extends AbstractDatasetProvider
                 ],
             ]),
 
-            $this->d('lms.submission', 'Homework Submissions', 'homework_submissions', [
-                $this->f('grade_obtained', 'Grade Obtained'),
-                $this->f('teacher_feedback', 'Teacher Feedback'),
-                $this->f('submitted_at', 'Submitted At', 'datetime'),
-                $this->f('student_name', 'Student', 'string', "CONCAT(lms_submission_st.first_name, ' ', lms_submission_st.last_name)"),
-                $this->f('homework_title', 'Homework', 'string', 'lms_submission_hw.title'),
-                $this->f('on_time', 'On Time', 'boolean', 'CASE WHEN lms_submission.submitted_at <= lms_submission_hw.due_date THEN 1 ELSE 0 END'),
+            $this->d('lms.submission', __('Homework Submissions'), 'homework_submissions', [
+                $this->f('grade_obtained', __('Grade Obtained')),
+                $this->f('teacher_feedback', __('Teacher Feedback')),
+                $this->f('submitted_at', __('Submitted At'), 'datetime'),
+                $this->f('student_name', __('Student'), 'string', "CONCAT(lms_submission_st.first_name, ' ', lms_submission_st.last_name)"),
+                $this->f('homework_title', __('Homework'), 'string', 'lms_submission_hw.title'),
+                $this->f('on_time', __('On Time'), 'boolean', 'CASE WHEN lms_submission.submitted_at <= lms_submission_hw.due_date THEN 1 ELSE 0 END'),
             ], [
                 'description' => __('Student homework submissions with timeliness.'),
                 'autoJoins' => [

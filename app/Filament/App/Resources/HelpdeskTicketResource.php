@@ -46,7 +46,7 @@ class HelpdeskTicketResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Ticket Scope')
+                Forms\Components\Section::make(__('Ticket Scope'))
                     ->schema([
                         Forms\Components\Select::make('user_id')
                             ->label(__('Submitter / Author'))
@@ -71,7 +71,7 @@ class HelpdeskTicketResource extends Resource
                     ])->columnSpan(2),
 
                 Forms\Components\Group::make([
-                    Forms\Components\Section::make('Internal Assignment')
+                    Forms\Components\Section::make(__('Internal Assignment'))
                         ->schema([
                             Forms\Components\Select::make('priority')
                                 ->options([

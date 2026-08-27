@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ __('Register Your School - SchoolCore') }}</title>
+    <title>{{ __('Register Your School - Kairo CORE') }}</title>
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     @livewireStyles
@@ -283,7 +283,7 @@
                                 <circle cx="44" cy="31.5" r="2.6" fill="currentColor"/>
                             </svg>
                         </div>
-                        <b>SchoolCore Enterprise</b>
+                        <b>Kairo CORE Enterprise</b>
                     </div>
                     <span class="sc-reg-head-pill"><span class="dot"></span>{{ __('Institution Registration') }}</span>
                 </header>

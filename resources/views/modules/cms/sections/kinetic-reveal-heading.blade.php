@@ -11,7 +11,7 @@
          data-trigger="{{ $trigger }}" data-variant="{{ $variant }}"
          x-data="scKinetic({ trigger: '{{ $trigger }}' })" x-init="init()" x-cloak>
     <div class="sc-container" style="text-align: center;">
-        <h2 class="sc-kinetic-text" style="--sc-smoke: {{ $intensity }}; font-size: clamp(1.9rem, {{ $vw }}vw, {{ $size }}px);">
+        <h2 class="sc-kinetic-text" style="--sc-smoke: {{ $intensity }}; font-size: clamp(1.9rem, {{ $vw }}vw, {{ $size }}px); {{ preg_replace('/font-size:[^;]+;?/', '', $v['titleStyle'] ?? '') }}">
             @foreach ($words as $i => $word)
                 <span class="sc-kinetic-word" style="--sc-delay: {{ $i * 0.08 }}s;">{{ e($word) }}@if(! $loop->last)&nbsp;@endif</span>
             @endforeach

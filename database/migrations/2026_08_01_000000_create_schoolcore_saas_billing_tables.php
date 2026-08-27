@@ -148,7 +148,7 @@ return new class extends Migration
         // Seed default system configurations & initial base plan using environment variables
         DB::table('saas_billing_settings')->insert([
             'bank_name' => 'Steward Bank Zimbabwe',
-            'bank_account_name' => 'SchoolCore Technologies Pvt Ltd',
+            'bank_account_name' => 'Kairo CORE Technologies Pvt Ltd',
             'bank_account_number' => '1002345678',
             'bank_branch_code' => '2105',
             'bank_swift_code' => 'STWBTX2X',
@@ -161,7 +161,7 @@ return new class extends Migration
 
         DB::table('saas_plans')->insert([
             'uuid' => (string) Str::uuid(),
-            'name' => 'Standard SchoolCore License',
+            'name' => 'Standard Kairo CORE License',
             'slug' => 'standard-schoolcore-license',
             'description' => 'Full administrative access package covering all ERP workspace modules.',
             'price_monthly' => 10.00,

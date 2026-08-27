@@ -22,6 +22,12 @@ use Modules\Students\Models\Student;
 
 class AssessmentMarkResource extends Resource
 {
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        // Student column renders enrollment→student; eager load to avoid N+1.
+        return parent::getEloquentQuery()->with(['enrollment.student']);
+    }
+
     public static function getNavigationGroup(): ?string
     {
         return __('Exams & Grading');

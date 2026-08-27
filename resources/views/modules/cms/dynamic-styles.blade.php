@@ -12,10 +12,7 @@
     $bgScaling = 'cover';
     
     $bgUrl = asset('images/School_repository_cover.jpeg');
-    $logoUrl = asset('images/Transparant Logo.png');
-    if (!file_exists(public_path('images/Transparant Logo.png')) && file_exists(public_path('images/Transparent Logo.png'))) {
-        $logoUrl = asset('images/Transparent Logo.png');
-    }
+    $logoUrl = asset('images/logo-transparent.png');
 
     if ($schoolId) {
         $themeSetting = SystemSetting::get('branding', 'theme');
@@ -60,7 +57,8 @@
         'rosewood' => ['primary' => '#9f1239', 'accent' => '#f43f5e', 'glow' => 'rgba(159, 18, 57, 0.12)'],
         'dev_choice_1' => ['primary' => '#4f46e5', 'accent' => '#06b6d4', 'glow' => 'rgba(79, 70, 229, 0.12)'],
         'dev_choice_2' => ['primary' => '#c026d3', 'accent' => '#a855f7', 'glow' => 'rgba(192, 38, 211, 0.12)'],
-        'dev_choice_3' => ['primary' => '#0891b2', 'accent' => '#10b981', 'glow' => 'rgba(8, 145, 178, 0.12)']
+        'dev_choice_3' => ['primary' => '#0891b2', 'accent' => '#10b981', 'glow' => 'rgba(8, 145, 178, 0.12)'],
+        'dev_choice_4' => ['primary' => '#1b263b', 'accent' => '#f05438', 'glow' => 'rgba(27, 38, 59, 0.12)']
     ];
 
     $colors = $themes[$theme] ?? $themes['emerald_heritage'];
@@ -268,6 +266,18 @@
     .fi-sidebar-nav::-webkit-scrollbar-thumb:hover {
         background: #cbd5e1;
     }
+
+    /* ── Fix Filament v3 Topbar Dropdown Clipping (Avatar Menu, etc.) ── */
+    .fi-topbar, .fi-topbar nav, .fi-topbar header, .fi-header, .fi-topbar-item {
+        overflow: visible !important;
+    }
+    .fi-dropdown, .fi-dropdown-panel, .fi-dropdown-list, .fi-dropdown-header, .fi-dropdown-footer {
+        overflow: visible !important;
+        z-index: 99999 !important;
+    }
+    .fi-topbar-actions, .fi-user-menu {
+        overflow: visible !important;
+    }
     </style>';
 @endphp
 
@@ -301,7 +311,8 @@
             rosewood: { primary: '#9f1239', accent: '#f43f5e', glow: 'rgba(159, 18, 57, 0.12)' },
             dev_choice_1: { primary: '#4f46e5', accent: '#06b6d4', glow: 'rgba(79, 70, 229, 0.12)' },
             dev_choice_2: { primary: '#c026d3', accent: '#a855f7', glow: 'rgba(192, 38, 211, 0.12)' },
-            dev_choice_3: { primary: '#0891b2', accent: '#10b981', glow: 'rgba(8, 145, 178, 0.12)' }
+            dev_choice_3: { primary: '#0891b2', accent: '#10b981', glow: 'rgba(8, 145, 178, 0.12)' },
+            dev_choice_4: { primary: '#1b263b', accent: '#f05438', glow: 'rgba(27, 38, 59, 0.12)' }
         };
 
         const bridge = document.getElementById('schoolcore-fonts-data-bridge');

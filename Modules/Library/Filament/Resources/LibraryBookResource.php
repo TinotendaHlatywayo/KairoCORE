@@ -61,7 +61,7 @@ class LibraryBookResource extends Resource
             ->schema([
                 Forms\Components\Grid::make(3)
                     ->schema([
-                        Forms\Components\Section::make('Resource Specification')
+                        Forms\Components\Section::make(__('Resource Specification'))
                             ->description(__('Input bibliographic records, catalog files, and digital links.'))
                             ->schema([
                                 Forms\Components\TextInput::make('title')
@@ -136,7 +136,7 @@ class LibraryBookResource extends Resource
                                     ->maxLength(255),
                             ])->columnSpan(2),
 
-                        Forms\Components\Section::make('Storage & Format Parameters')
+                        Forms\Components\Section::make(__('Storage & Format Parameters'))
                             ->schema([
                                 Forms\Components\Select::make('media_type')
                                     ->label(__('Classification'))

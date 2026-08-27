@@ -7,7 +7,7 @@
     <div class="container py-5 text-center">
         <h1 class="display-5 fw-bold text-success mb-3">Welcome to {{ $school->name }}</h1>
         <p class="lead text-secondary mb-4" style="max-width: 650px; margin: 0 auto;">{{ __('Nurturing academic excellence, character development, and lifetime leadership in our community.') }}</p>
-        <a href="{{ route('login') }}" class="btn btn-success btn-lg px-4 shadow-sm">{{ __('Access Secure Portal') }}</a>
+        <a href="{{ route('login') }}" class="btn btn-success btn-lg px-4 shadow-sm" target="_blank" rel="noopener noreferrer">{{ __('Access Secure Portal') }}</a>
     </div>
 </div>
 

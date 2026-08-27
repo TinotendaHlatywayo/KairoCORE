@@ -43,7 +43,7 @@ class EventCalendarResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Event Scope')
+                Forms\Components\Section::make(__('Event Scope'))
                     ->schema([
                         Forms\Components\TextInput::make('title')
                             ->required()
@@ -61,7 +61,7 @@ class EventCalendarResource extends Resource
                     ])->columnSpan(2),
 
                 Forms\Components\Group::make([
-                    Forms\Components\Section::make('Date Boundaries')
+                    Forms\Components\Section::make(__('Date Boundaries'))
                         ->schema([
                             Forms\Components\DateTimePicker::make('start_time')->required(),
                             Forms\Components\DateTimePicker::make('end_time')->required(),

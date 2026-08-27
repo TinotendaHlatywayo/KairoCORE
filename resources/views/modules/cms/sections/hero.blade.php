@@ -7,6 +7,16 @@
     $imagePos = $block['image_position'] ?? 'center';
     $reverse = ($block['layout'] ?? 'image-right') === 'image-left';
 
+    // Academic enrollment year: 2026 → "2026/27", 2027 → "2027/28".
+    // Editable per-block via badge_text; falls back to the dynamic default.
+    if (! empty($block['badge_text'])) {
+        $badgeLine = $block['badge_text'];
+    } else {
+        $year = (int) now()->format('Y');
+        $nextShort = str_pad((string) (($year + 1) % 100), 2, '0', STR_PAD_LEFT);
+        $badgeLine = __('Enrollment Open for') . ' ' . $year . '/' . $nextShort;
+    }
+
     // DepthText is reserved for motion-forward templates on the lead hero.
     $useDepth = in_array(CmsTemplateService::canonicalTemplate($theme['template'] ?? null), ['cinematic-immersive'], true);
     $students = max((int) ($stats['students_count'] ?? 0), 0);
@@ -15,7 +25,7 @@
 <div class="sc-hero-grid {{ $v['alignClass'] }}">
 
     <div class="sc-hero-copy">
-        <span class="sc-badge">{{ __('Enrollment Open for') }} {{ now()->year }}</span>
+        <span class="sc-badge">{{ $badgeLine }}</span>
 
         @if($useDepth)
             <h1 class="sc-hero-title sc-depth"

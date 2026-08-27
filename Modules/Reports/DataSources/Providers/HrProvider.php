@@ -8,30 +8,30 @@ class HrProvider extends AbstractDatasetProvider
 {
     public function module(): string
     {
-        return 'HR & Payroll';
+        return __('HR & Payroll');
     }
 
     public function datasets(): array
     {
         return [
-            $this->d('hr.employee', 'Employees', 'employees', [
-                $this->f('employee_number', 'Employee Number'),
-                $this->f('national_id', 'National ID'),
-                $this->f('first_name', 'First Name'),
-                $this->f('last_name', 'Last Name'),
-                $this->f('full_name', 'Full Name', 'string', "CONCAT(hr_employee.first_name, ' ', hr_employee.last_name)"),
-                $this->f('gender', 'Gender'),
-                $this->f('marital_status', 'Marital Status'),
-                $this->f('department', 'Department'),
-                $this->f('designation', 'Designation'),
-                $this->f('role', 'Role'),
-                $this->f('employment_type', 'Employment Type'),
-                $this->f('date_joined', 'Date Joined', 'date'),
-                $this->f('contract_end_date', 'Contract End', 'date'),
-                $this->f('status', 'Status'),
-                $this->f('phone_number', 'Phone'),
-                $this->f('email', 'Email'),
-                $this->f('dependents', 'Dependents', 'integer'),
+            $this->d('hr.employee', __('Employees'), 'employees', [
+                $this->f('employee_number', __('Employee Number')),
+                $this->f('national_id', __('National ID')),
+                $this->f('first_name', __('First Name')),
+                $this->f('last_name', __('Last Name')),
+                $this->f('full_name', __('Full Name'), 'string', "CONCAT(hr_employee.first_name, ' ', hr_employee.last_name)"),
+                $this->f('gender', __('Gender')),
+                $this->f('marital_status', __('Marital Status')),
+                $this->f('department', __('Department')),
+                $this->f('designation', __('Designation')),
+                $this->f('role', __('Role')),
+                $this->f('employment_type', __('Employment Type')),
+                $this->f('date_joined', __('Date Joined'), 'date'),
+                $this->f('contract_end_date', __('Contract End'), 'date'),
+                $this->f('status', __('Status')),
+                $this->f('phone_number', __('Phone')),
+                $this->f('email', __('Email')),
+                $this->f('dependents', __('Dependents'), 'integer'),
             ], [
                 'description' => __('Employee register with employment details.'),
                 'connections' => [
@@ -47,12 +47,12 @@ class HrProvider extends AbstractDatasetProvider
                 ],
             ]),
 
-            $this->d('hr.department', 'Departments', 'departments', [
-                $this->f('name', 'Department Name'),
-                $this->f('code', 'Code'),
-                $this->f('type', 'Type'),
-                $this->f('budget_code', 'Budget Code'),
-                $this->f('status', 'Status'),
+            $this->d('hr.department', __('Departments'), 'departments', [
+                $this->f('name', __('Department Name')),
+                $this->f('code', __('Code')),
+                $this->f('type', __('Type')),
+                $this->f('budget_code', __('Budget Code')),
+                $this->f('status', __('Status')),
             ], [
                 'description' => __('Departments and budget codes.'),
                 'connections' => [
@@ -61,15 +61,15 @@ class HrProvider extends AbstractDatasetProvider
                 ],
             ]),
 
-            $this->d('hr.leave_request', 'Leave Requests', 'leave_requests', [
-                $this->f('start_date', 'Start Date', 'date'),
-                $this->f('end_date', 'End Date', 'date'),
-                $this->f('total_days', 'Total Days', 'decimal'),
-                $this->f('status', 'Status'),
-                $this->f('reason', 'Reason'),
-                $this->f('employee_name', 'Employee Name', 'string', "CONCAT(hr_leave_emp.first_name, ' ', hr_leave_emp.last_name)"),
-                $this->f('department', 'Department', 'string', 'hr_leave_emp.department'),
-                $this->f('leave_type', 'Leave Type', 'string', 'hr_leave_type.name'),
+            $this->d('hr.leave_request', __('Leave Requests'), 'leave_requests', [
+                $this->f('start_date', __('Start Date'), 'date'),
+                $this->f('end_date', __('End Date'), 'date'),
+                $this->f('total_days', __('Total Days'), 'decimal'),
+                $this->f('status', __('Status')),
+                $this->f('reason', __('Reason')),
+                $this->f('employee_name', __('Employee Name'), 'string', "CONCAT(hr_leave_emp.first_name, ' ', hr_leave_emp.last_name)"),
+                $this->f('department', __('Department'), 'string', 'hr_leave_emp.department'),
+                $this->f('leave_type', __('Leave Type'), 'string', 'hr_leave_type.name'),
             ], [
                 'description' => __('Leave requests with employee, department and leave type context.'),
                 'autoJoins' => [
@@ -85,16 +85,16 @@ class HrProvider extends AbstractDatasetProvider
                 ],
             ]),
 
-            $this->d('payroll.payslip', 'Payslips', 'payslips', [
-                $this->money('base_salary', 'Base Salary', 'payroll_payslip.base_salary'),
-                $this->money('gross_pay', 'Gross Pay', 'payroll_payslip.gross_pay'),
-                $this->money('total_deductions', 'Total Deductions', 'payroll_payslip.total_deductions'),
-                $this->money('net_pay', 'Net Pay', 'payroll_payslip.net_pay'),
-                $this->f('status', 'Status'),
-                $this->f('payment_date', 'Payment Date', 'date'),
-                $this->f('employee_name', 'Employee Name', 'string', "CONCAT(payroll_payslip_emp.first_name, ' ', payroll_payslip_emp.last_name)"),
-                $this->f('department', 'Department', 'string', 'payroll_payslip_emp.department'),
-                $this->f('period_name', 'Payroll Period', 'string', 'payroll_payslip_period.name'),
+            $this->d('payroll.payslip', __('Payslips'), 'payslips', [
+                $this->money('base_salary', __('Base Salary'), 'payroll_payslip.base_salary'),
+                $this->money('gross_pay', __('Gross Pay'), 'payroll_payslip.gross_pay'),
+                $this->money('total_deductions', __('Total Deductions'), 'payroll_payslip.total_deductions'),
+                $this->money('net_pay', __('Net Pay'), 'payroll_payslip.net_pay'),
+                $this->f('status', __('Status')),
+                $this->f('payment_date', __('Payment Date'), 'date'),
+                $this->f('employee_name', __('Employee Name'), 'string', "CONCAT(payroll_payslip_emp.first_name, ' ', payroll_payslip_emp.last_name)"),
+                $this->f('department', __('Department'), 'string', 'payroll_payslip_emp.department'),
+                $this->f('period_name', __('Payroll Period'), 'string', 'payroll_payslip_period.name'),
             ], [
                 'description' => __('Payslips with employee and payroll period context.'),
                 'autoJoins' => [
@@ -111,14 +111,14 @@ class HrProvider extends AbstractDatasetProvider
                 ],
             ]),
 
-            $this->d('payroll.run', 'Payroll Runs', 'payroll_runs', [
-                $this->f('status', 'Status'),
-                $this->f('calculated_at', 'Calculated At', 'datetime'),
-                $this->f('approved_at', 'Approved At', 'datetime'),
-                $this->money('gross_total', 'Gross Total', 'payroll_run.gross_total'),
-                $this->money('deductions_total', 'Deductions Total', 'payroll_run.deductions_total'),
-                $this->money('net_total', 'Net Total', 'payroll_run.net_total'),
-                $this->f('period_name', 'Period', 'string', 'payroll_run_period.name'),
+            $this->d('payroll.run', __('Payroll Runs'), 'payroll_runs', [
+                $this->f('status', __('Status')),
+                $this->f('calculated_at', __('Calculated At'), 'datetime'),
+                $this->f('approved_at', __('Approved At'), 'datetime'),
+                $this->money('gross_total', __('Gross Total'), 'payroll_run.gross_total'),
+                $this->money('deductions_total', __('Deductions Total'), 'payroll_run.deductions_total'),
+                $this->money('net_total', __('Net Total'), 'payroll_run.net_total'),
+                $this->f('period_name', __('Period'), 'string', 'payroll_run_period.name'),
             ], [
                 'description' => __('Payroll run summaries with totals.'),
                 'autoJoins' => [
@@ -126,13 +126,13 @@ class HrProvider extends AbstractDatasetProvider
                 ],
             ]),
 
-            $this->d('discipline.case', 'Disciplinary Cases', 'disciplinary_cases', [
-                $this->f('offense', 'Offense'),
-                $this->f('incident_date', 'Incident Date', 'date'),
-                $this->f('status', 'Status'),
-                $this->f('severity', 'Severity'),
-                $this->f('resolution_notes', 'Resolution Notes'),
-                $this->f('employee_name', 'Employee Name', 'string', "CONCAT(discipline_case_emp.first_name, ' ', discipline_case_emp.last_name)"),
+            $this->d('discipline.case', __('Disciplinary Cases'), 'disciplinary_cases', [
+                $this->f('offense', __('Offense')),
+                $this->f('incident_date', __('Incident Date'), 'date'),
+                $this->f('status', __('Status')),
+                $this->f('severity', __('Severity')),
+                $this->f('resolution_notes', __('Resolution Notes')),
+                $this->f('employee_name', __('Employee Name'), 'string', "CONCAT(discipline_case_emp.first_name, ' ', discipline_case_emp.last_name)"),
             ], [
                 'description' => __('Staff disciplinary cases.'),
                 'autoJoins' => [

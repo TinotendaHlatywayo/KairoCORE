@@ -43,7 +43,7 @@ return new class extends Migration
             // Seed Default platform settings
             DB::table('saas_billing_settings')->insert([
                 'bank_name' => 'Steward Bank Zimbabwe',
-                'bank_account_name' => 'SchoolCore Technologies Pvt Ltd',
+                'bank_account_name' => 'Kairo CORE Technologies Pvt Ltd',
                 'bank_account_number' => '1002345678',
                 'bank_branch_code' => '2105',
                 'bank_swift_code' => 'STWBTX2X',

@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Modules\DigitalAssessment\Database\Seeders\GamificationSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -35,7 +36,7 @@ class DatabaseSeeder extends Seeder
             'id' => 1,
             'school_id' => null, // NULL designates a central/system-wide user
             'name' => 'System Founder',
-            'email' => 'founder@schoolcore.test', // Your System Founder login email
+            'email' => 'twaynehlatywayo09@gmail.com', // Super Admin login email
             'password' => Hash::make('securepassword'), // securepassword
             'created_at' => now(),
             'updated_at' => now(),
@@ -55,5 +56,9 @@ class DatabaseSeeder extends Seeder
         ]);
 
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
+        $this->call([
+            GamificationSeeder::class,
+        ]);
     }
 }

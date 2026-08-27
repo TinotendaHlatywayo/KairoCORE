@@ -47,13 +47,16 @@ class MyDay extends Page
 
     public bool $showCompleted = false;
 
-    public const TABS = [
-        'my_day' => 'My Day',
-        'important' => 'Important',
-        'assigned' => 'Assigned to Me',
-        'mine' => 'My Tasks',
-        'completed' => 'Completed',
-    ];
+    public static function TABS(): array
+    {
+        return [
+            'my_day' => __('My Day'),
+            'important' => __('Important'),
+            'assigned' => __('Assigned to Me'),
+            'mine' => __('My Tasks'),
+            'completed' => __('Completed'),
+        ];
+    }
 
     protected $listeners = [
         'taskCreated' => '$refresh',
@@ -67,7 +70,7 @@ class MyDay extends Page
 
     public function setTab(string $tab): void
     {
-        if (array_key_exists($tab, self::TABS)) {
+        if (array_key_exists($tab, self::TABS())) {
             $this->tab = $tab;
         }
     }
@@ -76,7 +79,7 @@ class MyDay extends Page
     {
         $user = $this->user();
         if (! $user) {
-            return array_fill_keys(array_keys(self::TABS), 0);
+            return array_fill_keys(array_keys(self::TABS()), 0);
         }
 
         return [

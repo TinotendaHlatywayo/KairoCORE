@@ -393,6 +393,7 @@ class ComponentRegistry
                 'default_variant' => 'hero-premium',
                 'props' => [
                     'title' => ['type' => 'text', 'label' => 'Headline', 'group' => self::GROUP_CONTENT],
+                    'badge_text' => ['type' => 'text', 'label' => 'Badge text (defaults to enrollment year)', 'group' => self::GROUP_CONTENT, 'default' => ''],
                     'description' => ['type' => 'rich_text', 'label' => 'Lead text', 'group' => self::GROUP_CONTENT, 'default' => 'A premier educational institution guiding next-generation achievements.'],
                     'cta_text' => ['type' => 'text', 'label' => 'Primary button label', 'group' => self::GROUP_CONTENT],
                     'cta_url' => ['type' => 'url', 'label' => 'Primary button link', 'group' => self::GROUP_CONTENT],
@@ -527,6 +528,8 @@ class ComponentRegistry
                     'steps' => ['type' => 'list', 'group' => self::GROUP_CONTENT, 'items' => [['title' => 'text'], ['description' => 'textarea']]],
                     'documents' => ['type' => 'list', 'group' => self::GROUP_CONTENT, 'items' => [['label' => 'text']]],
                     'fee_note' => ['type' => 'rich_text', 'label' => 'Fees enquiry note', 'group' => self::GROUP_CONTENT],
+                    'bg_color' => ['type' => 'color', 'label' => 'Background Color', 'group' => self::GROUP_APPEARANCE],
+                    'bg_image' => ['type' => 'image', 'label' => 'Background Image', 'group' => self::GROUP_APPEARANCE],
                 ],
             ],
 
@@ -629,6 +632,16 @@ class ComponentRegistry
                     'pointer_reaction' => ['type' => 'toggle', 'label' => 'Drift with pointer', 'group' => self::GROUP_ANIMATION, 'default' => true],
                     'show_chips' => ['type' => 'toggle', 'label' => 'Floating stat chips', 'group' => self::GROUP_APPEARANCE, 'default' => true],
                     'show_progress' => ['type' => 'toggle', 'label' => 'Scroll progress indicator', 'group' => self::GROUP_APPEARANCE, 'default' => true],
+                ],
+            ],
+
+            'divider' => [
+                'name' => 'Divider / Spacer',
+                'category' => 'Layout',
+                'default_variant' => 'default',
+                'props' => [
+                    'height' => ['type' => 'range', 'label' => 'Spacer height (px)', 'group' => self::GROUP_LAYOUT, 'default' => 48, 'min' => 8, 'max' => 200, 'step' => 4],
+                    'bg_color' => ['type' => 'color', 'label' => 'Background Color', 'group' => self::GROUP_APPEARANCE],
                 ],
             ],
         ];

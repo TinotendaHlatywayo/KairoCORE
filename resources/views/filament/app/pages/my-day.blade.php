@@ -4,10 +4,10 @@
         <div class="sc-todo-head">
             <div>
                 <h2 class="sc-todo-title">{{ __('My Day') }}</h2>
-                <p class="sc-todo-sub">{{ $this->today['label'] }} &middot; {{ $this->overdueTasks->count() }} overdue · {{ $this->myDayTasks->count() }} due today</p>
+                <p class="sc-todo-sub">{{ $this->today['label'] }} &middot; {{ $this->overdueTasks->count() }} {{ __('overdue') }} · {{ $this->myDayTasks->count() }} {{ __('due today') }}</p>
             </div>
             <div class="sc-todo-head-actions">
-                <a href="{{ \App\Filament\App\Pages\Dashboard::getUrl() }}" class="sc-btn-ghost sc-todo-home" title="Back to home" aria-label="Back to home">
+                <a href="{{ \App\Filament\App\Pages\Dashboard::getUrl() }}" class="sc-btn-ghost sc-todo-home" title="{{ __('Back to home') }}" aria-label="{{ __('Back to home') }}">
                     <x-filament::icon icon="heroicon-o-home" class="w-4 h-4" />
                     <span>{{ __('Home') }}</span>
                 </a>
@@ -19,7 +19,7 @@
 
         {{-- ═══ TABS ═══ --}}
         <div class="sc-todo-tabs">
-            @foreach (\App\Filament\App\Pages\MyDay::TABS as $key => $label)
+            @foreach (\App\Filament\App\Pages\MyDay::TABS() as $key => $label)
                 <button
                     wire:key="tab-{{ $key }}"
                     type="button"
@@ -38,11 +38,11 @@
                 <input
                     type="search"
                     class="sc-sched-search"
-                    placeholder="Search tasks…"
+                    placeholder="{{ __('Search tasks…') }}"
                     wire:model.live.debounce.300ms="search"
                 />
                 @if ($search)
-                    <button type="button" class="sc-sched-clear" wire:click="resetFilters" title="Clear search">{{ __('✕') }}</button>
+                    <button type="button" class="sc-sched-clear" wire:click="resetFilters" title="{{ __('Clear search') }}">{{ __('✕') }}</button>
                 @endif
             </div>
         </div>
@@ -63,16 +63,16 @@
                                     <button class="sc-check" wire:click="toggleTaskDone({{ $task->id }})" type="button">{{ __('☐') }}</button>
                                     <div class="sc-task-main">
                                         <span class="sc-task-title">{{ $task->title }}</span>
-                                        <span class="sc-task-meta">Due {{ $task->due_date?->format('j M') }}{{ $task->due_time ? ' at '.$task->due_time : '' }}</span>
+                                        <span class="sc-task-meta">{{ __('Due') }} {{ $task->due_date?->format('j M') }}{{ $task->due_time ? ' '.__('at').' '.$task->due_time : '' }}</span>
                                     </div>
                                     @if ($task->important)<span class="sc-star">{{ __('★') }}</span>@endif
                                     <span class="sc-priority-dot is-{{ $task->priority }}"></span>
                                     <div class="sc-task-actions">
-                                        <button class="sc-iconbtn-sm" wire:click="toggleTaskImportant({{ $task->id }})" aria-label="Toggle important">{{ __('★') }}</button>
-                                        <button class="sc-iconbtn-sm" wire:click="editTask({{ $task->id }})" aria-label="Edit">
+                                        <button class="sc-iconbtn-sm" wire:click="toggleTaskImportant({{ $task->id }})" aria-label="{{ __('Toggle important') }}">{{ __('★') }}</button>
+                                        <button class="sc-iconbtn-sm" wire:click="editTask({{ $task->id }})" aria-label="{{ __('Edit') }}">
                                             <x-filament::icon icon="heroicon-o-pencil-square" class="w-3.5 h-3.5" />
                                         </button>
-                                        <button class="sc-iconbtn-sm" wire:click="deleteTask({{ $task->id }})" aria-label="Delete">
+                                        <button class="sc-iconbtn-sm" wire:click="deleteTask({{ $task->id }})" aria-label="{{ __('Delete') }}">
                                             <x-filament::icon icon="heroicon-o-trash" class="w-3.5 h-3.5" />
                                         </button>
                                     </div>
@@ -83,34 +83,34 @@
 
                     {{-- TODAY --}}
                     <div class="sc-todo-section">
-                        <div class="sc-todo-section-label">TODAY'S TASKS</div>
+                        <div class="sc-todo-section-label">{{ __("TODAY'S TASKS") }}</div>
                         @forelse ($this->activeTasks as $task)
                             <div wire:key="td-{{ $task->id }}" class="sc-task-row">
                                 <button class="sc-check" wire:click="toggleTaskDone({{ $task->id }})" type="button">{{ __('☐') }}</button>
                                 <div class="sc-task-main">
                                     <span class="sc-task-title">{{ $task->title }}</span>
                                     <span class="sc-task-meta">
-                                        {{ $task->due_time ? 'Due at '.$task->due_time : 'Due today' }}
+                                        {{ $task->due_time ? __('Due at').' '.$task->due_time : __('Due today') }}
                                         @if ($task->assigned_to_id && $task->assigned_to_id !== auth()->id())
-                                            · assigned to {{ $task->assignee?->name }}
+                                            · {{ __('assigned to') }} {{ $task->assignee?->name }}
                                         @endif
                                     </span>
                                 </div>
                                 @if ($task->important)<span class="sc-star">{{ __('★') }}</span>@endif
                                 <span class="sc-priority-dot is-{{ $task->priority }}"></span>
                                 <div class="sc-task-actions">
-                                    <button class="sc-iconbtn-sm" wire:click="toggleTaskImportant({{ $task->id }})" aria-label="Toggle important">{{ __('★') }}</button>
-                                    <button class="sc-iconbtn-sm" wire:click="editTask({{ $task->id }})" aria-label="Edit">
+                                    <button class="sc-iconbtn-sm" wire:click="toggleTaskImportant({{ $task->id }})" aria-label="{{ __('Toggle important') }}">{{ __('★') }}</button>
+                                    <button class="sc-iconbtn-sm" wire:click="editTask({{ $task->id }})" aria-label="{{ __('Edit') }}">
                                         <x-filament::icon icon="heroicon-o-pencil-square" class="w-3.5 h-3.5" />
                                     </button>
-                                    <button class="sc-iconbtn-sm" wire:click="deleteTask({{ $task->id }})" aria-label="Delete">
+                                    <button class="sc-iconbtn-sm" wire:click="deleteTask({{ $task->id }})" aria-label="{{ __('Delete') }}">
                                         <x-filament::icon icon="heroicon-o-trash" class="w-3.5 h-3.5" />
                                     </button>
                                 </div>
                             </div>
                         @empty
                             <div class="sc-empty">
-                                <div class="sc-empty-title">You're all caught up!</div>
+                                <div class="sc-empty-title">{{ __("You're all caught up!") }}</div>
                                 <p>{{ __('No tasks due today. Add a task or enjoy the free time.') }}</p>
                             </div>
                         @endforelse
@@ -123,13 +123,13 @@
                                 <button class="sc-check checked" wire:click="toggleTaskDone({{ $task->id }})" type="button">{{ __('☑') }}</button>
                                 <div class="sc-task-main">
                                     <span class="sc-task-title">{{ $task->title }}</span>
-                                    <span class="sc-task-meta">Completed {{ $task->completed_at?->diffForHumans() }}</span>
+                                    <span class="sc-task-meta">{{ __('Completed') }} {{ $task->completed_at?->diffForHumans() }}</span>
                                 </div>
                                 <div class="sc-task-actions">
-                                    <button class="sc-iconbtn-sm" wire:click="editTask({{ $task->id }})" aria-label="Edit">
+                                    <button class="sc-iconbtn-sm" wire:click="editTask({{ $task->id }})" aria-label="{{ __('Edit') }}">
                                         <x-filament::icon icon="heroicon-o-pencil-square" class="w-3.5 h-3.5" />
                                     </button>
-                                    <button class="sc-iconbtn-sm" wire:click="deleteTask({{ $task->id }})" aria-label="Delete">
+                                    <button class="sc-iconbtn-sm" wire:click="deleteTask({{ $task->id }})" aria-label="{{ __('Delete') }}">
                                         <x-filament::icon icon="heroicon-o-trash" class="w-3.5 h-3.5" />
                                     </button>
                                 </div>
@@ -145,10 +145,10 @@
                     <div class="sc-todo-section">
                         <div class="sc-todo-section-label">
                             {{ match ($tab) {
-                                'important' => 'IMPORTANT',
-                                'assigned' => 'ASSIGNED TO ME',
-                                'mine' => 'MY TASKS',
-                                default => 'TASKS',
+                                'important' => __('IMPORTANT'),
+                                'assigned' => __('ASSIGNED TO ME'),
+                                'mine' => __('MY TASKS'),
+                                default => __('TASKS'),
                             } }}
                         </div>
                         @forelse ($this->activeTasks as $task)
@@ -158,23 +158,23 @@
                                     <span class="sc-task-title">{{ $task->title }}</span>
                                     <span class="sc-task-meta">
                                         @if ($task->due_date)
-                                            Due {{ $task->due_date->format('j M') }}{{ $task->due_time ? ' at '.$task->due_time : '' }}
+                                            {{ __('Due') }} {{ $task->due_date->format('j M') }}{{ $task->due_time ? ' '.__('at').' '.$task->due_time : '' }}
                                         @else
-                                            No due date
+                                            {{ __('No due date') }}
                                         @endif
                                         @if ($tab === 'assigned' && $task->creator_id !== auth()->id())
-                                            · by {{ $task->creator?->name }}
+                                            · {{ __('by') }} {{ $task->creator?->name }}
                                         @endif
                                     </span>
                                 </div>
                                 @if ($task->important)<span class="sc-star">{{ __('★') }}</span>@endif
                                 <span class="sc-priority-dot is-{{ $task->priority }}"></span>
                                 <div class="sc-task-actions">
-                                    <button class="sc-iconbtn-sm" wire:click="toggleTaskImportant({{ $task->id }})" aria-label="Toggle important">{{ __('★') }}</button>
-                                    <button class="sc-iconbtn-sm" wire:click="editTask({{ $task->id }})" aria-label="Edit">
+                                    <button class="sc-iconbtn-sm" wire:click="toggleTaskImportant({{ $task->id }})" aria-label="{{ __('Toggle important') }}">{{ __('★') }}</button>
+                                    <button class="sc-iconbtn-sm" wire:click="editTask({{ $task->id }})" aria-label="{{ __('Edit') }}">
                                         <x-filament::icon icon="heroicon-o-pencil-square" class="w-3.5 h-3.5" />
                                     </button>
-                                    <button class="sc-iconbtn-sm" wire:click="deleteTask({{ $task->id }})" aria-label="Delete">
+                                    <button class="sc-iconbtn-sm" wire:click="deleteTask({{ $task->id }})" aria-label="{{ __('Delete') }}">
                                         <x-filament::icon icon="heroicon-o-trash" class="w-3.5 h-3.5" />
                                     </button>
                                 </div>
@@ -182,7 +182,7 @@
                         @empty
                             <div class="sc-empty">
                                 <div class="sc-empty-title">{{ __('Nothing here yet') }}</div>
-                                <p>Tasks you {{ $tab === 'assigned' ? 'are assigned' : 'created' }} will appear here.</p>
+                                <p>{{ __($tab === 'assigned' ? 'Tasks you are assigned will appear here.' : 'Tasks you created will appear here.') }}</p>
                             </div>
                         @endforelse
                     </div>
@@ -192,14 +192,14 @@
             {{-- ═══ RIGHT COLUMN ═══ --}}
             <aside class="sc-todo-aside">
                 <div class="sc-todo-card">
-                    <div class="sc-todo-card-title">TODAY'S SCHEDULE</div>
+                    <div class="sc-todo-card-title">{{ __("TODAY'S SCHEDULE") }}</div>
                     @forelse ($this->todaySchedule as $event)
                         <div wire:key="ev-{{ $event->id }}" class="sc-todo-sched-row">
                             <span class="sc-day-swatch" style="background: {{ $event->color ?: 'var(--sc-primary-600)' }}"></span>
                             <div class="sc-todo-sched-body">
                                 <span class="sc-todo-sched-title">{{ $event->title }}</span>
                                 <span class="sc-todo-sched-time">
-                                    {{ $event->all_day ? 'All day' : $event->start_time->format('H:i').' – '.$event->end_time?->format('H:i') }}
+                                    {{ $event->all_day ? __('All day') : $event->start_time->format('H:i').' – '.$event->end_time?->format('H:i') }}
                                 </span>
                             </div>
                         </div>
@@ -241,15 +241,15 @@
             <div class="sc-modal" @click.self="$wire.closeTaskModal()">
                 <div class="sc-modal-card">
                     <div class="sc-modal-head">
-                        <h3 class="sc-modal-title">{{ $editingTask ? 'Edit Task' : 'Create Task' }}</h3>
-                        <button type="button" class="sc-iconbtn" wire:click="closeTaskModal" aria-label="Close">
+                        <h3 class="sc-modal-title">{{ $editingTask ? __('Edit Task') : __('Create Task') }}</h3>
+                        <button type="button" class="sc-iconbtn" wire:click="closeTaskModal" aria-label="{{ __('Close') }}">
                             <x-filament::icon icon="heroicon-o-x-mark" class="w-4 h-4" />
                         </button>
                     </div>
                     <form wire:submit="saveTask" class="sc-form">
                         <label class="sc-field">
                             <span class="sc-field-label">{{ __('Task *') }}</span>
-                            <input type="text" class="sc-input" wire:model="taskForm.title" placeholder="e.g. Submit attendance" maxlength="255" />
+                            <input type="text" class="sc-input" wire:model="taskForm.title" placeholder="{{ __('e.g. Submit attendance') }}" maxlength="255" />
                             @error('taskForm.title')<span class="sc-error">{{ $message }}</span>@enderror
                         </label>
                         <label class="sc-field">
@@ -273,7 +273,7 @@
                                 <span class="sc-field-label">{{ __('Priority') }}</span>
                                 <select class="sc-input" wire:model="taskForm.priority">
                                     @foreach (\App\Models\UserTask::PRIORITIES as $key => $label)
-                                        <option value="{{ $key }}">{{ $label }}</option>
+                                        <option value="{{ $key }}">{{ __($label) }}</option>
                                     @endforeach
                                 </select>
                             </label>
@@ -292,7 +292,7 @@
                                 <span class="sc-field-label">{{ __('Repeats') }}</span>
                                 <select class="sc-input" wire:model="taskForm.recurrence">
                                     @foreach (\App\Models\UserTask::RECURRENCES as $key => $label)
-                                        <option value="{{ $key }}">{{ $label }}</option>
+                                        <option value="{{ $key }}">{{ __($label) }}</option>
                                     @endforeach
                                 </select>
                             </label>
@@ -321,7 +321,7 @@
                             @endif
                             <button type="submit" class="sc-btn-primary is-task">
                                 <x-filament::icon icon="heroicon-o-check" class="w-4 h-4" />
-                                {{ $editingTask ? 'Save changes' : 'Create Task' }}
+                                {{ $editingTask ? __('Save changes') : __('Create Task') }}
                             </button>
                         </div>
                     </form>

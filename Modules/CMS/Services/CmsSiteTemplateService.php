@@ -115,6 +115,7 @@ class CmsSiteTemplateService
                 'blocks' => $blocks,
                 'draft_blocks' => $blocks,
                 'page_template' => $presetKey,
+                'page_theme' => $presetKey,
             ]);
         }
 
@@ -275,6 +276,8 @@ class CmsSiteTemplateService
                 'hide_from_nav' => (bool) $page->hide_from_nav,
                 'sort_order' => (int) $page->sort_order,
                 'page_template' => $page->page_template,
+                'page_layout' => $page->page_layout,
+                'page_theme' => $page->page_theme,
                 'page_settings' => $page->page_settings ?? [],
                 'blocks' => $page->blocks ?? [],
                 'draft_blocks' => $page->draft_blocks ?? ($page->blocks ?? []),
@@ -330,6 +333,7 @@ class CmsSiteTemplateService
                 'blocks' => $blocks,
                 'draft_blocks' => $blocks,
                 'page_template' => $templateKey,
+                'page_theme' => $templateKey,
             ]);
         }
 

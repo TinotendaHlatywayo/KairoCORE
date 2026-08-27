@@ -27,7 +27,7 @@
         @if ($title !== '')
             <div class="sc-container" style="padding-top: clamp(2.5rem, 5vw, 3.5rem);">
                 <div class="sc-section-head is-center">
-                    <h2 class="sc-section-title">{!! e($title) !!}</h2>
+                    <h2 class="sc-section-title" {!! $v['titleStyle'] ?? '' !!}>{!! e($title) !!}</h2>
                 </div>
             </div>
         @endif

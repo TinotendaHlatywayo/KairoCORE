@@ -47,9 +47,14 @@
                             </x-filament::button>
                         @endif
                     </div>
-                    <x-filament::button type="submit" color="success">
-                        {{ __('Compile & Generate Time Slots') }}
-                    </x-filament::button>
+                    <div class="flex gap-2">
+                        <x-filament::button type="button" wire:click="autoGenerateLessons" color="info" icon="heroicon-m-sparkles">
+                            {{ __('Auto-Generate All Lessons') }}
+                        </x-filament::button>
+                        <x-filament::button type="submit" color="success">
+                            {{ __('Compile & Generate Time Slots') }}
+                        </x-filament::button>
+                    </div>
                 </div>
             </form>
         </div>

@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\Domain;
 use App\Models\School;
+use App\Services\TenantFeatureService;
 use Closure;
 use Filament\Support\Colors\Color;
 use Filament\Support\Facades\FilamentColor;
@@ -25,6 +26,40 @@ class ResolveTenant
 
     public function handle(Request $request, Closure $next): Response
     {
+        // ── Single-tenant mode ────────────────────────────────────────────
+        // Bypass all subdomain resolution. Bind the single configured
+        // tenant on every request regardless of host.
+        if (config('tenancy.mode') === 'single') {
+            $tenantId = config('tenancy.single_tenant_id');
+
+            if (! $tenantId) {
+                abort(500, 'Single-tenant mode is enabled but SINGLE_TENANT_ID is not set.');
+            }
+
+            $school = Cache::remember(
+                "tenant.single:{$tenantId}",
+                self::TENANT_CACHE_TTL_SECONDS,
+                fn () => School::withoutGlobalScopes()->find($tenantId)
+            );
+
+            if (! $school) {
+                abort(500, 'Single-tenant school not found (ID: '.$tenantId.').');
+            }
+
+            if ($school->status === 'suspended') {
+                return response()->view('errors.suspended', ['school' => $school], 403);
+            }
+
+            App::instance('current_tenant', $school);
+            view()->share('school', $school);
+            view()->share('features', TenantFeatureService::all());
+
+            $this->applyFilamentTheme();
+
+            return $next($request);
+        }
+
+        // ── Multi-tenant mode (original logic) ────────────────────────────
         $host = $request->getHost();
         $baseDomain = config('app.url');
         $baseHost = parse_url($baseDomain, PHP_URL_HOST) ?? $baseDomain;
@@ -52,12 +87,21 @@ class ResolveTenant
 
         App::instance('current_tenant', $school);
         view()->share('school', $school);
+        view()->share('features', TenantFeatureService::all());
 
-        // Set default route parameter for {tenant} so route() helper works
-        // without explicitly passing the tenant subdomain.
         URL::defaults(['tenant' => $school->subdomain]);
 
-        // Dynamically override Filament's primary theme color based on current tenant setting [1.2]
+        $this->applyFilamentTheme();
+
+        return $next($request);
+    }
+
+    /**
+     * Dynamically override Filament's primary theme color based on current
+     * tenant SystemSetting.
+     */
+    protected function applyFilamentTheme(): void
+    {
         try {
             $theme = SystemSetting::get('branding', 'theme', 'emerald_heritage');
 
@@ -74,7 +118,8 @@ class ResolveTenant
                 'dev_choice_1' => Color::Indigo,
                 'dev_choice_2' => Color::Fuchsia,
                 'dev_choice_3' => Color::Cyan,
-                default => Color::Green, // emerald_heritage is Green
+                'dev_choice_4' => '#f05438',
+                default => Color::Green,
             };
 
             FilamentColor::register([
@@ -83,8 +128,6 @@ class ResolveTenant
         } catch (\Exception $e) {
             // Guard against unrun migrations or CLI installations
         }
-
-        return $next($request);
     }
 
     /**

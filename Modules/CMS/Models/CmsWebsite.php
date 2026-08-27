@@ -34,6 +34,7 @@ class CmsWebsite extends Model
         'active_template',
         'font_primary',
         'font_secondary',
+        'font_heading',
         'color_primary',
         'color_secondary',
         'color_accent',

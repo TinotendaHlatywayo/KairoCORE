@@ -1,0 +1,45 @@
+FROM php:8.3-fpm-alpine
+
+# System deps
+RUN apk add --no-cache \
+        nginx \
+        supervisor \
+        libpng-dev \
+        libjpeg-turbo-dev \
+        freetype-dev \
+        oniguruma-dev \
+        libzip-dev \
+        icu-dev \
+        zlib-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j$(nproc) \
+        pdo_mysql mbstring exif pcntl bcmath gd zip intl opcache \
+    && apk del --no-cache freetype-dev libjpeg-turbo-dev zlib-dev
+
+# Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+WORKDIR /var/www/html
+
+# Install deps first (cacheable layer)
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist \
+    && composer dump-autoload --optimize --no-dev
+
+# Copy app code
+COPY . .
+
+# Copy Railway configs
+COPY docker/railway/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY docker/railway/nginx.conf /etc/nginx/http.d/default.conf
+COPY docker/railway/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
+
+# Permissions
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+
+EXPOSE 8080
+
+CMD ["/start.sh"]

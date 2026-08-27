@@ -48,9 +48,22 @@
                     {{ __('Please keep this information for your records. For any queries regarding this admission,
                     contact the admissions office.') }}
                 </p>
+
+                @if(!empty($activationUrl))
+                    <div style="text-align: center; margin: 28px 0 8px;">
+                        <a href="{{ $activationUrl }}"
+                           style="display: inline-block; background-color: #1e3a8a; color: #ffffff; text-decoration: none;
+                                  padding: 14px 36px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                            {{ __('Activate My Account') }}
+                        </a>
+                        <p style="margin-top: 12px; color: #6b7280; font-size: 13px;">
+                            {{ __('Use the button above to set your password and activate your student portal account. The link is valid for :hours hours.', ['hours' => config('auth.activation_token_ttl_hours', 48)]) }}
+                        </p>
+                    </div>
+                @endif
             </div>
             <div class="email-footer">
-                &copy; {{ date('Y') }} {{ $schoolName }} &middot; Powered by SchoolCore ERP
+                &copy; {{ date('Y') }} {{ $schoolName }} &middot; Powered by Kairo CORE
             </div>
         </div>
     </div>

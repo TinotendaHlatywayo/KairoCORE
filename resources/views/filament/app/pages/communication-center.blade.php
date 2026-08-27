@@ -69,7 +69,7 @@
 
             <div class="sc-panel">
                 <div class="sc-panel-head">
-                    <h3 class="sc-panel-title">{{ __('SchoolCore Messages') }}</h3>
+                    <h3 class="sc-panel-title">{{ __('Kairo CORE Messages') }}</h3>
                     <a class="sc-panel-link" href="{{ \App\Filament\App\Resources\PlatformInboxResource::getUrl('index') }}">{{ __('Open inbox') }}</a>
                 </div>
                 @forelse ($platformMessages as $item)
@@ -78,7 +78,7 @@
                         <span class="sc-row-meta">{{ $item->created_at?->diffForHumans() }}</span>
                     </div>
                 @empty
-                    <p class="sc-empty">{{ __('No messages from the SchoolCore platform team.') }}</p>
+                    <p class="sc-empty">{{ __('No messages from the Kairo CORE platform team.') }}</p>
                 @endforelse
             </div>
         </div>
@@ -98,26 +98,31 @@
             align-items: center;
             gap: 0.75rem;
             padding: 1rem 1.125rem;
-            background: var(--gray-50, #f9fafb);
-            border: 1px solid var(--gray-200, #e5e7eb);
+            /* Explicit solid surfaces: matches the opaque card look of every
+               other workspace page instead of relying on --gray-* variables,
+               which resolve to semi-transparent values under some themes. */
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
             border-radius: 0.75rem;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
             text-decoration: none;
             transition: background-color 150ms ease, border-color 150ms ease;
         }
 
         .sc-kpi:hover {
-            background: var(--gray-100, #f3f4f6);
-            border-color: var(--gray-300, #d1d5db);
+            background: #f9fafb;
+            border-color: #d1d5db;
         }
 
         .dark .sc-kpi {
-            background: var(--gray-800, #1f2937);
-            border-color: var(--gray-700, #374151);
+            background: #1f2937;
+            border-color: #374151;
+            box-shadow: none;
         }
 
         .dark .sc-kpi:hover {
-            background: var(--gray-700, #374151);
-            border-color: var(--gray-600, #4b5563);
+            background: #273449;
+            border-color: #4b5563;
         }
 
         .sc-kpi-icon {
@@ -170,14 +175,17 @@
 
         .sc-panel {
             padding: 1rem 1.125rem;
-            background: var(--gray-50, #f9fafb);
-            border: 1px solid var(--gray-200, #e5e7eb);
+            /* Solid surface — see .sc-kpi note above. */
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
             border-radius: 0.75rem;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
         }
 
         .dark .sc-panel {
-            background: var(--gray-800, #1f2937);
-            border-color: var(--gray-700, #374151);
+            background: #1f2937;
+            border-color: #374151;
+            box-shadow: none;
         }
 
         .sc-panel-head {

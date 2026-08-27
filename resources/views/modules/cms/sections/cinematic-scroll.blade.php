@@ -57,7 +57,7 @@
         <div class="sc-container">
             <div class="sc-aurora-inner" x-ref="content">
                 <span class="sc-eyebrow sc-eyebrow-light">{{ __('Welcome to Our School') }}</span>
-                <h1 class="sc-aurora-title">
+                <h1 class="sc-aurora-title" style="{{ preg_replace('/font-size:[^;]+;?/', '', $v['titleStyle'] ?? '') }}">
                     @foreach ($words as $i => $word)
                         <span class="sc-kinetic-word" style="--sc-delay: {{ 0.15 + $i * 0.09 }}s;">{{ e($word) }}@if(! $loop->last)&nbsp;@endif</span>
                     @endforeach

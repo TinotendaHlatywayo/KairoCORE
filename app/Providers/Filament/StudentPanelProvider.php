@@ -85,6 +85,13 @@ class StudentPanelProvider extends PanelProvider
                 fn () => view('modules.cms.dynamic-styles')
             )
 
+            // Dynamic browser-tab favicon: the school's uploaded favicon when
+            // set, otherwise the platform favicon.
+            ->renderHook(
+                'panels::head.start',
+                fn () => '<link rel="icon" href="'.e(school_favicon_url()).'">'
+            )
+
             ->renderHook(
                 PanelsRenderHook::TOPBAR_START,
                 fn () => view('components.sidebar-toggle-btn')

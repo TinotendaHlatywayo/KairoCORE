@@ -27,7 +27,7 @@
                 </ul>
                 <div class="d-flex gap-2">
                     <a href="{{ route('cms-render', ['slug' => 'apply-online']) }}" class="btn btn-outline-success fw-semibold">{{ __('Apply Online') }}</a>
-                    <a href="{{ route('login') }}" class="btn btn-success fw-semibold px-4">{{ __('Portal Login') }}</a>
+                    <a href="{{ route('login') }}" class="btn btn-success fw-semibold px-4" target="_blank" rel="noopener noreferrer">{{ __('Portal Login') }}</a>
                 </div>
             </div>
         </div>

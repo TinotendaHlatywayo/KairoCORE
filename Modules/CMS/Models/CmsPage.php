@@ -26,6 +26,8 @@ use Modules\CMS\Services\CmsNavigationService;
  * @property array|null $draft_blocks
  * @property int $sort_order
  * @property string|null $page_template
+ * @property string|null $page_layout
+ * @property string|null $page_theme
  * @property array|null $page_settings
  * @property string|null $seo_title
  * @property string|null $seo_description
@@ -53,6 +55,7 @@ class CmsPage extends Model
         'hide_from_sitemap',
         'page_template',
         'page_layout',
+        'page_theme',
         'blocks',
         'draft_blocks',
         'seo_title',
@@ -80,7 +83,7 @@ class CmsPage extends Model
     protected $casts = [
         'blocks' => 'array',
         'draft_blocks' => 'array',
-        'page_layout' => 'array',
+        'page_layout' => 'string',
         'seo_structured_data' => 'array',
         'page_settings' => 'array',
         'scripts' => 'array',

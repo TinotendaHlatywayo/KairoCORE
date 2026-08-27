@@ -19,7 +19,7 @@ class ListCardTemplates extends ListRecords
 
     public function getHeading(): string
     {
-        return '';
+        return __('ID Card Templates');
     }
 
     public function getBreadcrumbs(): array
@@ -29,6 +29,17 @@ class ListCardTemplates extends ListRecords
 
     protected function getHeaderActions(): array
     {
-        return [Actions\CreateAction::make()];
+        return [
+            Actions\CreateAction::make(),
+            Actions\Action::make('bulkPrint')
+                ->label(__('Bulk Print ID Cards'))
+                ->icon('heroicon-o-printer')
+                ->color('success')
+                ->url(fn () => route('students.print-cards', [
+                    'scope' => 'all',
+                    'layout' => 'pvc',
+                ]))
+                ->openUrlInNewTab(),
+        ];
     }
 }

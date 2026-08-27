@@ -123,7 +123,7 @@
         <table class="header-table">
             <tr>
                 <td style="width: 60%; vertical-align: top;">
-                    <div class="school-info">{{ __('SchoolCore Academic ERP') }}</div>
+                    <div class="school-info">{{ __('Kairo CORE') }}</div>
                     <div style="color: #475569; margin-top: 4px;">{{ __('Official Remuneration Statement') }}</div>
                     <div style="color: #64748b; margin-top: 2px;">Email: financial@schoolcore.test | Tel: +263 242 123456</div>
                 </td>

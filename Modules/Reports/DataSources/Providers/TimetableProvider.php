@@ -8,26 +8,26 @@ class TimetableProvider extends AbstractDatasetProvider
 {
     public function module(): string
     {
-        return 'Timetables';
+        return __('Timetables');
     }
 
     public function datasets(): array
     {
         return [
-            $this->d('timetable.lesson', 'Timetable Lessons', 'timetable_lessons', [
-                $this->f('day_of_week', 'Day of Week', 'integer'),
-                $this->f('custom_label', 'Label'),
-                $this->f('color', 'Color'),
-                $this->f('is_locked', 'Locked', 'boolean'),
-                $this->f('course_name', 'Course', 'string', 'timetable_lesson_course.name'),
-                $this->f('section_name', 'Section', 'string', 'timetable_lesson_section.name'),
-                $this->f('subject_name', 'Subject', 'string', 'timetable_lesson_subject.name'),
-                $this->f('teacher_name', 'Teacher', 'string', 'timetable_lesson_teacher.name'),
-                $this->f('classroom_name', 'Room', 'string', 'timetable_lesson_classroom.name'),
-                $this->f('slot_name', 'Time Slot', 'string', 'timetable_lesson_slot.name'),
-                $this->f('slot_start', 'Starts', 'string', 'timetable_lesson_slot.start_time'),
-                $this->f('slot_end', 'Ends', 'string', 'timetable_lesson_slot.end_time'),
-                $this->f('day_name', 'Day', 'string', 'CASE timetable_lesson.day_of_week WHEN 0 THEN \'Sunday\' WHEN 1 THEN \'Monday\' WHEN 2 THEN \'Tuesday\' WHEN 3 THEN \'Wednesday\' WHEN 4 THEN \'Thursday\' WHEN 5 THEN \'Friday\' ELSE \'Saturday\' END'),
+            $this->d('timetable.lesson', __('Timetable Lessons'), 'timetable_lessons', [
+                $this->f('day_of_week', __('Day of Week'), 'integer'),
+                $this->f('custom_label', __('Label')),
+                $this->f('color', __('Color')),
+                $this->f('is_locked', __('Locked'), 'boolean'),
+                $this->f('course_name', __('Course'), 'string', 'timetable_lesson_course.name'),
+                $this->f('section_name', __('Section'), 'string', 'timetable_lesson_section.name'),
+                $this->f('subject_name', __('Subject'), 'string', 'timetable_lesson_subject.name'),
+                $this->f('teacher_name', __('Teacher'), 'string', 'timetable_lesson_teacher.name'),
+                $this->f('classroom_name', __('Room'), 'string', 'timetable_lesson_classroom.name'),
+                $this->f('slot_name', __('Time Slot'), 'string', 'timetable_lesson_slot.name'),
+                $this->f('slot_start', __('Starts'), 'string', 'timetable_lesson_slot.start_time'),
+                $this->f('slot_end', __('Ends'), 'string', 'timetable_lesson_slot.end_time'),
+                $this->f('day_name', __('Day'), 'string', 'CASE timetable_lesson.day_of_week WHEN 0 THEN \'Sunday\' WHEN 1 THEN \'Monday\' WHEN 2 THEN \'Tuesday\' WHEN 3 THEN \'Wednesday\' WHEN 4 THEN \'Thursday\' WHEN 5 THEN \'Friday\' ELSE \'Saturday\' END'),
             ], [
                 'description' => __('Scheduled lessons with subject, teacher, room and slot context.'),
                 'autoJoins' => [
@@ -48,19 +48,19 @@ class TimetableProvider extends AbstractDatasetProvider
                 ],
             ]),
 
-            $this->d('timetable.time_slot', 'Time Slots', 'time_slots', [
-                $this->f('name', 'Name'),
-                $this->f('start_time', 'Starts', 'time'),
-                $this->f('end_time', 'Ends', 'time'),
-                $this->f('is_break', 'Is Break', 'boolean'),
-                $this->f('is_locked', 'Locked', 'boolean'),
+            $this->d('timetable.time_slot', __('Time Slots'), 'time_slots', [
+                $this->f('name', __('Name')),
+                $this->f('start_time', __('Starts'), 'time'),
+                $this->f('end_time', __('Ends'), 'time'),
+                $this->f('is_break', __('Is Break'), 'boolean'),
+                $this->f('is_locked', __('Locked'), 'boolean'),
             ], [
                 'description' => __('Defined lesson periods.'),
             ]),
 
-            $this->d('timetable.classroom', 'Classrooms', 'classrooms', [
-                $this->f('name', 'Name'),
-                $this->f('capacity', 'Capacity', 'integer'),
+            $this->d('timetable.classroom', __('Classrooms'), 'classrooms', [
+                $this->f('name', __('Name')),
+                $this->f('capacity', __('Capacity'), 'integer'),
             ], [
                 'description' => __('Physical teaching rooms.'),
             ]),

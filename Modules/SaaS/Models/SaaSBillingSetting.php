@@ -25,7 +25,7 @@ class SaaSBillingSetting extends Model
         if (! $settings) {
             $settings = static::create([
                 'bank_name' => 'Steward Bank',
-                'bank_account_name' => 'SchoolCore Systems Ltd',
+                'bank_account_name' => 'Kairo CORE Systems Ltd',
                 'bank_account_number' => '1002345678',
                 'paynow_integration_id' => env('PAYNOW_INTEGRATION_ID', '25965'),
                 'paynow_integration_key' => env('PAYNOW_INTEGRATION_KEY', '669ac21f-1216-40b0-9623-91c489caca35'),

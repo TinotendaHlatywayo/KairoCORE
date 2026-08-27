@@ -3,13 +3,11 @@
 
     $schoolId = session('current_tenant')?->id ?? (auth()->check() ? auth()->user()->school_id : null);
     $profileSchoolName = $schoolId ? SystemSetting::get('profile', 'school_name') : null;
-    $schoolName = $profileSchoolName ?: (session('current_tenant')?->name ?? ($schoolId ? \App\Models\School::find($schoolId)?->name : null) ?: 'SchoolCore');
+    $schoolName = $profileSchoolName ?: (session('current_tenant')?->name ?? ($schoolId ? \App\Models\School::find($schoolId)?->name : null) ?: 'Kairo CORE');
     
     // Set default assets
-    $logoUrl = asset('images/Transparant Logo.png');
-    if (!file_exists(public_path('images/Transparant Logo.png')) && file_exists(public_path('images/Transparent Logo.png'))) {
-        $logoUrl = asset('images/Transparent Logo.png');
-    }
+    $logoUrl = asset('images/logo-transparent.png');
+    $logoUrl = asset('images/logo-transparent.png');
 
     $logoHeight = '32px';
     $logoOpacity = '1.0';
@@ -33,7 +31,7 @@
 
 <div class="flex items-center gap-3 py-1" x-data="{ schoolName: '{{ $schoolName }}' }" @theme-updated.window="schoolName = $event.detail.school_name || schoolName">
     <img src="{{ $logoUrl }}" 
-         alt="School Logo" 
+         alt="{{ __('School Logo') }}" 
          class="object-cover rounded-full border border-gray-200 dark:border-gray-800 aspect-square" 
          {!! $inlineStyles !!} />
     <span class="font-bold text-sm tracking-tight text-gray-900 dark:text-white" x-text="schoolName">

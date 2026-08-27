@@ -10,8 +10,10 @@ use Filament\Pages\Page;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
+use Modules\Academics\Models\AcademicYear;
 use Modules\Academics\Models\Classroom;
 use Modules\Academics\Models\Section;
+use Modules\Academics\Models\Term;
 use Modules\Timetables\Models\TimeSlot;
 use Modules\Timetables\Models\TimetableLesson;
 use Modules\Timetables\Models\TimetableTemplate;
@@ -225,12 +227,39 @@ class VisualTimetableBuilder extends Page implements Forms\Contracts\HasForms
                                     ->visible(fn (Forms\Get $get) => $get('has_fixed_lunch') === false)
                                     ->required(fn (Forms\Get $get) => $get('has_fixed_lunch') === false),
 
-                                Forms\Components\TextInput::make('lunch_duration')
-                                    ->label(__('Lunch Duration (Minutes)'))
-                                    ->numeric()
-                                    ->required(),
-                            ])->columnSpan(1),
+                                 Forms\Components\TextInput::make('lunch_duration')
+                                     ->label(__('Lunch Duration (Minutes)'))
+                                     ->numeric()
+                                     ->required(),
+                             ])->columnSpan(1),
                     ]),
+
+                Forms\Components\Section::make('Automatic Lesson Placement Engine')
+                    ->description('Automatically fill all teaching periods using subjects, teachers, and class assignments without manual slot entry.')
+                    ->schema([
+                        Forms\Components\Select::make('academic_year_id')
+                            ->label(__('Academic Year'))
+                            ->options(AcademicYear::where('school_id', app('current_tenant')->id)->pluck('name', 'id'))
+                            ->required()
+                            ->default(AcademicYear::where('school_id', app('current_tenant')->id)->latest()->first()?->id),
+
+                        Forms\Components\Select::make('term_id')
+                            ->label(__('Term'))
+                            ->options(fn (Forms\Get $get) => Term::where('academic_year_id', $get('academic_year_id'))->pluck('name', 'id'))
+                            ->required()
+                            ->default(Term::latest()->first()?->id),
+
+                        Forms\Components\Toggle::make('replace_unlocked')
+                            ->label(__('Clear existing unlocked lessons before generating'))
+                            ->default(true),
+
+                        Forms\Components\TextInput::make('max_per_subject_per_day')
+                            ->label(__('Max periods per subject per class per day'))
+                            ->numeric()
+                            ->default(1)
+                            ->minValue(1)
+                            ->maxValue(3),
+                    ])->columns(2),
             ])
             ->statePath('data');
     }
@@ -400,6 +429,52 @@ class VisualTimetableBuilder extends Page implements Forms\Contracts\HasForms
         } catch (\Exception $e) {
             DB::rollBack();
             Notification::make()->title(__('Generation Blocked'))->body($e->getMessage())->danger()->send();
+        }
+    }
+
+    public function autoGenerateLessons(): void
+    {
+        $schoolId = app('current_tenant')->id;
+        $activeTemplate = TimetableTemplate::where('school_id', $schoolId)->where('is_active', true)->first();
+
+        if (! $activeTemplate) {
+            Notification::make()->title(__('No Active Timetable Template'))->body('Please compile and activate a template first before auto-generating lessons.')->warning()->send();
+            return;
+        }
+
+        $formData = $this->form->getState();
+        $academicYearId = $formData['academic_year_id'] ?? null;
+        $termId = $formData['term_id'] ?? null;
+
+        if (! $academicYearId || ! $termId) {
+            Notification::make()->title(__('Academic Year & Term Required'))->body('Please select Academic Year and Term for the timetable lessons.')->danger()->send();
+            return;
+        }
+
+        DB::beginTransaction();
+        try {
+            $service = app(TimetableGeneratorService::class);
+            $result = $service->autoPlaceLessons([
+                'template_id' => $activeTemplate->id,
+                'academic_year_id' => $academicYearId,
+                'term_id' => $termId,
+                'replace_unlocked' => (bool) ($formData['replace_unlocked'] ?? true),
+                'max_per_subject_per_day' => (int) ($formData['max_per_subject_per_day'] ?? 1),
+            ]);
+
+            DB::commit();
+
+            $msg = "Successfully placed {$result['placed']} lesson(s) automatically with zero clashes!";
+            if (! empty($result['unplaced'])) {
+                $msg .= ' (' . count($result['unplaced']) . ' could not be placed due to tight constraints).';
+            }
+
+            Notification::make()->title(__('Timetable Auto-Generated Successfully!'))->body($msg)->success()->send();
+            $this->loadTimetableMatrix();
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Notification::make()->title(__('Auto-Generation Failed'))->body($e->getMessage())->danger()->send();
         }
     }
 

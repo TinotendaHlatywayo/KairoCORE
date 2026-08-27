@@ -4,9 +4,10 @@ use App\Http\Controllers\Api\AcademicWorkflowController;
 use App\Http\Controllers\Api\AuthController;
 use Illuminate\Support\Facades\Route;
 
-Route::post('auth/token', [AuthController::class, 'token']);
+Route::post('auth/token', [AuthController::class, 'token'])
+    ->middleware('throttle:rate_limit:api');
 
-Route::prefix('academic')->middleware(['auth:sanctum'])->group(function () {
+Route::prefix('academic')->middleware(['auth:sanctum', 'throttle:rate_limit:api'])->group(function () {
     Route::get('workflow', [AcademicWorkflowController::class, 'workflow']);
     Route::get('workflow/progress', [AcademicWorkflowController::class, 'progress']);
     Route::get('workflow/steps', [AcademicWorkflowController::class, 'steps']);

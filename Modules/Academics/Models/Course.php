@@ -12,7 +12,7 @@ class Course extends Model
 {
     use BelongsToTenant;
 
-    protected $fillable = ['school_id', 'name', 'code', 'teacher_id', 'workflow_status', 'workflow_completed_at'];
+    protected $fillable = ['school_id', 'name', 'code', 'level', 'teacher_id', 'workflow_status', 'workflow_completed_at'];
 
     protected $casts = [
         'workflow_completed_at' => 'datetime',

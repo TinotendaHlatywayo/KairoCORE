@@ -40,7 +40,7 @@ class FixedAssetResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Asset Identification')
+                Forms\Components\Section::make(__('Asset Identification'))
                     ->schema([
                         Forms\Components\TextInput::make('asset_number')
                             ->required()
@@ -54,7 +54,7 @@ class FixedAssetResource extends Resource
                         Forms\Components\TextInput::make('serial_number'),
                     ])->columns(3),
 
-                Forms\Components\Section::make('Acquisition & Valuation')
+                Forms\Components\Section::make(__('Acquisition & Valuation'))
                     ->schema([
                         Forms\Components\DatePicker::make('acquisition_date')
                             ->required(),
@@ -78,7 +78,7 @@ class FixedAssetResource extends Resource
                             ->required(),
                     ])->columns(5),
 
-                Forms\Components\Section::make('Location & Stewardship')
+                Forms\Components\Section::make(__('Location & Stewardship'))
                     ->schema([
                         Forms\Components\Select::make('assigned_location_id')
                             ->relationship('location', 'name')
@@ -114,6 +114,7 @@ class FixedAssetResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Action::make('Post Depreciation')
+                    ->label(__('Post Depreciation'))
                     ->icon('heroicon-o-calculator')
                     ->color('success')
                     ->requiresConfirmation()
@@ -123,7 +124,7 @@ class FixedAssetResource extends Resource
 
                         Notification::make()
                             ->title(__('Depreciation Posted'))
-                            ->body('The asset valuation schedule was recalculated and updated.')
+                            ->body(__('The asset valuation schedule was recalculated and updated.'))
                             ->success()
                             ->send();
                     }),

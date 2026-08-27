@@ -4,6 +4,7 @@ namespace App\Filament\App\Resources;
 
 use App\Filament\App\Concerns\ModulePermissionAccess;
 use App\Filament\App\Resources\HostelAttendanceResource\Pages;
+use App\Filament\App\Resources\HostelAttendanceResource\RelationManagers\StudentsRelationManager;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -67,6 +68,13 @@ class HostelAttendanceResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
             ]);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            StudentsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

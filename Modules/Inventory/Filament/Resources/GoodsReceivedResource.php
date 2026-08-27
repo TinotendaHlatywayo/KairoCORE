@@ -43,7 +43,7 @@ class GoodsReceivedResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('GRN Metadata')
+                Forms\Components\Section::make(__('GRN Metadata'))
                     ->schema([
                         Forms\Components\TextInput::make('grn_number')
                             ->required()
@@ -75,7 +75,7 @@ class GoodsReceivedResource extends Resource
                             ->required(),
                     ])->columns(4),
 
-                Forms\Components\Section::make('Accepted Cargo Delivery')
+                Forms\Components\Section::make(__('Accepted Cargo Delivery'))
                     ->schema([
                         Forms\Components\Repeater::make('items')
                             ->relationship('items')

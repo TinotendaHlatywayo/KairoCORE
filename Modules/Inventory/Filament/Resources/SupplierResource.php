@@ -42,7 +42,7 @@ class SupplierResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Vendor Profile')
+                Forms\Components\Section::make(__('Vendor Profile'))
                     ->schema([
                         Forms\Components\TextInput::make('name')
                             ->required()
@@ -54,7 +54,7 @@ class SupplierResource extends Resource
                             ->placeholder(__('e.g., ZIMRA BP-No / standard VAT')),
                     ])->columns(3),
 
-                Forms\Components\Section::make('Communication Channels')
+                Forms\Components\Section::make(__('Communication Channels'))
                     ->schema([
                         Forms\Components\TextInput::make('phone')
                             ->tel(),

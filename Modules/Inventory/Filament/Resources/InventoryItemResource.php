@@ -48,7 +48,7 @@ class InventoryItemResource extends Resource
             ->schema([
                 Forms\Components\Grid::make(3)
                     ->schema([
-                        Forms\Components\Section::make('General Item Specifications')
+                        Forms\Components\Section::make(__('General Item Specifications'))
                             ->schema([
                                 Forms\Components\TextInput::make('name')
                                     ->required()
@@ -75,7 +75,7 @@ class InventoryItemResource extends Resource
                                     ]),
                             ])->columnSpan(2),
 
-                        Forms\Components\Section::make('Class & Tracking Configuration')
+                        Forms\Components\Section::make(__('Class & Tracking Configuration'))
                             ->schema([
                                 Forms\Components\Select::make('item_type')
                                     ->required()
@@ -96,7 +96,7 @@ class InventoryItemResource extends Resource
                             ])->columnSpan(1),
                     ]),
 
-                Forms\Components\Section::make('Sales & Dynamic Custom Metadata')
+                Forms\Components\Section::make(__('Sales & Dynamic Custom Metadata'))
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -111,8 +111,8 @@ class InventoryItemResource extends Resource
                             ]),
                         Forms\Components\KeyValue::make('meta_data')
                             ->label(__('Technical Properties'))
-                            ->keyPlaceholder('e.g., Size, Color, Hazard Rating') // Corrected Method
-                            ->valuePlaceholder('e.g., Large, Blue, Haz-3'), // Corrected Method
+                            ->keyPlaceholder(__('e.g., Size, Color, Hazard Rating')) // Corrected Method
+                            ->valuePlaceholder(__('e.g., Large, Blue, Haz-3')), // Corrected Method
                     ]),
             ]);
     }

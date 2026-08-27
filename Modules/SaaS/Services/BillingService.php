@@ -49,7 +49,7 @@ class BillingService
                 'currency' => $plan->currency,
                 'status' => 'unpaid',
                 'is_locked' => false,
-                'payment_instructions' => 'Payment for SchoolCore ERP Subscriptions on plan: '.$plan->name,
+                'payment_instructions' => 'Payment for Kairo CORE Subscriptions on plan: '.$plan->name,
             ]);
 
             SaaSInvoiceItem::create([

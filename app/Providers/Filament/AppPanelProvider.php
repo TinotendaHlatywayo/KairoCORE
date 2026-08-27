@@ -162,6 +162,13 @@ class AppPanelProvider extends PanelProvider
                 fn () => view('modules.cms.dynamic-styles')
             )
 
+            // Dynamic browser-tab favicon: the school's uploaded favicon when
+            // set, otherwise the platform favicon.
+            ->renderHook(
+                'panels::head.start',
+                fn () => '<link rel="icon" href="'.e(school_favicon_url()).'">'
+            )
+
             // Render sidebar toggle button at top header start
             ->renderHook(
                 PanelsRenderHook::TOPBAR_START,
@@ -192,7 +199,9 @@ class AppPanelProvider extends PanelProvider
             // ──────────────────────────────────────────────────────────────
             ->renderHook(
                 'panels::sidebar.nav.start',
-                fn () => view('components.sidebar-search')
+                fn () => view('components.sidebar-search', [
+                    'serverItems' => \App\Support\WorkspaceSearchIndex::items(),
+                ])
             )
 
             // ──────────────────────────────────────────────────────────────
@@ -404,6 +413,7 @@ class AppPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/App/Widgets'), for: 'App\\Filament\\App\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,
+                \App\Filament\App\Widgets\DemoDataWidget::class,
                 ReportingDashboardOverview::class,
             ])
             ->middleware([

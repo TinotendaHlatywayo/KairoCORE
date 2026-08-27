@@ -8,6 +8,8 @@ use Modules\Students\Models\Student;
 
 class StudentCardOverview extends BaseWidget
 {
+    protected static ?int $sort = 5;
+
     protected function getStats(): array
     {
         $school = current_tenant();

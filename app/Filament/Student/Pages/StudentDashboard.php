@@ -3,7 +3,12 @@
 namespace App\Filament\Student\Pages;
 
 use App\Filament\Student\Resources\HomeworkResource;
+use App\Filament\Student\Resources\StudentAssessmentResource;
 use Filament\Pages\Page;
+use Modules\DigitalAssessment\Enums\AssessmentStatus;
+use Modules\DigitalAssessment\Enums\AttemptStatus;
+use Modules\DigitalAssessment\Models\DigitalAssessment;
+use Modules\DigitalAssessment\Models\DigitalAssessmentAttempt;
 use Modules\Finance\Models\Invoice;
 use Modules\Finance\Models\StudentPaymentSubmission;
 use Modules\Lms\Models\Homework;
@@ -42,6 +47,9 @@ class StudentDashboard extends Page
         $submissionsCount = 0;
         $unpaidBalance = 0.0;
         $pendingPayments = 0;
+        $availableAssessments = collect();
+        $recentResults = collect();
+        $assessmentStats = ['total' => 0, 'pending' => 0, 'completed' => 0, 'in_progress' => 0];
 
         if ($student) {
             $sectionIds = $student->enrollments()->pluck('section_id')->filter()->unique();
@@ -69,6 +77,44 @@ class StudentDashboard extends Page
             $submissionsCount = HomeworkSubmission::where('student_id', $student->id)
                 ->whereNull('teacher_feedback')
                 ->count();
+
+            // ── Digital Assessments ──
+            $enrolledSectionIds = $student->enrollments()->pluck('section_id')->filter()->toArray();
+
+            $allAssessments = DigitalAssessment::query()
+                ->whereIn('status', [AssessmentStatus::Published, AssessmentStatus::Active])
+                ->where(function ($q) use ($enrolledSectionIds) {
+                    $q->whereNull('section_id')
+                      ->orWhereIn('section_id', $enrolledSectionIds);
+                })
+                ->with(['subject', 'attempts' => function ($q) use ($student) {
+                    $q->where('student_id', $student->id);
+                }])
+                ->orderByDesc('created_at')
+                ->get();
+
+            $allAssessments->each(function ($a) use ($student) {
+                $attempts = $a->attempts->where('student_id', $student->id);
+                $a->student_attempts_count = $attempts->count();
+                $a->student_has_in_progress = $attempts->contains(fn ($at) => $at->status === AttemptStatus::InProgress);
+                $a->student_has_completed = $attempts->contains(fn ($at) => in_array($at->status->value, ['submitted', 'graded', 'auto_submitted']));
+                $a->student_best_percentage = $attempts->max('percentage') ?? 0;
+                $a->student_latest_attempt = $attempts->sortByDesc('created_at')->first();
+            });
+
+            $availableAssessments = $allAssessments->take(5);
+            $assessmentStats['total'] = $allAssessments->count();
+            $assessmentStats['pending'] = $allAssessments->filter(fn ($a) => ! $a->student_has_completed && ! $a->student_has_in_progress)->count();
+            $assessmentStats['in_progress'] = $allAssessments->filter(fn ($a) => $a->student_has_in_progress)->count();
+            $assessmentStats['completed'] = $allAssessments->filter(fn ($a) => $a->student_has_completed)->count();
+
+            // Recent results
+            $recentResults = DigitalAssessmentAttempt::where('student_id', $student->id)
+                ->whereIn('status', [AttemptStatus::Submitted, AttemptStatus::Graded, AttemptStatus::AutoSubmitted])
+                ->with('assessment.subject')
+                ->orderByDesc('submitted_at')
+                ->take(5)
+                ->get();
         }
 
         return [
@@ -78,6 +124,9 @@ class StudentDashboard extends Page
             'submissionsCount' => $submissionsCount,
             'unpaidBalance' => $unpaidBalance,
             'pendingPayments' => $pendingPayments,
+            'availableAssessments' => $availableAssessments,
+            'recentResults' => $recentResults,
+            'assessmentStats' => $assessmentStats,
         ];
     }
 }

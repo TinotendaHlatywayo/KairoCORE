@@ -85,4 +85,8 @@ return [
         'name' => 'Subscriptions & Billing',
         'desc' => 'Subscription plans and platform billing.',
     ],
+    'digital_assessment' => [
+        'name' => 'Digital Assessment & Gamification',
+        'desc' => 'Online assessments, question banks, adaptive testing and gamification.',
+    ],
 ];

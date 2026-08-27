@@ -48,7 +48,7 @@
     <div class="sc-container">
         <div class="sc-section-head is-center">
             <span class="sc-eyebrow">{{ __('Community') }}</span>
-            <h2 class="sc-section-title">{!! e($heading) !!}</h2>
+            <h2 class="sc-section-title" {!! $v['titleStyle'] ?? '' !!}>{!! e($heading) !!}</h2>
             <p>{{ $subtitle }}</p>
         </div>
 

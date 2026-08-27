@@ -16,7 +16,7 @@ use Illuminate\Validation\Rule;
  * App-panel account/profile page.
  *
  * The stock Filament profile page validates the email against the whole users
- * table, but SchoolCore scopes uniqueness per school (composite unique index on
+ * table, but Kairo CORE scopes uniqueness per school (composite unique index on
  * [school_id, email]). This page narrows the rule to the current tenant so a
  * user can keep the same email address as a colleague at another school. It
  * also adds an optional phone field and a friendly profile header.
@@ -95,11 +95,15 @@ class EditProfile extends BaseEditProfile
     {
         $record = parent::handleRecordUpdate($record, $data);
         $locale = $data['locale'] ?? null;
+
+        $isPlatform = str_starts_with(request()->path(), 'platform');
+        $sessionKey = $isPlatform ? 'locale_admin' : 'locale';
+
         if ($locale) {
-            session(['locale' => $locale]);
+            session([$sessionKey => $locale]);
             app()->setLocale($locale);
         } else {
-            session()->forget('locale');
+            session()->forget($sessionKey);
         }
 
         return $record;

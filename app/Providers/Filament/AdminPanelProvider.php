@@ -29,6 +29,7 @@ use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\View\PanelsRenderHook;
 use Filament\Widgets;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -36,12 +37,22 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
+        // Platform branding is configurable at runtime under
+        // Platform → Settings → SaaS Branding, so resolve it per request.
+        $primary = null;
+        try {
+            $primary = \Modules\SaaS\Models\PlatformSetting::get('branding', 'default_primary');
+        } catch (\Throwable $e) {
+            $primary = null;
+        }
+
         return $panel
             ->default()
             ->id('admin')
@@ -50,8 +61,11 @@ class AdminPanelProvider extends PanelProvider
             ->login(Login::class)
             ->passwordReset()
             ->profile()
+            ->brandName(platform_name())
+            ->brandLogo(fn () => view('filament.admin.partials.platform-brand-logo'))
+            ->favicon(platform_favicon_url())
             ->colors([
-                'primary' => Color::Blue,
+                'primary' => is_string($primary) && preg_match('/^#[0-9a-fA-F]{6}$/', $primary) ? $primary : Color::Blue,
                 'danger' => Color::Red,
                 'gray' => Color::Slate,
                 'info' => Color::Sky,
@@ -78,6 +92,10 @@ class AdminPanelProvider extends PanelProvider
                 NavigationGroup::make('Communication')->collapsible(),
                 NavigationGroup::make('Platform Control')->collapsible(),
             ])
+            ->renderHook(
+                PanelsRenderHook::TOPBAR_START,
+                fn () => Blade::render('@livewire(\'admin-language-switcher\')')
+            )
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

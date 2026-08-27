@@ -48,7 +48,7 @@ class AnnouncementResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Notice Details')
+                Forms\Components\Section::make(__('Notice Details'))
                     ->schema([
                         Forms\Components\TextInput::make('title')
                             ->required()
@@ -59,7 +59,7 @@ class AnnouncementResource extends Resource
                     ])->columnSpan(2),
 
                 Forms\Components\Group::make([
-                    Forms\Components\Section::make('Publication & Priority')
+                    Forms\Components\Section::make(__('Publication & Priority'))
                         ->schema([
                             Forms\Components\Select::make('status')
                                 ->options([
@@ -87,24 +87,24 @@ class AnnouncementResource extends Resource
                                 ->default(false),
                         ]),
 
-                    Forms\Components\Section::make('Audience Targets')
+                    Forms\Components\Section::make(__('Audience Targets'))
                         ->schema([
                             Forms\Components\Select::make('visibility')
                                 ->label(__('Visible to Roles'))
                                 ->multiple()
                                 ->options([
-                                    'admin' => 'Administrators',
-                                    'teacher' => 'Teachers',
-                                    'student' => 'Students',
-                                    'parent' => 'Parents',
-                                    'accountant' => 'Finance Staff',
-                                    'librarian' => 'Librarians',
+                                    'admin' => __('Administrators'),
+                                    'teacher' => __('Teachers'),
+                                    'student' => __('Students'),
+                                    'parent' => __('Parents'),
+                                    'accountant' => __('Finance Staff'),
+                                    'librarian' => __('Librarians'),
                                 ])->preload(),
                             Forms\Components\DatePicker::make('published_at'),
                             Forms\Components\DatePicker::make('expires_at'),
                         ]),
 
-                    Forms\Components\Section::make('Attachments')
+                    Forms\Components\Section::make(__('Attachments'))
                         ->schema([
                             Forms\Components\FileUpload::make('attachments')
                                 ->multiple()
@@ -169,7 +169,7 @@ class AnnouncementResource extends Resource
                     ->label(__('Expiration'))
                     ->formatStateUsing(function ($state) {
                         if (! $state) {
-                            return 'Never';
+                            return __('Never');
                         }
 
                         return Carbon::parse($state)->diffForHumans();
@@ -214,7 +214,7 @@ class AnnouncementResource extends Resource
                         foreach ($notifiedUsers as $user) {
                             Notification::make()
                                 ->title(__('New Notice Published'))
-                                ->body('Important Announcement: '.$record->title)
+                                ->body(__('Important Announcement: ').$record->title)
                                 ->success()
                                 ->sendToDatabase($user);
                         }

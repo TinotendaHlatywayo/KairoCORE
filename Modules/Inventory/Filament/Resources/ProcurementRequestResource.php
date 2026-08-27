@@ -42,7 +42,7 @@ class ProcurementRequestResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Request Metadata')
+                Forms\Components\Section::make(__('Request Metadata'))
                     ->schema([
                         Forms\Components\TextInput::make('request_number')
                             ->required()
@@ -66,7 +66,7 @@ class ProcurementRequestResource extends Resource
                             ->placeholder(__('e.g., Science, Admin')),
                     ])->columns(4),
 
-                Forms\Components\Section::make('Requisitioned Items')
+                Forms\Components\Section::make(__('Requisitioned Items'))
                     ->schema([
                         Forms\Components\Repeater::make('items')
                             ->relationship('items')

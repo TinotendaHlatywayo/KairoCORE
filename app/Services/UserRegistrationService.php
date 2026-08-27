@@ -65,7 +65,7 @@ class UserRegistrationService
             $role = CustomRole::create([
                 'school_id' => $schoolId,
                 'name' => $name,
-                'description' => __('SchoolCore default ').$name.' role.',
+                'description' => __('Kairo CORE default ').$name.' role.',
                 'permissions' => self::defaultPermissionsFor($category),
                 'is_system' => true,
             ]);
@@ -222,7 +222,7 @@ class UserRegistrationService
         foreach ($approvers as $approver) {
             try {
                 app(TenantEmailConfigurationService::class)->queueSend(
-                    new UserRegistrationPending($pendingUser, $approver->email, $school->name),
+                    new UserRegistrationPending($pendingUser, $approver->email, $school->name, $school),
                     EmailCategory::Communication,
                     $school,
                 );

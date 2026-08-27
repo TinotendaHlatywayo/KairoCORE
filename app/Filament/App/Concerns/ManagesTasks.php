@@ -132,7 +132,7 @@ trait ManagesTasks
             ->where('school_id', $user->school_id)
             ->where('account_status', User::STATUS_ACTIVE)
             ->orderBy('name')
-            ->get(['id', 'name', 'email'])
+            ->get()
             ->filter(fn (User $u) => ! $u->isStudent())
             ->map(fn (User $u) => ['id' => $u->id, 'name' => $u->name, 'email' => $u->email])
             ->values()

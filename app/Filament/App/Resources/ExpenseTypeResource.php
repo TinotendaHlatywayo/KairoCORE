@@ -43,7 +43,7 @@ class ExpenseTypeResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Expense Type Setup')
+                Forms\Components\Section::make(__('Expense Type Setup'))
                     ->description(__('Reusable expense items within categories (e.g., Hydrochloric Acid under Laboratory).'))
                     ->schema([
                         Forms\Components\Select::make('expense_category_id')

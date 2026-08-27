@@ -51,7 +51,7 @@ class PollResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Survey Definition')
+                Forms\Components\Section::make(__('Survey Definition'))
                     ->schema([
                         Forms\Components\TextInput::make('question')
                             ->required()
@@ -68,7 +68,7 @@ class PollResource extends Resource
                     ])->columnSpan(2),
 
                 Forms\Components\Group::make([
-                    Forms\Components\Section::make('Audience Boundaries')
+                    Forms\Components\Section::make(__('Audience Boundaries'))
                         ->schema([
                             Forms\Components\Select::make('target_roles')
                                 ->multiple()
@@ -83,7 +83,7 @@ class PollResource extends Resource
                 ])->columnSpan(1),
 
                 // INLINE OPTIONS BUILDER
-                Forms\Components\Section::make('Choice Parameters')
+                Forms\Components\Section::make(__('Choice Parameters'))
                     ->schema([
                         Forms\Components\Repeater::make('options')
                             ->relationship('options')
@@ -102,7 +102,7 @@ class PollResource extends Resource
     {
         return $infolist
             ->schema([
-                InfolistSection::make('Live Voting Results Summary')
+                InfolistSection::make(__('Live Voting Results Summary'))
                     ->schema([
                         TextEntry::make('question')
                             ->weight('bold')
@@ -114,7 +114,7 @@ class PollResource extends Resource
                             ->formatStateUsing(function ($record) {
                                 $totalVotes = $record->votes()->count();
                                 if ($totalVotes === 0) {
-                                    return 'No votes have been recorded for this poll.';
+                                    return __('No votes have been recorded for this poll.');
                                 }
 
                                 return $record->options->map(function ($opt) use ($totalVotes) {

@@ -188,7 +188,7 @@ http://<school-subdomain>.lvh.me:8080/dashboard
 The fresh database is seeded with a single founder account:
 
 - URL: `http://lvh.me:8080/platform/login`
-- Email: `founder@schoolcore.test`
+- Email: `twaynehlatywayo09@gmail.com`
 - Password: `securepassword`
 
 > To use a different domain, set `APP_URL` and the `{tenant}`/host routing

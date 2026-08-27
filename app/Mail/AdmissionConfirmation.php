@@ -19,6 +19,7 @@ class AdmissionConfirmation extends Mailable
         public string $emailBody,
         public string $schoolName,
         public ?string $fromEmail = null,
+        public ?string $activationUrl = null,
     ) {}
 
     public function build(): self

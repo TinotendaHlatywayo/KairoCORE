@@ -26,7 +26,7 @@ class PlatformInboxResource extends Resource
 
     protected static ?string $navigationGroup = 'Communication Center';
 
-    protected static ?string $navigationLabel = 'SchoolCore Messages';
+    protected static ?string $navigationLabel = 'Platform Messages';
 
     public static function getNavigationLabel(): string
     {
@@ -37,6 +37,37 @@ class PlatformInboxResource extends Resource
 
     // Reached via the Communication Center contextual tabs, not the sidebar.
     protected static bool $shouldRegisterNavigation = false;
+
+    /**
+     * Unread platform → school messages, shown as a badge wherever the
+     * resource surfaces in navigation, so replies from the platform are
+     * immediately visible.
+     */
+    public static function getNavigationBadge(): ?string
+    {
+        $schoolId = Auth::user()?->school_id;
+
+        if (! $schoolId) {
+            return null;
+        }
+
+        $unread = PlatformMessage::withoutTenantScope()
+            ->where('sender_type', 'platform')
+            ->whereIn('id', function ($query) use ($schoolId) {
+                $query->select('message_id')
+                    ->from('platform_message_recipients')
+                    ->where('school_id', $schoolId)
+                    ->where('status', '!=', 'read');
+            })
+            ->count();
+
+        return $unread > 0 ? (string) $unread : null;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'info';
+    }
 
     public static function canAccess(): bool
     {
@@ -97,14 +128,14 @@ class PlatformInboxResource extends Resource
                 Tables\Filters\SelectFilter::make('direction')
                     ->label(__('Direction'))
                     ->options([
-                        'received' => __('Received from SchoolCore'),
-                        'sent' => __('Sent to SchoolCore'),
+                        'received' => __('Received from the platform'),
+                        'sent' => __('Sent to Kairo CORE'),
                     ])
                     ->query(fn ($query, array $data) => self::applyDirectionFilter($query, $data, $schoolId, $receivedIds)),
             ])
             ->headerActions([
                 Tables\Actions\Action::make('new_message')
-                    ->label(__('Send Message to SchoolCore'))
+                    ->label(__('Send Message to Kairo CORE'))
                     ->icon('heroicon-o-paper-airplane')
                     ->slideOver()
                     ->modalWidth('lg')
@@ -142,7 +173,11 @@ class PlatformInboxResource extends Resource
                     ->modalHeading(__('Conversation Thread'))
                     ->modalContent(fn (PlatformMessage $record) => view(
                         'filament.admin.resources.platform-message-thread',
-                        ['messages' => $record->threadMessages()->get()]
+                        [
+                            'messages' => $record->threadMessages()->get(),
+                            'threadParentId' => $record->id,
+                            'canReply' => true,
+                        ]
                     ))
                     ->action(function (PlatformMessage $record) {
                         self::markReceivedRead($record);

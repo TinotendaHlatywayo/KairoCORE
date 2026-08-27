@@ -2,11 +2,11 @@
 
 namespace App\Filament\Admin\Pages;
 
+use App\Models\School;
 use Filament\Pages\Dashboard as BaseDashboard;
 use Modules\SaaS\Models\SaaSInvoice;
 use Modules\SaaS\Models\SaaSManualSubmission;
 use Modules\SaaS\Models\SaaSTransaction;
-use Modules\SaaS\Models\School;
 
 class Dashboard extends BaseDashboard
 {

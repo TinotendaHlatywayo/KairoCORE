@@ -37,6 +37,8 @@ class Login extends BaseLogin
 
     public string $regRole = 'student';
 
+    public bool $regAgreeTerms = false;
+
     public bool $regSubmitted = false;
 
     public string $regSubmittedName = '';
@@ -196,6 +198,7 @@ class Login extends BaseLogin
             'regEmail' => ['required', 'email:rfc', 'max:255'],
             'regPhone' => ['nullable', 'string', 'max:60'],
             'regRole' => ['required', Rule::in(array_keys(User::REGISTRATION_ROLES))],
+            'regAgreeTerms' => ['accepted'],
         ], [
             'regName.required' => __('Please enter your full name.'),
             'regName.min' => __('Full name must be at least 2 characters.'),
@@ -204,6 +207,7 @@ class Login extends BaseLogin
             'regEmail.required' => __('Please enter your email address.'),
             'regEmail.email' => __('The email address is not valid. It should be in the form name@gmail.com.'),
             'regEmail.max' => __('Email address must not exceed 255 characters.'),
+            'regAgreeTerms.accepted' => __('You must read and agree to the Platform Terms of Service and School Terms of Conditions before registering.'),
         ]);
 
         $email = mb_strtolower(trim($this->regEmail));
@@ -297,6 +301,15 @@ class Login extends BaseLogin
         // Automatically trigger activation email
         try {
             app(AccountActivationService::class)->issueAndSend($user);
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
+        // Notify users.approve permission holders about the pending account.
+        // Whether they also receive an EMAIL is the school's choice in
+        // System Settings -> Notifications (email_on_user_registration).
+        try {
+            app(\App\Services\UserRegistrationService::class)->notifyApprovers($school, $user);
         } catch (\Throwable $e) {
             report($e);
         }

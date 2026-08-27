@@ -17,6 +17,7 @@ class Section extends Model
         'school_id',
         'course_id',
         'name',
+        'code',
         'capacity',
     ];
 

@@ -128,7 +128,7 @@ class EResourceResource extends Resource
                     ->action(function ($record) {
                         $disk = Storage::disk('public');
                         if (! $disk->exists($record->file_path)) {
-                            abort(404, 'Requested eResource file does not exist on disk.');
+                            abort(404, __('Requested eResource file does not exist on disk.'));
                         }
 
                         return response()->download($disk->path($record->file_path));

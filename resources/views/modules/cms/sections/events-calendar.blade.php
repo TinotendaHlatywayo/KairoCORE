@@ -1,7 +1,8 @@
 <div style="display: flex; flex-direction: column; gap: 2rem;">
     <div class="sc-section-head is-center">
         <span class="sc-eyebrow">{{ __('School Schedule') }}</span>
-        <h2 {!! 'style="' . $v['titleStyle'] . '"' !!} class="sc-section-title">{{ __('Upcoming Campus Events') }}</h2>
+        @php $eventsTitle = trim((string) ($block['title'] ?? '')) !== '' ? $block['title'] : __('Upcoming Campus Events'); @endphp
+        <h2 {!! 'style="' . $v['titleStyle'] . '"' !!} class="sc-section-title">{{ $eventsTitle }}</h2>
     </div>
 
     <div class="sc-grid sc-grid-3">

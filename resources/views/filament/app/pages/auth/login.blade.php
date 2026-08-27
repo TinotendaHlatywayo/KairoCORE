@@ -5,7 +5,7 @@
 
     $school = $school ?? null;
     $profileSchoolName = $school ? SystemSetting::get('profile', 'school_name') : null;
-    $schoolName = $profileSchoolName ?: ($school?->name ?? 'SchoolCore');
+    $schoolName = $profileSchoolName ?: ($school?->name ?? 'Kairo CORE');
     $motto = $school?->motto ?? null;
     $schoolSubdomain = $school?->subdomain ?? null;
 
@@ -15,10 +15,7 @@
     $establishedYear = $school ? SystemSetting::get('profile', 'established_year') : null;
     $principalName = $school ? SystemSetting::get('profile', 'principal_name') : null;
 
-    $logoUrl = asset('images/Transparent Logo.png');
-    if (! file_exists(public_path('images/Transparent Logo.png')) && file_exists(public_path('images/TransparentLogo.png'))) {
-        $logoUrl = asset('images/TransparentLogo.png');
-    }
+    $logoUrl = asset('images/logo-transparent.png');
 
     $customLogo = $school ? SystemSetting::get('branding', 'logo_path') : null;
     if (! empty($customLogo)) {
@@ -48,6 +45,7 @@
         'dev_choice_1' => '#4f46e5',
         'dev_choice_2' => '#c026d3',
         'dev_choice_3' => '#0891b2',
+        'dev_choice_4' => '#f05438',
     ];
     $accent = $accents[$accentKey] ?? '#0f766e';
     $accentStrong = $accent === '#0f766e' ? '#0d5f56' : $accent;
@@ -263,7 +261,7 @@
                         <div class="sc-reg-grid">
                             <div class="sc-field sc-field-full">
                                 <label for="sc-reg-name">{{ __('Full Name') }}</label>
-                                <input id="sc-reg-name" type="text" autocomplete="name" placeholder="e.g. Tendai Moyo" wire:model.defer="regName"
+                                 <input id="sc-reg-name" type="text" autocomplete="name" placeholder="e.g. Tendai Moyo" wire:model.live="regName"
                                        x-on:blur="validateField('name', $el.value)"
                                        x-on:input="clearError('name')"
                                        maxlength="100" />
@@ -302,20 +300,35 @@
 
                             <div class="sc-field">
                                 <label for="sc-reg-email">{{ __('Email Address') }}</label>
-                                <input id="sc-reg-email" type="email" autocomplete="email" placeholder="you@school.com" wire:model.defer="regEmail"
+                                <input id="sc-reg-email" type="email" autocomplete="email" placeholder="you@school.com" wire:model.live="regEmail"
                                        maxlength="255" />
                                 @error('regEmail') <span class="sc-field-err">{{ $message }}</span> @enderror
                             </div>
 
                             <div class="sc-field">
                                 <label for="sc-reg-phone">{{ __('Phone Number') }} <span class="sc-opt">(Optional)</span></label>
-                                <input id="sc-reg-phone" type="tel" autocomplete="tel" placeholder="+263 77 123 4567" wire:model.defer="regPhone"
+                                <input id="sc-reg-phone" type="tel" autocomplete="tel" placeholder="+263 77 123 4567" wire:model.live="regPhone"
                                        maxlength="30" />
                                 @error('regPhone') <span class="sc-field-err">{{ $message }}</span> @enderror
                             </div>
+
+                            <div class="sc-field" style="margin-top: 0.5rem; margin-bottom: 1.25rem;">
+                                <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+                                    <input type="checkbox" id="sc-reg-terms" wire:model.live="regAgreeTerms" style="margin-top: 0.25rem; width: 1.1rem; height: 1.1rem; accent-color: var(--sc-accent, #10b981); cursor: pointer;" />
+                                    <label for="sc-reg-terms" style="font-size: 0.85rem; color: #475569; line-height: 1.5; cursor: pointer;">
+                                        {{ __('I have read and agree to the') }}
+                                        <a href="{{ route('platform.terms') }}" target="_blank" style="color: var(--sc-accent, #10b981); text-decoration: underline; font-weight: 600;">{{ __('Platform Terms of Service') }}</a>
+                                        {{ __('and the') }}
+                                        @if (request()->route('tenant') ?? current_tenant()?->subdomain)
+                                            <a href="{{ route('school.terms', ['tenant' => request()->route('tenant') ?? current_tenant()?->subdomain]) }}" target="_blank" style="color: var(--sc-accent, #10b981); text-decoration: underline; font-weight: 600;">{{ __('School Terms & Conditions') }}</a>.
+                                        @endif
+                                    </label>
+                                </div>
+                                @error('regAgreeTerms') <span class="sc-field-err" style="display: block; margin-top: 0.35rem;">{{ $message }}</span> @enderror
+                            </div>
                         </div>
 
-                        <button type="submit" class="sc-l2-submit" wire:loading.attr="disabled" wire:target="registerAccount">
+                        <button type="submit" class="sc-l2-submit" wire:loading.attr="disabled" wire:target="registerAccount" @if(! $regAgreeTerms || empty($regName) || empty($regEmail)) disabled style="opacity: 0.6; cursor: not-allowed; background-color: #94a3b8; border-color: #94a3b8;" @endif>
                             <span wire:loading.remove wire:target="registerAccount">{{ __('Submit Request') }}</span>
                             <span wire:loading wire:target="registerAccount">{{ __('Processing...') }}</span>
                         </button>
@@ -359,6 +372,10 @@
 
     {{-- Footer --}}
     <footer class="sc-l2-legal">
+        <a href="{{ route('platform.terms') }}" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:none;font-weight:600;">{{ __('Terms of Service') }}</a>
+        <span style="margin:0 .4rem;opacity:.4;">·</span>
+        <a href="{{ route('platform.terms') }}" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:none;font-weight:600;">{{ __('Terms of Use') }}</a>
+        <span style="margin:0 .4rem;opacity:.4;">·</span>
         <span>{{ __('Powered by Tinway Technologies') }}</span>
     </footer>
 
@@ -1289,7 +1306,7 @@
             },
         }));
     });
-
-    <x-sc-typewriter />
 </script>
+
+<x-sc-typewriter />
 </div>

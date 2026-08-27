@@ -15,7 +15,7 @@ use Modules\HR\Models\Employee;
  *  - Full Default Multi-Page Block Schemas for each template
  *  - 50+ Curated Google Fonts & Font Pairings
  *  - WCAG Contrast Engine (ensures NO light/white text on light backgrounds)
- *  - Dynamic Block Data Resolution from SchoolCore modules
+ *  - Dynamic Block Data Resolution from Kairo CORE modules
  */
 class CmsTemplateService
 {
@@ -264,23 +264,56 @@ class CmsTemplateService
     }
 
     /**
-     * Resolve a template definition by any stored key (with legacy fallback).
+     * Resolve the effective template for a page.
      *
-     * @return array{name: string, subtitle: string, description: string, fonts: array, palette: array, design: array}|null
+     * `page_template` historically stores TWO kinds of values:
+     *  - real template keys ("coastal-fresh") = deliberate per-page theme override
+     *  - page LAYOUT ids ("home_2", "about_2") from pageLayoutsFor()
+     *
+     * Layout ids are NOT templates — they only describe block structure, so the
+     * theme must fall back to the site-wide active template instead of the
+     * hard-coded heritage fallback (which made every page render identically).
      */
-    public static function resolveTemplate(?string $key): ?array
+    public static function resolvePageTemplate(?string $stored, ?string $siteDefault = null): string
     {
-        $templates = self::getTemplates();
+        if ($stored !== null && $stored !== '') {
+            if (isset(self::getTemplates()[$stored])) {
+                return $stored;
+            }
 
-        return $templates[self::canonicalTemplate($key)] ?? null;
+            $legacyMap = self::LEGACY_TEMPLATE_MAP();
+            if (isset($legacyMap[$stored])) {
+                return $legacyMap[$stored];
+            }
+        }
+
+        return self::canonicalTemplate($siteDefault);
     }
 
     /**
-     * Template key canonical for the CmsWebsite's active template.
+     * Resolve the effective theme for a page using the dedicated page_theme column.
+     *
+     * Resolution order:
+     *  1. page_theme (explicit per-page override)
+     *  2. page_template (legacy — only if it's a valid template key)
+     *  3. site-wide active_template
+     *  4. heritage-editorial (hard fallback)
      */
-    public static function canonicalWebsiteTemplate(CmsWebsite $website): string
+    public static function resolvePageTheme(?string $pageTheme, ?string $pageTemplate, ?string $siteDefault = null): string
     {
-        return self::canonicalTemplate($website->active_template);
+        // 1. Explicit per-page theme override
+        if ($pageTheme !== null && $pageTheme !== '') {
+            if (isset(self::getTemplates()[$pageTheme])) {
+                return $pageTheme;
+            }
+            $legacyMap = self::LEGACY_TEMPLATE_MAP();
+            if (isset($legacyMap[$pageTheme])) {
+                return $legacyMap[$pageTheme];
+            }
+        }
+
+        // 2. Legacy page_template (if it's a real template key, not a layout ID)
+        return self::resolvePageTemplate($pageTemplate, $siteDefault);
     }
 
     /**
@@ -356,7 +389,7 @@ class CmsTemplateService
             ],
             'testimonials' => $block['testimonials'] = [
                 ['quote' => 'The faculty genuinely transformed my child\'s academic confidence.', 'name' => 'Mrs. Chikafu', 'role' => 'Parent, Grade 6'],
-                ['quote' => 'SchoolCore provided the foundation I needed for university success.', 'name' => 'T. Mangwiro', 'role' => 'Alumnus, Class of 2022'],
+                ['quote' => 'Kairo CORE provided the foundation I needed for university success.', 'name' => 'T. Mangwiro', 'role' => 'Alumnus, Class of 2022'],
             ],
             'logo_cloud' => $block['logos'] = [
                 ['name' => 'Cambridge Assessment', 'logo_url' => ''],
@@ -573,11 +606,6 @@ class CmsTemplateService
             'text-justify' => 'justify',
             default => 'center',
         };
-    }
-
-    public static function safeImagePosition(?string $value): string
-    {
-        return in_array($value, self::IMAGE_POSITIONS, true) ? $value : 'center';
     }
 
     /** Render a content field as safe rich text (bold, italic, lists, links, line breaks). */

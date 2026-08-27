@@ -1,5 +1,5 @@
 {{-- ============================================================
-     SchoolCore Website Design System
+     Kairo CORE Website Design System
      A self-contained, template-aware CSS layer for tenant public
      websites. Scoped under `.sc-site` so it never leaks into the
      Filament admin / CMS studio. Tokens are injected inline on the
@@ -47,10 +47,10 @@
     .sc-site *, .sc-site *::before, .sc-site *::after { box-sizing: border-box; }
 
     .sc-site h1, .sc-site h2, .sc-site h3, .sc-site h4, .sc-site h5, .sc-site h6 {
-        font-family: var(--sc-font-display);
+        font-family: var(--sc-font-heading, var(--sc-font-display));
         line-height: 1.15;
         letter-spacing: -0.02em;
-        color: var(--sc-text);
+        color: inherit;
         margin: 0;
     }
 
@@ -159,7 +159,7 @@
 
     .sc-btn-primary {
         background: linear-gradient(135deg, var(--sc-primary), color-mix(in srgb, var(--sc-primary) 62%, var(--sc-secondary)));
-        color: var(--sc-ink);
+        color: #ffffff !important;
         box-shadow: 0 14px 30px -12px color-mix(in srgb, var(--sc-primary) 75%, transparent);
     }
     .sc-btn-primary:hover { box-shadow: 0 18px 40px -14px color-mix(in srgb, var(--sc-primary) 85%, transparent); }
@@ -917,7 +917,7 @@
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        justify-content: space-between;
+        justify-content: center;
         gap: 0.6rem;
         padding-block: 1.2rem;
         border-top: 1px solid var(--sc-border);

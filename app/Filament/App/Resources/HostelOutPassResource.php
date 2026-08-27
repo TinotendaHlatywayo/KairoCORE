@@ -37,15 +37,103 @@ class HostelOutPassResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Card::make()
+                Forms\Components\Section::make()
                     ->schema([
                         Forms\Components\Select::make('student_id')
-                            ->relationship('student', 'first_name')
+                            ->label(__('Student'))
+                            ->options(fn () => \Modules\Students\Models\Student::with('currentEnrollment.course')
+                                ->where('school_id', current_tenant()?->id)
+                                ->get()
+                                ->mapWithKeys(fn ($s) => [
+                                    $s->id => $s->first_name . ' ' . $s->last_name
+                                        . ' (' . ($s->student_id_number ?? $s->admission_number) . ')',
+                                ]))
                             ->searchable()
+                            ->live()
+                            ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                if (! $state) {
+                                    $set('hostel_id', null);
+                                    return;
+                                }
+                                $student = \Modules\Students\Models\Student::with([
+                                    'currentEnrollment.course',
+                                    'currentEnrollment.section',
+                                ])->find($state);
+
+                                if (! $student) {
+                                    $set('hostel_id', null);
+                                    return;
+                                }
+
+                                $allocation = \Modules\Hostels\Models\HostelAllocation::with('bed.room.hostel')
+                                    ->where('student_id', $student->id)
+                                    ->where('status', 'active')
+                                    ->first();
+
+                                if ($allocation && $allocation->bed && $allocation->bed->room && $allocation->bed->room->hostel) {
+                                    $set('hostel_id', $allocation->bed->room->hostel_id);
+                                } else {
+                                    $set('hostel_id', null);
+                                }
+                            })
                             ->required(),
+
                         Forms\Components\Select::make('hostel_id')
+                            ->label(__('Hostel'))
                             ->relationship('hostel', 'name')
                             ->required(),
+
+                        Forms\Components\Placeholder::make('student_details_display')
+                            ->label(__('Student Details'))
+                            ->content(function ($get) {
+                                $studentId = $get('student_id');
+                                if (! $studentId) {
+                                    return __('Select a student to view details.');
+                                }
+
+                                $student = \Modules\Students\Models\Student::with([
+                                    'currentEnrollment.course',
+                                    'currentEnrollment.section',
+                                ])->find($studentId);
+
+                                if (! $student) {
+                                    return __('Student not found.');
+                                }
+
+                                $lines = [];
+                                $lines[] = __('Name') . ': <strong>' . e($student->first_name . ' ' . $student->last_name) . '</strong>';
+                                $lines[] = __('Student ID') . ': ' . e($student->student_id_number ?? $student->admission_number);
+                                $lines[] = __('Gender') . ': ' . e(ucfirst($student->gender));
+                                $lines[] = __('Boarding Status') . ': ' . e(ucfirst(str_replace('_', ' ', $student->boarding_status)));
+
+                                $enrollment = $student->currentEnrollment;
+                                if ($enrollment) {
+                                    $courseName = $enrollment->course?->name ?? '—';
+                                    $sectionName = $enrollment->section?->name ?? '—';
+                                    $lines[] = __('Grade / Class') . ': ' . e($courseName . ' — ' . $sectionName);
+                                }
+
+                                $allocation = \Modules\Hostels\Models\HostelAllocation::with('bed.room.hostel')
+                                    ->where('student_id', $student->id)
+                                    ->where('status', 'active')
+                                    ->first();
+
+                                if ($allocation && $allocation->bed) {
+                                    $bed = $allocation->bed;
+                                    $lines[] = __('Hostel') . ': ' . e($bed->room->hostel?->name ?? '—');
+                                    $lines[] = __('Room') . ': ' . e($bed->room->room_number ?? '—');
+                                    $lines[] = __('Bed') . ': ' . e($bed->bed_number);
+                                } else {
+                                    $lines[] = '<span class="text-warning-600">' . __('No active hostel allocation found.') . '</span>';
+                                }
+
+                                return new \Illuminate\Support\HtmlString(implode('<br>', $lines));
+                            })
+                            ->columnSpanFull(),
+                    ])->columns(2),
+
+                Forms\Components\Section::make()
+                    ->schema([
                         Forms\Components\Hidden::make('requester_id')
                             ->default(fn () => Auth::id()),
                         Forms\Components\Select::make('type')
@@ -67,7 +155,12 @@ class HostelOutPassResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('student.first_name')->searchable(),
+                Tables\Columns\TextColumn::make('student.first_name')
+                    ->label(__('Student'))
+                    ->formatStateUsing(fn ($record) => $record->student
+                        ? $record->student->first_name . ' ' . $record->student->last_name
+                        : '—')
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('type'),
                 Tables\Columns\TextColumn::make('status')->badge(),
                 Tables\Columns\TextColumn::make('expected_departure')->dateTime(),

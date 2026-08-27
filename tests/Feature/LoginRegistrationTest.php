@@ -80,6 +80,7 @@ class LoginRegistrationTest extends TestCase
             ->set('regIdentifier', $this->studentId)
             ->set('regEmail', 'name_max@example.com')
             ->set('regRole', 'student')
+            ->set('regAgreeTerms', true)
             ->call('registerAccount')
             ->assertStatus(200)
             ->assertHasErrors(['regName' => 'max']);
@@ -94,6 +95,7 @@ class LoginRegistrationTest extends TestCase
             ->set('regIdentifier', $this->studentId)
             ->set('regEmail', 'not-an-email')
             ->set('regRole', 'student')
+            ->set('regAgreeTerms', true)
             ->call('registerAccount')
             ->assertHasErrors(['regEmail' => 'email']);
     }
@@ -121,6 +123,7 @@ class LoginRegistrationTest extends TestCase
             ->set('regIdentifier', $this->studentId)
             ->set('regEmail', $email)
             ->set('regRole', 'student')
+            ->set('regAgreeTerms', true)
             ->call('registerAccount')
             ->assertSet('regSubmitted', true);
 

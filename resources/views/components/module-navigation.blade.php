@@ -56,7 +56,9 @@
     .sc-module-navigation {
         position: sticky;
         top: 0;
-        z-index: 30;
+        /* Must stay BELOW the Filament topbar (z-20) so the user/profile
+           dropdown is never painted underneath this bar on dashboard pages. */
+        z-index: 10;
         margin: 1.5rem 0 1.25rem;
         padding-inline-start: 1.25rem;
         padding-inline-end: 1.25rem;

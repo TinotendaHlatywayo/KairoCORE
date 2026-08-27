@@ -64,10 +64,6 @@ class ModuleVisibilityManager
      */
     public static function isPageVisible(string $moduleKey, string $pageKey): bool
     {
-        if (! self::isVisible($moduleKey)) {
-            return false;
-        }
-
         $schoolId = self::schoolId();
         if (! $schoolId) {
             return true; // Default visible during super-admin platform context
@@ -88,6 +84,9 @@ class ModuleVisibilityManager
         // UserAccount* / SaaSBilling* would otherwise match 'Account'/'Billing'.
         if (str_contains($class, 'Homework') || str_contains($class, 'Lesson')) {
             return self::isVisible('lms');
+        }
+        if (str_contains($class, 'DigitalAssessment') || str_contains($class, 'QuestionBank')) {
+            return self::isVisible('digital_assessment');
         }
         if (str_contains($class, 'Knowledge')) {
             return self::isVisible('knowledge');
@@ -164,6 +163,9 @@ class ModuleVisibilityManager
         }
         if (str_contains($path, '/hostel') || str_contains($path, '/boarding')) {
             return self::isVisible('boarding');
+        }
+        if (str_contains($path, '/digital-assessments') || str_contains($path, '/question-bank')) {
+            return self::isVisible('digital_assessment');
         }
         if (str_contains($path, '/clinic') || str_contains($path, '/medical')) {
             return self::isVisible('clinic');

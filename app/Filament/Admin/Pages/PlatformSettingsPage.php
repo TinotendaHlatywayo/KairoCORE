@@ -156,6 +156,40 @@ class PlatformSettingsPage extends Page implements HasForms
                                     ->default(platform_email_address())
                                     ->helperText(__('Where new-school-registration emails are delivered (e.g. twaynehlatywayo09@gmail.com).')),
                             ])->columns(1),
+
+                        Tab::make('Email Branding')
+                            ->icon('heroicon-o-envelope-open')
+                            ->schema([
+                                Placeholder::make('email_branding_intro')
+                                    ->label(__('Platform Email Branding'))
+                                    ->content(new HtmlString(
+                                        'These details brand every email <strong>the platform itself</strong> sends — registration alerts to administrators, billing receipts and dunning notices. '
+                                        .'Schools configure branding for their own automatically-sent emails in their own workspace settings.'
+                                    ))
+                                    ->columnSpanFull(),
+                                FileUpload::make('email_logo_path')
+                                    ->label(__('Email logo'))
+                                    ->image()
+                                    ->imageEditor()
+                                    ->directory('platform/email-branding')
+                                    ->maxSize(2048)
+                                    ->helperText(__('Shown at the top of outgoing platform emails. Falls back to the console logo when empty.')),
+                                TextInput::make('email_company_name')
+                                    ->label(__('Company / platform name'))
+                                    ->default(config('app.name'))
+                                    ->maxLength(120),
+                                TextInput::make('email_company_address')
+                                    ->label(__('Address'))
+                                    ->maxLength(255),
+                                TextInput::make('email_company_phone')
+                                    ->label(__('Phone number'))
+                                    ->tel()
+                                    ->maxLength(40),
+                                TextInput::make('email_company_email')
+                                    ->label(__('Contact email address'))
+                                    ->email()
+                                    ->maxLength(120),
+                            ])->columns(2),
                     ]),
             ])
             ->statePath('data');

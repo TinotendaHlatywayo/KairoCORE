@@ -13,7 +13,7 @@ class PlatformBackupService
     public function executeFullBackup(): PlatformBackup
     {
         $timestamp = now()->format('Y-m-d_His');
-        $fileName = "SchoolCore_PLATFORM_SNAP_{$timestamp}.zip";
+        $fileName = "Kairo CORE_PLATFORM_SNAP_{$timestamp}.zip";
         $tempPath = storage_path('app/platform_temp_snapshots');
 
         if (! file_exists($tempPath)) {
@@ -74,7 +74,7 @@ class PlatformBackupService
 
     private function compileFullSchemaAndData(): string
     {
-        $sql = "-- SchoolCore Global Enterprise Database Snapshot\n";
+        $sql = "-- Kairo CORE Global Enterprise Database Snapshot\n";
         $sql .= '-- Timestamp: '.now()->toDateTimeString()."\n\n";
         $sql .= "SET FOREIGN_KEY_CHECKS=0;\n\n";
 

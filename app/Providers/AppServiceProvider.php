@@ -69,6 +69,15 @@ class AppServiceProvider extends ServiceProvider
         // Deliberately scoped to local so production stays lean.
         if ($this->app->environment('local')) {
             Model::shouldBeStrict();
+
+            // A missed eager-load must never take down a whole page: log the
+            // violation as an N+1 warning instead of throwing. The other
+            // strict guards (accessing missing attributes, silently discarding
+            // non-fillable input) remain fatal because they indicate real
+            // data-integrity bugs.
+            Model::handleLazyLoadingViolationUsing(function ($model, string $key): void {
+                report(new \Illuminate\Database\LazyLoadingViolationException($model, $key));
+            });
         }
 
         // 0. Register the server's TrueType fonts with DomPDF so the finance
@@ -100,7 +109,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         RateLimiter::for('rate_limit:registration', function ($request) {
-            return Limit::perHour(3)->by($request->ip());
+            return Limit::perMinute(20)->by($request->ip());
         });
 
         RateLimiter::for('rate_limit:exports', function ($request) {
@@ -133,6 +142,7 @@ class AppServiceProvider extends ServiceProvider
             $this->loadMigrationsFrom(base_path('Modules/Library/Database/Migrations'));
             $this->loadMigrationsFrom(base_path('Modules/Knowledge/Database/Migrations'));
             $this->loadMigrationsFrom(base_path('Modules/Inventory/Database/Migrations'));
+            $this->loadMigrationsFrom(base_path('Modules/DigitalAssessment/Database/Migrations'));
         }
 
         // 2. Force Livewire's internal update endpoint to run through the Tenant Resolver
@@ -154,11 +164,15 @@ class AppServiceProvider extends ServiceProvider
         // reverse-map its name back to a class on subsequent update requests,
         // which throws LivewireReleaseTokenMismatchException and 419s the send.
         Livewire::component('communication.chat-workspace', ChatWorkspace::class);
+        Livewire::component('assessment.take-assessment', \App\Livewire\Assessment\TakeAssessment::class);
+        Livewire::component('assessment.marking-queue', \App\Livewire\Assessment\MarkingQueue::class);
 
         // 3. Register the strict platform policy mapping
         Gate::policy(School::class, SchoolPolicy::class);
         Gate::policy(CmsPage::class, CmsPagePolicy::class);
         Gate::policy(CmsWebsite::class, CmsWebsitePolicy::class);
+        Gate::policy(\Modules\DigitalAssessment\Models\QuestionBank::class, \Modules\DigitalAssessment\Policies\QuestionBankPolicy::class);
+        Gate::policy(\Modules\DigitalAssessment\Models\DigitalAssessment::class, \Modules\DigitalAssessment\Policies\DigitalAssessmentPolicy::class);
 
         // 4. Global Autonomic Auditing Engine: Intercepts all database changes globally
         Event::listen('eloquent.*', function ($event, array $models) {

@@ -10,6 +10,8 @@ use Modules\Reports\Models\ReportSchedule;
 
 class ReportingDashboardOverview extends BaseWidget
 {
+    protected static ?int $sort = 4;
+
     protected function getStats(): array
     {
         $schoolId = current_tenant()?->id;
@@ -18,11 +20,19 @@ class ReportingDashboardOverview extends BaseWidget
             return [];
         }
 
+        $compiledTrend = collect(range(6, 0))->map(function ($daysAgo) use ($schoolId) {
+            return GeneratedReport::withoutGlobalScopes()
+                ->where('school_id', $schoolId)
+                ->whereDate('created_at', now()->subDays($daysAgo)->toDateString())
+                ->count();
+        })->all();
+
         return [
             Stat::make('Total Compiled Reports', GeneratedReport::where('school_id', $schoolId)->count())
                 ->description(__('Total historical report runs stored in archive'))
                 ->descriptionIcon('heroicon-m-document-duplicate')
-                ->color('success'),
+                ->color('success')
+                ->chart($compiledTrend),
 
             Stat::make('Saved Custom Templates', EnterpriseReportTemplate::where('school_id', $schoolId)->count())
                 ->description(__('Custom layouts configured for re-run extraction'))

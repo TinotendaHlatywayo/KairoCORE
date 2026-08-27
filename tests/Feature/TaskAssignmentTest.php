@@ -150,23 +150,66 @@ class TaskAssignmentTest extends TestCase
     {
         $user = $this->admin();
 
-        $student = Student::where('school_id', 15)
-            ->whereNotNull('user_id')
-            ->whereHas('currentEnrollment', fn ($q) => $q->where('section_id', 3))
-            ->first();
+        // Self-sufficient fixture: the dev database cannot be relied on to
+        // always contain a user-linked student enrolled in section 3.
+        $sectionId = DB::table('sections')->where('school_id', 15)->orderBy('id')->value('id');
+        $this->assertNotNull($sectionId, 'School 15 must have at least one section');
 
-        $this->assertNotNull($student);
-
-        Livewire::test(MyDay::class)
-            ->call('openTaskModal', now()->toDateString())
-            ->set('taskForm.title', 'Class task')
-            ->set('taskForm.assignee_spec', json_encode(['mode' => 'students', 'scope' => 'class', 'section_id' => 3]))
-            ->call('saveTask');
-
-        $this->assertDatabaseHas('user_tasks', [
-            'title' => 'Class task',
-            'assigned_to_id' => $student->user_id,
+        $suffix = uniqid();
+        $linkedUser = User::create([
+            'school_id' => 15,
+            'name' => 'Class Fixture Student',
+            'email' => "class.fixture.{$suffix}@demo.schoolcore.test",
+            'password' => bcrypt(\Illuminate\Support\Str::random(64)),
+            'account_status' => 'active',
+            'requested_role' => 'student',
         ]);
+
+        $student = Student::create([
+            'school_id' => 15,
+            'user_id' => $linkedUser->id,
+            'student_id_number' => 'TEST-TASK-'.strtoupper($suffix),
+            'admission_number' => 'TEST-TADM-'.strtoupper($suffix),
+            'first_name' => 'Class',
+            'last_name' => 'Fixture',
+            'gender' => 'female',
+            'date_of_birth' => now()->subYears(14)->toDateString(),
+            'admission_date' => now()->startOfYear()->toDateString(),
+            'status' => 'active',
+        ]);
+
+        $year = \Modules\Academics\Models\AcademicYear::withoutGlobalScopes()->where('school_id', 15)->orderBy('id')->first()
+            ?? \Modules\Academics\Models\AcademicYear::create([
+                'school_id' => 15, 'name' => now()->format('Y').' Academic Year', 'is_active' => true,
+                'start_date' => now()->startOfYear(), 'end_date' => now()->endOfYear(),
+            ]);
+
+        $enrollment = \Modules\Students\Models\Enrollment::create([
+            'school_id' => 15,
+            'student_id' => $student->id,
+            'academic_year_id' => $year->id,
+            'course_id' => DB::table('sections')->where('id', $sectionId)->value('course_id'),
+            'section_id' => $sectionId,
+        ]);
+
+        try {
+            Livewire::test(MyDay::class)
+                ->call('openTaskModal', now()->toDateString())
+                ->set('taskForm.title', 'Class task')
+                ->set('taskForm.assignee_spec', json_encode(['mode' => 'students', 'scope' => 'class', 'section_id' => $sectionId]))
+                ->call('saveTask');
+
+            $this->assertDatabaseHas('user_tasks', [
+                'title' => 'Class task',
+                'assigned_to_id' => $linkedUser->id,
+            ]);
+        } finally {
+            // Remove the fixture so repeated runs stay clean.
+            \Modules\Students\Models\Enrollment::withoutGlobalScopes()->whereKey($enrollment->id)->delete();
+            \App\Models\UserTask::where('assigned_to_id', $linkedUser->id)->delete();
+            $student->forceDelete();
+            $linkedUser->forceDelete();
+        }
     }
 
     public function test_edit_task_shows_single_assignee_spec(): void

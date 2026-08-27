@@ -4,17 +4,13 @@ namespace App\Notifications;
 
 use App\Models\School;
 use App\Models\User;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Modules\Admin\Enums\EmailCategory;
 use Modules\Admin\Services\TenantEmailConfigurationService;
 
-class AccountActivationNotification extends Notification implements ShouldQueue
+class AccountActivationNotification extends Notification
 {
-    use Queueable;
-
     protected School $school;
 
     protected User $user;
@@ -39,28 +35,36 @@ class AccountActivationNotification extends Notification implements ShouldQueue
 
         $school = $this->school;
 
-        $message = (new MailMessage)
-            ->subject(__('Activate Your '.($school->name ?: 'SchoolCore').' Account'))
-            ->greeting(__('Hello '.$this->user->name.','))
-            ->line(__('Your registration at **'.$school->name.'** is ready to be activated.'))
-            ->line(__('To complete setting up your account, please click the secure activation link below to choose your username and secure password:'))
-            ->action(__('Activate Account Now'), $activationUrl)
-            ->line(__('This activation link is valid for :hours hours and can only be used once.', ['hours' => config('auth.activation_token_ttl_hours', 48)]));
-
-        if (filled($school->phone_number)) {
-            $message->line(__('School contact: ').$school->phone_number);
-        }
-
-        if (filled($school->physical_address)) {
-            $message->line(__('School address: ').$school->physical_address);
-        }
-
-        $message->line(__('Thank you for joining us!'));
+        $branding = email_branding($school);
 
         // Send from the school's own mailbox whenever possible. A configured
         // tenant mailer (Communication category) wins; otherwise fall back to
         // the school's recorded contact address.
         $emailConfig = app(TenantEmailConfigurationService::class);
+
+        $message = (new MailMessage)
+            ->subject(__('Activate your '.$branding['company_name'].' account'))
+            ->view('emails.brand', brand_email_view_data([
+                'logoUrl' => $branding['logo_url'],
+                'companyName' => $branding['company_name'],
+                'companyAddress' => $branding['company_address'],
+                'companyPhone' => $branding['company_phone'],
+                'companyEmail' => $branding['company_email'],
+                'heading' => __('You are one step away'),
+                'greeting' => __('Hello :name,', ['name' => $this->user->name]),
+                'introLines' => [
+                    __('Your account at <strong>:school</strong> has been created and is ready to be activated.', ['school' => e($school->name ?: $branding['company_name'])]),
+                    __('For security, every account starts locked. Set your username and a strong password using the button below — the secure link is valid for :hours hours and can only be used once.', ['hours' => config('auth.activation_token_ttl_hours', 48)]),
+                    __('If you were not expecting this invitation, you can safely ignore this email.'),
+                ],
+                'actionUrl' => $activationUrl,
+                'actionText' => __('Activate my account'),
+                'outroLines' => [
+                    __('Welcome aboard — we are glad to have you with us!'),
+                ],
+                'signature' => __('The :name Team', ['name' => $branding['company_name']]),
+                'footerNote' => __('You received this email because an account was created for you at :school.', ['school' => $school->name ?: $branding['company_name']]),
+            ]));
 
         if ($school->email_address) {
             $message->from($school->email_address, $school->name ?: null);

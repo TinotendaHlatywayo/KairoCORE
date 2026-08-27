@@ -39,13 +39,20 @@ class HomeworkResource extends Resource
         return __(static::$navigationLabel);
     }
 
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        // The Class column renders section→course names; eager loading keeps
+        // strict mode (Model::shouldBeStrict) from flagging N+1 lazy loads.
+        return parent::getEloquentQuery()->with(['section.course', 'subject']);
+    }
+
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
                 Forms\Components\Grid::make(3)
                     ->schema([
-                        Forms\Components\Section::make('Homework Details')
+                        Forms\Components\Section::make(__('Homework Details'))
                             ->schema([
                                 // 1. Select ANY Class Stream configured in the school
                                 Forms\Components\Select::make('section_id')
@@ -85,7 +92,7 @@ class HomeworkResource extends Resource
                                     ->placeholder(__('Enter instructions for students or parent supervision guidance...')),
                             ])->columnSpan(2),
 
-                        Forms\Components\Section::make('Attachments & Materials')
+                        Forms\Components\Section::make(__('Attachments & Materials'))
                             ->description(__('Upload files or attach learning videos.'))
                             ->schema([
                                 Forms\Components\FileUpload::make('file_path')

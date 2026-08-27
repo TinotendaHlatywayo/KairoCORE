@@ -43,17 +43,17 @@ class FeeStructureResource extends Resource
     public static function form(Form $form): Form
     {
         $ratingOptions = [
-            'outstanding' => 'Outstanding (10.0)',
-            'excellent' => 'Excellent (8.5)',
-            'very_good' => 'Very Good (7.0)',
-            'good' => 'Good (5.5)',
-            'satisfactory' => 'Satisfactory (4.0)',
-            'needs_improvement' => 'Needs Improvement (2.0)',
+            'outstanding' => __('Outstanding (10.0)'),
+            'excellent' => __('Excellent (8.5)'),
+            'very_good' => __('Very Good (7.0)'),
+            'good' => __('Good (5.5)'),
+            'satisfactory' => __('Satisfactory (4.0)'),
+            'needs_improvement' => __('Needs Improvement (2.0)'),
         ];
 
         return $form
             ->schema([
-                Forms\Components\Section::make('Fee Structure Parameters')
+                Forms\Components\Section::make(__('Fee Structure Parameters'))
                     ->schema([
                         Forms\Components\Select::make('fee_category_id')
                             ->relationship('feeCategory', 'name')
@@ -131,7 +131,7 @@ class FeeStructureResource extends Resource
 
                 Tables\Columns\TextColumn::make('course.name')
                     ->label(__('Class Level'))
-                    ->default('All (Scoped)'),
+                    ->default(__('All (Scoped)')),
 
                 Tables\Columns\TextColumn::make('term.name')
                     ->label(__('Term'))

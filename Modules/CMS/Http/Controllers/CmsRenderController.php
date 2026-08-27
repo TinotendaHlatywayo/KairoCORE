@@ -143,6 +143,7 @@ class CmsRenderController extends Controller
                         'hide_from_nav' => false,
                         'sort_order' => 4,
                         'page_template' => $website->active_template,
+                        'page_theme' => $website->active_template,
                         'blocks' => $blocks,
                         'draft_blocks' => $blocks,
                     ]);
@@ -161,7 +162,7 @@ class CmsRenderController extends Controller
                 'students_count' => DB::table('students')->where('school_id', $school->id)->count(),
                 'courses_count' => DB::table('courses')->where('school_id', $school->id)->count(),
                 'books_count' => DB::table('inventory_items')->where('school_id', $school->id)->count(),
-                'teachers_count' => DB::table('users')->where('school_id', $school->id)->count(),
+                'teachers_count' => DB::table('users')->where('school_id', $school->id)->whereIn('requested_role', ['teacher', 'staff'])->count(),
             ];
 
             $news = CmsTemplateService::resolveDynamicBlockData('news_feed', $school->id);
@@ -169,12 +170,15 @@ class CmsRenderController extends Controller
             $staff = CmsTemplateService::resolveDynamicBlockData('staff_directory', $school->id);
 
             $templates = CmsTemplateService::getTemplates();
-            $pageTemplate = CmsTemplateService::canonicalTemplate($page->page_template ?? $website->active_template);
+            $pageTemplate = CmsTemplateService::resolvePageTheme($page->page_theme, $page->page_template, $website->active_template);
             $activeTheme = $templates[$pageTemplate] ?? $templates['heritage-editorial'];
             $schemaMarkup = CmsSeoService::generateSchemaJson($school, $website, $page);
             $navigationPages = CmsPage::where('cms_website_id', $website->id)
                 ->where('is_published', true)->where('hide_from_nav', false)->orderBy('sort_order')->get();
 
+            // Draft-first: the live site renders the PUBLISHED blocks. The
+            // studio preview (authenticated) renders draft_blocks so editors
+            // can review changes before publishing them.
             $blocks = $preview && Auth::check() && ! empty($page->draft_blocks)
                 ? $page->draft_blocks
                 : ($page->blocks ?? []);
@@ -199,7 +203,7 @@ class CmsRenderController extends Controller
 
     public function preview(Request $request, string $slug)
     {
-        return $this->render($request, $slug, true);
+        return $this->render($request, null, $slug, true);
     }
 
     public function submitApplication(Request $request)
@@ -236,7 +240,7 @@ class CmsRenderController extends Controller
             // A public form must never be able to attach an application to a
             // course belonging to another school.
             'course_id' => ['required', Rule::exists('courses', 'id')->where('school_id', $school->id)],
-            'applying_year' => ['nullable', 'string', 'max:10'],
+            'applying_year' => ['nullable', 'string', 'max:50'],
             'applying_term' => ['nullable', 'string', 'max:50'],
             // Supporting documents are optional at application time. They can
             // be requested by admissions during review instead of silently
@@ -413,7 +417,7 @@ class CmsRenderController extends Controller
             'last_name' => ['required', 'string', 'max:100'],
             'email' => 'required|email|max:255',
             'phone' => ['required', 'string', 'max:30'],
-            'message' => __('required|string|min:2|max:5000'),
+            'message' => 'required|string|min:2|max:5000',
         ]);
 
         $website = CmsWebsite::where('school_id', $school->id)->where('is_template_site', false)->first();
@@ -499,6 +503,7 @@ class CmsRenderController extends Controller
                     'is_homepage' => $slug === 'home',
                     'is_published' => true,
                     'page_template' => $activeTemplate,
+                    'page_theme' => $activeTemplate,
                     'blocks' => $sp['blocks'],
                 ]);
             }
