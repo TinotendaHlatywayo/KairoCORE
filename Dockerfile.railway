@@ -1,6 +1,6 @@
 FROM php:8.3-fpm-alpine
 
-# System deps (keep runtime libs on Alpine — gd needs them loaded)
+# System deps (keep runtime libs on Alpine)
 RUN apk add --no-cache \
         nginx \
         supervisor \
@@ -18,20 +18,25 @@ RUN apk add --no-cache \
 # Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
+ENV COMPOSER_ALLOW_SUPERUSER=1
+
 WORKDIR /var/www/html
 
-# Step 1: Install deps only (no scripts, no autoload — app code not here yet)
+# Step 1: Install dependencies only
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
 
 # Step 2: Copy application code
 COPY . .
 
-# Step 3: Generate autoloader WITHOUT running scripts (scripts run in start.sh)
-RUN composer dump-autoload --optimize --no-dev --no-scripts
+# Force cache bust for all subsequent steps (bump this number to rebuild)
+ARG CACHE_BUST=2
 
-# Step 4: Create Vite build placeholder (so artisan doesn't crash during cache:build)
+# Step 3: Create Vite placeholder BEFORE autoloader
 RUN mkdir -p public/build && echo '{}' > public/build/manifest.json
+
+# Step 4: Generate autoloader only (no scripts - they run in start.sh)
+RUN composer dump-autoload --optimize --no-dev --no-scripts
 
 # Copy Railway configs
 COPY docker/railway/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
