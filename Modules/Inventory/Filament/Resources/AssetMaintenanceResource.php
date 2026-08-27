@@ -42,7 +42,7 @@ class AssetMaintenanceResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Service Log Details')
+                Forms\Components\Section::make(__('Service Log Details'))
                     ->schema([
                         Forms\Components\Select::make('fixed_asset_id')
                             ->relationship('fixedAsset', 'asset_number')
@@ -62,7 +62,7 @@ class AssetMaintenanceResource extends Resource
                             ->default('preventive'),
                     ])->columns(3),
 
-                Forms\Components\Section::make('Schedule Frequency')
+                Forms\Components\Section::make(__('Schedule Frequency'))
                     ->schema([
                         Forms\Components\Select::make('schedule_type')
                             ->options([
@@ -81,7 +81,7 @@ class AssetMaintenanceResource extends Resource
                             ->required(),
                     ])->columns(3),
 
-                Forms\Components\Section::make('Execution Reconciliation')
+                Forms\Components\Section::make(__('Execution Reconciliation'))
                     ->schema([
                         Forms\Components\DatePicker::make('completed_date'),
                         Forms\Components\TextInput::make('cost')

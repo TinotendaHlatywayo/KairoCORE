@@ -50,7 +50,7 @@
     // ── Title / body typography overrides ──
     $titleFontRaw = $block['styles']['title_font'] ?? '';
     $titleFontCss = ($titleFontRaw === '' || $titleFontRaw === $fontSecondary)
-        ? 'var(--sc-font-display)'
+        ? 'var(--sc-font-heading, var(--sc-font-display))'
         : "'".$titleFontRaw."', sans-serif";
 
     $titleColorRaw = $block['styles']['title_color'] ?? '';
@@ -268,25 +268,25 @@
             <hr class="sc-divider">
 
         @elseif($block['type'] === 'admissions_block')
-            @include('modules.cms.sections.admissions-form')
+            @include('modules.cms.sections.admissions-form', ['block' => $block, 'v' => $v])
 
         @elseif($block['type'] === 'cylinder_carousel')
-            @include('modules.cms.sections.cylinder-carousel')
+            @include('modules.cms.sections.cylinder-carousel', ['block' => $block, 'v' => $v])
 
         @elseif($block['type'] === 'cinematic_scroll')
             @include('modules.cms.sections.cinematic-scroll', ['block' => $block, 'v' => $v, 'theme' => $theme, 'stats' => $stats ?? []])
 
         @elseif($block['type'] === 'orbit_gallery')
-            @include('modules.cms.sections.orbit-gallery', ['block' => $block])
+            @include('modules.cms.sections.orbit-gallery', ['block' => $block, 'v' => $v])
 
         @elseif($block['type'] === 'coverflow_carousel')
-            @include('modules.cms.sections.coverflow-carousel', ['block' => $block])
+            @include('modules.cms.sections.coverflow-carousel', ['block' => $block, 'v' => $v])
 
         @elseif($block['type'] === 'marquee_ticker')
-            @include('modules.cms.sections.marquee-ticker', ['block' => $block])
+            @include('modules.cms.sections.marquee-ticker', ['block' => $block, 'v' => $v])
 
         @elseif($block['type'] === 'kinetic_reveal_heading')
-            @include('modules.cms.sections.kinetic-reveal-heading', ['block' => $block])
+            @include('modules.cms.sections.kinetic-reveal-heading', ['block' => $block, 'v' => $v])
 
         @elseif($block['type'] === 'scroll_highlight_text')
             @include('modules.cms.sections.scroll-highlight-text', ['block' => $block])

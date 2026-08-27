@@ -45,13 +45,19 @@ class StudentCsvActionsTest extends TestCase
         // These tests exercise the students module directly, so enable it
         // regardless of the tenant's configured module toggles and restore
         // the real value afterwards.
+        $school = School::where('subdomain', 'rujeko')->first() ?? School::first();
+        $this->assertNotNull($school, 'A school record is required.');
+        $this->actingAsTenant($school);
+
         $this->studentsModuleSaved = SystemSetting::get('modules', 'students', '1');
         SystemSetting::set('modules', 'students', '1');
     }
 
     protected function tearDown(): void
     {
-        SystemSetting::set('modules', 'students', $this->studentsModuleSaved);
+        if ($this->studentsModuleSaved !== null) {
+            SystemSetting::set('modules', 'students', $this->studentsModuleSaved);
+        }
 
         parent::tearDown();
     }

@@ -15,6 +15,7 @@ use Livewire\Livewire;
 use Modules\Finance\Http\Controllers\FinanceDocumentVerificationController;
 use Modules\Finance\Models\FinanceDocumentTemplate;
 use Modules\Finance\Models\Invoice;
+use Modules\Finance\Models\InvoiceItem;
 use Modules\Finance\Services\BillingDocumentSettingsService;
 
 class FinanceTemplateSmokeTest extends TestCase
@@ -28,6 +29,7 @@ class FinanceTemplateSmokeTest extends TestCase
         $school = School::find(15);
         app()->instance('current_tenant', $school);
         URL::defaults(['tenant' => $school->subdomain]);
+        $this->withSession(['locale' => 'en']);
     }
 
     public function test_finance_template_pages_render_live_preview(): void
@@ -151,26 +153,69 @@ class FinanceTemplateSmokeTest extends TestCase
         }
     }
 
+    /**
+     * Self-contained finance fixture: the dev database no longer guarantees
+     * an invoice with a linked student, so every run creates its own.
+     *
+     * @return array{0: \Modules\Students\Models\Student, 1: Invoice}
+     */
+    private function makeFinanceFixture(float $paid = 40.00): array
+    {
+        $student = \Modules\Students\Models\Student::create([
+            'school_id' => 15,
+            'student_id_number' => 'TEST-FIN-'.uniqid(),
+            'admission_number' => 'TEST-FADM-'.uniqid(),
+            'first_name' => 'Finance',
+            'last_name' => 'Fixture',
+            'gender' => 'male',
+            'date_of_birth' => now()->subYears(14)->toDateString(),
+            'admission_date' => now()->startOfYear()->toDateString(),
+            'status' => 'active',
+        ]);
+
+        $invoice = Invoice::create([
+            'school_id' => 15,
+            'student_id' => $student->id,
+            'invoice_number' => 'TEST-FINV-'.strtoupper(uniqid()),
+            'currency' => 'USD',
+            'subtotal_amount' => 100,
+            'total_amount' => 100,
+            'paid_amount' => $paid,
+            'balance_amount' => max(0, 100 - $paid),
+            'status' => $paid >= 100 ? 'paid' : ($paid > 0 ? 'partial' : 'unpaid'),
+            'due_date' => now()->addDays(30)->toDateString(),
+        ]);
+
+        InvoiceItem::create([
+            'invoice_id' => $invoice->id,
+            'name' => 'Tuition Fees',
+            'amount' => 100,
+        ]);
+
+        return [$student, $invoice->refresh()];
+    }
+
     public function test_finance_verification_route_and_page_render(): void
     {
         $route = app('router')->getRoutes()->getByName('finance.verify');
         $this->assertNotNull($route, 'finance.verify route must be registered');
 
-        $invoice = Invoice::with(['student', 'items'])
-            ->where('school_id', 15)
-            ->whereHas('items')
-            ->orderBy('id', 'desc')
-            ->first();
-        $this->assertNotNull($invoice);
+        [$student, $invoice] = $this->makeFinanceFixture();
 
-        $controller = app(FinanceDocumentVerificationController::class);
+        try {
+            $controller = app(FinanceDocumentVerificationController::class);
 
-        $html = $controller->verify(new Request(['type' => 'invoice']), $invoice->integrity_hash)
-            ->render();
-        $this->assertStringContainsString('VERIFIED GENUINE', $html);
-        $this->assertStringContainsString($invoice->student->full_name, $html);
-        $this->assertStringContainsString('Outstanding Balance', $html);
-        $this->assertStringContainsString($invoice->integrity_hash, $html);
+            $html = $controller->verify(new Request(['type' => 'invoice']), $invoice->integrity_hash)
+                ->render();
+            $this->assertStringContainsString('VERIFIED GENUINE', $html);
+            $this->assertStringContainsString($student->full_name, $html);
+            $this->assertStringContainsString('Outstanding Balance', $html);
+            $this->assertStringContainsString($invoice->integrity_hash, $html);
+        } finally {
+            InvoiceItem::where('invoice_id', $invoice->id)->delete();
+            $invoice->delete();
+            $student->forceDelete();
+        }
     }
 
     public function test_active_template_config_appears_in_actual_document(): void
@@ -200,18 +245,28 @@ class FinanceTemplateSmokeTest extends TestCase
             ],
         ]);
 
-        try {
-            $invoice = Invoice::with(['student', 'term.academicYear', 'items'])
-                ->where('school_id', 15)->whereHas('items')->orderBy('id', 'desc')->first();
-            $this->assertNotNull($invoice);
+        // Term context for the PDF view (term.academicYear chain).
+        $year = \Modules\Academics\Models\AcademicYear::firstOrCreate(
+            ['school_id' => 15, 'is_active' => true],
+            ['name' => now()->format('Y').' Academic Year', 'start_date' => now()->startOfYear(), 'end_date' => now()->endOfYear()]
+        );
+        $term = \Modules\Academics\Models\Term::where('school_id', 15)->where('academic_year_id', $year->id)->orderBy('id')->first()
+            ?? \Modules\Academics\Models\Term::create([
+                'school_id' => 15, 'academic_year_id' => $year->id, 'name' => 'Term 1',
+                'start_date' => now()->startOfYear(), 'end_date' => now()->startOfYear()->addMonths(3),
+            ]);
 
+        [$student, $invoice] = $this->makeFinanceFixture();
+        $invoice->update(['term_id' => $term->id]);
+
+        try {
             $resolved = FinanceDocumentTemplate::resolveFor(15, 'invoice');
             $this->assertSame($tpl->id, $resolved->id);
 
             $html = view('modules.finance.invoice-pdf', [
                 'invoice' => $invoice,
                 'school' => $school,
-                'student' => $invoice->student,
+                'student' => $student,
                 'config' => BillingDocumentSettingsService::get(),
                 'template' => $resolved,
             ])->render();
@@ -225,6 +280,9 @@ class FinanceTemplateSmokeTest extends TestCase
             FinanceDocumentTemplate::where('school_id', 15)->where('document_type', 'invoice')->update(['is_active' => false]);
             $tpl->delete();
             @unlink(public_path('storage/'.$storedPath));
+            InvoiceItem::where('invoice_id', $invoice->id)->delete();
+            $invoice->delete();
+            $student->forceDelete();
         }
     }
 }

@@ -67,7 +67,7 @@
                         type="button"
                         class="sc-sched-view {{ $viewMode === $key ? 'is-active' : '' }}"
                         wire:click="setView('{{ $key }}')"
-                    >{{ $label }}</button>
+                    >{{ __($label) }}</button>
                 @endforeach
             </div>
         </div>
@@ -75,35 +75,35 @@
         {{-- ═══ TOOLBAR ═══ --}}
         <div class="sc-sched-toolbar">
             <div class="sc-sched-nav">
-                <a href="{{ $this->homeUrl() }}" class="sc-sched-pill sc-sched-home" title="Back to home" aria-label="Back to home">
+                <a href="{{ $this->homeUrl() }}" class="sc-sched-pill sc-sched-home" title="{{ __('Back to home') }}" aria-label="{{ __('Back to home') }}">
                     <x-filament::icon icon="heroicon-o-home" class="w-3.5 h-3.5" />
                     <span>{{ __('Home') }}</span>
                 </a>
                 <button type="button" class="sc-sched-pill" wire:click="goToday">{{ __('Today') }}</button>
-                <button type="button" class="sc-iconbtn" @click="$wire.jumpYear(-1)" aria-label="Previous year" title="Previous year (Shift+PageUp)">
+                <button type="button" class="sc-iconbtn" @click="$wire.jumpYear(-1)" aria-label="{{ __('Previous year') }}" title="{{ __('Previous year') }} (Shift+PageUp)">
                     <x-filament::icon icon="heroicon-o-chevron-double-left" class="w-4 h-4" />
                 </button>
-                <button type="button" class="sc-iconbtn" wire:click="prevPeriod" aria-label="Previous" title="Previous (PageUp)">
+                <button type="button" class="sc-iconbtn" wire:click="prevPeriod" aria-label="{{ __('Previous') }}" title="{{ __('Previous') }} (PageUp)">
                     <x-filament::icon icon="heroicon-o-chevron-left" class="w-4 h-4" />
                 </button>
-                <button type="button" class="sc-iconbtn" wire:click="nextPeriod" aria-label="Next" title="Next (PageDown)">
+                <button type="button" class="sc-iconbtn" wire:click="nextPeriod" aria-label="{{ __('Next') }}" title="{{ __('Next') }} (PageDown)">
                     <x-filament::icon icon="heroicon-o-chevron-right" class="w-4 h-4" />
                 </button>
-                <button type="button" class="sc-iconbtn" @click="$wire.jumpYear(1)" aria-label="Next year" title="Next year (Shift+PageDown)">
+                <button type="button" class="sc-iconbtn" @click="$wire.jumpYear(1)" aria-label="{{ __('Next year') }}" title="{{ __('Next year') }} (Shift+PageDown)">
                     <x-filament::icon icon="heroicon-o-chevron-double-right" class="w-4 h-4" />
                 </button>
                 <span class="sc-sched-period">
                     {{ $this->viewMode === 'month' ? $this->monthGrid['label'] : ($this->viewMode === 'week' ? \Illuminate\Support\Carbon::parse($this->currentDate)->format('M j, Y') : ($this->viewMode === 'day' ? $this->dayAgenda['label'] : $this->agendaRangeLabel)) }}
                 </span>
 
-                <div class="sc-sched-stepwrap" title="What the previous/next buttons jump by">
+                <div class="sc-sched-stepwrap" title="{{ __('What the previous/next buttons jump by') }}">
                     @foreach (['auto' => 'Auto', 'week' => 'Week', 'month' => 'Month', 'year' => 'Year'] as $key => $label)
                         <button
                             wire:key="step-{{ $key }}"
                             type="button"
                             class="sc-sched-step {{ $this->step === $key ? 'is-active' : '' }}"
                             wire:click="setStep('{{ $key }}')"
-                        >{{ $label }}</button>
+                        >{{ __($label) }}</button>
                     @endforeach
                 </div>
 
@@ -112,8 +112,8 @@
                     class="sc-date-input"
                     :value="focus"
                     @change="focus = $event.target.value; $wire.jumpToDate($event.target.value)"
-                    title="Jump to a date"
-                    aria-label="Jump to a date"
+                    title="{{ __('Jump to a date') }}"
+                    aria-label="{{ __('Jump to a date') }}"
                 />
             </div>
 
@@ -136,7 +136,7 @@
                         type="button"
                         class="sc-range-chip {{ $rangePreset === $key ? 'is-active' : '' }}"
                         wire:click="setRangePreset('{{ $key }}')"
-                    >{{ $label }}</button>
+                    >{{ __($label) }}</button>
                 @endforeach
                 @if ($rangePreset === 'custom')
                     <span class="sc-range-sep">{{ __('Pick start & end on the mini calendar.') }}</span>
@@ -155,7 +155,7 @@
                         <input
                             type="search"
                             class="sc-sched-search"
-                            placeholder="Search events & tasks…"
+                            placeholder="{{ __('Search events & tasks…') }}"
                             wire:model.live.debounce.300ms="search"
                         />
                     </div>
@@ -170,7 +170,7 @@
                         <button type="button" class="sc-filter-chip {{ $assignedOnly ? 'is-on' : '' }}" wire:click="toggleFilter('assigned')">{{ __('Assigned to me') }}</button>
                         <button type="button" class="sc-filter-chip {{ $mineOnly ? 'is-on' : '' }}" wire:click="toggleFilter('mine')">{{ __('My tasks') }}</button>
                         <button type="button" class="sc-filter-chip {{ $showCompleted ? 'is-on' : '' }}" wire:click="toggleFilter('completed')">{{ __('Completed') }}</button>
-                        <button type="button" class="sc-sched-clear" wire:click="resetFilters" title="Clear filters">{{ __('✕') }}</button>
+                        <button type="button" class="sc-sched-clear" wire:click="resetFilters" title="{{ __('Clear filters') }}">{{ __('✕') }}</button>
                     </div>
                 </div>
 
@@ -182,10 +182,10 @@
                             <span class="sc-day-agenda-date">{{ $this->dayAgenda['label'] }}</span>
                         </div>
                         <div class="sc-day-agenda-adds">
-                            <button type="button" class="sc-day-agenda-add" wire:click="openEventModal('{{ $this->dayAgenda['date'] }}')" title="Add event for this day">
+                            <button type="button" class="sc-day-agenda-add" wire:click="openEventModal('{{ $this->dayAgenda['date'] }}')" title="{{ __('Add event for this day') }}">
                                 <x-filament::icon icon="heroicon-o-plus" class="sc-day-agenda-add-icon" /> {{ __('Event') }}
                             </button>
-                            <button type="button" class="sc-day-agenda-add is-task" wire:click="openTaskModal('{{ $this->dayAgenda['date'] }}')" title="Add task for this day">
+                            <button type="button" class="sc-day-agenda-add is-task" wire:click="openTaskModal('{{ $this->dayAgenda['date'] }}')" title="{{ __('Add task for this day') }}">
                                 <x-filament::icon icon="heroicon-o-plus" class="sc-day-agenda-add-icon" /> {{ __('Task') }}
                             </button>
                         </div>
@@ -208,9 +208,9 @@
                                 wire:click="{{ array_key_exists('done', $di) ? "editTask({$di['id']})" : "editEvent({$di['id']})" }}"
                                 title="{{ $di['title'] }}"
                             >
-                                <span class="sc-day-agenda-time">{{ ($di['all_day'] ?? false) ? 'All day' : ($di['start_time'] ?? $di['due_time'] ?? '') }}</span>
+                                <span class="sc-day-agenda-time">{{ ($di['all_day'] ?? false) ? __('All day') : ($di['start_time'] ?? $di['due_time'] ?? '') }}</span>
                                 <span class="sc-day-agenda-title">{{ \Illuminate\Support\Str::limit($di['title'], 22) }}</span>
-                                <span class="sc-day-agenda-badge {{ array_key_exists('done', $di) ? 'is-task' : 'is-event' }}">{{ array_key_exists('done', $di) ? 'Task' : 'Event' }}</span>
+                                <span class="sc-day-agenda-badge {{ array_key_exists('done', $di) ? 'is-task' : 'is-event' }}">{{ array_key_exists('done', $di) ? __('Task') : __('Event') }}</span>
                             </button>
                         @empty
                             <div class="sc-day-agenda-empty">
@@ -223,7 +223,7 @@
 
                 <div class="sc-picker-todayline">
                     <span class="sc-picker-todaydate">{{ \Illuminate\Support\Carbon::parse($this->currentDate)->format('D, j M Y') }}</span>
-                    <span class="sc-picker-todaytag">{{ \Illuminate\Support\Carbon::parse($this->currentDate)->isToday() ? 'Today' : '' }}</span>
+                    <span class="sc-picker-todaytag">{{ \Illuminate\Support\Carbon::parse($this->currentDate)->isToday() ? __('Today') : '' }}</span>
                 </div>
                 @foreach ($this->pickerMonths as $pm)
                     <div wire:key="picker-{{ $pm['key'] }}" class="sc-picker-month">
@@ -231,17 +231,17 @@
                             <span class="sc-picker-label">{{ $pm['label'] }}</span>
                             <div class="sc-picker-headnav">
                                 @if ($loop->first)
-                                    <button type="button" class="sc-picker-nav" wire:click="previousPickerYear" aria-label="Previous year" title="Previous year">
+                                    <button type="button" class="sc-picker-nav" wire:click="previousPickerYear" aria-label="{{ __('Previous year') }}" title="{{ __('Previous year') }}">
                                         <x-filament::icon icon="heroicon-o-chevron-double-left" class="w-3.5 h-3.5" />
                                     </button>
-                                    <button type="button" class="sc-picker-nav" wire:click="previousPickerMonth" aria-label="Previous month" title="Previous month">
+                                    <button type="button" class="sc-picker-nav" wire:click="previousPickerMonth" aria-label="{{ __('Previous month') }}" title="{{ __('Previous month') }}">
                                         <x-filament::icon icon="heroicon-o-chevron-left" class="w-3.5 h-3.5" />
                                     </button>
                                 @else
-                                    <button type="button" class="sc-picker-nav" wire:click="nextPickerMonth" aria-label="Next month" title="Next month">
+                                    <button type="button" class="sc-picker-nav" wire:click="nextPickerMonth" aria-label="{{ __('Next month') }}" title="{{ __('Next month') }}">
                                         <x-filament::icon icon="heroicon-o-chevron-right" class="w-3.5 h-3.5" />
                                     </button>
-                                    <button type="button" class="sc-picker-nav" wire:click="nextPickerYear" aria-label="Next year" title="Next year">
+                                    <button type="button" class="sc-picker-nav" wire:click="nextPickerYear" aria-label="{{ __('Next year') }}" title="{{ __('Next year') }}">
                                         <x-filament::icon icon="heroicon-o-chevron-double-right" class="w-3.5 h-3.5" />
                                     </button>
                                 @endif
@@ -419,7 +419,7 @@
                         <div class="sc-day-head">
                             <div>
                                 <h2 class="sc-day-title">{{ $this->dayAgenda['label'] }}</h2>
-                                <p class="sc-day-sub">{{ $this->dayAgenda['isToday'] ? 'Today' : \Illuminate\Support\Carbon::parse($this->dayAgenda['date'])->diffForHumans() }}</p>
+                                <p class="sc-day-sub">{{ $this->dayAgenda['isToday'] ? __('Today') : \Illuminate\Support\Carbon::parse($this->dayAgenda['date'])->diffForHumans() }}</p>
                             </div>
                             <div class="sc-day-actions">
                                 <button type="button" class="sc-btn-primary" wire:click="openEventModal('{{ $this->dayAgenda['date'] }}')">
@@ -449,16 +449,16 @@
                                 >
                                     <span class="sc-day-time">
                                         @if ($entry['all_day'] ?? false)
-                                            All day
+                                            {{ __('All day') }}
                                         @elseif ($isTask)
-                                            {{ $entry['due_time'] ?? 'Task' }}
+                                            {{ $entry['due_time'] ?? __('Task') }}
                                         @else
                                             {{ $entry['start_time'] }}@if ($entry['end_time']) – {{ $entry['end_time'] }}@endif
                                         @endif
                                     </span>
                                     @if ($isTask)
                                         <button class="sc-check {{ $entry['done'] ? 'checked' : '' }}" wire:click.stop="toggleTaskDone({{ $entry['id'] }})" type="button">
-                                            {{ $entry['done'] ? '☑' : '☐' }}
+                                            {{ $entry['done'] ? __('☑') : __('☐') }}
                                         </button>
                                         <span class="sc-day-entry-title {{ $entry['done'] ? 'is-done' : '' }}">{{ $entry['title'] }}</span>
                                         @if ($entry['important'])<span class="sc-star">{{ __('★') }}</span>@endif
@@ -484,7 +484,7 @@
                                     >
                                         <span class="sc-day-time">{{ __('Anytime') }}</span>
                                         <button class="sc-check {{ $entry['done'] ? 'checked' : '' }}" wire:click.stop="toggleTaskDone({{ $entry['id'] }})" type="button">
-                                            {{ $entry['done'] ? '☑' : '☐' }}
+                                            {{ $entry['done'] ? __('☑') : __('☐') }}
                                         </button>
                                         <span class="sc-day-entry-title {{ $entry['done'] ? 'is-done' : '' }}">{{ $entry['title'] }}</span>
                                         @if ($entry['important'])<span class="sc-star">{{ __('★') }}</span>@endif
@@ -502,7 +502,7 @@
                             <div wire:key="a-{{ $day['date'] }}" class="sc-agenda-day {{ $day['isToday'] ? 'is-today' : '' }}">
                                 <button type="button" class="sc-agenda-dayhead" wire:click="jumpToDate('{{ $day['date'] }}')">
                                     <span class="sc-agenda-label">{{ $day['label'] }}</span>
-                                    <span class="sc-agenda-date">{{ $day['isToday'] ? 'Today' : \Illuminate\Support\Carbon::parse($day['date'])->format('j M') }}</span>
+                                    <span class="sc-agenda-date">{{ $day['isToday'] ? __('Today') : \Illuminate\Support\Carbon::parse($day['date'])->format('j M') }}</span>
                                 </button>
                                 <div class="sc-agenda-entries">
                                     @foreach ($day['entries'] as $entry)
@@ -514,7 +514,7 @@
                                         >
                                             @if ($isTask)
                                                 <button class="sc-check {{ $entry['done'] ? 'checked' : '' }}" wire:click.stop="toggleTaskDone({{ $entry['id'] }})" type="button">
-                                                    {{ $entry['done'] ? '☑' : '☐' }}
+                                                    {{ $entry['done'] ? __('☑') : __('☐') }}
                                                 </button>
                                                 <span class="sc-agenda-time">{{ $entry['due_time'] ?? '—' }}</span>
                                                 <span class="sc-agenda-title {{ $entry['done'] ? 'is-done' : '' }}">{{ $entry['title'] }}</span>
@@ -522,7 +522,7 @@
                                             @else
                                                 <span class="sc-day-swatch" style="background: {{ $entry['color'] ?: 'var(--sc-primary-600)' }}"></span>
                                                 <span class="sc-agenda-time">
-                                                    {{ $entry['all_day'] ? 'All day' : $entry['start_time'] }}
+                                                    {{ $entry['all_day'] ? __('All day') : $entry['start_time'] }}
                                                 </span>
                                                 <span class="sc-agenda-title">{{ $entry['title'] }}</span>
                                             @endif
@@ -542,13 +542,13 @@
                         <div class="sc-daypanel-head">
                             <div>
                                 <div class="sc-daypanel-title">{{ $this->dayAgenda['label'] }}</div>
-                                <div class="sc-daypanel-sub">{{ $this->dayAgenda['isToday'] ? 'Today' : '' }}</div>
+                                <div class="sc-daypanel-sub">{{ $this->dayAgenda['isToday'] ? __('Today') : '' }}</div>
                             </div>
                             <div class="sc-daypanel-actions">
                                 <button type="button" class="sc-btn-primary" wire:click="openEventModal('{{ $this->dayAgenda['date'] }}')">{{ __('+ Event') }}</button>
                                 <button type="button" class="sc-btn-primary is-task" wire:click="openTaskModal('{{ $this->dayAgenda['date'] }}')">{{ __('+ Task') }}</button>
                                 <button type="button" class="sc-btn-ghost" wire:click="setView('day')">{{ __('View full day') }}</button>
-                                <button type="button" class="sc-iconbtn" wire:click="closeDayPanel" aria-label="Close day panel">
+                                <button type="button" class="sc-iconbtn" wire:click="closeDayPanel" aria-label="{{ __('Close day panel') }}">
                                     <x-filament::icon icon="heroicon-o-x-mark" class="w-4 h-4" />
                                 </button>
                             </div>
@@ -573,16 +573,16 @@
                                 >
                                     <span class="sc-daypanel-time">
                                         @if ($entry['all_day'] ?? false)
-                                            All day
+                                            {{ __('All day') }}
                                         @elseif ($isTask)
-                                            {{ $entry['due_time'] ?? 'Task' }}
+                                            {{ $entry['due_time'] ?? __('Task') }}
                                         @else
                                             {{ $entry['start_time'] }}
                                         @endif
                                     </span>
                                     @if ($isTask)
                                         <button class="sc-check {{ $entry['done'] ? 'checked' : '' }}" wire:click.stop="toggleTaskDone({{ $entry['id'] }})" type="button">
-                                            {{ $entry['done'] ? '☑' : '☐' }}
+                                            {{ $entry['done'] ? __('☑') : __('☐') }}
                                         </button>
                                     @else
                                         <span class="sc-day-swatch" style="background: {{ $entry['color'] ?: 'var(--sc-primary-600)' }}"></span>
@@ -604,8 +604,8 @@
             <div class="sc-modal" @click.self="$wire.closeEventModal()">
                 <div class="sc-modal-card">
                     <div class="sc-modal-head">
-                        <h3 class="sc-modal-title">{{ $editingEvent ? 'Edit Event' : 'Create Event' }}</h3>
-                        <button type="button" class="sc-iconbtn" wire:click="closeEventModal" aria-label="Close">
+                        <h3 class="sc-modal-title">{{ $editingEvent ? __('Edit Event') : __('Create Event') }}</h3>
+                        <button type="button" class="sc-iconbtn" wire:click="closeEventModal" aria-label="{{ __('Close') }}">
                             <x-filament::icon icon="heroicon-o-x-mark" class="w-4 h-4" />
                         </button>
                     </div>
@@ -630,7 +630,7 @@
                     <form wire:submit="saveEvent" class="sc-form">
                         <label class="sc-field">
                             <span class="sc-field-label">{{ __('Title *') }}</span>
-                            <input type="text" class="sc-input" wire:model="eventForm.title" placeholder="e.g. Staff meeting" maxlength="255" />
+                            <input type="text" class="sc-input" wire:model="eventForm.title" placeholder="{{ __('e.g. Staff meeting') }}" maxlength="255" />
                             @error('eventForm.title')<span class="sc-error">{{ $message }}</span>@enderror
                         </label>
 
@@ -639,7 +639,7 @@
                                 <span class="sc-field-label">{{ __('Category') }}</span>
                                 <select class="sc-input" wire:model="eventForm.category">
                                     @foreach (\Modules\Communication\Models\EventCalendar::CATEGORIES as $key => $label)
-                                        <option value="{{ $key }}">{{ $label }}</option>
+                                        <option value="{{ $key }}">{{ __($label) }}</option>
                                     @endforeach
                                 </select>
                             </label>
@@ -689,7 +689,7 @@
 
                         <label class="sc-field">
                             <span class="sc-field-label">{{ __('Location') }}</span>
-                            <input type="text" class="sc-input" wire:model="eventForm.location" placeholder="e.g. Hall A" />
+                            <input type="text" class="sc-input" wire:model="eventForm.location" placeholder="{{ __('e.g. Hall A') }}" />
                         </label>
                         <label class="sc-field">
                             <span class="sc-field-label">{{ __('Description') }}</span>
@@ -703,11 +703,11 @@
                                     <option value="">{{ __('None') }}</option>
                                     @foreach ([5, 10, 15, 30, 60, 120, 1440] as $min)
                                         <option value="{{ $min }}">
-                                            @if ($min < 60) {{ $min }} min
-                                            @elseif ($min === 60) 1 hour
-                                            @elseif ($min === 120) 2 hours
-                                            @else 1 day
-                                            @endif before
+                                            @if ($min < 60) {{ $min }} {{ __('min') }}
+                                            @elseif ($min === 60) {{ __('1 hour') }}
+                                            @elseif ($min === 120) {{ __('2 hours') }}
+                                            @else {{ __('1 day') }}
+                                            @endif {{ __('before') }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -716,7 +716,7 @@
                                 <span class="sc-field-label">{{ __('Repeats') }}</span>
                                 <select class="sc-input" wire:model="eventForm.recurrence">
                                     @foreach (\Modules\Communication\Models\EventCalendar::RECURRENCES as $key => $label)
-                                        <option value="{{ $key }}">{{ $label }}</option>
+                                        <option value="{{ $key }}">{{ __($label) }}</option>
                                     @endforeach
                                 </select>
                             </label>
@@ -729,7 +729,7 @@
                             @endif
                             <button type="submit" class="sc-btn-primary">
                                 <x-filament::icon icon="heroicon-o-check" class="w-4 h-4" />
-                                {{ $editingEvent ? 'Save changes' : 'Create Event' }}
+                                {{ $editingEvent ? __('Save changes') : __('Create Event') }}
                             </button>
                         </div>
                     </form>
@@ -742,15 +742,15 @@
             <div class="sc-modal" @click.self="$wire.closeTaskModal()">
                 <div class="sc-modal-card">
                     <div class="sc-modal-head">
-                        <h3 class="sc-modal-title">{{ $editingTask ? 'Edit Task' : 'Create Task' }}</h3>
-                        <button type="button" class="sc-iconbtn" wire:click="closeTaskModal" aria-label="Close">
+                        <h3 class="sc-modal-title">{{ $editingTask ? __('Edit Task') : __('Create Task') }}</h3>
+                        <button type="button" class="sc-iconbtn" wire:click="closeTaskModal" aria-label="{{ __('Close') }}">
                             <x-filament::icon icon="heroicon-o-x-mark" class="w-4 h-4" />
                         </button>
                     </div>
                     <form wire:submit="saveTask" class="sc-form">
                         <label class="sc-field">
                             <span class="sc-field-label">{{ __('Task *') }}</span>
-                            <input type="text" class="sc-input" wire:model="taskForm.title" placeholder="e.g. Submit attendance" maxlength="255" />
+                            <input type="text" class="sc-input" wire:model="taskForm.title" placeholder="{{ __('e.g. Submit attendance') }}" maxlength="255" />
                             @error('taskForm.title')<span class="sc-error">{{ $message }}</span>@enderror
                         </label>
                         <label class="sc-field">
@@ -774,7 +774,7 @@
                                 <span class="sc-field-label">{{ __('Priority') }}</span>
                                 <select class="sc-input" wire:model="taskForm.priority">
                                     @foreach (\App\Models\UserTask::PRIORITIES as $key => $label)
-                                        <option value="{{ $key }}">{{ $label }}</option>
+                                        <option value="{{ $key }}">{{ __($label) }}</option>
                                     @endforeach
                                 </select>
                             </label>
@@ -793,7 +793,7 @@
                                 <span class="sc-field-label">{{ __('Repeats') }}</span>
                                 <select class="sc-input" wire:model="taskForm.recurrence">
                                     @foreach (\App\Models\UserTask::RECURRENCES as $key => $label)
-                                        <option value="{{ $key }}">{{ $label }}</option>
+                                        <option value="{{ $key }}">{{ __($label) }}</option>
                                     @endforeach
                                 </select>
                             </label>
@@ -822,7 +822,7 @@
                             @endif
                             <button type="submit" class="sc-btn-primary is-task">
                                 <x-filament::icon icon="heroicon-o-check" class="w-4 h-4" />
-                                {{ $editingTask ? 'Save changes' : 'Create Task' }}
+                                {{ $editingTask ? __('Save changes') : __('Create Task') }}
                             </button>
                         </div>
                     </form>

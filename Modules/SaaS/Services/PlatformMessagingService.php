@@ -84,7 +84,26 @@ class PlatformMessagingService
     public function replyFromPlatform(User $actor, PlatformMessage $parent, string $body): PlatformMessage
     {
         return DB::transaction(function () use ($actor, $parent, $body) {
-            $schoolId = $parent->school_id;
+            // Resolve WHO this thread belongs to. The parent itself may be a
+            // platform-originated message (school_id = NULL — e.g. replying
+            // from your own outbox), so fall back to any sibling message in
+            // the thread, then to recipient tracking rows.
+            $schoolId = $parent->school_id
+                ?? PlatformMessage::withoutGlobalScopes()
+                    ->where('thread_id', $parent->thread_id)
+                    ->whereNotNull('school_id')
+                    ->value('school_id');
+
+            if (! $schoolId) {
+                $schoolId = PlatformMessageRecipient::query()
+                    ->whereIn('message_id', function ($q) use ($parent) {
+                        $q->select('id')
+                            ->from((new PlatformMessage)->getTable())
+                            ->where('thread_id', $parent->thread_id);
+                    })
+                    ->orderByDesc('school_id')
+                    ->value('school_id');
+            }
 
             $message = PlatformMessage::create([
                 'sender_type' => 'platform',
@@ -99,7 +118,7 @@ class PlatformMessagingService
             ]);
 
             if ($schoolId) {
-                $this->createRecipients($message, [$schoolId]);
+                $this->createRecipients($message, [(int) $schoolId]);
             }
 
             return $message;

@@ -106,7 +106,7 @@
                 </td>
             @endif
             <td class="school-info">
-                <div class="school-name">{{ $school->name ?? 'SCHOOLCORE ACADEMY' }}</div>
+                <div class="school-name">{{ $school->name ?? 'KAIRO DEMO ACADEMY' }}</div>
                 
                 <!--
                 <div class="report-subtitle">
@@ -175,7 +175,7 @@
     <table class="footer-table">
         <tr>
             <td>
-                {{ $settings['footer_text'] ?? 'Confidential - SchoolCore ERP Secured Ledger Record.' }}
+                {{ $settings['footer_text'] ?? 'Confidential - Kairo CORE Secured Ledger Record.' }}
             </td>
             <td style="text-align: right;">
                 {{ __('System Stamp Signature: SECURED ELECTRONIC LOG') }}

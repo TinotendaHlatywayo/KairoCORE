@@ -2,22 +2,33 @@
 @php
     use Modules\CMS\Services\CmsTemplateService;
 
-    $primary   = CmsTemplateService::safeHex($website->color_primary, '#1e3a8a');
-    $secondary = CmsTemplateService::safeHex($website->color_secondary, '#0284c7');
-    $accent    = CmsTemplateService::safeHex($website->color_accent, '#f59e0b');
-    $bg        = CmsTemplateService::safeHex($website->color_background, '#ffffff');
-    $textColor = CmsTemplateService::safeHex($website->color_text, '#0f172a');
-    $cardBg    = CmsTemplateService::safeHex($website->color_card_bg, '#f8fafc');
+    $templateKey = CmsTemplateService::resolvePageTheme(
+        $page->page_theme ?? null,
+        $page->page_template ?? null,
+        $website->active_template ?: 'heritage-editorial'
+    );
+
+    // If the page has its own theme override, use that theme's design tokens
+    // instead of the site-wide ones.
+    $resolvedTheme = CmsTemplateService::getTemplates()[$templateKey] ?? null;
+    $hasPageTheme = ! empty($page->page_theme) && $resolvedTheme !== null;
+
+    $primary   = $hasPageTheme ? ($resolvedTheme['palette']['primary']   ?? '#1e3a8a') : CmsTemplateService::safeHex($website->color_primary, '#1e3a8a');
+    $secondary = $hasPageTheme ? ($resolvedTheme['palette']['secondary'] ?? '#0284c7') : CmsTemplateService::safeHex($website->color_secondary, '#0284c7');
+    $accent    = $hasPageTheme ? ($resolvedTheme['palette']['accent']    ?? '#f59e0b') : CmsTemplateService::safeHex($website->color_accent, '#f59e0b');
+    $bg        = $hasPageTheme ? ($resolvedTheme['palette']['background']?? '#ffffff') : CmsTemplateService::safeHex($website->color_background, '#ffffff');
+    $textColor = $hasPageTheme ? ($resolvedTheme['palette']['text']      ?? '#0f172a') : CmsTemplateService::safeHex($website->color_text, '#0f172a');
+    $cardBg    = $hasPageTheme ? ($resolvedTheme['palette']['card_bg']   ?? '#f8fafc') : CmsTemplateService::safeHex($website->color_card_bg, '#f8fafc');
     $onPrimary = CmsTemplateService::getAdaptiveTextColor($primary, '#ffffff', '#0f172a');
 
-    $radiusKey = CmsTemplateService::safeToken($website->design_radius, CmsTemplateService::RADIUS_SCALE, 'md');
-    $shadowKey = CmsTemplateService::safeToken($website->design_shadow, CmsTemplateService::SHADOW_SCALE, 'md');
-    $containerKey = CmsTemplateService::safeToken($website->design_container, CmsTemplateService::CONTAINER_SCALE, 'wide');
-    $buttonKey = CmsTemplateService::safeToken($website->design_button_style, CmsTemplateService::BUTTON_STYLES, 'pill');
+    $radiusKey    = $hasPageTheme ? ($resolvedTheme['design']['radius']       ?? 'md') : CmsTemplateService::safeToken($website->design_radius, CmsTemplateService::RADIUS_SCALE, 'md');
+    $shadowKey    = $hasPageTheme ? ($resolvedTheme['design']['shadow']       ?? 'md') : CmsTemplateService::safeToken($website->design_shadow, CmsTemplateService::SHADOW_SCALE, 'md');
+    $containerKey = $hasPageTheme ? ($resolvedTheme['design']['container']    ?? 'wide'): CmsTemplateService::safeToken($website->design_container, CmsTemplateService::CONTAINER_SCALE, 'wide');
+    $buttonKey    = $hasPageTheme ? ($resolvedTheme['design']['button_style'] ?? 'pill'): CmsTemplateService::safeToken($website->design_button_style, CmsTemplateService::BUTTON_STYLES, 'pill');
 
-    $fontPrimary = $website->font_primary ?: 'Inter';
-    $fontSecondary = $website->font_secondary ?: 'Outfit';
-    $templateKey = CmsTemplateService::canonicalTemplate($page->page_template ?? ($website->active_template ?: 'heritage-editorial'));
+    $fontPrimary   = $hasPageTheme ? ($resolvedTheme['fonts']['primary']   ?? 'Inter')    : ($website->font_primary ?: 'Inter');
+    $fontSecondary = $hasPageTheme ? ($resolvedTheme['fonts']['secondary'] ?? 'Outfit')   : ($website->font_secondary ?: 'Outfit');
+    $fontHeading   = $hasPageTheme ? ($resolvedTheme['fonts']['primary']   ?? $fontSecondary) : ($website->font_heading ?: $fontSecondary);
 
     $siteTokens = [
         '--sc-primary: ' . $primary,
@@ -35,6 +46,7 @@
         '--sc-container: ' . ($containerKey === 'full' ? 'none' : '80rem'),
         "--sc-font-sans: '{$fontPrimary}', ui-sans-serif, system-ui, sans-serif",
         "--sc-font-display: '{$fontSecondary}', ui-sans-serif, system-ui, sans-serif",
+        "--sc-font-heading: '{$fontHeading}', ui-sans-serif, system-ui, sans-serif",
     ];
 
     // ── SEO / meta chain ──
@@ -57,8 +69,22 @@
         ? (preg_match('~^https?://~i', $favicon) ? $favicon : asset('storage/' . $favicon))
         : 'data:image/svg+xml,' . rawurlencode('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="22" fill="' . $primary . '"/><text x="50" y="68" font-size="52" font-family="Arial, sans-serif" font-weight="700" text-anchor="middle" fill="' . $onPrimary . '">' . e(mb_substr($school->name, 0, 1)) . '</text></svg>');
 
-    // ── Fonts: only the active pair (identity CSS handles styling) ──
-    $fontFamilies = [$fontPrimary, $fontSecondary];
+    // ── Fonts: active pair + dedicated heading font + EVERY per-block font
+    //      chosen in the section inspector, so live matches the studio
+    //      preview exactly (the studio loads the full catalog). ──
+    $blockFonts = collect($blocks ?? [])
+        ->flatMap(fn ($b) => [
+            $b['styles']['font_family'] ?? null,
+            $b['styles']['title_font'] ?? null,
+        ])
+        ->filter(fn ($f) => is_string($f) && $f !== '')
+        ->unique()
+        ->values();
+    $fontFamilies = collect([$fontPrimary, $fontSecondary, $fontHeading])
+        ->merge($blockFonts)
+        ->unique()
+        ->values()
+        ->all();
     $fontsUrl = CmsTemplateService::googleFontsUrl($fontFamilies, '400;500;600;700;800');
 
     // ── Navigation (group children under their parent for dropdowns) ──
@@ -174,7 +200,7 @@
 
             <div class="sc-nav-actions">
                 <span class="sc-nav-divider" aria-hidden="true"></span>
-                <a href="/login" class="sc-btn sc-btn-ghost sc-btn-sm sc-nav-login">{{ __('Log In') }}</a>
+                <a href="/login" class="sc-btn sc-btn-ghost sc-btn-sm sc-nav-login" target="_blank" rel="noopener noreferrer">{{ __('Log In') }}</a>
                 <a href="/apply-online" class="sc-btn sc-btn-primary sc-btn-sm">
                     <span>{{ __('Apply Online') }}</span>
                     <span class="sc-btn-arrow" aria-hidden="true">→</span>
@@ -224,7 +250,7 @@
                     @endforeach
                 </ul>
                 <div class="sc-mobile-actions">
-                    <a href="/login" class="sc-btn sc-btn-surface">{{ __('Log In') }}</a>
+                    <a href="/login" class="sc-btn sc-btn-surface" target="_blank" rel="noopener noreferrer">{{ __('Log In') }}</a>
                     <a href="/apply-online" class="sc-btn sc-btn-primary">{{ __('Apply Online') }}</a>
                 </div>
             </nav>
@@ -345,15 +371,14 @@
                     <h4>{{ __('Admissions') }}</h4>
                     <ul class="sc-footer-links">
                         <li><a href="/apply-online">{{ __('Apply Online') }}</a></li>
-                        <li><a href="/login">{{ __('Parent / Student Portal') }}</a></li>
+                        <li><a href="/login" target="_blank" rel="noopener noreferrer">{{ __('Parent / Student Portal') }}</a></li>
                         <li><a href="/sitemap.xml">{{ __('Sitemap') }}</a></li>
                     </ul>
                 </div>
             </div>
 
-            <div class="sc-footer-bottom">
-                <span>&copy; {{ date('Y') }} {{ $school->name }}. {{ __('All rights reserved.') }}</span>
-                <span>{{ __('Powered by') }} <a href="/platform" style="font-weight: 700;">SchoolCore</a></span>
+            <div class="sc-footer-bottom" style="justify-content: center; text-align: center;">
+                <span>&copy; {{ date('Y') }} {{ platform_name() }}. {{ __('All rights reserved.') }}</span>
             </div>
         </div>
     </footer>

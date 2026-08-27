@@ -10,6 +10,7 @@ use App\Http\Controllers\SaaS\PaynowWebhookController;
 use App\Http\Controllers\SaaS\ReceiptDownloadController;
 use App\Http\Controllers\StudentCardPrintController;
 use App\Http\Controllers\StudentFeeCheckoutController;
+use App\Http\Middleware\SetUserLocale;
 use App\Livewire\RegistrationWizard;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Http\Request;
@@ -59,7 +60,7 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
             function ($message) use ($data) {
                 $message->to(config('mail.platform.address') ?: config('mail.from.address'))
                     ->replyTo($data['email'], $data['name'])
-                    ->subject('SchoolCore Contact: '.$data['name']);
+                    ->subject('Kairo CORE Contact: '.$data['name']);
             }
         );
 
@@ -67,7 +68,10 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
     })->name('marketing.contact.submit');
 
     // School Portal Multi-step Registration
-    Route::get('/register', RegistrationWizard::class)->name('register');
+    Route::get('/register', RegistrationWizard::class)
+        ->middleware('throttle:rate_limit:registration')
+        ->name('register');
+    // POST registration is handled via Livewire wire:click="submit" inside the wizard component.
     Route::get('/register/success', function () {
         return view('auth.register-success');
     })->name('registration.success');
@@ -83,10 +87,58 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
     // Google Single Sign-On
     Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirect'])->name('auth.google.redirect');
     Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->name('auth.google.callback');
+
+    // Completes Google SSO on the TENANT subdomain (single-use ticket from the
+    // central callback) so the session is created inside this tenant's scope.
+    Route::get('/auth/sso/consume', [GoogleAuthController::class, 'consume'])->name('auth.sso.consume');
+
+    // Platform Terms of Service
+    Route::get('/terms', function () {
+        return view('terms.platform');
+    })->name('platform.terms');
+
+    Route::get('/terms/pdf', function () {
+        $pdf = Pdf::loadView('terms.platform');
+        return $pdf->download('Kairo CORE-Platform-Terms-of-Service.pdf');
+    })->name('platform.terms.pdf');
 });
 
+// Livewire update endpoint fallback - handles stray GET requests gracefully
+// (e.g. prefetches). Bounce the visitor home instead of showing raw JSON.
+Route::get('/livewire/update', function () {
+    return redirect('/', 302);
+})->name('livewire.update.fallback');
+
+// Public language switcher for the platform website. Stores the choice in the
+// session so every visitor can browse the marketing site in their language.
+Route::get('/locale/{locale}', function (string $locale) {
+    $supported = ['en', 'sn', 'sw', 'fr', 'pt', 'es'];
+
+    if (in_array($locale, $supported, true)) {
+        session(['locale' => $locale]);
+    }
+
+    return redirect()->back()->setStatusCode(302);
+})->name('locale.switch');
+
 // 2. Tenant Routing Group (Subdomains and Custom Domains like rujeko.lvh.me)
-Route::domain('{tenant}.'.parse_url(config('app.url'), PHP_URL_HOST))->middleware(['tenant'])->group(function () {
+// SetUserLocale runs after ResolveTenant here so the school's locale is applied
+// (it already ran in the web group with session/user context).
+Route::domain('{tenant}.'.parse_url(config('app.url'), PHP_URL_HOST))->middleware(['tenant', SetUserLocale::class])->group(function () {
+
+    // School Terms & Conditions
+    Route::get('/school-terms', function () {
+        $school = app('current_tenant');
+        $termsContent = $school ? \Modules\Admin\Models\SystemSetting::get('legal', 'terms_content', default_school_terms()) : default_school_terms();
+        return view('terms.school', ['school' => $school, 'termsContent' => $termsContent]);
+    })->name('school.terms');
+
+    Route::get('/school-terms/pdf', function () {
+        $school = app('current_tenant');
+        $termsContent = $school ? \Modules\Admin\Models\SystemSetting::get('legal', 'terms_content', default_school_terms()) : default_school_terms();
+        $pdf = Pdf::loadView('terms.school', ['school' => $school, 'termsContent' => $termsContent]);
+        return $pdf->download(($school?->name ?? 'School') . '-Terms-and-Conditions.pdf');
+    })->name('school.terms.pdf');
 
     // PUBLIC CUSTOM DYNAMIC WEBSITE ROOT ENTRY POINT [2]
     Route::get('/', [CmsRenderController::class, 'render'])->name('tenant.home');
@@ -264,7 +316,7 @@ Route::domain('{tenant}.'.parse_url(config('app.url'), PHP_URL_HOST))->middlewar
 // so route() generates URLs without needing a {tenant} parameter).
 // ResolveTenant middleware resolves the school from the hostname.
 // =========================================================================
-Route::middleware(['tenant', 'auth'])->group(function () {
+Route::middleware(['tenant', 'auth', 'throttle:rate_limit:exports'])->group(function () {
     // Reports
     Route::get('/documents/reports/{record}/pdf', [AcademicReportPdfController::class, 'generate'])
         ->name('report.pdf');

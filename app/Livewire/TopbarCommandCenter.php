@@ -45,9 +45,27 @@ class TopbarCommandCenter extends Component
         'custom' => 'Custom range',
     ];
 
+    public static function PRESETS(): array
+    {
+        return [
+            'today' => __('Today'),
+            'yesterday' => __('Yesterday'),
+            'last7' => __('Last 7 days'),
+            'last30' => __('Last 30 days'),
+            'last_quarter' => __('Last quarter'),
+            'custom' => __('Custom range'),
+        ];
+    }
+
     public bool $isOpen = false;
 
     public bool $showNotificationHistory = false;
+
+    // Notification-history filters: category (all/chat/registration/system)
+    // and age window in days.
+    public string $historyCategory = 'all';
+
+    public int $historyDays = 30;
 
     public string $month = '';
 
@@ -188,7 +206,7 @@ class TopbarCommandCenter extends Component
 
     public function choosePreset(string $preset): void
     {
-        $this->preset = in_array($preset, array_keys(self::PRESETS), true) ? $preset : null;
+        $this->preset = in_array($preset, array_keys(self::PRESETS()), true) ? $preset : null;
 
         if ($preset === 'custom') {
             $this->rangeStart = null;
@@ -596,7 +614,24 @@ class TopbarCommandCenter extends Component
             TaskOverdueNotification::class,
             EventReminderNotification::class,
             ProfilePhotoRejectedNotification::class,
+            \App\Notifications\PlatformMessageNotification::class,
         ];
+    }
+
+    /**
+     * Coarse category for a notification class, used by the history filters:
+     *  - chat         → platform ↔ tenant conversations
+     *  - registration → admission applications / account registrations
+     *  - system       → tasks, events, reminders, photo moderation, etc.
+     */
+    public static function notificationCategory(string $type): string
+    {
+        return match ($type) {
+            \App\Notifications\PlatformMessageNotification::class => 'chat',
+            NewApplicationNotification::class,
+            UserRegistrationApprovalNotification::class => 'registration',
+            default => 'system',
+        };
     }
 
     public function getUnreadNotificationsProperty(): Collection
@@ -661,7 +696,8 @@ class TopbarCommandCenter extends Component
      * Notification history for the past 30 days (any type), newest first.
      * Used by the "History" toggle in the Command Center. Shows every
      * notification row so nothing is permanently lost after "Clear
-     * notifications".
+     * notifications". Filterable by category (chat / registration / system)
+     * and by age window.
      */
     public function getNotificationHistoryProperty(): Collection
     {
@@ -670,16 +706,80 @@ class TopbarCommandCenter extends Component
             return collect();
         }
 
-        return $user->notifications()
-            ->where('created_at', '>=', now()->subDays(30)->startOfDay())
-            ->latest()
-            ->limit(50)
-            ->get();
+        $days = in_array((int) $this->historyDays, [7, 14, 30], true) ? (int) $this->historyDays : 30;
+
+        $query = $user->notifications()
+            ->where('created_at', '>=', now()->subDays($days)->startOfDay());
+
+        if (in_array($this->historyCategory, ['chat', 'registration', 'system'], true)) {
+            $types = collect($this->trackedNotificationTypes())
+                ->filter(fn (string $type) => static::notificationCategory($type) === $this->historyCategory)
+                ->all();
+
+            // Unknown/legacy types are treated as system notifications.
+            if ($this->historyCategory === 'system') {
+                $query->where(function ($q) use ($types) {
+                    $q->whereIn('type', $types)
+                        ->orWhereNotIn('type', collect($this->trackedNotificationTypes())->all());
+                });
+            } else {
+                $query->whereIn('type', $types);
+            }
+        }
+
+        return $query->latest()->limit(50)->get();
     }
 
     public function toggleNotificationHistory(): void
     {
         $this->showNotificationHistory = ! $this->showNotificationHistory;
+    }
+
+    /**
+     * Resolve the click-through URL at RENDER time so even historical
+     * notifications stored before deep links existed still navigate to the
+     * right inbox. Audiences without inbox access (e.g. students) get no
+     * link rather than a route error, and panels are pinned explicitly.
+     */
+    public function notificationUrl($notification): ?string
+    {
+        if ($url = data_get($notification->data, 'url')) {
+            return $url;
+        }
+
+        $isChat = ($notification->data['category'] ?? null) === 'chat'
+            || $notification->type === \App\Notifications\PlatformMessageNotification::class;
+
+        if (! $isChat) {
+            return null;
+        }
+
+        $user = $this->user();
+
+        try {
+            if ($user && $user->school_id === null) {
+                return \App\Filament\Admin\Resources\PlatformMessageResource::getUrl(panel: 'admin')
+                    .'?tableAction=view_thread&tableActionRecord='.data_get($notification->data, 'message_id');
+            }
+
+            if (
+                $user
+                && filled($user->school_id)
+                && \Modules\Admin\Services\PermissionRegistry::checkPermission('communication.contact_platform')
+            ) {
+                // Tenants go to THEIR workspace inbox on THEIR OWN subdomain —
+                // never the platform panel, never the central host (where their
+                // session cookie does not exist).
+                return tenant_workspace_url(
+                    $user->school,
+                    'workspace/platform-inboxes?tableAction=view_thread&tableActionRecord='.data_get($notification->data, 'message_id'),
+                );
+            }
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
+        return null;
     }
 
     // ── Task assignee colour coding ────────────────────────────────────────

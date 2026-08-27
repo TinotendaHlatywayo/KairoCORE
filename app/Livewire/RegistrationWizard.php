@@ -4,7 +4,9 @@ namespace App\Livewire;
 
 use App\Models\School;
 use App\Models\User;
+use App\Services\DummyDataSeeder;
 use App\Services\SchoolRegistrationService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -14,12 +16,15 @@ use Modules\Admin\Models\SystemSetting;
 
 class RegistrationWizard extends Component
 {
+    // Standard "I agree" checkbox — must be ticked before submitting
+    public bool $termsAccepted = false;
+
     // Step tracking
     public int $currentStep = 1;
 
     public int $totalSteps = 3;
 
-    // Step 1: Institution & Admin Info (NO username or password during initial registration)
+    // Step 1: Institution & Admin Info
     public string $schoolName = '';
 
     public string $country = '';
@@ -38,6 +43,8 @@ class RegistrationWizard extends Component
 
     public string $adminEmail = '';
 
+    public string $institutionEmail = '';
+
     // Step 2: Subdomain & Sample Data
     public string $subdomain = '';
 
@@ -50,22 +57,22 @@ class RegistrationWizard extends Component
     // Step 3: Module Selection
     public array $selectedModules = [];
 
-    // Modules that can never be switched off at registration. Their visibility
-    // inside the workspace is controlled later via user permissions.
+    // Modules that can never be switched off
     public array $lockedModules = ['administration', 'saas'];
 
-    // All top-level modules, sourced from the shared module catalog so the
-    // registration picker matches the System Settings -> Manage Modules page.
     public array $availableModules = [];
 
     public function mount()
     {
-        $this->availableModules = config('modules', []);
+        if (config('tenancy.mode') === 'single') {
+            abort(404);
+        }
 
-        // All modules are selected by default; users can uncheck the ones they
-        // do not need (locked modules stay checked).
+        $this->availableModules = config('modules', []);
         $this->selectedModules = array_keys($this->availableModules);
     }
+
+    // ── Module helpers ──────────────────────────────────────────────────────
 
     public function selectAllModules(): void
     {
@@ -77,40 +84,50 @@ class RegistrationWizard extends Component
         $this->selectedModules = $this->lockedModules;
     }
 
-    /**
-     * The full, searchable list of countries available for selection.
-     */
     public function getCountriesProperty(): array
     {
         return config('countries', []);
     }
 
     /**
-     * Listen to changes in subdomain and run live validation.
+     * Host-only base domain (e.g. "lvh.me" locally, "kairocore.com" in
+     * production) so subdomain previews never render a scheme inside the URL.
      */
+    public function getBaseDomainProperty(): string
+    {
+        $url = (string) config('app.url', 'https://lvh.me');
+        $host = parse_url($url, PHP_URL_HOST)
+            ?? preg_replace('#^[a-z][a-z0-9+.-]*://#i', '', $url);
+
+        return trim($host ?: 'lvh.me', '/');
+    }
+
+    /** Full portal URL the visitor will get once approved. */
+    public function getSubdomainPreviewUrlProperty(): string
+    {
+        if ($this->subdomain === '') {
+            return 'https://' . $this->baseDomain;
+        }
+
+        return 'https://' . $this->subdomain . '.' . $this->baseDomain;
+    }
+
+    // ── Real-time (on-change / on-blur) per-field validation ───────────────
+
     public function updatedSubdomain($value)
     {
-        // Format subdomain as slug
         $this->subdomain = strtolower(preg_replace('/[^a-zA-Z0-9-]/', '', $value));
-
-        // Track any characters that were stripped so the user can be told
-        // exactly which characters are not allowed.
         $bad = preg_replace('/[a-zA-Z0-9-]/', '', $value ?? '');
         $this->subdomainInvalidChars = $bad === '' ? '' : collect(mb_str_split($bad))->unique()->implode('');
 
         if (empty($this->subdomain)) {
             $this->isSubdomainAvailable = false;
         } else {
-            // Check if subdomain is already taken
             $this->isSubdomainAvailable = ! School::where('subdomain', $this->subdomain)->exists();
         }
 
         $this->validateField('subdomain');
     }
-
-    // ─── Real-time (on-blur) per-field validation ───────────────────────────
-    // Each hook runs the moment the user leaves the field, so problems are
-    // flagged while filling the form instead of only on final submission.
 
     public function updatedSchoolName(): void
     {
@@ -158,6 +175,13 @@ class RegistrationWizard extends Component
         $this->validateField('adminEmail');
     }
 
+    public function updatedInstitutionEmail(): void
+    {
+        $this->validateField('institutionEmail');
+    }
+
+    // ── Step navigation ─────────────────────────────────────────────────────
+
     public function nextStep()
     {
         $this->validateStep();
@@ -169,6 +193,8 @@ class RegistrationWizard extends Component
         $this->currentStep--;
     }
 
+    // ── Validation engine ───────────────────────────────────────────────────
+
     private function validateField(string $field): void
     {
         if (! array_key_exists($field, $this->fieldRules())) {
@@ -178,155 +204,206 @@ class RegistrationWizard extends Component
         $this->validateOnly($field, [$field => $this->fieldRules()[$field]], $this->fieldMessages());
     }
 
-    /**
-     * Per-field validation rules. Kept in one place so the final submit check
-     * and the real-time (on-blur) checks can never drift apart.
-     */
     private function fieldRules(): array
     {
         return [
-            'schoolName' => ['required', 'string', 'min:3', 'max:255', 'not_regex:/[<>]/'],
+            'schoolName' => [
+                'required', 'string', 'min:3', 'max:150',
+                'not_regex:/[<>{}[\]\\\\]/',
+                'regex:/^[A-Za-z0-9\s\.\-\,\&\'\"]+$/',
+            ],
             'country' => ['required', 'string', Rule::in(config('countries', []))],
             'physicalAddress' => ['required', 'string', 'min:5', 'max:500', 'not_regex:/[<>]/'],
             'language' => ['required', 'string', 'max:50'],
             'institutionType' => ['required', 'string', 'max:100'],
             'otherInstitutionType' => ['required_if:institutionType,other', 'nullable', 'string', 'max:255', 'not_regex:/[<>]/'],
             'phone' => ['required', 'regex:/^\+?[0-9()\- ]{7,20}$/', 'not_regex:/[<>]/'],
-            'adminName' => ['required', 'string', 'min:3', 'max:255', 'not_regex:/[<>]/'],
+            'adminName' => ['required', 'string', 'min:3', 'max:100', 'not_regex:/[<>{}]/', 'regex:/^[A-Za-z\s\.\-\']+$/'],
             'adminEmail' => ['required', 'email:rfc,dns', 'max:255', 'unique:users,email,NULL,id,deleted_at,NULL'],
-            'subdomain' => ['required', 'alpha_dash', 'min:3', 'max:50'],
+            'institutionEmail' => ['required', 'email:rfc,dns', 'max:255', 'different:adminEmail'],
+            'subdomain' => ['required', 'alpha_dash', 'min:3', 'max:50', Rule::notIn([
+                'www', 'platform', 'workspace', 'student', 'api', 'mail', 'smtp', 'ftp', 'admin', 'app', 'root', 'ns1', 'ns2', 'cdn', 'static', 'assets', 'localhost', 'saas', 'paynow', 'webhook', 'cms', 'auth', 'sso', 'login', 'logout', 'register', 'activation', 'verify', 'password', 'email', 'profile', 'settings', 'dashboard', 'home', 'about', 'contact', 'terms', 'privacy', 'blog', 'news', 'support', 'help', 'docs', 'documentation', 'status', 'health', 'metrics', 'monitoring',
+            ])],
+            'termsAccepted' => ['accepted'],
         ];
     }
 
     private function fieldMessages(): array
     {
         return [
-            'schoolName.required' => 'Please enter the institution name.',
-            'schoolName.min' => 'The institution name must be at least 3 characters.',
-            'schoolName.not_regex' => 'The school name may not contain HTML or script characters.',
-            'country.required' => 'Please select your country.',
-            'country.in' => 'Please select a valid country from the list.',
-            'physicalAddress.required' => 'Please enter the physical address.',
-            'physicalAddress.min' => 'The address must be at least 5 characters.',
-            'physicalAddress.not_regex' => 'The address may not contain HTML or script characters.',
-            'language.required' => 'Please choose the system language.',
-            'institutionType.required' => 'Please choose the type of institution.',
-            'otherInstitutionType.required_if' => 'Please specify the institution type.',
-            'otherInstitutionType.not_regex' => 'The specified type may not contain HTML or script characters.',
-            'phone.required' => 'Please enter a phone number.',
-            'phone.regex' => 'Enter a valid phone number, e.g. +263 77 123 4567 (digits, spaces, plus, minus and parentheses only).',
-            'adminName.required' => 'Please enter the administrator name.',
-            'adminName.min' => 'The administrator name must be at least 3 characters.',
-            'adminName.not_regex' => 'The administrator name may not contain HTML or script characters.',
-            'adminEmail.required' => 'Please enter the administrator email.',
-            'adminEmail.email' => 'Enter a valid email address, e.g. name@example.com.',
-            'adminEmail.unique' => 'This email is already registered.',
-            'subdomain.required' => 'Please choose a subdomain.',
-            'subdomain.alpha_dash' => 'Only letters, numbers, dashes and underscores are allowed.',
-            'subdomain.min' => 'The subdomain must be at least 3 characters.',
-            'subdomain.max' => 'The subdomain may not be longer than 50 characters.',
+            'schoolName.required' => __('Please enter the institution name.'),
+            'schoolName.min' => __('The institution name must be at least 3 characters.'),
+            'schoolName.max' => __('The institution name must not exceed 150 characters.'),
+            'schoolName.not_regex' => __('The institution name may not contain HTML, script tags, or special characters like <, >, {, }, [, ].'),
+            'schoolName.regex' => __('The institution name may only contain letters, numbers, spaces, periods, hyphens, commas, ampersands, and quotes.'),
+            'country.required' => __('Please select your country.'),
+            'country.in' => __('Please select a valid country from the list.'),
+            'physicalAddress.required' => __('Please enter the physical address.'),
+            'physicalAddress.min' => __('The address must be at least 5 characters.'),
+            'physicalAddress.not_regex' => __('The address may not contain HTML or script characters.'),
+            'language.required' => __('Please choose the system language.'),
+            'institutionType.required' => __('Please choose the type of institution.'),
+            'otherInstitutionType.required_if' => __('Please specify the institution type.'),
+            'otherInstitutionType.not_regex' => __('The specified type may not contain HTML or script characters.'),
+            'phone.required' => __('Please enter a phone number.'),
+            'phone.regex' => __('Enter a valid international phone number, e.g. +1 234 567 8901 or +263 77 123 4567.'),
+            'adminName.required' => __('Please enter the administrator full name.'),
+            'adminName.min' => __('The administrator name must be at least 3 characters.'),
+            'adminName.max' => __('The administrator name must not exceed 100 characters.'),
+            'adminName.not_regex' => __('The administrator name may not contain numbers, HTML, or script characters.'),
+            'adminName.regex' => __('The administrator name may only contain letters, spaces, periods, hyphens and apostrophes.'),
+            'adminEmail.required' => __('Please enter the administrator email address.'),
+            'adminEmail.email' => __('Please enter a valid email address, e.g. name@example.com.'),
+            'adminEmail.unique' => __('This email address is already registered.'),
+            'institutionEmail.required' => __('Please enter the institution email address.'),
+            'institutionEmail.email' => __('Please enter a valid institution email, e.g. info@schoolname.edu.'),
+            'institutionEmail.different' => __('The institution email must be different from the administrator email.'),
+            'subdomain.required' => __('Please choose a subdomain.'),
+            'subdomain.alpha_dash' => __('Only lowercase letters, numbers, dashes and underscores are allowed.'),
+            'subdomain.min' => __('The subdomain must be at least 3 characters.'),
+            'subdomain.max' => __('The subdomain must not exceed 50 characters.'),
+            'subdomain.not_in' => __('This subdomain is reserved and cannot be used.'),
+            'termsAccepted.accepted' => __('You must read and agree to the Terms of Service and Terms of Use before registering.'),
         ];
     }
 
-    private function validateStep()
+    private function validateStep(): void
     {
         if ($this->currentStep === 1) {
+            $step1Fields = [
+                'schoolName', 'country', 'physicalAddress', 'language',
+                'institutionType', 'otherInstitutionType', 'phone',
+                'adminName', 'adminEmail', 'institutionEmail',
+            ];
             $rules = [];
-            foreach (['schoolName', 'country', 'physicalAddress', 'language', 'institutionType', 'otherInstitutionType', 'phone', 'adminName', 'adminEmail'] as $field) {
+            foreach ($step1Fields as $field) {
                 $rules[$field] = $this->fieldRules()[$field];
             }
-
             $this->validate($rules, $this->fieldMessages());
         }
 
         if ($this->currentStep === 2) {
-            $this->validate(['subdomain' => $this->fieldRules()['subdomain']], $this->fieldMessages());
+            $this->validate(
+                ['subdomain' => $this->fieldRules()['subdomain']],
+                $this->fieldMessages()
+            );
 
             if (! $this->isSubdomainAvailable) {
-                $this->addError('subdomain', 'This subdomain is already taken.');
+                $this->addError('subdomain', __('This subdomain is already taken.'));
                 throw ValidationException::withMessages([
-                    'subdomain' => 'This subdomain is already taken.',
+                    'subdomain' => __('This subdomain is already taken.'),
                 ]);
             }
         }
     }
 
+    // ── Form submission ─────────────────────────────────────────────────────
+
     public function submit()
     {
+        if (config('tenancy.mode') === 'single') {
+            abort(404);
+        }
+
         $this->validateStep();
 
-        // If this subdomain was previously registered and soft-deleted, its
-        // tombstone still occupies the unique subdomain index. Purge it (and
-        // its users) so the school can be re-registered from scratch.
+        if (! $this->termsAccepted) {
+            throw ValidationException::withMessages([
+                'termsAccepted' => __('You must read and agree to the Terms of Service and Terms of Use before registering.'),
+            ]);
+        }
+
+        // A live (non-deleted) school already owns this subdomain — surface a
+        // friendly validation error instead of a raw SQL unique-constraint 500.
+        if (School::where('subdomain', $this->subdomain)->exists()) {
+            $this->isSubdomainAvailable = false;
+            throw ValidationException::withMessages([
+                'subdomain' => __('This subdomain is already taken.'),
+            ]);
+        }
+
+        // Soft-deleted registrations with the same subdomain still occupy the
+        // unique index, so purge them before creating the new school.
         School::onlyTrashed()
             ->where('subdomain', $this->subdomain)
             ->get()
             ->each->forceDelete();
 
-        // 1. Create the school record as PENDING APPROVAL. It only becomes
-        //    active once a platform administrator approves it (which sends the
-        //    activation email) and the contact then completes activation.
-        $school = School::create([
-            'name' => $this->schoolName,
-            'country' => $this->country,
-            'physical_address' => $this->physicalAddress,
-            'language' => $this->language,
-            'institution_type' => $this->institutionType,
-            'other_institution_type' => $this->otherInstitutionType,
-            'phone' => $this->phone,
-            'subdomain' => $this->subdomain,
-            'status' => 'pending',
-            'has_dummy_data' => $this->hasDummyData,
-            'settings' => [
-                'enabled_modules' => $this->selectedModules,
-            ],
-        ]);
+        $localeMap = [
+            'english' => 'en',
+            'spanish' => 'es',
+            'french' => 'fr',
+            'portuguese' => 'pt',
+            'shona' => 'sn',
+            'swahili' => 'sw',
+        ];
+        $schoolLocale = $localeMap[strtolower($this->language)] ?? 'en';
 
-        // 1b. Persist the module visibility toggles so the selected modules
-        //     actually drive what is visible inside the new school's workspace
-        //     (same System Settings -> Manage Modules keys). Unselected modules
-        //     are written as '0' (hidden). Locked modules are always enabled.
-        foreach (array_keys(config('modules', [])) as $moduleKey) {
-            $enabled = in_array($moduleKey, $this->selectedModules, true)
-                || in_array($moduleKey, $this->lockedModules, true);
-
-            SystemSetting::withoutTenantScope()->updateOrCreate(
-                [
-                    'school_id' => $school->id,
-                    'group' => 'modules',
-                    'key' => $moduleKey,
+        // Everything below is atomic: if any step fails (settings, admin user,
+        // demo seeding) no orphaned school row is left behind blocking the
+        // subdomain on the next attempt.
+        $school = DB::transaction(function () use ($schoolLocale) {
+            $school = School::create([
+                'name' => $this->schoolName,
+                'country' => $this->country,
+                'physical_address' => $this->physicalAddress,
+                'language' => $this->language,
+                'locale' => $schoolLocale,
+                'institution_type' => $this->institutionType,
+                'other_institution_type' => $this->otherInstitutionType,
+                'phone' => $this->phone,
+                'email_address' => mb_strtolower(trim($this->institutionEmail)),
+                'subdomain' => $this->subdomain,
+                'status' => 'pending',
+                'has_dummy_data' => $this->hasDummyData,
+                'settings' => [
+                    'enabled_modules' => $this->selectedModules,
                 ],
-                [
-                    'value' => $enabled ? '1' : '0',
-                    'updated_at' => now(),
-                    'created_at' => now(),
-                ]
-            );
-        }
+            ]);
 
-        // 2. Create the initial administrative account with PENDING status
-        //    No username or password is collected at this stage; the contact
-        //    sets both during account activation. The activation email is NOT
-        //    sent here — it is sent when a platform administrator approves the
-        //    institution from the admin panel.
-        $adminUser = User::create([
-            'school_id' => $school->id,
-            'name' => $this->adminName,
-            'email' => mb_strtolower(trim($this->adminEmail)),
-            'username' => null,
-            'password' => Hash::make(Str::random(64)), // Temporary placeholder until account activation
-            'requested_role' => 'administrator',
-            'account_status' => User::STATUS_PENDING,
-        ]);
+            foreach (array_keys(config('modules', [])) as $moduleKey) {
+                $enabled = in_array($moduleKey, $this->selectedModules, true)
+                    || in_array($moduleKey, $this->lockedModules, true);
 
-        // 3. Notify the platform super administrators (in-app + email) so they
-        //    are aware a new school is awaiting approval. Approving the school
-        //    from the admin panel triggers the activation email.
-        try {
-            app(SchoolRegistrationService::class)->notifySuperAdmin($school, $adminUser);
-        } catch (\Throwable $e) {
-            report($e);
-        }
+                SystemSetting::withoutTenantScope()->updateOrCreate(
+                    [
+                        'school_id' => $school->id,
+                        'group' => 'modules',
+                        'key' => $moduleKey,
+                    ],
+                    [
+                        'value' => $enabled ? '1' : '0',
+                    ]
+                );
+            }
+
+            $adminUser = User::create([
+                'school_id' => $school->id,
+                'name' => $this->adminName,
+                'email' => mb_strtolower(trim($this->adminEmail)),
+                'username' => null,
+                'locale' => $schoolLocale,
+                'password' => Hash::make(Str::random(64)),
+                'requested_role' => 'administrator',
+                'account_status' => User::STATUS_PENDING,
+            ]);
+
+            if ($this->hasDummyData) {
+                try {
+                    app(DummyDataSeeder::class)->seed($school->id);
+                } catch (\Throwable $e) {
+                    report($e);
+                }
+            }
+
+            try {
+                app(SchoolRegistrationService::class)->notifySuperAdmin($school, $adminUser);
+            } catch (\Throwable $e) {
+                report($e);
+            }
+
+            return $school;
+        });
 
         return redirect()->route('registration.success', ['school_name' => $this->schoolName]);
     }

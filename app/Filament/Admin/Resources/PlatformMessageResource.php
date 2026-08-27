@@ -44,6 +44,42 @@ class PlatformMessageResource extends Resource
         return $user && $user->school_id === null;
     }
 
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        // Gmail-style conversations: ONE table row per thread (the newest
+        // message represents it), plus eager loads used by columns/actions.
+        return parent::getEloquentQuery()
+            ->withoutGlobalScopes()
+            ->with(['school', 'recipients.school'])
+            ->addSelect([
+                'platform_messages.*',
+                'thread_size' => PlatformMessage::query()
+                    ->withoutGlobalScopes()
+                    ->selectRaw('count(*)')
+                    ->whereColumn('thread_id', 'platform_messages.thread_id'),
+            ])
+            ->whereIn('id', PlatformMessage::query()
+                ->withoutGlobalScopes()
+                ->selectRaw('max(id)')
+                ->groupBy('thread_id'));
+    }
+
+    /**
+     * The school this conversation belongs to (for single-tenant threads):
+     * the latest message's own school, any sibling's school, or recipient rows.
+     */
+    public static function resolveThreadSchool(PlatformMessage $record): ?School
+    {
+        return $record->school
+            ?? $record->recipients->first()?->school
+            ?? PlatformMessage::withoutGlobalScopes()
+                ->where('thread_id', $record->thread_id)
+                ->whereNotNull('school_id')
+                ->with('school')
+                ->get()
+                ->first()?->school;
+    }
+
     public static function table(Table $table): Table
     {
         return $table
@@ -53,14 +89,19 @@ class PlatformMessageResource extends Resource
                     ->badge()
                     ->color(fn (PlatformMessage $record): string => $record->isToPlatform() ? 'info' : 'success')
                     ->formatStateUsing(fn (PlatformMessage $record): string => $record->isToPlatform() ? 'Inbox' : 'Outbox'),
+                Tables\Columns\TextColumn::make('thread_school')
+                    ->label(__('Tenant'))
+                    ->getStateUsing(fn (PlatformMessage $record): string => self::resolveThreadSchool($record)?->name ?? __('All tenants')),
                 Tables\Columns\TextColumn::make('sender_label')
-                    ->label(__('From')),
-                Tables\Columns\TextColumn::make('target_label')
-                    ->label(__('To')),
+                    ->label(__('Last message from')),
                 Tables\Columns\TextColumn::make('subject')
                     ->label(__('Subject'))
                     ->searchable()
                     ->limit(40),
+                Tables\Columns\TextColumn::make('thread_size')
+                    ->label(__('Messages'))
+                    ->badge()
+                    ->color('gray'),
                 Tables\Columns\TextColumn::make('priority')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
@@ -68,12 +109,8 @@ class PlatformMessageResource extends Resource
                         'info' => 'info',
                         default => 'gray',
                     }),
-                Tables\Columns\IconColumn::make('is_read')
-                    ->label(__('Read'))
-                    ->boolean()
-                    ->visible(fn (?PlatformMessage $record): bool => $record?->isToPlatform() ?? false),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label(__('Date'))
+                    ->label(__('Last activity'))
                     ->dateTime()
                     ->sortable(),
             ])
@@ -193,36 +230,62 @@ class PlatformMessageResource extends Resource
                     ->modalHeading(__('Conversation Thread'))
                     ->modalContent(fn (PlatformMessage $record) => view(
                         'filament.admin.resources.platform-message-thread',
-                        ['messages' => $record->threadMessages()->get()]
+                        [
+                            'messages' => $record->threadMessages()->get(),
+                            'threadParentId' => $record->id,
+                            'canReply' => true,
+                            'viewerSchoolId' => null,
+                        ]
                     ))
                     ->action(function (PlatformMessage $record) {
-                        app(PlatformMessagingService::class)->markPlatformMessageRead($record, Auth::user());
+                        // Mark every tenant-sent message in this thread as read.
+                        PlatformMessage::withoutGlobalScopes()
+                            ->where('thread_id', $record->thread_id)
+                            ->where('recipient_type', 'platform')
+                            ->where('is_read', false)
+                            ->update(['is_read' => true, 'read_at' => now()]);
                     }),
                 Tables\Actions\Action::make('reply')
                     ->label(__('Reply'))
                     ->icon('heroicon-o-arrow-uturn-left')
                     ->color('primary')
-                    ->visible(fn (?PlatformMessage $record): bool => $record?->isToPlatform() ?? false)
                     ->slideOver()
                     ->form([
                         Forms\Components\Placeholder::make('replying_to')
                             ->label(__('Replying to'))
-                            ->content(fn (PlatformMessage $record) => ($record->school?->name ?? 'Tenant').' — '.($record->subject ?? 'Conversation')),
+                            ->content(fn (PlatformMessage $record) => (self::resolveThreadSchool($record)?->name ?? __('All tenants')).' — '.($record->subject ?? 'Conversation')),
                         Forms\Components\Textarea::make('body')
                             ->label(__('Reply message'))
                             ->required()
                             ->rows(6),
                     ])
-                    ->action(function (PlatformMessage $record, array $data) {
+                    ->action(function (PlatformMessage $record, array $data, $action) {
+                        $school = self::resolveThreadSchool($record);
+
+                        if (! $school) {
+                            Notification::make()
+                                ->title(__('No specific tenant'))
+                                ->body(__('This is a broadcast conversation. Replies are only possible on conversations with a specific tenant.'))
+                                ->warning()
+                                ->send();
+                            $action->halt();
+
+                            return;
+                        }
+
                         app(PlatformMessagingService::class)->replyFromPlatform(Auth::user(), $record, $data['body']);
                     }),
                 Tables\Actions\Action::make('mark_read')
                     ->label(__('Mark as read'))
                     ->icon('heroicon-o-check-badge')
                     ->color('success')
-                    ->visible(fn (?PlatformMessage $record): bool => $record?->isToPlatform() ?? false && ! $record->is_read)
+                    ->visible(fn (?PlatformMessage $record): bool => ($record?->isToPlatform() ?? false))
                     ->action(function (PlatformMessage $record) {
-                        app(PlatformMessagingService::class)->markPlatformMessageRead($record, Auth::user());
+                        PlatformMessage::withoutGlobalScopes()
+                            ->where('thread_id', $record->thread_id)
+                            ->where('recipient_type', 'platform')
+                            ->where('is_read', false)
+                            ->update(['is_read' => true, 'read_at' => now()]);
                     }),
             ]);
     }

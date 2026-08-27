@@ -55,8 +55,8 @@ class StudentMedicalRecordResource extends Resource
                             ->required(),
                         Forms\Components\Select::make('blood_group')
                             ->options([
-                                'A+' => 'A+', 'A-' => __('A-'), 'B+' => 'B+', 'B-' => __('B-'),
-                                'AB+' => 'AB+', 'AB-' => __('AB-'), 'O+' => 'O+', 'O-' => __('O-'),
+                                'A+' => __('A+'), 'A-' => __('A-'), 'B+' => __('B+'), 'B-' => __('B-'),
+                                'AB+' => __('AB+'), 'AB-' => __('AB-'), 'O+' => __('O+'), 'O-' => __('O-'),
                             ]),
                         Forms\Components\Textarea::make('allergies')
                             ->placeholder(__('List allergies or none...')),

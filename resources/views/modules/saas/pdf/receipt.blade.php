@@ -27,7 +27,7 @@
         <table class="header-table">
             <tr>
                 <td>
-                    <h1 class="logo-text">{{ __('SchoolCore ERP') }}</h1>
+                    <h1 class="logo-text">{{ __('Kairo CORE') }}</h1>
                     <div style="font-size: 12px; color: #64748b; margin-top: 4px;">{{ __('SaaS Platform Subscription Receipt') }}</div>
                 </td>
                 <td style="text-align: right;">
@@ -70,7 +70,7 @@
 
         <div class="footer">
             <p>{{ __('Verification Checksum:') }} <strong>{{ $receipt->verification_token }}</strong></p>
-            <p>{{ __('&copy; 2026 SchoolCore ERP Software Inc. All rights reserved.') }}</p>
+            <p>{{ __('&copy; 2026 Kairo CORE Software Inc. All rights reserved.') }}</p>
         </div>
     </div>
 

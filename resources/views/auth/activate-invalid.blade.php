@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
-    <title>{{ __('Invalid Activation Link - SchoolCore') }}</title>
+    <title>{{ __('Invalid Activation Link - Kairo CORE') }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light d-flex align-items-center py-5" style="min-height: 100vh;">
@@ -37,7 +37,7 @@
                         <a href="{{ route('marketing.home') }}" class="small">{{ __('Return to Home') }}</a>
                         @if (isset($email) && $email)
                             <span class="text-muted">&middot;</span>
-                            <a href="{{ route('filament.app.auth.login') }}" class="small">{{ __('Sign In') }}</a>
+                            <a href="{{ route('filament.app.auth.login') }}" class="small" target="_blank" rel="noopener noreferrer">{{ __('Sign In') }}</a>
                         @endif
                     </div>
                 </div>

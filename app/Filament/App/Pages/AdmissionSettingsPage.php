@@ -70,21 +70,20 @@ class AdmissionSettingsPage extends Page implements HasForms
         $user = Auth::user();
         $schoolId = session('current_tenant')?->id ?? ($user ? $user->school_id : null);
 
-        $this->form->fill([
+        $data = [
             'admission_email' => SystemSetting::get('admission', 'contact_email', ''),
             'admission_phone' => SystemSetting::get('admission', 'contact_phone', ''),
-            'email_subject' => SystemSetting::get('admission', 'email_subject', 'Admission Confirmation'),
-            'email_body' => SystemSetting::get('admission', 'email_body', ''),
+            'email_subject' => SystemSetting::get('admission', 'email_subject', 'Admission Confirmation — {school_name}'),
+            'email_body' => SystemSetting::get('admission', 'email_body') ?: $this->defaultEmailBody(),
             'notify_email_enabled' => SystemSetting::get('admission', 'notify_email_enabled', true),
             'document_guidelines' => SystemSetting::get('admission', 'document_guidelines', $this->defaultDocumentGuidelines()),
             'transfer_letter_required' => SystemSetting::get('admission', 'transfer_letter_required', true),
             'success_title' => SystemSetting::get('admission', 'success_title', 'Application Submitted!'),
             'success_message' => SystemSetting::get('admission', 'success_message', 'Your online application has been submitted successfully! Save your tracking reference below to monitor your application status.'),
-        ]);
+        ];
 
-        $emailConfig = [];
-        $this->fillEmailConfigurationState($emailConfig);
-        $this->form->fill($emailConfig);
+        $this->fillEmailConfigurationState($data);
+        $this->form->fill($data);
     }
 
     public function form(Form $form): Form
@@ -158,7 +157,7 @@ class AdmissionSettingsPage extends Page implements HasForms
                     ])->columns(1),
 
                 Section::make(__('Admission Confirmation Email'))
-                    ->description(__('This email is sent to the email address supplied in the online application when a student is enrolled. The Student ID Number and Admission Number are inserted automatically.'))
+                    ->description(__('This email is sent to the parent/guardian and the student when a student is enrolled. It includes the student\'s ID number, admission number, and an activation link for the student to set their password.'))
                     ->columnSpanFull()
                     ->schema([
                         TextInput::make('email_subject')
@@ -170,7 +169,7 @@ class AdmissionSettingsPage extends Page implements HasForms
                             ->label(__('Email Body'))
                             ->rows(10)
                             ->required()
-                            ->helperText(__('Available placeholders: {student_name}, {student_id}, {admission_number}, {school_name}, {academic_year}'))
+                            ->helperText(__('Available placeholders: {student_name}, {student_id}, {admission_number}, {school_name}, {academic_year}, {activation_url}, {hours}'))
                             ->placeholder(__("Dear Parent/Guardian,\n\nWe are pleased to confirm that {student_name} has been offered admission to {school_name}.\n\nStudent ID Number: {student_id}\nStudent/Admission Number: {admission_number}\n\nWelcome to our school community!")),
                     ])->columns(1),
 
@@ -235,6 +234,11 @@ class AdmissionSettingsPage extends Page implements HasForms
 
     protected function defaultDocumentGuidelines(): string
     {
-        return 'Upload scanned copies (PDF, JPG or PNG, max 5MB each). Birth certificate is required; certificates or result slips are highly recommended for secondary level applications.';
+        return 'Upload scanned copies (PDF, JPG or PNG, max 10MB each). Birth certificate is required; certificates or result slips are highly recommended for secondary level applications.';
+    }
+
+    protected function defaultEmailBody(): string
+    {
+        return "Dear Parent/Guardian,\n\nWe are pleased to confirm that {student_name} has been offered admission to {school_name} for the {academic_year} academic year in {level}.\n\nStudent ID Number: {student_id}\nAdmission/Student Number: {admission_number}\n\nWelcome to our school community!\n\nKind Regards,\nAdmissions Office";
     }
 }

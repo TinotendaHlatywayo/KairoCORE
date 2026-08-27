@@ -124,7 +124,7 @@
 
             {{-- Quick range presets --}}
             <div class="sc-cc-presets">
-                @foreach (\App\Livewire\TopbarCommandCenter::PRESETS as $key => $label)
+                @foreach (\App\Livewire\TopbarCommandCenter::PRESETS() as $key => $label)
                     <button
                         type="button"
                         class="sc-cc-preset"
@@ -164,7 +164,7 @@
                     <button
                         type="button"
                         class="sc-cc-btn sc-cc-btn-ghost"
-                        :class="{ 'sc-cc-btn-active': showNotificationHistory }"
+                        :class="{ 'sc-cc-btn-active': $wire.showNotificationHistory }"
                         x-on:click="$wire.toggleNotificationHistory()"
                         title="{{ __('View notification history for the past 30 days') }}"
                     >
@@ -260,12 +260,35 @@
                     </span>
                 </div>
                 <div class="sc-cc-list sc-cc-list-notif">
+                    @if ($this->showNotificationHistory)
+                        {{-- History filters: category + age window --}}
+                        <div class="sc-cc-filter-bar">
+                            <select wire:model.live="historyCategory" class="sc-cc-filter-select" aria-label="{{ __('Filter by type') }}">
+                                <option value="all">{{ __('All types') }}</option>
+                                <option value="chat">{{ __('Chat messages') }}</option>
+                                <option value="registration">{{ __('Registrations') }}</option>
+                                <option value="system">{{ __('System & tasks') }}</option>
+                            </select>
+                            <select wire:model.live="historyDays" class="sc-cc-filter-select" aria-label="{{ __('Filter by period') }}">
+                                <option value="7">{{ __('Last 7 days') }}</option>
+                                <option value="14">{{ __('Last 14 days') }}</option>
+                                <option value="30">{{ __('Last 30 days') }}</option>
+                            </select>
+                        </div>
+                    @endif
                     @foreach ($this->showNotificationHistory ? $this->notificationHistory : $this->unreadNotifications as $notification)
                         @php
                             $nType = $notification->type;
                             $nChip = 'New';
                             $nClass = 'sc-cc-notif-info';
-                            if ($nType === \App\Notifications\UserRegistrationApprovalNotification::class) {
+                            if ($nType === \App\Notifications\PlatformMessageNotification::class) {
+                                // Distinct CHAT presentation so conversations are
+                                // instantly recognizable next to system notices.
+                                $nTitle = ($notification->data['subject'] ?? 'New message');
+                                $nSub = trim(($notification->data['sender_label'] ?? '').' · '.($notification->data['preview'] ?? ''));
+                                $nChip = ($notification->data['sender_type'] ?? '') === 'platform' ? 'Chat ↓' : 'Chat ↑';
+                                $nClass = 'sc-cc-notif-chat';
+                            } elseif ($nType === \App\Notifications\UserRegistrationApprovalNotification::class) {
                                 $nTitle = 'New '.($notification->data['requested_role_label'] ?? 'registration').' registration';
                                 $nSub = $notification->data['user_name'] ?? '';
                                 $nChip = 'Action required';
@@ -306,22 +329,44 @@
                                 $nClass = 'sc-cc-notif-info';
                             }
                         @endphp
-                        <a
-                            href="{{ data_get($notification->data, 'url', '#') }}"
-                            class="sc-cc-notif {{ $this->showNotificationHistory && $notification->read_at ? 'sc-cc-notif-read' : '' }}"
-                            :class="'{{ $nClass }}'"
-                            wire:click.prevent=""
-                        >
-                            <span class="sc-cc-notif-dot"></span>
-                            <span class="sc-cc-notif-body">
-                                <span class="sc-cc-notif-msg">{{ $nTitle }}</span>
-                                <span class="sc-cc-notif-sub">
-                                    {{ $nSub }}
-                                    &middot; {{ $notification->created_at->diffForHumans() }}
+                        @php
+                            $nUrl = $this->notificationUrl($notification);
+                        @endphp
+                        @if ($nType === \App\Notifications\PlatformMessageNotification::class)
+                            {{-- Chat notifications navigate (SPA) into the message inbox --}}
+                            <a
+                                href="{{ $nUrl ?? '#' }}"
+                                class="sc-cc-notif {{ $this->showNotificationHistory && $notification->read_at ? 'sc-cc-notif-read' : '' }} {{ $nClass }}"
+                            >
+                                <span class="sc-cc-notif-chat-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z"/></svg>
                                 </span>
-                            </span>
-                            <span class="sc-cc-notif-chip">{{ $nChip }}</span>
-                        </a>
+                                <span class="sc-cc-notif-body">
+                                    <span class="sc-cc-notif-msg">{{ $nTitle }}</span>
+                                    <span class="sc-cc-notif-sub">
+                                        {{ $nSub }}
+                                        &middot; {{ $notification->created_at->diffForHumans() }}
+                                    </span>
+                                </span>
+                                <span class="sc-cc-notif-chip">{{ $nChip }}</span>
+                            </a>
+                        @else
+                            <a
+                                href="{{ $nUrl ?? '#' }}"
+                                class="sc-cc-notif {{ $this->showNotificationHistory && $notification->read_at ? 'sc-cc-notif-read' : '' }}"
+                                :class="'{{ $nClass }}'"
+                            >
+                                <span class="sc-cc-notif-dot"></span>
+                                <span class="sc-cc-notif-body">
+                                    <span class="sc-cc-notif-msg">{{ $nTitle }}</span>
+                                    <span class="sc-cc-notif-sub">
+                                        {{ $nSub }}
+                                        &middot; {{ $notification->created_at->diffForHumans() }}
+                                    </span>
+                                </span>
+                                <span class="sc-cc-notif-chip">{{ $nChip }}</span>
+                            </a>
+                        @endif
                     @endforeach
                 </div>
             @endif

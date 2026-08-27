@@ -1,5 +1,5 @@
 {{-- ============================================================
-     SchoolCore Website Motion Library
+     Kairo CORE Website Motion Library
      Vanilla JS (no framework): scroll reveals, parallax, tilt,
      animated counters and the DepthText effect (adapted from the
      React Bits component to a framework-agnostic implementation).

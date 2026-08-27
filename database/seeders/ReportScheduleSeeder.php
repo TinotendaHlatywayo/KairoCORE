@@ -715,7 +715,7 @@ class ReportScheduleSeeder extends Seeder
                         'show_logo' => true,
                         'show_signature_block' => true,
                         'header_text' => 'OFFICIAL INSTITUTIONAL RECORD',
-                        'footer_text' => 'Confidential - Generated via SchoolCore ERP Reporting System.',
+                        'footer_text' => 'Confidential - Generated via Kairo CORE Reporting System.',
                     ],
                     'created_by_id' => $createdBy,
                 ])

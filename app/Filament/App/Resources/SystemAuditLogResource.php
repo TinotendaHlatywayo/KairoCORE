@@ -175,7 +175,7 @@ class SystemAuditLogResource extends Resource
                             .header { text-align: center; margin-bottom: 25px; }
                         </style></head><body>
                         <div class="header">
-                            <h2>SchoolCore Administrative Auditing Statement</h2>
+                            <h2>Kairo CORE Administrative Auditing Statement</h2>
                             <p>Query extraction compiled on: '.date('Y-m-d H:i:s').'</p>
                         </div>
                         <table>

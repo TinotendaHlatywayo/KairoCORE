@@ -1,7 +1,8 @@
 <div style="display: flex; flex-direction: column; gap: 2rem;">
     <div class="sc-section-head is-center">
-        <span class="sc-eyebrow">{{ __('SchoolCore Live Feed') }}</span>
-        <h2 {!! 'style="' . $v['titleStyle'] . '"' !!} class="sc-section-title">{{ __('Latest News & Announcements') }}</h2>
+        <span class="sc-eyebrow">{{ __('Kairo CORE Live Feed') }}</span>
+        @php $newsTitle = trim((string) ($block['title'] ?? '')) !== '' ? $block['title'] : __('Latest News & Announcements'); @endphp
+        <h2 {!! 'style="' . $v['titleStyle'] . '"' !!} class="sc-section-title">{{ $newsTitle }}</h2>
     </div>
 
     <div class="sc-grid sc-grid-3">

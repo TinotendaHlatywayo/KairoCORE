@@ -42,7 +42,7 @@ class FeeWaiverResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Waiver Details')
+                Forms\Components\Section::make(__('Waiver Details'))
                     ->schema([
                         Forms\Components\TextInput::make('name')
                             ->required()

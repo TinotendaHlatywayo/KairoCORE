@@ -67,7 +67,7 @@ class ReportGeneratorPage extends Page
                 'show_logo' => true,
                 'show_signature_block' => true,
                 'header_text' => 'OFFICIAL INSTITUTIONAL RECORD',
-                'footer_text' => 'Confidential - Generated via SchoolCore ERP Reporting System.',
+                'footer_text' => 'Confidential - Generated via Kairo CORE Reporting System.',
             ],
             'orientation' => 'portrait',
             'output_format' => 'pdf',
@@ -554,7 +554,7 @@ class ReportGeneratorPage extends Page
         $options = [];
         foreach ($registry->groupedForPicker() as $module => $datasets) {
             foreach ($datasets as $dataset) {
-                $options[$dataset['key']] = "{$module} — {$dataset['label']}";
+                $options[$dataset['key']] = __("{$module} — {$dataset['label']}");
             }
         }
 

@@ -86,15 +86,15 @@ trait HasCsvBulkActions
         $title = $this->getExportTitle();
 
         return Action::make('import_csv')
-            ->label("Import {$title} (CSV)")
+            ->label(__("Import {$title} (CSV)"))
             ->icon('heroicon-o-arrow-up-tray')
             ->color('warning')
-            ->modalHeading("Import {$title} from CSV")
-            ->modalDescription('Two-phase import: upload your file, then match its columns to the system columns. Any mismatch is flagged before anything is saved.')
+            ->modalHeading(__("Import {$title} from CSV"))
+            ->modalDescription(__('Two-phase import: upload your file, then match its columns to the system columns. Any mismatch is flagged before anything is saved.'))
             ->modalWidth(MaxWidth::ExtraLarge)
-            ->modalSubmitActionLabel("Import {$title}")
+            ->modalSubmitActionLabel(__("Import {$title}"))
             ->steps([
-                Forms\Components\Wizard\Step::make('Upload')
+                Forms\Components\Wizard\Step::make(__('Upload'))
                     ->description(__('Download the template and fill it in'))
                     ->schema([
                         Forms\Components\Actions::make([
@@ -106,14 +106,14 @@ trait HasCsvBulkActions
                         ]),
                         Forms\Components\FileUpload::make('csv_file')
                             ->label(__('CSV File'))
-                            ->helperText("The template above contains the exact system columns. Replace the example row with your {$title} records.")
+                            ->helperText(__("The template above contains the exact system columns. Replace the example row with your {$title} records."))
                             ->acceptedFileTypes(['text/csv', 'text/plain', 'text/x-csv', 'application/csv', 'application/vnd.ms-excel'])
                             ->maxSize(4096)
                             ->required()
                             ->live()
                             ->storeFiles(false),
                     ]),
-                Forms\Components\Wizard\Step::make('Match Columns')
+                Forms\Components\Wizard\Step::make(__('Match Columns'))
                     ->description(__('Map your file columns to the system columns'))
                     ->schema(fn (Get $get): array => $this->columnMatchingSchema($get, $service, $streamName)),
             ])
@@ -150,7 +150,7 @@ trait HasCsvBulkActions
         $pdf = Pdf::loadView('filament.app.components.csv-export-pdf', [
             'school' => School::find($schoolId),
             'title' => $this->getExportTitle(),
-            'subtitle' => 'Exported from SchoolCore ERP on '.now()->format('d M Y H:i'),
+            'subtitle' => __('Exported from Kairo CORE on ').now()->format('d M Y H:i'),
             'headers' => $headers,
             'rows' => $rows,
             'primaryColor' => '#5b4fe9',
@@ -186,7 +186,7 @@ trait HasCsvBulkActions
             return [
                 Forms\Components\Placeholder::make('no_file_yet')
                     ->label(__('Upload your CSV first'))
-                    ->content('Go back to the "Upload" step, upload your file, then come here to match its columns.'),
+                    ->content(__('Go back to the "Upload" step, upload your file, then come here to match its columns.')),
             ];
         }
 
@@ -197,7 +197,7 @@ trait HasCsvBulkActions
             return [
                 Forms\Components\Placeholder::make('unreadable_file')
                     ->label(__('Could not read the CSV header row'))
-                    ->content('Make sure the first row of your file contains the column names, then re-upload it.'),
+                    ->content(__('Make sure the first row of your file contains the column names, then re-upload it.')),
             ];
         }
 
@@ -211,7 +211,7 @@ trait HasCsvBulkActions
             $selects[] = Forms\Components\Select::make("columnMap.{$key}")
                 ->label($column['label'].($column['required'] ? ' *' : ''))
                 ->options($options)
-                ->placeholder($column['required'] ? 'Select the matching column' : 'Optional')
+                ->placeholder($column['required'] ? __('Select the matching column') : __('Optional'))
                 ->searchable()
                 ->optionsLimit(100)
                 ->live()
@@ -229,11 +229,11 @@ trait HasCsvBulkActions
         $selects[] = Forms\Components\View::make('filament.app.components.csv-import.progress-panel')
             ->viewData([
                 'streamName' => $streamName,
-                'message' => 'Click "Import" to begin — progress appears here.',
+                'message' => __('Click "Import" to begin — progress appears here.'),
             ]);
 
         return [
-            Forms\Components\Fieldset::make('Column matching')
+            Forms\Components\Fieldset::make(__('Column matching'))
                 ->columns(2)
                 ->schema($selects),
         ];
@@ -255,8 +255,8 @@ trait HasCsvBulkActions
             $issues[] = [
                 'type' => 'error',
                 'title' => count($requiredMissing) === 1
-                    ? '1 required column is not matched yet — the import will not start until you fix this'
-                    : count($requiredMissing).' required columns are not matched yet — the import will not start until you fix these',
+                    ? __('1 required column is not matched yet — the import will not start until you fix this')
+                    : count($requiredMissing).__(' required columns are not matched yet — the import will not start until you fix these'),
                 'items' => $requiredMissing->keys()
                     ->map(fn (string $key): string => $columns[$key]['label'])
                     ->all(),
@@ -277,8 +277,8 @@ trait HasCsvBulkActions
             $issues[] = [
                 'type' => 'warning',
                 'title' => count($unused) === 1
-                    ? '1 column in your file will be ignored (no system field uses it)'
-                    : count($unused).' columns in your file will be ignored (no system field uses them)',
+                    ? __('1 column in your file will be ignored (no system field uses it)')
+                    : count($unused).__(' columns in your file will be ignored (no system field uses them)'),
                 'items' => $unused->values()->all(),
             ];
         }
@@ -291,7 +291,7 @@ trait HasCsvBulkActions
         if ($duplicates->isNotEmpty()) {
             $issues[] = [
                 'type' => 'error',
-                'title' => 'One file column is mapped to more than one field',
+                'title' => __('One file column is mapped to more than one field'),
                 'items' => $duplicates->all(),
             ];
         }
@@ -299,7 +299,7 @@ trait HasCsvBulkActions
         if (empty($issues)) {
             $issues[] = [
                 'type' => 'success',
-                'title' => 'Every required column is matched — ready to import.',
+                'title' => __('Every required column is matched — ready to import.'),
                 'items' => [],
             ];
         }
@@ -323,7 +323,7 @@ trait HasCsvBulkActions
         if (! $file) {
             Notification::make()
                 ->title(__('No file uploaded'))
-                ->body('Upload a CSV file in the first step before importing.')
+                ->body(__('Upload a CSV file in the first step before importing.'))
                 ->danger()
                 ->send();
 
@@ -339,7 +339,7 @@ trait HasCsvBulkActions
         if ($requiredMissing->isNotEmpty()) {
             Notification::make()
                 ->title(__('Import not started — required columns are not mapped'))
-                ->body('Match these columns before importing: '.$requiredMissing->keys()->map(fn (string $key): string => $columns[$key]['label'])->implode(', ').'.')
+                ->body(__('Match these columns before importing: ').$requiredMissing->keys()->map(fn (string $key): string => $columns[$key]['label'])->implode(', ').'.')
                 ->danger()
                 ->persistent()
                 ->send();
@@ -359,8 +359,8 @@ trait HasCsvBulkActions
                     $percent = $total > 0 ? (int) floor(($processed / $total) * 100) : 100;
 
                     $status = $rowFailed
-                        ? '<span class="text-danger-600">'.count($errors).' row(s) rejected so far</span>'
-                        : '<span class="text-gray-400">No errors yet</span>';
+                        ? '<span class="text-danger-600">'.count($errors).__(' row(s) rejected so far').'</span>'
+                        : '<span class="text-gray-400">'.__('No errors yet').'</span>';
 
                     $html = '<div class="flex items-center gap-3">'
                         .'<div class="h-2 flex-1 overflow-hidden rounded-full bg-gray-200">'
@@ -388,7 +388,7 @@ trait HasCsvBulkActions
         if ($failures->isEmpty()) {
             Notification::make()
                 ->title(__('Import complete'))
-                ->body('Imported '.$result['success'].' of '.$result['total'].' records.')
+                ->body(__('Imported ').$result['success'].__(' of ').$result['total'].__(' records.'))
                 ->success()
                 ->send();
 
@@ -399,7 +399,7 @@ trait HasCsvBulkActions
 
         Notification::make()
             ->title(__('Import finished with errors'))
-            ->body('Imported '.$result['success'].' of '.$result['total'].' records. '.$failures->count().' row(s) were rejected — download the error report below.')
+            ->body(__('Imported ').$result['success'].__(' of ').$result['total'].__(' records. ').$failures->count().__(' row(s) were rejected — download the error report below.'))
             ->warning()
             ->persistent()
             ->actions([
@@ -420,7 +420,7 @@ trait HasCsvBulkActions
     {
         $out = fopen('php://temp', 'r+');
         fwrite($out, "\xEF\xBB\xBF");
-        fputcsv($out, ['Row Number', 'Error(s)']);
+        fputcsv($out, [__('Row Number'), __('Error(s)')]);
 
         foreach ($failures as $failure) {
             fputcsv($out, [

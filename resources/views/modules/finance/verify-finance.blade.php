@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ __('Verify Finance Document - SchoolCore') }}</title>
+    <title>{{ __('Verify Finance Document - Kairo CORE') }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-50 min-h-screen flex items-center justify-center p-4">
@@ -19,11 +19,11 @@
             <h2 class="text-xl font-bold tracking-wide">{{ __('VERIFIED GENUINE') }}</h2>
             <p class="text-emerald-100 text-xs mt-1">
                 @if($type === 'receipt')
-                    {{ __('Authentic Payment Receipt Secured by SchoolCore') }}
+                    {{ __('Authentic Payment Receipt Secured by Kairo CORE') }}
                 @elseif($type === 'statement')
-                    {{ __('Authentic Statement of Account Secured by SchoolCore') }}
+                    {{ __('Authentic Statement of Account Secured by Kairo CORE') }}
                 @else
-                    {{ __('Authentic Invoice Secured by SchoolCore') }}
+                    {{ __('Authentic Invoice Secured by Kairo CORE') }}
                 @endif
             </p>
         </div>

@@ -21,6 +21,8 @@ class ModuleVisibilityTest extends TestCase
 
     private array $savedModules = [];
 
+    private ?School $school = null;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -31,6 +33,8 @@ class ModuleVisibilityTest extends TestCase
         if (! $school) {
             $school = School::create(['name' => 'Rujeko High', 'subdomain' => 'rujeko', 'status' => 'active']);
         }
+        $this->school = $school;
+        $this->actingAsTenant($school);
         $user = User::where('school_id', $school->id)->first();
         if (! $user) {
             User::create([
@@ -64,6 +68,10 @@ class ModuleVisibilityTest extends TestCase
 
     protected function tearDown(): void
     {
+        if ($this->school) {
+            $this->actingAsTenant($this->school);
+        }
+
         foreach ($this->savedModules as $module => $value) {
             SystemSetting::set('modules', $module, $value);
         }

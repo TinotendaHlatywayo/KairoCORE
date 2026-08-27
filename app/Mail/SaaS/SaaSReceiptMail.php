@@ -16,9 +16,16 @@ class SaaSReceiptMail extends Mailable
 
     public function build(): self
     {
+        // Apply the customer school's locale so the receipt PDF renders in the
+        // school's chosen language instead of the default 'en'.
+        $locale = $this->receipt->school?->locale;
+        if (in_array($locale, ['en', 'sn', 'sw', 'fr', 'pt', 'es'], true)) {
+            app()->setLocale($locale);
+        }
+
         $pdf = Pdf::loadView('modules.saas.pdf.receipt', ['receipt' => $this->receipt]);
 
-        return $this->subject('Payment Verified - SchoolCore SaaS Receipt: '.$this->receipt->receipt_number)
+        return $this->subject('Payment Verified - Kairo CORE SaaS Receipt: '.$this->receipt->receipt_number)
             ->view('modules.saas.emails.receipt')
             ->attachData($pdf->output(), $this->receipt->receipt_number.'.pdf', [
                 'mime' => 'application/pdf',

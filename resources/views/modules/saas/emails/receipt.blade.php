@@ -11,7 +11,7 @@
        <strong>{{ __('Amount Paid:') }}</strong> ${{ number_format($receipt->amount_paid, 2) }} {{ $receipt->currency }}<br>
        <strong>{{ __('Settled On:') }}</strong> {{ $receipt->issued_at->format('M d, Y H:i') }}</p>
     <p>{{ __('We have compiled and attached your official PDF receipt to this email for your accounting records.') }}</p>
-    <p>If you have any billing inquiries, please contact our support team at billing@schoolcore.test.</p>
-    <p>{{ __('Best regards,') }}<br>{{ __('SchoolCore ERP SaaS Team') }}</p>
+    <p>If you have any billing inquiries, please contact our support team at billing@kairocore.test.</p>
+    <p>{{ __('Best regards,') }}<br>{{ __('Kairo CORE SaaS Team') }}</p>
 </body>
 </html>

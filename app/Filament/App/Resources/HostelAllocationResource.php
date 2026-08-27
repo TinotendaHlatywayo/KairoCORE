@@ -36,31 +36,65 @@ class HostelAllocationResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Wizard::make([
-                    Forms\Components\Wizard\Step::make('Student Mapping')
+                    Forms\Components\Wizard\Step::make(__('Student Mapping'))
                         ->schema([
                             Forms\Components\Select::make('student_id')
-                                ->relationship('student', 'first_name')
+                                ->label(__('Student'))
+                                ->options(fn () => \Modules\Students\Models\Student::query()
+                                    ->get()
+                                    ->mapWithKeys(fn ($s) => [$s->id => $s->first_name . ' ' . $s->last_name]))
                                 ->searchable()
                                 ->required(),
                             Forms\Components\Select::make('academic_year_id')
                                 ->relationship('academicYear', 'name')
                                 ->required(),
                         ]),
-                    Forms\Components\Wizard\Step::make('Room Mapping')
+                    Forms\Components\Wizard\Step::make(__('Room Mapping'))
                         ->schema([
                             Forms\Components\Select::make('room_id')
-                                ->options(HostelRoom::pluck('room_number', 'id'))
+                                ->label(__('Room'))
+                                ->options(fn () => HostelRoom::with('hostel')
+                                    ->get()
+                                    ->mapWithKeys(fn ($r) => [
+                                        $r->id => ($r->hostel?->name ? $r->hostel->name . ' — ' : '') . $r->room_number,
+                                    ]))
+                                ->searchable()
                                 ->reactive()
                                 ->required()
                                 ->afterStateUpdated(fn ($set) => $set('bed_id', null)),
                             Forms\Components\Select::make('bed_id')
+                                ->label(__('Bed'))
                                 ->options(fn ($get) => HostelBed::where('room_id', $get('room_id'))
                                     ->where('status', 'vacant')
-                                    ->pluck('bed_number', 'id')
-                                )
+                                    ->get()
+                                    ->mapWithKeys(fn ($b) => [$b->id => $b->bed_number . ' (' . ucfirst($b->condition) . ')']))
+                                ->searchable()
+                                ->createOptionForm([
+                                    Forms\Components\TextInput::make('bed_number')
+                                        ->label(__('Bed Number'))
+                                        ->required()
+                                        ->maxLength(50)
+                                        ->placeholder('e.g., B-1'),
+                                    Forms\Components\Select::make('condition')
+                                        ->label(__('Condition'))
+                                        ->options([
+                                            'good' => __('Good'),
+                                            'fair' => __('Fair'),
+                                            'poor' => __('Poor'),
+                                        ])
+                                        ->default('good')
+                                        ->required(),
+                                ])
+                                ->createOptionUsing(function (array $data, $get) {
+                                    $data['room_id'] = $get('room_id');
+                                    $data['school_id'] = current_tenant()?->id ?? auth()->user()->school_id;
+                                    $data['status'] = 'vacant';
+                                    $data['cleaning_status'] = 'clean';
+                                    return HostelBed::create($data)->id;
+                                })
                                 ->required(),
                         ]),
-                    Forms\Components\Wizard\Step::make('Processing Rules')
+                    Forms\Components\Wizard\Step::make(__('Processing Rules'))
                         ->schema([
                             Forms\Components\DatePicker::make('allocated_at')
                                 ->default(now())
@@ -76,8 +110,10 @@ class HostelAllocationResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('student.first_name')->label(__('First Name'))->searchable(),
-                Tables\Columns\TextColumn::make('student.last_name')->label(__('Last Name'))->searchable(),
+                Tables\Columns\TextColumn::make('student.first_name')
+                    ->label(__('Student'))
+                    ->searchable()
+                    ->formatStateUsing(fn ($state, $record) => trim(($record->student->first_name ?? '') . ' ' . ($record->student->last_name ?? ''))),
                 Tables\Columns\TextColumn::make('bed.room.room_number')->label(__('Room')),
                 Tables\Columns\TextColumn::make('bed.bed_number')->label(__('Bed')),
                 Tables\Columns\TextColumn::make('status')->badge(),

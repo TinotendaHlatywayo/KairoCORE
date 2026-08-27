@@ -79,7 +79,7 @@ class ApplicationResource extends Resource
             ->schema([
                 Forms\Components\Tabs::make(__('Admissions Workflow'))
                     ->tabs([
-                        Tab::make('Application')
+                        Tab::make(__('Application'))
                             ->label(__('1. Application'))
                             ->schema([
                                 Forms\Components\Section::make(__('Student Information'))
@@ -123,7 +123,7 @@ class ApplicationResource extends Resource
                                     ])->columns(2),
                             ]),
 
-                        Tab::make('Review')
+                        Tab::make(__('Review'))
                             ->label(__('2. Review & Verification'))
                             ->schema([
                                 Forms\Components\Section::make(__('Documents'))
@@ -155,13 +155,13 @@ class ApplicationResource extends Resource
                                             ->columns(6)
                                             ->collapsible()
                                             ->defaultItems(0)
-                                            ->addActionLabel('Add Document'),
+                                            ->addActionLabel(__('Add Document')),
                                         Forms\Components\Checkbox::make('documents_verified')
                                             ->label(__('Documents Verified'))
                                             ->helperText(__('Mark when all documents have been checked.')),
                                     ]),
 
-                                Forms\Components\Section::make('Interview')
+                                Forms\Components\Section::make(__('Interview'))
                                     ->schema([
                                         Forms\Components\DatePicker::make('interview_date')
                                             ->label(__('Interview Date')),
@@ -178,10 +178,10 @@ class ApplicationResource extends Resource
                                     ]),
                             ]),
 
-                        Tab::make('Approval')
+                        Tab::make(__('Approval'))
                             ->label(__('3. Approval'))
                             ->schema([
-                                Forms\Components\Section::make('Decision')
+                                Forms\Components\Section::make(__('Decision'))
                                     ->schema([
                                         Forms\Components\Select::make('status')
                                             ->options([
@@ -198,10 +198,10 @@ class ApplicationResource extends Resource
                                     ]),
                             ]),
 
-                        Tab::make('Enrollment')
+                        Tab::make(__('Enrollment'))
                             ->label(__('4. Enrollment'))
                             ->schema([
-                                Forms\Components\Section::make('Enrollment Details')
+                                Forms\Components\Section::make(__('Enrollment Details'))
                                     ->schema([
                                         Forms\Components\Select::make('academic_year_id')
                                             ->label(__('Active Academic Year'))
@@ -253,7 +253,7 @@ class ApplicationResource extends Resource
                 Tables\Columns\TextColumn::make('date_of_birth')
                     ->label(__('Age'))
                     ->date()
-                    ->formatStateUsing(fn ($state) => $state ? Carbon::parse($state)->age.' years' : '-'),
+                    ->formatStateUsing(fn ($state) => $state ? Carbon::parse($state)->age.' '.__('years') : '-'),
 
                 Tables\Columns\BadgeColumn::make('status')
                     ->color(fn (string $state): string => match ($state) {
@@ -278,12 +278,12 @@ class ApplicationResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
-                        'pending' => 'Pending Review',
-                        'verified' => 'Verified',
-                        'confirmed' => 'Confirmed',
-                        'enrolled' => 'Enrolled',
-                        'rejected' => 'Rejected',
-                        'waiting_list' => 'Waiting List',
+                        'pending' => __('Pending Review'),
+                        'verified' => __('Verified'),
+                        'confirmed' => __('Confirmed'),
+                        'enrolled' => __('Enrolled'),
+                        'rejected' => __('Rejected'),
+                        'waiting_list' => __('Waiting List'),
                     ]),
                 Tables\Filters\Filter::make('unverified_docs')
                     ->label(__('Documents Not Verified'))
@@ -313,7 +313,7 @@ class ApplicationResource extends Resource
                     ->icon('heroicon-o-paper-clip')
                     ->color('success')
                     ->modalHeading(__('Application Documents'))
-                    ->modalDescription(fn (Application $record) => 'Supporting documents for '.$record->full_name)
+                    ->modalDescription(fn (Application $record) => __('Supporting documents for').' '.$record->full_name)
                     ->modalContent(fn (Application $record) => view('filament.app.resources.application-documents-modal', [
                         'application' => $record,
                         'documents' => $record->documents,
@@ -386,7 +386,7 @@ class ApplicationResource extends Resource
 
                         Notification::make()
                             ->title(__('Student Enrolled Successfully!'))
-                            ->body("Portal account created for {$studentUser->name}")
+                            ->body(__('Portal account created for')." {$studentUser->name}")
                             ->success()
                             ->send();
                     }),
@@ -459,7 +459,7 @@ class ApplicationResource extends Resource
 
                             Notification::make()
                                 ->title(__('Bulk Enrollment Complete'))
-                                ->body(count($records).' students enrolled successfully.')
+                                ->body(count($records).' '.__('students enrolled successfully.'))
                                 ->success()
                                 ->send();
                         }),
@@ -478,12 +478,15 @@ class ApplicationResource extends Resource
     }
 
     /**
-     * Finds an existing user by email or creates a unique portal account for
-     * the student. Ensures no two users ever share the same email address.
+     * Finds an existing user by email or creates a new portal account for
+     * the student. The account starts locked — an activation email is sent
+     * so the student can set their own password securely.
      */
     protected static function resolveOrCreateStudentUser(Application $record): User
     {
-        $base = strtolower($record->first_name.'.'.$record->last_name.'@'.app('current_tenant')->subdomain.'.schoolcore.test');
+        $school = app('current_tenant');
+
+        $base = strtolower($record->first_name.'.'.$record->last_name.'@'.($school->subdomain ?? 'school').'.schoolcore.test');
 
         $email = $base;
         $suffix = 1;
@@ -491,12 +494,15 @@ class ApplicationResource extends Resource
             $email = preg_replace('/@/', ($suffix++).'@', $base, 1);
         }
 
-        return User::create([
+        $user = User::create([
             'school_id' => $record->school_id,
             'name' => "{$record->first_name} {$record->last_name}",
             'email' => $email,
-            'password' => Hash::make('password123'),
+            'password' => \Illuminate\Support\Facades\Hash::make(\Illuminate\Support\Str::random(32)),
+            'account_status' => User::STATUS_PENDING,
         ]);
+
+        return $user;
     }
 
     /**
@@ -542,7 +548,7 @@ class ApplicationResource extends Resource
     {
         Notification::make()
             ->title(__('🎉 Application Submitted Successfully!'))
-            ->body('Application #'.$record->application_number.' has been received. We will review it shortly.')
+            ->body(__('Application #').$record->application_number.' '.__('has been received. We will review it shortly.'))
             ->success()
             ->duration(10000)
             ->send();

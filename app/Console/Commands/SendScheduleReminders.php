@@ -13,7 +13,7 @@ use Modules\Communication\Models\EventCalendar;
 
 /**
  * Scheduled sweeper that turns configured reminders into database
- * notifications, reusing the existing SchoolCore notification architecture.
+ * notifications, reusing the existing Kairo CORE notification architecture.
  *
  * Runs every few minutes via the scheduler:
  *   - task reminders whose `reminder_at` has arrived

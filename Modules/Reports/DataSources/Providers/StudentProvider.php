@@ -8,7 +8,7 @@ class StudentProvider extends AbstractDatasetProvider
 {
     public function module(): string
     {
-        return 'Students';
+        return __('Students');
     }
 
     public function datasets(): array
@@ -16,31 +16,31 @@ class StudentProvider extends AbstractDatasetProvider
         $stu = 'students_register';
 
         return [
-            $this->d('students.register', 'Students (Register)', 'students', [
-                $this->f('admission_number', 'Admission Number'),
-                $this->f('student_id_number', 'Student ID Number'),
-                $this->f('national_id', 'National ID / Passport'),
-                $this->f('first_name', 'First Name'),
-                $this->f('last_name', 'Last Name'),
-                $this->f('full_name', 'Full Name', 'string', "CONCAT({$stu}.first_name, ' ', {$stu}.last_name)"),
-                $this->f('gender', 'Gender'),
-                $this->f('date_of_birth', 'Date of Birth', 'date'),
-                $this->f('admission_date', 'Admission Date', 'date'),
-                $this->f('status', 'Status'),
-                $this->f('boarding_status', 'Boarding / Day Scholar'),
-                $this->f('house', 'House'),
-                $this->f('blood_group', 'Blood Group'),
-                $this->f('class_name', 'Class Stream', 'string', "CONCAT({$stu}_course.name, ' ', {$stu}_section.name)"),
-                $this->f('course_name', 'Course', 'string', "{$stu}_course.name"),
-                $this->f('section_name', 'Section', 'string', "{$stu}_section.name"),
-                $this->f('roll_number', 'Roll Number', 'string', "{$stu}_enr.roll_number"),
-                $this->f('medical_notes', 'Medical Notes'),
-                $this->f('emergency_contact_name', 'Emergency Contact'),
-                $this->f('emergency_contact_phone', 'Emergency Contact Phone'),
-                $this->f('guardian_name', 'Guardian Name', 'string', "{$stu}_grd.name"),
-                $this->f('guardian_phone', 'Guardian Phone', 'string', "{$stu}_grd.phone"),
-                $this->f('guardian_email', 'Guardian Email', 'string', "{$stu}_grd.email"),
-                $this->f('guardian_relationship', 'Guardian Relationship', 'string', "{$stu}_grd.relationship"),
+            $this->d('students.register', __('Students (Register)'), 'students', [
+                $this->f('admission_number', __('Admission Number')),
+                $this->f('student_id_number', __('Student ID Number')),
+                $this->f('national_id', __('National ID / Passport')),
+                $this->f('first_name', __('First Name')),
+                $this->f('last_name', __('Last Name')),
+                $this->f('full_name', __('Full Name'), 'string', "CONCAT({$stu}.first_name, ' ', {$stu}.last_name)"),
+                $this->f('gender', __('Gender')),
+                $this->f('date_of_birth', __('Date of Birth'), 'date'),
+                $this->f('admission_date', __('Admission Date'), 'date'),
+                $this->f('status', __('Status')),
+                $this->f('boarding_status', __('Boarding / Day Scholar')),
+                $this->f('house', __('House')),
+                $this->f('blood_group', __('Blood Group')),
+                $this->f('class_name', __('Class Stream'), 'string', "CONCAT({$stu}_course.name, ' ', {$stu}_section.name)"),
+                $this->f('course_name', __('Course'), 'string', "{$stu}_course.name"),
+                $this->f('section_name', __('Section'), 'string', "{$stu}_section.name"),
+                $this->f('roll_number', __('Roll Number'), 'string', "{$stu}_enr.roll_number"),
+                $this->f('medical_notes', __('Medical Notes')),
+                $this->f('emergency_contact_name', __('Emergency Contact')),
+                $this->f('emergency_contact_phone', __('Emergency Contact Phone')),
+                $this->f('guardian_name', __('Guardian Name'), 'string', "{$stu}_grd.name"),
+                $this->f('guardian_phone', __('Guardian Phone'), 'string', "{$stu}_grd.phone"),
+                $this->f('guardian_email', __('Guardian Email'), 'string', "{$stu}_grd.email"),
+                $this->f('guardian_relationship', __('Guardian Relationship'), 'string', "{$stu}_grd.relationship"),
             ], [
                 'description' => __('Current student register enriched with latest enrollment (class stream), guardian and emergency contacts.'),
                 'autoJoins' => [
@@ -75,7 +75,7 @@ class StudentProvider extends AbstractDatasetProvider
                 ],
             ]),
 
-            $this->d('attendance.summary', 'Attendance Summary (per student)', 'SELECT
+            $this->d('attendance.summary', __('Attendance Summary (per student)'), 'SELECT
                     student_id AS student_id,
                     COUNT(*) AS total_days,
                     SUM(CASE WHEN status = \'present\' THEN 1 ELSE 0 END) AS present_days,
@@ -84,11 +84,11 @@ class StudentProvider extends AbstractDatasetProvider
                 FROM student_attendances
                 WHERE school_id = {school_id}
                 GROUP BY student_id', [
-                $this->f('total_days', 'Total School Days', 'integer'),
-                $this->f('present_days', 'Days Present', 'integer'),
-                $this->f('absent_days', 'Days Absent', 'integer'),
-                $this->f('late_days', 'Days Late', 'integer'),
-                $this->pct('attendance_rate', 'Attendance Rate', 'ROUND(100.0 * attendance_summary.present_days / NULLIF(attendance_summary.total_days, 0), 2)'),
+                $this->f('total_days', __('Total School Days'), 'integer'),
+                $this->f('present_days', __('Days Present'), 'integer'),
+                $this->f('absent_days', __('Days Absent'), 'integer'),
+                $this->f('late_days', __('Days Late'), 'integer'),
+                $this->pct('attendance_rate', __('Attendance Rate'), 'ROUND(100.0 * attendance_summary.present_days / NULLIF(attendance_summary.total_days, 0), 2)'),
             ], [
                 'description' => __('Aggregated attendance per student — enables attendance % and absent-day filters across any other module.'),
                 'connections' => [
@@ -97,12 +97,12 @@ class StudentProvider extends AbstractDatasetProvider
                 ],
             ]),
 
-            $this->d('attendance.daily', 'Attendance (daily rows)', 'student_attendances', [
-                $this->f('date', 'Attendance Date', 'date'),
-                $this->f('status', 'Status', 'string', null, null),
-                $this->f('remarks', 'Remarks'),
-                $this->f('student_name', 'Student Name', 'string', "CONCAT(attendance_daily_st.first_name, ' ', attendance_daily_st.last_name)"),
-                $this->f('class_name', 'Class Stream', 'string', "CONCAT(attendance_daily_course.name, ' ', attendance_daily_section.name)"),
+            $this->d('attendance.daily', __('Attendance (daily rows)'), 'student_attendances', [
+                $this->f('date', __('Attendance Date'), 'date'),
+                $this->f('status', __('Status'), 'string', null, null),
+                $this->f('remarks', __('Remarks')),
+                $this->f('student_name', __('Student Name'), 'string', "CONCAT(attendance_daily_st.first_name, ' ', attendance_daily_st.last_name)"),
+                $this->f('class_name', __('Class Stream'), 'string', "CONCAT(attendance_daily_course.name, ' ', attendance_daily_section.name)"),
             ], [
                 'description' => __('Raw daily attendance rows with student and class context.'),
                 'autoJoins' => [
@@ -119,13 +119,13 @@ class StudentProvider extends AbstractDatasetProvider
                 ],
             ]),
 
-            $this->d('academics.enrollment', 'Enrollments (Students ↔ Courses)', 'enrollments', [
-                $this->f('roll_number', 'Roll Number'),
-                $this->f('student_name', 'Student Name', 'string', "CONCAT(academics_enrollment_st.first_name, ' ', academics_enrollment_st.last_name)"),
-                $this->f('admission_number', 'Admission Number', 'string', 'academics_enrollment_st.admission_number'),
-                $this->f('course_name', 'Course', 'string', 'academics_enrollment_course.name'),
-                $this->f('section_name', 'Section', 'string', 'academics_enrollment_section.name'),
-                $this->f('academic_year', 'Academic Year', 'string', 'academics_enrollment_ay.name'),
+            $this->d('academics.enrollment', __('Enrollments (Students ↔ Courses)'), 'enrollments', [
+                $this->f('roll_number', __('Roll Number')),
+                $this->f('student_name', __('Student Name'), 'string', "CONCAT(academics_enrollment_st.first_name, ' ', academics_enrollment_st.last_name)"),
+                $this->f('admission_number', __('Admission Number'), 'string', 'academics_enrollment_st.admission_number'),
+                $this->f('course_name', __('Course'), 'string', 'academics_enrollment_course.name'),
+                $this->f('section_name', __('Section'), 'string', 'academics_enrollment_section.name'),
+                $this->f('academic_year', __('Academic Year'), 'string', 'academics_enrollment_ay.name'),
             ], [
                 'description' => __('Student enrollment records joined with course, section and academic year.'),
                 'autoJoins' => [
@@ -139,11 +139,11 @@ class StudentProvider extends AbstractDatasetProvider
                 ],
             ]),
 
-            $this->d('academics.subject', 'Subjects', 'subjects', [
-                $this->f('name', 'Subject Name'),
-                $this->f('code', 'Subject Code'),
-                $this->f('type', 'Subject Type'),
-                $this->f('credit_weight', 'Credit Weight', 'integer'),
+            $this->d('academics.subject', __('Subjects'), 'subjects', [
+                $this->f('name', __('Subject Name')),
+                $this->f('code', __('Subject Code')),
+                $this->f('type', __('Subject Type')),
+                $this->f('credit_weight', __('Credit Weight'), 'integer'),
             ], [
                 'description' => __('Subjects offered by the school.'),
                 'connections' => [
@@ -151,22 +151,22 @@ class StudentProvider extends AbstractDatasetProvider
                 ],
             ]),
 
-            $this->d('academics.mark_record', 'Student Marks (per subject / paper)', 'mark_records', [
-                $this->f('student_name', 'Student Name', 'string', "CONCAT(academics_mark_record_st.first_name, ' ', academics_mark_record_st.last_name)"),
-                $this->f('admission_number', 'Admission Number', 'string', 'academics_mark_record_st.admission_number'),
-                $this->f('subject_name', 'Subject', 'string', 'academics_mark_record_sub.name'),
-                $this->f('paper_name', 'Paper', 'string', 'academics_mark_record_paper.name'),
-                $this->f('course_name', 'Course', 'string', 'academics_mark_record_course.name'),
-                $this->f('section_name', 'Section', 'string', 'academics_mark_record_section.name'),
-                $this->f('bot_mark', 'BOT Mark', 'decimal'),
-                $this->f('mot_mark', 'MOT Mark', 'decimal'),
-                $this->f('eot_mark', 'EOT Mark', 'decimal'),
-                $this->f('c1_mark', 'C1 Mark', 'decimal'),
-                $this->f('c2_mark', 'C2 Mark', 'decimal'),
-                $this->f('c3_mark', 'C3 Mark', 'decimal'),
-                $this->f('total_score', 'Total Score', 'decimal',
+            $this->d('academics.mark_record', __('Student Marks (per subject / paper)'), 'mark_records', [
+                $this->f('student_name', __('Student Name'), 'string', "CONCAT(academics_mark_record_st.first_name, ' ', academics_mark_record_st.last_name)"),
+                $this->f('admission_number', __('Admission Number'), 'string', 'academics_mark_record_st.admission_number'),
+                $this->f('subject_name', __('Subject'), 'string', 'academics_mark_record_sub.name'),
+                $this->f('paper_name', __('Paper'), 'string', 'academics_mark_record_paper.name'),
+                $this->f('course_name', __('Course'), 'string', 'academics_mark_record_course.name'),
+                $this->f('section_name', __('Section'), 'string', 'academics_mark_record_section.name'),
+                $this->f('bot_mark', __('BOT Mark'), 'decimal'),
+                $this->f('mot_mark', __('MOT Mark'), 'decimal'),
+                $this->f('eot_mark', __('EOT Mark'), 'decimal'),
+                $this->f('c1_mark', __('C1 Mark'), 'decimal'),
+                $this->f('c2_mark', __('C2 Mark'), 'decimal'),
+                $this->f('c3_mark', __('C3 Mark'), 'decimal'),
+                $this->f('total_score', __('Total Score'), 'decimal',
                     'COALESCE(academics_mark_record.bot_mark,0) + COALESCE(academics_mark_record.mot_mark,0) + COALESCE(academics_mark_record.eot_mark,0) + COALESCE(academics_mark_record.c1_mark,0) + COALESCE(academics_mark_record.c2_mark,0) + COALESCE(academics_mark_record.c3_mark,0)'),
-                $this->f('average_score', 'Average Mark', 'decimal',
+                $this->f('average_score', __('Average Mark'), 'decimal',
                     'ROUND((COALESCE(academics_mark_record.bot_mark,0) + COALESCE(academics_mark_record.mot_mark,0) + COALESCE(academics_mark_record.eot_mark,0)) / 3.0, 2)'),
             ], [
                 'description' => __('Mark records per student per subject paper with class context.'),
@@ -184,7 +184,7 @@ class StudentProvider extends AbstractDatasetProvider
                 ],
             ]),
 
-            $this->d('academics.performance', 'Academic Performance Summary (per student)', 'SELECT
+            $this->d('academics.performance', __('Academic Performance Summary (per student)'), 'SELECT
                     enr.student_id AS student_id,
                     COUNT(DISTINCT mr.subject_id) AS subjects_taken,
                     ROUND(AVG((COALESCE(mr.bot_mark,0) + COALESCE(mr.mot_mark,0) + COALESCE(mr.eot_mark,0)) / 3.0), 2) AS average_mark,
@@ -193,9 +193,9 @@ class StudentProvider extends AbstractDatasetProvider
                 JOIN enrollments enr ON enr.id = mr.enrollment_id
                 WHERE mr.school_id = {school_id}
                 GROUP BY enr.student_id', [
-                $this->f('subjects_taken', 'Subjects Taken', 'integer'),
-                $this->f('average_mark', 'Average Mark (out of 20)', 'decimal'),
-                $this->pct('score_percent', 'Overall Score %', 'academics_performance.score_percent'),
+                $this->f('subjects_taken', __('Subjects Taken'), 'integer'),
+                $this->f('average_mark', __('Average Mark (out of 20)'), 'decimal'),
+                $this->pct('score_percent', __('Overall Score %'), 'academics_performance.score_percent'),
             ], [
                 'description' => __('Per-student academic summary computed from mark records.'),
                 'connections' => [
@@ -204,7 +204,7 @@ class StudentProvider extends AbstractDatasetProvider
                 ],
             ]),
 
-            $this->d('attendance.class_summary', 'Attendance Summary (per class stream)', 'SELECT
+            $this->d('attendance.class_summary', __('Attendance Summary (per class stream)'), 'SELECT
                     CONCAT(c.name, \' \', s.name) AS class_name,
                     COUNT(DISTINCT a.student_id) AS total_students,
                     COUNT(*) AS total_records,
@@ -220,20 +220,20 @@ class StudentProvider extends AbstractDatasetProvider
                 JOIN sections s ON s.id = e.section_id
                 WHERE a.school_id = {school_id}
                 GROUP BY c.name, s.name', [
-                $this->f('class_name', 'Class Stream'),
-                $this->f('total_students', 'Students Covered', 'integer'),
-                $this->f('total_records', 'Attendance Records', 'integer'),
-                $this->f('present_days', 'Days Present', 'integer'),
-                $this->f('absent_days', 'Days Absent', 'integer'),
-                $this->f('late_days', 'Days Late', 'integer'),
-                $this->f('excused_days', 'Days Excused', 'integer'),
-                $this->pct('attendance_rate', 'Attendance Rate', 'attendance_class_summary.attendance_rate'),
+                $this->f('class_name', __('Class Stream')),
+                $this->f('total_students', __('Students Covered'), 'integer'),
+                $this->f('total_records', __('Attendance Records'), 'integer'),
+                $this->f('present_days', __('Days Present'), 'integer'),
+                $this->f('absent_days', __('Days Absent'), 'integer'),
+                $this->f('late_days', __('Days Late'), 'integer'),
+                $this->f('excused_days', __('Days Excused'), 'integer'),
+                $this->pct('attendance_rate', __('Attendance Rate'), 'attendance_class_summary.attendance_rate'),
             ], [
                 'description' => __('Attendance aggregates per class stream — compare class-level attendance health.'),
                 'default_order' => 'attendance_rate|asc',
             ]),
 
-            $this->d('attendance.monthly_trend', 'Attendance Trend (per month)', 'SELECT
+            $this->d('attendance.monthly_trend', __('Attendance Trend (per month)'), 'SELECT
                     DATE_FORMAT(date, \'%Y-%m\') AS month,
                     COUNT(*) AS total_records,
                     SUM(CASE WHEN status = \'present\' THEN 1 ELSE 0 END) AS present_days,
@@ -244,13 +244,13 @@ class StudentProvider extends AbstractDatasetProvider
                 FROM student_attendances
                 WHERE school_id = {school_id}
                 GROUP BY DATE_FORMAT(date, \'%Y-%m\')', [
-                $this->f('month', 'Month'),
-                $this->f('total_records', 'Attendance Records', 'integer'),
-                $this->f('present_days', 'Days Present', 'integer'),
-                $this->f('absent_days', 'Days Absent', 'integer'),
-                $this->f('late_days', 'Days Late', 'integer'),
-                $this->f('excused_days', 'Days Excused', 'integer'),
-                $this->pct('attendance_rate', 'Attendance Rate', 'attendance_monthly_trend.attendance_rate'),
+                $this->f('month', __('Month')),
+                $this->f('total_records', __('Attendance Records'), 'integer'),
+                $this->f('present_days', __('Days Present'), 'integer'),
+                $this->f('absent_days', __('Days Absent'), 'integer'),
+                $this->f('late_days', __('Days Late'), 'integer'),
+                $this->f('excused_days', __('Days Excused'), 'integer'),
+                $this->pct('attendance_rate', __('Attendance Rate'), 'attendance_monthly_trend.attendance_rate'),
             ], [
                 'description' => __('Monthly attendance trend for spotting seasonal dips.'),
                 'default_order' => 'month|asc',

@@ -73,10 +73,10 @@ class ReportTemplateResource extends Resource
                     ->schema([
                         // Left Column: Controls & Styling Fields (Span 2)
                         Forms\Components\Group::make([
-                            Forms\Components\Tabs::make('Report Template Designer')
+                            Forms\Components\Tabs::make(__('Report Template Designer'))
                                 ->tabs([
                                     // TAB 1: BRACKET MAPPING, THEMES & TARGET SCOPING
-                                    Forms\Components\Tabs\Tab::make('1. Scopes & Theme')
+                                    Forms\Components\Tabs\Tab::make(__('1. Scopes & Theme'))
                                         ->icon('heroicon-o-tag')
                                         ->schema([
                                             Forms\Components\TextInput::make('name')
@@ -129,18 +129,18 @@ class ReportTemplateResource extends Resource
                                         ])->columns(2),
 
                                     // TAB 2: TYPOGRAPHY, BRANDING & COLORS
-                                    Forms\Components\Tabs\Tab::make('2. Typography & Colors')
+                                    Forms\Components\Tabs\Tab::make(__('2. Typography & Colors'))
                                         ->icon('heroicon-o-paint-brush')
                                         ->schema([
-                                            Forms\Components\Fieldset::make('Font Styles')
+                                            Forms\Components\Fieldset::make(__('Font Styles'))
                                                 ->schema([
                                                     Forms\Components\Select::make('layout_config.font_family')
                                                         ->label(__('Card Font Family'))
                                                         ->options([
-                                                            'Helvetica, sans-serif' => 'Helvetica / Arial (Clean Modern)',
-                                                            'Georgia, serif' => 'Georgia (Elegant Editorial)',
-                                                            'Times New Roman, serif' => 'Times New Roman (Academic Classic)',
-                                                            'Courier, monospace' => 'Courier (System Monospace)',
+                                                            'Helvetica, sans-serif' => __('Helvetica / Arial (Clean Modern)'),
+                                                            'Georgia, serif' => __('Georgia (Elegant Editorial)'),
+                                                            'Times New Roman, serif' => __('Times New Roman (Academic Classic)'),
+                                                            'Courier, monospace' => __('Courier (System Monospace)'),
                                                         ])
                                                         ->default('Helvetica, sans-serif')
                                                         ->required()
@@ -153,7 +153,7 @@ class ReportTemplateResource extends Resource
                                                         ->live(),
                                                 ])->columns(2),
 
-                                            Forms\Components\Fieldset::make('Color Adjustments')
+                                            Forms\Components\Fieldset::make(__('Color Adjustments'))
                                                 ->schema([
                                                     Forms\Components\ColorPicker::make('layout_config.header_color')
                                                         ->label(__('Header Title Color'))
@@ -171,7 +171,7 @@ class ReportTemplateResource extends Resource
                                                         ->live(),
                                                 ])->columns(3),
 
-                                            Forms\Components\Fieldset::make('Branding Visibilities')
+                                            Forms\Components\Fieldset::make(__('Branding Visibilities'))
                                                 ->schema([
                                                     Forms\Components\Toggle::make('layout_config.show_school_logo')->label(__('Display School Logo'))->default(true)->live(),
                                                     Forms\Components\Toggle::make('layout_config.show_school_motto')->label(__('Display School Motto'))->default(true)->live(),
@@ -182,7 +182,7 @@ class ReportTemplateResource extends Resource
                                         ]),
 
                                     // TAB 3: SPACING & BOARD SPACES
-                                    Forms\Components\Tabs\Tab::make('3. Margins & Padding')
+                                    Forms\Components\Tabs\Tab::make(__('3. Margins & Padding'))
                                         ->icon('heroicon-o-arrows-pointing-out')
                                         ->schema([
                                             Forms\Components\TextInput::make('layout_config.page_margin_v')
@@ -221,10 +221,10 @@ class ReportTemplateResource extends Resource
                                         ])->columns(3),
 
                                     // TAB 4: ACADEMIC TABLE COLUMNS CUSTOMIZER
-                                    Forms\Components\Tabs\Tab::make('4. Academic Columns')
+                                    Forms\Components\Tabs\Tab::make(__('4. Academic Columns'))
                                         ->icon('heroicon-o-table-cells')
                                         ->schema([
-                                            Forms\Components\Fieldset::make('Select Columns to Display')
+                                            Forms\Components\Fieldset::make(__('Select Columns to Display'))
                                                 ->schema([
                                                     Forms\Components\CheckboxList::make('layout_config.included_assessments')
                                                         ->label(__('Select Included Tests/Assessments'))
@@ -253,10 +253,10 @@ class ReportTemplateResource extends Resource
                                         ]),
 
                                     // TAB 5: VISIBILITY CONTROLS, RANKINGS & DYNAMIC SELECTIONS
-                                    Forms\Components\Tabs\Tab::make('5. Section Visibilities')
+                                    Forms\Components\Tabs\Tab::make(__('5. Section Visibilities'))
                                         ->icon('heroicon-o-eye')
                                         ->schema([
-                                            Forms\Components\Fieldset::make('Information Modules & Rankings')
+                                            Forms\Components\Fieldset::make(__('Information Modules & Rankings'))
                                                 ->schema([
                                                     Forms\Components\Toggle::make('layout_config.show_student_photo')->label(__('Display Student Photo'))->default(true)->live(),
                                                     Forms\Components\Toggle::make('layout_config.show_class_position')->label(__('Display Class Position / Rank'))->default(true)->live(),
@@ -269,7 +269,7 @@ class ReportTemplateResource extends Resource
                                                     Forms\Components\Toggle::make('layout_config.show_grading_keys')->label(__('Display Grading Scales Key in Footer'))->default(true)->live(),
                                                 ])->columns(3),
 
-                                            Forms\Components\Fieldset::make('Select Unhu/Ubuntu Traits to Display')
+                                            Forms\Components\Fieldset::make(__('Select Unhu/Ubuntu Traits to Display'))
                                                 ->visible(fn (Forms\Get $get) => $get('layout_config.show_ubuntu_competencies'))
                                                 ->schema([
                                                     Forms\Components\CheckboxList::make('layout_config.displayed_ubuntu_traits')
@@ -304,7 +304,7 @@ class ReportTemplateResource extends Resource
                                         ]),
 
                                     // TAB 6: CUSTOM ANNOUNCEMENTS, FEES & SCHEDULES
-                                    Forms\Components\Tabs\Tab::make('6. Schedule & Fees Settings')
+                                    Forms\Components\Tabs\Tab::make(__('6. Schedule & Fees Settings'))
                                         ->icon('heroicon-o-banknotes')
                                         ->schema([
                                             Forms\Components\DatePicker::make('layout_config.next_term_begins')
@@ -341,7 +341,7 @@ class ReportTemplateResource extends Resource
 
                         // Right Column: Interactive WYSIWYG Realtime Preview Panel (Span 1)
                         Forms\Components\Group::make([
-                            Forms\Components\Section::make('Interactive Live Simulator')
+                            Forms\Components\Section::make(__('Interactive Live Simulator'))
                                 ->description(__('Simulates layout changes in real-time before saving.'))
                                 ->schema([
                                     Forms\Components\Placeholder::make('live_preview')

@@ -34,12 +34,16 @@
         $successMessage = \Modules\Admin\Models\SystemSetting::get('admission', 'success_message', 'Your online application has been submitted successfully! Save your tracking reference below to monitor your application status.');
     @endphp
 
-    <div class="sc-card" style="max-width: 48rem; margin-inline: auto; padding: clamp(1.5rem, 5vw, 3rem);">
+    <div class="sc-card" style="max-width: 48rem; margin-inline: auto; padding: clamp(1.5rem, 5vw, 3rem); @if(!empty($v['bg_color']))background-color: {{ $v['bg_color'] }};@endif @if(!empty($v['bg_image']))background-image: url('{{ $v['bg_image'] }}'); background-size: cover; background-position: center;@endif">
 
         <div style="text-align: center; margin-bottom: 2rem;">
             <span class="sc-eyebrow" style="justify-content: center;">{{ __('Enrollment Open') }}</span>
-            <h2 class="sc-section-title" style="font-size: clamp(1.6rem, 1.2rem + 1.6vw, 2.25rem);">Apply to {{ $school->name ?? 'Our School' }}</h2>
-            <p class="sc-muted" style="margin-top: 0.6rem;">Please register student details below for the {{ $school->name ?? 'Our School' }} admissions review.</p>
+            @php
+                $admTitle = !empty($block['title']) ? $block['title'] : __('Apply to :school', ['school' => $school->name ?? __('Our School')]);
+                $admSubtitle = !empty($block['subtitle']) ? $block['subtitle'] : __('Please register student details below for the :school admissions review.', ['school' => $school->name ?? __('Our School')]);
+            @endphp
+            <h2 class="sc-section-title" style="font-size: clamp(1.6rem, 1.2rem + 1.6vw, 2.25rem); {{ $v['titleStyle'] ?? '' }}">{{ $admTitle }}</h2>
+            <p class="sc-muted" style="margin-top: 0.6rem;">{{ $admSubtitle }}</p>
         </div>
 
         <!-- System Alerts -->
@@ -69,7 +73,7 @@
                  session-random field name so browser autofill (Chrome) and bots
                  that target a fixed field name cannot pre-fill it. --}}
             @php($hpName = honeypot_field_name())
-            <div class="absolute left-[-9999px] top-[-9999px]" aria-hidden="true">
+            <div style="position: absolute; left: -9999px; top: -9999px; display: none;" aria-hidden="true">
                 <label for="{{ $hpName }}">{{ __('Leave this field empty') }}</label>
                 <input type="text" id="{{ $hpName }}" name="{{ $hpName }}" tabindex="-1" autocomplete="off" class="hp-fill-guard" readonly onfocus="this.removeAttribute('readonly')">
             </div>
@@ -101,7 +105,7 @@
 
             <!-- STEP 1: Student Profile & Level -->
             <div x-show="step === 1" x-transition data-step="1">
-                <h3 class="sc-step-heading">{{ __('1. Prospective Student Profile &amp; Level') }}</h3>
+                <h3 class="sc-step-heading">{{ __('') }}</h3>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1rem;">
                     <div>
                         <label class="sc-label">{{ __('First Name') }} <span class="sc-required">*</span></label>
@@ -183,7 +187,7 @@
                     </div>
                     <div>
                         <label class="sc-label">{{ __('Primary Phone Number') }} <span class="sc-required">*</span></label>
-                        <input type="tel" name="parent_phone" x-model="parentPhone" @input="validateRealTimePhone()" required maxlength="15"
+                        <input type="tel" name="parent_phone" x-model="parentPhone" @input="validateRealTimePhone()" required maxlength="30"
                                placeholder="e.g. 0786366855 or +263771234567"
                                class="sc-input"
                                :class="phoneFormatError ? 'is-error' : ''">
@@ -202,32 +206,7 @@
                 ))
                 <p class="sc-muted" style="font-size: 0.85rem; margin-bottom: 1rem;">{{ $documentGuidelines }}</p>
 
-                <div id="document-rows" style="display: flex; flex-direction: column; gap: 1rem;">
-                    <div class="document-row sc-upload-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1rem; padding: 1.25rem; border-radius: var(--sc-radius);">
-                        <div>
-                            <label class="sc-label">Document Title / Name (required)</label>
-                            <input type="text" name="documents[0][title]" data-type="name" maxlength="100"
-                                   class="document-title sc-input"
-                                   placeholder="e.g., Birth Certificate">
-                        </div>
-                        <div>
-                            <label class="sc-label">{{ __('Upload File') }} <span class="sc-required">*</span></label>
-                            <!-- ONLY PDF allowed -->
-                            <input type="file" name="documents[0][file]" accept=".pdf,application/pdf" data-type="file"
-                                   class="sc-input">
-                            <p class="sc-form-hint">{{ __('PDF files only. Max 5MB per file. At least one supporting document is required.') }}</p>
-                        </div>
-                        <div style="grid-column: 1 / -1; display: flex; justify-content: flex-end;">
-                            <button type="button" @click="removeRow($el.closest('.document-row'))"
-                                    class="remove-row hidden sc-file-btn" style="background: none; border: none; cursor: pointer; color: #e11d48;">
-                                <svg xmlns="http://www.w3.org/2000/svg" style="display: inline-block; margin-right: 0.25rem;" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                                {{ __('Remove this document') }}
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                <div id="document-rows" style="display: flex; flex-direction: column; gap: 1rem;"></div>
 
                 <button type="button" @click="addRow()" class="sc-btn sc-btn-ghost" style="margin-top: 1rem;">
                     <span aria-hidden="true">＋</span> {{ __('Add another document') }}
@@ -245,7 +224,7 @@
                         </div>
                         <div>
                             <label class="sc-label">{{ __('Upload Transfer Letter') }} <span x-show="transferRequired && !isEntryLevel" class="sc-required">*</span></label>
-                            <input type="file" name="transfer_letter" accept=".pdf,application/pdf" data-type="file"
+                            <input type="file" name="transfer_letter" accept=".pdf,application/pdf,.jpg,.jpeg,.png,image/jpeg,image/png" data-type="file"
                                    :required="transferRequired && !isEntryLevel"
                                    class="sc-input">
                             <p class="sc-form-hint">{{ __('PDF files only. Max 5MB per file.') }}</p>
@@ -391,7 +370,7 @@
                             this.markInvalid(transferInput);
                             valid = false;
                             if (!firstInvalid) firstInvalid = transferInput;
-                            this.stepError = 'A verified transfer letter is required for this level. Please upload the PDF in the "Verified Transfer Letter" section.';
+                            this.stepError = 'A verified transfer letter is required for this level. Please upload a PDF, JPG or PNG in the "Verified Transfer Letter" section.';
                         }
                     }
 
@@ -415,7 +394,7 @@
                                     this.markInvalid(field);
                                     valid = false;
                                     if (!firstInvalid) firstInvalid = field;
-                                    this.stepError = 'File size error: Uploads must be smaller than 5MB.';
+                                    this.stepError = 'File size error: Uploads must be smaller than 10MB.';
                                 } else {
                                     this.markValid(field);
                                 }
@@ -450,27 +429,37 @@
                 addRow() {
                     this.docIndex++;
                     const container = document.querySelector('#document-rows');
-                    const row = container.querySelector('.document-row').cloneNode(true);
 
-                    row.querySelectorAll('input[type="text"]').forEach(input => {
-                        input.value = '';
-                        input.name = 'documents[' + this.docIndex + '][title]';
-                        this.markValid(input);
+                    const row = document.createElement('div');
+                    row.className = 'document-row sc-upload-row';
+                    row.style.cssText = 'display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1rem; padding: 1.25rem; border-radius: var(--sc-radius);';
+                    row.innerHTML = `
+                        <div>
+                            <label class="sc-label">{{ __('Document Title / Name (required)') }}</label>
+                            <input type="text" name="documents[${this.docIndex}][title]" maxlength="100"
+                                   class="document-title sc-input" placeholder="{{ __('e.g., Birth Certificate') }}">
+                        </div>
+                        <div>
+                            <label class="sc-label">{{ __('Upload File') }} <span class="sc-required">*</span></label>
+                            <input type="file" name="documents[${this.docIndex}][file]" accept=".pdf,application/pdf,.jpg,.jpeg,.png,image/jpeg,image/png"
+                                   class="sc-input">
+                            <p class="sc-form-hint">{{ __('PDF, JPG or PNG. Max 10MB per file.') }}</p>
+                        </div>
+                        <div style="grid-column: 1 / -1; display: flex; justify-content: flex-end;">
+                            <button type="button" class="remove-row sc-file-btn" style="background: none; border: none; cursor: pointer; color: #e11d48;">
+                                <svg xmlns="http://www.w3.org/2000/svg" style="display: inline-block; margin-right: 0.25rem;" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                {{ __('Remove this document') }}
+                            </button>
+                        </div>
+                    `;
+
+                    row.querySelector('.remove-row').addEventListener('click', function() {
+                        row.remove();
                     });
 
-                    const fileInput = row.querySelector('input[type="file"]');
-                    if (fileInput) {
-                        fileInput.value = '';
-                        fileInput.name = 'documents[' + this.docIndex + '][file]';
-                        this.markValid(fileInput);
-                    }
-
-                    const removeBtn = row.querySelector('.remove-row');
-                    removeBtn.classList.remove('hidden');
                     container.appendChild(row);
-                },
-                removeRow(row) {
-                    row.remove();
                 }
             };
         }
@@ -481,6 +470,9 @@
          x-transition.opacity>
         <div class="sc-modal-backdrop" @click="showModal = false"></div>
         <div class="sc-modal-card" x-transition x-transition.scale.90>
+            <button type="button" @click="showModal = false"
+                    style="position: absolute; top: 0.75rem; right: 0.75rem; background: none; border: none; cursor: pointer; color: var(--sc-muted, #6b7280); font-size: 1.25rem; line-height: 1; padding: 0.25rem;"
+                    aria-label="{{ __('Close') }}">&#10005;</button>
             <div class="sc-modal-check">
                 <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />

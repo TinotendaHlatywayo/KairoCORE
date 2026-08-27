@@ -88,7 +88,7 @@ class ClinicVisitResource extends Resource
                             ->default(fn () => Auth::id()),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Treatment Prescriptions')
+                Forms\Components\Section::make(__('Treatment Prescriptions'))
                     ->schema([
                         Forms\Components\Repeater::make('prescriptions')
                             ->relationship('prescriptions')

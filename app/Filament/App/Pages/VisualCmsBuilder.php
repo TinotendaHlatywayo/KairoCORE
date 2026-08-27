@@ -44,9 +44,15 @@ class VisualCmsBuilder extends Page
     public string $activeTemplate = 'heritage-editorial';
 
     /** The template actually applied to the currently-loaded page (differs from
-     *  $activeTemplate when a page has its own page_template override).
+     *  $activeTemplate when a page has its own page_theme override).
      */
     public string $pageTemplate = 'heritage-editorial';
+
+    /** Per-page layout ID (e.g. 'about_2') — stored in page_layout column. */
+    public string $pageLayout = '';
+
+    /** Whether the current page has its own theme override (vs site-wide). */
+    public bool $pageHasThemeOverride = false;
 
     public string $editingMode = 'simple';
 
@@ -76,6 +82,9 @@ class VisualCmsBuilder extends Page
     public string $font_primary = 'Inter';
 
     public string $font_secondary = 'Outfit';
+
+    /** Dedicated heading font for all section titles (falls back to font_secondary). */
+    public string $font_heading = '';
 
     public string $design_radius = 'lg';
 
@@ -199,7 +208,9 @@ class VisualCmsBuilder extends Page
         $this->hasUnpublishedChanges = ($this->blocks !== ($this->page->blocks ?? []));
 
         $this->activeTemplate = CmsTemplateService::canonicalTemplate($this->website->active_template);
-        $this->pageTemplate = CmsTemplateService::canonicalTemplate($this->page->page_template ?? $this->activeTemplate);
+        $this->pageTemplate = CmsTemplateService::resolvePageTheme($this->page->page_theme, $this->page->page_template, $this->activeTemplate);
+        $this->pageLayout = $this->page->page_layout ?? '';
+        $this->pageHasThemeOverride = ! empty($this->page->page_theme);
         $this->editingMode = data_get($this->website->theme_overrides, 'editor_mode', 'simple');
         $this->color_primary = CmsTemplateService::safeHex($this->website->color_primary, '#1e3a8a');
         $this->color_secondary = CmsTemplateService::safeHex($this->website->color_secondary, '#0284c7');
@@ -209,6 +220,7 @@ class VisualCmsBuilder extends Page
         $this->color_card_bg = CmsTemplateService::safeHex($this->website->color_card_bg, '#f8fafc');
         $this->font_primary = $this->website->font_primary ?: 'Inter';
         $this->font_secondary = $this->website->font_secondary ?: 'Outfit';
+        $this->font_heading = $this->website->font_heading ?: $this->font_secondary;
         $this->design_radius = CmsTemplateService::safeToken($this->website->design_radius, CmsTemplateService::RADIUS_SCALE, 'lg');
         $this->design_shadow = CmsTemplateService::safeToken($this->website->design_shadow, CmsTemplateService::SHADOW_SCALE, 'md');
         $this->design_container = CmsTemplateService::safeToken($this->website->design_container, CmsTemplateService::CONTAINER_SCALE, 'wide');
@@ -224,7 +236,7 @@ class VisualCmsBuilder extends Page
             'students_count' => DB::table('students')->where('school_id', $schoolId)->count(),
             'courses_count' => DB::table('courses')->where('school_id', $schoolId)->count(),
             'books_count' => DB::table('inventory_items')->where('school_id', $schoolId)->count(),
-            'teachers_count' => DB::table('users')->where('school_id', $schoolId)->count(),
+            'teachers_count' => DB::table('users')->where('school_id', $schoolId)->whereIn('requested_role', ['teacher', 'staff'])->count(),
         ];
 
         $this->news = CmsTemplateService::resolveDynamicBlockData('news_feed', $schoolId);
@@ -338,6 +350,8 @@ class VisualCmsBuilder extends Page
             'hide_from_nav' => (bool) $this->page->hide_from_nav,
             'sort_order' => (int) $this->page->sort_order,
             'page_template' => $this->page->page_template,
+            'page_layout' => $this->page->page_layout,
+            'page_theme' => $this->page->page_theme,
             'page_settings' => $this->page->page_settings ?? [],
             'blocks' => $blocks,
             'draft_blocks' => $blocks,
@@ -379,23 +393,6 @@ class VisualCmsBuilder extends Page
         if (! is_null($this->selectedBlockIndex) && isset($this->blocks[$this->selectedBlockIndex])) {
             $this->blocks[$this->selectedBlockIndex] = $this->selectedBlockData;
             $this->syncDraft();
-        }
-    }
-
-    public function someMethod(string $name)
-    {
-        if (in_array($name, [
-            'color_primary', 'color_secondary', 'color_accent', 'color_background', 'color_text',
-            'color_card_bg', 'font_primary', 'font_secondary', 'design_radius', 'design_shadow',
-            'design_container', 'design_button_style',
-        ], true)) {
-            $this->hasUnpublishedChanges = true;
-        }
-
-        // Let blocks that were still inheriting the old site background / text color
-        // follow the new palette, so site-wide theme changes reflect instantly.
-        if ($name === 'color_background' || $name === 'color_text') {
-            $this->refreshInheritedBlockColors($this->prevBackground, $this->prevText);
         }
     }
 
@@ -456,6 +453,9 @@ class VisualCmsBuilder extends Page
 
     private function syncDraft(): void
     {
+        // Draft-first workflow: edits are visible in the builder canvas and
+        // the full-page preview, but the public site only changes when the
+        // user clicks "Publish" (publishPage()).
         $this->page->update(['draft_blocks' => $this->blocks]);
         $this->hasUnpublishedChanges = ($this->blocks !== ($this->page->blocks ?? []));
     }
@@ -508,6 +508,7 @@ class VisualCmsBuilder extends Page
         $this->color_card_bg = $preset['palette']['card_bg'];
         $this->font_primary = $preset['fonts']['primary'];
         $this->font_secondary = $preset['fonts']['secondary'];
+        $this->font_heading = $preset['fonts']['heading'] ?? $preset['fonts']['primary'];
         $this->design_radius = $preset['design']['radius'];
         $this->design_shadow = $preset['design']['shadow'];
         $this->design_container = $preset['design']['container'];
@@ -534,18 +535,18 @@ class VisualCmsBuilder extends Page
         // A site-wide template switch must actually change what the public site
         // and the studio preview render. Pages still pinned to the previous
         // site-wide template follow the switch; pages with an explicit per-page
-        // override keep their own template.
+        // theme override keep their own template.
         CmsPage::where('cms_website_id', $this->website->id)
-            ->where('page_template', $previousTemplate)
-            ->update(['page_template' => $val]);
+            ->where('page_theme', $previousTemplate)
+            ->update(['page_theme' => $val]);
         $this->page = $this->page->fresh() ?? $this->page;
-        $this->pageTemplate = CmsTemplateService::canonicalTemplate($this->page->page_template ?? $val);
+        $this->pageTemplate = CmsTemplateService::resolvePageTheme($this->page->page_theme, $this->page->page_template, $val);
         $this->loadSitePages();
 
         $this->dispatch('notify', ['message' => "Template switched to '{$preset['name']}' – all content preserved!", 'type' => 'success']);
     }
 
-    /** Apply a different template to just the current page (per-page override). */
+    /** Apply a different theme to just the current page (per-page override). */
     public function switchPageTemplate(string $template): void
     {
         $template = CmsTemplateService::canonicalTemplate($template);
@@ -555,9 +556,22 @@ class VisualCmsBuilder extends Page
         }
 
         $this->pageTemplate = $template;
-        $this->page->update(['page_template' => $template]);
+        $this->pageHasThemeOverride = true;
+        $this->page->update(['page_theme' => $template]);
 
-        $this->dispatch('notify', ['message' => "Page template set to '{$templates[$template]['name']}'.", 'type' => 'success']);
+        $this->dispatch('notify', ['message' => "Page theme set to '{$templates[$template]['name']}'.", 'type' => 'success']);
+    }
+
+    /** Remove per-page theme override — page falls back to site-wide theme. */
+    public function resetPageTheme(): void
+    {
+        $this->pageTemplate = $this->activeTemplate;
+        $this->pageHasThemeOverride = false;
+        $this->page->update(['page_theme' => null]);
+
+        $templates = CmsTemplateService::getTemplates();
+        $name = $templates[$this->activeTemplate]['name'] ?? $this->activeTemplate;
+        $this->dispatch('notify', ['message' => "Page now uses the site-wide theme ({$name}).", 'type' => 'success']);
     }
 
     /**
@@ -665,6 +679,7 @@ class VisualCmsBuilder extends Page
                 'is_published' => true,
                 'sort_order' => $sort,
                 'page_template' => $template,
+                'page_theme' => $template,
             ]);
         }
 
@@ -683,6 +698,7 @@ class VisualCmsBuilder extends Page
             'color_card_bg' => CmsTemplateService::safeHex($this->color_card_bg, '#f8fafc'),
             'font_primary' => $this->font_primary,
             'font_secondary' => $this->font_secondary,
+            'font_heading' => $this->font_heading !== '' ? $this->font_heading : null,
             'design_radius' => CmsTemplateService::safeToken($this->design_radius, CmsTemplateService::RADIUS_SCALE, 'lg'),
             'design_shadow' => CmsTemplateService::safeToken($this->design_shadow, CmsTemplateService::SHADOW_SCALE, 'md'),
             'design_container' => CmsTemplateService::safeToken($this->design_container, CmsTemplateService::CONTAINER_SCALE, 'wide'),
@@ -998,6 +1014,10 @@ class VisualCmsBuilder extends Page
     /**
      * Five ready-to-use layouts are available for every key page kind. They are
      * deliberately block-based, so every word, image, and position remains editable.
+     *
+     * Layout choice is stored per page (page_layout = "about_2" etc.) and the
+     * starter blocks are saved to the DRAFT so they show in preview; publishing
+     * pushes them live. The theme (template) is unaffected — layout ≠ template.
      */
     public function applyPageTemplate(string $layout): void
     {
@@ -1008,14 +1028,23 @@ class VisualCmsBuilder extends Page
 
         $this->blocks = [];
         foreach ($layouts[$layout]['blocks'] as $type) {
-            $this->addBlock($type);
+            $this->blocks[] = CmsTemplateService::starterBlock($type);
         }
 
-        $this->page->update(['page_template' => $layout]);
+        $this->page->update(['page_layout' => $layout]);
+        $this->syncDraft();
         $this->selectedBlockIndex = null;
         $this->selectedBlockData = [];
         $this->pushToHistory();
         $this->dispatch('notify', ['message' => "{$layouts[$layout]['name']} applied. Replace the starter text and images to make it yours.", 'type' => 'success']);
+    }
+
+    /** Clear the per-page layout — page keeps its current blocks. */
+    public function resetPageLayout(): void
+    {
+        $this->pageLayout = '';
+        $this->page->update(['page_layout' => null]);
+        $this->dispatch('notify', ['message' => 'Page layout cleared.', 'type' => 'success']);
     }
 
     public function moveBlockUp(int $index): void
@@ -1228,7 +1257,7 @@ class VisualCmsBuilder extends Page
     {
         $this->sitePages = CmsPage::where('cms_website_id', $this->website->id)
             ->orderBy('sort_order')
-            ->get(['id', 'title', 'slug', 'is_homepage', 'is_published', 'hide_from_nav', 'sort_order'])
+            ->get(['id', 'title', 'slug', 'is_homepage', 'is_published', 'hide_from_nav', 'sort_order', 'page_theme', 'page_layout'])
             ->toArray();
     }
 
@@ -1301,6 +1330,33 @@ class VisualCmsBuilder extends Page
         foreach (array_values($orderedIds) as $order => $id) {
             CmsPage::where('cms_website_id', $this->website->id)->where('id', $id)->update(['sort_order' => $order]);
         }
+        $this->loadSitePages();
+        $this->syncNavigationMenu();
+    }
+
+    /** Swap a page one position up/down in the navigation order. */
+    public function movePage(int $pageId, string $direction): void
+    {
+        $pages = CmsPage::where('cms_website_id', $this->website->id)
+            ->orderBy('sort_order')->orderBy('id')
+            ->get(['id', 'sort_order']);
+
+        $index = $pages->search(fn ($p) => (int) $p->id === $pageId);
+        if ($index === false) {
+            return;
+        }
+
+        $targetIndex = $direction === 'up' ? $index - 1 : $index + 1;
+        if (! isset($pages[$targetIndex])) {
+            return;
+        }
+
+        // Swap sort orders between neighbours, then normalise 0..n-1.
+        $a = $pages[$index];
+        $b = $pages[$targetIndex];
+        CmsPage::where('id', $a->id)->update(['sort_order' => $b->sort_order]);
+        CmsPage::where('id', $b->id)->update(['sort_order' => $a->sort_order]);
+
         $this->loadSitePages();
         $this->syncNavigationMenu();
     }
@@ -1575,6 +1631,8 @@ class VisualCmsBuilder extends Page
             'slug' => $unique,
             'blocks' => $source->blocks,
             'draft_blocks' => $source->draft_blocks ?? $source->blocks,
+            'page_theme' => $source->page_theme,
+            'page_layout' => $source->page_layout,
             'is_homepage' => false,
             'is_published' => false,
             'sort_order' => count($this->sitePages),

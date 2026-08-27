@@ -17,6 +17,7 @@ class AdmissionNotificationService
 {
     public function __construct(
         private TenantEmailConfigurationService $emailConfigService,
+        private AccountActivationService $activationService,
     ) {}
 
     public function send(Student $student, ?string $recipientEmail = null, ?int $schoolId = null): bool
@@ -41,14 +42,26 @@ class AdmissionNotificationService
             return false;
         }
 
-        $subject = SystemSetting::get('admission', 'email_subject', 'Admission Confirmation');
-        $body = SystemSetting::get('admission', 'email_body', $this->defaultBody());
+        $subject = SystemSetting::get('admission', 'email_subject', 'Admission Confirmation — {school_name}');
+        $body = SystemSetting::get('admission', 'email_body') ?: $this->defaultBody();
 
         $year = $student->enrollments()->with('academicYear')->latest()->first()?->academicYear?->name
             ?? SystemSetting::get('admission', 'current_year', '');
 
-        $subject = $this->interpolate($subject, $student, $school, $year);
-        $body = $this->interpolate($body, $student, $school, $year);
+        // Issue an activation token so the confirmation email includes a
+        // direct link for the student to set their password.
+        $activationUrl = null;
+        if ($student->user) {
+            try {
+                $token = $this->activationService->issueToken($student->user);
+                $activationUrl = route('account.activate', ['token' => $token]);
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        }
+
+        $subject = $this->interpolate($subject, $student, $school, $year, $activationUrl);
+        $body = $this->interpolate($body, $student, $school, $year, $activationUrl);
 
         return $this->emailConfigService->queueSend(
             new AdmissionConfirmation(
@@ -57,6 +70,7 @@ class AdmissionNotificationService
                 $subject,
                 $body,
                 $school->name,
+                activationUrl: $activationUrl,
             ),
             EmailCategory::Admissions,
             $school
@@ -79,7 +93,7 @@ class AdmissionNotificationService
         return $student->user?->email;
     }
 
-    protected function interpolate(string $text, Student $student, School $school, string $year): string
+    protected function interpolate(string $text, Student $student, School $school, string $year, ?string $activationUrl = null): string
     {
         $level = $student->currentEnrollment?->course?->name
             ?? $student->application?->course?->name
@@ -92,6 +106,8 @@ class AdmissionNotificationService
             '{school_name}' => $school->name,
             '{academic_year}' => $year,
             '{level}' => $level,
+            '{activation_url}' => $activationUrl ?? '',
+            '{hours}' => (string) config('auth.activation_token_ttl_hours', 48),
         ]);
     }
 

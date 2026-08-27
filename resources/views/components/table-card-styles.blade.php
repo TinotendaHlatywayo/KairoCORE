@@ -1,4 +1,4 @@
-{{-- SchoolCore shared table-card styles.
+{{-- Kairo CORE shared table-card styles.
      Include this inside any card-based table content view so the
      card look stays consistent across the whole system (rounded corners,
      soft drop-shadow, light-teal active-indicator edge border and a top

@@ -55,7 +55,7 @@ class SchoolBankAccountResource extends Resource
                             ]),
                         Forms\Components\TextInput::make('account_name')
                             ->required()
-                            ->placeholder(__('e.g. SchoolCore Technologies Pvt Ltd')),
+                            ->placeholder(__('e.g. Kairo CORE Technologies Pvt Ltd')),
                         Forms\Components\TextInput::make('account_number')
                             ->required()
                             ->placeholder(__('e.g. 1002345678')),

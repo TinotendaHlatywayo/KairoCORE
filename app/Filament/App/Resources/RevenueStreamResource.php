@@ -43,7 +43,7 @@ class RevenueStreamResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Revenue Stream Configuration')
+                Forms\Components\Section::make(__('Revenue Stream Configuration'))
                     ->description(__('Specific income items or billing channels linked to revenue categories.'))
                     ->schema([
                         Forms\Components\Select::make('revenue_category_id')

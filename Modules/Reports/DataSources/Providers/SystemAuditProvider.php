@@ -8,21 +8,21 @@ class SystemAuditProvider extends AbstractDatasetProvider
 {
     public function module(): string
     {
-        return 'Administration';
+        return __('Administration');
     }
 
     public function datasets(): array
     {
         return [
-            $this->d('system.audit_log', 'System Audit Log', 'system_audit_logs', [
-                $this->f('action', 'Action'),
-                $this->f('module', 'Module'),
-                $this->f('outcome', 'Outcome'),
-                $this->f('ip_address', 'IP Address'),
-                $this->f('user_agent', 'User Agent'),
-                $this->f('created_at', 'Logged At', 'datetime'),
-                $this->f('user_name', 'User', 'string', 'system_audit_user.name'),
-                $this->f('user_email', 'User Email', 'string', 'system_audit_user.email'),
+            $this->d('system.audit_log', __('System Audit Log'), 'system_audit_logs', [
+                $this->f('action', __('Action')),
+                $this->f('module', __('Module')),
+                $this->f('outcome', __('Outcome')),
+                $this->f('ip_address', __('IP Address')),
+                $this->f('user_agent', __('User Agent')),
+                $this->f('created_at', __('Logged At'), 'datetime'),
+                $this->f('user_name', __('User'), 'string', 'system_audit_user.name'),
+                $this->f('user_email', __('User Email'), 'string', 'system_audit_user.email'),
             ], [
                 'description' => __('Trail of administrative actions across the platform.'),
                 'autoJoins' => [
@@ -35,13 +35,13 @@ class SystemAuditProvider extends AbstractDatasetProvider
                 'default_order' => 'created_at|desc',
             ]),
 
-            $this->d('system.department', 'Departments', 'departments', [
-                $this->f('name', 'Department Name'),
-                $this->f('code', 'Code'),
-                $this->f('type', 'Type'),
-                $this->f('budget_code', 'Budget Code'),
-                $this->f('status', 'Status'),
-                $this->f('head_name', 'Head of Department', 'string', 'system_dept_head.name'),
+            $this->d('system.department', __('Departments'), 'departments', [
+                $this->f('name', __('Department Name')),
+                $this->f('code', __('Code')),
+                $this->f('type', __('Type')),
+                $this->f('budget_code', __('Budget Code')),
+                $this->f('status', __('Status')),
+                $this->f('head_name', __('Head of Department'), 'string', 'system_dept_head.name'),
             ], [
                 'description' => __('Organisational departments and their heads.'),
                 'autoJoins' => [
@@ -55,11 +55,11 @@ class SystemAuditProvider extends AbstractDatasetProvider
                 ],
             ]),
 
-            $this->d('system.user', 'Users', 'users', [
-                $this->f('name', 'Name'),
-                $this->f('email', 'Email'),
-                $this->f('created_at', 'Created At', 'datetime'),
-                $this->f('role_name', 'Role', 'string', 'system_user_role.name'),
+            $this->d('system.user', __('Users'), 'users', [
+                $this->f('name', __('Name')),
+                $this->f('email', __('Email')),
+                $this->f('created_at', __('Created At'), 'datetime'),
+                $this->f('role_name', __('Role'), 'string', 'system_user_role.name'),
             ], [
                 'description' => __('User accounts and roles.'),
                 'autoJoins' => [

@@ -1,6 +1,6 @@
 @extends('marketing.layout')
 
-@section('title', __('Contact - SchoolCore ERP'))
+@section('title', __('Contact - Kairo CORE'))
 
 @section('content')
 <section class="sc-section">

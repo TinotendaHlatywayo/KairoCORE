@@ -4,7 +4,7 @@ namespace App\Filament\App\Pages;
 
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Models\User;
-use App\Scopes\TenantScope;
+use App\Models\Scopes\TenantScope;
 use App\Services\ModuleVisibilityManager;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;

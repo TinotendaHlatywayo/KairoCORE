@@ -1,14 +1,14 @@
 @extends('marketing.layout')
 
-@section('title', __('About - SchoolCore ERP'))
+@section('title', __('About - Kairo CORE'))
 
 @section('content')
 <section class="sc-section">
     <div class="sc-container">
         <div class="sc-grid sc-col-center" style="justify-content: center;">
             <div class="sc-col-lg-8">
-                <h1 class="sc-page-title">{{ __('About SchoolCore ERP') }}</h1>
-                <p class="sc-page-lead">{{ __('SchoolCore is designed for forward-thinking schools, colleges, and training institutions requiring a single, centralized database for their entire operational workflows.') }}</p>
+                <h1 class="sc-page-title">{{ __('About Kairo CORE') }}</h1>
+                <p class="sc-page-lead">{{ __('Kairo CORE is designed for forward-thinking schools, colleges, and training institutions requiring a single, centralized database for their entire operational workflows.') }}</p>
 
                 <div class="sc-card">
                     <div class="sc-card-body">

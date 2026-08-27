@@ -8,7 +8,7 @@ class FinanceProvider extends AbstractDatasetProvider
 {
     public function module(): string
     {
-        return 'Finance & Fees';
+        return __('Finance & Fees');
     }
 
     public function datasets(): array
@@ -16,21 +16,21 @@ class FinanceProvider extends AbstractDatasetProvider
         $inv = 'finance_invoice';
 
         return [
-            $this->d('finance.invoice', 'Invoices', 'invoices', [
-                $this->f('invoice_number', 'Invoice Reference'),
-                $this->f('currency', 'Currency'),
-                $this->f('subtotal_amount', 'Subtotal', 'currency'),
-                $this->f('discount_amount', 'Discount', 'currency'),
-                $this->f('total_amount', 'Total Amount', 'currency'),
-                $this->f('paid_amount', 'Amount Paid', 'currency'),
-                $this->f('balance_amount', 'Balance Outstanding', 'currency'),
-                $this->f('status', 'Status'),
-                $this->f('due_date', 'Due Date', 'date'),
-                $this->f('created_at', 'Invoice Date', 'datetime'),
-                $this->f('student_name', 'Student Name', 'string', "CONCAT({$inv}_st.first_name, ' ', {$inv}_st.last_name)"),
-                $this->f('class_name', 'Class Stream', 'string', "CONCAT({$inv}_course.name, ' ', {$inv}_section.name)"),
-                $this->f('term_name', 'Term', 'string', "{$inv}_term.name"),
-                $this->f('is_overdue', 'Is Overdue', 'boolean', "CASE WHEN {$inv}.balance_amount > 0 AND {$inv}.due_date < CURRENT_DATE THEN 1 ELSE 0 END"),
+            $this->d('finance.invoice', __('Invoices'), 'invoices', [
+                $this->f('invoice_number', __('Invoice Reference')),
+                $this->f('currency', __('Currency')),
+                $this->f('subtotal_amount', __('Subtotal'), 'currency'),
+                $this->f('discount_amount', __('Discount'), 'currency'),
+                $this->f('total_amount', __('Total Amount'), 'currency'),
+                $this->f('paid_amount', __('Amount Paid'), 'currency'),
+                $this->f('balance_amount', __('Balance Outstanding'), 'currency'),
+                $this->f('status', __('Status')),
+                $this->f('due_date', __('Due Date'), 'date'),
+                $this->f('created_at', __('Invoice Date'), 'datetime'),
+                $this->f('student_name', __('Student Name'), 'string', "CONCAT({$inv}_st.first_name, ' ', {$inv}_st.last_name)"),
+                $this->f('class_name', __('Class Stream'), 'string', "CONCAT({$inv}_course.name, ' ', {$inv}_section.name)"),
+                $this->f('term_name', __('Term'), 'string', "{$inv}_term.name"),
+                $this->f('is_overdue', __('Is Overdue'), 'boolean', "CASE WHEN {$inv}.balance_amount > 0 AND {$inv}.due_date < CURRENT_DATE THEN 1 ELSE 0 END"),
             ], [
                 'description' => __('Fee invoices with student, class and term context.'),
                 'autoJoins' => [
@@ -50,7 +50,7 @@ class FinanceProvider extends AbstractDatasetProvider
                 ],
             ]),
 
-            $this->d('finance.balance', 'Fee Balance Summary (per student)', 'SELECT
+            $this->d('finance.balance', __('Fee Balance Summary (per student)'), 'SELECT
                     student_id AS student_id,
                     COUNT(*) AS invoice_count,
                     SUM(total_amount) AS total_invoiced,
@@ -60,12 +60,12 @@ class FinanceProvider extends AbstractDatasetProvider
                 FROM invoices
                 WHERE school_id = {school_id}
                 GROUP BY student_id', [
-                $this->f('invoice_count', 'Invoice Count', 'integer'),
-                $this->money('total_invoiced', 'Total Invoiced', 'finance_balance.total_invoiced'),
-                $this->money('total_paid', 'Total Paid', 'finance_balance.total_paid'),
-                $this->money('outstanding_balance', 'Outstanding Balance', 'finance_balance.outstanding_balance'),
-                $this->f('unpaid_invoice_count', 'Unpaid Invoices', 'integer'),
-                $this->f('has_outstanding', 'Has Outstanding Balance', 'boolean', 'CASE WHEN finance_balance.outstanding_balance > 0 THEN 1 ELSE 0 END'),
+                $this->f('invoice_count', __('Invoice Count'), 'integer'),
+                $this->money('total_invoiced', __('Total Invoiced'), 'finance_balance.total_invoiced'),
+                $this->money('total_paid', __('Total Paid'), 'finance_balance.total_paid'),
+                $this->money('outstanding_balance', __('Outstanding Balance'), 'finance_balance.outstanding_balance'),
+                $this->f('unpaid_invoice_count', __('Unpaid Invoices'), 'integer'),
+                $this->f('has_outstanding', __('Has Outstanding Balance'), 'boolean', 'CASE WHEN finance_balance.outstanding_balance > 0 THEN 1 ELSE 0 END'),
             ], [
                 'description' => __('Aggregated fee position per student — the backbone of defaulter and revenue reports.'),
                 'connections' => [
@@ -74,16 +74,16 @@ class FinanceProvider extends AbstractDatasetProvider
                 ],
             ]),
 
-            $this->d('finance.payment', 'Payments', 'payments', [
-                $this->f('receipt_number', 'Receipt Number'),
-                $this->f('reference_number', 'Reference Number'),
-                $this->money('amount', 'Payment Amount', 'finance_payment.amount'),
-                $this->f('currency', 'Currency'),
-                $this->f('payment_method', 'Payment Method'),
-                $this->f('payment_date', 'Payment Date', 'date'),
-                $this->f('is_reversed', 'Reversed', 'boolean'),
-                $this->f('student_name', 'Student Name', 'string', "CONCAT(finance_payment_st.first_name, ' ', finance_payment_st.last_name)"),
-                $this->f('invoice_number', 'Invoice Reference', 'string', 'finance_payment_inv.invoice_number'),
+            $this->d('finance.payment', __('Payments'), 'payments', [
+                $this->f('receipt_number', __('Receipt Number')),
+                $this->f('reference_number', __('Reference Number')),
+                $this->money('amount', __('Payment Amount'), 'finance_payment.amount'),
+                $this->f('currency', __('Currency')),
+                $this->f('payment_method', __('Payment Method')),
+                $this->f('payment_date', __('Payment Date'), 'date'),
+                $this->f('is_reversed', __('Reversed'), 'boolean'),
+                $this->f('student_name', __('Student Name'), 'string', "CONCAT(finance_payment_st.first_name, ' ', finance_payment_st.last_name)"),
+                $this->f('invoice_number', __('Invoice Reference'), 'string', 'finance_payment_inv.invoice_number'),
             ], [
                 'description' => __('Payment receipts with student and invoice context.'),
                 'autoJoins' => [
@@ -95,13 +95,13 @@ class FinanceProvider extends AbstractDatasetProvider
                 ],
             ]),
 
-            $this->d('finance.fee_structure', 'Fee Structures', 'fee_structures', [
-                $this->f('scope_type', 'Scope Type'),
-                $this->money('amount', 'Fee Amount', 'finance_fee_structure.amount'),
-                $this->f('currency', 'Currency'),
-                $this->f('category_name', 'Fee Category', 'string', 'finance_fee_cat.name'),
-                $this->f('course_name', 'Course', 'string', 'finance_fee_course.name'),
-                $this->f('term_name', 'Term', 'string', 'finance_fee_term.name'),
+            $this->d('finance.fee_structure', __('Fee Structures'), 'fee_structures', [
+                $this->f('scope_type', __('Scope Type')),
+                $this->money('amount', __('Fee Amount'), 'finance_fee_structure.amount'),
+                $this->f('currency', __('Currency')),
+                $this->f('category_name', __('Fee Category'), 'string', 'finance_fee_cat.name'),
+                $this->f('course_name', __('Course'), 'string', 'finance_fee_course.name'),
+                $this->f('term_name', __('Term'), 'string', 'finance_fee_term.name'),
             ], [
                 'description' => __('Configured fee structures per category, course and term.'),
                 'autoJoins' => [
@@ -111,12 +111,12 @@ class FinanceProvider extends AbstractDatasetProvider
                 ],
             ]),
 
-            $this->d('finance.payment_plan', 'Payment Plans', 'payment_plans', [
-                $this->f('proposed_installments_count', 'Installments', 'integer'),
-                $this->f('installment_amount', 'Installment Amount', 'currency'),
-                $this->f('status', 'Status'),
-                $this->f('parent_notes', 'Parent Notes'),
-                $this->f('student_name', 'Student Name', 'string', "CONCAT(finance_payment_plan_st.first_name, ' ', finance_payment_plan_st.last_name)"),
+            $this->d('finance.payment_plan', __('Payment Plans'), 'payment_plans', [
+                $this->f('proposed_installments_count', __('Installments'), 'integer'),
+                $this->f('installment_amount', __('Installment Amount'), 'currency'),
+                $this->f('status', __('Status')),
+                $this->f('parent_notes', __('Parent Notes')),
+                $this->f('student_name', __('Student Name'), 'string', "CONCAT(finance_payment_plan_st.first_name, ' ', finance_payment_plan_st.last_name)"),
             ], [
                 'description' => __('Student payment plans with approval status.'),
                 'autoJoins' => [
@@ -127,7 +127,7 @@ class FinanceProvider extends AbstractDatasetProvider
                 ],
             ]),
 
-            $this->d('finance.revenue_summary', 'Revenue Summary (per month)', 'SELECT
+            $this->d('finance.revenue_summary', __('Revenue Summary (per month)'), 'SELECT
                     DATE_FORMAT(payment_date, \'%Y-%m\') AS month,
                     COUNT(*) AS payment_count,
                     SUM(CASE WHEN is_reversed = 0 THEN amount ELSE 0 END) AS net_collected,
@@ -138,13 +138,13 @@ class FinanceProvider extends AbstractDatasetProvider
                 FROM payments
                 WHERE school_id = {school_id}
                 GROUP BY DATE_FORMAT(payment_date, \'%Y-%m\')', [
-                $this->f('month', 'Month', 'string'),
-                $this->f('payment_count', 'Payment Count', 'integer'),
-                $this->money('net_collected', 'Net Collected', 'finance_revenue_summary.net_collected'),
-                $this->money('cash_collected', 'Cash Collected', 'finance_revenue_summary.cash_collected'),
-                $this->money('other_collected', 'Non-Cash Collected', 'finance_revenue_summary.other_collected'),
-                $this->money('reversed_amount', 'Reversed Amount', 'finance_revenue_summary.reversed_amount'),
-                $this->f('reversed_count', 'Reversed Transactions', 'integer'),
+                $this->f('month', __('Month'), 'string'),
+                $this->f('payment_count', __('Payment Count'), 'integer'),
+                $this->money('net_collected', __('Net Collected'), 'finance_revenue_summary.net_collected'),
+                $this->money('cash_collected', __('Cash Collected'), 'finance_revenue_summary.cash_collected'),
+                $this->money('other_collected', __('Non-Cash Collected'), 'finance_revenue_summary.other_collected'),
+                $this->money('reversed_amount', __('Reversed Amount'), 'finance_revenue_summary.reversed_amount'),
+                $this->f('reversed_count', __('Reversed Transactions'), 'integer'),
             ], [
                 'description' => __('Monthly collections net of reversals — the basis of cash-flow and bursary reporting.'),
                 'default_order' => 'month|asc',

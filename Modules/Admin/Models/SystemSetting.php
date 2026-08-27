@@ -42,44 +42,58 @@ class SystemSetting extends Model
 
     /**
      * Set a single setting value.
+     *
+     * The value is ALWAYS written for one specific tenant. By default the
+     * active tenant (current_tenant) is used; pass $schoolId explicitly when
+     * writing outside a request context. Writing without any tenant context
+     * is refused — there is no such thing as a "global" tenant setting.
+     *
+     * @throws \RuntimeException when no tenant can be resolved.
      */
-    public static function set(string $group, string $key, mixed $value): self
+    public static function set(string $group, string $key, mixed $value, ?int $schoolId = null): self
     {
-        $setting = self::updateOrCreate(
-            ['group' => $group, 'key' => $key],
-            ['value' => is_array($value) ? json_encode($value) : $value]
-        );
+        $schoolId = $schoolId ?? self::activeSchoolId();
 
-        self::forget($group, $key);
+        if ($schoolId === null) {
+            throw new \RuntimeException(
+                'SystemSetting::set() requires a tenant context (current_tenant) or an explicit $schoolId.'
+            );
+        }
+
+        $setting = self::withoutTenantScope()
+            ->updateOrCreate(
+                ['school_id' => $schoolId, 'group' => $group, 'key' => $key],
+                ['value' => is_array($value) ? json_encode($value) : $value]
+            );
+
+        unset(self::$requestSnapshot[$schoolId]);
 
         return $setting;
     }
 
     /**
-     * Get a single setting value.
+     * Get a single setting value for the ACTIVE TENANT only.
+     *
+     * When no tenant context exists (central platform host, marketing site,
+     * CLI without a tenant binding) the default is returned immediately — we
+     * never fall back to an unscoped query, which could leak another
+     * tenant's value onto the platform or a different school.
      */
     public static function get(string $group, string $key, mixed $default = null): mixed
     {
         $schoolId = self::activeSchoolId();
 
-        if ($schoolId !== null) {
-            self::loadSnapshot($schoolId);
+        if ($schoolId === null) {
+            return $default;
         }
 
-        if ($schoolId !== null && array_key_exists($group.'.'.$key, self::$requestSnapshot[$schoolId])) {
-            $val = self::$requestSnapshot[$schoolId][$group.'.'.$key];
-        } else {
-            $setting = self::query()
-                ->where('group', $group)
-                ->where('key', $key)
-                ->first();
+        self::loadSnapshot($schoolId);
 
-            if (! $setting) {
-                return $default;
-            }
-
-            $val = $setting->value;
+        if (! array_key_exists($group.'.'.$key, self::$requestSnapshot[$schoolId])) {
+            return $default;
         }
+
+        $val = self::$requestSnapshot[$schoolId][$group.'.'.$key];
 
         $decoded = json_decode((string) $val, true);
 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ __('Application Submitted Successfully - SchoolCore') }}</title>
+    <title>{{ __('Application Submitted Successfully - Kairo CORE') }}</title>
     <style>
         * { box-sizing: border-box; }
         html, body { margin: 0; padding: 0; }
@@ -149,7 +149,7 @@
 
             <h2 class="sc-success-title">{{ __('Application Submitted!') }}</h2>
             <p class="sc-success-sub">
-                {{ __('Thank you for choosing SchoolCore for') }} <strong>{{ request('school_name') }}</strong>{{ __('.') }}
+                {{ __('Thank you for choosing Kairo CORE for') }} <strong>{{ request('school_name') }}</strong>{{ __('.') }}
             </p>
             <p class="sc-success-body">
                 {{ __('Your registration request has been successfully queued for validation. Once our system administrators review and approve your application, an activation email with a secure link will be sent to your administrator email so you can set your username and password.') }}

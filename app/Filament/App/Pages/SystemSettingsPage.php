@@ -77,7 +77,9 @@ class SystemSettingsPage extends Page implements HasForms
                 $state[$setting->group.'_'.$setting->key] = json_decode($setting->value, true) ?? $setting->value;
             }
 
-            // Migrate legacy single-bank fields into the multi-bank repeater
+            if (empty($state['legal_terms_content'])) {
+                $state['legal_terms_content'] = default_school_terms();
+            }
             if (empty($state['banking_banks']) && ! empty($state['banking_bank_name'])) {
                 $state['banking_banks'] = [[
                     'bank_name' => $state['banking_bank_name'] ?? '',
@@ -119,52 +121,52 @@ class SystemSettingsPage extends Page implements HasForms
     {
         return [
             // Sans-Serif (Block Style)
-            'inter' => ['label' => 'Inter Sans (Clean Tech)', 'css' => '"Inter", sans-serif', 'import' => 'Inter:wght@400;700'],
-            'roboto' => ['label' => 'Roboto Sans (Highly Structured)', 'css' => '"Roboto", sans-serif', 'import' => 'Roboto:wght@400;700'],
-            'plus_jakarta' => ['label' => 'Plus Jakarta Sans (Modern Editorial)', 'css' => '"Plus Jakarta Sans", sans-serif', 'import' => 'Plus+Jakarta+Sans:wght@400;700'],
-            'outfit' => ['label' => 'Outfit Sans (Contemporary Soft)', 'css' => '"Outfit", sans-serif', 'import' => 'Outfit:wght@400;700'],
-            'montserrat' => ['label' => 'Montserrat (Avant Garde Block)', 'css' => '"Montserrat", sans-serif', 'import' => 'Montserrat:wght@400;700'],
-            'poppins' => ['label' => 'Poppins (Soft Modern)', 'css' => '"Poppins", sans-serif', 'import' => 'Poppins:wght@400;700'],
-            'lexend' => ['label' => 'Lexend (Academic Legibility)', 'css' => '"Lexend", sans-serif', 'import' => 'Lexend:wght@400;600'],
-            'nunito' => ['label' => 'Nunito (Rounded Sans)', 'css' => '"Nunito", sans-serif', 'import' => 'Nunito:wght@400;700'],
-            'oswald' => ['label' => 'Oswald (Impact Block Sans)', 'css' => '"Oswald", sans-serif', 'import' => 'Oswald:wght@400;700'],
-            'syncopate' => ['label' => 'Syncopate (Wide Tech Sans)', 'css' => '"Syncopate", sans-serif', 'import' => 'Syncopate:wght@400;700'],
+            'inter' => ['label' => __('Inter Sans (Clean Tech)'), 'css' => '"Inter", sans-serif', 'import' => 'Inter:wght@400;700'],
+            'roboto' => ['label' => __('Roboto Sans (Highly Structured)'), 'css' => '"Roboto", sans-serif', 'import' => 'Roboto:wght@400;700'],
+            'plus_jakarta' => ['label' => __('Plus Jakarta Sans (Modern Editorial)'), 'css' => '"Plus Jakarta Sans", sans-serif', 'import' => 'Plus+Jakarta+Sans:wght@400;700'],
+            'outfit' => ['label' => __('Outfit Sans (Contemporary Soft)'), 'css' => '"Outfit", sans-serif', 'import' => 'Outfit:wght@400;700'],
+            'montserrat' => ['label' => __('Montserrat (Avant Garde Block)'), 'css' => '"Montserrat", sans-serif', 'import' => 'Montserrat:wght@400;700'],
+            'poppins' => ['label' => __('Poppins (Soft Modern)'), 'css' => '"Poppins", sans-serif', 'import' => 'Poppins:wght@400;700'],
+            'lexend' => ['label' => __('Lexend (Academic Legibility)'), 'css' => '"Lexend", sans-serif', 'import' => 'Lexend:wght@400;600'],
+            'nunito' => ['label' => __('Nunito (Rounded Sans)'), 'css' => '"Nunito", sans-serif', 'import' => 'Nunito:wght@400;700'],
+            'oswald' => ['label' => __('Oswald (Impact Block Sans)'), 'css' => '"Oswald", sans-serif', 'import' => 'Oswald:wght@400;700'],
+            'syncopate' => ['label' => __('Syncopate (Wide Tech Sans)'), 'css' => '"Syncopate", sans-serif', 'import' => 'Syncopate:wght@400;700'],
 
             // Serif / Decorative
-            'playfair' => ['label' => 'Playfair Display (Ivy League Serif)', 'css' => '"Playfair Display", serif', 'import' => 'Playfair+Display:ital,wght@0,400;0,700'],
-            'merriweather' => ['label' => 'Merriweather (Classic Editorial Serif)', 'css' => '"Merriweather", serif', 'import' => 'Merriweather:wght@400;700'],
-            'lora' => ['label' => 'Lora (Contemporary University Serif)', 'css' => '"Lora", serif', 'import' => 'Lora:wght@400;500;700'],
-            'cinzel' => ['label' => 'Cinzel (Albertus Roman Engraved)', 'css' => '"Cinzel", serif', 'import' => 'Cinzel:wght@400;700'],
-            'crimson' => ['label' => 'Crimson Text (Traditional Times Roman)', 'css' => '"Crimson Text", serif', 'import' => 'Crimson+Text:wght@400;700'],
-            'eb_garamond' => ['label' => 'EB Garamond (Caslon / Baskerville Serif)', 'css' => '"EB Garamond", serif', 'import' => 'EB+Garamond:wght@400;700'],
-            'arvo' => ['label' => 'Arvo (Slab-Serif / Rockwell Style)', 'css' => '"Arvo", serif', 'import' => 'Arvo:wght@400;700'],
-            'pt_serif' => ['label' => 'PT Serif (Elegant Corporate Serif)', 'css' => '"PT Serif", serif', 'import' => 'PT+Serif:wght@400;700'],
-            'libre_baskerville' => ['label' => 'Libre Baskerville (Bookman / Caslon)', 'css' => '"Libre Baskerville", serif', 'import' => 'Libre+Baskerville:wght@400;700'],
-            'bodoni_moda' => ['label' => 'Bodoni Moda (Bodoni High-Contrast Serif)', 'css' => '"Bodoni Moda", serif', 'import' => 'Bodoni+Moda:wght@400;700'],
+            'playfair' => ['label' => __('Playfair Display (Ivy League Serif)'), 'css' => '"Playfair Display", serif', 'import' => 'Playfair+Display:ital,wght@0,400;0,700'],
+            'merriweather' => ['label' => __('Merriweather (Classic Editorial Serif)'), 'css' => '"Merriweather", serif', 'import' => 'Merriweather:wght@400;700'],
+            'lora' => ['label' => __('Lora (Contemporary University Serif)'), 'css' => '"Lora", serif', 'import' => 'Lora:wght@400;500;700'],
+            'cinzel' => ['label' => __('Cinzel (Albertus Roman Engraved)'), 'css' => '"Cinzel", serif', 'import' => 'Cinzel:wght@400;700'],
+            'crimson' => ['label' => __('Crimson Text (Traditional Times Roman)'), 'css' => '"Crimson Text", serif', 'import' => 'Crimson+Text:wght@400;700'],
+            'eb_garamond' => ['label' => __('EB Garamond (Caslon / Baskerville Serif)'), 'css' => '"EB Garamond", serif', 'import' => 'EB+Garamond:wght@400;700'],
+            'arvo' => ['label' => __('Arvo (Slab-Serif / Rockwell Style)'), 'css' => '"Arvo", serif', 'import' => 'Arvo:wght@400;700'],
+            'pt_serif' => ['label' => __('PT Serif (Elegant Corporate Serif)'), 'css' => '"PT Serif", serif', 'import' => 'PT+Serif:wght@400;700'],
+            'libre_baskerville' => ['label' => __('Libre Baskerville (Bookman / Caslon)'), 'css' => '"Libre Baskerville", serif', 'import' => 'Libre+Baskerville:wght@400;700'],
+            'bodoni_moda' => ['label' => __('Bodoni Moda (Bodoni High-Contrast Serif)'), 'css' => '"Bodoni Moda", serif', 'import' => 'Bodoni+Moda:wght@400;700'],
 
             // Script & Handwriting
-            'great_vibes' => ['label' => 'Great Vibes (Amaze Elegant Script)', 'css' => '"Great Vibes", cursive', 'import' => 'Great+Vibes'],
-            'dancing_script' => ['label' => 'Dancing Script (Casual Monoline Script)', 'css' => '"Dancing Script", cursive', 'import' => 'Dancing+Script:wght@400;700'],
-            'sacramento' => ['label' => 'Sacramento (Kauffman Thin Script)', 'css' => '"Sacramento", cursive', 'import' => 'Sacramento'],
-            'alex_brush' => ['label' => 'Alex Brush (Fluid Brush Script)', 'css' => '"Alex Brush", cursive', 'import' => 'Alex+Brush'],
-            'satisfy' => ['label' => 'Satisfy (Brisk / Pepita Script)', 'css' => '"Satisfy", cursive', 'import' => 'Satisfy'],
-            'parisienne' => ['label' => 'Parisienne (Balmoral Vintage Script)', 'css' => '"Parisienne", cursive', 'import' => 'Parisienne'],
-            'allura' => ['label' => 'Allura (Kauffman Fine Calligraphy)', 'css' => '"Allura", cursive', 'import' => 'Allura'],
-            'monsieur' => ['label' => 'Ornate Balmoral (Monsieur La Doulaise)', 'css' => '"Monsieur La Doulaise", cursive', 'import' => 'Monsieur+La+Doulaise'],
-            'cookie' => ['label' => 'Cookie (Zapf Chancery Script)', 'css' => '"Cookie", cursive', 'import' => 'Cookie'],
-            'marck_script' => ['label' => 'Marck Script (Reporter Expressive Script)', 'css' => '"Marck Script", cursive', 'import' => 'Marck+Script'],
+            'great_vibes' => ['label' => __('Great Vibes (Amaze Elegant Script)'), 'css' => '"Great Vibes", cursive', 'import' => 'Great+Vibes'],
+            'dancing_script' => ['label' => __('Dancing Script (Casual Monoline Script)'), 'css' => '"Dancing Script", cursive', 'import' => 'Dancing+Script:wght@400;700'],
+            'sacramento' => ['label' => __('Sacramento (Kauffman Thin Script)'), 'css' => '"Sacramento", cursive', 'import' => 'Sacramento'],
+            'alex_brush' => ['label' => __('Alex Brush (Fluid Brush Script)'), 'css' => '"Alex Brush", cursive', 'import' => 'Alex+Brush'],
+            'satisfy' => ['label' => __('Satisfy (Brisk / Pepita Script)'), 'css' => '"Satisfy", cursive', 'import' => 'Satisfy'],
+            'parisienne' => ['label' => __('Parisienne (Balmoral Vintage Script)'), 'css' => '"Parisienne", cursive', 'import' => 'Parisienne'],
+            'allura' => ['label' => __('Allura (Kauffman Fine Calligraphy)'), 'css' => '"Allura", cursive', 'import' => 'Allura'],
+            'monsieur' => ['label' => __('Ornate Balmoral (Monsieur La Doulaise)'), 'css' => '"Monsieur La Doulaise", cursive', 'import' => 'Monsieur+La+Doulaise'],
+            'cookie' => ['label' => __('Cookie (Zapf Chancery Script)'), 'css' => '"Cookie", cursive', 'import' => 'Cookie'],
+            'marck_script' => ['label' => __('Marck Script (Reporter Expressive Script)'), 'css' => '"Marck Script", cursive', 'import' => 'Marck+Script'],
 
             // Novelty / Decorative / Unique
-            'unifraktur_maguntia' => ['label' => 'Unifraktur Maguntia (Old English Gothic)', 'css' => '"UnifrakturMaguntia", serif', 'import' => 'UnifrakturMaguntia'],
-            'courier_prime' => ['label' => 'Classic Typewriter (Courier Prime)', 'css' => '"Courier Prime", monospace', 'import' => 'Courier+Prime:wght@400;700'],
-            'special_elite' => ['label' => 'Grungy Typewriter (Special Elite)', 'css' => '"Special Elite", display', 'import' => 'Special+Elite'],
-            'caveat' => ['label' => 'Chalk Dust Handwriting (Caveat)', 'css' => '"Caveat", cursive', 'import' => 'Caveat:wght@400;700'],
-            'architects_daughter' => ['label' => 'Tekton Pencil (Architects)', 'css' => '"Architects Daughter", cursive', 'import' => 'Architects+Daughter'],
-            'fredericka' => ['label' => 'Sketchy Chalk Dust (Fredericka)', 'css' => '"Fredericka the Great", display', 'import' => 'Fredericka+the+Great'],
-            'bungee' => ['label' => 'Aachen Block Inline (Bungee Block)', 'css' => '"Bungee", sans-serif', 'import' => 'Bungee'],
-            'permanent_marker' => ['label' => 'Reporter Bold Brush (Marker)', 'css' => '"Permanent Marker", cursive', 'import' => 'Permanent+Marker'],
-            'creepster' => ['label' => 'Reporter Novelty Gothic (Creepster)', 'css' => '"Creepster", display', 'import' => 'Creepster'],
-            'rye' => ['label' => 'Rye (Wild West Decorative)', 'css' => '"Rye", display', 'import' => 'Rye'],
+            'unifraktur_maguntia' => ['label' => __('Unifraktur Maguntia (Old English Gothic)'), 'css' => '"UnifrakturMaguntia", serif', 'import' => 'UnifrakturMaguntia'],
+            'courier_prime' => ['label' => __('Classic Typewriter (Courier Prime)'), 'css' => '"Courier Prime", monospace', 'import' => 'Courier+Prime:wght@400;700'],
+            'special_elite' => ['label' => __('Grungy Typewriter (Special Elite)'), 'css' => '"Special Elite", display', 'import' => 'Special+Elite'],
+            'caveat' => ['label' => __('Chalk Dust Handwriting (Caveat)'), 'css' => '"Caveat", cursive', 'import' => 'Caveat:wght@400;700'],
+            'architects_daughter' => ['label' => __('Tekton Pencil (Architects)'), 'css' => '"Architects Daughter", cursive', 'import' => 'Architects+Daughter'],
+            'fredericka' => ['label' => __('Sketchy Chalk Dust (Fredericka)'), 'css' => '"Fredericka the Great", display', 'import' => 'Fredericka+the+Great'],
+            'bungee' => ['label' => __('Aachen Block Inline (Bungee Block)'), 'css' => '"Bungee", sans-serif', 'import' => 'Bungee'],
+            'permanent_marker' => ['label' => __('Reporter Bold Brush (Marker)'), 'css' => '"Permanent Marker", cursive', 'import' => 'Permanent+Marker'],
+            'creepster' => ['label' => __('Reporter Novelty Gothic (Creepster)'), 'css' => '"Creepster", display', 'import' => 'Creepster'],
+            'rye' => ['label' => __('Rye (Wild West Decorative)'), 'css' => '"Rye", display', 'import' => 'Rye'],
         ];
     }
 
@@ -194,10 +196,10 @@ class SystemSettingsPage extends Page implements HasForms
             ->schema([
                 Tabs::make('SettingsCategories')
                     ->tabs([
-                        Tab::make('Design & Branding')
+                        Tab::make(__('Design & Branding'))
                             ->icon('heroicon-o-paint-brush')
                             ->schema([
-                                Section::make('Theme & Typography')
+                                Section::make(__('Theme & Typography'))
                                     ->schema([
                                         Select::make('branding_theme')
                                             ->label(__('Visual Theme Design'))
@@ -215,6 +217,7 @@ class SystemSettingsPage extends Page implements HasForms
                                                 'dev_choice_1' => __('Developer\'s Choice 1 (Indigo + Cyan Blend)'),
                                                 'dev_choice_2' => __('Developer\'s Choice 2 (Fuchsia + Violet Blend)'),
                                                 'dev_choice_3' => __('Developer\'s Choice 3 (Cyan + Emerald Blend)'),
+                                                'dev_choice_4' => __('Developer\'s Choice 4 (Midnight Navy + Flame Blend)'),
                                             ])->default('emerald_heritage'),
                                         Select::make('branding_font_family')
                                             ->label(__('System Typography Font'))
@@ -249,7 +252,7 @@ class SystemSettingsPage extends Page implements HasForms
                                          * ----------------------------------------------------------------- */
                                     ])->columns(2),
 
-                                Section::make('School Logo')
+                                Section::make(__('School Logo'))
                                     ->schema([
                                         FileUpload::make('branding_logo_path')
                                             ->label(__('Logo Badge Upload'))
@@ -258,6 +261,14 @@ class SystemSettingsPage extends Page implements HasForms
                                             ->avatar()
                                             ->imageEditor()
                                             ->imageEditorAspectRatios(['1:1']),
+                                        FileUpload::make('branding_favicon_path')
+                                            ->label(__('Browser Tab Favicon'))
+                                            ->directory('tenant/branding')
+                                            ->image()
+                                            ->imageEditor()
+                                            ->maxSize(1024)
+                                            ->acceptedFileTypes(['image/png', 'image/x-icon', 'image/vnd.microsoft.icon', 'image/svg+xml'])
+                                            ->helperText(__('Small icon shown on the browser tab in Chrome and other browsers. Square PNG or ICO, 64×64px or larger recommended. Falls back to the platform favicon when empty.')),
                                         Select::make('branding_logo_height')
                                             ->label(__('Logo Badge Scale Height'))
                                             ->options([
@@ -269,13 +280,13 @@ class SystemSettingsPage extends Page implements HasForms
                                         Select::make('branding_logo_opacity')
                                             ->label(__('Logo Header Opacity'))
                                             ->options([
-                                                '0.5' => 'Faded (50%)',
-                                                '0.8' => 'Soft (80%)',
-                                                '1.0' => 'Opaque (100%)',
+                                                '0.5' => __('Faded (50%)'),
+                                                '0.8' => __('Soft (80%)'),
+                                                '1.0' => __('Opaque (100%)'),
                                             ])->default('1.0'),
                                     ])->columns(3),
 
-                                Section::make('Dashboard Watermark')
+                                Section::make(__('Dashboard Watermark'))
                                     ->schema([
                                         FileUpload::make('branding_bg_path')
                                             ->label(__('Background Wallpaper'))
@@ -286,28 +297,28 @@ class SystemSettingsPage extends Page implements HasForms
                                         Select::make('branding_background_opacity')
                                             ->label(__('Wallpaper Opacity'))
                                             ->options([
-                                                '0.02' => 'Subtle (2%)',
-                                                '0.08' => 'Soft (8%)',
-                                                '0.15' => 'Defined (15%)',
-                                                '0.25' => 'Bold (25%)',
-                                                '0.35' => 'Heavy (35%)',
+                                                '0.02' => __('Subtle (2%)'),
+                                                '0.08' => __('Soft (8%)'),
+                                                '0.15' => __('Defined (15%)'),
+                                                '0.25' => __('Bold (25%)'),
+                                                '0.35' => __('Heavy (35%)'),
                                             ])->default('0.08'),
                                         Select::make('branding_background_scaling')
                                             ->label(__('Wallpaper Scale'))
                                             ->options([
-                                                'cover' => 'Fill Canvas (Cover)',
-                                                'contain' => 'Keep Image Scale (Contain)',
+                                                'cover' => __('Fill Canvas (Cover)'),
+                                                'contain' => __('Keep Image Scale (Contain)'),
                                             ])->default('cover'),
                                     ])->columns(3),
                             ]),
 
                         // Tab 2: Dynamic System Module Switcher (Hides or shows sidebar entries dynamically) [1]
-                        Tab::make('Manage Modules')
+                        Tab::make(__('Manage Modules'))
                             ->icon('heroicon-o-cpu-chip')
                             ->schema([
                                 Placeholder::make('modules_intro')
                                     ->label(__('Modular System Architecture & Interface Customization'))
-                                    ->content(new HtmlString('Configure your school interface by enabling or disabling entire modules and their specific sub-pages. Tailor the workspace to your institution (e.g. disable Boarding and Clinic for day schools, or Payroll for government schools where salaries are centrally managed). <em>Hover over any toggle or section for details on its function.</em>'))
+                                    ->content(new HtmlString(__('Configure your school interface by enabling or disabling entire modules and their specific sub-pages. Tailor the workspace to your institution (e.g. disable Boarding and Clinic for day schools, or Payroll for government schools where salaries are centrally managed). <em>Hover over any toggle or section for details on its function.</em>')))
                                     ->columnSpanFull(),
 
                                 // One-click enable / disable every module at once.
@@ -333,16 +344,16 @@ class SystemSettingsPage extends Page implements HasForms
                                 // one column; Filament's Grid::make(2) handles the 2-across layout.
                                 Grid::make(2)->schema([
                                     // 1. Admissions & Online CRM
-                                    Section::make('Admissions & Online CRM')
+                                    Section::make(__('Admissions & Online CRM'))
                                         ->description(__('Manage prospective student applications and intake review pipeline.'))
                                         ->icon('heroicon-o-clipboard-document-list')
-                                        ->extraAttributes(['title' => 'Admissions & Online CRM: controls the full admissions pipeline, online application forms, the Kanban intake board, and the admission settings page.'])
+                                        ->extraAttributes(['title' => __('Admissions & Online CRM: controls the full admissions pipeline, online application forms, the Kanban intake board, and the admission settings page.')])
                                         ->collapsible()
                                         ->schema([
                                             Toggle::make('modules_admissions')
                                                 ->label(__('Enable Admissions Module'))
                                                 ->helperText(__('Master toggle: controls visibility of the admissions pipeline and online application forms.'))
-                                                ->hintIcon('heroicon-o-information-circle', 'Master toggle: enables the entire Admissions pipeline, online application forms, Kanban board, and settings.')
+                                                ->hintIcon('heroicon-o-information-circle', __('Master toggle: enables the entire Admissions pipeline, online application forms, Kanban board, and settings.'))
                                                 ->default(true)
                                                 ->live(),
                                             Grid::make(1)->schema([
@@ -354,7 +365,7 @@ class SystemSettingsPage extends Page implements HasForms
                                                 Toggle::make('modules_admissions_kanban')
                                                     ->label(__('Admissions Kanban Pipeline'))
                                                     ->helperText(__('Drag-and-drop Kanban board for tracking applicants through each intake stage.'))
-                                                    ->hintIcon('heroicon-o-information-circle', 'Admissions Kanban Pipeline: visual board to move applicants from enquiry to enrolment.')
+                                                    ->hintIcon('heroicon-o-information-circle', __('Admissions Kanban Pipeline: visual board to move applicants from enquiry to enrolment.'))
                                                     ->default(true)
                                                     ->visible(fn ($get) => $get('modules_admissions')),
                                                 Toggle::make('modules_admissions_settings')
@@ -366,16 +377,16 @@ class SystemSettingsPage extends Page implements HasForms
                                         ]),
 
                                     // 2. Students & SIS
-                                    Section::make('Students Directory')
+                                    Section::make(__('Students Directory'))
                                         ->description(__('Core student profiles, enrollments, and student administration.'))
                                         ->icon('heroicon-o-user-group')
-                                        ->extraAttributes(['title' => 'Students Directory: master toggle gates the student body, ID cards, directory records, the promotion workflow, and the guardians/contacts hub.'])
+                                        ->extraAttributes(['title' => __('Students Directory: master toggle gates the student body, ID cards, directory records, the promotion workflow, and the guardians/contacts hub.')])
                                         ->collapsible()
                                         ->schema([
                                             Toggle::make('modules_students')
                                                 ->label(__('Enable Students Module'))
                                                 ->helperText(__('Master toggle: controls visibility of the student body, ID cards, and directory.'))
-                                                ->hintIcon('heroicon-o-information-circle', 'Master toggle: enables the Students module, directory & ID cards, promotion workflow, and guardians/contacts hub.')
+                                                ->hintIcon('heroicon-o-information-circle', __('Master toggle: enables the Students module, directory & ID cards, promotion workflow, and guardians/contacts hub.'))
                                                 ->default(true)
                                                 ->live(),
                                             Grid::make(1)->schema([
@@ -387,7 +398,7 @@ class SystemSettingsPage extends Page implements HasForms
                                                 Toggle::make('modules_students_guardians')
                                                     ->label(__('Guardians & Contacts Hub'))
                                                     ->helperText(__('Manage parent/guardian contact books, communication preferences, and linked dependants.'))
-                                                    ->hintIcon('heroicon-o-information-circle', 'Guardians & Contacts Hub: central contact book for parents and linked dependants.')
+                                                    ->hintIcon('heroicon-o-information-circle', __('Guardians & Contacts Hub: central contact book for parents and linked dependants.'))
                                                     ->default(true)
                                                     ->visible(fn ($get) => $get('modules_students')),
                                                 Toggle::make('modules_students_promotion')
@@ -399,16 +410,16 @@ class SystemSettingsPage extends Page implements HasForms
                                         ]),
 
                                     // 3. Academics & Curriculum
-                                    Section::make('Academics & Curriculum')
+                                    Section::make(__('Academics & Curriculum'))
                                         ->description(__('Forms/grades, classes/streams, subjects, and academic operations.'))
                                         ->icon('heroicon-o-academic-cap')
-                                        ->extraAttributes(['title' => 'Academics & Curriculum: gates courses/forms, classes/streams, the Academic Operations Center readiness board, and the curriculum dashboard.'])
+                                        ->extraAttributes(['title' => __('Academics & Curriculum: gates courses/forms, classes/streams, the Academic Operations Center readiness board, and the curriculum dashboard.')])
                                         ->collapsible()
                                         ->schema([
                                             Toggle::make('modules_academics')
                                                 ->label(__('Enable Academics Module'))
                                                 ->helperText(__('Master toggle: controls curriculum structures, class streams, and academic setup.'))
-                                                ->hintIcon('heroicon-o-information-circle', 'Master toggle: enables the Academics module, courses/forms, classes/streams, operations center, and curriculum dashboard.')
+                                                ->hintIcon('heroicon-o-information-circle', __('Master toggle: enables the Academics module, courses/forms, classes/streams, operations center, and curriculum dashboard.'))
                                                 ->default(true)
                                                 ->live(),
                                             Grid::make(1)->schema([
@@ -430,23 +441,23 @@ class SystemSettingsPage extends Page implements HasForms
                                                 Toggle::make('modules_academics_dashboard')
                                                     ->label(__('Curriculum Dashboard'))
                                                     ->helperText(__('High-level overview of form coverage, subject allocations, and timetable readiness.'))
-                                                    ->hintIcon('heroicon-o-information-circle', 'Curriculum Dashboard: snapshot of form coverage and timetable readiness.')
+                                                    ->hintIcon('heroicon-o-information-circle', __('Curriculum Dashboard: snapshot of form coverage and timetable readiness.'))
                                                     ->default(true)
                                                     ->visible(fn ($get) => $get('modules_academics')),
                                             ]),
                                         ]),
 
                                     // 4. Exams & Grading
-                                    Section::make('Exams & Grading')
+                                    Section::make(__('Exams & Grading'))
                                         ->description(__('Assessments, grading scales, marks entry, and report cards.'))
                                         ->icon('heroicon-o-pencil-square')
-                                        ->extraAttributes(['title' => 'Exams & Grading: controls continuous assessment, the mark ledger workspace, report card publishing, and the exams analytics dashboard.'])
+                                        ->extraAttributes(['title' => __('Exams & Grading: controls continuous assessment, the mark ledger workspace, report card publishing, and the exams analytics dashboard.')])
                                         ->collapsible()
                                         ->schema([
                                             Toggle::make('modules_exams')
                                                 ->label(__('Enable Exams & Grading'))
                                                 ->helperText(__('Master toggle: controls continuous assessment, mark ledgers, and report card publishing.'))
-                                                ->hintIcon('heroicon-o-information-circle', 'Master toggle: enables the Exams module, assessment workspace, marks ledger, report cards, and analytics dashboard.')
+                                                ->hintIcon('heroicon-o-information-circle', __('Master toggle: enables the Exams module, assessment workspace, marks ledger, report cards, and analytics dashboard.'))
                                                 ->default(true)
                                                 ->live(),
                                             Grid::make(1)->schema([
@@ -468,23 +479,23 @@ class SystemSettingsPage extends Page implements HasForms
                                                 Toggle::make('modules_exams_analytics')
                                                     ->label(__('Exams Analytics & Trends'))
                                                     ->helperText(__('Subject and cohort performance dashboards, pass-rate trends, and item analysis.'))
-                                                    ->hintIcon('heroicon-o-information-circle', 'Exams Analytics & Trends: performance dashboards and pass-rate trend reporting.')
+                                                    ->hintIcon('heroicon-o-information-circle', __('Exams Analytics & Trends: performance dashboards and pass-rate trend reporting.'))
                                                     ->default(true)
                                                     ->visible(fn ($get) => $get('modules_exams')),
                                             ]),
                                         ]),
 
                                     // 5. Attendance
-                                    Section::make('Attendance Tracking')
+                                    Section::make(__('Attendance Tracking'))
                                         ->description(__('Daily attendance tracking for staff and students.'))
                                         ->icon('heroicon-o-clipboard-document-check')
-                                        ->extraAttributes(['title' => 'Attendance Tracking: gates daily staff/student attendance logging and the attendance reports & analytics panel.'])
+                                        ->extraAttributes(['title' => __('Attendance Tracking: gates daily staff/student attendance logging and the attendance reports & analytics panel.')])
                                         ->collapsible()
                                         ->schema([
                                             Toggle::make('modules_attendance')
                                                 ->label(__('Enable Attendance Module'))
                                                 ->helperText(__('Master toggle: controls attendance monitoring and reporting.'))
-                                                ->hintIcon('heroicon-o-information-circle', 'Master toggle: enables the Attendance module, staff attendance logging, and reports & analytics.')
+                                                ->hintIcon('heroicon-o-information-circle', __('Master toggle: enables the Attendance module, staff attendance logging, and reports & analytics.'))
                                                 ->default(true)
                                                 ->live(),
                                             Grid::make(1)->schema([
@@ -496,23 +507,23 @@ class SystemSettingsPage extends Page implements HasForms
                                                 Toggle::make('modules_attendance_reports')
                                                     ->label(__('Attendance Reports & Analytics'))
                                                     ->helperText(__('Aggregate attendance statistics, late-arrival trends, and exportable registers.'))
-                                                    ->hintIcon('heroicon-o-information-circle', 'Attendance Reports & Analytics: statistics and trend reporting for students and staff.')
+                                                    ->hintIcon('heroicon-o-information-circle', __('Attendance Reports & Analytics: statistics and trend reporting for students and staff.'))
                                                     ->default(true)
                                                     ->visible(fn ($get) => $get('modules_attendance')),
                                             ]),
                                         ]),
 
                                     // 6. HR & Payroll
-                                    Section::make('HR & Payroll')
+                                    Section::make(__('HR & Payroll'))
                                         ->description(__('Staff directory, salary grades, loans, and payroll processing.'))
                                         ->icon('heroicon-o-user-plus')
-                                        ->extraAttributes(['title' => 'HR & Payroll: controls employee records, staff directory/contracts, payroll & salary grades, and leave/staff loans.'])
+                                        ->extraAttributes(['title' => __('HR & Payroll: controls employee records, staff directory/contracts, payroll & salary grades, and leave/staff loans.')])
                                         ->collapsible()
                                         ->schema([
                                             Toggle::make('modules_hr')
                                                 ->label(__('Enable HR & Payroll'))
                                                 ->helperText(__('Master toggle: controls employee records, contracts, and salary management. Government schools can toggle off payroll if salaries are centralized.'))
-                                                ->hintIcon('heroicon-o-information-circle', 'Master toggle: enables the HR module, staff directory, payroll/salary grades, and leave/staff loans.')
+                                                ->hintIcon('heroicon-o-information-circle', __('Master toggle: enables the HR module, staff directory, payroll/salary grades, and leave/staff loans.'))
                                                 ->default(true)
                                                 ->live(),
                                             Grid::make(1)->schema([
@@ -534,23 +545,23 @@ class SystemSettingsPage extends Page implements HasForms
                                                 Toggle::make('modules_hr_recruitment')
                                                     ->label(__('Recruitment & Onboarding'))
                                                     ->helperText(__('Job postings, candidate tracking, and new-employee onboarding workflow.'))
-                                                    ->hintIcon('heroicon-o-information-circle', 'Recruitment & Onboarding: job postings and candidate tracking pipeline.')
+                                                    ->hintIcon('heroicon-o-information-circle', __('Recruitment & Onboarding: job postings and candidate tracking pipeline.'))
                                                     ->default(true)
                                                     ->visible(fn ($get) => $get('modules_hr')),
                                             ]),
                                         ]),
 
                                     // 7. Boarding & Welfare
-                                    Section::make('Boarding & Welfare')
+                                    Section::make(__('Boarding & Welfare'))
                                         ->description(__('Hostel dormitories, bed allocations, and outpass management.'))
                                         ->icon('heroicon-o-home-modern')
-                                        ->extraAttributes(['title' => 'Boarding & Welfare: gates bed allocations and gate outpasses/visitor management for boarding schools.'])
+                                        ->extraAttributes(['title' => __('Boarding & Welfare: gates bed allocations and gate outpasses/visitor management for boarding schools.')])
                                         ->collapsible()
                                         ->schema([
                                             Toggle::make('modules_boarding')
                                                 ->label(__('Enable Boarding Module'))
                                                 ->helperText(__('Master toggle: ideal for boarding schools. Day schools can switch this off to keep their interface clean.'))
-                                                ->hintIcon('heroicon-o-information-circle', 'Master toggle: enables the Boarding module, bed allocations, outpasses, and hostel dashboard.')
+                                                ->hintIcon('heroicon-o-information-circle', __('Master toggle: enables the Boarding module, bed allocations, outpasses, and hostel dashboard.'))
                                                 ->default(true)
                                                 ->live(),
                                             Grid::make(1)->schema([
@@ -567,23 +578,23 @@ class SystemSettingsPage extends Page implements HasForms
                                                 Toggle::make('modules_boarding_hostel')
                                                     ->label(__('Hostel Overview Dashboard'))
                                                     ->helperText(__('Real-time occupancy, pending checkouts, and visitor arrival summaries.'))
-                                                    ->hintIcon('heroicon-o-information-circle', 'Hostel Overview Dashboard: occupancy and visitor summaries.')
+                                                    ->hintIcon('heroicon-o-information-circle', __('Hostel Overview Dashboard: occupancy and visitor summaries.'))
                                                     ->default(true)
                                                     ->visible(fn ($get) => $get('modules_boarding')),
                                             ]),
                                         ]),
 
                                     // 8. Health & Safety (Clinic)
-                                    Section::make('Health & Safety (Clinic)')
+                                    Section::make(__('Health & Safety (Clinic)'))
                                         ->description(__('Sanitarium dispensary log and student medical history.'))
                                         ->icon('heroicon-o-heart')
-                                        ->extraAttributes(['title' => 'Health & Safety (Clinic): gates clinic visit logs and the student medical records hub.'])
+                                        ->extraAttributes(['title' => __('Health & Safety (Clinic): gates clinic visit logs and the student medical records hub.')])
                                         ->collapsible()
                                         ->schema([
                                             Toggle::make('modules_clinic')
                                                 ->label(__('Enable Clinic Module'))
                                                 ->helperText(__('Master toggle: school health center log. Day schools without a resident nurse can switch this off.'))
-                                                ->hintIcon('heroicon-o-information-circle', 'Master toggle: enables the Clinic module, visit logs, and medical records hub.')
+                                                ->hintIcon('heroicon-o-information-circle', __('Master toggle: enables the Clinic module, visit logs, and medical records hub.'))
                                                 ->default(true)
                                                 ->live(),
                                             Grid::make(1)->schema([
@@ -595,23 +606,23 @@ class SystemSettingsPage extends Page implements HasForms
                                                 Toggle::make('modules_clinic_medical_records')
                                                     ->label(__('Student Medical Records'))
                                                     ->helperText(__('Store immunisation histories, chronic conditions, and medical certificates.'))
-                                                    ->hintIcon('heroicon-o-information-circle', 'Student Medical Records: immunisation histories and chronic conditions.')
+                                                    ->hintIcon('heroicon-o-information-circle', __('Student Medical Records: immunisation histories and chronic conditions.'))
                                                     ->default(true)
                                                     ->visible(fn ($get) => $get('modules_clinic')),
                                             ]),
                                         ]),
 
                                     // 9. Library Circulation
-                                    Section::make('Library Circulation')
+                                    Section::make(__('Library Circulation'))
                                         ->description(__('Book catalog, barcode scanning, borrowing, and returns.'))
                                         ->icon('heroicon-o-book-open')
-                                        ->extraAttributes(['title' => 'Library Circulation: controls book catalog & copies and the circulation/issues desk.'])
+                                        ->extraAttributes(['title' => __('Library Circulation: controls book catalog & copies and the circulation/issues desk.')])
                                         ->collapsible()
                                         ->schema([
                                             Toggle::make('modules_library')
                                                 ->label(__('Enable Library Module'))
                                                 ->helperText(__('Master toggle: controls library book inventory, circulation desk, and overdue fines.'))
-                                                ->hintIcon('heroicon-o-information-circle', 'Master toggle: enables the Library module, book catalog, issues desk, and e-resources.')
+                                                ->hintIcon('heroicon-o-information-circle', __('Master toggle: enables the Library module, book catalog, issues desk, and e-resources.'))
                                                 ->default(true)
                                                 ->live(),
                                             Grid::make(1)->schema([
@@ -628,23 +639,23 @@ class SystemSettingsPage extends Page implements HasForms
                                                 Toggle::make('modules_library_eresources')
                                                     ->label(__('E-Resources & Digital Library'))
                                                     ->helperText(__('Online journals, e-books, and digital media catalogue with access logs.'))
-                                                    ->hintIcon('heroicon-o-information-circle', 'E-Resources & Digital Library: online journals and digital media catalogue.')
+                                                    ->hintIcon('heroicon-o-information-circle', __('E-Resources & Digital Library: online journals and digital media catalogue.'))
                                                     ->default(true)
                                                     ->visible(fn ($get) => $get('modules_library')),
                                             ]),
                                         ]),
 
                                     // 10. Inventory & Procurement
-                                    Section::make('Inventory & Procurement')
+                                    Section::make(__('Inventory & Procurement'))
                                         ->description(__('Stock inventory items, fixed assets, purchase orders, and GRNs.'))
                                         ->icon('heroicon-o-archive-box')
-                                        ->extraAttributes(['title' => 'Inventory & Procurement: gates stock inventory, fixed assets/depreciation, and procurement/purchase orders.'])
+                                        ->extraAttributes(['title' => __('Inventory & Procurement: gates stock inventory, fixed assets/depreciation, and procurement/purchase orders.')])
                                         ->collapsible()
                                         ->schema([
                                             Toggle::make('modules_inventory')
                                                 ->label(__('Enable Inventory Module'))
                                                 ->helperText(__('Master toggle: controls school assets, stationery stock, and supplier procurement workflow.'))
-                                                ->hintIcon('heroicon-o-information-circle', 'Master toggle: enables the Inventory module, stock items, fixed assets, and procurement.')
+                                                ->hintIcon('heroicon-o-information-circle', __('Master toggle: enables the Inventory module, stock items, fixed assets, and procurement.'))
                                                 ->default(true)
                                                 ->live(),
                                             Grid::make(1)->schema([
@@ -666,23 +677,23 @@ class SystemSettingsPage extends Page implements HasForms
                                                 Toggle::make('modules_inventory_suppliers')
                                                     ->label(__('Suppliers & Vendors'))
                                                     ->helperText(__('Supplier master list, rating, and preferred-vendor management.'))
-                                                    ->hintIcon('heroicon-o-information-circle', 'Suppliers & Vendors: supplier master list and rating management.')
+                                                    ->hintIcon('heroicon-o-information-circle', __('Suppliers & Vendors: supplier master list and rating management.'))
                                                     ->default(true)
                                                     ->visible(fn ($get) => $get('modules_inventory')),
                                             ]),
                                         ]),
 
                                     // 11. Finance & Accounting
-                                    Section::make('Finance & Accounting')
+                                    Section::make(__('Finance & Accounting'))
                                         ->description(__('Fee structures, invoicing, double-entry general ledger, and expenses.'))
                                         ->icon('heroicon-o-banknotes')
-                                        ->extraAttributes(['title' => 'Finance & Accounting: controls fee invoicing, the double-entry ledger, expense management, and financial statements.'])
+                                        ->extraAttributes(['title' => __('Finance & Accounting: controls fee invoicing, the double-entry ledger, expense management, and financial statements.')])
                                         ->collapsible()
                                         ->schema([
                                             Toggle::make('modules_finance')
                                                 ->label(__('Enable Finance Module'))
                                                 ->helperText(__('Master toggle: controls fee collection, bank accounts, accounting journal entries, and financial reports.'))
-                                                ->hintIcon('heroicon-o-information-circle', 'Master toggle: enables Finance, invoicing, ledger, expenses, and financial statements.')
+                                                ->hintIcon('heroicon-o-information-circle', __('Master toggle: enables Finance, invoicing, ledger, expenses, and financial statements.'))
                                                 ->default(true)
                                                 ->live(),
                                             Grid::make(1)->schema([
@@ -704,23 +715,23 @@ class SystemSettingsPage extends Page implements HasForms
                                                 Toggle::make('modules_finance_reports')
                                                     ->label(__('Financial Statements & Reports'))
                                                     ->helperText(__('Trial balance, income statement, and cash-flow reports with export.'))
-                                                    ->hintIcon('heroicon-o-information-circle', 'Financial Statements & Reports: trial balance and income statement reporting.')
+                                                    ->hintIcon('heroicon-o-information-circle', __('Financial Statements & Reports: trial balance and income statement reporting.'))
                                                     ->default(true)
                                                     ->visible(fn ($get) => $get('modules_finance')),
                                             ]),
                                         ]),
 
                                     // 12. Communication & Helpdesk
-                                    Section::make('Communication Center')
+                                    Section::make(__('Communication Center'))
                                         ->description(__('Notice boards, internal messaging, and support helpdesks.'))
                                         ->icon('heroicon-o-chat-bubble-left-right')
-                                        ->extraAttributes(['title' => 'Communication Center: gates announcements/notice board and the support helpdesk ticketing system.'])
+                                        ->extraAttributes(['title' => __('Communication Center: gates announcements/notice board and the support helpdesk ticketing system.')])
                                         ->collapsible()
                                         ->schema([
                                             Toggle::make('modules_communication')
                                                 ->label(__('Enable Communication Module'))
                                                 ->helperText(__('Master toggle: controls broadcast announcements, notice boards, and helpdesk tickets.'))
-                                                ->hintIcon('heroicon-o-information-circle', 'Master toggle: enables Communication, announcements, notice board, and helpdesk tickets.')
+                                                ->hintIcon('heroicon-o-information-circle', __('Master toggle: enables Communication, announcements, notice board, and helpdesk tickets.'))
                                                 ->default(true)
                                                 ->live(),
                                             Grid::make(1)->schema([
@@ -737,23 +748,23 @@ class SystemSettingsPage extends Page implements HasForms
                                                 Toggle::make('modules_communication_messaging')
                                                     ->label(__('Messaging & Broadcasts'))
                                                     ->helperText(__('Targeted SMS/email broadcasts and staff-to-staff instant messaging.'))
-                                                    ->hintIcon('heroicon-o-information-circle', 'Messaging & Broadcasts: targeted SMS/email broadcasts and staff messaging.')
+                                                    ->hintIcon('heroicon-o-information-circle', __('Messaging & Broadcasts: targeted SMS/email broadcasts and staff messaging.'))
                                                     ->default(true)
                                                     ->visible(fn ($get) => $get('modules_communication')),
                                             ]),
                                         ]),
 
                                     // 13. Visual Website & CMS
-                                    Section::make('Visual Website & CMS')
+                                    Section::make(__('Visual Website & CMS'))
                                         ->description(__('Public-facing website, landing page builder, and SEO.'))
                                         ->icon('heroicon-o-globe-alt')
-                                        ->extraAttributes(['title' => 'Visual Website & CMS: controls the public portal pages and the visual drag-and-drop CMS page builder.'])
+                                        ->extraAttributes(['title' => __('Visual Website & CMS: controls the public portal pages and the visual drag-and-drop CMS page builder.')])
                                         ->collapsible()
                                         ->schema([
                                             Toggle::make('modules_website')
                                                 ->label(__('Enable Website & CMS Module'))
                                                 ->helperText(__('Master toggle: controls public portal pages, news, and visual drag-and-drop website builder.'))
-                                                ->hintIcon('heroicon-o-information-circle', 'Master toggle: enables the Website & CMS module, page builder, news, and SEO.')
+                                                ->hintIcon('heroicon-o-information-circle', __('Master toggle: enables the Website & CMS module, page builder, news, and SEO.'))
                                                 ->default(true)
                                                 ->live(),
                                             Grid::make(1)->schema([
@@ -765,81 +776,81 @@ class SystemSettingsPage extends Page implements HasForms
                                                 Toggle::make('modules_website_news')
                                                     ->label(__('News & Announcements Page'))
                                                     ->helperText(__('Manage the public news feed and curriculum announcements shown on the school portal.'))
-                                                    ->hintIcon('heroicon-o-information-circle', 'News & Announcements Page: public news feed for the school portal.')
+                                                    ->hintIcon('heroicon-o-information-circle', __('News & Announcements Page: public news feed for the school portal.'))
                                                     ->default(true)
                                                     ->visible(fn ($get) => $get('modules_website')),
                                             ]),
                                             // 14. LMS
-                                            Section::make('LMS')
+                                            Section::make(__('LMS'))
                                                 ->description(__('Homework and online learning activities.'))
                                                 ->icon('heroicon-o-play-circle')
-                                                ->extraAttributes(['title' => 'LMS: gates homework & lessons, online learning activities, and submissions.'])
+                                                ->extraAttributes(['title' => __('LMS: gates homework & lessons, online learning activities, and submissions.')])
                                                 ->collapsible()
                                                 ->schema([
                                                     Toggle::make('modules_lms')
                                                         ->label(__('Enable LMS Module'))
                                                         ->helperText(__('Master toggle: controls homework & lessons and online learning activities.'))
-                                                        ->hintIcon('heroicon-o-information-circle', 'Master toggle: enables the LMS module, homework & lessons, and submissions.')
+                                                        ->hintIcon('heroicon-o-information-circle', __('Master toggle: enables the LMS module, homework & lessons, and submissions.'))
                                                         ->default(true)
                                                         ->live(),
                                                 ]),
 
                                             // 15. Knowledge Hub
-                                            Section::make('Knowledge Hub')
+                                            Section::make(__('Knowledge Hub'))
                                                 ->description(__('Curated knowledge assets and galleries.'))
                                                 ->icon('heroicon-o-light-bulb')
-                                                ->extraAttributes(['title' => 'Knowledge Hub: gates the school repository, knowledge assets, and galleries.'])
+                                                ->extraAttributes(['title' => __('Knowledge Hub: gates the school repository, knowledge assets, and galleries.')])
                                                 ->collapsible()
                                                 ->schema([
                                                     Toggle::make('modules_knowledge')
                                                         ->label(__('Enable Knowledge Hub Module'))
                                                         ->helperText(__('Master toggle: controls the school repository, knowledge assets, and galleries.'))
-                                                        ->hintIcon('heroicon-o-information-circle', 'Master toggle: enables the Knowledge Hub module, school repository, assets, and galleries.')
+                                                        ->hintIcon('heroicon-o-information-circle', __('Master toggle: enables the Knowledge Hub module, school repository, assets, and galleries.'))
                                                         ->default(true)
                                                         ->live(),
                                                 ]),
 
                                             // 16. Reports & Intelligence
-                                            Section::make('Reports & Intelligence')
+                                            Section::make(__('Reports & Intelligence'))
                                                 ->description(__('Report generator, templates, generated reports, and analytics.'))
                                                 ->icon('heroicon-o-chart-bar')
-                                                ->extraAttributes(['title' => 'Reports & Intelligence: gates the reporting dashboard, report generator, templates, generated reports, and analytics explorer.'])
+                                                ->extraAttributes(['title' => __('Reports & Intelligence: gates the reporting dashboard, report generator, templates, generated reports, and analytics explorer.')])
                                                 ->collapsible()
                                                 ->schema([
                                                     Toggle::make('modules_reports')
                                                         ->label(__('Enable Reports & Intelligence Module'))
                                                         ->helperText(__('Master toggle: controls the reporting dashboard, report generator, templates, and analytics explorer.'))
-                                                        ->hintIcon('heroicon-o-information-circle', 'Master toggle: enables Reports & Intelligence, the dashboard, generator, templates, and analytics.')
+                                                        ->hintIcon('heroicon-o-information-circle', __('Master toggle: enables Reports & Intelligence, the dashboard, generator, templates, and analytics.'))
                                                         ->default(true)
                                                         ->live(),
                                                 ]),
 
                                             // 17. System Administration
-                                            Section::make('System Administration')
+                                            Section::make(__('System Administration'))
                                                 ->description(__('Settings, roles, departments, users, and audit trails.'))
                                                 ->icon('heroicon-o-wrench-screwdriver')
-                                                ->extraAttributes(['title' => 'System Administration: gates the admin overview, user accounts, roles, departments, and audit log. System Settings stays reachable by direct URL.'])
+                                                ->extraAttributes(['title' => __('System Administration: gates the admin overview, user accounts, roles, departments, and audit log. System Settings stays reachable by direct URL.')])
                                                 ->collapsible()
                                                 ->schema([
                                                     Toggle::make('modules_administration')
                                                         ->label(__('Enable System Administration Module'))
                                                         ->helperText(__('Master toggle: controls the admin overview, user accounts, roles, departments, and data export. System Settings remains reachable by URL.'))
-                                                        ->hintIcon('heroicon-o-information-circle', 'Master toggle: enables System Administration, user accounts, roles, departments, audit log, and data export.')
+                                                        ->hintIcon('heroicon-o-information-circle', __('Master toggle: enables System Administration, user accounts, roles, departments, audit log, and data export.'))
                                                         ->default(true)
                                                         ->live(),
                                                 ]),
 
                                             // 18. Subscription & Billing
-                                            Section::make('Subscription & Billing')
+                                            Section::make(__('Subscription & Billing'))
                                                 ->description(__('Plan overview, invoices, receipts, and payments.'))
                                                 ->icon('heroicon-o-credit-card')
-                                                ->extraAttributes(['title' => 'Subscription & Billing: gates the billing overview and subscription management pages.'])
+                                                ->extraAttributes(['title' => __('Subscription & Billing: gates the billing overview and subscription management pages.')])
                                                 ->collapsible()
                                                 ->schema([
                                                     Toggle::make('modules_saas')
                                                         ->label(__('Enable Subscription & Billing Module'))
                                                         ->helperText(__('Master toggle: controls the billing overview and subscription management pages.'))
-                                                        ->hintIcon('heroicon-o-information-circle', 'Master toggle: enables Subscription & Billing, the overview, invoices, and receipts.')
+                                                        ->hintIcon('heroicon-o-information-circle', __('Master toggle: enables Subscription & Billing, the overview, invoices, and receipts.'))
                                                         ->default(true)
                                                         ->live(),
                                                 ]),
@@ -847,7 +858,7 @@ class SystemSettingsPage extends Page implements HasForms
                                 ]),
                             ]),
 
-                        Tab::make('Institution Profile')
+                        Tab::make(__('Institution Profile'))
                             ->icon('heroicon-o-home-modern')
                             ->schema([
                                 TextInput::make('profile_school_name')->label(__('School Name')),
@@ -856,10 +867,10 @@ class SystemSettingsPage extends Page implements HasForms
                                 Select::make('profile_school_type')
                                     ->label(__('School Type'))
                                     ->options([
-                                        'primary' => 'Primary School',
-                                        'secondary' => 'Secondary School',
-                                        'combined' => 'Combined / Comprehensive',
-                                        'college' => 'Tertiary College',
+                                        'primary' => __('Primary School'),
+                                        'secondary' => __('Secondary School'),
+                                        'combined' => __('Combined / Comprehensive'),
+                                        'college' => __('Tertiary College'),
                                     ]),
                                 TextInput::make('profile_phone')->label(__('Phone Number')),
                                 TextInput::make('profile_email')->label(__('Contact Email')),
@@ -880,13 +891,13 @@ class SystemSettingsPage extends Page implements HasForms
                                     ->label(__('Website URL'))
                                     ->url()
                                     ->placeholder(__('e.g. https://www.your-school.org'))
-                                    ->helperText('Leave empty to use the website automatically assigned to this school (e.g. http://'.(current_tenant()?->subdomain ?? 'school').'.schoolcore.com/).'),
+                                    ->helperText(__('Leave empty to use the website automatically assigned to this school (e.g. http://'.(current_tenant()?->subdomain ?? 'school').'.schoolcore.com/).')),
                             ])->columns(2),
 
-                        Tab::make('Footer & Branding')
+                        Tab::make(__('Footer & Branding'))
                             ->icon('heroicon-o-window')
                             ->schema([
-                                Section::make('App Footer')
+                                Section::make(__('App Footer'))
                                     ->description(__('Controls the low-profile footer shown at the bottom of every page in the app panel.'))
                                     ->schema([
                                         TextInput::make('footer_powered_by_text')
@@ -901,10 +912,10 @@ class SystemSettingsPage extends Page implements HasForms
                                     ])->columns(2),
                             ]),
 
-                        Tab::make('Banking & Payments')
+                        Tab::make(__('Banking & Payments'))
                             ->icon('heroicon-o-banknotes')
                             ->schema([
-                                Section::make('Bank Accounts')
+                                Section::make(__('Bank Accounts'))
                                     ->description(__('Bank accounts are created and maintained by the finance team under Finance → School Bank Accounts. Here you only choose which of those accounts should appear on printed student invoices.'))
                                     ->schema([
                                         Select::make('banking_invoice_default_bank_account_id')
@@ -922,7 +933,7 @@ class SystemSettingsPage extends Page implements HasForms
                                                             $account->bank_name,
                                                             $account->account_name,
                                                             $account->account_number,
-                                                            $account->is_default ? ' (Default)' : ''
+                                                            $account->is_default ? __(' (Default)') : ''
                                                         ),
                                                     ])
                                                     ->toArray();
@@ -941,7 +952,7 @@ class SystemSettingsPage extends Page implements HasForms
                                             )),
                                     ]),
 
-                                Section::make('Mobile Money / EcoCash')
+                                Section::make(__('Mobile Money / EcoCash'))
                                     ->schema([
                                         TextInput::make('banking_ecocash_merchant')
                                             ->label(__('EcoCash Merchant Pin Code'))
@@ -950,23 +961,23 @@ class SystemSettingsPage extends Page implements HasForms
                                     ]),
                             ]),
 
-                        Tab::make('Authentication & Security')
+                        Tab::make(__('Authentication & Security'))
                             ->icon('heroicon-o-lock-closed')
                             ->schema([
                                 Select::make('security_password_length')
                                     ->label(__('Minimum Password Length'))
                                     ->options([
-                                        '8' => '8 Characters',
-                                        '10' => '10 Characters',
-                                        '12' => '12 Characters',
+                                        '8' => __('8 Characters'),
+                                        '10' => __('10 Characters'),
+                                        '12' => __('12 Characters'),
                                     ])->default('8'),
                                 Select::make('security_session_timeout')
                                     ->label(__('Auto-Session Timeout'))
                                     ->options([
-                                        '15' => '15 Minutes',
-                                        '30' => '30 Minutes',
-                                        '60' => '60 Minutes',
-                                        '120' => '2 Hours',
+                                        '15' => __('15 Minutes'),
+                                        '30' => __('30 Minutes'),
+                                        '60' => __('60 Minutes'),
+                                        '120' => __('2 Hours'),
                                     ])->default('60'),
                                 Toggle::make('security_require_mfa')->label(__('Enforce Multi-Factor Authentication (MFA)'))->default(false),
                                 TextInput::make('security_ip_restrictions')
@@ -974,44 +985,44 @@ class SystemSettingsPage extends Page implements HasForms
                                     ->placeholder(__('Leave empty to allow all IP requests')),
                             ])->columns(2),
 
-                        Tab::make('System Preferences')
+                        Tab::make(__('System Preferences'))
                             ->icon('heroicon-o-globe-alt')
                             ->schema([
                                 Select::make('preferences_default_language')
                                     ->label(__('School Operating & ERP Language'))
                                     ->options([
-                                        'en' => 'English',
-                                        'sn' => 'Shona',
-                                        'sw' => 'Swahili',
-                                        'fr' => 'Français',
-                                        'pt' => 'Português',
-                                        'es' => 'Español',
+                                        'en' => __('English'),
+                                        'sn' => __('Shona'),
+                                        'sw' => __('Swahili'),
+                                        'fr' => __('Français'),
+                                        'pt' => __('Português'),
+                                        'es' => __('Español'),
                                     ])->default('en')
                                     ->helperText(__('Used for system administration and all official printed documents/reports.')),
                                 Select::make('preferences_website_language')
                                     ->label(__('Public Website & Portal Language'))
                                     ->options([
-                                        'en' => 'English',
-                                        'sn' => 'Shona',
-                                        'sw' => 'Swahili',
-                                        'fr' => 'Français',
-                                        'pt' => 'Português',
-                                        'es' => 'Español',
+                                        'en' => __('English'),
+                                        'sn' => __('Shona'),
+                                        'sw' => __('Swahili'),
+                                        'fr' => __('Français'),
+                                        'pt' => __('Português'),
+                                        'es' => __('Español'),
                                     ])->default('en')
                                     ->helperText(__('Used independently for public portal pages, landing pages, and the CMS builder.')),
                                 Select::make('preferences_default_currency')
                                     ->label(__('Primary Ledger Currency'))
                                     ->options([
-                                        'USD' => 'United States Dollar ($)',
-                                        'ZiG' => 'Zimbabwe Gold (ZiG)',
-                                        'ZAR' => 'South African Rand (R)',
-                                        'BWP' => 'Botswana Pula (P)',
-                                        'ZMW' => 'Zambian Kwacha (ZK)',
-                                        'MWK' => 'Malawian Kwacha (MK)',
-                                        'MZN' => 'Mozambican Metical (MT)',
-                                        'KES' => 'Kenyan Shilling (KSh)',
-                                        'GBP' => 'British Pound (£)',
-                                        'EUR' => 'Euro (€)',
+                                        'USD' => __('United States Dollar ($)'),
+                                        'ZiG' => __('Zimbabwe Gold (ZiG)'),
+                                        'ZAR' => __('South African Rand (R)'),
+                                        'BWP' => __('Botswana Pula (P)'),
+                                        'ZMW' => __('Zambian Kwacha (ZK)'),
+                                        'MWK' => __('Malawian Kwacha (MK)'),
+                                        'MZN' => __('Mozambican Metical (MT)'),
+                                        'KES' => __('Kenyan Shilling (KSh)'),
+                                        'GBP' => __('British Pound (£)'),
+                                        'EUR' => __('Euro (€)'),
                                     ])->default('USD'),
                                 TextInput::make('preferences_student_format')
                                     ->label(__('Student ID Prefix Pattern'))
@@ -1021,36 +1032,223 @@ class SystemSettingsPage extends Page implements HasForms
                                     ->default('INV-{SEQ}'),
                             ])->columns(2),
 
-                        Tab::make('Email Configuration')
+                         Tab::make(__('Legal & Terms'))
+                            ->icon('heroicon-o-document-text')
+                            ->schema([
+                                Section::make(__('School Terms & Conditions'))
+                                    ->description(__('Customize the Terms of Service and Conditions that users must review and agree to during registration to your school portal.'))
+                                    ->schema([
+                                        \Filament\Forms\Components\RichEditor::make('legal_terms_content')
+                                            ->label(__('School Terms of Service Content'))
+                                            ->default(default_school_terms())
+                                            ->columnSpanFull()
+                                            ->required(),
+                                    ]),
+                            ]),
+
+                         Tab::make(__('Email Configuration'))
                             ->icon('heroicon-o-envelope')
                             ->schema([
                                 Placeholder::make('email_config_intro')
                                     ->label(__('School Email Configuration'))
                                     ->content(new HtmlString(
-                                        'Configure how this school sends email for each category. '.
+                                        __('Configure how this school sends email for each category. '.
                                         'The sender address must be a school-specific address and can never reuse the platform '.
                                         'sending account (<strong>'.e(platform_email_address()).'</strong>). '.
                                         'Changes made here are shared with the dedicated <strong>Email Configuration</strong> page '.
-                                        'under System Administration — there is only ever one underlying configuration per category.'
+                                        'under System Administration — there is only ever one underlying configuration per category.')
                                     )),
                                 ...$this->emailConfigurationSections(),
+                                Placeholder::make('email_branding_intro')
+                                    ->label(__('Email Branding'))
+                                    ->content(new HtmlString(__('These details appear in the header and footer of every email your school automatically sends — activation invites, registration alerts, admissions confirmations and more.')))
+                                    ->columnSpanFull(),
+                                FileUpload::make('email_logo_path')
+                                    ->label(__('Email logo'))
+                                    ->image()
+                                    ->imageEditor()
+                                    ->directory('school/email-branding')
+                                    ->maxSize(2048)
+                                    ->helperText(__('Shown at the top of outgoing emails. Falls back to your workspace logo when empty.')),
+                                TextInput::make('email_company_name')
+                                    ->label(__('Company / institution name'))
+                                    ->maxLength(120),
+                                TextInput::make('email_company_address')
+                                    ->label(('Address'))
+                                    ->maxLength(255),
+                                TextInput::make('email_company_phone')
+                                    ->label(__('Phone number'))
+                                    ->tel()
+                                    ->maxLength(40),
+                                TextInput::make('email_company_email')
+                                    ->label(__('Contact email address'))
+                                    ->email()
+                                    ->maxLength(120),
                             ]),
 
-                        Tab::make('Notifications')
+                        Tab::make(__('Notifications'))
                             ->icon('heroicon-o-bell-alert')
                             ->schema([
                                 Placeholder::make('notifications_intro')
                                     ->label(__('Registration Notifications'))
                                     ->content(new HtmlString(
-                                        'Control how your school administrators are alerted when a new user registers on your workspace. '.
+                                        __('Control how your school administrators are alerted when a new user registers on your workspace. '.
                                         'In-app notifications are always delivered to authorized approvers; the toggle below only governs '.
-                                        'whether a notification <em>email</em> is also sent for each registration.'
+                                        'whether a notification <em>email</em> is also sent for each registration.')
                                     ))
                                     ->columnSpanFull(),
                                 Toggle::make('notifications_email_on_user_registration')
                                     ->label(__('Email approvers when a new user registers'))
                                     ->default(true)
                                     ->helperText(__('When switched off, approvers are still notified inside the workspace, but no email is sent for every registration.')),
+                            ]),
+
+                        Tab::make(__('Feature Flags'))
+                            ->icon('heroicon-o-flag')
+                            ->schema([
+                                Placeholder::make('feature_flags_intro')
+                                    ->label(__('Tenant Feature Flags'))
+                                    ->content(new HtmlString(
+                                        __('Toggle individual platform features on or off for your school. '.
+                                        'Disabled features are hidden from the navigation and inaccessible to all users. '.
+                                        'Each flag inherits the platform default; overrides below apply only to your tenant.')
+                                    ))
+                                    ->columnSpanFull(),
+
+                                Section::make(__('UI & Experience'))
+                                    ->icon('heroicon-o-paint-brush')
+                                    ->columns(3)
+                                    ->schema([
+                                        Toggle::make('features_dark_mode')
+                                            ->label(__('Dark Mode'))
+                                            ->default(false)
+                                            ->helperText(__('Allow users to switch to dark theme')),
+                                        Toggle::make('features_onboarding_wizard')
+                                            ->label(__('Onboarding Wizard'))
+                                            ->default(true)
+                                            ->helperText(__('Show setup wizard for new administrators')),
+                                        Toggle::make('features_id_card_designer')
+                                            ->label(__('ID Card Designer'))
+                                            ->default(true)
+                                            ->helperText(__('Visual student & staff ID card builder')),
+                                    ]),
+
+                                Section::make(__('Core Modules'))
+                                    ->icon('heroicon-o-cube')
+                                    ->columns(3)
+                                    ->schema([
+                                        Toggle::make('features_attendance_tracking')
+                                            ->label(__('Attendance Tracking'))
+                                            ->default(true),
+                                        Toggle::make('features_exam_management')
+                                            ->label(__('Exam Management'))
+                                            ->default(true),
+                                        Toggle::make('features_fee_management')
+                                            ->label(__('Fee Management'))
+                                            ->default(true),
+                                        Toggle::make('features_payroll_module')
+                                            ->label(__('Payroll Module'))
+                                            ->default(true),
+                                        Toggle::make('features_library_module')
+                                            ->label(__('Library Module'))
+                                            ->default(true),
+                                        Toggle::make('features_hostel_module')
+                                            ->label(__('Hostel / Boarding'))
+                                            ->default(true),
+                                        Toggle::make('features_clinic_module')
+                                            ->label(__('Clinic / Health'))
+                                            ->default(true),
+                                        Toggle::make('features_inventory_module')
+                                            ->label(__('Inventory Module'))
+                                            ->default(true),
+                                        Toggle::make('features_lms_module')
+                                            ->label(__('LMS (Homework & Lessons)'))
+                                            ->default(true),
+                                        Toggle::make('features_knowledge_base')
+                                            ->label(__('Knowledge Base'))
+                                            ->default(true),
+                                        Toggle::make('features_report_generation')
+                                            ->label(__('Report Generation'))
+                                            ->default(true),
+                                        Toggle::make('features_website_builder')
+                                            ->label(__('Website / CMS Builder'))
+                                            ->default(true),
+                                    ]),
+
+                                Section::make(__('Communication & Notifications'))
+                                    ->icon('heroicon-o-chat-bubble-left-ellipsis')
+                                    ->columns(3)
+                                    ->schema([
+                                        Toggle::make('features_communication_center')
+                                            ->label(__('Communication Center'))
+                                            ->default(true),
+                                        Toggle::make('features_email_notifications')
+                                            ->label(__('Email Notifications'))
+                                            ->default(true),
+                                        Toggle::make('features_sms_notifications')
+                                            ->label(__('SMS Notifications'))
+                                            ->default(false),
+                                        Toggle::make('features_whatsapp_notifications')
+                                            ->label(__('WhatsApp Notifications'))
+                                            ->default(false),
+                                    ]),
+
+                                Section::make(__('Portals & Access'))
+                                    ->icon('heroicon-o-users')
+                                    ->columns(3)
+                                    ->schema([
+                                        Toggle::make('features_student_portal')
+                                            ->label(__('Student Portal'))
+                                            ->default(true),
+                                        Toggle::make('features_parent_portal')
+                                            ->label(__('Parent Portal'))
+                                            ->default(false),
+                                        Toggle::make('features_staff_portal')
+                                            ->label(__('Staff Portal'))
+                                            ->default(true),
+                                        Toggle::make('features_online_admissions')
+                                            ->label(__('Online Admissions'))
+                                            ->default(true),
+                                        Toggle::make('features_two_factor_auth')
+                                            ->label(__('Two-Factor Authentication'))
+                                            ->default(false),
+                                        Toggle::make('features_custom_roles')
+                                            ->label(__('Custom Role Builder'))
+                                            ->default(false),
+                                    ]),
+
+                                Section::make(__('Data & Integrations'))
+                                    ->icon('heroicon-o-arrow-down-tray')
+                                    ->columns(3)
+                                    ->schema([
+                                        Toggle::make('features_csv_export')
+                                            ->label(__('CSV Export'))
+                                            ->default(true),
+                                        Toggle::make('features_pdf_export')
+                                            ->label(__('PDF Export'))
+                                            ->default(true),
+                                        Toggle::make('features_data_import')
+                                            ->label(__('Data Import'))
+                                            ->default(true),
+                                        Toggle::make('features_advanced_analytics')
+                                            ->label(__('Advanced Analytics'))
+                                            ->default(false),
+                                        Toggle::make('features_api_access')
+                                            ->label(__('External API Access'))
+                                            ->default(false),
+                                        Toggle::make('features_bulk_operations')
+                                            ->label(__('Bulk Operations'))
+                                            ->default(true),
+                                        Toggle::make('features_print_reports')
+                                            ->label(__('Print Reports'))
+                                            ->default(true),
+                                        Toggle::make('features_academic_calendar')
+                                            ->label(__('Academic Calendar'))
+                                            ->default(true),
+                                        Toggle::make('features_timetable_builder')
+                                            ->label(__('Visual Timetable Builder'))
+                                            ->default(true),
+                                    ]),
                             ]),
                     ]),
             ])
@@ -1110,6 +1308,11 @@ class SystemSettingsPage extends Page implements HasForms
                 $value = $value ? '1' : '0';
             }
 
+            // Normalise feature flag toggles the same way.
+            if ($group === 'features' && is_bool($value)) {
+                $value = $value ? '1' : '0';
+            }
+
             $serialized = is_array($value) ? json_encode($value) : $value;
 
             $oldValues[$compoundKey] = $settingModel ? $settingModel->value : null;
@@ -1143,7 +1346,7 @@ class SystemSettingsPage extends Page implements HasForms
         $this->saveEmailConfiguration($state);
 
         // Resolve URLs for the live-reload event [1.2]
-        $logoUrl = asset('images/Transparant Logo.png');
+        $logoUrl = asset('images/logo-transparent.png');
         if (! empty($state['branding_logo_path'])) {
             $logoUrl = asset('storage/'.$state['branding_logo_path']);
         }
@@ -1161,7 +1364,7 @@ class SystemSettingsPage extends Page implements HasForms
             'background_scaling' => $state['branding_background_scaling'] ?? 'cover',
             'logo_url' => $logoUrl,
             'bg_url' => $bgUrl,
-            'school_name' => $state['profile_school_name'] ?? 'SchoolCore',
+            'school_name' => $state['profile_school_name'] ?? 'Kairo CORE',
         ]);
 
         $this->dispatch('reload-page-after-save');

@@ -43,7 +43,7 @@ class RevenueCategoryResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Revenue Category Setup')
+                Forms\Components\Section::make(__('Revenue Category Setup'))
                     ->description(__('Manage unlimited income streams such as Tuition, Transport, Boarding, School Shop, Grants, etc.'))
                     ->schema([
                         Forms\Components\TextInput::make('name')

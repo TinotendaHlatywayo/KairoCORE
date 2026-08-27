@@ -8,7 +8,7 @@
     'variant' => 'school',          // 'school' | 'admin'
     'title' => 'Welcome back',
     'subtitle' => null,
-    'brand' => 'SchoolCore',        // school name or platform name
+    'brand' => 'Kairo CORE',        // school name or platform name
     'logo' => null,                 // URL or null
     'badge' => 'School Portal',
     'footer' => null,

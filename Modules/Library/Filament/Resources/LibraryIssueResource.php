@@ -47,7 +47,7 @@ class LibraryIssueResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Issue Processing Form')
+                Forms\Components\Section::make(__('Issue Processing Form'))
                     ->schema([
                         Forms\Components\Select::make('library_book_id')
                             ->label(__('Select Resource Title'))
@@ -57,11 +57,11 @@ class LibraryIssueResource extends Resource
                                     ->with('format')
                                     ->get()
                                     ->mapWithKeys(function ($book) {
-                                        $formatName = isset($book->format->name) ? $book->format->name : 'General Book';
+                                        $formatName = isset($book->format->name) ? $book->format->name : __('General Book');
                                         $avail = $book->getAvailableCopiesCount();
                                         $total = $book->getTotalCopiesCount();
 
-                                        return [$book->id => "{$book->title} [{$formatName}] (Available: {$avail}/{$total})"];
+                                        return [$book->id => __("{$book->title} [{$formatName}] (Available: {$avail}/{$total})")];
                                     });
                             })
                             ->searchable()
@@ -145,7 +145,7 @@ class LibraryIssueResource extends Resource
 
                         $className = $enrollment
                             ? $enrollment->course->name.' '.$enrollment->section->name
-                            : 'Unassigned Class';
+                            : __('Unassigned Class');
 
                         return $record->student->first_name.' '.$record->student->last_name.' | ID: '.$record->student->admission_number.' | Class: '.$className;
                     }),

@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', __('SchoolCore ERP - Multi-Tenant School Management Platform'))</title>
-    <meta name="description" content="{{ __('SchoolCore is a multi-tenant school management platform with admissions, academics, fees, attendance, communication, and a customizable public website for every school.') }}">
+    <title>@yield('title', platform_name() . ' - ' . __('Multi-Tenant School Management Platform'))</title>
+    <meta name="description" content="{{ __(platform_name() . ' is a multi-tenant school management platform with admissions, academics, fees, attendance, communication, and a customizable public website for every school.') }}">
     <meta property="og:type" content="website">
-    <meta property="og:site_name" content="SchoolCore">
-    <meta property="og:title" content="{{ __('SchoolCore ERP - Multi-Tenant School Management Platform') }}">
+    <meta property="og:site_name" content="{{ platform_name() }}">
+    <meta property="og:title" content="{{ platform_name() }} - {{ __('Multi-Tenant School Management Platform') }}">
     <meta property="og:description" content="{{ __('Run your entire school administration from a single, secure platform.') }}">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'><rect width='48' height='48' rx='12' fill='%235b4fe9'/><path d='M24 9 5 18l19 9 19-9-19-9Z' fill='%23fff'/><path d='M40 21v8' stroke='%23fff' stroke-width='2.6' stroke-linecap='round'/><circle cx='42' cy='31' r='2.6' fill='%23fff'/></svg>">
+    <link rel="icon" href="{{ platform_favicon_url() }}">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -102,6 +102,43 @@
             transition: background 0.15s ease, color 0.15s ease;
         }
         .sc-nav-link:hover { color: var(--sc-indigo); background: rgba(91, 79, 233, 0.08); }
+        .sc-lang-wrap { position: relative; }
+        .sc-lang-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            font-family: inherit;
+        }
+        .sc-lang-menu {
+            position: absolute;
+            right: 0;
+            top: calc(100% + 0.45rem);
+            min-width: 11rem;
+            background: #fff;
+            border: 1px solid var(--sc-border);
+            border-radius: 0.75rem;
+            box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
+            overflow: hidden;
+            z-index: 60;
+            padding: 0.3rem;
+        }
+        .sc-lang-item {
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+            padding: 0.5rem 0.7rem;
+            font-size: 0.88rem;
+            font-weight: 500;
+            color: #334155;
+            text-decoration: none;
+            border-radius: 0.5rem;
+            transition: background 0.12s ease;
+        }
+        .sc-lang-item:hover { background: #f1f5f9; color: var(--sc-indigo); }
+        .sc-lang-item.is-active { background: #eef2ff; font-weight: 700; }
         .sc-nav-toggle {
             display: none;
             align-items: center;
@@ -382,13 +419,9 @@
         <div class="sc-container sc-nav-inner">
             <a class="sc-nav-brand" href="{{ route('marketing.home') }}">
                 <span class="sc-nav-logo">
-                    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                        <path d="M24 7 2 17.5 24 28 46 17.5 24 7Z" fill="currentColor"/>
-                        <path d="M42 20.5v9" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
-                        <circle cx="44" cy="31.5" r="2.6" fill="currentColor"/>
-                    </svg>
+                    <img src="{{ platform_logo_url() }}" alt="{{ platform_name() }}" style="width: 100%; height: 100%; object-fit: contain;">
                 </span>
-                SchoolCore
+                {{ platform_name() }}
             </a>
             <button class="sc-nav-toggle" type="button" @click="navOpen = !navOpen" :aria-expanded="navOpen.toString()" aria-controls="marketing-nav" aria-label="{{ __('Toggle navigation') }}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
@@ -400,8 +433,39 @@
                 <a class="sc-nav-link" href="{{ route('marketing.home') }}" @click="navOpen = false">{{ __('Home') }}</a>
                 <a class="sc-nav-link" href="{{ route('marketing.about') }}" @click="navOpen = false">{{ __('About') }}</a>
                 <a class="sc-nav-link" href="{{ route('marketing.contact') }}" @click="navOpen = false">{{ __('Contact') }}</a>
-                <a href="/platform" class="sc-btn sc-btn-outline" @click="navOpen = false">{{ __('Platform Login') }}</a>
-                <a href="{{ route('register') }}" class="sc-btn sc-btn-primary" @click="navOpen = false">{{ __('Register School') }}</a>
+                @php
+                    $siteLocale = app()->getLocale();
+                    $siteLanguages = [
+                        'en' => ['label' => 'English', 'flag' => '🇬🇧'],
+                        'sn' => ['label' => 'Shona', 'flag' => '🇿🇼'],
+                        'sw' => ['label' => 'Swahili', 'flag' => '🇹🇿'],
+                        'fr' => ['label' => 'Français', 'flag' => '🇫🇷'],
+                        'pt' => ['label' => 'Português', 'flag' => '🇵🇹'],
+                        'es' => ['label' => 'Español', 'flag' => '🇪🇸'],
+                    ];
+                @endphp
+                <div x-data="{ langOpen: false }" class="sc-lang-wrap" @click.away="langOpen = false" @keydown.escape.window="langOpen = false">
+                    <button type="button" class="sc-nav-link sc-lang-btn" @click="langOpen = !langOpen" :aria-expanded="langOpen.toString()" aria-haspopup="true">
+                        {{ $siteLanguages[$siteLocale]['flag'] ?? '🌐' }}
+                        <span>{{ $siteLanguages[$siteLocale]['label'] ?? 'English' }}</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="12" height="12" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                    </button>
+                    <div x-show="langOpen" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+                         class="sc-lang-menu" role="menu" style="display: none;">
+                        @foreach($siteLanguages as $code => $lang)
+                            <a href="{{ route('locale.switch', ['locale' => $code]) }}"
+                               class="sc-lang-item {{ $code === $siteLocale ? 'is-active' : '' }}"
+                               role="menuitem"
+                               @click="navOpen = false; langOpen = false">
+                                <span class="text-base leading-none">{{ $lang['flag'] }}</span>
+                                <span>{{ $lang['label'] }}</span>
+                                @if($code === $siteLocale)<span style="margin-left:auto;color:#059669;">✓</span>@endif
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+                <a href="/platform" class="sc-btn sc-btn-outline" @click="navOpen = false" target="_blank" rel="noopener noreferrer">{{ __('Platform Login') }}</a>
+                <a href="{{ route('register') }}" class="sc-btn sc-btn-primary" @click="navOpen = false" target="_blank" rel="noopener noreferrer">{{ __('Register School') }}</a>
             </div>
         </div>
     </nav>
@@ -413,10 +477,12 @@
     <footer class="sc-footer">
         <div class="sc-container">
             <p>
-                &copy; {{ date('Y') }} SchoolCore ERP Platform. All rights reserved. &middot;
+                &copy; {{ date('Y') }} <a href="{{ route('marketing.home') }}" style="color: inherit; text-decoration: none; font-weight: 600;">{{ platform_name() }}</a>. All rights reserved. &middot;
+                <a href="{{ route('platform.terms') }}" target="_blank" rel="noopener noreferrer">{{ __('Terms of Service') }}</a> &middot;
+                <a href="{{ route('platform.terms') }}" target="_blank" rel="noopener noreferrer">{{ __('Terms of Use') }}</a> &middot;
                 <a href="{{ route('marketing.about') }}">{{ __('About') }}</a> &middot;
                 <a href="{{ route('marketing.contact') }}">{{ __('Contact') }}</a> &middot;
-                <a href="/platform">{{ __('Platform Login') }}</a>
+                <a href="/platform" target="_blank" rel="noopener noreferrer">{{ __('Platform Login') }}</a>
             </p>
         </div>
     </footer>

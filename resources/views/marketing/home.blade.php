@@ -1,6 +1,6 @@
 @extends('marketing.layout')
 
-@section('title', __('SchoolCore ERP - Multi-Tenant School Management Platform'))
+@section('title', __('Kairo CORE - Multi-Tenant School Management Platform'))
 
 @section('content')
 @if(session()->has('success_message'))
@@ -24,8 +24,8 @@
         <h1>{{ __('The Operating System for Modern Schools') }}</h1>
         <p>{{ __('Empower your institution with decoupled sub-domain isolation, real-time grading, automated fee ledgers, admissions workflows, and professional institutional websites.') }}</p>
         <div class="sc-hero-actions">
-            <a href="{{ route('register') }}" class="sc-btn sc-btn-light sc-btn-lg">{{ __('Register Your School') }}</a>
-            <a href="/platform" class="sc-btn sc-btn-light sc-btn-lg">{{ __('Platform Administration') }}</a>
+            <a href="{{ route('register') }}" class="sc-btn sc-btn-light sc-btn-lg" target="_blank" rel="noopener noreferrer">{{ __('Register Your School') }}</a>
+            <a href="/platform" class="sc-btn sc-btn-light sc-btn-lg" target="_blank" rel="noopener noreferrer">{{ __('Platform Administration') }}</a>
         </div>
     </div>
 </section>
@@ -129,7 +129,7 @@
                 <p>{{ __('Register your school in under two minutes and experience the future of school management.') }}</p>
             </div>
             <div class="sc-cta-actions">
-                <a href="{{ route('register') }}" class="sc-btn sc-btn-light sc-btn-lg">{{ __('Register School') }}</a>
+                <a href="{{ route('register') }}" class="sc-btn sc-btn-light sc-btn-lg" target="_blank" rel="noopener noreferrer">{{ __('Register School') }}</a>
             </div>
         </div>
     </div>

@@ -54,6 +54,7 @@ class CmsPageTemplate extends Model
         $page->update([
             'draft_blocks' => $this->blocks,
             'page_template' => $this->handle,
+            'page_theme' => $this->handle,
             'page_settings' => array_merge($page->page_settings ?? [], $this->page_settings ?? []),
         ]);
     }

@@ -48,7 +48,7 @@ class InventoryIssuanceResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Distribution Details')
+                Forms\Components\Section::make(__('Distribution Details'))
                     ->schema([
                         Forms\Components\Select::make('inventory_item_id')
                             ->relationship('inventoryItem', 'name')
@@ -93,13 +93,13 @@ class InventoryIssuanceResource extends Resource
                             ->placeholder(__('Enter quantity to issue...')),
                     ])->columns(4),
 
-                Forms\Components\Section::make('Recipient Assignment')
+                Forms\Components\Section::make(__('Recipient Assignment'))
                     ->schema([
                         Forms\Components\Select::make('issued_to_type')
                             ->required()
                             ->options([
-                                User::class => 'Staff Member',
-                                Student::class => 'Student',
+                                User::class => __('Staff Member'),
+                                Student::class => __('Student'),
                             ])
                             ->reactive()
                             ->placeholder(__('Select recipient category...')),
@@ -119,7 +119,7 @@ class InventoryIssuanceResource extends Resource
                             }),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Return Tracker')
+                Forms\Components\Section::make(__('Return Tracker'))
                     ->schema([
                         Forms\Components\Toggle::make('is_returnable')
                             ->label(__('Is Returnable Asset (e.g., textbook, laptop)'))
@@ -149,7 +149,7 @@ class InventoryIssuanceResource extends Resource
                 Tables\Columns\TextColumn::make('inventoryItem.name')->label(__('Item'))->searchable(),
                 Tables\Columns\TextColumn::make('location.name')
                     ->label(__('Source Location'))
-                    ->default('Default General Store'),
+                    ->default(__('Default General Store')),
                 Tables\Columns\TextColumn::make('quantity')->alignEnd(),
                 Tables\Columns\TextColumn::make('issued_to_type')
                     ->label(__('Recipient Type'))
@@ -167,6 +167,7 @@ class InventoryIssuanceResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Action::make('Return Asset')
+                    ->label(__('Return Asset'))
                     ->icon('heroicon-o-arrow-down-left-icon')
                     ->color('success')
                     ->visible(fn (InventoryIssuance $record) => $record->is_returnable && $record->status === 'issued')

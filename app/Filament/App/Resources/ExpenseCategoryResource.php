@@ -43,7 +43,7 @@ class ExpenseCategoryResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Expense Category Setup')
+                Forms\Components\Section::make(__('Expense Category Setup'))
                     ->description(__('Organize school spend into high-level categories such as Laboratory, Utilities, Maintenance, etc.'))
                     ->schema([
                         Forms\Components\TextInput::make('name')

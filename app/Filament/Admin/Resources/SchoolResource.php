@@ -45,6 +45,15 @@ class SchoolResource extends Resource
         return $user && $user->school_id === null;
     }
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        if (config('tenancy.mode') === 'single') {
+            return false;
+        }
+
+        return true;
+    }
+
     public static function form(Form $form): Form
     {
         return $form

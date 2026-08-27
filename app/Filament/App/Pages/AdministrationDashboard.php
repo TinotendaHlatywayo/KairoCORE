@@ -90,6 +90,9 @@ class AdministrationDashboard extends Page
         } elseif ($theme === 'dev_choice_3') {
             $chartPrimary = '#0891b2';
             $chartAccent = '#10b981';
+        } elseif ($theme === 'dev_choice_4') {
+            $chartPrimary = '#1b263b';
+            $chartAccent = '#f05438';
         }
 
         $totalUsers = User::where('school_id', $schoolId)->count();
@@ -146,7 +149,7 @@ class AdministrationDashboard extends Page
 
         $schoolId = current_tenant()?->id;
         $profileSchoolName = $schoolId ? SystemSetting::get('profile', 'school_name') : null;
-        $schoolName = $profileSchoolName ?: (current_tenant()?->name ?? 'SchoolCore Academy');
+        $schoolName = $profileSchoolName ?: (current_tenant()?->name ?? 'Kairo Demo Academy');
 
         return [
             'greeting' => $greeting,

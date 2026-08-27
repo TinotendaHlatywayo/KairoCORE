@@ -115,7 +115,6 @@ class CourseResource extends Resource
                                     ->placeholder(__('e.g., A or Red')),
 
                                 Forms\Components\TextInput::make('code')
-                                    ->required()
                                     ->placeholder(__('e.g., F1A or F1R')),
 
                                 Forms\Components\TextInput::make('capacity')

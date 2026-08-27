@@ -28,7 +28,10 @@ Thumbs.db
 .aider*
 
 # Secrets and local credentials (never commit)
-.env (Copy)
+.env
+.env.backup
+.env.production
+.env.local
 localhost+4-key.pem
 localhost+4.pem
 
@@ -53,3 +56,8 @@ memory.md
 
 # User-uploaded media (kept local)
 /storage/app/public/library
+
+# Local backup copies
+.env (Copy)
+*.afm.json
+*.ufm.json

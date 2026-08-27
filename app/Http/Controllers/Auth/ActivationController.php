@@ -85,7 +85,12 @@ class ActivationController extends Controller
             'activated_at' => now(),
         ])->save();
 
-        if ($user->school) {
+        // School-activation logic only runs for non-student users (e.g. school
+        // admins activating their newly registered school). Student accounts
+        // are activated silently — the school is already active.
+        $isStudent = $user->isStudent();
+
+        if ($user->school && ! $isStudent) {
             $user->school->update(['status' => 'active', 'trial_ends_at' => now()->addMonths(3)]);
             try {
                 app()->instance('current_tenant', $user->school);

@@ -16,7 +16,9 @@ class ListSchools extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make()->label(__('Onboard New Institution')),
+            Actions\CreateAction::make()
+                ->label(__('Onboard New Institution'))
+                ->visible(fn () => config('tenancy.mode') !== 'single'),
         ];
     }
 

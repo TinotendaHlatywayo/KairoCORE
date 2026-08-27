@@ -76,7 +76,7 @@ class CmsPageResource extends Resource
                 TextInput::make('slug')
                     ->required()
                     // URLs are unique per website (live + each template), not across
-                    // the whole SchoolCore platform. This matches the database layout
+                    // the whole Kairo CORE platform. This matches the database layout
                     // after template sites were introduced and lets every tenant have
                     // their own /home, /about and /admissions pages.
                     ->unique(

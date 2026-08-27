@@ -68,13 +68,13 @@ class StudentResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Tabs::make('Student Profile')
+                Forms\Components\Tabs::make(__('Student Profile'))
                     ->tabs([
-                        Tab::make('Personal Details')
+                        Tab::make(__('Personal Details'))
                             ->schema([
                                 Forms\Components\Grid::make(2)
                                     ->schema([
-                                        Forms\Components\Section::make('Student Information')
+                                        Forms\Components\Section::make(__('Student Information'))
                                             ->schema([
                                                 Forms\Components\TextInput::make('first_name')
                                                     ->required()
@@ -93,7 +93,7 @@ class StudentResource extends Resource
                                                     ->placeholder(__('e.g., 63-123456A78')),
                                             ])->columns(2),
 
-                                        Forms\Components\Section::make('Photo')
+                                        Forms\Components\Section::make(__('Photo'))
                                             ->schema([
                                                 Forms\Components\FileUpload::make('photo_path')
                                                     ->label(__('Student Photo'))
@@ -104,7 +104,7 @@ class StudentResource extends Resource
                                                     ->helperText(__('Used on ID cards, invoices and reports.')),
                                             ])->columns(1),
 
-                                        Forms\Components\Section::make('Guardian & Emergency Contact')
+                                        Forms\Components\Section::make(__('Guardian & Emergency Contact'))
                                             ->schema([
                                                 Forms\Components\TextInput::make('parent_email')
                                                     ->label(__('Parent / Guardian Email'))
@@ -116,7 +116,7 @@ class StudentResource extends Resource
                                                     ->tel(),
                                             ])->columns(2),
 
-                                        Forms\Components\Section::make('Boarding & Health')
+                                        Forms\Components\Section::make(__('Boarding & Health'))
                                             ->schema([
                                                 Forms\Components\TextInput::make('house')
                                                     ->placeholder(__('e.g., Chiadzwa, Nyanga, Bvumba')),
@@ -128,17 +128,17 @@ class StudentResource extends Resource
                                                     ->default('day_scholar'),
                                                 Forms\Components\Select::make('blood_group')
                                                     ->options([
-                                                        'A+' => 'A+', 'A-' => __('A-'),
-                                                        'B+' => 'B+', 'B-' => __('B-'),
-                                                        'AB+' => 'AB+', 'AB-' => __('AB-'),
-                                                        'O+' => 'O+', 'O-' => __('O-'),
+                                                        'A+' => __('A+'), 'A-' => __('A-'),
+                                                        'B+' => __('B+'), 'B-' => __('B-'),
+                                                        'AB+' => __('AB+'), 'AB-' => __('AB-'),
+                                                        'O+' => __('O+'), 'O-' => __('O-'),
                                                     ]),
                                                 Forms\Components\Textarea::make('medical_notes')
                                                     ->placeholder(__('Allergies, chronic conditions, medication...'))
                                                     ->columnSpanFull(),
                                             ])->columns(2),
 
-                                        Forms\Components\Section::make('Admission Details')
+                                        Forms\Components\Section::make(__('Admission Details'))
                                             ->columnSpan(2)
                                             ->schema([
                                                 Forms\Components\TextInput::make('student_id_number')
@@ -165,9 +165,9 @@ class StudentResource extends Resource
                                     ]),
                             ]),
 
-                        Tab::make('Enrollment')
+                        Tab::make(__('Enrollment'))
                             ->schema([
-                                Forms\Components\Section::make('Current Enrollment')
+                                Forms\Components\Section::make(__('Current Enrollment'))
                                     ->description(__('Assign the student to a form / grade and stream for the active academic year.'))
                                     ->schema([
                                         Forms\Components\Select::make('academic_year_id')
@@ -191,9 +191,9 @@ class StudentResource extends Resource
                                     ])->columns(2),
                             ]),
 
-                        Tab::make('ID Card')
+                        Tab::make(__('ID Card'))
                             ->schema([
-                                Forms\Components\Section::make('Card Status')
+                                Forms\Components\Section::make(__('Card Status'))
                                     ->schema([
                                         Forms\Components\Select::make('card_status')
                                             ->options([
@@ -216,6 +216,14 @@ class StudentResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\ImageColumn::make('photo_path')
+                    ->label(__('Photo'))
+                    ->disk('public')
+                    ->circular()
+                    ->defaultImageUrl(fn ($record) => asset(($record->gender === 'female') ? 'images/no_profile_female.jpg' : 'images/no_profile_male.png'))
+                    ->limited(false)
+                    ->stacked(false)
+                    ->hiddenLabel(),
                 Tables\Columns\TextColumn::make('student_id_number')
                     ->label(__('Student ID'))
                     ->searchable()
@@ -253,16 +261,16 @@ class StudentResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
-                        'active' => 'Active',
-                        'inactive' => 'Inactive',
-                        'suspended' => 'Suspended',
-                        'graduated' => 'Graduated',
+                        'active' => __('Active'),
+                        'inactive' => __('Inactive'),
+                        'suspended' => __('Suspended'),
+                        'graduated' => __('Graduated'),
                     ]),
                 Tables\Filters\SelectFilter::make('gender')
                     ->options([
-                        'male' => 'Male',
-                        'female' => 'Female',
-                        'other' => 'Other',
+                        'male' => __('Male'),
+                        'female' => __('Female'),
+                        'other' => __('Other'),
                     ]),
                 Tables\Filters\SelectFilter::make('course_id')
                     ->label(__('Form / Grade'))
@@ -271,8 +279,8 @@ class StudentResource extends Resource
                         ->when($data['value'], fn (Builder $q, $courseId) => $q->whereHas('currentEnrollment', fn ($enq) => $enq->where('course_id', $courseId)))),
                 Tables\Filters\SelectFilter::make('boarding_status')
                     ->options([
-                        'day_scholar' => 'Day Scholar',
-                        'boarder' => 'Boarder',
+                        'day_scholar' => __('Day Scholar'),
+                        'boarder' => __('Boarder'),
                     ]),
             ])
             ->actions([

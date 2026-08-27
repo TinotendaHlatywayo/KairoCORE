@@ -33,6 +33,7 @@ class LibraryBook extends Model
         'file_path',
         'cover_image_path',
         'description',
+        'abstract_description',
         'metadata',
     ];
 

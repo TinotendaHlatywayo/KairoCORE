@@ -21,7 +21,7 @@
         @endif
 
         <p style="margin-top:24px;font-size:13px;color:#64748b;">
-            {{ __('Please review this application in the SchoolCore admissions dashboard to progress it to the next stage.') }}
+            {{ __('Please review this application in the Kairo CORE admissions dashboard to progress it to the next stage.') }}
         </p>
     </div>
 </body>

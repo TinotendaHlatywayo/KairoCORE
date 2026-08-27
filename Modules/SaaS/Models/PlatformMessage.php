@@ -75,10 +75,17 @@ class PlatformMessage extends Model
 
     /**
      * All messages in the same conversation thread, oldest first.
+     *
+     * MUST bypass the tenant global scope: platform-sent messages carry
+     * school_id = NULL, so the scope would hide the platform's side of the
+     * conversation from tenants (they could never read replies). This is
+     * safe — threads are only reachable via inbox records already scoped to
+     * the viewer's own conversations by the resource queries.
      */
     public function threadMessages(): HasMany
     {
         return $this->hasMany(PlatformMessage::class, 'thread_id', 'thread_id')
+            ->withoutGlobalScopes()
             ->orderBy('created_at');
     }
 
@@ -89,7 +96,7 @@ class PlatformMessage extends Model
 
     public function getSenderLabelAttribute(): string
     {
-        return $this->isFromPlatform() ? 'SchoolCore Platform' : ($this->school?->name ?? 'Tenant');
+        return $this->isFromPlatform() ? platform_name() : ($this->school?->name ?? 'Tenant');
     }
 
     public function getTargetLabelAttribute(): string

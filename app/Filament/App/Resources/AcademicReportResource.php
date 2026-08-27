@@ -25,6 +25,12 @@ class AcademicReportResource extends Resource
 {
     use ModulePermissionAccess;
 
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        // Class column renders section→course; eager load to avoid N+1.
+        return parent::getEloquentQuery()->with(['section.course']);
+    }
+
     public static function getNavigationGroup(): ?string
     {
         return __('Exams & Grading');
@@ -48,19 +54,19 @@ class AcademicReportResource extends Resource
     public static function form(Form $form): Form
     {
         $ratingOptions = [
-            'outstanding' => 'Outstanding (10.0)',
-            'excellent' => 'Excellent (8.5)',
-            'very_good' => 'Very Good (7.0)',
-            'good' => 'Good (5.5)',
-            'satisfactory' => 'Satisfactory (4.0)',
-            'needs_improvement' => 'Needs Improvement (2.0)',
+            'outstanding' => __('Outstanding (10.0)'),
+            'excellent' => __('Excellent (8.5)'),
+            'very_good' => __('Very Good (7.0)'),
+            'good' => __('Good (5.5)'),
+            'satisfactory' => __('Satisfactory (4.0)'),
+            'needs_improvement' => __('Needs Improvement (2.0)'),
         ];
 
         return $form
             ->schema([
                 Forms\Components\Grid::make(3)
                     ->schema([
-                        Forms\Components\Section::make('Class & Student Selection')
+                        Forms\Components\Section::make(__('Class & Student Selection'))
                             ->description(__('Select the class stream first to load enrolled students.'))
                             ->schema([
                                 Forms\Components\Select::make('section_id')
@@ -125,7 +131,7 @@ class AcademicReportResource extends Resource
 
                                 Forms\Components\Textarea::make('unhu_competencies.outstanding_achievements') // FIX: Save inside casted JSON field
                                     ->label(__('Outstanding Achievements'))
-                                    ->placeholder("★ First Place in National Mathematics Olympiad (Senior Category)\n★ Captain of the School Debating Society")
+                                    ->placeholder(__("★ First Place in National Mathematics Olympiad (Senior Category)\n★ Captain of the School Debating Society"))
                                     ->rows(3)
                                     ->helperText(__('Enter outstanding student accomplishments, separated by new lines.')),
 
@@ -135,10 +141,10 @@ class AcademicReportResource extends Resource
                                     ->rows(3),
                             ])->columnSpan(1),
 
-                        Forms\Components\Section::make('Heritage-Based Curriculum (HBC) Competencies')
-                            ->description('Assess the student\'s values and practical competencies.')
+                        Forms\Components\Section::make(__('Heritage-Based Curriculum (HBC) Competencies'))
+                            ->description(__('Assess the student\'s values and practical competencies.'))
                             ->schema([
-                                Forms\Components\Fieldset::make('Top 10 Core Competencies')
+                                Forms\Components\Fieldset::make(__('Top 10 Core Competencies'))
                                     ->schema([
                                         Forms\Components\Select::make('unhu_competencies.respect')->label('1. '.AcademicReport::$competencyLabels['respect'])->options($ratingOptions)->placeholder(__('Skip / Not Graded')),
                                         Forms\Components\Select::make('unhu_competencies.honesty')->label('2. '.AcademicReport::$competencyLabels['honesty'])->options($ratingOptions)->placeholder(__('Skip / Not Graded')),
@@ -152,7 +158,7 @@ class AcademicReportResource extends Resource
                                         Forms\Components\Select::make('unhu_competencies.environment')->label('10. '.AcademicReport::$competencyLabels['environment'])->options($ratingOptions)->placeholder(__('Skip / Not Graded')),
                                     ])->columns(2),
 
-                                Forms\Components\Section::make('Additional 10 Competencies')
+                                Forms\Components\Section::make(__('Additional 10 Competencies'))
                                     ->description(__('Expand to grade optional competencies.'))
                                     ->collapsed()
                                     ->schema([
@@ -230,7 +236,7 @@ class AcademicReportResource extends Resource
 
                 Tables\Columns\TextColumn::make('teacher.name')
                     ->label(__('Teacher'))
-                    ->default('System Admin'),
+                    ->default(__('System Admin')),
             ])
             ->filters([
                 Tables\Filters\Filter::make('scope')
@@ -340,7 +346,7 @@ class AcademicReportResource extends Resource
                     ->icon('heroicon-o-sparkles')
                     ->color('primary')
                     ->form([
-                        Forms\Components\Section::make('Report Generation')
+                        Forms\Components\Section::make(__('Report Generation'))
                             ->description(__('Reports are generated from the active report template. Only one template may be active at a time.'))
                             ->schema([
                                 Forms\Components\Select::make('scope_type')
@@ -408,7 +414,7 @@ class AcademicReportResource extends Resource
                         if (! $template) {
                             Notification::make()
                                 ->title(__('No active report template'))
-                                ->body('Mark exactly one report template as active before generating reports.')
+                                ->body(__('Mark exactly one report template as active before generating reports.'))
                                 ->danger()
                                 ->send();
 
@@ -420,7 +426,7 @@ class AcademicReportResource extends Resource
                         if ($students->isEmpty()) {
                             Notification::make()
                                 ->title(__('No matching students'))
-                                ->body('No students matched the selected scope criteria.')
+                                ->body(__('No students matched the selected scope criteria.'))
                                 ->warning()
                                 ->send();
 
@@ -464,7 +470,7 @@ class AcademicReportResource extends Resource
 
                         Notification::make()
                             ->title(__('Report generation complete'))
-                            ->body("Generated {$created} report card(s) using '{$template->name}'. {$skipped} skipped (already exists or missing class).")
+                            ->body(__('Generated')." {$created} ".__('report card(s) using')." '{$template->name}'. {$skipped} ".__('skipped (already exists or missing class).'))
                             ->success()
                             ->send();
                     }),
@@ -477,8 +483,8 @@ class AcademicReportResource extends Resource
                         Forms\Components\Select::make('print_mode')
                             ->label(__('Select Output Type'))
                             ->options([
-                                'combined' => 'Single Combined PDF (Best for printing)',
-                                'zip' => 'ZIP Archive (Individual PDF files)',
+                                'combined' => __('Single Combined PDF (Best for printing)'),
+                                'zip' => __('ZIP Archive (Individual PDF files)'),
                             ])
                             ->default('combined')
                             ->required(),

@@ -12,7 +12,7 @@
                 {{ __('🔒') }}
             </div>
             <h1 class="text-xl font-extrabold tracking-tight">Paynow Secure Checkout (Sandbox)</h1>
-            <p class="text-xs text-slate-400">{{ __('Simulating payment gateway processing for SchoolCore SaaS licensing.') }}</p>
+            <p class="text-xs text-slate-400">{{ __('Simulating payment gateway processing for Kairo CORE SaaS licensing.') }}</p>
         </div>
 
         <div class="bg-slate-900/50 rounded-xl p-4 space-y-3 text-xs border border-slate-700/50">

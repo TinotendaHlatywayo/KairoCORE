@@ -43,7 +43,7 @@ class StockAdjustmentResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Stocktake Details')
+                Forms\Components\Section::make(__('Stocktake Details'))
                     ->schema([
                         Forms\Components\TextInput::make('adjustment_number')
                             ->required()
@@ -59,7 +59,7 @@ class StockAdjustmentResource extends Resource
                             ->required(),
                     ])->columns(3),
 
-                Forms\Components\Section::make('Adjustment Ledger Sheets')
+                Forms\Components\Section::make(__('Adjustment Ledger Sheets'))
                     ->schema([
                         Forms\Components\Repeater::make('items')
                             ->relationship('items')
@@ -126,6 +126,7 @@ class StockAdjustmentResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Action::make('Commit Audit')
+                    ->label(__('Commit Audit'))
                     ->icon('heroicon-o-shield-check')
                     ->color('success')
                     ->requiresConfirmation()
@@ -160,7 +161,7 @@ class StockAdjustmentResource extends Resource
 
                         Notification::make()
                             ->title(__('Stock Audit Committed'))
-                            ->body('All variances resolved and inventory counts synchronized.')
+                            ->body(__('All variances resolved and inventory counts synchronized.'))
                             ->success()
                             ->send();
                     }),

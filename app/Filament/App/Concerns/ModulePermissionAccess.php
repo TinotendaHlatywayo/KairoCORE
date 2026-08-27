@@ -153,6 +153,10 @@ trait ModulePermissionAccess
         // ---- LMS ----
         HomeworkResource::class => ['lms', 'lms.manage_content'],
 
+        // ---- Digital Assessment ----
+        \App\Filament\App\Resources\DigitalAssessmentResource::class => ['digital_assessment', 'digital_assessment.create_assessments'],
+        \App\Filament\App\Resources\QuestionBankResource::class => ['digital_assessment', 'digital_assessment.manage_questions'],
+
         // ---- Reports ----
         EnterpriseReportTemplateResource::class => ['reports', 'reports.manage_templates'],
         GeneratedReportResource::class => ['reports', 'reports.view_module'],

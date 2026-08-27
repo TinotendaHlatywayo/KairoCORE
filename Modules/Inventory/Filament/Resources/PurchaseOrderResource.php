@@ -42,7 +42,7 @@ class PurchaseOrderResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('LPO Details')
+                Forms\Components\Section::make(__('LPO Details'))
                     ->schema([
                         Forms\Components\TextInput::make('order_number')
                             ->required()
@@ -59,7 +59,7 @@ class PurchaseOrderResource extends Resource
                         Forms\Components\DatePicker::make('expected_delivery_date'),
                     ])->columns(4),
 
-                Forms\Components\Section::make('Ordered Items')
+                Forms\Components\Section::make(__('Ordered Items'))
                     ->schema([
                         Forms\Components\Repeater::make('items')
                             ->relationship('items')
