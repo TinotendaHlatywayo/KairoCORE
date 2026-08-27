@@ -1,0 +1,18 @@
+# Redirect all requests into the Laravel public/ directory.
+# Required because InfinityFree's document root is htdocs/ (project root).
+# Without this, .env and other sensitive files are publicly accessible.
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# Block sensitive files at the root level
+<FilesMatch "^\.env">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+<FilesMatch "^composer\.(json|lock)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
