@@ -1,4 +1,4 @@
-# SchoolCORE
+# Kairo CORE
 
 School Central Operation and Resource Environment — a fullstack School Operating
 System built with Laravel.
