@@ -13,10 +13,11 @@ system on Microsoft Azure **for free** using the **Azure for Students** offer.
 - Renews **annually while you're a student** (your GitHub Education is verified
   until **Aug 2028**)
 
-> ⚠️ **Free-tier VM sizes are being retired/unavailable in some regions.**
-> In **South Africa North**, the available free-tier sizes are **`B1s`** and
-> **`B2ats_v2`** (Azure confirms these are "not charged for up to 750 hours").
-> `B2pts_v2` / `B1ms` etc. may be unavailable — use `B2ats_v2` if offered, else `B1s`.
+> ⚠️ **The 1GB free-tier VM is too small for Filament.** Use `B2als_v2` (2 vCPU /
+> **4GB RAM**) instead — it costs ~$10/mo out of your **$100 credit** (~9+ months free).
+> ⚠️ **Public IP must use the STANDARD SKU.** Student subscriptions have a `0`
+> limit on **Basic** SKU public IPs (error `IPv4BasicSkuPublicIpCountLimitReached`).
+> Always pick **Standard**.
 
 ---
 
@@ -65,8 +66,8 @@ bash deploy/rotate-gh-token.sh ghp_YOUR_NEW_TOKEN_HERE
    - **Virtual machine name**: `kairocore-vm`
    - **Region**: Pick one near you (e.g. South Africa North if you're in ZA, else East US / West Europe)
    - **Image**: **Ubuntu Server 24.04 LTS x64 - Gen2** (if unavailable in your region,
-     **22.04 LTS** works identically with the setup script — it installs PHP 8.3 via a PPA)
-   - **Size**: Choose a **free burstable tier**. Use the **"See all sizes"** link and type `B` to filter. Preferred: `Standard_B2ats_v2` (available in South Africa North). Fallback: `Standard_B1s`.
+     **22.04 or 20.04 LTS** works identically with the setup script — it installs PHP 8.3 via a PPA)
+   - **Size**: **`Standard_B2als_v2`** (2 vCPU / **4GB** RAM) — the comfortable choice for Filament.
    - **Authentication type**: *SSH public key* (recommended) or *Password* — write it down if password.
    - **Inbound ports**: select **SSH (22)**, **HTTP (80)**, **HTTPS (443)**.
 3. **Networking tab**: leave defaults (Azure creates the NSG with your inbound ports).
@@ -126,7 +127,7 @@ curl -sL https://raw.githubusercontent.com/TinotendaHlatywayo/KairoCORE/main/dep
 ```
 
    The script automatically:
-   - Adds a **4GB swap file** (essential for the small free-tier VM)
+   - Adds a **2GB swap file** (safety margin on the 4GB VM)
    - Installs **PHP 8.3**, **MariaDB** (light), **Nginx**, **Composer**, **Node.js**
    - Tunes MariaDB & PHP-FPM for low memory
    - Creates the database + secure random password
@@ -162,9 +163,8 @@ certbot --nginx -d kairocore.me -d *.kairocore.me
 ## Money-saving tips (so $100 lasts)
 
 - Leave **Auto-shutdown** on — the VM only runs during school hours.
-- The `B-series` free hours (750/mo) easily cover one always-on 1GB VM or
-  a few hours/day on a bigger one.
-- Choose the **smallest size** that runs Filament acceptably (start with `B1ms`).
+- The `B2als_v2` at ~$10/mo + Standard SSD disk (~$1-2/mo) ≈ **$11-13/mo**, so the
+  **$100 credit lasts ~8-9 months** (renews each year while a student).
 - Monitor usage: Azure Portal → **Cost management**.
 
 ---
@@ -172,7 +172,8 @@ certbot --nginx -d kairocore.me -d *.kairocore.me
 ## Cost summary
 
 - **Phase 0–6**: covered by the free tier + $100 credit → **$0 out of pocket**.
-- **Monthly recurring**: $0 while within the 750 free hours (one free B-series VM).
+- **Monthly recurring**: ~$11-13/mo for `B2als_v2` (4GB) + Standard SSD disk
+  since the 1GB free tier is too small for Filament.
 - **Renewal**: the Azure for Students offer renews each year while you're a student.
 
 ---
@@ -182,8 +183,8 @@ certbot --nginx -d kairocore.me -d *.kairocore.me
 | Problem | Fix |
 |---|---|
 | `git clone` fails/first load slow | Ensure DNS `@` **and** `*` both point to VM IP, then wait 10–30 min |
-| VM size "not available" | Choose a free size available in your region (`B2ats_v2` first, else `B1s`) or change the Region |
-| Site slow on 1GB RAM | Confirm the **4GB swap** was added (script step 2) and PHP-FPM set to `ondemand` |
+| Public IP error `IPv4BasicSkuPublicIpCountLimitReached` | Recreate using a **Standard** SKU public IP (Basic is blocked on student subs) |
+| Site slow / memory thrash | Confirm the **2GB swap** was added (script step 2) and PHP-FPM set to `ondemand` |
 | 502 Bad Gateway | `sudo systemctl restart php8.3-fpm && sudo systemctl reload nginx` |
 | Can't reach site at all | Verify ports 80/443 open in the VM's NSG; check `curl -I http://localhost` on the VM |
 
