@@ -14,9 +14,9 @@ system on Microsoft Azure **for free** using the **Azure for Students** offer.
   until **Aug 2028**)
 
 > ⚠️ **Free-tier VM sizes are being retired/unavailable in some regions.**
-> Don't fight it if `B1s` is missing — the reliable free options are:
-> `B1ms`, `B1s_v2`, `B2pts_v2`, `B2ats_v2`. Try them until one is available
-> in your region.
+> In **South Africa North**, the available free-tier sizes are **`B1s`** and
+> **`B2ats_v2`** (Azure confirms these are "not charged for up to 750 hours").
+> `B2pts_v2` / `B1ms` etc. may be unavailable — use `B2ats_v2` if offered, else `B1s`.
 
 ---
 
@@ -64,8 +64,9 @@ bash deploy/rotate-gh-token.sh ghp_YOUR_NEW_TOKEN_HERE
    - **Resource group**: Create new → `kairocore-rg`
    - **Virtual machine name**: `kairocore-vm`
    - **Region**: Pick one near you (e.g. South Africa North if you're in ZA, else East US / West Europe)
-   - **Image**: **Ubuntu Server 24.04 LTS x64 - Gen2**
-   - **Size**: Choose a **free burstable tier**. Use the **"See all sizes"** link and type `B1` to filter. Try: `Standard_B1ms` → `Standard_B2pts_v2` → `Standard_B2ats_v2`.
+   - **Image**: **Ubuntu Server 24.04 LTS x64 - Gen2** (if unavailable in your region,
+     **22.04 LTS** works identically with the setup script — it installs PHP 8.3 via a PPA)
+   - **Size**: Choose a **free burstable tier**. Use the **"See all sizes"** link and type `B` to filter. Preferred: `Standard_B2ats_v2` (available in South Africa North). Fallback: `Standard_B1s`.
    - **Authentication type**: *SSH public key* (recommended) or *Password* — write it down if password.
    - **Inbound ports**: select **SSH (22)**, **HTTP (80)**, **HTTPS (443)**.
 3. **Networking tab**: leave defaults (Azure creates the NSG with your inbound ports).
@@ -181,7 +182,7 @@ certbot --nginx -d kairocore.me -d *.kairocore.me
 | Problem | Fix |
 |---|---|
 | `git clone` fails/first load slow | Ensure DNS `@` **and** `*` both point to VM IP, then wait 10–30 min |
-| VM size "not available" | Change **Region** or try another B-series size (`B1ms` → `B2pts_v2` → `B2ats_v2`) |
+| VM size "not available" | Choose a free size available in your region (`B2ats_v2` first, else `B1s`) or change the Region |
 | Site slow on 1GB RAM | Confirm the **4GB swap** was added (script step 2) and PHP-FPM set to `ondemand` |
 | 502 Bad Gateway | `sudo systemctl restart php8.3-fpm && sudo systemctl reload nginx` |
 | Can't reach site at all | Verify ports 80/443 open in the VM's NSG; check `curl -I http://localhost` on the VM |
