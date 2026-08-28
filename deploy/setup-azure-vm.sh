@@ -7,14 +7,17 @@
 #   bash deploy/setup-azure-vm.sh kairocore.me
 #
 # Prerequisites:
-#   1. Azure VM: Ubuntu 22.04 or 24.04 LTS (x64), Standard SSD disk, public IP
-#      (free B-series: B1s / B2ats_v2 — smaller B tiers may be region-restricted)
+#   1. Azure VM: Ubuntu 20.04/22.04/24.04 LTS (x64), Standard SSD disk, public IP
+#      Recommended: Standard_B2als_v2 (2 vCPU / 4GB RAM) — NOT the 1GB free tier
+#   2. Public IP must use the STANDARD SKU (Basic SKU is blocked on student subs)
+#
+# Tuned for a 4GB VM: 2GB swap, MariaDB + PHP-FPM sized for 4GB RAM.
 #   2. DNS: A record + wildcard *.domain pointed to the VM public IP
 #   3. Ports 22 (SSH), 80 (HTTP), 443 (HTTPS) open in the VM's NSG
 #   4. SSH access configured (username from the VM creation, e.g. azureuser)
 #
 # This script is tuned for low-memory free-tier VMs:
-#   - Adds a 4GB swap file (essential for Filament on 1-2GB RAM)
+#   - Adds a 2GB swap file (safety margin)
 #   - Uses MariaDB (lighter than MySQL 8)
 #   - Tunes MariaDB + PHP-FPM for low memory
 #   - Queues run in-process (QUEUE_CONNECTION=sync) to avoid a worker process
@@ -40,10 +43,10 @@ apt-get update -y
 apt-get upgrade -y
 apt-get install -y software-properties-common curl git unzip
 
-# ── 2. Add a swap file (small VMs need it) ─────────────────────────────
-echo "[2/13] Adding 4GB swap file (for low-memory free-tier VM)..."
+# ── 2. Add a swap file (safety margin on the 4GB VM) ───────────────────────
+echo "[2/13] Adding 2GB swap file (safety margin)..."
 if [ ! -f /swapfile ]; then
-    fallocate -l 4G /swapfile
+    fallocate -l 2G /swapfile
     chmod 600 /swapfile
     mkswap /swapfile
     swapon /swapfile
@@ -77,14 +80,14 @@ apt-get install -y mariadb-server
 systemctl enable mariadb
 systemctl start mariadb
 
-# Tune MariaDB for low memory (shrinks buffer pool from default)
-cat > /etc/mysql/mariadb.conf.d/99-kairocore-lowmem.cnf << 'MARIADB'
+# Tune MariaDB for the 4GB B2als_v2 VM
+cat > /etc/mysql/mariadb.conf.d/99-kairocore.cnf << 'MARIADB'
 [mysqld]
-innodb_buffer_pool_size = 128M
-innodb_log_buffer_size = 4M
+innodb_buffer_pool_size = 384M
+innodb_log_buffer_size = 8M
 innodb_flush_log_at_trx_commit = 2
-max_connections = 40
-key_buffer_size = 16M
+max_connections = 80
+key_buffer_size = 32M
 query_cache_type = 0
 MARIADB
 systemctl restart mariadb
@@ -208,13 +211,13 @@ php artisan permission:cache-reset 2>/dev/null || true
 chown -R www-data:www-data ${APP_DIR}/storage ${APP_DIR}/bootstrap/cache
 chmod -R 775 ${APP_DIR}/storage ${APP_DIR}/bootstrap/cache
 
-# ── 12. Configure Nginx + PHP-FPM for low memory ─────────────────────
+# ── 12. Configure Nginx + PHP-FPM for the 4GB VM ─────────────────────
 echo "[12/13] Configuring Nginx & PHP-FPM..."
 
-# PHP-FPM low-memory tuning (prevent OOM on small VMs)
+# PHP-FPM: ondemand (spawn children only when needed) is efficient on 4GB
 sed -i 's/^pm = .*/pm = ondemand/' /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf
-sed -i 's/^pm.max_children = .*/pm.max_children = 8/' /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf
-sed -i 's/^;pm.max_requests = .*/pm.max_requests = 100/' /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf
+sed -i 's/^pm.max_children = .*/pm.max_children = 20/' /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf
+sed -i 's/^;pm.max_requests = .*/pm.max_requests = 200/' /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf
 systemctl restart php${PHP_VERSION}-fpm
 
 cat > /etc/nginx/sites-available/kairocore << NGINX
