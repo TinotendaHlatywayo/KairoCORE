@@ -34,6 +34,15 @@ if [ -z "$NEW_TOKEN" ]; then
     echo "  bash deploy/rotate-gh-token.sh ghp_XXXXXXXXXXXXXXXXXXXXXXXXXXXX"
     echo ""
     echo "Generate it at: https://github.com/settings/tokens"
+    echo "  -> Generate new token -> (classic) -> tick the 'repo' scope"
+    echo "     (it must start with 'ghp_' — NOT 'github_pat_')"
+    exit 1
+fi
+
+if [[ "$NEW_TOKEN" != ghp_* ]]; then
+    echo "ERROR: This is not a classic token (expected 'ghp_...')."
+    echo "  A fine-grained token ('github_pat_...') often lacks write access."
+    echo "  Generate a CLASSIC token with the 'repo' scope and try again."
     exit 1
 fi
 
