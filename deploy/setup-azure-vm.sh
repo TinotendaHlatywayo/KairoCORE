@@ -7,8 +7,8 @@
 #   bash deploy/setup-azure-vm.sh kairocore.me
 #
 # Prerequisites:
-#   1. Azure VM: Ubuntu 24.04 LTS (x64), Standard SSD disk, public IP
-#      (free B-series: B1ms / B2pts_v2 / B2ats_v2 / B1s_v2)
+#   1. Azure VM: Ubuntu 22.04 or 24.04 LTS (x64), Standard SSD disk, public IP
+#      (free B-series: B1s / B2ats_v2 — smaller B tiers may be region-restricted)
 #   2. DNS: A record + wildcard *.domain pointed to the VM public IP
 #   3. Ports 22 (SSH), 80 (HTTP), 443 (HTTPS) open in the VM's NSG
 #   4. SSH access configured (username from the VM creation, e.g. azureuser)
