@@ -286,17 +286,20 @@
     </div>
 
     @if($currentStep === $totalSteps)
-        {{-- Visible feedback while the server provisions the school. --}}
-        <div wire:loading wire:target="submit"
-             class="alert alert-info border-0 d-flex align-items-center gap-3 mt-3 mb-0 py-3" role="status">
-            <div class="spinner-border text-info flex-shrink-0" style="width: 2rem; height: 2rem;">
-                <span class="visually-hidden">{{ __('Loading...') }}</span>
+        {{-- Visible feedback only after the applicant actually clicks Submit. Driven
+             by the server-side $submitting flag so it never appears during step
+             navigation (a false trigger of wire:loading on nextStep). --}}
+        @if($submitting)
+            <div class="alert alert-info border-0 d-flex align-items-center gap-3 mt-3 mb-0 py-3" role="status">
+                <div class="spinner-border text-info flex-shrink-0" style="width: 2rem; height: 2rem;">
+                    <span class="visually-hidden">{{ __('Loading...') }}</span>
+                </div>
+                <div>
+                    <strong class="d-block">{{ __('Submitting your application…') }}</strong>
+                    <span class="small text-secondary">{{ __('This will only take a moment. Your school workspace is prepared in the background and will be available once an administrator approves your application.') }}</span>
+                </div>
             </div>
-            <div>
-                <strong class="d-block">{{ __('Submitting your application…') }}</strong>
-                <span class="small text-secondary">{{ __('This will only take a moment. Your school workspace is prepared in the background and will be available once an administrator approves your application.') }}</span>
-            </div>
-        </div>
+        @endif
 
         {{-- Standard "I agree" checkbox — required before the application can be submitted. --}}
         <div class="form-check mt-3 pt-1">
