@@ -6,7 +6,6 @@ use App\Filament\App\Pages\Academic\AcademicOperationsCenter;
 use App\Filament\App\Pages\AdministrationDashboard;
 use App\Filament\App\Pages\AdmissionSettingsPage;
 use App\Filament\App\Pages\AnalyticsExplorer;
-use App\Filament\App\Pages\AssessmentWorkspace;
 use App\Filament\App\Pages\CommunicationCenter;
 use App\Filament\App\Pages\EmailConfigurationPage;
 use App\Filament\App\Pages\ExecutiveFinancialDashboard;
@@ -26,8 +25,6 @@ use App\Filament\App\Resources\AcademicYearResource;
 use App\Filament\App\Resources\AccountResource;
 use App\Filament\App\Resources\AnnouncementResource;
 use App\Filament\App\Resources\ApplicationResource;
-use App\Filament\App\Resources\AssessmentMarkResource;
-use App\Filament\App\Resources\AssessmentTypeResource;
 use App\Filament\App\Resources\CampusResourceResource;
 use App\Filament\App\Resources\CardTemplateResource;
 use App\Filament\App\Resources\ChatThreadResource;
@@ -38,6 +35,7 @@ use App\Filament\App\Resources\CmsWebsiteResource;
 use App\Filament\App\Resources\CourseResource;
 use App\Filament\App\Resources\CustomRoleResource;
 use App\Filament\App\Resources\DepartmentResource;
+use App\Filament\App\Resources\DigitalAssessmentResource;
 use App\Filament\App\Resources\DisciplinaryCaseResource;
 use App\Filament\App\Resources\EmployeeAssetResource;
 use App\Filament\App\Resources\EmployeeResource;
@@ -52,7 +50,6 @@ use App\Filament\App\Resources\FeeStructureResource;
 use App\Filament\App\Resources\FeeWaiverResource;
 use App\Filament\App\Resources\FixedAssetResource;
 use App\Filament\App\Resources\GeneratedReportResource;
-use App\Filament\App\Resources\GradingScaleResource;
 use App\Filament\App\Resources\HelpdeskTicketResource;
 use App\Filament\App\Resources\HomeworkResource;
 use App\Filament\App\Resources\HostelAllocationResource;
@@ -68,7 +65,6 @@ use App\Filament\App\Resources\PayrollPeriodResource;
 use App\Filament\App\Resources\PlatformInboxResource;
 use App\Filament\App\Resources\PollResource;
 use App\Filament\App\Resources\PromotionWorkflowResource;
-use App\Filament\App\Resources\ReportTemplateResource;
 use App\Filament\App\Resources\RevenueCategoryResource;
 use App\Filament\App\Resources\RevenueStreamResource;
 use App\Filament\App\Resources\SaaSMySubscriptionResource;
@@ -85,8 +81,6 @@ use App\Filament\App\Resources\TeacherAssignmentResource;
 use App\Filament\App\Resources\TimeSlotResource;
 use App\Filament\App\Resources\TimetableLessonResource;
 use App\Filament\App\Resources\UserAccountResource;
-use App\Filament\App\Resources\DigitalAssessmentResource;
-use App\Filament\App\Resources\QuestionBankResource;
 use Modules\Inventory\Filament\Resources\AssetMaintenanceResource;
 use Modules\Inventory\Filament\Resources\GoodsReceivedResource;
 use Modules\Inventory\Filament\Resources\InventoryIssuanceResource;
@@ -168,13 +162,10 @@ class ModuleNavigation
                 'slug' => 'exams',
                 'label' => __('Exams & Grading'),
                 'icon' => 'heroicon-o-pencil-square',
-                'description' => __('Assessments, grading scales, marks and report cards.'),
+                'description' => __('Digital assessments and academic reports.'),
                 'tabs' => [
-                    ['label' => __('Assessment Workspace'), 'page' => AssessmentWorkspace::class],
-                    ['label' => __('Marks Entry'), 'resource' => AssessmentMarkResource::class],
-                    ['label' => __('Report Cards'), 'resource' => AcademicReportResource::class],
                     ['label' => __('Digital Assessments'), 'resource' => DigitalAssessmentResource::class],
-                    ['label' => __('Report Templates'), 'resource' => ReportTemplateResource::class],
+                    ['label' => __('Report Cards'), 'resource' => AcademicReportResource::class],
                 ],
                 'more' => [],
             ],
