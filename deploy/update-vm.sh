@@ -24,6 +24,13 @@ if [[ ! -d "$APP_DIR/.git" ]]; then
     exit 1
 fi
 
+echo "==> 0/10 Setting app ownership + git safe.directory for $PHP_USER"
+# Nginx/PHP-FPM run as $PHP_USER and must own the whole app to run composer/artisan.
+# Running this every deploy is idempotent and fixes storage/vendor ownership drift.
+sudo chown -R "$PHP_USER":"$PHP_USER" "$APP_DIR"
+sudo -u "$PHP_USER" git config --global --add safe.directory "$APP_DIR"
+sudo -u "$PHP_USER" git config --global --add safe.directory "*"
+
 cd "$APP_DIR"
 
 # Optional maintenance window for deploys that touch a busy live system.
@@ -46,42 +53,42 @@ restore() {
 }
 trap restore EXIT
 
-echo "==> 1/9 Fetching + checking out latest ${REMOTE_BRANCH}"
+echo "==> 1/10 Fetching + checking out latest ${REMOTE_BRANCH}"
 # Safer than `reset --hard`: leaves ignored/storage files alone and aborts if there
 # are unexpected local edits to tracked files (so we never silently wipe live changes).
-sudo git fetch origin
-sudo git checkout --force "origin/${REMOTE_BRANCH}"
+sudo -u "$PHP_USER" git fetch origin
+sudo -u "$PHP_USER" git checkout --force "origin/${REMOTE_BRANCH}"
 
-echo "==> 2/9 Installing composer dependencies (no-dev)"
-sudo -u "$PHP_USER" composer install --no-dev --optimize-autoloader --no-scripts --no-interaction
+echo "==> 2/10 Installing composer dependencies (no-dev)"
+sudo -u "$PHP_USER" HOME=/var/www COMPOSER_HOME=/var/www/.composer composer install --no-dev --optimize-autoloader --no-scripts --no-interaction
 
-echo "==> 3/9 Building frontend assets (Vite)"
-sudo -u "$PHP_USER" npx vite build 2>/dev/null || sudo -u "$PHP_USER" npm run build
+echo "==> 3/10 Building frontend assets (Vite)"
+sudo -u "$PHP_USER" HOME=/var/www npx vite build 2>/dev/null || sudo -u "$PHP_USER" HOME=/var/www npm run build
 
-echo "==> 4/9 Package discovery + Filament asset publish"
-sudo -u "$PHP_USER" php artisan package:discover --ansi
-sudo -u "$PHP_USER" php artisan filament:assets --ansi || true
-sudo -u "$PHP_USER" composer dump-autoload --no-dev --optimize
+echo "==> 4/10 Package discovery + Filament asset publish"
+sudo -u "$PHP_USER" HOME=/var/www php artisan package:discover --ansi
+sudo -u "$PHP_USER" HOME=/var/www php artisan filament:assets --ansi || true
+sudo -u "$PHP_USER" HOME=/var/www composer dump-autoload --no-dev --optimize
 
-echo "==> 5/9 Clearing stale caches"
-sudo -u "$PHP_USER" php artisan config:clear
-sudo -u "$PHP_USER" php artisan route:clear
-sudo -u "$PHP_USER" php artisan view:clear
-sudo -u "$PHP_USER" php artisan event:clear
+echo "==> 5/10 Clearing stale caches"
+sudo -u "$PHP_USER" HOME=/var/www php artisan config:clear
+sudo -u "$PHP_USER" HOME=/var/www php artisan route:clear
+sudo -u "$PHP_USER" HOME=/var/www php artisan view:clear
+sudo -u "$PHP_USER" HOME=/var/www php artisan event:clear
 
-echo "==> 6/9 Running migrations"
-sudo -u "$PHP_USER" php artisan migrate --force
+echo "==> 6/10 Running migrations"
+sudo -u "$PHP_USER" HOME=/var/www php artisan migrate --force
 
-echo "==> 7/9 Re-caching config/routes/views/events"
-sudo -u "$PHP_USER" php artisan config:cache
-sudo -u "$PHP_USER" php artisan route:cache
-sudo -u "$PHP_USER" php artisan view:cache
-sudo -u "$PHP_USER" php artisan event:cache
+echo "==> 7/10 Re-caching config/routes/views/events"
+sudo -u "$PHP_USER" HOME=/var/www php artisan config:cache
+sudo -u "$PHP_USER" HOME=/var/www php artisan route:cache
+sudo -u "$PHP_USER" HOME=/var/www php artisan view:cache
+sudo -u "$PHP_USER" HOME=/var/www php artisan event:cache
 
-echo "==> 8/9 Storage link (idempotent)"
-sudo -u "$PHP_USER" php artisan storage:link 2>/dev/null || true
+echo "==> 8/10 Storage link (idempotent)"
+sudo -u "$PHP_USER" HOME=/var/www php artisan storage:link 2>/dev/null || true
 
-echo "==> 9/9 Ensuring queue worker is running"
+echo "==> 9/10 Ensuring queue worker is running"
 sudo install -m 644 "$APP_DIR/deploy/queue-worker.service" /etc/systemd/system/kairocore-queue.service
 sudo systemctl daemon-reload
 sudo systemctl enable kairocore-queue.service 2>/dev/null || true
