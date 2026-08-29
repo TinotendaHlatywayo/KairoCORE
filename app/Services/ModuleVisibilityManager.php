@@ -52,7 +52,7 @@ class ModuleVisibilityManager
     public static function isModuleVisible(string $moduleSlug): bool
     {
         return match ($moduleSlug) {
-            'admissions' => self::isPageVisible('admissions', 'applications'),
+            'admissions' => true,
             'health' => self::isVisible('clinic'),
             default => self::isVisible($moduleSlug),
         };
@@ -67,6 +67,10 @@ class ModuleVisibilityManager
         $schoolId = self::schoolId();
         if (! $schoolId) {
             return true; // Default visible during super-admin platform context
+        }
+
+        if ($moduleKey === 'admissions') {
+            return true;
         }
 
         $raw = SystemSetting::get('modules', $moduleKey.'_'.$pageKey, '1');
