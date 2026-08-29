@@ -11,6 +11,7 @@ use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Tabs;
@@ -1032,13 +1033,13 @@ class SystemSettingsPage extends Page implements HasForms
                                     ->default('INV-{SEQ}'),
                             ])->columns(2),
 
-                         Tab::make(__('Legal & Terms'))
+                        Tab::make(__('Legal & Terms'))
                             ->icon('heroicon-o-document-text')
                             ->schema([
                                 Section::make(__('School Terms & Conditions'))
                                     ->description(__('Customize the Terms of Service and Conditions that users must review and agree to during registration to your school portal.'))
                                     ->schema([
-                                        \Filament\Forms\Components\RichEditor::make('legal_terms_content')
+                                        RichEditor::make('legal_terms_content')
                                             ->label(__('School Terms of Service Content'))
                                             ->default(default_school_terms())
                                             ->columnSpanFull()
@@ -1046,7 +1047,7 @@ class SystemSettingsPage extends Page implements HasForms
                                     ]),
                             ]),
 
-                         Tab::make(__('Email Configuration'))
+                        Tab::make(__('Email Configuration'))
                             ->icon('heroicon-o-envelope')
                             ->schema([
                                 Placeholder::make('email_config_intro')
@@ -1350,7 +1351,7 @@ class SystemSettingsPage extends Page implements HasForms
         if (! empty($state['branding_logo_path'])) {
             $logoUrl = asset('storage/'.$state['branding_logo_path']);
         }
-        $bgUrl = asset('images/School_repository_cover.jpeg');
+        $bgUrl = platform_logo_url();
         if (! empty($state['branding_bg_path'])) {
             $bgUrl = asset('storage/'.$state['branding_bg_path']);
         }

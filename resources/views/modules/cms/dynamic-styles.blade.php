@@ -11,8 +11,9 @@
     $bgOpacity = '0.08';
     $bgScaling = 'cover';
     
-    $bgUrl = asset('images/School_repository_cover.jpeg');
-    $logoUrl = asset('images/logo-transparent.png');
+    // Default background and logo fallback to the Super Admin Console Logo
+    $bgUrl = platform_logo_url();
+    $logoUrl = platform_logo_url();
 
     if ($schoolId) {
         $themeSetting = SystemSetting::get('branding', 'theme');
@@ -34,12 +35,18 @@
         $bgScaling = !empty($scalingSetting) ? $scalingSetting : 'cover';
 
         $customLogo = SystemSetting::get('branding', 'logo_path');
+        $school = \App\Models\School::find($schoolId);
         if (!empty($customLogo)) {
             $logoUrl = asset('storage/' . $customLogo);
+        } elseif ($school && !empty($school->logo_path)) {
+            $logoUrl = asset('storage/' . $school->logo_path);
         }
+
         $customBg = SystemSetting::get('branding', 'bg_path');
         if (!empty($customBg)) {
             $bgUrl = asset('storage/' . $customBg);
+        } elseif ($school && !empty($school->bg_path)) {
+            $bgUrl = asset('storage/' . $school->bg_path);
         }
     }
 
