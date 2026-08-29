@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SeedSchoolDemoDataJob;
 use App\Models\User;
 use App\Services\AccountActivationService;
-use App\Services\DummyDataSeeder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
@@ -96,10 +96,12 @@ class ActivationController extends Controller
                 app()->instance('current_tenant', $user->school);
                 app(AcademicPresetService::class)->applyPreset($user->school->region ?? 'zimbabwe');
 
-                // If the registration opted into sample data, seed the same
-                // demonstration dataset the main dashboard command produces.
-                if ($user->school->has_dummy_data) {
-                    app(DummyDataSeeder::class)->seed($user->school->id);
+                // Demo data is generated in the background after approval
+                // (SeedSchoolDemoDataJob), so activation stays fast. This async
+                // fallback guarantees the school still gets its data if it was
+                // approved before that job existed, without blocking sign-in.
+                if ($user->school->has_dummy_data && $user->school->seed_status !== 'seeded') {
+                    SeedSchoolDemoDataJob::dispatch($user->school->id);
                 }
             } catch (\Throwable $e) {
                 report($e);
