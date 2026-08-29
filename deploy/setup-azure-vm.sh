@@ -129,7 +129,9 @@ cd ${APP_DIR}
 
 # ── 9. Configure .env ────────────────────────────────────────────────
 echo "[9/13] Configuring .env..."
-APP_KEY=$(php artisan key:generate --show)
+# NOTE: vendor/ is not installed yet so artisan cannot run here; generate a
+# Laravel-compatible APP_KEY (base64:32-random-bytes) without relying on PHP.
+APP_KEY="base64:$(openssl rand -base64 32)"
 
 cat > .env << EOF
 APP_NAME="Kairo CORE"
