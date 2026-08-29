@@ -2,10 +2,9 @@
 
 namespace App\Livewire;
 
+use App\Jobs\ProcessSchoolRegistrationJob;
 use App\Models\School;
 use App\Models\User;
-use App\Services\DummyDataSeeder;
-use App\Services\SchoolRegistrationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -339,9 +338,13 @@ class RegistrationWizard extends Component
         ];
         $schoolLocale = $localeMap[strtolower($this->language)] ?? 'en';
 
-        // Everything below is atomic: if any step fails (settings, admin user,
-        // demo seeding) no orphaned school row is left behind blocking the
-        // subdomain on the next attempt.
+        // Everything below is atomic and intentionally FAST: we only persist the
+        // core pending-school row, its module settings and the pending admin user.
+        // The heavy work (optional demo-data seeding + super-admin notification)
+        // is pushed to a background queue so the applicant sees an immediate
+        // "request sent — awaiting approval" screen instead of a long spinner.
+        $hasDummyData = $this->hasDummyData;
+
         $school = DB::transaction(function () use ($schoolLocale) {
             $school = School::create([
                 'name' => $this->schoolName,
@@ -377,7 +380,7 @@ class RegistrationWizard extends Component
                 );
             }
 
-            $adminUser = User::create([
+            User::create([
                 'school_id' => $school->id,
                 'name' => $this->adminName,
                 'email' => mb_strtolower(trim($this->adminEmail)),
@@ -388,22 +391,11 @@ class RegistrationWizard extends Component
                 'account_status' => User::STATUS_PENDING,
             ]);
 
-            if ($this->hasDummyData) {
-                try {
-                    app(DummyDataSeeder::class)->seed($school->id);
-                } catch (\Throwable $e) {
-                    report($e);
-                }
-            }
-
-            try {
-                app(SchoolRegistrationService::class)->notifySuperAdmin($school, $adminUser);
-            } catch (\Throwable $e) {
-                report($e);
-            }
-
             return $school;
         });
+
+        // Background completion: demo-data seeding + super-admin notification.
+        ProcessSchoolRegistrationJob::dispatch($school->id, $hasDummyData);
 
         return redirect()->route('registration.success', ['school_name' => $this->schoolName]);
     }

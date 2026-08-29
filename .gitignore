@@ -57,6 +57,10 @@ memory.md
 # User-uploaded media (kept local)
 /storage/app/public/library
 
+# InfinityFree upload package (large, superseded — DO NOT commit)
+/uploads/
+/uploads (Copy)/
+
 # Local backup copies
 .env (Copy)
 *.afm.json
