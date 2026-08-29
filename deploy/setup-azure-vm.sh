@@ -37,6 +37,12 @@ echo " Domain: $DOMAIN"
 echo "============================================"
 echo ""
 
+# ── Non-interactive ────────────────────────────────────────────────────
+# Prevent apt/dpkg from prompting (e.g. "restart services?") which can
+# hang unattended runs. Keeping these non-interactive is safe here.
+export DEBIAN_FRONTEND=noninteractive
+export DEBCONF_NONINTERACTIVE_SEEN=true
+export NEEDRESTART_MODE=a
 # ── 1. System updates ─────────────────────────────────────────────────
 echo "[1/13] Updating system packages..."
 apt-get update -y
