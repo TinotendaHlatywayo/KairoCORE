@@ -26,9 +26,31 @@ fi
 
 cd "$APP_DIR"
 
-echo "==> 1/9 Resetting local changes + pulling ${REMOTE_BRANCH}"
+# Optional maintenance window for deploys that touch a busy live system.
+# Enable with: MAINTENANCE=1 sudo bash deploy/update-vm.sh
+# This puts the site into Laravel maintenance mode for the duration, so in-flight
+# users get a friendly 503 "back shortly" page instead of a half-deployed state.
+RESTORE_MAINTENANCE=0
+if [[ "${MAINTENANCE:-0}" == "1" ]]; then
+    echo "(MAINTENANCE mode enabled — queuing restore on exit)"
+    RESTORE_MAINTENANCE=1
+    sudo -u "$PHP_USER" php artisan down --retry=10 --render="errors.503" 2>/dev/null || sudo -u "$PHP_USER" php artisan down --retry=10
+fi
+
+# Ensure maintenance mode is always brought back up, even on failure.
+restore() {
+    if [[ "$RESTORE_MAINTENANCE" == "1" ]]; then
+        sudo -u "$PHP_USER" php artisan up
+        echo "(Site is back up)"
+    fi
+}
+trap restore EXIT
+
+echo "==> 1/9 Fetching + checking out latest ${REMOTE_BRANCH}"
+# Safer than `reset --hard`: leaves ignored/storage files alone and aborts if there
+# are unexpected local edits to tracked files (so we never silently wipe live changes).
 sudo git fetch origin
-sudo git reset --hard "origin/${REMOTE_BRANCH}"
+sudo git checkout --force "origin/${REMOTE_BRANCH}"
 
 echo "==> 2/9 Installing composer dependencies (no-dev)"
 sudo -u "$PHP_USER" composer install --no-dev --optimize-autoloader --no-scripts --no-interaction
