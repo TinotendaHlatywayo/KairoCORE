@@ -23,20 +23,19 @@
         $logoOpacity = SystemSetting::get('branding', 'logo_opacity', '1.0');
     }
 
-    // Cap the logo so it always fits inside the top bar (never exceeds ~40px),
-    // regardless of what value is stored in the branding settings.
-    $logoHeight = max(24, min((int) $logoHeight, 40)).'px';
-
-    // Direct inline rendering ensures standard circular aspect ratios [1]
-    $inlineStyles = 'style="height: ' . $logoHeight . '; width: ' . $logoHeight . '; opacity: ' . $logoOpacity . ';"';
+    $numericHeight = max(24, min((int) $logoHeight, 40));
+    // Flexible inline height & max dimensions so any logo type (square, rectangular, wide banner) fits cleanly without distortion
+    $inlineStyles = 'style="max-height: ' . $numericHeight . 'px; opacity: ' . $logoOpacity . ';"';
 @endphp
 
 <div class="flex items-center gap-3 py-1" x-data="{ schoolName: '{{ $schoolName }}' }" @theme-updated.window="schoolName = $event.detail.school_name || schoolName">
-    <img src="{{ $logoUrl }}" 
-         alt="{{ __('School Logo') }}" 
-         class="object-cover rounded-full border border-gray-200 dark:border-gray-800 aspect-square" 
-         {!! $inlineStyles !!} />
-    <span class="font-bold text-sm tracking-tight text-gray-900 dark:text-white" x-text="schoolName">
+    <div class="flex-shrink-0 flex items-center justify-center overflow-hidden">
+        <img src="{{ $logoUrl }}" 
+             alt="{{ __('School Logo') }}" 
+             class="w-auto object-contain rounded-md" 
+             {!! $inlineStyles !!} />
+    </div>
+    <span class="font-bold text-sm tracking-tight text-gray-900 dark:text-white truncate max-w-[180px]" x-text="schoolName">
         {{ $schoolName }}
     </span>
 </div>
