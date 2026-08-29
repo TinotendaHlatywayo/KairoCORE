@@ -6,7 +6,9 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Modules\Admin\Models\SystemSetting;
 use Modules\Finance\Models\FinanceDocumentTemplate;
+use Modules\SaaS\Models\PlatformSetting;
 
 if (! function_exists('term')) {
     function term(string $key, string $default): string
@@ -59,8 +61,8 @@ if (! function_exists('platform_name')) {
     function platform_name(): string
     {
         try {
-            $name = \Modules\SaaS\Models\PlatformSetting::get('branding', 'platform_name');
-        } catch (\Throwable $e) {
+            $name = PlatformSetting::get('branding', 'platform_name');
+        } catch (Throwable $e) {
             $name = null;
         }
 
@@ -100,8 +102,8 @@ if (! function_exists('platform_branding_asset_url')) {
     function platform_branding_asset_url(string $key, string $fallback): string
     {
         try {
-            $value = \Modules\SaaS\Models\PlatformSetting::get('branding', $key);
-        } catch (\Throwable $e) {
+            $value = PlatformSetting::get('branding', $key);
+        } catch (Throwable $e) {
             $value = null;
         }
 
@@ -130,7 +132,7 @@ if (! function_exists('school_favicon_url')) {
     {
         try {
             if (app()->bound('current_tenant')) {
-                $favicon = \Modules\Admin\Models\SystemSetting::get('branding', 'favicon_path');
+                $favicon = SystemSetting::get('branding', 'favicon_path');
 
                 if (is_array($favicon)) {
                     $favicon = $favicon[0] ?? null;
@@ -140,7 +142,7 @@ if (! function_exists('school_favicon_url')) {
                     return asset('storage/'.$favicon);
                 }
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             // fall through to platform favicon
         }
 
@@ -434,11 +436,11 @@ if (! function_exists('tenant_feature')) {
                 return (bool) config("features.{$featureKey}", $default);
             }
 
-            $override = \Modules\Admin\Models\SystemSetting::get('features', $featureKey, null);
+            $override = SystemSetting::get('features', $featureKey, null);
             if ($override !== null) {
                 return filter_var($override, FILTER_VALIDATE_BOOLEAN);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             // Fallback gracefully during unrun migrations or boot
         }
 
@@ -466,11 +468,11 @@ if (! function_exists('tenant_config')) {
             $group = $parts[0] ?? 'general';
             $settingKey = $parts[1] ?? $key;
 
-            $override = \Modules\Admin\Models\SystemSetting::get($group, $settingKey, null);
+            $override = SystemSetting::get($group, $settingKey, null);
             if ($override !== null) {
                 return $override;
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             // Fallback gracefully
         }
 
@@ -481,12 +483,12 @@ if (! function_exists('tenant_config')) {
 if (! function_exists('default_school_terms')) {
     function default_school_terms(): string
     {
-        return '<h3>School Terms of Service & Student/Staff Conduct Agreement</h3>' .
-               '<p>Welcome to our school portal. By registering an account and using this educational platform, you agree to abide by the following school-specific terms and policies:</p>' .
-               '<ol>' .
-               '<li><strong>Conduct & Academic Integrity:</strong> All students, staff, and parents agree to uphold the highest standards of academic honesty, respectful communication, and ethical behavior.</li>' .
-               '<li><strong>Data Privacy & Acceptable Use:</strong> Users must not share login credentials, access unauthorized student records, or misuse school communication channels.</li>' .
-               '<li><strong>Compliance with School Regulations:</strong> All activities on this platform are governed by school administration policies and applicable educational regulations.</li>' .
+        return '<h3>School Terms of Service & Student/Staff Conduct Agreement</h3>'.
+               '<p>Welcome to our school portal. By registering an account and using this educational platform, you agree to abide by the following school-specific terms and policies:</p>'.
+               '<ol>'.
+               '<li><strong>Conduct & Academic Integrity:</strong> All students, staff, and parents agree to uphold the highest standards of academic honesty, respectful communication, and ethical behavior.</li>'.
+               '<li><strong>Data Privacy & Acceptable Use:</strong> Users must not share login credentials, access unauthorized student records, or misuse school communication channels.</li>'.
+               '<li><strong>Compliance with School Regulations:</strong> All activities on this platform are governed by school administration policies and applicable educational regulations.</li>'.
                '</ol>';
     }
 }
@@ -504,12 +506,12 @@ if (! function_exists('email_branding')) {
      *
      * @return array{logo_url:?string,company_name:string,company_address:?string,company_phone:?string,company_email:?string}
      */
-    function email_branding(?\App\Models\School $school = null): array
+    function email_branding(?School $school = null): array
     {
         $platform = function (string $key, mixed $default = null): mixed {
             try {
-                return \Modules\SaaS\Models\PlatformSetting::get('email', $key, $default);
-            } catch (\Throwable) {
+                return PlatformSetting::get('email', $key, $default);
+            } catch (Throwable) {
                 return $default;
             }
         };
@@ -544,7 +546,7 @@ if (! function_exists('email_branding')) {
         if ($school !== null) {
             $readSchoolSetting = function (string $key) use ($school): mixed {
                 try {
-                    $row = \Modules\Admin\Models\SystemSetting::query()
+                    $row = SystemSetting::query()
                         ->where('school_id', $school->id)
                         ->where('group', 'email')
                         ->where('key', $key)
@@ -555,7 +557,7 @@ if (! function_exists('email_branding')) {
                     return json_last_error() === JSON_ERROR_NONE && is_array($decoded) === false && $decoded !== null
                         ? $decoded
                         : $row;
-                } catch (\Throwable) {
+                } catch (Throwable) {
                     return null;
                 }
             };
@@ -570,7 +572,7 @@ if (! function_exists('email_branding')) {
         }
 
         return [
-            'logo_url' => $logoUrl ?? asset('images/logo-transparent.png'),
+            'logo_url' => $logoUrl ?? platform_logo_url(),
             'company_name' => $name ?: config('app.name'),
             'company_address' => filled($address) ? trim((string) $address) : null,
             'company_phone' => filled($phone) ? trim((string) $phone) : null,
@@ -614,7 +616,7 @@ if (! function_exists('tenant_workspace_url')) {
      * into a login (or worse, the platform panel). This helper pins the host to
      * the school's own subdomain so tenants stay inside their space.
      */
-    function tenant_workspace_url(?\App\Models\School $school, string $path = '/'): string
+    function tenant_workspace_url(?School $school, string $path = '/'): string
     {
         if ($school === null || blank($school->subdomain)) {
             return url($path);
