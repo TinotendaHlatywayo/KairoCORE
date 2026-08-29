@@ -4,6 +4,7 @@ namespace App\Filament\Admin\Resources;
 
 use App\Filament\Admin\Resources\SchoolResource\Pages;
 use App\Filament\Admin\Resources\SchoolResource\RelationManagers\UsersRelationManager;
+use App\Jobs\SeedSchoolDemoDataJob;
 use App\Models\School;
 use App\Models\User;
 use App\Services\AccountActivationService;
@@ -210,6 +211,29 @@ class SchoolResource extends Resource
                         'suspended' => 'danger',
                         default => 'gray',
                     }),
+                Tables\Columns\TextColumn::make('seed_status')
+                    ->label(__('Demo Data'))
+                    ->badge()
+                    ->toggleable()
+                    ->placeholder('—')
+                    ->formatStateUsing(fn ($state) => $state === null ? __('N/A') : ucfirst((string) $state))
+                    ->color(fn ($state) => match ($state) {
+                        'seeded' => 'success',
+                        'seeding' => 'info',
+                        'failed' => 'danger',
+                        default => 'gray',
+                    })
+                    ->description(function (School $record): string {
+                        if ($record->seed_status === 'failed' && $record->seed_error) {
+                            return mb_strimwidth($record->seed_error, 0, 60, '…');
+                        }
+
+                        if ($record->seed_status === 'seeded' && $record->seeded_at) {
+                            return $record->seeded_at->format('d M Y H:i');
+                        }
+
+                        return '';
+                    }),
                 Tables\Columns\TextColumn::make('trial_ends_at')
                     ->label(__('Trial Ends'))
                     ->dateTime('d M Y')
@@ -268,6 +292,14 @@ class SchoolResource extends Resource
                             'trial_ends_at' => now()->addMonths(3),
                         ]);
 
+                        // Demo data (if the applicant opted in) is generated in
+                        // the background now, while the school awaits activation.
+                        // This gives the slow seeder time to finish before the
+                        // new admin logs in, without blocking this approval click.
+                        if ($record->has_dummy_data && $record->seed_status !== 'seeded') {
+                            SeedSchoolDemoDataJob::dispatch($record->id);
+                        }
+
                         if (! $adminUser || ! $token) {
                             Notification::make()
                                 ->title(__('Institution Approved'))
@@ -278,9 +310,13 @@ class SchoolResource extends Resource
                             return;
                         }
 
+                        $seedingNote = $record->has_dummy_data
+                            ? __(' Demo data is now generating in the background and will appear once ready.')
+                            : '';
+
                         Notification::make()
                             ->title(__('Institution Approved & Activation Email Sent'))
-                            ->body("Activation link sent to {$adminUser->email}.")
+                            ->body("Activation link sent to {$adminUser->email}.{$seedingNote}")
                             ->success()
                             ->send();
                     }),
