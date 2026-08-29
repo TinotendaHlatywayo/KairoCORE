@@ -198,11 +198,17 @@ EOF
 
 # ── 10. Install dependencies & build ──────────────────────────────────
 echo "[10/13] Installing Composer dependencies..."
-composer install --no-dev --optimize-autoloader
+# --no-scripts: skip the post-autoload-dump (artisan package:discover) which
+# fails because the Vite manifest does not exist until we build assets below.
+composer install --no-dev --optimize-autoloader --no-scripts
 
 echo "    Building frontend assets..."
 npm install --ignore-scripts
 npm run build
+
+# Now that public/build/manifest.json exists, run discovery + optimize autoload
+php artisan package:discover --ansi 2>/dev/null || true
+composer dump-autoload --no-dev --optimize
 
 # ── 11. Laravel setup ────────────────────────────────────────────────
 echo "[11/13] Running Laravel setup..."
