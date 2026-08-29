@@ -6,10 +6,13 @@ use App\Filament\App\Pages\Academic\AcademicOperationsCenter;
 use App\Filament\App\Pages\AdministrationDashboard;
 use App\Filament\App\Pages\AdmissionSettingsPage;
 use App\Filament\App\Pages\AnalyticsExplorer;
+use App\Filament\App\Pages\AssessmentAnalyticsPage;
 use App\Filament\App\Pages\CommunicationCenter;
 use App\Filament\App\Pages\EmailConfigurationPage;
 use App\Filament\App\Pages\ExecutiveFinancialDashboard;
+use App\Filament\App\Pages\GamificationSettingsPage;
 use App\Filament\App\Pages\IssueBook;
+use App\Filament\App\Pages\ManualMarkingPage;
 use App\Filament\App\Pages\MyDay;
 use App\Filament\App\Pages\ReportGeneratorPage;
 use App\Filament\App\Pages\ReportingDashboard;
@@ -162,12 +165,23 @@ class ModuleNavigation
                 'slug' => 'exams',
                 'label' => __('Exams & Grading'),
                 'icon' => 'heroicon-o-pencil-square',
-                'description' => __('Digital assessments and academic reports.'),
+                'description' => __('Assessments, grading scales, marks and report cards.'),
                 'tabs' => [
-                    ['label' => __('Digital Assessments'), 'resource' => DigitalAssessmentResource::class],
+                    ['label' => __('Assessment Workspace'), 'page' => AssessmentWorkspace::class],
                     ['label' => __('Report Cards'), 'resource' => AcademicReportResource::class],
+                    ['label' => __('Digital Assessments'), 'resource' => DigitalAssessmentResource::class],
                 ],
-                'more' => [],
+                'more' => [
+                    ['label' => __('Assessment Types'), 'resource' => AssessmentTypeResource::class],
+                    ['label' => __('Grading Scales'), 'resource' => GradingScaleResource::class],
+                    ['label' => __('Marks Entry'), 'resource' => AssessmentMarkResource::class],
+                    ['label' => __('Manual Marking'), 'page' => ManualMarkingPage::class],
+                    ['label' => __('Assessment Analytics'), 'page' => AssessmentAnalyticsPage::class],
+                    ['label' => __('Gamification'), 'page' => GamificationSettingsPage::class],
+                    ['label' => __('Question Bank'), 'resource' => QuestionBankResource::class],
+                    ['label' => __('Report Templates'), 'resource' => ReportTemplateResource::class],
+                    ['label' => __('Workflows'), 'resource' => AssessmentWorkflowResource::class],
+                ],
             ],
 
             [
