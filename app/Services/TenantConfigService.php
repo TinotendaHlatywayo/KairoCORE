@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Cache;
 use Modules\Admin\Models\SystemSetting;
 
 class TenantConfigService
@@ -18,7 +17,7 @@ class TenantConfigService
     protected static array $baseConfig = [
         // Branding
         'branding' => [
-            'theme' => 'emerald_heritage',
+            'theme' => 'dev_choice_1',
             'typography' => 'inter',
             'header_opacity' => '100',
             'watermark_opacity' => '30',

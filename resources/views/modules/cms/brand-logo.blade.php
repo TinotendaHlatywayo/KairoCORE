@@ -5,17 +5,19 @@
     $profileSchoolName = $schoolId ? SystemSetting::get('profile', 'school_name') : null;
     $schoolName = $profileSchoolName ?: (session('current_tenant')?->name ?? ($schoolId ? \App\Models\School::find($schoolId)?->name : null) ?: 'Kairo CORE');
     
-    // Set default assets
-    $logoUrl = asset('images/logo-transparent.png');
-    $logoUrl = asset('images/logo-transparent.png');
+    // Default logo is the Super Admin Console Logo (platform logo)
+    $logoUrl = platform_logo_url();
 
     $logoHeight = '32px';
     $logoOpacity = '1.0';
 
     if ($schoolId) {
         $customLogo = SystemSetting::get('branding', 'logo_path');
+        $school = \App\Models\School::find($schoolId);
         if (!empty($customLogo)) {
             $logoUrl = asset('storage/' . $customLogo);
+        } elseif ($school && !empty($school->logo_path)) {
+            $logoUrl = asset('storage/' . $school->logo_path);
         }
         $logoHeight = SystemSetting::get('branding', 'logo_height', '32px');
         $logoOpacity = SystemSetting::get('branding', 'logo_opacity', '1.0');

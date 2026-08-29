@@ -29,7 +29,7 @@ class QuestionsRelationManager extends RelationManager
                         ->where('status', 'published')
                         ->get()
                         ->mapWithKeys(fn ($q) => [
-                            $q->id => $q->title . ' [' . $q->question_type->label() . '] — ' . $q->subject?->name,
+                            $q->id => $q->title.' ['.$q->question_type->label().'] — '.$q->subject?->name,
                         ])
                         ->toArray())
                     ->required()
@@ -74,7 +74,7 @@ class QuestionsRelationManager extends RelationManager
                             return $state->label();
                         }
 
-                        return QuestionType::tryFrom($state)?->label() ?? $state;
+                        return QuestionType::tryFrom((string) $state)?->label() ?? $state;
                     }),
 
                 Tables\Columns\TextColumn::make('question.difficulty')
@@ -121,7 +121,7 @@ class QuestionsRelationManager extends RelationManager
                                 ->where('status', 'published')
                                 ->get()
                                 ->mapWithKeys(fn ($q) => [
-                                    $q->id => $q->title . ' [' . $q->question_type->label() . '] — ' . $q->subject?->name,
+                                    $q->id => $q->title.' ['.$q->question_type->label().'] — '.$q->subject?->name,
                                 ])
                                 ->toArray())
                             ->searchable()
@@ -141,7 +141,7 @@ class QuestionsRelationManager extends RelationManager
                         $service->attachQuestions($assessment, $data['question_ids']);
 
                         Notification::make()
-                            ->title(count($data['question_ids']) . ' question(s) added')
+                            ->title(count($data['question_ids']).' question(s) added')
                             ->success()
                             ->send();
                     }),
