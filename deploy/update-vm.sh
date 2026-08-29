@@ -28,10 +28,9 @@ echo "==> 0/10 Setting app ownership + git safe.directory for $PHP_USER"
 # Nginx/PHP-FPM run as $PHP_USER and must own the whole app to run composer/artisan.
 # Running this every deploy is idempotent and fixes storage/vendor ownership drift.
 sudo chown -R "$PHP_USER":"$PHP_USER" "$APP_DIR"
-sudo -u "$PHP_USER" git config --global --add safe.directory "$APP_DIR"
-sudo -u "$PHP_USER" git config --global --add safe.directory "*"
-
+# Write safe.directory to the repo-local config (survives regardless of HOME).
 cd "$APP_DIR"
+sudo -u "$PHP_USER" git config --local --add safe.directory "$APP_DIR"
 
 # Optional maintenance window for deploys that touch a busy live system.
 # Enable with: MAINTENANCE=1 sudo bash deploy/update-vm.sh
