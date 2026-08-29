@@ -23,6 +23,11 @@ class RegistrationWizard extends Component
 
     public int $totalSteps = 3;
 
+    // Becomes true only once the applicant officially clicks Submit. The banner
+    // is driven by this state (not Livewire's reactive wire:loading, which can
+    // flash during unrelated step navigation) so it never shows before submit.
+    public bool $submitting = false;
+
     // Step 1: Institution & Admin Info
     public string $schoolName = '';
 
@@ -105,10 +110,10 @@ class RegistrationWizard extends Component
     public function getSubdomainPreviewUrlProperty(): string
     {
         if ($this->subdomain === '') {
-            return 'https://' . $this->baseDomain;
+            return 'https://'.$this->baseDomain;
         }
 
-        return 'https://' . $this->subdomain . '.' . $this->baseDomain;
+        return 'https://'.$this->subdomain.'.'.$this->baseDomain;
     }
 
     // ── Real-time (on-change / on-blur) per-field validation ───────────────
@@ -304,21 +309,30 @@ class RegistrationWizard extends Component
             abort(404);
         }
 
-        $this->validateStep();
+        // Show immediate feedback once the applicant clicks Submit; reset if any
+        // validation step rejects so the banner doesn't linger with errors.
+        $this->submitting = true;
 
-        if (! $this->termsAccepted) {
-            throw ValidationException::withMessages([
-                'termsAccepted' => __('You must read and agree to the Terms of Service and Terms of Use before registering.'),
-            ]);
-        }
+        try {
+            $this->validateStep();
 
-        // A live (non-deleted) school already owns this subdomain — surface a
-        // friendly validation error instead of a raw SQL unique-constraint 500.
-        if (School::where('subdomain', $this->subdomain)->exists()) {
-            $this->isSubdomainAvailable = false;
-            throw ValidationException::withMessages([
-                'subdomain' => __('This subdomain is already taken.'),
-            ]);
+            if (! $this->termsAccepted) {
+                throw ValidationException::withMessages([
+                    'termsAccepted' => __('You must read and agree to the Terms of Service and Terms of Use before registering.'),
+                ]);
+            }
+
+            // A live (non-deleted) school already owns this subdomain — surface a
+            // friendly validation error instead of a raw SQL unique-constraint 500.
+            if (School::where('subdomain', $this->subdomain)->exists()) {
+                $this->isSubdomainAvailable = false;
+                throw ValidationException::withMessages([
+                    'subdomain' => __('This subdomain is already taken.'),
+                ]);
+            }
+        } catch (\Throwable $e) {
+            $this->submitting = false;
+            throw $e;
         }
 
         // Soft-deleted registrations with the same subdomain still occupy the
