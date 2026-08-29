@@ -33,6 +33,9 @@ class School extends Model
         'trial_ends_at',
         'settings',
         'has_dummy_data',
+        'seed_status',
+        'seeded_at',
+        'seed_error',
         'locale',
     ];
 
@@ -40,6 +43,7 @@ class School extends Model
         'settings' => 'array',
         'trial_ends_at' => 'datetime',
         'has_dummy_data' => 'boolean',
+        'seeded_at' => 'datetime',
     ];
 
     protected static function booted(): void

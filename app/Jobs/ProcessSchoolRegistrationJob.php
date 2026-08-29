@@ -4,22 +4,21 @@ namespace App\Jobs;
 
 use App\Models\School;
 use App\Models\User;
-use App\Services\DummyDataSeeder;
 use App\Services\SchoolRegistrationService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Completes the heavy parts of a school registration in the background so the
+ * Completes the light parts of a school registration in the background so the
  * public registration wizard responds immediately.
  *
  * The wizard only synchronously persists the core pending-school + admin rows
- * (fast, atomic, keeps the subdomain unique-index safe). Once submitted, this
- * job fans out async to:
- *   1. Optionally seed demo data (hundreds of records — the slow part).
- *   2. Notify every platform super administrator (in-app + email) about the
- *      new application, who then approves it and sets a real admin password.
+ * (fast, atomic, keeps the subdomain unique-index safe). Demo-data seeding is
+ * intentionally NOT done here — it is deferred until a super admin approves the
+ * school (SeedSchoolDemoDataJob), so applicants are never blocked at signup.
+ * This job only notifies every platform super administrator (in-app + email)
+ * that a new application is waiting for approval.
  */
 class ProcessSchoolRegistrationJob implements ShouldQueue
 {
@@ -33,7 +32,7 @@ class ProcessSchoolRegistrationJob implements ShouldQueue
 
     public function __construct(
         public int $schoolId,
-        public bool $hasDummyData,
+        public bool $hasDummyData = false,
     ) {}
 
     public function handle(): void
@@ -46,18 +45,6 @@ class ProcessSchoolRegistrationJob implements ShouldQueue
             ]);
 
             return;
-        }
-
-        if ($this->hasDummyData) {
-            try {
-                app(DummyDataSeeder::class)->seed($school->id);
-            } catch (\Throwable $e) {
-                report($e);
-                Log::error('ProcessSchoolRegistrationJob: demo data seeding failed.', [
-                    'school_id' => $this->schoolId,
-                    'error' => $e->getMessage(),
-                ]);
-            }
         }
 
         $contact = User::query()
