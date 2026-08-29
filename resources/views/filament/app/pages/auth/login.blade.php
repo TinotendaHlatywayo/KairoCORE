@@ -15,11 +15,13 @@
     $establishedYear = $school ? SystemSetting::get('profile', 'established_year') : null;
     $principalName = $school ? SystemSetting::get('profile', 'principal_name') : null;
 
-    $logoUrl = asset('images/logo-transparent.png');
+    $logoUrl = platform_logo_url();
 
     $customLogo = $school ? SystemSetting::get('branding', 'logo_path') : null;
     if (! empty($customLogo)) {
         $logoUrl = asset('storage/' . $customLogo);
+    } elseif ($school && ! empty($school->logo_path)) {
+        $logoUrl = asset('storage/' . $school->logo_path);
     }
 
     // Tenant accent colors parsed safely
