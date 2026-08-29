@@ -40,12 +40,12 @@ class VisualTimetableBuilder extends Page implements Forms\Contracts\HasForms
 
     public static function getNavigationLabel(): string
     {
-        return 'Visual Timetable Builder';
+        return __('Academic Workspace');
     }
 
     public function getHeading(): string
     {
-        return 'Visual Timetable Builder';
+        return __('Academic Workspace');
     }
 
     public ?array $data = [];
