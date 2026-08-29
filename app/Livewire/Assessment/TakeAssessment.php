@@ -2,9 +2,9 @@
 
 namespace App\Livewire\Assessment;
 
+use App\Filament\Student\Resources\StudentAssessmentResource;
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use Modules\DigitalAssessment\Enums\AttemptStatus;
 use Modules\DigitalAssessment\Models\DigitalAssessment;
 use Modules\DigitalAssessment\Models\DigitalAssessmentAttempt;
 use Modules\DigitalAssessment\Services\AdaptiveEngine;
@@ -15,23 +15,37 @@ class TakeAssessment extends Component
     use WithFileUploads;
 
     public ?int $assessmentId = null;
+
     public ?int $attemptId = null;
+
     public ?DigitalAssessment $assessment = null;
+
     public ?DigitalAssessmentAttempt $attempt = null;
+
     public int $currentQuestionIndex = 0;
+
     public array $answers = [];
+
     public int $secondsRemaining = 0;
+
     public bool $submitted = false;
+
     public bool $confirmSubmit = false;
+
     public bool $isAdaptive = false;
+
     public int $currentDifficulty = 50;
+
     public int $totalQuestions = 0;
 
     public $file;
+
     public bool $fileUploading = false;
+
     public bool $uploadSuccess = false;
 
     protected AttemptService $attemptService;
+
     protected ?AdaptiveEngine $adaptiveEngine = null;
 
     protected $listeners = ['file-uploaded' => 'handleFileUpload'];
@@ -52,12 +66,20 @@ class TakeAssessment extends Component
         $this->isAdaptive = $this->adaptiveEngine->getAdaptiveConfig($this->assessment)?->is_active ?? false;
         $this->totalQuestions = $this->assessment->questions()->count();
 
-        $student = \App\Filament\Student\Resources\StudentAssessmentResource::currentStudent();
+        $student = StudentAssessmentResource::currentStudent();
 
         if (! $student) {
             session()->flash('error', 'Student record not found.');
 
             return;
+        }
+
+        // Deny attempts on assessments targeted at a class the student is not in.
+        if ($this->assessment->section_id !== null) {
+            $sectionIds = $student->enrollments()->pluck('section_id')->map(fn ($id) => (int) $id)->all();
+            if (! in_array((int) $this->assessment->section_id, $sectionIds, true)) {
+                abort(403, 'This assessment is not assigned to your class.');
+            }
         }
 
         $this->attempt = $this->attemptService->startAttempt(
@@ -131,6 +153,37 @@ class TakeAssessment extends Component
         }
     }
 
+    /**
+     * Reorder an Ordering-answer item up or down by index. The answer is stored
+     * as a list of {text: ...} entries in the learner's chosen order, which is
+     * exactly what AttemptService::checkAnswer() compares for QuestionType::Ordering.
+     */
+    public function moveOrderingItem(string $qId, int $from, string $direction): void
+    {
+        if ($this->submitted || ! $this->attempt || $this->isAdaptive) {
+            return;
+        }
+
+        $items = $this->answers[$qId] ?? [];
+        if (! is_array($items) || empty($items)) {
+            return;
+        }
+
+        $to = $direction === 'up' ? $from - 1 : $from + 1;
+        if ($from < 0 || $to < 0 || $from >= count($items) || $to >= count($items)) {
+            return;
+        }
+
+        [$removed] = array_splice($items, $from, 1);
+        array_splice($items, $to, 0, [$removed]);
+
+        $items = array_values($items);
+        $this->answers[(int) $qId] = $items;
+
+        $this->attemptService->saveAnswer($this->attempt, (int) $qId, $items);
+        $this->attemptService->autoSaveAnswer($this->attempt, (int) $qId, $items);
+    }
+
     public function uploadFile(): void
     {
         $this->validate([
@@ -156,7 +209,7 @@ class TakeAssessment extends Component
 
             $this->dispatch('file-uploaded');
         } catch (\Exception $e) {
-            session()->flash('error', 'Upload failed: ' . $e->getMessage());
+            session()->flash('error', 'Upload failed: '.$e->getMessage());
         } finally {
             $this->fileUploading = false;
         }
@@ -173,7 +226,7 @@ class TakeAssessment extends Component
             $this->answers[$this->currentQuestion->question_bank_id] = null;
             $this->uploadSuccess = false;
         } catch (\Exception $e) {
-            session()->flash('error', 'Failed to remove file: ' . $e->getMessage());
+            session()->flash('error', 'Failed to remove file: '.$e->getMessage());
         }
     }
 
@@ -258,6 +311,7 @@ class TakeAssessment extends Component
     {
         if (! $this->assessment->duration_minutes || ! $this->attempt) {
             $this->secondsRemaining = 999999;
+
             return;
         }
 

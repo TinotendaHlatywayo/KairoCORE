@@ -158,7 +158,7 @@
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Your Answer</label>
 
                         @php
-                            $qId = $resp->question_bank_id;
+                            $qId = $current->question_bank_id;
                             $currentAnswer = $this->answers[$qId] ?? null;
                         @endphp
 
@@ -252,11 +252,37 @@
 
                         {{-- Ordering --}}
                         @elseif($q->question_type?->value === 'ordering')
+                            @php
+                                $defaultItems = collect($q->ordering_items ?? [])->map(function ($item) {
+                                    return ['text' => is_array($item) ? ($item['text'] ?? '') : $item];
+                                })->values()->all();
+                                $orderItems = is_array($currentAnswer) && ! empty($currentAnswer)
+                                    ? array_values($currentAnswer)
+                                    : $defaultItems;
+                            @endphp
                             <div class="space-y-2">
-                                @foreach($q->ordering_items ?? [] as $itemIdx => $item)
-                                    <div class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
-                                        <span class="text-xs font-bold text-gray-400 w-6">{{ $itemIdx + 1 }}.</span>
-                                        <span class="text-sm text-gray-800 dark:text-gray-200 flex-1">{{ $item['text'] ?? $item }}</span>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Use the arrows to arrange the items in the correct order (top = first).</p>
+                                @foreach($orderItems as $ordIdx => $orderItem)
+                                    @php
+                                        $ordText = is_array($orderItem) ? ($orderItem['text'] ?? $orderItem) : $orderItem;
+                                    @endphp
+                                    <div class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+                                        <div class="flex flex-col">
+                                            <button type="button"
+                                                    wire:click="moveOrderingItem({{ $qId }}, {{ $ordIdx }}, 'up')"
+                                                    @if($ordIdx === 0) disabled @endif
+                                                    class="text-gray-400 hover:text-primary-600 disabled:opacity-30 disabled:cursor-not-allowed">
+                                                <x-heroicon-o-chevron-up class="w-4 h-4" />
+                                            </button>
+                                            <button type="button"
+                                                    wire:click="moveOrderingItem({{ $qId }}, {{ $ordIdx }}, 'down')"
+                                                    @if($ordIdx === count($orderItems) - 1) disabled @endif
+                                                    class="text-gray-400 hover:text-primary-600 disabled:opacity-30 disabled:cursor-not-allowed">
+                                                <x-heroicon-o-chevron-down class="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                        <span class="text-xs font-bold text-gray-400 w-6">{{ $ordIdx + 1 }}.</span>
+                                        <span class="text-sm text-gray-800 dark:text-gray-200 flex-1">{{ $ordText }}</span>
                                     </div>
                                 @endforeach
                             </div>

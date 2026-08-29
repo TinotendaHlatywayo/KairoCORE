@@ -124,6 +124,12 @@ class ManualMarkingService
         if ($percentage >= ($attempt->assessment?->pass_mark ?? 0)) {
             $attempt->update(['status' => 'graded']);
         }
+
+        // Sync a finalised score into the report-card pipeline whenever the
+        // attempt is considered fully marked (no outstanding manual questions).
+        if ($this->isFullyMarked($attempt)) {
+            app(DigitalAssessmentGradeBridge::class)->syncAttemptGrade($attempt);
+        }
     }
 
     public function isFullyMarked(DigitalAssessmentAttempt $attempt): bool
@@ -149,6 +155,7 @@ class ManualMarkingService
         foreach ($attempts as $attempt) {
             if ($this->isFullyMarked($attempt)) {
                 $attempt->update(['status' => 'graded']);
+                app(DigitalAssessmentGradeBridge::class)->syncAttemptGrade($attempt);
                 $count++;
             }
         }

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Student\Pages;
 
+use App\Filament\Student\Resources\StudentAssessmentResource;
 use Filament\Pages\Page;
 use Modules\DigitalAssessment\Models\DigitalAssessmentAttempt;
 use Modules\DigitalAssessment\Services\AttemptService;
@@ -33,11 +34,22 @@ class AttemptResultPage extends Page
     {
         $this->attempt = $attempt;
 
+        $student = StudentAssessmentResource::currentStudent();
+
+        if (! $student) {
+            abort(403, 'No student record linked to this account.');
+        }
+
         $service = app(AttemptService::class);
 
-        $this->attemptModel = $service->getAttemptWithResponses(
-            DigitalAssessmentAttempt::findOrFail($attempt)
-        );
+        $attemptModel = DigitalAssessmentAttempt::findOrFail($attempt);
+
+        // A student may only view their own attempts.
+        if ((int) $attemptModel->student_id !== (int) $student->id) {
+            abort(403, 'You are not authorised to view this attempt.');
+        }
+
+        $this->attemptModel = $service->getAttemptWithResponses($attemptModel);
 
         $this->summary = $service->getAttemptSummary($this->attemptModel);
     }
