@@ -272,15 +272,15 @@
             <button type="button" wire:click="nextStep" class="btn btn-primary px-4" style="background-color: #1e3a8a; border-color: #1e3a8a;">{{ __('Continue') }}</button>
         @else
             <button type="button"
+                    x-data="{ clicked: false }"
+                    @click="clicked = true"
                     wire:click="submit"
                     class="btn btn-success px-4 d-inline-flex align-items-center gap-2"
-                    {{ (!$isSubdomainAvailable || !$termsAccepted) ? 'disabled' : '' }}
-                    wire:loading.attr="disabled data-submitting"
-                    wire:target="submit">
-                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"
-                      wire:loading wire:target="submit"></span>
-                <span wire:loading.remove wire:target="submit">{{ __('Submit Application') }}</span>
-                <span wire:loading wire:target="submit">{{ __('Submitting…') }}</span>
+                    :disabled="clicked || {{ (!$isSubdomainAvailable || !$termsAccepted) ? 'true' : 'false' }}"
+                    :class="{ 'opacity-75': clicked }">
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" x-show="clicked" style="display: none;"></span>
+                <span x-show="!clicked">{{ __('Submit Application') }}</span>
+                <span x-show="clicked" style="display: none;">{{ __('Submitting…') }}</span>
             </button>
         @endif
     </div>
