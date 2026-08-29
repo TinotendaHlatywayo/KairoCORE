@@ -6,7 +6,6 @@ use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Filament\App\Resources\ApplicationResource\Pages;
 use App\Models\User;
 use App\Services\AdmissionNotificationService;
-use App\Services\ModuleVisibilityManager;
 use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Forms\Components\Tabs\Tab;
@@ -18,10 +17,10 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Modules\Academics\Models\AcademicYear;
 use Modules\Academics\Models\Course;
 use Modules\Academics\Models\Section;
-use Modules\Admin\Services\PermissionRegistry;
 use Modules\Admissions\Models\Application;
 use Modules\Admissions\Models\ApplicationDocument;
 use Modules\Students\Models\Enrollment;
@@ -41,14 +40,6 @@ class ApplicationResource extends Resource
 
     public static function canAccess(): bool
     {
-        if (! ModuleVisibilityManager::isPageVisible('admissions', 'applications')) {
-            return false;
-        }
-
-        if (class_exists('\Modules\Admin\Services\PermissionRegistry')) {
-            return PermissionRegistry::checkPermission('academic_ops.manage_admissions');
-        }
-
         return true;
     }
 
@@ -498,7 +489,7 @@ class ApplicationResource extends Resource
             'school_id' => $record->school_id,
             'name' => "{$record->first_name} {$record->last_name}",
             'email' => $email,
-            'password' => \Illuminate\Support\Facades\Hash::make(\Illuminate\Support\Str::random(32)),
+            'password' => Hash::make(Str::random(32)),
             'account_status' => User::STATUS_PENDING,
         ]);
 
