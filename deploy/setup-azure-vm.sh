@@ -285,6 +285,14 @@ DB_PASS=${DB_PASS}
 EOF
 chmod 600 ${APP_DIR}/.env.production.local
 
+# ── 14. Install Queue Worker (background jobs: async registration, email) ──
+echo "[14/14] Installing queue worker systemd service..."
+install -m 644 $(dirname "$0")/queue-worker.service /etc/systemd/system/kairocore-queue.service
+systemctl daemon-reload
+systemctl enable kairocore-queue.service
+systemctl restart kairocore-queue.service
+systemctl --no-pager --lines=5 status kairocore-queue.service || true
+
 # Reminder for Azure auto-shutdown (keeps VM from running 24/7 on credit)
 echo ""
 echo "============================================"

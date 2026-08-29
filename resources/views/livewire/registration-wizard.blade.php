@@ -293,8 +293,8 @@
                 <span class="visually-hidden">{{ __('Loading...') }}</span>
             </div>
             <div>
-                <strong class="d-block">{{ __('Setting up your school workspace…') }}</strong>
-                <span class="small text-secondary">{{ __('This can take up to a minute while we create your portal, administrator account and modules. Please keep this page open.') }}</span>
+                <strong class="d-block">{{ __('Submitting your application…') }}</strong>
+                <span class="small text-secondary">{{ __('This will only take a moment. Your school workspace is prepared in the background and will be available once an administrator approves your application.') }}</span>
             </div>
         </div>
 
