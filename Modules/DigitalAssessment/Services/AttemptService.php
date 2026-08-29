@@ -3,6 +3,7 @@
 namespace Modules\DigitalAssessment\Services;
 
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Modules\DigitalAssessment\Enums\AttemptStatus;
@@ -11,9 +12,6 @@ use Modules\DigitalAssessment\Models\DigitalAssessment;
 use Modules\DigitalAssessment\Models\DigitalAssessmentAttempt;
 use Modules\DigitalAssessment\Models\DigitalAssessmentAutoSave;
 use Modules\DigitalAssessment\Models\DigitalAssessmentResponse;
-use Modules\DigitalAssessment\Services\QuestionAnalyticsService;
-use Modules\DigitalAssessment\Services\MasteryService;
-use Modules\DigitalAssessment\Services\GamificationService;
 use Modules\DigitalAssessment\Models\QuestionBank;
 
 class AttemptService
@@ -102,7 +100,7 @@ class AttemptService
         });
     }
 
-    protected function resolveQuestionOrder(DigitalAssessment $assessment): \Illuminate\Support\Collection
+    protected function resolveQuestionOrder(DigitalAssessment $assessment): Collection
     {
         $questions = $assessment->questions()
             ->orderBy('question_order')
@@ -163,7 +161,7 @@ class AttemptService
             Storage::disk('public')->delete($response->file_path);
         }
 
-        $path = $file->store('assessment-uploads/' . $attempt->id, 'public');
+        $path = $file->store('assessment-uploads/'.$attempt->id, 'public');
 
         $response->update([
             'learner_answer' => $path,
@@ -248,6 +246,12 @@ class AttemptService
             app(MasteryService::class)->updateMasteryForAttempt($attempt->id);
             app(GamificationService::class)->processAttemptCompletion($attempt);
 
+            // Push a finalised score into the report-card grading pipeline when
+            // there is no outstanding manual marking left for this attempt.
+            if (app(ManualMarkingService::class)->isFullyMarked($attempt)) {
+                app(DigitalAssessmentGradeBridge::class)->syncAttemptGrade($attempt);
+            }
+
             return $attempt->fresh();
         });
     }
@@ -267,6 +271,10 @@ class AttemptService
             app(QuestionAnalyticsService::class)->recalculateForAssessment($attempt->assessment);
             app(MasteryService::class)->updateMasteryForAttempt($attempt->id);
             app(GamificationService::class)->processAttemptCompletion($attempt);
+
+            if (app(ManualMarkingService::class)->isFullyMarked($attempt)) {
+                app(DigitalAssessmentGradeBridge::class)->syncAttemptGrade($attempt);
+            }
 
             return $attempt->fresh();
         });

@@ -4,15 +4,14 @@ namespace App\Filament\Student\Resources;
 
 use App\Filament\Student\Resources\StudentAssessmentResource\Pages;
 use App\Models\Scopes\TenantScope;
-use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use Modules\DigitalAssessment\Enums\AssessmentCategory;
 use Modules\DigitalAssessment\Enums\AssessmentStatus;
 use Modules\DigitalAssessment\Models\DigitalAssessment;
-use Modules\DigitalAssessment\Services\AttemptService;
 use Modules\Students\Models\Student;
 
 class StudentAssessmentResource extends Resource
@@ -36,6 +35,20 @@ class StudentAssessmentResource extends Resource
         return __('Digital Assessments');
     }
 
+    // Students must be able to reach this resource from the sidebar. The
+    // underlying DigitalAssessmentPolicy only grants create/view permissions to
+    // staff, so we bypass it here — access is still safe because the query is
+    // scoped to the student's own enrolled sections and published assessments.
+    public static function canViewAny(): bool
+    {
+        return Auth::check();
+    }
+
+    public static function canAccess(): bool
+    {
+        return Auth::check();
+    }
+
     protected static array $currentStudentCache = [];
 
     public static function currentStudent(): ?Student
@@ -45,7 +58,7 @@ class StudentAssessmentResource extends Resource
         }
 
         $user = Auth::user();
-        $cacheKey = 'da.current_student.' . $user->id;
+        $cacheKey = 'da.current_student.'.$user->id;
 
         if (array_key_exists($cacheKey, static::$currentStudentCache)) {
             return static::$currentStudentCache[$cacheKey];
@@ -157,8 +170,8 @@ class StudentAssessmentResource extends Resource
                 Tables\Columns\TextColumn::make('assessment_category')
                     ->label(__('Category'))
                     ->badge()
-                    ->formatStateUsing(fn ($state) => $state instanceof \BackedEnum ? $state->label() : (\Modules\DigitalAssessment\Enums\AssessmentCategory::tryFrom($state)?->label() ?? $state))
-                    ->color(fn ($state) => $state instanceof \BackedEnum ? $state->color() : (\Modules\DigitalAssessment\Enums\AssessmentCategory::tryFrom($state)?->color() ?? 'gray')),
+                    ->formatStateUsing(fn ($state) => $state instanceof \BackedEnum ? $state->label() : (AssessmentCategory::tryFrom($state)?->label() ?? $state))
+                    ->color(fn ($state) => $state instanceof \BackedEnum ? $state->color() : (AssessmentCategory::tryFrom($state)?->color() ?? 'gray')),
 
                 Tables\Columns\TextColumn::make('questions_count')
                     ->label(__('Questions'))
@@ -166,7 +179,7 @@ class StudentAssessmentResource extends Resource
 
                 Tables\Columns\TextColumn::make('duration_minutes')
                     ->label(__('Duration'))
-                    ->formatStateUsing(fn ($state) => $state ? $state . ' min' : '—'),
+                    ->formatStateUsing(fn ($state) => $state ? $state.' min' : '—'),
 
                 Tables\Columns\TextColumn::make('total_marks')
                     ->label(__('Marks')),
@@ -225,6 +238,7 @@ class StudentAssessmentResource extends Resource
                     ->color('success')
                     ->visible(function (DigitalAssessment $record) {
                         $student = static::currentStudent();
+
                         return $student && $record->attempts()
                             ->where('student_id', $student->id)
                             ->complete()

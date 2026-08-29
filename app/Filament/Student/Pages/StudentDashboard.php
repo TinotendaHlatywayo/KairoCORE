@@ -90,6 +90,7 @@ class StudentDashboard extends Page
                 ->with(['subject', 'attempts' => function ($q) use ($student) {
                     $q->where('student_id', $student->id);
                 }])
+                ->withCount('questions')
                 ->orderByDesc('created_at')
                 ->get();
 

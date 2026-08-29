@@ -2,11 +2,11 @@
 
 namespace App\Filament\Student\Pages;
 
+use App\Filament\Student\Resources\StudentAssessmentResource;
 use Filament\Pages\Page;
 use Modules\DigitalAssessment\Enums\AttemptStatus;
 use Modules\DigitalAssessment\Models\DigitalAssessment;
 use Modules\DigitalAssessment\Models\DigitalAssessmentAttempt;
-use App\Filament\Student\Resources\StudentAssessmentResource;
 
 class AssessmentDetailPage extends Page
 {
@@ -23,11 +23,17 @@ class AssessmentDetailPage extends Page
     protected static bool $shouldRegisterNavigation = false;
 
     public ?int $assessmentId = null;
+
     public ?DigitalAssessment $assessment = null;
+
     public ?DigitalAssessmentAttempt $currentAttempt = null;
+
     public int $attemptCount = 0;
+
     public int $attemptsRemaining = 0;
+
     public bool $canStart = false;
+
     public string $blockReason = '';
 
     public static function getRoutePath(): string
@@ -40,13 +46,26 @@ class AssessmentDetailPage extends Page
         $this->assessmentId = $assessment;
 
         $this->assessment = DigitalAssessment::with(['subject', 'attempts'])
+            ->withCount('questions')
             ->findOrFail($assessment);
 
         $student = StudentAssessmentResource::currentStudent();
 
         if (! $student) {
             $this->blockReason = 'Student profile not found.';
+
             return;
+        }
+
+        // Only students enrolled in the assessment's target section (or a
+        // school-wide assessment with a null section) may view/attempt it.
+        $sectionIds = $student->enrollments()->pluck('section_id')->all();
+
+        if (
+            $this->assessment->section_id !== null
+            && ! in_array((int) $this->assessment->section_id, array_map('intval', $sectionIds), true)
+        ) {
+            abort(403, 'This assessment is not assigned to your class.');
         }
 
         $this->currentAttempt = $this->assessment->attempts()
@@ -68,7 +87,7 @@ class AssessmentDetailPage extends Page
             $this->blockReason = 'You have used all available attempts for this assessment.';
         } elseif ($this->assessment->availability_start_at && now()->lt($this->assessment->availability_start_at)) {
             $this->canStart = false;
-            $this->blockReason = 'This assessment is not available yet. Opens: ' . $this->assessment->availability_start_at->format('d M Y, H:i');
+            $this->blockReason = 'This assessment is not available yet. Opens: '.$this->assessment->availability_start_at->format('d M Y, H:i');
         } elseif ($this->assessment->availability_end_at && now()->gt($this->assessment->availability_end_at)) {
             $this->canStart = false;
             $this->blockReason = 'This assessment is no longer available.';
