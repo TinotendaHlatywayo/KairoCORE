@@ -76,8 +76,10 @@
             {{-- Section 1: Dynamic Tenant Identity --}}
             <header class="sc-l2-head">
                 <div class="sc-l2-brand">
-                    <div class="sc-l2-logo" @if ($logoUrl) style="background-image:url('{{ $logoUrl }}');" @endif>
-                        @if (! $logoUrl)
+                    <div class="sc-l2-logo">
+                        @if ($logoUrl)
+                            <img src="{{ $logoUrl }}" alt="{{ $schoolName }}" class="w-full h-full object-contain p-1" />
+                        @else
                             <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                 <rect x="4" y="4" width="40" height="40" rx="12" fill="currentColor" opacity="0.15"/>
                                 <path d="M24 10 8 22l16 12 16-12-16-12Z" fill="currentColor" opacity="0.9"/>
@@ -527,12 +529,10 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background-color: var(--sc-accent);
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-        color: var(--sc-on-accent);
-        box-shadow: 0 8px 28px -10px rgba(var(--sc-accent-rgb), 0.5), 0 0 40px -16px rgba(var(--sc-accent-rgb), 0.25);
+        background-color: rgba(255, 255, 255, 0.95);
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        box-shadow: 0 8px 28px -10px rgba(0, 0, 0, 0.15);
         transition: transform 0.3s ease;
     }
     .sc-l2-logo:hover { transform: scale(1.04); }
