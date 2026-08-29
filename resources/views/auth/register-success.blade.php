@@ -152,7 +152,7 @@
                 {{ __('Thank you for choosing Kairo CORE for') }} <strong>{{ request('school_name') }}</strong>{{ __('.') }}
             </p>
             <p class="sc-success-body">
-                {{ __('Your registration request has been successfully queued for validation. Once our system administrators review and approve your application, an activation email with a secure link will be sent to your administrator email so you can set your username and password.') }}
+                {{ __('Your request has been received and is now awaiting administrator approval. We are preparing your school workspace in the background, and your administrator will receive a secure activation email as soon as it is approved. This may take a few moments. You can safely close this page.') }}
             </p>
 
             <div class="sc-success-actions">
