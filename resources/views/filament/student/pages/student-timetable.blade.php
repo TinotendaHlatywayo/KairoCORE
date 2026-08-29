@@ -38,6 +38,51 @@
                     </div>
                 @endforeach
             </div>
+
+            <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                <h3 class="mb-3 text-sm font-extrabold uppercase tracking-wide text-indigo-600 dark:text-indigo-400">{{ __('Upcoming Tests & Tasks') }}</h3>
+
+                @if($upcomingTests->isEmpty() && $upcomingTasks->isEmpty())
+                    <p class="py-4 text-center text-[11px] text-slate-400">{{ __('No pending tests or tasks.') }}</p>
+                @else
+                    <div class="space-y-3">
+                        @foreach($upcomingTests as $test)
+                            <a href="{{ \App\Filament\Student\Pages\AssessmentDetailPage::getUrl([$test->id]) }}"
+                               class="flex items-start justify-between gap-3 rounded-lg border border-indigo-100 bg-indigo-50/60 p-3 transition hover:border-indigo-300 dark:border-indigo-900 dark:bg-indigo-950/30 dark:hover:border-indigo-700">
+                                <div>
+                                    <p class="text-xs font-bold text-slate-800 dark:text-slate-200">
+                                        {{ $test->title }}
+                                    </p>
+                                    <p class="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                                        {{ $test->subject?->name ?? __('Test') }}
+                                        @if($test->total_marks)
+                                            · {{ __(':marks marks', ['marks' => rtrim(rtrim(number_format((float)$test->total_marks, 2, '.', ''), '0'), '.')]) }}
+                                        @endif
+                                    </p>
+                                </div>
+                                <span class="shrink-0 rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold text-indigo-700 dark:bg-indigo-900 dark:text-indigo-200">
+                                    {{ optional($test->deadline_at ?? $test->availability_end_at ?? $test->availability_start_at)->format('d M Y') ?? __('Open') }}
+                                </span>
+                            </a>
+                        @endforeach
+
+                        @foreach($upcomingTasks as $task)
+                            <a href="{{ \App\Filament\Student\Resources\HomeworkResource::getUrl('index', panel: 'student') }}"
+                               class="flex items-start justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50/60 p-3 transition hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900/40 dark:hover:border-slate-700">
+                                <div>
+                                    <p class="text-xs font-bold text-slate-800 dark:text-slate-200">
+                                        {{ $task->title }}
+                                    </p>
+                                    <p class="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">{{ $task->subject?->name ?? __('Task') }}</p>
+                                </div>
+                                <span class="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold {{ ($task->due_date && $task->due_date->lt(\Illuminate\Support\Carbon::now()->startOfDay())) ? 'bg-rose-100 text-rose-700 dark:bg-rose-900 dark:text-rose-200' : 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-200' }}">
+                                    {{ $task->due_date ? __('Due :date', ['date' => $task->due_date->format('d M Y')]) : __('Due') }}
+                                </span>
+                            </a>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
         @endif
     </div>
 </x-filament-panels::page>
