@@ -220,8 +220,7 @@ class StudentResource extends Resource
                     ->label(__('Photo'))
                     ->disk('public')
                     ->circular()
-                    ->defaultImageUrl(fn ($record) => asset(($record->gender === 'female') ? 'images/no_profile_female.jpg' : 'images/no_profile_male.png'))
-                    ->hiddenLabel(),
+                    ->defaultImageUrl(fn ($record) => asset(($record->gender === 'female') ? 'images/no_profile_female.jpg' : 'images/no_profile_male.png')),
                 Tables\Columns\TextColumn::make('student_id_number')
                     ->label(__('Student ID'))
                     ->searchable()
