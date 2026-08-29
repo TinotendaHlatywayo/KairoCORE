@@ -43,6 +43,11 @@ class ApplicationResource extends Resource
         return true;
     }
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return true;
+    }
+
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
     protected static ?string $navigationGroup = 'Admissions';
