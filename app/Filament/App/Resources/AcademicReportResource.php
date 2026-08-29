@@ -7,6 +7,7 @@ use App\Filament\App\Resources\AcademicReportResource\Pages;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
+use Filament\Resources\Pages\Page;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -25,7 +26,7 @@ class AcademicReportResource extends Resource
 {
     use ModulePermissionAccess;
 
-    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    public static function getEloquentQuery(): Builder
     {
         // Class column renders section→course; eager load to avoid N+1.
         return parent::getEloquentQuery()->with(['section.course']);
@@ -502,10 +503,12 @@ class AcademicReportResource extends Resource
                             return;
                         }
 
-                        return redirect()->route('reports.bulk-pdf', [
+                        $url = route('reports.bulk-pdf', [
                             'ids' => implode(',', $ids),
                             'mode' => $data['print_mode'],
                         ]);
+
+                        $livewire->js("window.open('{$url}', '_blank');");
                     }),
             ])
             ->bulkActions([
@@ -524,13 +527,15 @@ class AcademicReportResource extends Resource
                                 ->default('combined')
                                 ->required(),
                         ])
-                        ->action(function (array $data, Collection $records) {
+                        ->action(function (array $data, Collection $records, Page $livewire) {
                             $ids = $records->pluck('id')->toArray();
 
-                            return redirect()->route('reports.bulk-pdf', [
+                            $url = route('reports.bulk-pdf', [
                                 'ids' => implode(',', $ids),
                                 'mode' => $data['print_mode'],
                             ]);
+
+                            $livewire->js("window.open('{$url}', '_blank');");
                         }),
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),

@@ -171,20 +171,12 @@ class ModuleNavigation
                 'description' => __('Assessments, grading scales, marks and report cards.'),
                 'tabs' => [
                     ['label' => __('Assessment Workspace'), 'page' => AssessmentWorkspace::class],
-                    ['label' => __('Assessment Types'), 'resource' => AssessmentTypeResource::class],
-                    ['label' => __('Grading Scales'), 'resource' => GradingScaleResource::class],
                     ['label' => __('Marks Entry'), 'resource' => AssessmentMarkResource::class],
                     ['label' => __('Report Cards'), 'resource' => AcademicReportResource::class],
                     ['label' => __('Digital Assessments'), 'resource' => DigitalAssessmentResource::class],
-                    ['label' => __('Manual Marking'), 'page' => \App\Filament\App\Pages\ManualMarkingPage::class],
-                    ['label' => __('Assessment Analytics'), 'page' => \App\Filament\App\Pages\AssessmentAnalyticsPage::class],
-                    ['label' => __('Gamification'), 'page' => \App\Filament\App\Pages\GamificationSettingsPage::class],
-                    ['label' => __('Question Bank'), 'resource' => QuestionBankResource::class],
-                ],
-                'more' => [
                     ['label' => __('Report Templates'), 'resource' => ReportTemplateResource::class],
-                    ['label' => __('Workflows'), 'resource' => AssessmentWorkflowResource::class],
                 ],
+                'more' => [],
             ],
 
             [

@@ -44,6 +44,15 @@ class AcademicReportPdfController extends Controller
         $school = app('current_tenant');
         $schoolId = $school->id;
 
+        $hasAnyTemplate = ReportTemplate::where('school_id', $schoolId)->exists();
+        if (! $hasAnyTemplate) {
+            $createUrl = route('filament.app.resources.report-templates.create');
+
+            return response()->view('errors.missing-report-template', [
+                'createUrl' => $createUrl,
+            ], 422);
+        }
+
         // Fetch School-Wide Active Fallback Layout
         $activeDefaultTemplate = ReportTemplate::where('school_id', $schoolId)
             ->where('is_active', true)
