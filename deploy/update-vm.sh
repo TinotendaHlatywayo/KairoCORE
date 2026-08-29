@@ -78,11 +78,8 @@ sudo -u "$PHP_USER" HOME=/var/www php artisan event:clear
 echo "==> 6/10 Running migrations"
 sudo -u "$PHP_USER" HOME=/var/www php artisan migrate --force
 
-echo "==> 7/10 Re-caching config/routes/views/events"
-sudo -u "$PHP_USER" HOME=/var/www php artisan config:cache
-sudo -u "$PHP_USER" HOME=/var/www php artisan route:cache
+echo "==> 7/10 Caching views"
 sudo -u "$PHP_USER" HOME=/var/www php artisan view:cache
-sudo -u "$PHP_USER" HOME=/var/www php artisan event:cache
 
 echo "==> 8/10 Storage link (idempotent)"
 sudo -u "$PHP_USER" HOME=/var/www php artisan storage:link 2>/dev/null || true
