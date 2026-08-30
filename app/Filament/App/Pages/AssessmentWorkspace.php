@@ -28,6 +28,8 @@ class AssessmentWorkspace extends Page implements HasForms
     // Grouping configuration matches the customized Exams & Grading workflow group
     protected static ?string $navigationGroup = 'Exams & Grading';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     public static function getNavigationGroup(): ?string
     {
         return __(static::$navigationGroup);

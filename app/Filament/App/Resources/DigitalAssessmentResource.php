@@ -30,6 +30,8 @@ class DigitalAssessmentResource extends Resource
 
     protected static ?string $navigationGroup = 'Exams & Grading';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?int $navigationSort = 62;
 
     protected static ?string $modelLabel = 'Digital Assessment';

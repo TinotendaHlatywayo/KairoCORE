@@ -18,10 +18,10 @@
             break;
         }
     }
-    // Remember the last-visited page in each Finance category so a sidebar
-    // category link can return the user to their previous page instead of the hub.
-    if ($module && ($module['slug'] ?? null) === 'finance' && $activeGroup !== null && ! $activeIsHub) {
-        session(["finance.last.{$activeGroup}" => $activeTabUrl ?? request()->url()]);
+    // Remember the last-visited page in each category so a sidebar category
+    // link can return the user to their previous page instead of the hub.
+    if ($module && $activeGroup !== null && ! $activeIsHub) {
+        session(["nav.last.".$module['slug'].".".$activeGroup => $activeTabUrl ?? request()->url()]);
     }
     $visibleTabs = $activeGroup === null
         ? array_values(array_filter($allTabs, fn ($t) => empty($t['hub'])))
