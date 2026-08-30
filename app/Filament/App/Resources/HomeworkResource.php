@@ -11,6 +11,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Modules\Academics\Models\Section;
 use Modules\Academics\Models\Subject;
 use Modules\Lms\Models\Homework;
@@ -30,6 +31,9 @@ class HomeworkResource extends Resource
 
     protected static ?string $navigationGroup = 'LMS';
 
+    // Reached via the module contextual tabs, not the sidebar.
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
 
     protected static ?string $navigationLabel = 'Homework & Lessons';
@@ -39,7 +43,7 @@ class HomeworkResource extends Resource
         return __(static::$navigationLabel);
     }
 
-    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    public static function getEloquentQuery(): Builder
     {
         // The Class column renders section→course names; eager loading keeps
         // strict mode (Model::shouldBeStrict) from flagging N+1 lazy loads.
