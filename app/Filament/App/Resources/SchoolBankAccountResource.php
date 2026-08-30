@@ -19,6 +19,8 @@ class SchoolBankAccountResource extends Resource
 
     protected static ?string $navigationGroup = 'Finance';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?string $navigationIcon = 'heroicon-o-building-library';
 
     protected static ?string $navigationLabel = 'School Bank Accounts';
