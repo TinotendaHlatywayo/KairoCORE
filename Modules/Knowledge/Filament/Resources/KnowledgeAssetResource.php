@@ -43,6 +43,8 @@ class KnowledgeAssetResource extends Resource
 
     protected static ?string $navigationGroup = 'Knowledge Hub';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     public static function form(Form $form): Form
     {
         return $form

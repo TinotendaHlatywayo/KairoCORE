@@ -138,6 +138,7 @@ use Modules\Library\Filament\Resources\LibraryIssueResource;
  * and active-state detection are always derived from the live application
  * rather than hard-coded strings.
  */
+use App\Filament\App\Pages\Knowledge\KnowledgeHub;
 class ModuleNavigation
 {
     /**
@@ -377,8 +378,9 @@ class ModuleNavigation
                 'icon' => 'heroicon-o-light-bulb',
                 'description' => __('Digital repository, documents and media galleries.'),
                 'tabs' => [
-                    ['label' => __('Knowledge Assets'), 'resource' => KnowledgeAssetResource::class],
-                    ['label' => __('Galleries'), 'resource' => KnowledgeGalleryResource::class],
+                    ['label' => __('Knowledge'), 'page' => KnowledgeHub::class, 'group' => __('Knowledge'), 'hub' => true],
+                    ['label' => __('Assets'), 'resource' => KnowledgeAssetResource::class, 'group' => __('Knowledge')],
+                    ['label' => __('Galleries'), 'resource' => KnowledgeGalleryResource::class, 'group' => __('Knowledge')],
                 ],
                 'more' => [],
             ],
