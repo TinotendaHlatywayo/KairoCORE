@@ -29,7 +29,7 @@ class SystemAuditLogResource extends Resource
 
     protected static ?string $navigationGroup = 'System Administration';
 
-    protected static ?string $navigationLabel = 'Activity Logs';
+    protected static bool $shouldRegisterNavigation = false;
 
     public static function getNavigationLabel(): string
     {
@@ -39,7 +39,6 @@ class SystemAuditLogResource extends Resource
     protected static ?int $navigationSort = 15;
 
     // Reached via the module contextual tabs, not the sidebar.
-    protected static bool $shouldRegisterNavigation = false;
 
     public static function canAccess(): bool
     {

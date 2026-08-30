@@ -36,6 +36,8 @@ class UserAccountResource extends Resource
 
     protected static ?string $navigationGroup = 'System Administration';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?string $navigationIcon = 'heroicon-o-users';
 
     protected static ?string $navigationLabel = 'User Accounts';

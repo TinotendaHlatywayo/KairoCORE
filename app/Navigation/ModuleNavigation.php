@@ -6,9 +6,11 @@ use App\Filament\App\Pages\Academic\AcademicOperationsCenter;
 use App\Filament\App\Pages\Academic\ProgressionHub;
 use App\Filament\App\Pages\Academic\SetupStructureHub;
 use App\Filament\App\Pages\Academic\TimetablesTeachingHub;
+use App\Filament\App\Pages\Administration\AuditHub;
+use App\Filament\App\Pages\Administration\SystemSettingsHub;
+use App\Filament\App\Pages\Administration\UserManagementHub;
 use App\Filament\App\Pages\AdministrationDashboard;
 use App\Filament\App\Pages\AdmissionSettingsPage;
-use App\Filament\App\Pages\AnalyticsExplorer;
 use App\Filament\App\Pages\AssessmentWorkspace;
 use App\Filament\App\Pages\Boarding\AccommodationHub;
 use App\Filament\App\Pages\Boarding\WelfareHub;
@@ -33,19 +35,20 @@ use App\Filament\App\Pages\Inventory\FixedAssetsHub;
 use App\Filament\App\Pages\Inventory\ProcurementHub;
 use App\Filament\App\Pages\Inventory\StockInventoryHub;
 use App\Filament\App\Pages\IssueBook;
+use App\Filament\App\Pages\Knowledge\KnowledgeHub;
 use App\Filament\App\Pages\Library\CatalogueHub;
 use App\Filament\App\Pages\Library\CirculationHub;
 use App\Filament\App\Pages\ManualMarkingPage;
 use App\Filament\App\Pages\MyDay;
-use App\Filament\App\Pages\ReportGeneratorPage;
 use App\Filament\App\Pages\ReportingDashboard;
+use App\Filament\App\Pages\Reports\ReportsHub;
 use App\Filament\App\Pages\SaaSBillingOverview;
 use App\Filament\App\Pages\Schedule;
 use App\Filament\App\Pages\SystemSettingsPage;
 use App\Filament\App\Pages\TenantDataExportPage;
 use App\Filament\App\Pages\VisualTimetableBuilder;
+use App\Filament\App\Pages\Website\WebsiteTemplatesHub;
 use App\Filament\App\Pages\WebsiteContentManager;
-use App\Filament\App\Pages\WebsiteTemplatesHub;
 use App\Filament\App\Resources\AcademicReportResource;
 use App\Filament\App\Resources\AcademicYearResource;
 use App\Filament\App\Resources\AccountResource;
@@ -68,7 +71,6 @@ use App\Filament\App\Resources\DigitalAssessmentResource;
 use App\Filament\App\Resources\DisciplinaryCaseResource;
 use App\Filament\App\Resources\EmployeeAssetResource;
 use App\Filament\App\Resources\EmployeeResource;
-use App\Filament\App\Resources\EnterpriseReportTemplateResource;
 use App\Filament\App\Resources\EventCalendarResource;
 use App\Filament\App\Resources\ExpenseCategoryResource;
 use App\Filament\App\Resources\ExpenseResource;
@@ -79,7 +81,6 @@ use App\Filament\App\Resources\FeeStructureResource;
 use App\Filament\App\Resources\FeeWaiverResource;
 use App\Filament\App\Resources\FinanceDocumentTemplateResource;
 use App\Filament\App\Resources\FixedAssetResource;
-use App\Filament\App\Resources\GeneratedReportResource;
 use App\Filament\App\Resources\GradingScaleResource;
 use App\Filament\App\Resources\HelpdeskTicketResource;
 use App\Filament\App\Resources\HomeworkResource;
@@ -125,8 +126,6 @@ use Modules\Knowledge\Filament\Resources\KnowledgeAssetResource;
 use Modules\Knowledge\Filament\Resources\KnowledgeGalleryResource;
 use Modules\Library\Filament\Resources\EResourceResource;
 use Modules\Library\Filament\Resources\LibraryBookResource;
-use Modules\Library\Filament\Resources\LibraryIssueResource;
-
 /**
  * Central registry of the application's information architecture.
  *
@@ -138,7 +137,8 @@ use Modules\Library\Filament\Resources\LibraryIssueResource;
  * and active-state detection are always derived from the live application
  * rather than hard-coded strings.
  */
-use App\Filament\App\Pages\Knowledge\KnowledgeHub;
+use Modules\Library\Filament\Resources\LibraryIssueResource;
+
 class ModuleNavigation
 {
     /**
@@ -391,10 +391,10 @@ class ModuleNavigation
                 'icon' => 'heroicon-o-globe-alt',
                 'description' => __('Build and manage the public school website.'),
                 'tabs' => [
-                    ['label' => __('Templates'), 'page' => WebsiteTemplatesHub::class],
-                    ['label' => __('Websites'), 'resource' => CmsWebsiteResource::class],
-                    ['label' => __('Pages'), 'resource' => CmsPageResource::class],
-                    ['label' => __('Content Manager'), 'page' => WebsiteContentManager::class],
+                    ['label' => __('Templates & Design'), 'page' => WebsiteTemplatesHub::class, 'group' => __('Templates & Design'), 'hub' => true],
+                    ['label' => __('Websites'), 'resource' => CmsWebsiteResource::class, 'group' => __('Templates & Design')],
+                    ['label' => __('Pages'), 'resource' => CmsPageResource::class, 'group' => __('Templates & Design')],
+                    ['label' => __('Content Manager'), 'page' => WebsiteContentManager::class, 'group' => __('Templates & Design')],
                 ],
                 'more' => [],
             ],
@@ -405,11 +405,11 @@ class ModuleNavigation
                 'icon' => 'heroicon-o-chart-bar',
                 'description' => __('Compile reports, templates and explore analytics.'),
                 'tabs' => [
-                    ['label' => __('Dashboard'), 'page' => ReportingDashboard::class],
-                    ['label' => __('Report Generator'), 'page' => ReportGeneratorPage::class],
-                    ['label' => __('Templates'), 'resource' => EnterpriseReportTemplateResource::class],
-                    ['label' => __('Generated Reports'), 'resource' => GeneratedReportResource::class],
-                    ['label' => __('Analytics Explorer'), 'page' => AnalyticsExplorer::class],
+                    ['label' => __('Dashboard'), 'page' => ReportingDashboard::class, 'group' => __('Dashboard')],
+                    ['label' => __('Reports'), 'page' => ReportsHub::class, 'group' => __('Reports'), 'hub' => true],
+                    ['label' => __('Report Generator'), 'page' => ReportGeneratorPage::class, 'group' => __('Reports')],
+                    ['label' => __('Generated Reports'), 'resource' => GeneratedReportResource::class, 'group' => __('Reports')],
+                    ['label' => __('Analytics Explorer'), 'page' => AnalyticsExplorer::class, 'group' => __('Reports')],
                 ],
                 'more' => [],
             ],
@@ -420,17 +420,19 @@ class ModuleNavigation
                 'icon' => 'heroicon-o-wrench-screwdriver',
                 'description' => __('Settings, roles, departments and audit trails.'),
                 'tabs' => [
-                    ['label' => __('Overview'), 'page' => AdministrationDashboard::class],
-                    ['label' => __('System Settings'), 'page' => SystemSettingsPage::class],
-                    ['label' => __('Email Configuration'), 'page' => EmailConfigurationPage::class],
-                    ['label' => __('User Accounts'), 'resource' => UserAccountResource::class],
-                    ['label' => __('Roles'), 'resource' => CustomRoleResource::class],
-                    ['label' => __('Departments'), 'resource' => DepartmentResource::class],
-                    ['label' => __('Audit Log'), 'resource' => SystemAuditLogResource::class],
+                    ['label' => __('Overview'), 'page' => AdministrationDashboard::class, 'group' => __('Overview')],
+                    ['label' => __('System Settings'), 'page' => SystemSettingsHub::class, 'group' => __('System Settings'), 'hub' => true],
+                    ['label' => __('System Settings'), 'page' => SystemSettingsPage::class, 'group' => __('System Settings')],
+                    ['label' => __('Email Configuration'), 'page' => EmailConfigurationPage::class, 'group' => __('System Settings')],
+                    ['label' => __('User Management'), 'page' => UserManagementHub::class, 'group' => __('User Management'), 'hub' => true],
+                    ['label' => __('User Accounts'), 'resource' => UserAccountResource::class, 'group' => __('User Management')],
+                    ['label' => __('Roles'), 'resource' => CustomRoleResource::class, 'group' => __('User Management')],
+                    ['label' => __('Departments'), 'resource' => DepartmentResource::class, 'group' => __('User Management')],
+                    ['label' => __('Audit & Compliance'), 'page' => AuditHub::class, 'group' => __('Audit & Compliance'), 'hub' => true],
+                    ['label' => __('Audit Log'), 'resource' => SystemAuditLogResource::class, 'group' => __('Audit & Compliance')],
+                    ['label' => __('Data Export'), 'page' => TenantDataExportPage::class, 'group' => __('Audit & Compliance')],
                 ],
-                'more' => [
-                    ['label' => __('Data Export'), 'page' => TenantDataExportPage::class],
-                ],
+                'more' => [],
             ],
 
             [
@@ -439,8 +441,9 @@ class ModuleNavigation
                 'icon' => 'heroicon-o-credit-card',
                 'description' => __('Your plan, invoices and payments.'),
                 'tabs' => [
-                    ['label' => __('Overview & Billing'), 'page' => SaaSBillingOverview::class],
-                    ['label' => __('My Subscription'), 'resource' => SaaSMySubscriptionResource::class],
+                    ['label' => __('Overview & Billing'), 'page' => SaaSBillingOverview::class, 'group' => __('Overview')],
+                    ['label' => __('Subscription & Billing'), 'page' => SaaSHub::class, 'group' => __('Subscription & Billing'), 'hub' => true],
+                    ['label' => __('My Subscription'), 'resource' => SaaSMySubscriptionResource::class, 'group' => __('Subscription & Billing')],
                 ],
                 'more' => [],
             ],
