@@ -30,6 +30,9 @@ class StudentMedicalRecordResource extends Resource
 
     protected static ?string $navigationGroup = 'Health & Safety';
 
+    // Reached via the module contextual tabs, not the sidebar.
+    protected static bool $shouldRegisterNavigation = false;
+
     public static function canAccess(): bool
     {
         if (! ModuleVisibilityManager::isVisible('clinic')) {
