@@ -21,6 +21,9 @@ use App\Filament\App\Pages\Finance\CoreAccountingHub;
 use App\Filament\App\Pages\Finance\ExpensesPurchasingHub;
 use App\Filament\App\Pages\Finance\StudentBillingHub;
 use App\Filament\App\Pages\GamificationSettingsPage;
+use App\Filament\App\Pages\Hr\AttendanceLeaveHub;
+use App\Filament\App\Pages\Hr\PayrollCompensationHub;
+use App\Filament\App\Pages\Hr\StaffDirectoryHub;
 use App\Filament\App\Pages\IssueBook;
 use App\Filament\App\Pages\ManualMarkingPage;
 use App\Filament\App\Pages\MyDay;
@@ -206,17 +209,6 @@ class ModuleNavigation
             ],
 
             [
-                'slug' => 'attendance',
-                'label' => __('Attendance'),
-                'icon' => 'heroicon-o-clipboard-document-check',
-                'description' => __('Track attendance for staff and students.'),
-                'tabs' => [
-                    ['label' => __('Staff Attendance'), 'resource' => StaffAttendanceResource::class],
-                ],
-                'more' => [],
-            ],
-
-            [
                 'slug' => 'finance',
                 'label' => __('Finance'),
                 'icon' => 'heroicon-o-banknotes',
@@ -250,16 +242,19 @@ class ModuleNavigation
                 'icon' => 'heroicon-o-users',
                 'description' => __('Employees, payroll, leave and staff administration.'),
                 'tabs' => [
-                    ['label' => __('Employees'), 'resource' => EmployeeResource::class],
-                    ['label' => __('Payroll Periods'), 'resource' => PayrollPeriodResource::class],
-                    ['label' => __('Leave Requests'), 'resource' => LeaveRequestResource::class],
+                    ['label' => __('Staff Directory & HR'), 'page' => StaffDirectoryHub::class, 'group' => __('Staff Directory & HR'), 'hub' => true],
+                    ['label' => __('Employees'), 'resource' => EmployeeResource::class, 'group' => __('Staff Directory & HR')],
+                    ['label' => __('Staff Assets'), 'resource' => EmployeeAssetResource::class, 'group' => __('Staff Directory & HR')],
+                    ['label' => __('Disciplinary Cases'), 'resource' => DisciplinaryCaseResource::class, 'group' => __('Staff Directory & HR')],
+                    ['label' => __('Payroll & Compensation'), 'page' => PayrollCompensationHub::class, 'group' => __('Payroll & Compensation'), 'hub' => true],
+                    ['label' => __('Payroll Periods'), 'resource' => PayrollPeriodResource::class, 'group' => __('Payroll & Compensation')],
+                    ['label' => __('Salary Grades'), 'resource' => SalaryGradeResource::class, 'group' => __('Payroll & Compensation')],
+                    ['label' => __('Staff Loans'), 'resource' => StaffLoanResource::class, 'group' => __('Payroll & Compensation')],
+                    ['label' => __('Attendance & Leave'), 'page' => AttendanceLeaveHub::class, 'group' => __('Attendance & Leave'), 'hub' => true],
+                    ['label' => __('Leave Requests'), 'resource' => LeaveRequestResource::class, 'group' => __('Attendance & Leave')],
+                    ['label' => __('Staff Attendance'), 'resource' => StaffAttendanceResource::class, 'group' => __('Attendance & Leave')],
                 ],
-                'more' => [
-                    ['label' => __('Salary Grades'), 'resource' => SalaryGradeResource::class],
-                    ['label' => __('Staff Loans'), 'resource' => StaffLoanResource::class],
-                    ['label' => __('Staff Assets'), 'resource' => EmployeeAssetResource::class],
-                    ['label' => __('Disciplinary Cases'), 'resource' => DisciplinaryCaseResource::class],
-                ],
+                'more' => [],
             ],
 
             [

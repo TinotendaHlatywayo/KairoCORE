@@ -31,6 +31,8 @@ class StaffAttendanceResource extends Resource
     // Grouping configuration:
     protected static ?string $navigationGroup = 'HR & Payroll';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     public static function getNavigationLabel(): string
     {
         return __('Staff Attendance');
