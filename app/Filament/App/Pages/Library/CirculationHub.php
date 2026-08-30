@@ -10,7 +10,7 @@ class CirculationHub extends Page
 {
     protected static string $view = 'filament.app.pages.library.category-hub';
 
-    protected static ?string $navigationIcon = 'heroicon-o-arrow-left-right';
+    protected static ?string $navigationIcon = 'heroicon-o-arrow-right-on-rectangle';
 
     protected static ?string $navigationGroup = 'Library';
 
