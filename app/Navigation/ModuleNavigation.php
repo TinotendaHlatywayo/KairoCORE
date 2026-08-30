@@ -27,6 +27,8 @@ use App\Filament\App\Pages\Hr\StaffDirectoryHub;
 use App\Filament\App\Pages\Inventory\FixedAssetsHub;
 use App\Filament\App\Pages\Inventory\ProcurementHub;
 use App\Filament\App\Pages\Inventory\StockInventoryHub;
+use App\Filament\App\Pages\Library\CatalogueHub;
+use App\Filament\App\Pages\Library\CirculationHub;
 use App\Filament\App\Pages\IssueBook;
 use App\Filament\App\Pages\ManualMarkingPage;
 use App\Filament\App\Pages\MyDay;
@@ -288,10 +290,12 @@ class ModuleNavigation
                 'icon' => 'heroicon-o-book-open',
                 'description' => __('Books, digital resources and circulation.'),
                 'tabs' => [
-                    ['label' => __('Books'), 'resource' => LibraryBookResource::class],
-                    ['label' => __('eResources'), 'resource' => EResourceResource::class],
-                    ['label' => __('Issue Book'), 'page' => IssueBook::class],
-                    ['label' => __('Issues'), 'resource' => LibraryIssueResource::class],
+                    ['label' => __('Catalogue'), 'page' => CatalogueHub::class, 'group' => __('Catalogue'), 'hub' => true],
+                    ['label' => __('Books'), 'resource' => LibraryBookResource::class, 'group' => __('Catalogue')],
+                    ['label' => __('eResources'), 'resource' => EResourceResource::class, 'group' => __('Catalogue')],
+                    ['label' => __('Circulation'), 'page' => CirculationHub::class, 'group' => __('Circulation'), 'hub' => true],
+                    ['label' => __('Issue Book'), 'page' => IssueBook::class, 'group' => __('Circulation')],
+                    ['label' => __('Issues'), 'resource' => LibraryIssueResource::class, 'group' => __('Circulation')],
                 ],
                 'more' => [],
             ],

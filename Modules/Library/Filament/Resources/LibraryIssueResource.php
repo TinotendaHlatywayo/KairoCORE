@@ -38,6 +38,8 @@ class LibraryIssueResource extends Resource
 
     protected static ?string $navigationGroup = 'Library';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     public static function canAccess(): bool
     {
         return ModuleVisibilityManager::isModuleVisible('library');

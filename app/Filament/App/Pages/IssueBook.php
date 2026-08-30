@@ -23,6 +23,8 @@ class IssueBook extends Page
 
     protected static ?string $navigationGroup = 'Library';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?string $navigationLabel = 'Issue Book';
 
     protected static ?string $title = 'Issue Physical Resource';
