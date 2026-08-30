@@ -17,6 +17,8 @@ class GamificationSettingsPage extends Page implements HasForms
 
     protected static string $view = 'filament.app.pages.gamification-settings';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?string $navigationIcon = 'heroicon-o-trophy';
 
     protected static ?string $navigationGroup = 'Exams & Grading';
