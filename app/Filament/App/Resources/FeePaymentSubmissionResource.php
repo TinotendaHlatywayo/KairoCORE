@@ -20,6 +20,8 @@ class FeePaymentSubmissionResource extends Resource
 
     protected static ?string $navigationGroup = 'Finance';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?string $navigationIcon = 'heroicon-o-arrow-path-rounded-square';
 
     protected static ?string $navigationLabel = 'Payment Proofs';

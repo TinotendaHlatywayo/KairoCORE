@@ -25,7 +25,7 @@ class ExecutiveFinancialDashboard extends Page
         return __(static::$navigationGroup);
     }
 
-    protected static ?string $navigationLabel = 'Executive Dashboard';
+    protected static ?string $navigationLabel = 'Dashboard & Analytics';
 
     public static function getNavigationLabel(): string
     {

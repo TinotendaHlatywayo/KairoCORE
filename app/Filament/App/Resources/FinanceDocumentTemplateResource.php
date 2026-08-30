@@ -39,6 +39,8 @@ class FinanceDocumentTemplateResource extends Resource
 
     protected static ?string $navigationGroup = 'Finance';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?string $navigationIcon = 'heroicon-o-document-chart-bar';
 
     protected static ?string $navigationLabel = 'Document Templates';
