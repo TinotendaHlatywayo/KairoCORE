@@ -42,6 +42,8 @@ class LibraryBookResource extends Resource
 
     protected static ?string $navigationGroup = 'Library';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     public static function canAccess(): bool
     {
         if (! ModuleVisibilityManager::isVisible('library')) {
