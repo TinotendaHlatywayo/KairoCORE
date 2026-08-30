@@ -25,6 +25,9 @@ class MyDay extends Page
 
     protected static ?string $navigationGroup = 'Schedule & Tasks';
 
+    // Reached via the module contextual tabs, not the sidebar.
+    protected static bool $shouldRegisterNavigation = false;
+
     public static function getNavigationGroup(): ?string
     {
 

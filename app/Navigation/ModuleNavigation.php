@@ -12,6 +12,9 @@ use App\Filament\App\Pages\AnalyticsExplorer;
 use App\Filament\App\Pages\AssessmentWorkspace;
 use App\Filament\App\Pages\Boarding\AccommodationHub;
 use App\Filament\App\Pages\Boarding\WelfareHub;
+use App\Filament\App\Pages\Communication\CommunityHub;
+use App\Filament\App\Pages\Communication\HelpInboxHub;
+use App\Filament\App\Pages\Communication\ScheduleTasksHub;
 use App\Filament\App\Pages\CommunicationCenter;
 use App\Filament\App\Pages\EmailConfigurationPage;
 use App\Filament\App\Pages\Exams\AssessmentCenterHub;
@@ -340,19 +343,21 @@ class ModuleNavigation
                 'description' => __('Connect, communicate and engage your school community.'),
                 'landing' => CommunicationCenter::class,
                 'tabs' => [
-                    ['label' => __('Overview'), 'page' => CommunicationCenter::class, 'icon' => 'heroicon-o-squares-2x2'],
-                    ['label' => __('Schedule'), 'page' => Schedule::class, 'icon' => 'heroicon-o-calendar-days'],
-                    ['label' => __('My Day'), 'page' => MyDay::class, 'icon' => 'heroicon-o-check-circle'],
-                    ['label' => __('Announcements'), 'resource' => AnnouncementResource::class],
-                    ['label' => __('Resources'), 'resource' => CampusResourceResource::class],
-                    ['label' => __('Chat'), 'resource' => ChatThreadResource::class],
-                    ['label' => __('Events'), 'resource' => EventCalendarResource::class],
+                    ['label' => __('Overview'), 'page' => CommunicationCenter::class, 'group' => __('Overview'), 'icon' => 'heroicon-o-squares-2x2'],
+                    ['label' => __('Schedule & Tasks'), 'page' => ScheduleTasksHub::class, 'group' => __('Schedule & Tasks'), 'hub' => true],
+                    ['label' => __('Schedule'), 'page' => Schedule::class, 'group' => __('Schedule & Tasks'), 'icon' => 'heroicon-o-calendar-days'],
+                    ['label' => __('My Day'), 'page' => MyDay::class, 'group' => __('Schedule & Tasks'), 'icon' => 'heroicon-o-check-circle'],
+                    ['label' => __('Community & Engagement'), 'page' => CommunityHub::class, 'group' => __('Community & Engagement'), 'hub' => true],
+                    ['label' => __('Announcements'), 'resource' => AnnouncementResource::class, 'group' => __('Community & Engagement')],
+                    ['label' => __('Events'), 'resource' => EventCalendarResource::class, 'group' => __('Community & Engagement')],
+                    ['label' => __('Chat'), 'resource' => ChatThreadResource::class, 'group' => __('Community & Engagement')],
+                    ['label' => __('Resources'), 'resource' => CampusResourceResource::class, 'group' => __('Community & Engagement')],
+                    ['label' => __('Polls & Surveys'), 'resource' => PollResource::class, 'group' => __('Community & Engagement')],
+                    ['label' => __('Help & Inbox'), 'page' => HelpInboxHub::class, 'group' => __('Help & Inbox'), 'hub' => true],
+                    ['label' => __('Helpdesk'), 'resource' => HelpdeskTicketResource::class, 'group' => __('Help & Inbox')],
+                    ['label' => __('Kairo CORE Messages'), 'resource' => PlatformInboxResource::class, 'group' => __('Help & Inbox')],
                 ],
-                'more' => [
-                    ['label' => __('Helpdesk'), 'resource' => HelpdeskTicketResource::class],
-                    ['label' => __('Polls & Surveys'), 'resource' => PollResource::class],
-                    ['label' => __('Kairo CORE Messages'), 'resource' => PlatformInboxResource::class],
-                ],
+                'more' => [],
             ],
 
             [
