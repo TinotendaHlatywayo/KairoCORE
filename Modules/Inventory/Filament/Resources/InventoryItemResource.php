@@ -40,6 +40,8 @@ class InventoryItemResource extends Resource
 
     protected static ?string $navigationGroup = 'Inventory & Procurement';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?string $recordTitleAttribute = 'name';
 
     public static function form(Form $form): Form

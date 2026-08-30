@@ -24,6 +24,9 @@ use App\Filament\App\Pages\GamificationSettingsPage;
 use App\Filament\App\Pages\Hr\AttendanceLeaveHub;
 use App\Filament\App\Pages\Hr\PayrollCompensationHub;
 use App\Filament\App\Pages\Hr\StaffDirectoryHub;
+use App\Filament\App\Pages\Inventory\FixedAssetsHub;
+use App\Filament\App\Pages\Inventory\ProcurementHub;
+use App\Filament\App\Pages\Inventory\StockInventoryHub;
 use App\Filament\App\Pages\IssueBook;
 use App\Filament\App\Pages\ManualMarkingPage;
 use App\Filament\App\Pages\MyDay;
@@ -263,18 +266,20 @@ class ModuleNavigation
                 'icon' => 'heroicon-o-cube',
                 'description' => __('Stock, fixed assets, suppliers and procurement workflows.'),
                 'tabs' => [
-                    ['label' => __('Inventory Items'), 'resource' => InventoryItemResource::class],
-                    ['label' => __('Procurement Requests'), 'resource' => ProcurementRequestResource::class],
-                    ['label' => __('Purchase Orders'), 'resource' => PurchaseOrderResource::class],
-                    ['label' => __('Goods Received'), 'resource' => GoodsReceivedResource::class],
+                    ['label' => __('Stock & Inventory'), 'page' => StockInventoryHub::class, 'group' => __('Stock & Inventory'), 'hub' => true],
+                    ['label' => __('Inventory Items'), 'resource' => InventoryItemResource::class, 'group' => __('Stock & Inventory')],
+                    ['label' => __('Issuance'), 'resource' => InventoryIssuanceResource::class, 'group' => __('Stock & Inventory')],
+                    ['label' => __('Stock Adjustments'), 'resource' => StockAdjustmentResource::class, 'group' => __('Stock & Inventory')],
+                    ['label' => __('Procurement'), 'page' => ProcurementHub::class, 'group' => __('Procurement'), 'hub' => true],
+                    ['label' => __('Procurement Requests'), 'resource' => ProcurementRequestResource::class, 'group' => __('Procurement')],
+                    ['label' => __('Purchase Orders'), 'resource' => PurchaseOrderResource::class, 'group' => __('Procurement')],
+                    ['label' => __('Goods Received'), 'resource' => GoodsReceivedResource::class, 'group' => __('Procurement')],
+                    ['label' => __('Suppliers'), 'resource' => SupplierResource::class, 'group' => __('Procurement')],
+                    ['label' => __('Fixed Assets'), 'page' => FixedAssetsHub::class, 'group' => __('Fixed Assets'), 'hub' => true],
+                    ['label' => __('Fixed Assets'), 'resource' => FixedAssetResource::class, 'group' => __('Fixed Assets')],
+                    ['label' => __('Asset Maintenance'), 'resource' => AssetMaintenanceResource::class, 'group' => __('Fixed Assets')],
                 ],
-                'more' => [
-                    ['label' => __('Suppliers'), 'resource' => SupplierResource::class],
-                    ['label' => __('Issuance'), 'resource' => InventoryIssuanceResource::class],
-                    ['label' => __('Stock Adjustments'), 'resource' => StockAdjustmentResource::class],
-                    ['label' => __('Fixed Assets'), 'resource' => FixedAssetResource::class],
-                    ['label' => __('Asset Maintenance'), 'resource' => AssetMaintenanceResource::class],
-                ],
+                'more' => [],
             ],
 
             [
