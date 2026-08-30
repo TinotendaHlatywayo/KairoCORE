@@ -11,6 +11,9 @@ use App\Filament\App\Pages\AssessmentWorkspace;
 use App\Filament\App\Pages\CommunicationCenter;
 use App\Filament\App\Pages\EmailConfigurationPage;
 use App\Filament\App\Pages\ExecutiveFinancialDashboard;
+use App\Filament\App\Pages\Finance\CoreAccountingHub;
+use App\Filament\App\Pages\Finance\ExpensesPurchasingHub;
+use App\Filament\App\Pages\Finance\StudentBillingHub;
 use App\Filament\App\Pages\GamificationSettingsPage;
 use App\Filament\App\Pages\IssueBook;
 use App\Filament\App\Pages\ManualMarkingPage;
@@ -208,15 +211,18 @@ class ModuleNavigation
                 'icon' => 'heroicon-o-banknotes',
                 'description' => __('Fees, billing, payments, expenses and the general ledger.'),
                 'tabs' => [
-                    ['label' => __('Overview'), 'page' => ExecutiveFinancialDashboard::class],
+                    ['label' => __('Overview'), 'page' => ExecutiveFinancialDashboard::class, 'group' => __('Dashboard & Analytics')],
+                    ['label' => __('Student Billing & Revenue'), 'page' => StudentBillingHub::class, 'group' => __('Student Billing & Revenue')],
                     ['label' => __('Fee Structures'), 'resource' => FeeStructureResource::class, 'group' => __('Student Billing & Revenue')],
                     ['label' => __('Fee Categories'), 'resource' => FeeCategoryResource::class, 'group' => __('Student Billing & Revenue')],
                     ['label' => __('Invoices'), 'resource' => InvoiceResource::class, 'group' => __('Student Billing & Revenue')],
                     ['label' => __('Payment Proofs'), 'resource' => FeePaymentSubmissionResource::class, 'group' => __('Student Billing & Revenue')],
                     ['label' => __('Fee Waivers'), 'resource' => FeeWaiverResource::class, 'group' => __('Student Billing & Revenue')],
+                    ['label' => __('Expenses & Purchasing'), 'page' => ExpensesPurchasingHub::class, 'group' => __('Expenses & Purchasing')],
                     ['label' => __('Expenses'), 'resource' => ExpenseResource::class, 'group' => __('Expenses & Purchasing')],
                     ['label' => __('Expense Types'), 'resource' => ExpenseTypeResource::class, 'group' => __('Expenses & Purchasing')],
                     ['label' => __('Expense Categories'), 'resource' => ExpenseCategoryResource::class, 'group' => __('Expenses & Purchasing')],
+                    ['label' => __('Core Accounting & Setup'), 'page' => CoreAccountingHub::class, 'group' => __('Core Accounting & Setup')],
                     ['label' => __('Ledger'), 'resource' => AccountResource::class, 'group' => __('Core Accounting & Setup')],
                     ['label' => __('Journal Entries'), 'resource' => JournalEntryResource::class, 'group' => __('Core Accounting & Setup')],
                     ['label' => __('Revenue Streams'), 'resource' => RevenueStreamResource::class, 'group' => __('Core Accounting & Setup')],

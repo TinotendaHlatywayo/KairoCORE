@@ -3,22 +3,20 @@
     $module = $service->currentModule();
     $allTabs = $module ? array_merge($service->moduleTabs($module), $service->moduleMoreTabs($module)) : [];
     $activeLabel = $module ? $service->activeTabLabel($module) : null;
-    // Group consecutive tabs that share a "group" label into dropdowns so long
-    // module menus (e.g. Finance) stay compact instead of an overwhelming flat list.
-    $groups = [];
+    // Tabs may carry a "group" label (e.g. the Finance categories). The sidebar
+    // already groups pages by category, so the top bar should stay compact:
+    // when the active tab belongs to a group, surface only that group's tabs as
+    // flat pills for quick switching. Ungrouped modules render every tab as a pill.
+    $activeGroup = null;
     foreach ($allTabs as $tab) {
-        $g = $tab['group'] ?? null;
-        if ($g === null) {
-            $groups[] = ['type' => 'pill', 'label' => null, 'tabs' => [$tab]];
-        } else {
-            $last = count($groups) - 1;
-            if ($last >= 0 && $groups[$last]['type'] === 'dropdown' && $groups[$last]['label'] === $g) {
-                $groups[$last]['tabs'][] = $tab;
-            } else {
-                $groups[] = ['type' => 'dropdown', 'label' => $g, 'tabs' => [$tab]];
-            }
+        if (($tab['label'] ?? null) === $activeLabel) {
+            $activeGroup = $tab['group'] ?? null;
+            break;
         }
     }
+    $visibleTabs = $activeGroup === null
+        ? $allTabs
+        : array_values(array_filter($allTabs, fn ($t) => ($t['group'] ?? null) === $activeGroup));
 @endphp
 
 @if(request()->has('scnav-debug'))
@@ -45,63 +43,22 @@
 
     <div class="sc-module-tabs-wrap">
         <div class="sc-module-tabs" x-ref="scTabs" role="tablist">
-            @foreach ($groups as $group)
-                @if ($group['type'] === 'pill')
-                    @php $pill = $group['tabs'][0]; @endphp
-                    <a
-                        href="{{ url($pill['url']) }}"
-                        role="tab"
-                        aria-selected="{{ $pill['label'] === $activeLabel ? 'true' : 'false' }}"
-                        class="sc-tab {{ $pill['label'] === $activeLabel ? 'is-active' : '' }}"
-                        @if ($pill['label'] === $activeLabel) aria-current="page" @endif
-                    >
-                        @if (! empty($pill['icon']))
-                            @svg($pill['icon'], 'sc-tab-icon')
-                        @endif
-                        <span>{{ $pill['label'] }}</span>
-                        @if ($pill['label'] === $activeLabel)
-                            <span class="sc-tab-active-dot" aria-hidden="true"></span>
-                        @endif
-                    </a>
-                @else
-                    @php
-                        $groupActive = collect($group['tabs'])->contains(fn ($t) => $t['label'] === $activeLabel);
-                    @endphp
-                    <div class="sc-module-more" x-data="{ open: false }">
-                        <button
-                            type="button"
-                            class="sc-more-btn {{ $groupActive ? 'is-group-active' : '' }}"
-                            :class="open ? 'is-open' : ''"
-                            @click="open = !open"
-                            :aria-expanded="open ? 'true' : 'false'"
-                        >
-                            <span>{{ $group['label'] }}</span>
-                            @svg('heroicon-o-chevron-down', 'sc-chevron')
-                        </button>
-                        <div
-                            class="sc-more-menu"
-                            x-show="open"
-                            x-cloak
-                            x-transition.opacity
-                            @click.outside="open = false"
-                            @keydown.escape.window="open = false"
-                        >
-                            @foreach ($group['tabs'] as $tab)
-                                @php $tabIsActive = $tab['label'] === $activeLabel; @endphp
-                                <a
-                                    href="{{ url($tab['url']) }}"
-                                    class="sc-more-item {{ $tabIsActive ? 'is-active' : '' }}"
-                                    @click="open = false"
-                                >
-                                    <span>{{ $tab['label'] }}</span>
-                                    @if ($tabIsActive)
-                                        <span class="sc-more-item-dot" aria-hidden="true"></span>
-                                    @endif
-                                </a>
-                            @endforeach
-                        </div>
-                    </div>
-                @endif
+            @foreach ($visibleTabs as $tab)
+                <a
+                    href="{{ url($tab['url']) }}"
+                    role="tab"
+                    aria-selected="{{ $tab['label'] === $activeLabel ? 'true' : 'false' }}"
+                    class="sc-tab {{ $tab['label'] === $activeLabel ? 'is-active' : '' }}"
+                    @if ($tab['label'] === $activeLabel) aria-current="page" @endif
+                >
+                    @if (! empty($tab['icon']))
+                        @svg($tab['icon'], 'sc-tab-icon')
+                    @endif
+                    <span>{{ $tab['label'] }}</span>
+                    @if ($tab['label'] === $activeLabel)
+                        <span class="sc-tab-active-dot" aria-hidden="true"></span>
+                    @endif
+                </a>
             @endforeach
         </div>
     </div>
