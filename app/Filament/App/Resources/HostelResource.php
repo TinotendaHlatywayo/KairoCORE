@@ -29,6 +29,9 @@ class HostelResource extends Resource
 
     protected static ?string $navigationGroup = 'Boarding & Welfare';
 
+    // Reached via the module contextual tabs, not the sidebar.
+    protected static bool $shouldRegisterNavigation = false;
+
     public static function form(Form $form): Form
     {
         return $form
