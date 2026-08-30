@@ -22,6 +22,7 @@ use App\Filament\App\Pages\Finance\CoreAccountingHub;
 use App\Filament\App\Pages\Finance\ExpensesPurchasingHub;
 use App\Filament\App\Pages\Finance\StudentBillingHub;
 use App\Filament\App\Pages\GamificationSettingsPage;
+use App\Filament\App\Pages\Health\HealthRecordsHub;
 use App\Filament\App\Pages\Hr\AttendanceLeaveHub;
 use App\Filament\App\Pages\Hr\PayrollCompensationHub;
 use App\Filament\App\Pages\Hr\StaffDirectoryHub;
@@ -325,8 +326,9 @@ class ModuleNavigation
                 'icon' => 'heroicon-o-heart',
                 'description' => __('Medical records and clinic visits.'),
                 'tabs' => [
-                    ['label' => __('Medical Records'), 'resource' => StudentMedicalRecordResource::class],
-                    ['label' => __('Clinic Visits'), 'resource' => ClinicVisitResource::class],
+                    ['label' => __('Health Records'), 'page' => HealthRecordsHub::class, 'group' => __('Health Records'), 'hub' => true],
+                    ['label' => __('Medical Records'), 'resource' => StudentMedicalRecordResource::class, 'group' => __('Health Records')],
+                    ['label' => __('Clinic Visits'), 'resource' => ClinicVisitResource::class, 'group' => __('Health Records')],
                 ],
                 'more' => [],
             ],
