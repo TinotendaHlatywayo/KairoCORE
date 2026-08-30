@@ -40,6 +40,14 @@ class StudentBillingHub extends Page
         return __(static::$title ?? '');
     }
 
+    public function mount(): void
+    {
+        $last = session("finance.last.".$this->getCategoryLabel());
+        if ($last && $last !== request()->url()) {
+            redirect($last);
+        }
+    }
+
     public function getCategoryLabel(): string
     {
         return __('Student Billing & Revenue');

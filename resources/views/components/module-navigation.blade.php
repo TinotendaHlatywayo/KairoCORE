@@ -6,17 +6,26 @@
     // Tabs may carry a "group" label (e.g. the Finance categories). The sidebar
     // already groups pages by category, so the top bar should stay compact:
     // when the active tab belongs to a group, surface only that group's tabs as
-    // flat pills for quick switching. Ungrouped modules render every tab as a pill.
+    // flat pills for quick switching. Landing hub pages are excluded.
     $activeGroup = null;
+    $activeTabUrl = null;
+    $activeIsHub = false;
     foreach ($allTabs as $tab) {
         if (($tab['label'] ?? null) === $activeLabel) {
             $activeGroup = $tab['group'] ?? null;
+            $activeTabUrl = $tab['url'] ?? null;
+            $activeIsHub = (bool) ($tab['hub'] ?? false);
             break;
         }
     }
+    // Remember the last-visited page in each Finance category so a sidebar
+    // category link can return the user to their previous page instead of the hub.
+    if ($module && ($module['slug'] ?? null) === 'finance' && $activeGroup !== null && ! $activeIsHub) {
+        session(["finance.last.{$activeGroup}" => $activeTabUrl ?? request()->url()]);
+    }
     $visibleTabs = $activeGroup === null
-        ? $allTabs
-        : array_values(array_filter($allTabs, fn ($t) => ($t['group'] ?? null) === $activeGroup));
+        ? array_values(array_filter($allTabs, fn ($t) => empty($t['hub'])))
+        : array_values(array_filter($allTabs, fn ($t) => ($t['group'] ?? null) === $activeGroup && empty($t['hub'])));
 @endphp
 
 @if(request()->has('scnav-debug'))
