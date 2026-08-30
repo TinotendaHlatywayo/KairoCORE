@@ -170,8 +170,6 @@ class ModuleNavigation
                     ['label' => __('Assessment Workspace'), 'page' => AssessmentWorkspace::class],
                     ['label' => __('Report Cards'), 'resource' => AcademicReportResource::class],
                     ['label' => __('Digital Assessments'), 'resource' => DigitalAssessmentResource::class],
-                ],
-                'more' => [
                     ['label' => __('Assessment Types'), 'resource' => AssessmentTypeResource::class],
                     ['label' => __('Grading Scales'), 'resource' => GradingScaleResource::class],
                     ['label' => __('Marks Entry'), 'resource' => AssessmentMarkResource::class],
@@ -182,6 +180,7 @@ class ModuleNavigation
                     ['label' => __('Report Templates'), 'resource' => ReportTemplateResource::class],
                     ['label' => __('Workflows'), 'resource' => AssessmentWorkflowResource::class],
                 ],
+                'more' => [],
             ],
 
             [

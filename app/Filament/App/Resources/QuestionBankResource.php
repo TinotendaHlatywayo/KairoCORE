@@ -24,6 +24,8 @@ class QuestionBankResource extends Resource
 
     protected static ?string $model = QuestionBank::class;
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?string $navigationIcon = 'heroicon-o-folder-open';
 
     protected static ?string $navigationGroup = 'Exams & Grading';
