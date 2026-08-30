@@ -9,8 +9,9 @@ use App\Filament\App\Pages\Academic\TimetablesTeachingHub;
 use App\Filament\App\Pages\AdministrationDashboard;
 use App\Filament\App\Pages\AdmissionSettingsPage;
 use App\Filament\App\Pages\AnalyticsExplorer;
-use App\Filament\App\Pages\AssessmentAnalyticsPage;
 use App\Filament\App\Pages\AssessmentWorkspace;
+use App\Filament\App\Pages\Boarding\AccommodationHub;
+use App\Filament\App\Pages\Boarding\WelfareHub;
 use App\Filament\App\Pages\CommunicationCenter;
 use App\Filament\App\Pages\EmailConfigurationPage;
 use App\Filament\App\Pages\Exams\AssessmentCenterHub;
@@ -27,9 +28,9 @@ use App\Filament\App\Pages\Hr\StaffDirectoryHub;
 use App\Filament\App\Pages\Inventory\FixedAssetsHub;
 use App\Filament\App\Pages\Inventory\ProcurementHub;
 use App\Filament\App\Pages\Inventory\StockInventoryHub;
+use App\Filament\App\Pages\IssueBook;
 use App\Filament\App\Pages\Library\CatalogueHub;
 use App\Filament\App\Pages\Library\CirculationHub;
-use App\Filament\App\Pages\IssueBook;
 use App\Filament\App\Pages\ManualMarkingPage;
 use App\Filament\App\Pages\MyDay;
 use App\Filament\App\Pages\ReportGeneratorPage;
@@ -44,11 +45,11 @@ use App\Filament\App\Pages\WebsiteTemplatesHub;
 use App\Filament\App\Resources\AcademicReportResource;
 use App\Filament\App\Resources\AcademicYearResource;
 use App\Filament\App\Resources\AccountResource;
+use App\Filament\App\Resources\AnnouncementResource;
+use App\Filament\App\Resources\ApplicationResource;
 use App\Filament\App\Resources\AssessmentMarkResource;
 use App\Filament\App\Resources\AssessmentTypeResource;
 use App\Filament\App\Resources\AssessmentWorkflowResource;
-use App\Filament\App\Resources\AnnouncementResource;
-use App\Filament\App\Resources\ApplicationResource;
 use App\Filament\App\Resources\CampusResourceResource;
 use App\Filament\App\Resources\CardTemplateResource;
 use App\Filament\App\Resources\ChatThreadResource;
@@ -69,13 +70,13 @@ use App\Filament\App\Resources\ExpenseCategoryResource;
 use App\Filament\App\Resources\ExpenseResource;
 use App\Filament\App\Resources\ExpenseTypeResource;
 use App\Filament\App\Resources\FeeCategoryResource;
-use App\Filament\App\Resources\FinanceDocumentTemplateResource;
 use App\Filament\App\Resources\FeePaymentSubmissionResource;
 use App\Filament\App\Resources\FeeStructureResource;
 use App\Filament\App\Resources\FeeWaiverResource;
+use App\Filament\App\Resources\FinanceDocumentTemplateResource;
 use App\Filament\App\Resources\FixedAssetResource;
-use App\Filament\App\Resources\GradingScaleResource;
 use App\Filament\App\Resources\GeneratedReportResource;
+use App\Filament\App\Resources\GradingScaleResource;
 use App\Filament\App\Resources\HelpdeskTicketResource;
 use App\Filament\App\Resources\HomeworkResource;
 use App\Filament\App\Resources\HostelAllocationResource;
@@ -306,15 +307,16 @@ class ModuleNavigation
                 'icon' => 'heroicon-o-home-modern',
                 'description' => __('Hostels, room allocation and welfare oversight.'),
                 'tabs' => [
-                    ['label' => __('Hostels'), 'resource' => HostelResource::class],
-                    ['label' => __('Rooms'), 'resource' => HostelRoomResource::class],
-                    ['label' => __('Allocations'), 'resource' => HostelAllocationResource::class],
-                    ['label' => __('Out Passes'), 'resource' => HostelOutPassResource::class],
+                    ['label' => __('Accommodation'), 'page' => AccommodationHub::class, 'group' => __('Accommodation'), 'hub' => true],
+                    ['label' => __('Hostels'), 'resource' => HostelResource::class, 'group' => __('Accommodation')],
+                    ['label' => __('Rooms'), 'resource' => HostelRoomResource::class, 'group' => __('Accommodation')],
+                    ['label' => __('Allocations'), 'resource' => HostelAllocationResource::class, 'group' => __('Accommodation')],
+                    ['label' => __('Welfare & Care'), 'page' => WelfareHub::class, 'group' => __('Welfare & Care'), 'hub' => true],
+                    ['label' => __('Out Passes'), 'resource' => HostelOutPassResource::class, 'group' => __('Welfare & Care')],
+                    ['label' => __('Attendance'), 'resource' => HostelAttendanceResource::class, 'group' => __('Welfare & Care')],
+                    ['label' => __('Inspections'), 'resource' => HostelInspectionResource::class, 'group' => __('Welfare & Care')],
                 ],
-                'more' => [
-                    ['label' => __('Attendance'), 'resource' => HostelAttendanceResource::class],
-                    ['label' => __('Inspections'), 'resource' => HostelInspectionResource::class],
-                ],
+                'more' => [],
             ],
 
             [
