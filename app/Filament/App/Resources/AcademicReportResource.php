@@ -50,7 +50,7 @@ class AcademicReportResource extends Resource
         return __(static::$navigationLabel);
     }
 
-    protected static bool $shouldRegisterNavigation = true;
+    protected static bool $shouldRegisterNavigation = false;
 
     public static function form(Form $form): Form
     {
