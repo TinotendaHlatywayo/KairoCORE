@@ -21,9 +21,18 @@ class FinancialAnalyticsEngine
             ->sum('amount');
         $netSurplus = $totalRevenue - $totalExpenses;
 
-        $outstandingFees = Invoice::where('school_id', $schoolId)->sum('balance_amount');
-        $totalInvoiced = Invoice::where('school_id', $schoolId)->sum('total_amount');
-        $totalPaidInvoices = Invoice::where('school_id', $schoolId)->sum('paid_amount');
+        $outstandingFees = Invoice::where('school_id', $schoolId)
+            ->where('status', '!=', 'void')
+            ->sum('balance_amount');
+
+        // Payables = approved but not yet paid expenses (real obligations).
+        $accountsPayable = Expense::where('school_id', $schoolId)
+            ->where('status', 'approved')
+            ->sum('amount');
+
+        // Cash position aligned with the revenue/expense figures already shown,
+        // rather than an inconsistent proxy of invoice credits.
+        $cashPosition = max(0, $netSurplus);
 
         return [
             'total_revenue' => $totalRevenue,
@@ -31,9 +40,9 @@ class FinancialAnalyticsEngine
             'net_surplus' => $netSurplus,
             'outstanding_student_fees' => $outstandingFees,
             'accounts_receivable' => $outstandingFees,
-            'accounts_payable' => 0.00,
-            'cash_on_hand' => max(0, $totalPaidInvoices - $totalExpenses),
-            'bank_balances' => max(0, $totalPaidInvoices - $totalExpenses),
+            'accounts_payable' => $accountsPayable,
+            'cash_on_hand' => $cashPosition,
+            'bank_balances' => $cashPosition,
         ];
     }
 
@@ -67,7 +76,10 @@ class FinancialAnalyticsEngine
     public function getFeeAgeing(int $schoolId): array
     {
         $now = now();
-        $invoices = Invoice::where('school_id', $schoolId)->where('balance_amount', '>', 0)->get();
+        $invoices = Invoice::where('school_id', $schoolId)
+            ->where('balance_amount', '>', 0)
+            ->where('status', '!=', 'void')
+            ->get();
 
         $ageing = [
             '0_30_days' => 0,
@@ -359,6 +371,7 @@ class FinancialAnalyticsEngine
             ->join('users', 'students.user_id', '=', 'users.id')
             ->where('invoices.school_id', $schoolId)
             ->where('invoices.balance_amount', '>', 0)
+            ->where('invoices.status', '!=', 'void')
             ->select(
                 'students.id as student_id',
                 'users.name as student_name',
@@ -382,6 +395,7 @@ class FinancialAnalyticsEngine
         $now = Carbon::now();
         $invoices = Invoice::where('school_id', $schoolId)
             ->where('balance_amount', '>', 0)
+            ->where('status', '!=', 'void')
             ->with(['student.user'])
             ->get();
 
@@ -425,26 +439,51 @@ class FinancialAnalyticsEngine
     }
 
     /**
-     * Get Revenue Forecast for upcoming months based on historical moving average.
+     * Get a short revenue forecast by projecting the observed historical trend
+     * forwards with ordinary least-squares regression (real data, no invented
+     * growth assumptions). Falls back to the average of recent periods when
+     * there is insufficient history to fit a line.
      */
     public function getRevenueForecast(int $schoolId, int $months = 6): array
     {
         $trend = $this->getRevenueExpenseTrend($schoolId, 12);
-        $revenues = $trend['revenue'] ?? [];
-        
-        // Simple moving average / linear projection
-        $avg = count($revenues) > 0 ? array_sum($revenues) / count($revenues) : 0;
-        $growthRate = 0.03; // 3% assumed monthly growth trend
+        $revenues = array_values(array_filter($trend['revenue'] ?? [], fn ($v) => $v > 0));
 
         $forecastLabels = [];
         $forecastValues = [];
         $current = Carbon::now();
 
-        for ($i = 1; $i <= $months; $i++) {
-            $current->addMonth();
-            $forecastLabels[] = $current->format('M Y');
-            $projected = $avg > 0 ? $avg * pow(1 + $growthRate, $i) : 0;
-            $forecastValues[] = round($projected, 2);
+        if (count($revenues) >= 2) {
+            // Least-squares slope/intercept over the observed periods (0..n-1).
+            $n = count($revenues);
+            $x = range(0, $n - 1);
+            $meanX = array_sum($x) / $n;
+            $meanY = array_sum($revenues) / $n;
+            $num = 0.0;
+            $den = 0.0;
+            foreach ($x as $i => $xi) {
+                $num += ($xi - $meanX) * ($revenues[$i] - $meanY);
+                $den += ($xi - $meanX) ** 2;
+            }
+            $slope = $den > 0 ? $num / $den : 0;
+            $intercept = $meanY - $slope * $meanX;
+
+            for ($i = 1; $i <= $months; $i++) {
+                $current->addMonth();
+                $forecastLabels[] = $current->format('M Y');
+                // Only project forward if the trend is at least neutral; a heavy
+                // negative slope is flattened to avoid absurd negative forecasts.
+                $projected = $intercept + $slope * ($n - 1 + $i);
+                $forecastValues[] = round(max(0, $projected), 2);
+            }
+        } else {
+            // Insufficient history: hold the latest observed level flat.
+            $baseline = $revenues[0] ?? 0;
+            for ($i = 1; $i <= $months; $i++) {
+                $current->addMonth();
+                $forecastLabels[] = $current->format('M Y');
+                $forecastValues[] = round($baseline, 2);
+            }
         }
 
         return [
@@ -455,34 +494,17 @@ class FinancialAnalyticsEngine
 
     /**
      * Get Budget Variance analysis.
+     *
+     * Only produces real variance when formal budget baselines exist. No Budget
+     * model is wired up yet, so this returns an empty set rather than presenting
+     * a fabricated "estimated baseline" that would mislead an executive.
      */
     public function getBudgetVariance(int $schoolId): array
     {
-        $actualExpenses = DB::table('expenses')
-            ->join('expense_types', 'expenses.expense_type_id', '=', 'expense_types.id')
-            ->join('expense_categories', 'expense_types.expense_category_id', '=', 'expense_categories.id', 'left')
-            ->where('expenses.school_id', $schoolId)
-            ->whereIn('expenses.status', ['approved', 'paid'])
-            ->select('expense_categories.name as category', DB::raw('SUM(expenses.amount) as actual'))
-            ->groupBy('expense_categories.name')
-            ->pluck('actual', 'category')
-            ->toArray();
-
-        $variance = [];
-        foreach ($actualExpenses as $category => $actual) {
-            // Estimated baseline (no formal budgets exist yet): 1.25x actual spend.
-            $budget = $actual * 1.25;
-            $diff = $budget - $actual;
-            $variance[] = [
-                'category' => $category ?: 'General Operational',
-                'budget' => (float) $budget,
-                'actual' => (float) $actual,
-                'variance' => (float) $diff,
-                'percentage' => $budget > 0 ? round(($actual / $budget) * 100, 1) : 0,
-            ];
-        }
-
-        return $variance;
+        // When real budgets are introduced, load them here and compute variance
+        // against actual approved/paid expenses per category. Until then there is
+        // no reliable baseline, so we return nothing and the UI hides this block.
+        return [];
     }
 
     /**

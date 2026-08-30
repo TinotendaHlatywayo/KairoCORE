@@ -2,19 +2,34 @@
     $service = app(\App\Navigation\ModuleNavigationService::class);
     $module = $service->currentModule();
     $allTabs = $module ? array_merge($service->moduleTabs($module), $service->moduleMoreTabs($module)) : [];
-    $tabs = $allTabs;
     $activeLabel = $module ? $service->activeTabLabel($module) : null;
+    // Group consecutive tabs that share a "group" label into dropdowns so long
+    // module menus (e.g. Finance) stay compact instead of an overwhelming flat list.
+    $groups = [];
+    foreach ($allTabs as $tab) {
+        $g = $tab['group'] ?? null;
+        if ($g === null) {
+            $groups[] = ['type' => 'pill', 'label' => null, 'tabs' => [$tab]];
+        } else {
+            $last = count($groups) - 1;
+            if ($last >= 0 && $groups[$last]['type'] === 'dropdown' && $groups[$last]['label'] === $g) {
+                $groups[$last]['tabs'][] = $tab;
+            } else {
+                $groups[] = ['type' => 'dropdown', 'label' => $g, 'tabs' => [$tab]];
+            }
+        }
+    }
 @endphp
 
 @if(request()->has('scnav-debug'))
     <div id="scnav-debug" style="display:none;"
          data-path="{{ request()->path() }}"
          data-module="{{ $module['slug'] ?? 'NULL' }}"
-         data-tabcount="{{ count($tabs) }}"
-         data-tabs="{{ json_encode(array_column($tabs, 'label')) }}"></div>
+         data-tabcount="{{ count($allTabs) }}"
+         data-tabs="{{ json_encode(array_column($allTabs, 'label')) }}"></div>
 @endif
 
-@if ($module && count($tabs) > 0 && ! request()->routeIs('*.courses.edit') && ! request()->routeIs('*courses.edit'))
+@if ($module && count($allTabs) > 0 && ! request()->routeIs('*.courses.edit') && ! request()->routeIs('*courses.edit'))
 <div class="sc-module-navigation" x-data="{}">
     <div class="sc-module-head">
         <span class="sc-module-icon">
@@ -30,23 +45,63 @@
 
     <div class="sc-module-tabs-wrap">
         <div class="sc-module-tabs" x-ref="scTabs" role="tablist">
-            @foreach ($tabs as $tab)
-                @php $tabIsActive = $tab['label'] === $activeLabel; @endphp
-                <a
-                    href="{{ url($tab['url']) }}"
-                    role="tab"
-                    aria-selected="{{ $tabIsActive ? 'true' : 'false' }}"
-                    class="sc-tab {{ $tabIsActive ? 'is-active' : '' }}"
-                    @if ($tabIsActive) aria-current="page" @endif
-                >
-                    @if (! empty($tab['icon']))
-                        @svg($tab['icon'], 'sc-tab-icon')
-                    @endif
-                    <span>{{ $tab['label'] }}</span>
-                    @if ($tabIsActive)
-                        <span class="sc-tab-active-dot" aria-hidden="true"></span>
-                    @endif
-                </a>
+            @foreach ($groups as $group)
+                @if ($group['type'] === 'pill')
+                    @php $pill = $group['tabs'][0]; @endphp
+                    <a
+                        href="{{ url($pill['url']) }}"
+                        role="tab"
+                        aria-selected="{{ $pill['label'] === $activeLabel ? 'true' : 'false' }}"
+                        class="sc-tab {{ $pill['label'] === $activeLabel ? 'is-active' : '' }}"
+                        @if ($pill['label'] === $activeLabel) aria-current="page" @endif
+                    >
+                        @if (! empty($pill['icon']))
+                            @svg($pill['icon'], 'sc-tab-icon')
+                        @endif
+                        <span>{{ $pill['label'] }}</span>
+                        @if ($pill['label'] === $activeLabel)
+                            <span class="sc-tab-active-dot" aria-hidden="true"></span>
+                        @endif
+                    </a>
+                @else
+                    @php
+                        $groupActive = collect($group['tabs'])->contains(fn ($t) => $t['label'] === $activeLabel);
+                    @endphp
+                    <div class="sc-module-more" x-data="{ open: false }">
+                        <button
+                            type="button"
+                            class="sc-more-btn {{ $groupActive ? 'is-group-active' : '' }}"
+                            :class="open ? 'is-open' : ''"
+                            @click="open = !open"
+                            :aria-expanded="open ? 'true' : 'false'"
+                        >
+                            <span>{{ $group['label'] }}</span>
+                            @svg('heroicon-o-chevron-down', 'sc-chevron')
+                        </button>
+                        <div
+                            class="sc-more-menu"
+                            x-show="open"
+                            x-cloak
+                            x-transition.opacity
+                            @click.outside="open = false"
+                            @keydown.escape.window="open = false"
+                        >
+                            @foreach ($group['tabs'] as $tab)
+                                @php $tabIsActive = $tab['label'] === $activeLabel; @endphp
+                                <a
+                                    href="{{ url($tab['url']) }}"
+                                    class="sc-more-item {{ $tabIsActive ? 'is-active' : '' }}"
+                                    @click="open = false"
+                                >
+                                    <span>{{ $tab['label'] }}</span>
+                                    @if ($tabIsActive)
+                                        <span class="sc-more-item-dot" aria-hidden="true"></span>
+                                    @endif
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
             @endforeach
         </div>
     </div>
@@ -314,10 +369,21 @@
         background-color: color-mix(in srgb, var(--theme-primary, #0d9488) 12%, transparent);
     }
 
+    .sc-more-btn.is-group-active {
+        color: #ffffff;
+        background: linear-gradient(135deg, var(--theme-primary, #0d9488) 0%, var(--theme-accent, #06b6d4) 130%);
+        box-shadow: 0 6px 16px -6px var(--theme-primary, #0d9488);
+    }
+
+    .dark .sc-more-btn.is-group-active {
+        color: #ffffff;
+    }
+
     .sc-chevron {
         width: 1rem;
         height: 1rem;
         transition: transform 150ms ease;
+        flex: none;
     }
 
     .rotate-180 {
@@ -344,7 +410,10 @@
     }
 
     .sc-more-item {
-        display: block;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
         padding: 0.5rem 0.625rem;
         font-size: 0.8125rem;
         font-weight: 600;
@@ -375,6 +444,14 @@
     .dark .sc-more-item.is-active {
         color: var(--primary-400, #4ade80);
         background-color: color-mix(in srgb, var(--primary-400, #4ade80) 14%, transparent);
+    }
+
+    .sc-more-item-dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 9999px;
+        background: var(--primary-600, #15803d);
+        flex: none;
     }
 
     @media (max-width: 640px) {

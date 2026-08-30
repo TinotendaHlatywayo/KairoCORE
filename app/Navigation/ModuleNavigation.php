@@ -7,6 +7,7 @@ use App\Filament\App\Pages\AdministrationDashboard;
 use App\Filament\App\Pages\AdmissionSettingsPage;
 use App\Filament\App\Pages\AnalyticsExplorer;
 use App\Filament\App\Pages\AssessmentAnalyticsPage;
+use App\Filament\App\Pages\AssessmentWorkspace;
 use App\Filament\App\Pages\CommunicationCenter;
 use App\Filament\App\Pages\EmailConfigurationPage;
 use App\Filament\App\Pages\ExecutiveFinancialDashboard;
@@ -26,6 +27,9 @@ use App\Filament\App\Pages\WebsiteTemplatesHub;
 use App\Filament\App\Resources\AcademicReportResource;
 use App\Filament\App\Resources\AcademicYearResource;
 use App\Filament\App\Resources\AccountResource;
+use App\Filament\App\Resources\AssessmentMarkResource;
+use App\Filament\App\Resources\AssessmentTypeResource;
+use App\Filament\App\Resources\AssessmentWorkflowResource;
 use App\Filament\App\Resources\AnnouncementResource;
 use App\Filament\App\Resources\ApplicationResource;
 use App\Filament\App\Resources\CampusResourceResource;
@@ -48,10 +52,12 @@ use App\Filament\App\Resources\ExpenseCategoryResource;
 use App\Filament\App\Resources\ExpenseResource;
 use App\Filament\App\Resources\ExpenseTypeResource;
 use App\Filament\App\Resources\FeeCategoryResource;
+use App\Filament\App\Resources\FinanceDocumentTemplateResource;
 use App\Filament\App\Resources\FeePaymentSubmissionResource;
 use App\Filament\App\Resources\FeeStructureResource;
 use App\Filament\App\Resources\FeeWaiverResource;
 use App\Filament\App\Resources\FixedAssetResource;
+use App\Filament\App\Resources\GradingScaleResource;
 use App\Filament\App\Resources\GeneratedReportResource;
 use App\Filament\App\Resources\HelpdeskTicketResource;
 use App\Filament\App\Resources\HomeworkResource;
@@ -68,6 +74,8 @@ use App\Filament\App\Resources\PayrollPeriodResource;
 use App\Filament\App\Resources\PlatformInboxResource;
 use App\Filament\App\Resources\PollResource;
 use App\Filament\App\Resources\PromotionWorkflowResource;
+use App\Filament\App\Resources\QuestionBankResource;
+use App\Filament\App\Resources\ReportTemplateResource;
 use App\Filament\App\Resources\RevenueCategoryResource;
 use App\Filament\App\Resources\RevenueStreamResource;
 use App\Filament\App\Resources\SaaSMySubscriptionResource;
@@ -201,22 +209,22 @@ class ModuleNavigation
                 'description' => __('Fees, billing, payments, expenses and the general ledger.'),
                 'tabs' => [
                     ['label' => __('Overview'), 'page' => ExecutiveFinancialDashboard::class],
-                    ['label' => __('Fee Structures'), 'resource' => FeeStructureResource::class],
-                    ['label' => __('Invoices'), 'resource' => InvoiceResource::class],
-                    ['label' => __('Expenses'), 'resource' => ExpenseResource::class],
-                    ['label' => __('Ledger'), 'resource' => AccountResource::class],
+                    ['label' => __('Fee Structures'), 'resource' => FeeStructureResource::class, 'group' => __('Student Billing & Revenue')],
+                    ['label' => __('Fee Categories'), 'resource' => FeeCategoryResource::class, 'group' => __('Student Billing & Revenue')],
+                    ['label' => __('Invoices'), 'resource' => InvoiceResource::class, 'group' => __('Student Billing & Revenue')],
+                    ['label' => __('Payment Proofs'), 'resource' => FeePaymentSubmissionResource::class, 'group' => __('Student Billing & Revenue')],
+                    ['label' => __('Fee Waivers'), 'resource' => FeeWaiverResource::class, 'group' => __('Student Billing & Revenue')],
+                    ['label' => __('Expenses'), 'resource' => ExpenseResource::class, 'group' => __('Expenses & Purchasing')],
+                    ['label' => __('Expense Types'), 'resource' => ExpenseTypeResource::class, 'group' => __('Expenses & Purchasing')],
+                    ['label' => __('Expense Categories'), 'resource' => ExpenseCategoryResource::class, 'group' => __('Expenses & Purchasing')],
+                    ['label' => __('Ledger'), 'resource' => AccountResource::class, 'group' => __('Core Accounting & Setup')],
+                    ['label' => __('Journal Entries'), 'resource' => JournalEntryResource::class, 'group' => __('Core Accounting & Setup')],
+                    ['label' => __('Revenue Streams'), 'resource' => RevenueStreamResource::class, 'group' => __('Core Accounting & Setup')],
+                    ['label' => __('Revenue Categories'), 'resource' => RevenueCategoryResource::class, 'group' => __('Core Accounting & Setup')],
+                    ['label' => __('School Bank Accounts'), 'resource' => SchoolBankAccountResource::class, 'group' => __('Core Accounting & Setup')],
+                    ['label' => __('Document Templates'), 'resource' => FinanceDocumentTemplateResource::class, 'group' => __('Core Accounting & Setup')],
                 ],
-                'more' => [
-                    ['label' => __('Fee Categories'), 'resource' => FeeCategoryResource::class],
-                    ['label' => __('Fee Waivers'), 'resource' => FeeWaiverResource::class],
-                    ['label' => __('Revenue Streams'), 'resource' => RevenueStreamResource::class],
-                    ['label' => __('Revenue Categories'), 'resource' => RevenueCategoryResource::class],
-                    ['label' => __('Expense Categories'), 'resource' => ExpenseCategoryResource::class],
-                    ['label' => __('Expense Types'), 'resource' => ExpenseTypeResource::class],
-                    ['label' => __('Journal Entries'), 'resource' => JournalEntryResource::class],
-                    ['label' => __('Payment Proofs'), 'resource' => FeePaymentSubmissionResource::class],
-                    ['label' => __('School Bank Accounts'), 'resource' => SchoolBankAccountResource::class],
-                ],
+                'more' => [],
             ],
 
             [
