@@ -10,6 +10,9 @@ use App\Filament\App\Pages\AssessmentAnalyticsPage;
 use App\Filament\App\Pages\AssessmentWorkspace;
 use App\Filament\App\Pages\CommunicationCenter;
 use App\Filament\App\Pages\EmailConfigurationPage;
+use App\Filament\App\Pages\Exams\AssessmentCenterHub;
+use App\Filament\App\Pages\Exams\GradingMarksHub;
+use App\Filament\App\Pages\Exams\ReportsPublishingHub;
 use App\Filament\App\Pages\ExecutiveFinancialDashboard;
 use App\Filament\App\Pages\Finance\CoreAccountingHub;
 use App\Filament\App\Pages\Finance\ExpensesPurchasingHub;
@@ -178,18 +181,20 @@ class ModuleNavigation
                 'icon' => 'heroicon-o-pencil-square',
                 'description' => __('Assessments, grading scales, marks and report cards.'),
                 'tabs' => [
-                    ['label' => __('Assessment Workspace'), 'page' => AssessmentWorkspace::class],
-                    ['label' => __('Report Cards'), 'resource' => AcademicReportResource::class],
-                    ['label' => __('Digital Assessments'), 'resource' => DigitalAssessmentResource::class],
-                    ['label' => __('Assessment Types'), 'resource' => AssessmentTypeResource::class],
-                    ['label' => __('Grading Scales'), 'resource' => GradingScaleResource::class],
-                    ['label' => __('Marks Entry'), 'resource' => AssessmentMarkResource::class],
-                    ['label' => __('Manual Marking'), 'page' => ManualMarkingPage::class],
-                    ['label' => __('Assessment Analytics'), 'page' => AssessmentAnalyticsPage::class],
-                    ['label' => __('Gamification'), 'page' => GamificationSettingsPage::class],
-                    ['label' => __('Question Bank'), 'resource' => QuestionBankResource::class],
-                    ['label' => __('Report Templates'), 'resource' => ReportTemplateResource::class],
-                    ['label' => __('Workflows'), 'resource' => AssessmentWorkflowResource::class],
+                    ['label' => __('Assessment Center'), 'page' => AssessmentCenterHub::class, 'group' => __('Assessment Center'), 'hub' => true],
+                    ['label' => __('Digital Assessments'), 'resource' => DigitalAssessmentResource::class, 'group' => __('Assessment Center')],
+                    ['label' => __('Question Bank'), 'resource' => QuestionBankResource::class, 'group' => __('Assessment Center')],
+                    ['label' => __('Manual Marking'), 'page' => ManualMarkingPage::class, 'group' => __('Assessment Center')],
+                    ['label' => __('Gamification'), 'page' => GamificationSettingsPage::class, 'group' => __('Assessment Center')],
+                    ['label' => __('Grading & Marks Management'), 'page' => GradingMarksHub::class, 'group' => __('Grading & Marks Management'), 'hub' => true],
+                    ['label' => __('Assessment Workspace'), 'page' => AssessmentWorkspace::class, 'group' => __('Grading & Marks Management')],
+                    ['label' => __('Marks Entry'), 'resource' => AssessmentMarkResource::class, 'group' => __('Grading & Marks Management')],
+                    ['label' => __('Grading Scales'), 'resource' => GradingScaleResource::class, 'group' => __('Grading & Marks Management')],
+                    ['label' => __('Assessment Types'), 'resource' => AssessmentTypeResource::class, 'group' => __('Grading & Marks Management')],
+                    ['label' => __('Reports & Academic Publishing'), 'page' => ReportsPublishingHub::class, 'group' => __('Reports & Academic Publishing'), 'hub' => true],
+                    ['label' => __('Report Cards'), 'resource' => AcademicReportResource::class, 'group' => __('Reports & Academic Publishing')],
+                    ['label' => __('Report Templates'), 'resource' => ReportTemplateResource::class, 'group' => __('Reports & Academic Publishing')],
+                    ['label' => __('Workflows'), 'resource' => AssessmentWorkflowResource::class, 'group' => __('Reports & Academic Publishing')],
                 ],
                 'more' => [],
             ],

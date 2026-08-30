@@ -42,7 +42,7 @@ class CoreAccountingHub extends Page
 
     public function mount(): void
     {
-        $last = session("finance.last.".$this->getCategoryLabel());
+        $last = session("nav.last.finance.".$this->getCategoryLabel());
         $pages = $this->getCategoryPages();
         $target = $last ?: ($pages[0]['url'] ?? null);
         if ($target && $target !== request()->url()) {
