@@ -43,8 +43,10 @@ class StudentBillingHub extends Page
     public function mount(): void
     {
         $last = session("finance.last.".$this->getCategoryLabel());
-        if ($last && $last !== request()->url()) {
-            redirect($last);
+        $pages = $this->getCategoryPages();
+        $target = $last ?: ($pages[0]['url'] ?? null);
+        if ($target && $target !== request()->url()) {
+            redirect($target);
         }
     }
 
