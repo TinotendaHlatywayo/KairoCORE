@@ -38,8 +38,8 @@
     $stageWidth = max(280, min(1000, $radiusX * 2 + $itemSize + 40));
     $stageHeight = max(220, min(720, $radiusY * 2 + $itemSize + 60));
 
-    $heading = $block['title'] ?? __('Our Vibrant Community in Orbit');
-    $subtitle = $block['subtitle'] ?? __('A living constellation of the people and places that shape our school.');
+    $heading = $block['title'] ?? __('A Tour of Our Campus');
+    $subtitle = $block['subtitle'] ?? __('The learning spaces, sports fields and landmarks that make our school a home.');
     $centerLabel = $block['center_label'] ?? __('Pillars');
 @endphp
 <section class="sc-orbit-section" aria-label="{{ $heading }}"
