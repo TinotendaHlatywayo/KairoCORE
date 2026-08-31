@@ -70,6 +70,9 @@ class QuestionsRelationManager extends RelationManager
                     ->label('Type')
                     ->badge()
                     ->formatStateUsing(function ($state) {
+                        if ($state instanceof QuestionType) {
+                            return $state->label();
+                        }
                         if ($state instanceof \BackedEnum) {
                             return $state->label();
                         }
