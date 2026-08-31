@@ -1764,7 +1764,7 @@
                                                       x-data="{ v: $wire.$entangle('selectedBlockData.item_size') }"
                                                       x-text="(Number(v) || 84) + 'px'"></span>
                                             </div>
-                                            <input type="range" min="48" max="160" step="2"
+                                            <input type="range" min="48" max="280" step="2"
                                                    wire:model.live="selectedBlockData.item_size"
                                                    class="w-full accent-[color:var(--sc-primary)]">
                                         </div>
@@ -1777,7 +1777,7 @@
                                                           x-data="{ v: $wire.$entangle('selectedBlockData.orbit_radius_x') }"
                                                           x-text="(Number(v) || 180) + 'px'"></span>
                                                 </div>
-                                                <input type="range" min="80" max="420" step="10"
+                                                <input type="range" min="80" max="620" step="10"
                                                        wire:model.live="selectedBlockData.orbit_radius_x"
                                                        class="w-full accent-[color:var(--sc-primary)]">
                                             </div>
@@ -1788,7 +1788,7 @@
                                                           x-data="{ v: $wire.$entangle('selectedBlockData.orbit_radius_y') }"
                                                           x-text="(Number(v) || 70) + 'px'"></span>
                                                 </div>
-                                                <input type="range" min="30" max="200" step="5"
+                                                <input type="range" min="30" max="300" step="5"
                                                        wire:model.live="selectedBlockData.orbit_radius_y"
                                                        class="w-full accent-[color:var(--sc-primary)]">
                                             </div>

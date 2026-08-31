@@ -165,6 +165,36 @@ class ModuleNavigationService
         return null;
     }
 
+    /**
+     * Resolve the category group of the tab currently active for a module.
+     * Category hubs use this to keep their sidebar item highlighted while any
+     * page within the same category group is open.
+     */
+    public function activeTabGroup(array $module, ?string $path = null): ?string
+    {
+        $path = $path ?? request()->path();
+
+        foreach (array_merge($this->moduleTabs($module, false), $this->moduleMoreTabs($module, false)) as $tab) {
+            if ($this->pathMatchesTab($path, $tab)) {
+                return $tab['group'] ?? null;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Whether the tab currently active for a module belongs to the given
+     * category group (so a category hub can stay highlighted as its user
+     * moves between pages in that category).
+     */
+    public function currentTabInGroup(array $module, string $group, ?string $path = null): bool
+    {
+        $activeGroup = $this->activeTabGroup($module, $path);
+
+        return $activeGroup !== null && $activeGroup === $group;
+    }
+
     protected function pathMatchesTab(string $path, array $tab): bool
     {
         $url = parse_url((string) ($tab['url'] ?? ''), PHP_URL_PATH) ?? '';

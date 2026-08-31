@@ -206,6 +206,11 @@
                 var avail = stage.parentElement ? stage.parentElement.clientWidth : window.innerWidth;
                 var needed = this.cardWidth + 160;
                 this.scale = Math.max(0.42, Math.min(1, avail / needed));
+                // Size the stage to the scaled card so taller photos render at full
+                // height (cards are absolutely positioned and previously clipped).
+                if (stage.parentElement) {
+                    stage.parentElement.style.height = Math.round(this.cardHeight * this.scale) + 'px';
+                }
             },
 
             step(dir) {
