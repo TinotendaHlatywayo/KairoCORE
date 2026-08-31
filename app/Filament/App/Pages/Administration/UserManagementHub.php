@@ -10,7 +10,7 @@ class UserManagementHub extends Page
 {
     protected static string $view = 'filament.app.pages.administration.category-hub';
 
-    protected static ?string $navigationIcon = 'heroicon-users';
+    protected static ?string $navigationIcon = 'heroicon-o-user-group';
 
     protected static ?string $navigationGroup = 'System Administration';
 

@@ -10,7 +10,7 @@ class WebsiteTemplatesHub extends Page
 {
     protected static string $view = 'filament.app.pages.website.category-hub';
 
-    protected static ?string $navigationIcon = 'heroicon-o-globe';
+    protected static ?string $navigationIcon = 'heroicon-o-globe-alt';
 
     protected static ?string $navigationGroup = 'Website';
 
