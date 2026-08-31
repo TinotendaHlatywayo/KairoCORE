@@ -75,14 +75,12 @@ class HostelAttendanceRollCallTest extends TestCase
 
         try {
             Livewire::test(CreateHostelAttendance::class)
-                ->fillForm([
-                    'hostel_id' => $hostel->id,
-                    'date' => now()->toDateString(),
-                    'type' => 'evening',
-                    'learners' => [
-                        ['student_id' => $s1->id, 'is_present' => true, 'remarks' => ''],
-                        ['student_id' => $s2->id, 'is_present' => false, 'remarks' => 'Sick'],
-                    ],
+                ->set('data.hostel_id', $hostel->id)
+                ->set('data.date', now()->toDateString())
+                ->set('data.type', 'evening')
+                ->set('data.learners', [
+                    ['student_id' => $s1->id, 'is_present' => true, 'remarks' => ''],
+                    ['student_id' => $s2->id, 'is_present' => false, 'remarks' => 'Sick'],
                 ])
                 ->call('create')
                 ->assertHasNoFormErrors();
