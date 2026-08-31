@@ -2,12 +2,15 @@
 
 namespace App\Filament\App\Pages\SaaS;
 
+use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Navigation\ModuleNavigationService;
 use App\Services\ModuleVisibilityManager;
 use Filament\Pages\Page;
 
 class SaaSHub extends Page
 {
+    use ModuleAwareActiveNavigation;
+
     protected static string $view = 'filament.app.pages.saas.category-hub';
 
     protected static ?string $navigationIcon = 'heroicon-o-credit-card';

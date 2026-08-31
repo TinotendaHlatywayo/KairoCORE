@@ -2,12 +2,15 @@
 
 namespace App\Filament\App\Pages\Health;
 
+use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Navigation\ModuleNavigationService;
 use App\Services\ModuleVisibilityManager;
 use Filament\Pages\Page;
 
 class HealthRecordsHub extends Page
 {
+    use ModuleAwareActiveNavigation;
+
     protected static string $view = 'filament.app.pages.health.category-hub';
 
     protected static ?string $navigationIcon = 'heroicon-o-heart';

@@ -6,13 +6,18 @@ use App\Navigation\ModuleNavigationService;
 use Filament\Resources\Resource;
 
 /**
- * Keeps a module's landing sidebar item highlighted while the user is on any
- * page that belongs to the same module (e.g. "Online Admissions" stays active
- * when the user opens "Admission Settings"), instead of only when the item's
- * own page is open.
+ * Keeps a sidebar item highlighted for the whole category (group) it belongs
+ * to, instead of only while its own page is open.
  *
- * Applied to every navigation-registered landing resource / page in the app
- * panel so the current module is always visible in the sidebar.
+ * Applied to navigation-registered category hub pages so that, for example,
+ * "Student Billing & Revenue" (Finance) stays highlighted while the user opens
+ * Invoices, Payment Proofs, Fee Waivers etc., and "Payroll & Compensation"
+ * (HR & Payroll) stays highlighted while the user opens Payroll Periods,
+ * Salary Grades or Staff Loans.
+ *
+ * When the class maps to a module tab that has a category group, the item is
+ * highlighted while the current page's active tab belongs to that same group.
+ * For tab-less landing pages it falls back to highlighting the whole module.
  */
 trait ModuleAwareActiveNavigation
 {
@@ -20,29 +25,57 @@ trait ModuleAwareActiveNavigation
     {
         $items = parent::getNavigationItems();
 
-        $module = app(ModuleNavigationService::class)->moduleForClass(static::class);
+        $service = app(ModuleNavigationService::class);
+        $module = $service->moduleForClass(static::class);
 
-        if ($module === null || static::class !== ($module['tabs'][0]['resource'] ?? $module['tabs'][0]['page'] ?? null)) {
+        if ($module === null) {
             return $items;
         }
 
+        $category = static::categoryGroup($module);
+
         foreach ($items as $item) {
-            $item->isActiveWhen(static::moduleActiveClosure($module));
+            $item->isActiveWhen(static::moduleActiveClosure($module, $category));
         }
 
         return $items;
     }
 
-    protected static function moduleActiveClosure(array $module): \Closure
+    /**
+     * The category group this class belongs to, read straight from the module
+     * registry so it always matches the group used when resolving the active tab.
+     */
+    protected static function categoryGroup(array $module): ?string
     {
-        return function () use ($module): bool {
+        foreach (array_merge($module['tabs'] ?? [], $module['more'] ?? []) as $tab) {
+            if (($tab['resource'] ?? $tab['page'] ?? null) === static::class) {
+                return $tab['group'] ?? null;
+            }
+        }
+
+        return null;
+    }
+
+    protected static function moduleActiveClosure(array $module, ?string $category): \Closure
+    {
+        return function () use ($module, $category): bool {
             if (static::navigationActiveRoutePattern() !== null && request()->routeIs(static::navigationActiveRoutePattern())) {
                 return true;
             }
 
-            $current = app(ModuleNavigationService::class)->currentModule();
+            $service = app(ModuleNavigationService::class);
 
-            return ($current['slug'] ?? null) === ($module['slug'] ?? null);
+            if (($service->currentModule()['slug'] ?? null) !== ($module['slug'] ?? null)) {
+                return false;
+            }
+
+            // A category hub is active while any page in the same group is open.
+            if ($category !== null) {
+                return $service->currentTabInGroup($module, $category);
+            }
+
+            // No category resolved (landing page): keep the whole module active.
+            return true;
         };
     }
 
