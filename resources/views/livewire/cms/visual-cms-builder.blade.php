@@ -1219,32 +1219,53 @@
                                         </div>
                                     @endif
 
-                                    <!-- NESTED ARRAY PC FILE UPLOADER FOR GALLERIES -->
+                                    <!-- NESTED ARRAY PC FILE UPLOADER FOR GALLERIES / ORBIT -->
                                     @if(isset($selectedBlockData['images']) && is_array($selectedBlockData['images']))
+                                        @php
+                                            $isOrbit = ($selectedBlockData['type'] ?? '') === 'orbit_gallery';
+                                        @endphp
                                         <div class="border-t border-slate-100 pt-3 space-y-3">
-                                            <span class="text-[10px] font-black text-[color:var(--sc-primary)] block uppercase">{{ __('Photo Gallery Elements') }}</span>
+                                            <span class="text-[10px] font-black text-[color:var(--sc-primary)] block uppercase">{{ $isOrbit ? __('Orbit Items') : __('Photo Gallery Elements') }}</span>
                                             @foreach($selectedBlockData['images'] as $imageIdx => $image)
                                                 <div class="p-3 bg-slate-50 border border-[color:var(--sc-border)] rounded-2xl space-y-2">
-                                                    <span class="text-[9px] font-extrabold text-slate-400 block uppercase">Gallery Image Slot #{{ $imageIdx + 1 }}</span>
-                                                    <input type="text" wire:model.blur="selectedBlockData.images.{{ $imageIdx }}.url" class="studio-input-field text-xs" placeholder="Image URL">
-                                                    <input type="text" wire:model.blur="selectedBlockData.images.{{ $imageIdx }}.caption" class="studio-input-field text-xs" placeholder="Caption label">
-
-                                                    <!-- Direct Upload Hook to exact index -->
-                                                    <div class="sc-dropzone !p-2 mt-1.5">
-                                                        <div class="flex items-center gap-2">
-                                                            <input type="file" wire:model="tempImage" accept="image/*" class="flex-1 text-[11px]">
-                                                            <button type="button" wire:click="attachUploadedImage('images.{{ $imageIdx }}.url')" class="btn-primary !h-9 !px-3 !text-[11px]">
-                                                                {{ __('Attach') }}
-                                                            </button>
+                                                    <span class="text-[9px] font-extrabold text-slate-400 block uppercase">{{ $isOrbit ? 'Orbit Slot #'.($imageIdx + 1) : 'Gallery Image Slot #'.($imageIdx + 1) }}</span>
+                                                    @if($isOrbit)
+                                                        <input type="text" wire:model.blur="selectedBlockData.images.{{ $imageIdx }}.image" class="studio-input-field text-xs" placeholder="Image URL">
+                                                        <input type="text" wire:model.blur="selectedBlockData.images.{{ $imageIdx }}.label" class="studio-input-field text-xs" placeholder="Label text">
+                                                        <div class="sc-dropzone !p-2 mt-1.5">
+                                                            <div class="flex items-center gap-2">
+                                                                <input type="file" wire:model="tempImage" accept="image/*" class="flex-1 text-[11px]">
+                                                                <button type="button" wire:click="attachUploadedImage('images.{{ $imageIdx }}.image')" class="btn-primary !h-9 !px-3 !text-[11px]">{{ __('Attach') }}</button>
+                                                            </div>
                                                         </div>
-                                                    </div>
+                                                    @else
+                                                        <input type="text" wire:model.blur="selectedBlockData.images.{{ $imageIdx }}.url" class="studio-input-field text-xs" placeholder="Image URL">
+                                                        <input type="text" wire:model.blur="selectedBlockData.images.{{ $imageIdx }}.caption" class="studio-input-field text-xs" placeholder="Caption label">
+                                                        <div class="sc-dropzone !p-2 mt-1.5">
+                                                            <div class="flex items-center gap-2">
+                                                                <input type="file" wire:model="tempImage" accept="image/*" class="flex-1 text-[11px]">
+                                                                <button type="button" wire:click="attachUploadedImage('images.{{ $imageIdx }}.url')" class="btn-primary !h-9 !px-3 !text-[11px]">{{ __('Attach') }}</button>
+                                                            </div>
+                                                        </div>
+                                                    @endif
                                                 </div>
                                             @endforeach
                                         </div>
                                     @endif
 
                                     <!-- EDITABLE CARD COLLECTIONS (items, features, testimonials, faqs) -->
-                                    @foreach(['items' => ['title' => 'Title', 'desc' => 'Description'], 'features' => ['title' => 'Title', 'desc' => 'Description', 'image' => 'Image URL'], 'faqs' => ['q' => 'Question', 'a' => 'Answer'], 'testimonials' => ['quote' => 'Quote', 'name' => 'Name', 'role' => 'Role']] as $collection => $fields)
+                                    @php
+                                        $blockColType = $selectedBlockData['type'] ?? '';
+                                        $collectionFields = [
+                                            'items' => in_array($blockColType, ['marquee_ticker'], true)
+                                                ? ['label' => 'Text']
+                                                : ['title' => 'Title', 'desc' => 'Description'],
+                                            'features' => ['title' => 'Title', 'desc' => 'Description', 'image' => 'Image URL'],
+                                            'faqs' => ['q' => 'Question', 'a' => 'Answer'],
+                                            'testimonials' => ['quote' => 'Quote', 'name' => 'Name', 'role' => 'Role'],
+                                        ];
+                                    @endphp
+                                    @foreach($collectionFields as $collection => $fields)
                                         @if(isset($selectedBlockData[$collection]) && is_array($selectedBlockData[$collection]))
                                             <div class="space-y-2 border-t border-slate-100 pt-3">
                                                 <span class="text-[10px] font-black text-[color:var(--sc-primary)] block uppercase">{{ ucfirst($collection) }} Details</span>
@@ -1525,10 +1546,14 @@
                                                 <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Photo Width') }}</label>
                                                 <select wire:model.live="selectedBlockData.styles.image_width"
                                                         class="studio-select-field w-full text-xs">
-                                                    <option value="">{{ __('Default') }}</option>
+                                                    <option value="">{{ __('Template default') }}</option>
                                                     <option value="none">{{ __('Full column') }}</option>
-                                                    <option value="85%">{{ __('Slightly smaller') }}</option>
-                                                    <option value="70%">{{ __('Compact') }}</option>
+                                                    <option value="90%">{{ __('Wide (90%)') }}</option>
+                                                    <option value="80%">{{ __('Standard (80%)') }}</option>
+                                                    <option value="70%">{{ __('Compact (70%)') }}</option>
+                                                    <option value="720px">{{ __('Extra Large') }}</option>
+                                                    <option value="640px">{{ __('Large') }}</option>
+                                                    <option value="560px">{{ __('Medium') }}</option>
                                                 </select>
                                             </div>
                                         </div>
@@ -1716,6 +1741,105 @@
 
                                         <button wire:click="resetBlockStyle('carousel')" class="btn-secondary !h-8 !px-3 !text-[11px] justify-center w-full">
                                             {{ __('↺ Reset Carousel to Template Default') }}
+                                        </button>
+                                    </div>
+                                @endif
+
+                                <!-- ══ ORBIT GALLERY ══ -->
+                                @if(($selectedBlockData['type'] ?? '') === 'orbit_gallery')
+                                    <div class="border-t border-[color:var(--sc-border)] pt-3 space-y-3">
+                                        <span class="text-[10px] font-black text-[color:var(--sc-primary)] block uppercase">{{ __('Orbit Diagram') }}</span>
+                                        <p class="text-[10px] text-[color:var(--sc-text-muted)] leading-relaxed">{{ __('Adjust the hub label and the position & size of the orbiting items.') }}</p>
+
+                                        <div class="space-y-1">
+                                            <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Center Hub Label') }}</label>
+                                            <input type="text" wire:model.blur="selectedBlockData.center_label"
+                                                   placeholder="{{ __('e.g. Seabreeze') }}" class="studio-input-field text-xs h-10">
+                                        </div>
+
+                                        <div class="space-y-1">
+                                            <div class="flex items-center justify-between">
+                                                <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Item Size') }}</label>
+                                                <span class="text-xs font-bold text-[color:var(--sc-primary)]"
+                                                      x-data="{ v: $wire.$entangle('selectedBlockData.item_size') }"
+                                                      x-text="(Number(v) || 84) + 'px'"></span>
+                                            </div>
+                                            <input type="range" min="48" max="160" step="2"
+                                                   wire:model.live="selectedBlockData.item_size"
+                                                   class="w-full accent-[color:var(--sc-primary)]">
+                                        </div>
+
+                                        <div class="grid grid-cols-2 gap-3">
+                                            <div class="space-y-1">
+                                                <div class="flex items-center justify-between">
+                                                    <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Orbit Width') }}</label>
+                                                    <span class="text-xs font-bold text-[color:var(--sc-primary)]"
+                                                          x-data="{ v: $wire.$entangle('selectedBlockData.orbit_radius_x') }"
+                                                          x-text="(Number(v) || 180) + 'px'"></span>
+                                                </div>
+                                                <input type="range" min="80" max="420" step="10"
+                                                       wire:model.live="selectedBlockData.orbit_radius_x"
+                                                       class="w-full accent-[color:var(--sc-primary)]">
+                                            </div>
+                                            <div class="space-y-1">
+                                                <div class="flex items-center justify-between">
+                                                    <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Orbit Height') }}</label>
+                                                    <span class="text-xs font-bold text-[color:var(--sc-primary)]"
+                                                          x-data="{ v: $wire.$entangle('selectedBlockData.orbit_radius_y') }"
+                                                          x-text="(Number(v) || 70) + 'px'"></span>
+                                                </div>
+                                                <input type="range" min="30" max="200" step="5"
+                                                       wire:model.live="selectedBlockData.orbit_radius_y"
+                                                       class="w-full accent-[color:var(--sc-primary)]">
+                                            </div>
+                                        </div>
+
+                                        <div class="grid grid-cols-2 gap-3">
+                                            <div class="space-y-1">
+                                                <div class="flex items-center justify-between">
+                                                    <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Rotation Speed') }}</label>
+                                                    <span class="text-xs font-bold text-[color:var(--sc-primary)]"
+                                                          x-data="{ v: $wire.$entangle('selectedBlockData.rotation_speed') }"
+                                                          x-text="(Number(v) || 6)"></span>
+                                                </div>
+                                                <input type="range" min="0" max="30" step="1"
+                                                       wire:model.live="selectedBlockData.rotation_speed"
+                                                       class="w-full accent-[color:var(--sc-primary)]">
+                                            </div>
+                                            <div class="space-y-1">
+                                                <div class="flex items-center justify-between">
+                                                    <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Perspective Tilt') }}</label>
+                                                    <span class="text-xs font-bold text-[color:var(--sc-primary)]"
+                                                          x-data="{ v: $wire.$entangle('selectedBlockData.tilt') }"
+                                                          x-text="(Number(v) || 18) + 'deg'"></span>
+                                                </div>
+                                                <input type="range" min="0" max="40" step="1"
+                                                       wire:model.live="selectedBlockData.tilt"
+                                                       class="w-full accent-[color:var(--sc-primary)]">
+                                            </div>
+                                        </div>
+
+                                        <div class="grid grid-cols-2 gap-3">
+                                            <div class="space-y-1">
+                                                <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Direction') }}</label>
+                                                <select wire:model.live="selectedBlockData.direction"
+                                                        class="studio-select-field w-full text-xs">
+                                                    <option value="clockwise">{{ __('Clockwise') }}</option>
+                                                    <option value="counter_clockwise">{{ __('Counter-clockwise') }}</option>
+                                                </select>
+                                            </div>
+                                            <div class="space-y-1">
+                                                <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Orbit Shape') }}</label>
+                                                <select wire:model.live="selectedBlockData.variant"
+                                                        class="studio-select-field w-full text-xs">
+                                                    <option value="ellipse">{{ __('Elliptical') }}</option>
+                                                    <option value="circle">{{ __('Circle') }}</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <button wire:click="resetBlockStyle('orbit')" class="btn-secondary !h-8 !px-3 !text-[11px] justify-center w-full">
+                                            {{ __('↺ Reset Orbit to Template Default') }}
                                         </button>
                                     </div>
                                 @endif
