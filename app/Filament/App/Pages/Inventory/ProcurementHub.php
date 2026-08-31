@@ -2,12 +2,15 @@
 
 namespace App\Filament\App\Pages\Inventory;
 
+use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Navigation\ModuleNavigationService;
 use App\Services\ModuleVisibilityManager;
 use Filament\Pages\Page;
 
 class ProcurementHub extends Page
 {
+    use ModuleAwareActiveNavigation;
+
     protected static string $view = 'filament.app.pages.inventory.category-hub';
 
     protected static ?string $navigationIcon = 'heroicon-o-truck';
@@ -56,7 +59,7 @@ class ProcurementHub extends Page
 
     public function mount(): void
     {
-        $last = session("nav.last.inventory.".$this->getCategoryLabel());
+        $last = session('nav.last.inventory.'.$this->getCategoryLabel());
         $pages = $this->getCategoryPages();
         $target = $last ?: ($pages[0]['url'] ?? null);
         if ($target && $target !== request()->url()) {

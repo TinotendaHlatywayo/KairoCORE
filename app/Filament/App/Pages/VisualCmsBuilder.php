@@ -393,6 +393,11 @@ class VisualCmsBuilder extends Page
         if (! is_null($this->selectedBlockIndex) && isset($this->blocks[$this->selectedBlockIndex])) {
             $this->blocks[$this->selectedBlockIndex] = $this->selectedBlockData;
             $this->syncDraft();
+            // The builder preview renders from the draft; the public site renders
+            // from the published blocks. Keep them in step so inspector edits
+            // (photo sizes, orbit changes, new slots, etc.) reach the live site
+            // immediately instead of only after a separate Publish click.
+            $this->syncPageToLive();
         }
     }
 
@@ -769,6 +774,7 @@ class VisualCmsBuilder extends Page
         $current = $this->blocks[$index]['styles']['hidden'] ?? false;
         $this->blocks[$index]['styles']['hidden'] = ! $current;
         $this->pushToHistory();
+        $this->syncPageToLive();
     }
 
     public function duplicateBlock(int $index): void
@@ -777,6 +783,7 @@ class VisualCmsBuilder extends Page
         $copy['id'] = uniqid('blk_');
         array_splice($this->blocks, $index + 1, 0, [$copy]);
         $this->pushToHistory();
+        $this->syncPageToLive();
         $this->dispatch('notify', ['message' => 'Section duplicated.', 'type' => 'success']);
     }
 
@@ -798,12 +805,14 @@ class VisualCmsBuilder extends Page
         $this->selectedBlockIndex = null;
         $this->selectedBlockData = [];
         $this->pushToHistory();
+        $this->syncPageToLive();
     }
 
     public function addBlock(string $type): void
     {
         $this->blocks[] = CmsTemplateService::starterBlock($type);
         $this->pushToHistory();
+        $this->syncPageToLive();
         $this->dispatch('notify', ['message' => 'New section added to page.', 'type' => 'success']);
     }
 
@@ -1054,6 +1063,7 @@ class VisualCmsBuilder extends Page
             $this->selectedBlockIndex = null;
             $this->selectedBlockData = [];
             $this->pushToHistory();
+            $this->syncPageToLive();
         }
     }
 
@@ -1064,6 +1074,7 @@ class VisualCmsBuilder extends Page
             $this->selectedBlockIndex = null;
             $this->selectedBlockData = [];
             $this->pushToHistory();
+            $this->syncPageToLive();
         }
     }
 
@@ -1092,6 +1103,7 @@ class VisualCmsBuilder extends Page
         $this->blocks[$this->selectedBlockIndex]['styles'] = $styles;
         $this->selectedBlockData = $this->blocks[$this->selectedBlockIndex];
         $this->syncDraft();
+        $this->syncPageToLive();
     }
 
     /** Reset the selected block's nudged position back to zero. */
@@ -1106,6 +1118,7 @@ class VisualCmsBuilder extends Page
         $this->blocks[$this->selectedBlockIndex]['styles'] = $styles;
         $this->selectedBlockData = $this->blocks[$this->selectedBlockIndex];
         $this->syncDraft();
+        $this->syncPageToLive();
     }
 
     /** Reset a group of the selected block's styles back to "inherit site theme". */
@@ -1142,6 +1155,7 @@ class VisualCmsBuilder extends Page
             ]);
             $this->selectedBlockData = $this->blocks[$this->selectedBlockIndex];
             $this->syncDraft();
+            $this->syncPageToLive();
             $this->dispatch('notify', ['message' => 'Carousel photo settings reset to template default.', 'type' => 'info']);
 
             return;
@@ -1153,6 +1167,7 @@ class VisualCmsBuilder extends Page
             ]);
             $this->selectedBlockData = $this->blocks[$this->selectedBlockIndex];
             $this->syncDraft();
+            $this->syncPageToLive();
             $this->dispatch('notify', ['message' => 'Orbit diagram settings reset to template default.', 'type' => 'info']);
 
             return;

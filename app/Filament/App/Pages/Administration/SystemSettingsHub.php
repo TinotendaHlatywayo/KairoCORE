@@ -2,12 +2,15 @@
 
 namespace App\Filament\App\Pages\Administration;
 
+use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Navigation\ModuleNavigationService;
 use App\Services\ModuleVisibilityManager;
 use Filament\Pages\Page;
 
 class SystemSettingsHub extends Page
 {
+    use ModuleAwareActiveNavigation;
+
     protected static string $view = 'filament.app.pages.administration.category-hub';
 
     protected static ?string $navigationIcon = 'heroicon-o-cog';

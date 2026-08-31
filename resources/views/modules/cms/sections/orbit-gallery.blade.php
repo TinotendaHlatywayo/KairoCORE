@@ -23,9 +23,9 @@
     }
 
     $count = count($images);
-    $itemSize = max(48, min(160, (int) ($block['item_size'] ?? 84)));
-    $radiusX = max(80, min(420, (int) ($block['orbit_radius_x'] ?? 180)));
-    $radiusY = max(30, min(200, (int) ($block['orbit_radius_y'] ?? 70)));
+    $itemSize = max(48, min(280, (int) ($block['item_size'] ?? 84)));
+    $radiusX = max(80, min(620, (int) ($block['orbit_radius_x'] ?? 180)));
+    $radiusY = max(30, min(300, (int) ($block['orbit_radius_y'] ?? 70)));
     $speed = max(0, min(30, (float) ($block['rotation_speed'] ?? 6)));
     $direction = (($block['direction'] ?? 'clockwise') === 'counter_clockwise') ? -1 : 1;
     $tilt = max(0, min(40, (int) ($block['tilt'] ?? 18)));
@@ -35,8 +35,8 @@
     }
 
     // Stage must contain the widest/tallest node positions without clipping.
-    $stageWidth = max(280, min(1000, $radiusX * 2 + $itemSize + 40));
-    $stageHeight = max(220, min(720, $radiusY * 2 + $itemSize + 60));
+    $stageWidth = max(320, min(1400, $radiusX * 2 + $itemSize + 40));
+    $stageHeight = max(240, min(1000, $radiusY * 2 + $itemSize + 60));
 
     $heading = $block['title'] ?? __('A Tour of Our Campus');
     $subtitle = $block['subtitle'] ?? __('The learning spaces, sports fields and landmarks that make our school a home.');
@@ -52,7 +52,7 @@
             <p>{{ $subtitle }}</p>
         </div>
 
-        <div class="sc-orbit-stage" :style="stageStyle()" style="width: {{ $stageWidth }}px; height: {{ $stageHeight }}px;">
+        <div class="sc-orbit-stage" :style="stageStyle()" style="width: {{ $stageWidth }}px; height: {{ $stageHeight }}px; max-width: 100%;">
             <div class="sc-orbit-center">{{ e($centerLabel) }}</div>
             @foreach ($images as $i => $item)
                 <figure class="sc-orbit-node" :style="nodeStyle({{ $i }})" aria-hidden="true">

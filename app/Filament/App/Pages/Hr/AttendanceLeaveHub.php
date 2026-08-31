@@ -2,12 +2,15 @@
 
 namespace App\Filament\App\Pages\Hr;
 
+use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Navigation\ModuleNavigationService;
 use App\Services\ModuleVisibilityManager;
 use Filament\Pages\Page;
 
 class AttendanceLeaveHub extends Page
 {
+    use ModuleAwareActiveNavigation;
+
     protected static string $view = 'filament.app.pages.hr.category-hub';
 
     protected static ?string $navigationIcon = 'heroicon-o-calendar';
@@ -56,7 +59,7 @@ class AttendanceLeaveHub extends Page
 
     public function mount(): void
     {
-        $last = session("nav.last.hr.".$this->getCategoryLabel());
+        $last = session('nav.last.hr.'.$this->getCategoryLabel());
         $pages = $this->getCategoryPages();
         $target = $last ?: ($pages[0]['url'] ?? null);
         if ($target && $target !== request()->url()) {

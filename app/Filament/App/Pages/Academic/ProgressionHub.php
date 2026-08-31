@@ -2,12 +2,15 @@
 
 namespace App\Filament\App\Pages\Academic;
 
+use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Navigation\ModuleNavigationService;
 use App\Services\ModuleVisibilityManager;
 use Filament\Pages\Page;
 
 class ProgressionHub extends Page
 {
+    use ModuleAwareActiveNavigation;
+
     protected static string $view = 'filament.app.pages.academic.category-hub';
 
     protected static ?string $navigationIcon = 'heroicon-o-arrow-trending-up';
@@ -56,7 +59,7 @@ class ProgressionHub extends Page
 
     public function mount(): void
     {
-        $last = session("nav.last.academics.".$this->getCategoryLabel());
+        $last = session('nav.last.academics.'.$this->getCategoryLabel());
         $pages = $this->getCategoryPages();
         $target = $last ?: ($pages[0]['url'] ?? null);
         if ($target && $target !== request()->url()) {
