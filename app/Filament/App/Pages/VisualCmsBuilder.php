@@ -1145,6 +1145,17 @@ class VisualCmsBuilder extends Page
             $this->dispatch('notify', ['message' => 'Carousel photo settings reset to template default.', 'type' => 'info']);
 
             return;
+        } elseif ($group === 'orbit') {
+            $this->blocks[$this->selectedBlockIndex] = array_merge($this->blocks[$this->selectedBlockIndex], [
+                'center_label' => 'Pillars', 'item_size' => 84,
+                'orbit_radius_x' => 180, 'orbit_radius_y' => 70,
+                'rotation_speed' => 6, 'direction' => 'clockwise', 'tilt' => 18, 'variant' => 'ellipse',
+            ]);
+            $this->selectedBlockData = $this->blocks[$this->selectedBlockIndex];
+            $this->syncDraft();
+            $this->dispatch('notify', ['message' => 'Orbit diagram settings reset to template default.', 'type' => 'info']);
+
+            return;
         } else {
             return;
         }

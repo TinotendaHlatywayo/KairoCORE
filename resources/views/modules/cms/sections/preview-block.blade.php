@@ -97,7 +97,7 @@
     $imgFits    = ['cover' => 'cover', 'contain' => 'contain'];
     $imgPositions = ['center' => 'center', 'top' => 'top', 'bottom' => 'bottom', 'left' => 'left', 'right' => 'right'];
     $imgRatios  = ['auto' => 'auto', '16 / 9' => '16 / 9', '4 / 3' => '4 / 3', '1 / 1' => '1 / 1', '3 / 4' => '3 / 4'];
-    $imgWidths  = ['none' => 'none', '70%' => '70%', '85%' => '85%'];
+    $imgWidths  = ['none' => 'none', '90%' => '90%', '80%' => '80%', '70%' => '70%', '560px' => '560px', '640px' => '640px', '720px' => '720px'];
     $imgRadii   = ['0px' => '0px', '12px' => '12px', '24px' => '24px', '999px' => '999px'];
 
     $imgVars = '';
