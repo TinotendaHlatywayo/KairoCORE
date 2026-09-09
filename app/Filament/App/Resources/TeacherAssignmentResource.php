@@ -5,6 +5,7 @@ namespace App\Filament\App\Resources;
 use App\Filament\App\Concerns\ModulePermissionAccess;
 use App\Filament\App\Resources\TeacherAssignmentResource\Pages;
 use App\Models\User;
+use App\Support\TeacherOptions;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -16,6 +17,7 @@ use Modules\Academics\Models\Course;
 use Modules\Academics\Models\CourseSubject;
 use Modules\Academics\Models\Section;
 use Modules\Academics\Models\Subject;
+use Modules\Timetables\Models\TimetableLesson;
 
 class TeacherAssignmentResource extends Resource
 {
@@ -50,7 +52,7 @@ class TeacherAssignmentResource extends Resource
                     ->schema([
                         Forms\Components\Select::make('course_id')
                             ->label(__('Form / Grade'))
-                            ->options(Course::where('school_id', config('current_tenant_id'))->pluck('name', 'id'))
+                            ->options(Course::where('school_id', current_tenant()?->id ?? auth()->user()?->school_id ?? 1)->pluck('name', 'id'))
                             ->required()
                             ->live()
                             ->searchable(),
@@ -63,18 +65,19 @@ class TeacherAssignmentResource extends Resource
 
                         Forms\Components\Select::make('subject_id')
                             ->label(__('Subject'))
-                            ->options(Subject::where('school_id', config('current_tenant_id'))->pluck('name', 'id'))
+                            ->options(Subject::where('school_id', current_tenant()?->id ?? auth()->user()?->school_id ?? 1)->pluck('name', 'id'))
                             ->required()
                             ->searchable(),
 
                         Forms\Components\Select::make('teacher_id')
                             ->label(__('Teacher'))
-                            ->options(User::where('school_id', config('current_tenant_id'))
-                                ->whereHas('roles', fn ($q) => $q->where('name', 'teacher'))
-                                ->pluck('name', 'id'))
-                            ->required()
+                            ->options(fn () => TeacherOptions::options())
                             ->searchable()
-                            ->live(),
+                            ->getSearchResultsUsing(fn (string $search) => TeacherOptions::search($search))
+                            ->getOptionLabelUsing(fn ($value) => TeacherOptions::labelFor($value))
+                            ->required()
+                            ->live()
+                            ->helperText(__('Fuzzy search supports fragments — "jhn" finds "John".')),
 
                         Forms\Components\Select::make('role')
                             ->label(__('Role'))
@@ -91,9 +94,12 @@ class TeacherAssignmentResource extends Resource
                             ->default(4)
                             ->minValue(1),
 
-                        Forms\Components\TextInput::make('room_preference')
+                        Forms\Components\Select::make('room_preference')
                             ->label(__('Preferred Room'))
-                            ->placeholder(__('e.g., Room 101, Science Lab')),
+                            ->options(fn () => \Modules\Academics\Models\Classroom::where('school_id', app('current_tenant')->id)->pluck('name', 'id'))
+                            ->searchable()
+                            ->preload()
+                            ->placeholder(__('Select a classroom...')),
                     ])->columns(3),
 
                 Forms\Components\Section::make('Validation')
@@ -148,6 +154,41 @@ class TeacherAssignmentResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('assignTeacher')
+                    ->label(__('Assign Teacher'))
+                    ->icon('heroicon-o-user-plus')
+                    ->color('success')
+                    ->visible(fn ($record) => empty($record->teacher_id))
+                    ->form([
+                        Forms\Components\Select::make('teacher_id')
+                            ->label(__('Teacher'))
+                            ->options(fn () => TeacherOptions::options())
+                            ->searchable()
+                            ->getSearchResultsUsing(fn (string $search) => TeacherOptions::search($search))
+                            ->getOptionLabelUsing(fn ($value) => TeacherOptions::labelFor($value))
+                            ->required()
+                            ->helperText(__('Fuzzy search supports fragments — "jhn" finds "John".')),
+                        Forms\Components\Select::make('role')
+                            ->label(__('Role'))
+                            ->options([
+                                'main' => __('Main Teacher'),
+                                'assistant' => __('Assistant Teacher'),
+                                'substitute' => __('Substitute'),
+                            ])
+                            ->default('main'),
+                    ])
+                    ->action(function ($record, $data) {
+                        $record->update([
+                            'teacher_id' => $data['teacher_id'],
+                            'role' => $data['role'],
+                        ]);
+
+                        Notification::make()
+                            ->title(__('Teacher assigned'))
+                            ->body($record->subject?->name.' — '.$record->course?->name)
+                            ->success()
+                            ->send();
+                    }),
                 Tables\Actions\Action::make('checkConflicts')
                     ->label(__('Check Conflicts'))
                     ->icon('heroicon-o-exclamation-triangle')
@@ -159,7 +200,7 @@ class TeacherAssignmentResource extends Resource
                         } else {
                             Notification::make()
                                 ->title($conflicts->count().' schedule conflicts found')
-                                ->body($conflicts->pluck('name')->implode(', '))
+                                ->body($conflicts->implode(', '))
                                 ->warning()
                                 ->send();
                         }
@@ -193,9 +234,10 @@ class TeacherAssignmentResource extends Resource
                         ->form([
                             Forms\Components\Select::make('teacher_id')
                                 ->label(__('Teacher'))
-                                ->options(User::where('school_id', config('current_tenant_id'))
-                                    ->whereHas('roles', fn ($q) => $q->where('name', 'teacher'))
-                                    ->pluck('name', 'id'))
+                                ->options(fn () => TeacherOptions::options())
+                                ->searchable()
+                                ->getSearchResultsUsing(fn (string $search) => TeacherOptions::search($search))
+                                ->getOptionLabelUsing(fn ($value) => TeacherOptions::labelFor($value))
                                 ->required(),
                             Forms\Components\Select::make('role')
                                 ->options([
@@ -222,20 +264,59 @@ class TeacherAssignmentResource extends Resource
             return collect();
         }
 
-        return TimetableLesson::where('teacher_id', $record->teacher_id)
+        $lessons = TimetableLesson::where('teacher_id', $record->teacher_id)
             ->where('school_id', $record->school_id)
-            ->get()
-            ->filter(function ($lesson) use ($record) {
-                // Check if teacher has overlapping lessons
-                return TimetableLesson::where('teacher_id', $record->teacher_id)
-                    ->where('id', '!=', $lesson->id)
-                    ->where('day', $lesson->day)
-                    ->where(function ($q) use ($lesson) {
-                        $q->where('start_time', '<', $lesson->end_time)
-                            ->where('end_time', '>', $lesson->start_time);
-                    })
-                    ->exists();
-            });
+            ->whereNotNull('time_slot_id')
+            ->with('timeSlot')
+            ->get(['id', 'day_of_week', 'time_slot_id']);
+
+        $conflicts = [];
+
+        foreach ($lessons as $i => $lesson) {
+            foreach ($lessons as $j => $other) {
+                if ($j <= $i) {
+                    continue;
+                }
+
+                if ($lesson->day_of_week !== $other->day_of_week) {
+                    continue;
+                }
+
+                if (self::timeSlotsOverlap($lesson->timeSlot, $other->timeSlot)) {
+                    $conflicts[] = $lesson;
+                    $conflicts[] = $other;
+                }
+            }
+        }
+
+        return collect($conflicts)
+            ->unique('id')
+            ->map(function (TimetableLesson $lesson) {
+                $time = $lesson->timeSlot
+                    ? substr($lesson->timeSlot->start_time, 0, 5).'-'.substr($lesson->timeSlot->end_time, 0, 5)
+                    : 'unknown time';
+
+                return ucfirst(strtolower($lesson->day_of_week ?? '')).' '.$time;
+            })
+            ->values();
+    }
+
+    protected static function timeSlotsOverlap($a, $b): bool
+    {
+        if (! $a || ! $b || ! $a->start_time || ! $a->end_time || ! $b->start_time || ! $b->end_time) {
+            return false;
+        }
+
+        $aStart = strtotime($a->start_time);
+        $aEnd = strtotime($a->end_time);
+        $bStart = strtotime($b->start_time);
+        $bEnd = strtotime($b->end_time);
+
+        if ($aStart === false || $aEnd === false || $bStart === false || $bEnd === false) {
+            return false;
+        }
+
+        return $aStart < $bEnd && $bStart < $aEnd;
     }
 
     public static function getRelations(): array

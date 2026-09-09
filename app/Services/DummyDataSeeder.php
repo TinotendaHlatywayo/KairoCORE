@@ -2,22 +2,42 @@
 
 namespace App\Services;
 
+use App\Models\User;
+use App\Models\UserTask;
 use Illuminate\Support\Facades\DB;
 use Modules\Academics\Models\AcademicReport;
 use Modules\Academics\Models\AcademicYear;
 use Modules\Academics\Models\Assessment;
+use Modules\Academics\Models\AssessmentMark;
 use Modules\Academics\Models\AssessmentMarksLedger;
 use Modules\Academics\Models\AssessmentPlan;
 use Modules\Academics\Models\AssessmentPlanComponent;
+use Modules\Academics\Models\AssessmentType;
+use Modules\Academics\Models\Classroom;
 use Modules\Academics\Models\Course;
 use Modules\Academics\Models\GradingPoint;
 use Modules\Academics\Models\GradingScale;
 use Modules\Academics\Models\Section;
+use Modules\Academics\Models\StudentCompetency;
 use Modules\Academics\Models\Subject;
 use Modules\Academics\Models\Term;
+use Modules\Admissions\Models\Application;
+use Modules\Admissions\Models\ApplicationDocument;
+use Modules\Admin\Models\Department;
+use Modules\Admin\Models\SystemSetting;
+use Modules\Attendance\Models\StaffAttendance;
+use Modules\Attendance\Models\StudentAttendance;
 use Modules\Clinic\Models\ClinicVisit;
 use Modules\Clinic\Models\StudentMedicalRecord;
-use Modules\Attendance\Models\StudentAttendance;
+use Modules\Communication\Models\Announcement;
+use Modules\Communication\Models\Poll;
+use Modules\Communication\Models\PollOption;
+use Modules\Communication\Models\PollVote;
+use Modules\DigitalAssessment\Models\DigitalAssessment;
+use Modules\DigitalAssessment\Models\DigitalAssessmentAttempt;
+use Modules\DigitalAssessment\Models\DigitalAssessmentQuestion;
+use Modules\DigitalAssessment\Models\DigitalAssessmentResponse;
+use Modules\DigitalAssessment\Models\QuestionBank;
 use Modules\Finance\Models\Expense;
 use Modules\Finance\Models\ExpenseCategory;
 use Modules\Finance\Models\ExpenseType;
@@ -34,17 +54,39 @@ use Modules\Hostels\Models\HostelFloor;
 use Modules\Hostels\Models\HostelRoom;
 use Modules\Hostels\Models\HostelWing;
 use Modules\HR\Models\Employee;
+use Modules\HR\Models\LeaveRequest;
+use Modules\HR\Models\LeaveType;
+use Modules\HR\Models\PayrollPeriod;
+use Modules\HR\Models\PayrollRun;
+use Modules\HR\Models\Payslip;
+use Modules\HR\Models\PayslipItem;
 use Modules\HR\Models\SalaryGrade;
+use Modules\HR\Models\SalaryGradeHistory;
+use Modules\Inventory\Models\AssetMaintenanceLog;
 use Modules\Inventory\Models\FixedAsset;
 use Modules\Inventory\Models\InventoryCategory;
 use Modules\Inventory\Models\InventoryItem;
+use Modules\Inventory\Models\InventoryLocation;
+use Modules\Inventory\Models\InventorySupplier;
+use Modules\Inventory\Models\ProcurementOrder;
+use Modules\Inventory\Models\ProcurementOrderItem;
+use Modules\Inventory\Models\ProcurementRequest;
+use Modules\Inventory\Models\ProcurementRequestItem;
+use Modules\Knowledge\Models\KnowledgeAsset;
+use Modules\Knowledge\Models\KnowledgeAssetCopy;
+use Modules\Knowledge\Models\KnowledgeFormat;
+use Modules\Library\Models\LibraryAuthor;
 use Modules\Library\Models\LibraryBook;
+use Modules\Library\Models\LibraryBookCopy;
 use Modules\Library\Models\LibraryCategory;
 use Modules\Library\Models\LibraryFormat;
+use Modules\Library\Models\LibraryIssue;
 use Modules\Lms\Models\Homework;
-use Modules\Admin\Models\SystemSetting;
+use Modules\Lms\Models\HomeworkSubmission;
 use Modules\Students\Models\Enrollment;
 use Modules\Students\Models\Student;
+use Modules\Timetables\Models\TimeSlot;
+use Modules\Timetables\Models\TimetableLesson;
 
 /**
  * Seeds (and wipes) the playground demonstration dataset for a school tenant.
@@ -54,10 +96,12 @@ use Modules\Students\Models\Student;
  * "Pre-load Demonstration Data" option, so the demo data produced everywhere
  * is identical.
  *
- * Comprehensive coverage: academics, grading, students & reports, finance,
- * HR & payroll, inventory & assets, library, clinic, hostels, attendance
- * and LMS homework — enough interlinked data to exercise every module
- * before real data arrives.
+ * Comprehensive coverage: academics, grading, students & reports, admissions,
+ * finance, HR, payroll, leave & staff attendance, inventory & procurement,
+ * library, knowledge repository, clinic, hostels, timetables & attendance,
+ * LMS homework, communication & polls, digital assessment and enterprise
+ * reporting — enough interlinked data to exercise every module before real
+ * data arrives.
  *
  * Every created row is recorded in a per-school "seed manifest"
  * (system_settings group=demo key=seed_manifest) so wipe() deletes EXACTLY
@@ -78,13 +122,47 @@ class DummyDataSeeder
         'invoices',
         'fee_structures',
         'fee_categories',
+        'homework_submissions',
+        'homeworks',
         'clinic_visits',
         'student_medical_records',
-        'homeworks',
+        'staff_attendances',
+        'salary_grade_history',
+        'leave_requests',
+        'leave_types',
+        'payslip_items',
+        'payslips',
+        'payroll_runs',
+        'payroll_periods',
+        'communication_poll_votes',
+        'communication_poll_options',
+        'communication_polls',
+        'communication_announcements',
+        'user_tasks',
+        'procurement_request_items',
+        'procurement_requests',
+        'procurement_order_items',
+        'procurement_orders',
+        'inventory_suppliers',
+        'inventory_locations',
+        'asset_maintenance_logs',
+        'knowledge_asset_copies',
+        'knowledge_asset_author',
+        'knowledge_assets',
+        'knowledge_formats',
+        'library_issues',
+        'library_book_copies',
+        'library_book_author',
+        'library_authors',
         'student_attendances',
         'timetable_lessons',
         'time_slots',
         'classrooms',
+        'digital_assessment_responses',
+        'digital_assessment_attempts',
+        'digital_assessment_questions',
+        'digital_assessments',
+        'question_bank',
         'generated_reports',
         'enterprise_report_schedules',
         'enterprise_report_templates',
@@ -103,11 +181,18 @@ class DummyDataSeeder
         'library_categories',
         'employees',
         'salary_grades',
+        'departments',
         'grading_points',
         'grading_scales',
+        'assessment_types',
+        'assessment_marks',
+        'subject_papers',
+        'course_subject',
         'assessment_marks_ledger',
         'enrollments',
         'academic_reports',
+        'application_documents',
+        'applications',
         'students',
         'sections',
         'subjects',
@@ -116,9 +201,29 @@ class DummyDataSeeder
         'academic_years',
     ];
 
+    /**
+     * Manifest tables without a school_id column. Their ids are already
+     * school-scoped by construction, so they are deleted by id only.
+     */
+    protected const MANIFEST_NO_SCHOOL_COLUMN = [
+        'invoice_items',
+        'procurement_request_items',
+        'procurement_order_items',
+        'grading_points',
+        'library_book_author',
+        'knowledge_asset_author',
+        'digital_assessment_questions',
+        'digital_assessment_responses',
+    ];
+
     public function seed(int $schoolId, ?callable $log = null): array
     {
         $log ??= fn () => null;
+
+        // Demo seeding is idempotent: previously-seeded demo rows are removed
+        // first (manifest-scoped), then the school is (re)populated. This keeps
+        // the class sizes exact even after repeated "Seed" runs.
+        $this->wipe($schoolId);
 
         $manifest = [];
 
@@ -156,11 +261,18 @@ class DummyDataSeeder
             return $model;
         };
 
+        $school = \App\Models\School::find($schoolId);
+        $schoolType = strtolower((string) ($school->institution_type ?? 'secondary'));
+        $isPrimary = in_array($schoolType, ['primary', 'both'], true);
+        $isSecondary = in_array($schoolType, ['secondary', 'both'], true) && !$isPrimary;
+
         // An acting user for "recorded_by"-style columns (admin if present).
-        $actorId = optional(\App\Models\User::where('school_id', $schoolId)->orderBy('id')->first())->id;
+        $actorId = optional(User::where('school_id', $schoolId)->where('requested_role', 'administrator')->orderBy('id')->first())->id
+            ?? optional(User::where('school_id', $schoolId)->orderBy('id')->first())->id;
 
         // ════════════════════════════════════════════════════════════════
-        // 1. ACADEMICS: year, terms, courses, streams, subjects, grading
+        // 1. ACADEMICS: year, three terms, courses, sections, subjects,
+        //    course-subject links, papers and grading scale
         // ════════════════════════════════════════════════════════════════
         $year = AcademicYear::where('school_id', $schoolId)->where('is_active', true)->first();
         if (! $year) {
@@ -173,70 +285,210 @@ class DummyDataSeeder
             ]));
         }
 
-        $term = Term::where('school_id', $schoolId)->where('academic_year_id', $year->id)->orderBy('id')->first();
-        if (! $term) {
-            $term = $created(Term::create([
-                'school_id' => $schoolId,
-                'name' => 'Term 1',
-                'academic_year_id' => $year->id,
-                'start_date' => now()->startOfYear()->toDateString(),
-                'end_date' => now()->startOfYear()->addMonths(3)->toDateString(),
-            ]));
-        }
-        $term2Id = optional(Term::where('school_id', $schoolId)->where('academic_year_id', $year->id)->skip(1)->first())->id;
-
-        $courseSpecs = [
-            ['ECD A', 'ecda', 'ECD-A', 'ecd'],
-            ['Grade 1', 'primary', 'G1', 'grade_1_7'],
-            ['Grade 2', 'primary', 'G2', 'grade_1_7'],
-            ['Form 1', 'secondary', 'F1', 'form_1_4'],
-            ['Form 2', 'secondary', 'F2', 'form_1_4'],
+        $termDates = [
+            ['Term 1', now()->startOfYear()->addDays(4), now()->startOfYear()->addMonths(3)->subDays(4)],
+            ['Term 2', now()->startOfYear()->addMonths(4)->addDays(8), now()->startOfYear()->addMonths(7)],
+            ['Term 3', now()->startOfYear()->addMonths(8)->addDays(6), now()->startOfYear()->addMonths(11)->addDays(2)],
         ];
-        $courseIds = [];
+        $termIds = [];
+        foreach ($termDates as [$termName, $start, $end]) {
+            $term = Term::where('school_id', $schoolId)->where('academic_year_id', $year->id)->where('name', $termName)->first();
+            if (! $term) {
+                $term = $created(Term::create([
+                    'school_id' => $schoolId,
+                    'name' => $termName,
+                    'academic_year_id' => $year->id,
+                    'start_date' => $start->toDateString(),
+                    'end_date' => $end->toDateString(),
+                ]));
+            }
+            $termIds[$termName] = $term->id;
+        }
+        $term = Term::where('school_id', $schoolId)->where('academic_year_id', $year->id)->orderBy('id')->first();
+
+        $courseSpecs = [];
+        if ($isPrimary) {
+            foreach (['ECD A', 'ECD B'] as $i => $n) {
+                $courseSpecs[] = [$n, 'ecda', 'PR-ECD-'.chr(65 + $i), 'ecd'];
+            }
+            for ($g = 1; $g <= 7; $g++) {
+                $courseSpecs[] = ['Grade '.$g, 'primary', 'PR-G'.$g, 'grade'];
+            }
+        }
+        if ($isSecondary) {
+            for ($f = 1; $f <= 4; $f++) {
+                $courseSpecs[] = ['Form '.$f, 'secondary', 'SEC-F'.$f, 'form_1_4'];
+            }
+            foreach ([5, 6] as $f) {
+                $courseSpecs[] = ['Form '.$f.' Sciences', 'secondary', 'SEC-F'.$f.'-SCI', 'form_5_6'];
+                $courseSpecs[] = ['Form '.$f.' Commercials', 'secondary', 'SEC-F'.$f.'-COM', 'form_5_6'];
+                $courseSpecs[] = ['Form '.$f.' Arts', 'secondary', 'SEC-F'.$f.'-ART', 'form_5_6'];
+            }
+        }
+
+        $courseObjects = [];
         foreach ($courseSpecs as [$name, $level, $code, $scope]) {
             $course = Course::firstOrCreate(
                 ['school_id' => $schoolId, 'name' => $name],
                 ['level' => $level, 'code' => $code]
             );
-            $courseIds[$scope] = $course->id;
+            $courseObjects[$name] = $course;
+            $courseIdsByScope[$scope][] = $course->id;
             $created($course);
         }
 
-        // Streams: two per course for the demo levels.
-        $sectionQuery = Section::where('school_id', $schoolId);
-        $existingSections = $sectionQuery->count();
-
-        if ($existingSections === 0) {
-            foreach (array_unique(array_intersect_key($courseIds, array_flip(['grade_1_7', 'ecd', 'form_1_4']))) as $courseId) {
-                foreach (['North', 'South'] as $stream) {
-                    $created(Section::create([
-                        'school_id' => $schoolId,
-                        'course_id' => $courseId,
-                        'name' => $stream,
-                        'capacity' => 40,
-                    ]));
-                }
+        // Streams: two sections per level, three for the Form 5/6 subject areas.
+        foreach ($courseObjects as $course) {
+            $names = preg_match('/Form [56] /', (string) $course->name) ? ['A'] : ['A', 'B'];
+            foreach ($names as $stream) {
+                $section = Section::firstOrCreate(
+                    ['school_id' => $schoolId, 'course_id' => $course->id, 'name' => $stream],
+                    ['capacity' => 40]
+                );
+                $created($section);
             }
         }
 
-        // Eager-load course relation (Model::shouldBeStrict forbids lazy loading).
         $sections = Section::where('school_id', $schoolId)->with('course')->get();
 
-        $subjectSpecs = [
-            ['Mathematics', 'M101', 'theory'],
-            ['English Language', 'ENG101', 'theory'],
-            ['Combined Science', 'SCI101', 'theory'],
-            ['Physical Education', 'PE101', 'practical'],
-            ['Computer Science', 'CS101', 'practical'],
+        $primarySubjects = [
+            ['Mathematics', 'PR-MATH', 'theory'],
+            ['English Language', 'PR-ENG', 'theory'],
+            ['Shona Language', 'PR-SHO', 'theory'],
+            ['Science & Technology', 'PR-SCI', 'practical'],
+            ['Social Studies', 'PR-SOC', 'theory'],
+            ['Physical Education', 'PR-PE', 'practical'],
         ];
-        $subjectIds = [];
-        foreach ($subjectSpecs as [$name, $code, $type]) {
+        $secondarySubjects = [
+            ['MATHEMATICS', 'SEC-MATH', 'theory'],
+            ['ENGLISH LANGUAGE', 'SEC-ENG', 'theory'],
+            ['SHONA LANGUAGE', 'SEC-SHO', 'theory'],
+            ['COMBINED SCIENCE', 'SEC-CSC', 'practical'],
+            ['GEOGRAPHY', 'SEC-GEO', 'theory'],
+            ['PHYSICS', 'SEC-PHY', 'practical'],
+            ['CHEMISTRY', 'SEC-CHE', 'practical'],
+            ['BIOLOGY', 'SEC-BIO', 'practical'],
+            ['HISTORY', 'SEC-HIS', 'theory'],
+            ['PE SPORTS AND MASS DISPLAYS', 'SEC-PE', 'practical'],
+            ['BUILDING TECHNOLOGY AND DESIGN', 'SEC-BTD', 'practical'],
+            ['AGRICULTURE', 'SEC-AGR', 'practical'],
+            ['HERITAGE', 'SEC-HER', 'theory'],
+        ];
+
+        $subjectById = [];
+        $subjectObjects = [];
+        foreach (($isPrimary ? $primarySubjects : $secondarySubjects) as [$name, $code, $type]) {
             $subject = Subject::firstOrCreate(
                 ['school_id' => $schoolId, 'code' => $code],
                 ['name' => $name, 'type' => $type, 'credit_weight' => 1.00, 'is_elective' => false]
             );
-            $subjectIds[] = $subject->id;
+            $subjectObjects[$name] = $subject;
+            $subjectById[$subject->id] = $subject;
             $created($subject);
+        }
+
+        // Course ⭢ subject syllabus (course_subject pivot).
+        $staffUserIds = $this->seedStaff($schoolId, $actorId, $track, $created);
+        $artsSubjects = ['ENGLISH LANGUAGE', 'MATHEMATICS', 'SHONA LANGUAGE', 'HISTORY', 'HERITAGE', 'PE SPORTS AND MASS DISPLAYS'];
+        $commercialsSubjects = ['MATHEMATICS', 'ENGLISH LANGUAGE', 'GEOGRAPHY', 'HISTORY', 'HERITAGE', 'PE SPORTS AND MASS DISPLAYS'];
+        $sciencesSubjects = ['MATHEMATICS', 'PHYSICS', 'CHEMISTRY', 'BIOLOGY', 'COMBINED SCIENCE', 'ENGLISH LANGUAGE'];
+        $subjectKeyFor = function (Course $course) use ($artsSubjects, $commercialsSubjects, $sciencesSubjects, $secondarySubjects, $primarySubjects): array {
+            $upper = strtoupper((string) $course->name);
+            if (str_contains($upper, 'SCIENTIFIC') || str_contains($upper, 'SCI') || str_contains($upper, ' SCI ')) {
+                return $sciencesSubjects;
+            }
+            if (str_contains($upper, 'COMMERCIAL') || str_contains($upper, 'COM')) {
+                return $commercialsSubjects;
+            }
+            if (str_contains($upper, ' ARTS') || str_contains($upper, 'ART')) {
+                return $artsSubjects;
+            }
+            if (str_contains($upper, 'FORM')) {
+                return $secondarySubjects;
+            }
+
+            return $primarySubjects;
+        };
+
+        $courseTeacherIdx = 0;
+        $courseTeacherByCourse = [];
+        foreach ($courseObjects as $course) {
+            $subjectNames = array_map(fn ($s) => is_array($s) ? $s[0] : $s, $subjectKeyFor($course));
+            foreach ($subjectNames as $si => $subjectName) {
+                $subject = $subjectObjects[$subjectName] ?? null;
+                if (! $subject) {
+                    continue;
+                }
+                $teacherId = $staffUserIds['teaching_staff'][$courseTeacherIdx % max(1, count($staffUserIds['teaching_staff']))] ?? $actorId;
+                $pivot = DB::table('course_subject')
+                    ->where('school_id', $schoolId)
+                    ->where('course_id', $course->id)
+                    ->where('subject_id', $subject->id)
+                    ->first();
+                if ($pivot) {
+                    $manifest['course_subject'][] = (int) $pivot->id;
+                } else {
+                    $pivotId = DB::table('course_subject')->insertGetId([
+                        'school_id' => $schoolId,
+                        'course_id' => $course->id,
+                        'subject_id' => $subject->id,
+                        'teacher_id' => $teacherId,
+                        'role' => 'main',
+                        'periods_per_week' => $si === 0 ? 6 : 4,
+                        'room_preference' => null,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                    $manifest['course_subject'][] = (int) $pivotId;
+                }
+            }
+            $courseTeacherByCourse[$course->id] = $staffUserIds['teaching_staff'][$courseTeacherIdx % max(1, count($staffUserIds['teaching_staff']))] ?? $actorId;
+            $courseTeacherIdx++;
+
+            // Subject papers for the practical science subjects (secondary).
+            if ($isSecondary) {
+                foreach (['COMBINED SCIENCE', 'PHYSICS', 'CHEMISTRY', 'BIOLOGY', 'AGRICULTURE', 'PE SPORTS AND MASS DISPLAYS'] as $paperSubject) {
+                    $subj = $subjectObjects[$paperSubject] ?? null;
+                    if (! $subj) {
+                        continue;
+                    }
+                    foreach (['Paper 1', 'Paper 2'] as $paperName) {
+                        $exists = DB::table('subject_papers')
+                            ->where('school_id', $schoolId)
+                            ->where('subject_id', $subj->id)
+                            ->where('name', $paperName)
+                            ->exists();
+                        if (! $exists) {
+                            $paperId = DB::table('subject_papers')->insertGetId([
+                                'school_id' => $schoolId,
+                                'subject_id' => $subj->id,
+                                'name' => $paperName,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]);
+                            $manifest['subject_papers'][] = (int) $paperId;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Form teachers on every Course (clears the "forms have no teachers"
+        // readiness warning) + a Class Teacher on every stream section.
+        foreach ($courseTeacherByCourse as $courseId => $teacherId) {
+            Course::withoutGlobalScopes()
+                ->where('school_id', $schoolId)
+                ->whereKey($courseId)
+                ->update(['teacher_id' => $teacherId]);
+        }
+
+        $classTeacherPool = $staffUserIds['teaching_staff'] ?: [$actorId];
+        foreach (Section::where('school_id', $schoolId)->get() as $si => $section) {
+            if (! $section->class_teacher_id) {
+                Section::withoutGlobalScopes()
+                    ->whereKey($section->id)
+                    ->update(['class_teacher_id' => $classTeacherPool[$si % max(1, count($classTeacherPool))]]);
+            }
         }
 
         $scale = GradingScale::where('school_id', $schoolId)->first();
@@ -261,7 +513,12 @@ class DummyDataSeeder
         }
 
         // ════════════════════════════════════════════════════════════════
-        // 2. STUDENTS + ENROLLMENTS + ASSESSMENTS + MARKS + REPORTS
+        // 2. ADMISSIONS: applications received for the upcoming intake
+        // ════════════════════════════════════════════════════════════════
+        $this->seedApplications($schoolId, $courseObjects, $track, $created, $manifest);
+
+        // ════════════════════════════════════════════════════════════════
+        // 3. STUDENTS + ENROLLMENTS + ASSESSMENTS + MARKS + REPORTS
         // ════════════════════════════════════════════════════════════════
         $studentOffset = Student::withoutGlobalScopes()
             ->where('school_id', $schoolId)
@@ -272,6 +529,8 @@ class DummyDataSeeder
         $firstNamesFemale = ['Ruvimbo', 'Chipo', 'Nyasha', 'Rudo', 'Tsitsi', 'Fadzai', 'Sekai', 'Nokutenda', 'Tadiwanashe', 'Rutendo'];
         $surnames = ['Moyo', 'Sibanda', 'Ndlovu', 'Dube', 'Mutasa', 'Gumbo', 'Zhou', 'Shumba', 'Mpofu', 'Maphosa'];
         $houses = ['Nyanga', 'Chiadzwa', 'Chimanimani', 'Vumba'];
+        $suburbs = ['Borrowdale', 'Avondale', 'Mount Pleasant', 'Chisipite', 'Glen Lorne', 'Highlands', 'Borrowdale Brooke', 'Carrickley', 'Mandara', 'Greendale'];
+        $streets = ['Links Lane', 'Borrowdale Road', "St Anne's Road", 'Enterprise Road', 'Avondale Drive', 'Mount Pleasant Heights', 'Chisipite Drive', 'Lytton Road', 'Greendale Road', 'Borrowdale Close'];
         $bloodGroups = ['O+', 'O-', 'A+', 'B+', 'AB+'];
         $medicalNotes = ['None', 'Mild pollen allergy', 'Requires asthma inhaler near sports field', 'None', 'None'];
 
@@ -280,18 +539,23 @@ class DummyDataSeeder
 
         foreach ($sections as $section) {
             $course = $section->course;
-
             if (! $course) {
                 continue;
             }
 
-            $log("Seeding 10 students into stream: {$course->name} {$section->name}...");
+            $log("Seeding 5 students into class: {$course->name} {$section->name}...");
+
+            $courseSubjects = $this->syllabusSubjectsFor($course, $primarySubjects, $secondarySubjects, $subjectObjects);
+            $firstSubject = $courseSubjects[0] ?? $subjectObjects[array_key_first($subjectObjects)];
+            if (! $firstSubject) {
+                continue;
+            }
 
             $plan = AssessmentPlan::firstOrCreate([
                 'school_id' => $schoolId,
                 'term_id' => $term->id,
                 'course_id' => $course->id,
-                'subject_id' => $subjectIds[0],
+                'subject_id' => $firstSubject->id,
             ], [
                 'created_by_id' => $actorId ?? 1,
             ]);
@@ -317,7 +581,7 @@ class DummyDataSeeder
                 'school_id' => $schoolId,
                 'assessment_plan_component_id' => $compHomework->id,
                 'section_id' => $section->id,
-                'name' => 'Fraction Quiz',
+                'name' => 'Progress Quiz',
             ], [
                 'assessment_date' => now()->subDays(10),
                 'max_mark' => 50.00,
@@ -340,13 +604,14 @@ class DummyDataSeeder
             ]);
 
             $age = match (true) {
-                str_contains(strtolower($course->name), 'ecd') => 5,
+                str_contains(strtolower((string) $course->name), 'ecd') => 5,
                 preg_match('/Grade\s*(\d)/i', (string) $course->name, $m) => 5 + intval($m[1]),
-                preg_match('/Form\s*(\d)/i', (string) $course->name, $m) => 12 + intval($m[1]),
+                preg_match('/Form\s*([1-4])/i', (string) $course->name, $m) => 12 + intval($m[1]),
+                preg_match('/Form [56]/i', (string) $course->name) => 17,
                 default => 10,
             };
 
-            for ($k = 0; $k < 10; $k++) {
+            for ($k = 0; $k < 5; $k++) {
                 $studentCount++;
                 $gender = $k % 2 === 0 ? 'female' : 'male';
                 $firstName = $gender === 'female'
@@ -365,8 +630,14 @@ class DummyDataSeeder
                     'gender' => $gender,
                     'date_of_birth' => now()->subYears($age)->subDays(rand(1, 280)),
                     'admission_date' => $year->start_date ?? now()->startOfYear(),
+                    'national_id' => '65 '.str_pad((string) rand(1000000, 9999999), 7, '0', STR_PAD_LEFT).' '.($gender === 'female' ? 'F' : 'M').' '.str_pad((string) rand(1, 99), 2, '0', STR_PAD_LEFT),
+                    'physical_address' => rand(1, 180).' '.$streets[rand(0, 9)].', '.$suburbs[rand(0, 9)].', Harare',
+                    'phone' => '+263 77 '.rand(100000, 999999),
                     'status' => 'active',
+                    'card_expiry_date' => now()->addMonths(rand(6, 18))->toDateString(),
                     'card_status' => 'active',
+                    'photo_approved_at' => now()->subMonths(rand(1, 8)),
+                    'photo_approved_by' => $actorId ?? 1,
                     'boarding_status' => $k % 3 === 0 ? 'boarder' : 'day_scholar',
                     'house' => $houses[rand(0, 3)],
                     'blood_group' => $bloodGroups[rand(0, 4)],
@@ -400,28 +671,345 @@ class DummyDataSeeder
                     'status' => 'present',
                 ]);
 
-                AcademicReport::create([
-                    'school_id' => $schoolId,
-                    'student_id' => $student->id,
-                    'section_id' => $section->id,
-                    'term_id' => $term->id,
-                    'overall_score' => rand(55, 92) / 10,
-                    'status' => 'approved',
-                    'teacher_comment' => 'A focused and highly diligent student who shows steady, remarkable progress.',
-                    'headmaster_comment' => 'Impressive score performance this term. Maintain the clean and excellent focus.',
-                    'integrity_hash' => hash_hmac('sha256', $stuIdNumber, config('app.key')),
-                ]);
-                $track('academic_reports', [DB::getPdo()->lastInsertId()]);
-                $reportCount++;
+                foreach ($termIds as $reportTermId) {
+                    $unhuRatings = [
+                        'respect' => rand(0, 1) ? 'excellent' : 'very_good',
+                        'honesty' => rand(0, 1) ? 'very_good' : 'satisfactory',
+                        'responsibility' => rand(0, 1) ? 'excellent' : 'very_good',
+                        'discipline' => rand(0, 1) ? 'very_good' : 'excellent',
+                        'teamwork' => rand(0, 1) ? 'satisfactory' : 'very_good',
+                    ];
+                    $outstandingAchievements = array_values(array_filter([
+                        rand(0, 1) ? 'Winner of 800m at the inter-house sports gala' : null,
+                        rand(0, 1) ? 'Best behaved student of the term' : null,
+                        rand(0, 1) ? 'Outstanding participation in the school choir' : null,
+                    ]));
+
+                    $report = AcademicReport::create([
+                        'school_id' => $schoolId,
+                        'student_id' => $student->id,
+                        'section_id' => $section->id,
+                        'term_id' => $reportTermId,
+                        'unhu_competencies' => array_merge($unhuRatings, [
+                            'outstanding_achievements' => $outstandingAchievements,
+                        ]),
+                        'overall_score' => rand(55, 92) / 10,
+                        'status' => 'approved',
+                        'teacher_comment' => 'A focused and highly diligent student who shows steady, remarkable progress.',
+                        'headmaster_comment' => 'Impressive score performance this term. Maintain the clean and excellent focus.',
+                        'integrity_hash' => hash_hmac('sha256', $stuIdNumber.'-'.$reportTermId, config('app.key')),
+                    ]);
+                    $track('academic_reports', [$report->id]);
+                    $reportCount++;
+                }
+
+                if (in_array($level, ['primary', 'ecd'], true)) {
+                    $competencyAreas = [
+                        'Art' => [8, 10],
+                        'Music' => [7, 10],
+                        'Physical Education' => [8, 10],
+                        'Gardening' => [6, 9],
+                    ];
+                    foreach ($competencyAreas as $skillArea => [$min, $max]) {
+                        StudentCompetency::create([
+                            'school_id' => $schoolId,
+                            'enrollment_id' => $enrollment->id,
+                            'skill_area' => $skillArea,
+                            'score' => rand($min, $max),
+                            'remark' => 'Satisfactory',
+                        ]);
+                    }
+                }
             }
         }
 
+        // Publish the demo students' reports so the student portal immediately
+        // has published report cards to display under the school's subdomain.
+        $demoStudentIds = Student::where('school_id', $schoolId)
+            ->where('student_id_number', 'LIKE', 'TEST-STU-%')
+            ->pluck('id');
+        AcademicReport::withoutGlobalScopes()
+            ->where('school_id', $schoolId)
+            ->whereIn('student_id', $demoStudentIds)
+            ->where('status', 'approved')
+            ->update(['status' => 'published']);
+
         $studentIdsList = $manifest['students'] ?? [];
-        $enrollmentIds = $manifest['enrollments'] ?? [];
+
+        // Demo login accounts: one per seeded student so the student portal
+        // (results, continuous assessment, digital assessments, gamification)
+        // is immediately demonstrable under the school's subdomain.
+        $this->ensureDemoStudentAccounts($schoolId);
 
         // ════════════════════════════════════════════════════════════════
-        // 3. FINANCE: fee structures, invoices & items, expenses, suppliers
+        // 4. FINANCE: fee structures, invoices & items, expenses, suppliers
         // ════════════════════════════════════════════════════════════════
+        $this->seedFinance($schoolId, $year, $term, $studentIdsList, $actorId, $track, $created);
+
+        // ════════════════════════════════════════════════════════════════
+        // 5. HR & PAYROLL: leave, staff attendance, payroll run & payslips
+        // ════════════════════════════════════════════════════════════════
+        $this->seedLeaveAndPayroll($schoolId, $actorId, $staffUserIds, $track, $created);
+
+        // ════════════════════════════════════════════════════════════════
+        // 6. INVENTORY & PROCUREMENT, fixed assets
+        // ════════════════════════════════════════════════════════════════
+        $this->seedInventoryAndProcurement($schoolId, $actorId, $staffUserIds, $track, $created);
+
+        // ════════════════════════════════════════════════════════════════
+        // 7. LIBRARY + KNOWLEDGE REPOSITORY
+        // ════════════════════════════════════════════════════════════════
+        $this->seedLibraryAndKnowledge($schoolId, $actorId, $studentIdsList, $staffUserIds, $track, $created);
+
+        // ════════════════════════════════════════════════════════════════
+        // 8. CLINIC: medical records + visits
+        // ════════════════════════════════════════════════════════════════
+        $this->seedClinic($schoolId, $studentIdsList, $bloodGroups, $actorId, $track, $created);
+
+        // ════════════════════════════════════════════════════════════════
+        // 9. HOSTELS: boys + girls houses, floors, wings, rooms, allocations
+        // ════════════════════════════════════════════════════════════════
+        $this->seedHostels($schoolId, $year, $studentIdsList, $track, $created);
+
+        // ════════════════════════════════════════════════════════════════
+        // 10. TIMETABLE + STUDENT ATTENDANCE
+        // ════════════════════════════════════════════════════════════════
+        $this->seedTimetableAndAttendance($schoolId, $year, $term, $sections, $studentIdsList, $staffUserIds, $courseTeacherByCourse, $actorId, $track, $created);
+
+        // ════════════════════════════════════════════════════════════════
+        // 11. LMS HOMEWORK + SUBMISSIONS
+        // ════════════════════════════════════════════════════════════════
+        $this->seedHomework($schoolId, $sections, $studentIdsList, $track, $created);
+
+        // ════════════════════════════════════════════════════════════════
+        // 12. COMMUNICATION: announcements, tasks, polls
+        // ════════════════════════════════════════════════════════════════
+        $this->seedCommunication($schoolId, $actorId, $staffUserIds, $track);
+
+        // ════════════════════════════════════════════════════════════════
+        // 13. DIGITAL ASSESSMENT (LMS)
+        // ════════════════════════════════════════════════════════════════
+        $this->seedDigitalAssessment($schoolId, $year, $term, $sections, $primarySubjects, $secondarySubjects, $subjectObjects, $actorId, $track);
+
+        // ════════════════════════════════════════════════════════════════
+        // 13b. TRADITIONAL SUBJECT MARKS (4 subjects per course)
+        // ════════════════════════════════════════════════════════════════
+        $this->seedSubjectMarks($schoolId, $term, $actorId, $track);
+
+        // ════════════════════════════════════════════════════════════════
+        // 14. ENTERPRISE REPORTING: templates, compiled reports, schedules
+        // ════════════════════════════════════════════════════════════════
+        $this->seedEnterpriseReports($schoolId, $term, $actorId, $track);
+    }
+
+    protected function syllabusSubjectsFor(Course $course, array $primarySubjects, array $secondarySubjects, array $subjectObjects): array
+    {
+        $upper = strtoupper((string) $course->name);
+        if (str_contains($upper, 'SCI') && ! str_contains($upper, 'FORM') && $course->level !== 'primary') {
+            // handled via written mapping below
+        }
+        if (str_contains($upper, 'COMMERCIAL') || str_contains($upper, 'COM')) {
+            $names = ['MATHEMATICS', 'ENGLISH LANGUAGE', 'GEOGRAPHY', 'HISTORY', 'HERITAGE', 'PE SPORTS AND MASS DISPLAYS'];
+        } elseif (str_contains($upper, 'ART')) {
+            $names = ['ENGLISH LANGUAGE', 'MATHEMATICS', 'SHONA LANGUAGE', 'HISTORY', 'HERITAGE', 'PE SPORTS AND MASS DISPLAYS'];
+        } elseif (str_contains($upper, 'SCI')) {
+            $names = ['MATHEMATICS', 'PHYSICS', 'CHEMISTRY', 'BIOLOGY', 'COMBINED SCIENCE', 'ENGLISH LANGUAGE'];
+        } elseif (str_contains($upper, 'FORM')) {
+            $names = array_column($secondarySubjects, 0);
+        } else {
+            $names = array_column($primarySubjects, 0);
+        }
+
+        $out = [];
+        foreach ($names as $name) {
+            if (isset($subjectObjects[$name])) {
+                $out[] = $subjectObjects[$name];
+            }
+        }
+
+        return $out;
+    }
+
+    // ────────────────────────────────────────────────────────────────────
+    // Humans
+    // ────────────────────────────────────────────────────────────────────
+
+    protected function seedStaff(int $schoolId, ?int $actorId, callable $track, callable $created): array
+    {
+        // Departments (Admin module).
+        foreach ([
+            ['Academic', 'ACD', 'academic'],
+            ['Administration', 'ADM', 'administrative'],
+            ['Finance', 'FIN', 'administrative'],
+            ['Health & Wellness', 'HLT', 'support'],
+            ['ICT & Digital Learning', 'ICT', 'support'],
+            ['Estates, Transport & Security', 'EST', 'support'],
+            ['Library & Resource Centre', 'LIB', 'support'],
+        ] as [$name, $code, $type]) {
+            if (Department::where('school_id', $schoolId)->where('code', $code)->exists()) {
+                continue;
+            }
+            $dept = Department::create([
+                'school_id' => $schoolId,
+                'name' => $name,
+                'code' => $code,
+                'type' => $type,
+                'status' => 'active',
+            ]);
+            $track('departments', [$dept->id]);
+        }
+
+        $gradeDefs = [
+            ['D1 — Senior Management', 2400, 300, 180, 120],
+            ['T1 — Senior Teacher', 1500, 160, 100, 60],
+            ['T2 — Teacher', 1100, 120, 80, 40],
+            ['S1 — Support Staff', 650, 60, 40, 0],
+        ];
+        $gradeIds = [];
+        foreach ($gradeDefs as [$name, $base, $housing, $transport, $duty]) {
+            $grade = SalaryGrade::firstOrCreate(
+                ['school_id' => $schoolId, 'name' => $name],
+                [
+                    'base_salary' => $base,
+                    'hourly_rate' => round($base / 160, 2),
+                    'housing_allowance' => $housing,
+                    'transport_allowance' => $transport,
+                    'duty_allowance' => $duty,
+                    'overtime_eligible' => $base < 800,
+                ]
+            );
+            $gradeIds[$name] = $grade->id;
+            $created($grade);
+        }
+
+        $staffSpecs = [
+            // Administrator role (5+)
+            ['Grace', 'Mhaka', 'female', 'Headmistress', 'Administration', 'administrator', 'D1 — Senior Management'],
+            ['Petros', 'Ngwenya', 'male', 'Deputy Headmaster', 'Academic', 'administrator', 'T1 — Senior Teacher'],
+            ['Runyararo', 'Demba', 'female', 'School Registrar (Admissions)', 'Administration', 'administrator', 'S1 — Support Staff'],
+            ['Munashe', 'Chayambuka', 'male', 'ICT Manager — Systems Administrator', 'ICT & Digital Learning', 'administrator', 'T1 — Senior Teacher'],
+            ['Agness', 'Taruvinga', 'female', 'HR & Finance Administrator', 'Finance', 'administrator', 'S1 — Support Staff'],
+            // Teaching staff (5+)
+            ['Chipo', 'Mandizvidza', 'female', 'Teacher — Mathematics', 'Academic', 'teaching_staff', 'T2 — Teacher'],
+            ['Tariro', 'Mutasa', 'female', 'Teacher — English Language', 'Academic', 'teaching_staff', 'T2 — Teacher'],
+            ['Simbarashe', 'Nyamupingidza', 'male', 'Teacher — Sciences (Physics & Chemistry)', 'Academic', 'teaching_staff', 'T1 — Senior Teacher'],
+            ['Rudo', 'Chikomba', 'female', 'Teacher — Humanities (History & Heritage)', 'Academic', 'teaching_staff', 'T2 — Teacher'],
+            ['Kudakwashe', 'Zhakata', 'male', 'Teacher — Practicals (Agriculture & BTD)', 'Academic', 'teaching_staff', 'T2 — Teacher'],
+            ['Fadzai', 'Mupfumira', 'female', 'Teacher — PE, Sports & Mass Displays', 'Academic', 'teaching_staff', 'T2 — Teacher'],
+            ['Tatenda', 'Gumbo', 'male', 'Senior Teacher — Combined Science', 'Academic', 'teaching_staff', 'T1 — Senior Teacher'],
+            // Non-teaching staff (5+)
+            ['Sharon', 'Chigumba', 'female', 'School Bursar', 'Finance', 'non_teaching_staff', 'S1 — Support Staff'],
+            ['Tafadzwa', 'Moyo', 'male', 'School Nurse', 'Health & Wellness', 'non_teaching_staff', 'S1 — Support Staff'],
+            ['Beauty', 'Zvoma', 'female', 'Receptionist & Admin Assistant', 'Administration', 'non_teaching_staff', 'S1 — Support Staff'],
+            ['Lloyd', 'Dube', 'male', 'ICT Technician', 'ICT & Digital Learning', 'non_teaching_staff', 'S1 — Support Staff'],
+            ['Tanaka', 'Mpofu', 'male', 'Driver & Groundsman', 'Estates, Transport & Security', 'non_teaching_staff', 'S1 — Support Staff'],
+            ['Nyasha', 'Chirwa', 'female', 'School Librarian', 'Library & Resource Centre', 'non_teaching_staff', 'S1 — Support Staff'],
+        ];
+
+        $idsByRole = [];
+        foreach ($staffSpecs as $n => [$first, $last, $gender, $designation, $department, $role, $gradeName]) {
+            $demoEmail = strtolower($first.'.'.$last.'@demo.schoolcore.test');
+
+            $existingEmp = Employee::withoutGlobalScopes()
+                ->where('school_id', $schoolId)->where('email', $demoEmail)->first();
+            if ($existingEmp) {
+                $idsByRole[$role][] = $existingEmp->user_id;
+                continue;
+            }
+
+            $employee = Employee::create([
+                'school_id' => $schoolId,
+                'employee_number' => 'TEST-STF-'.$schoolId.'-'.str_pad((string) ($n + 1), 3, '0', STR_PAD_LEFT),
+                'national_id' => 'TEST-'.rand(10, 99).'-'.rand(100000, 999999).'X'.rand(10, 99),
+                'first_name' => $first,
+                'last_name' => $last,
+                'gender' => $gender,
+                'date_of_birth' => now()->subYears(rand(28, 58))->subDays(rand(1, 300)),
+                'phone_number' => '+263 71 '.rand(100000, 999999),
+                'email' => $demoEmail,
+                'physical_address' => rand(1, 200).' '.collect(['Samora Machel Ave', 'Josiah Tongogara St', 'Robert Mugabe Rd'])->random().', Harare',
+                'emergency_contact_name' => 'Relative of '.$first,
+                'emergency_contact_phone' => '+263 78 '.rand(100000, 999999),
+                'department' => $department,
+                'designation' => $designation,
+                'role' => $role,
+                'employment_type' => 'Permanent',
+                'date_joined' => now()->subYears(rand(1, 10))->subMonths(rand(0, 11)),
+                'current_grade_id' => $gradeIds[$gradeName],
+            ]);
+            $track('employees', [$employee->id]);
+            $idsByRole[$role][] = $employee->user_id; // observer gives us the linked user
+        }
+
+        return [
+            'teaching_staff' => array_values(array_filter($idsByRole['teaching_staff'] ?? [])),
+            'non_teaching_staff' => array_values(array_filter($idsByRole['non_teaching_staff'] ?? [])),
+            'administrator' => array_values(array_filter($idsByRole['administrator'] ?? [])),
+        ];
+    }
+
+    protected function seedApplications(int $schoolId, array $courseObjects, callable $track, callable $created, array &$manifest): void
+    {
+        $appSeq = Application::withoutGlobalScopes()->where('school_id', $schoolId)->where('application_number', 'LIKE', 'TEST-APP-%')->count();
+        $parentsFemale = ['Sekai', 'Nomsa', 'Chiedza', 'Vongai'];
+        $parentsMale = ['Charles', 'Tonderai', 'Blessing', 'Webster'];
+        $courses = array_values($courseObjects);
+
+        $statuses = ['enrolled', 'enrolled', 'confirmed', 'pending', 'pending'];
+        foreach ($statuses as $i => $status) {
+            $appSeq++;
+            $course = $courses[$i % count($courses)];
+            $gender = $i % 2 === 0 ? 'female' : 'male';
+
+            $app = Application::create([
+                'school_id' => $schoolId,
+                'application_number' => 'TEST-APP-'.$schoolId.'-'.str_pad((string) $appSeq, 4, '0', STR_PAD_LEFT),
+                'first_name' => $gender === 'female' ? 'Rutendo' : 'Mufaro',
+                'last_name' => $course->name === 'Form 1' ? 'Maringa' : ['Maringa', 'Zvandaka', 'Mhazha', 'Dzvairo'][$i % 4],
+                'national_id' => '65 '.str_pad((string) rand(1000000, 9999999), 7, '0', STR_PAD_LEFT).' '.($gender === 'female' ? 'F' : 'M').' '.str_pad((string) rand(1, 99), 2, '0', STR_PAD_LEFT),
+                'email' => 'parent'.$appSeq.'@demo.schoolcore.test',
+                'gender' => $gender,
+                'date_of_birth' => now()->subYears($course->name === 'Form 1' ? 12 : 6)->subDays(rand(1, 200)),
+                'parent_name' => ($gender === 'female' ? $parentsFemale : $parentsMale)[$i % 4].' '.rand(1000, 9999),
+                'parent_email' => 'guardian'.$appSeq.'@demo.schoolcore.test',
+                'parent_phone' => '+263 77 '.rand(100000, 999999),
+                'parent_relationship' => 'Mother',
+                'course_id' => $course->id,
+                'applying_year' => now()->format('Y'),
+                'applying_term' => 'Term 1',
+                'applying_level' => strtoupper((string) $course->name),
+                'physical_address' => rand(1, 120).' '.collect(['Borrowdale Road', 'Enterprise Road', 'Kuwadzana'])->random().', Harare',
+                'phone' => '+263 78 '.rand(100000, 999999),
+                'status' => $status,
+                'documents_verified' => $status !== 'pending',
+                'interview_status' => $status === 'pending' ? 'scheduled' : 'completed',
+                'interview_date' => now()->addDays(rand(2, 20)),
+                'decision_notes' => $status === 'rejected' ? null : 'Offered a place pending payment of registration fees.',
+            ]);
+            $track('applications', [$app->id]);
+
+            // Attach a scanned birth certificate so the document registry looks lived-in.
+            $documentType = array_key_first(ApplicationDocument::$documentTypes);
+            $doc = ApplicationDocument::create([
+                'school_id' => $schoolId,
+                'application_id' => $app->id,
+                'document_type' => $documentType,
+                'title' => $documentType.' — '.$app->first_name.' '.$app->last_name,
+                'file_path' => 'documents/demo/'.$schoolId.'/'.$app->application_number.'-'.str_replace('_', '-', (string) $documentType).'.pdf',
+                'original_name' => str_replace('_', '-', (string) $documentType).'.pdf',
+                'mime_type' => 'application/pdf',
+                'file_size' => rand(80, 900),
+            ]);
+            $track('application_documents', [$doc->id]);
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────
+    // Operations
+    // ────────────────────────────────────────────────────────────────────
+
+    protected function seedFinance(int $schoolId, $year, $term, array $studentIdsList, ?int $actorId, callable $track, callable $created): void
+    {
         $feeCategories = [];
         foreach ([
             ['Tuition Fees', 'Core academic tuition per term'],
@@ -468,8 +1056,7 @@ class DummyDataSeeder
             ->where('invoice_number', 'LIKE', 'TEST-INV-%')->count();
 
         $studentsForInvoices = Student::withoutGlobalScopes()->whereIn('id', $studentIdsList)->get();
-
-        foreach ($studentsForInvoices as $i => $student) {
+        foreach ($studentsForInvoices as $student) {
             $invoiceSeq++;
             $subtotal = 260.00;
             $paid = collect([0, 0, 130.00, 260.00])->random();
@@ -529,7 +1116,7 @@ class DummyDataSeeder
             ['school_id' => $schoolId, 'expense_category_id' => $expenseCategory->id, 'name' => 'Stationery & Printing']
         ));
 
-        for ($e = 1; $e <= 6; $e++) {
+        for ($e = 1; $e <= 8; $e++) {
             $expense = Expense::create([
                 'school_id' => $schoolId,
                 'expense_type_id' => $expenseType->id,
@@ -543,83 +1130,221 @@ class DummyDataSeeder
             ]);
             $track('expenses', [$expense->id]);
         }
+    }
 
-        // ════════════════════════════════════════════════════════════════
-        // 4. HR & PAYROLL: salary grades + staff
-        // ════════════════════════════════════════════════════════════════
-        $gradeDefs = [
-            ['D1 — Senior Management', 2400, 300, 180, 120],
-            ['T1 — Senior Teacher', 1500, 160, 100, 60],
-            ['T2 — Teacher', 1100, 120, 80, 40],
-            ['S1 — Support Staff', 650, 60, 40, 0],
-        ];
-        $gradeIds = [];
-        foreach ($gradeDefs as [$name, $base, $housing, $transport, $duty]) {
-            $grade = SalaryGrade::firstOrCreate(
-                ['school_id' => $schoolId, 'name' => $name],
-                [
-                    'base_salary' => $base,
-                    'hourly_rate' => round($base / 160, 2),
-                    'housing_allowance' => $housing,
-                    'transport_allowance' => $transport,
-                    'duty_allowance' => $duty,
-                    'overtime_eligible' => $base < 800,
-                ]
-            );
-            $gradeIds[] = $grade->id;
-            $created($grade);
-        }
-
-        $staffSpecs = [
-            ['Grace', 'Mhaka', 'female', 'Headmistress', 'Administration', 'non_teaching_staff', 0],
-            ['Petros', 'Ngwenya', 'male', 'Senior Teacher — Mathematics', 'Academic', 'teaching_staff', 1],
-            ['Rudo', 'Chieza', 'female', 'Teacher — English', 'Academic', 'teaching_staff', 2],
-            ['Farai', 'Muchena', 'male', 'Teacher — Sciences', 'Academic', 'teaching_staff', 2],
-            ['Nyarai', 'Dzimiri', 'female', 'Teacher — Humanities', 'Academic', 'teaching_staff', 2],
-            ['Takura', 'Mapfumo', 'male', 'Sports Coach', 'Academic', 'teaching_staff', 2],
-            ['Sarah', 'Bvute', 'female', 'School Bursar', 'Finance', 'non_teaching_staff', 1],
-            ['James', 'Zvobgo', 'male', 'School Nurse', 'Health', 'non_teaching_staff', 3],
-        ];
-        foreach ($staffSpecs as $n => [$first, $last, $gender, $designation, $department, $role, $gradeIdx]) {
-            // NOTE: Employee::creating() regenerates employee_number as
-            // "EMP-YYYY-####", so demo staff are identified by their reserved
-            // demo email domain instead.
-            $demoEmail = strtolower($first.'.'.$last.'@demo.schoolcore.test');
-
-            $existingEmp = Employee::withoutGlobalScopes()
-                ->where('school_id', $schoolId)->where('email', $demoEmail)->first();
-            if ($existingEmp) {
+    protected function seedLeaveAndPayroll(int $schoolId, ?int $actorId, array $staffUserIds, callable $track, callable $created): void
+    {
+        foreach ([
+            ['Annual Leave', 'ANL', 21, true],
+            ['Sick Leave', 'SCK', 12, false],
+            ['Family Responsibility Leave', 'FAM', 5, false],
+            ['Maternity Leave', 'MAT', 90, false],
+            ['Study Leave', 'STD', 14, false],
+        ] as [$name, $code, $days, $carry]) {
+            if (LeaveType::where('school_id', $schoolId)->where('code', $code)->exists()) {
                 continue;
             }
-
-            $employee = Employee::create([
+            $type = LeaveType::create([
                 'school_id' => $schoolId,
-                'employee_number' => 'TEST-STF-'.$schoolId.'-'.str_pad((string) ($n + 1), 3, '0', STR_PAD_LEFT),
-                'national_id' => 'TEST-'.rand(10, 99).'-'.rand(100000, 999999).'X'.rand(10, 99),
-                'first_name' => $first,
-                'last_name' => $last,
-                'gender' => $gender,
-                'date_of_birth' => now()->subYears(rand(28, 58))->subDays(rand(1, 300)),
-                'phone_number' => '+263 71 '.rand(100000, 999999),
-                'email' => $demoEmail,
-                'physical_address' => rand(1, 200).' '.collect(['Samora Machel Ave', 'Josiah Tongogara St', 'Robert Mugabe Rd'])->random().', Harare',
-                'emergency_contact_name' => 'Relative of '.$first,
-                'emergency_contact_phone' => '+263 78 '.rand(100000, 999999),
-                'department' => $department,
-                'designation' => $designation,
-                'role' => $role,
-                'employment_type' => 'full_time',
-                'date_joined' => now()->subYears(rand(1, 10))->subMonths(rand(0, 11)),
-                'current_grade_id' => $gradeIds[$gradeIdx],
+                'name' => $name,
+                'code' => $code,
+                'days_per_year' => $days,
+                'carry_forward' => $carry,
+                'max_accumulation' => 30,
             ]);
-            $track('employees', [$employee->id]);
+            $track('leave_types', [$type->id]);
         }
 
-        // ════════════════════════════════════════════════════════════════
-        // 5. INVENTORY & FIXED ASSETS
-        // ════════════════════════════════════════════════════════════════
+        $allStaffEmails = Employee::withoutGlobalScopes()
+            ->where('school_id', $schoolId)
+            ->where('email', 'LIKE', '%@demo.schoolcore.test')
+            ->pluck('email', 'id');
+
+        $leaveReasons = [
+            ['ANL', 'Family visit to Mutare', 'approved'],
+            ['ANL', 'End-of-year holiday', 'approved'],
+            ['SCK', 'Recovering from flu', 'approved'],
+            ['FAM', 'Attending a funeral in Masvingo', 'approved'],
+            ['SCK', 'Medical appointment', 'pending'],
+            ['STD', 'Workshop on continuous assessment', 'pending'],
+            ['ANL', 'Wedding preparations', 'pending'],
+            ['MAT', 'Maternity leave', 'approved'],
+        ];
+
+        $employeeIds = $allStaffEmails->keys()->all();
+        $leaveTypeByCode = LeaveType::where('school_id', $schoolId)->get()->keyBy('code');
+
+        foreach ($leaveReasons as $i => [$code, $reason, $status]) {
+            $employeeId = $employeeIds[$i % count($employeeIds)];
+            $start = now()->subMonths(rand(1, 5))->startOfMonth()->addDays(rand(1, 15))->toDateString();
+            $end = now()->subMonths(rand(1, 5))->startOfMonth()->addDays(rand(3, 20))->toDateString();
+
+            $request = LeaveRequest::create([
+                'school_id' => $schoolId,
+                'employee_id' => $employeeId,
+                'leave_type_id' => $leaveTypeByCode[$code]->id,
+                'start_date' => $start,
+                'end_date' => $end,
+                'reason' => $reason,
+                'status' => $status,
+                'hr_remarks' => $status === 'approved' ? 'Approved by HR.' : null,
+                'approved_by_id' => $status === 'approved' ? ($actorId ?? null) : null,
+            ]);
+            $track('leave_requests', [$request->id]);
+        }
+
+        // Payroll period + run + payslips + items.
+        $periodStart = now()->subMonth()->startOfMonth();
+        $periodExists = PayrollPeriod::withoutGlobalScopes()
+            ->where('school_id', $schoolId)
+            ->where('start_date', $periodStart->toDateString())
+            ->first();
+        if ($periodExists) {
+            $period = $periodExists;
+        } else {
+            $period = PayrollPeriod::create([
+                'school_id' => $schoolId,
+                'name' => 'Payroll '.$periodStart->format('F Y'),
+                'start_date' => $periodStart->toDateString(),
+                'end_date' => $periodStart->copy()->endOfMonth()->toDateString(),
+                'status' => 'processed',
+            ]);
+            $track('payroll_periods', [$period->id]);
+        }
+
+        $run = PayrollRun::create([
+            'school_id' => $schoolId,
+            'payroll_period_id' => $period->id,
+            'status' => 'released',
+            'calculated_at' => now()->subDays(5),
+            'approved_at' => now()->subDays(3),
+            'released_at' => now()->subDays(2),
+            'gross_total' => 0,
+            'deductions_total' => 0,
+            'net_total' => 0,
+        ]);
+        $track('payroll_runs', [$run->id]);
+
+        $grades = SalaryGrade::where('school_id', $schoolId)->get()->keyBy('id');
+        $grossTotal = 0;
+        $deductionTotal = 0;
+        $netTotal = 0;
+
+        $employees = Employee::withoutGlobalScopes()->where('school_id', $schoolId)->whereIn('id', $employeeIds)->get();
+        foreach ($employees as $employee) {
+            $grade = $grades->get($employee->current_grade_id);
+            $base = (float) ($grade->base_salary ?? 650);
+            $housing = (float) ($grade->housing_allowance ?? 0);
+            $transport = (float) ($grade->transport_allowance ?? 0);
+            $duty = (float) ($grade->duty_allowance ?? 0);
+            $gross = $base + $housing + $transport + $duty;
+            $deductions = round($gross * 0.085, 2); // PAYE + NSSA
+            $net = round($gross - $deductions, 2);
+
+            $grossTotal += $gross;
+            $deductionTotal += $deductions;
+            $netTotal += $net;
+
+            $payslip = Payslip::create([
+                'school_id' => $schoolId,
+                'payroll_run_id' => $run->id,
+                'employee_id' => $employee->id,
+                'base_salary' => $base,
+                'gross_pay' => $gross,
+                'total_deductions' => $deductions,
+                'net_pay' => $net,
+                'status' => 'paid',
+                'payment_method' => 'Bank Transfer',
+                'payment_date' => now()->subDay()->toDateString(),
+                'transaction_reference' => 'TX-DEMO-'.random_int(100000, 999999),
+                'integrity_hash' => hash_hmac('sha256', $period->id.$employee->id.$gross, config('app.key')),
+            ]);
+            $track('payslips', [$payslip->id]);
+
+            foreach ([
+                ['BAS', 'Basic Salary', 'earning', $base, true],
+                ['HOU', 'Housing Allowance', 'earning', $housing, true],
+                ['TRN', 'Transport Allowance', 'earning', $transport, true],
+                ['DUT', 'Duty Allowance', 'earning', $duty, true],
+                ['PAY', 'PAYE Tax', 'deduction', round($gross * 0.07, 2), false],
+                ['NSS', 'NSSA Contribution', 'deduction', round($gross * 0.015, 2), false],
+            ] as [$code, $name, $type, $amount, $taxable]) {
+                if ($type === 'earning' && $amount <= 0) {
+                    continue;
+                }
+                $item = PayslipItem::create([
+                    'school_id' => $schoolId,
+                    'payslip_id' => $payslip->id,
+                    'code' => $code,
+                    'name' => $name,
+                    'type' => $type,
+                    'amount' => round($amount, 2),
+                    'is_taxable' => $taxable,
+                    'is_recurring' => true,
+                ]);
+                $track('payslip_items', [$item->id]);
+            }
+        }
+
+        $run->update([
+            'gross_total' => round($grossTotal, 2),
+            'deductions_total' => round($deductionTotal, 2),
+            'net_total' => round($netTotal, 2),
+        ]);
+
+        // Salary grade progression history for the deputy head.
+        $deputy = Employee::withoutGlobalScopes()
+            ->where('school_id', $schoolId)
+            ->where('email', 'petros.ngwenya@demo.schoolcore.test')
+            ->first();
+        if ($deputy && $actorId) {
+            $oldGradeId = $gradeIdsFallback = null;
+            $oldGrade = SalaryGrade::withoutGlobalScopes()->where('school_id', $schoolId)->where('name', 'T2 — Teacher')->first();
+            if ($oldGrade && (int) $deputy->current_grade_id !== (int) $oldGrade->id) {
+                $history = SalaryGradeHistory::create([
+                    'school_id' => $schoolId,
+                    'employee_id' => $deputy->id,
+                    'previous_grade_id' => $oldGrade->id,
+                    'new_grade_id' => $deputy->current_grade_id,
+                    'base_salary' => (float) ($grades->get($deputy->current_grade_id)->base_salary ?? 0),
+                    'effective_date' => now()->subMonths(6)->toDateString(),
+                    'reason' => 'Annual performance-based promotion',
+                    'approved_by_id' => $actorId,
+                ]);
+                $track('salary_grade_history', [$history->id]);
+            }
+        }
+
+        // Staff attendance: last 10 school weekdays for every demo employee user.
+        $weekdays = $this->recentWeekdays(10);
+        foreach ($employees as $employee) {
+            if (! $employee->user_id) {
+                continue;
+            }
+            foreach ($weekdays as $date) {
+                $status = collect(['present', 'present', 'present', 'present', 'late', 'absent'])->random();
+                if (StaffAttendance::where('school_id', $schoolId)->where('user_id', $employee->user_id)->where('date', $date)->exists()) {
+                    continue;
+                }
+                $att = StaffAttendance::create([
+                    'school_id' => $schoolId,
+                    'user_id' => $employee->user_id,
+                    'date' => $date,
+                    'status' => $status,
+                    'check_in_time' => '07:55',
+                    'check_out_time' => '15:45',
+                    'method' => 'manual',
+                    'marked_by_id' => $actorId,
+                ]);
+                $track('staff_attendances', [$att->id]);
+            }
+        }
+    }
+
+    protected function seedInventoryAndProcurement(int $schoolId, ?int $actorId, array $staffUserIds, callable $track, callable $created): void
+    {
         $invCats = [];
-        foreach ([['Stationery', 'Paper, pens and office supplies'], ['Cleaning Materials', 'Janitorial consumables'], ['ICT Equipment', 'Computers and peripherals']] as [$name, $desc]) {
+        foreach ([['Stationery', 'Paper, pens and office supplies'], ['Cleaning Materials', 'Janitorial consumables'], ['ICT Equipment', 'Computers and peripherals'], ['Science Equipment', 'Laboratory apparatus']] as [$name, $desc]) {
             $invCats[] = $created(InventoryCategory::firstOrCreate(
                 ['school_id' => $schoolId, 'name' => $name],
                 ['description' => $desc]
@@ -635,13 +1360,18 @@ class DummyDataSeeder
             [2, 'Laptop — Staff', 'fixed_asset', 'unit', 1, 12, 680.00],
             [0, 'Chalk (box)', 'consumable', 'box', 12, 140, 2.80],
             [2, 'Network Switch 24-port', 'fixed_asset', 'unit', 1, 4, 190.00],
+            [3, 'Microscope Kit', 'fixed_asset', 'unit', 1, 6, 540.00],
+            [3, 'Bunsen Burners (set)', 'consumable', 'set', 5, 30, 42.00],
         ];
-        $assetEligibleItems = [];
+        $itemIds = [];
         foreach ($itemSpecs as $n => [$catIdx, $name, $type, $uom, $reorder, $qty, $cost]) {
-            $item = InventoryItem::firstOrCreate(
-                ['school_id' => $schoolId, 'sku' => 'TEST-SKU-'.$schoolId.'-'.str_pad((string) ($n + 1), 3, '0', STR_PAD_LEFT)],
-                [
+            $sku = 'TEST-SKU-'.$schoolId.'-'.str_pad((string) ($n + 1), 3, '0', STR_PAD_LEFT);
+            $item = InventoryItem::withoutGlobalScopes()->where('school_id', $schoolId)->where('sku', $sku)->first();
+            if (! $item) {
+                $item = $created(InventoryItem::create([
+                    'school_id' => $schoolId,
                     'category_id' => $invCats[$catIdx]->id,
+                    'sku' => $sku,
                     'name' => $name,
                     'item_type' => $type,
                     'unit_of_measure' => $uom,
@@ -649,80 +1379,361 @@ class DummyDataSeeder
                     'current_quantity' => $qty,
                     'average_unit_cost' => $cost,
                     'is_saleable' => false,
-                ]
-            );
-            if ($type === 'fixed_asset') {
-                $assetEligibleItems[] = $item;
+                ]));
             }
-            $created($item);
+            $itemIds[] = $item->id;
         }
 
-        foreach ($assetEligibleItems as $n => $item) {
-            $exists = FixedAsset::withoutGlobalScopes()->where('school_id', $schoolId)
-                ->where('inventory_item_id', $item->id)->exists();
-            if ($exists) {
+        // Inventory locations + suppliers.
+        foreach ([
+            ['Main Stores', 'STO-MAIN', 'general'],
+            ['ICT Room', 'LOC-ICT', 'ict'],
+            ['Science Laboratory', 'LOC-LAB', 'laboratory'],
+            ['Sports Pavilion', 'LOC-SPT', 'sports'],
+        ] as [$name, $code, $type]) {
+            if (InventoryLocation::where('school_id', $schoolId)->where('code', $code)->exists()) {
+                continue;
+            }
+            $loc = InventoryLocation::create([
+                'school_id' => $schoolId,
+                'name' => $name,
+                'code' => $code,
+                'type' => $type,
+                'temperature_sensitive' => $code === 'LOC-LAB',
+            ]);
+            $track('inventory_locations', [$loc->id]);
+        }
+
+        $supplierIds = [];
+        foreach ([
+            ['Harare Stationery Suppliers', 'Tendai Chikafu', '+263 24 700001', 'sales@hararestationery.demo', '19 Sam Nujoma Street, Harare'],
+            ['Zimbabwe Laboratory Supplies', 'Nyaradzo Gumbo', '+263 24 700004', 'orders@zimsci.demo', '24 Lobengula Avenue, Bulawayo'],
+            ['TechServe ICT Solutions', 'Blessing Gara', '+263 24 700003', 'support@techserve.demo', '8 Josiah Tongogara Avenue, Harare'],
+        ] as [$name, $person, $phone, $email, $address]) {
+            if (InventorySupplier::where('school_id', $schoolId)->where('name', $name)->exists()) {
+                continue;
+            }
+            $sup = InventorySupplier::create([
+                'school_id' => $schoolId,
+                'name' => $name,
+                'contact_person' => $person,
+                'phone' => $phone,
+                'email' => $email,
+                'physical_address' => $address,
+            ]);
+            $track('inventory_suppliers', [$sup->id]);
+            $supplierIds[] = $sup->id;
+        }
+
+        // Fixed assets with maintenance logs.
+        $assetEligible = InventoryItem::withoutGlobalScopes()
+            ->where('school_id', $schoolId)
+            ->whereIn('id', $itemIds)
+            ->where('item_type', 'fixed_asset')
+            ->get();
+        foreach ($assetEligible as $n => $item) {
+            $asset = FixedAsset::withoutGlobalScopes()->where('school_id', $schoolId)->where('inventory_item_id', $item->id)->first();
+            if (! $asset) {
+                $asset = FixedAsset::create([
+                    'school_id' => $schoolId,
+                    'inventory_item_id' => $item->id,
+                    'asset_number' => 'TEST-AST-'.$schoolId.'-'.str_pad((string) ($n + 1), 3, '0', STR_PAD_LEFT),
+                    'serial_number' => 'SN-DEMO-'.strtoupper(\Illuminate\Support\Str::random(8)),
+                    'acquisition_date' => now()->subYears(rand(1, 4))->toDateString(),
+                    'purchase_cost' => $item->average_unit_cost,
+                    'salvage_value' => round($item->average_unit_cost * 0.1, 2),
+                    'useful_life_years' => 5,
+                    'depreciation_method' => 'straight_line',
+                    'current_value' => round($item->average_unit_cost * rand(60, 90) / 100, 2),
+                    'funding_source' => 'School Development Fund',
+                    'status' => 'in_use',
+                ]);
+                $track('fixed_assets', [$asset->id]);
+            }
+
+            $maintenance = AssetMaintenanceLog::create([
+                'school_id' => $schoolId,
+                'fixed_asset_id' => $asset->id,
+                'title' => 'Routine service — '.$item->name,
+                'type' => 'preventive',
+                'schedule_type' => 'one_time',
+                'scheduled_date' => now()->subDays(rand(10, 60))->toDateString(),
+                'completed_date' => now()->subDays(rand(1, 30))->toDateString(),
+                'cost' => rand(15, 90),
+                'performed_by' => 'External technician',
+                'status' => 'completed',
+                'notes' => 'Demo maintenance job.',
+            ]);
+            $track('asset_maintenance_logs', [$maintenance->id]);
+        }
+
+        // Procurement requests + orders.
+        $procurementSpecs = [
+            ['replenishment', 'Restock stationery ahead of new term', 2],
+            ['capital_purchase', 'Second batch of science microscopes', 2],
+            ['replenishment', 'ICT equipment refresh for computer lab', 2],
+        ];
+        $requesterId = $staffUserIds['non_teaching_staff'][0] ?? $actorId;
+        foreach ($procurementSpecs as $i => [$urgency, $notes, $itemCount]) {
+            $reqNumber = 'TEST-PREQ-'.$schoolId.'-'.str_pad((string) ($i + 1), 3, '0', STR_PAD_LEFT);
+            $existingReq = ProcurementRequest::withoutGlobalScopes()->where('school_id', $schoolId)->where('request_number', $reqNumber)->first();
+            if ($existingReq) {
                 continue;
             }
 
-            $asset = FixedAsset::create([
+            $request = ProcurementRequest::create([
                 'school_id' => $schoolId,
-                'inventory_item_id' => $item->id,
-                'asset_number' => 'TEST-AST-'.$schoolId.'-'.str_pad((string) ($n + 1), 3, '0', STR_PAD_LEFT),
-                'serial_number' => 'SN-DEMO-'.strtoupper(\Illuminate\Support\Str::random(8)),
-                'acquisition_date' => now()->subYears(rand(1, 4))->toDateString(),
-                'purchase_cost' => $item->average_unit_cost,
-                'salvage_value' => round($item->average_unit_cost * 0.1, 2),
-                'useful_life_years' => 5,
-                'depreciation_method' => 'straight_line',
-                'current_value' => round($item->average_unit_cost * rand(60, 90) / 100, 2),
-                'funding_source' => 'School Development Fund',
-                'status' => 'in_use',
+                'request_number' => $reqNumber,
+                'requester_id' => $requesterId,
+                'status' => 'approved',
+                'urgency' => $urgency,
+                'notes' => $notes,
+                'purpose' => 'Term start preparation',
             ]);
-            $track('fixed_assets', [$asset->id]);
-        }
+            $track('procurement_requests', [$request->id]);
 
-        // ════════════════════════════════════════════════════════════════
-        // 6. LIBRARY
-        // ════════════════════════════════════════════════════════════════
+            for ($j = 0; $j < $itemCount; $j++) {
+                $item = InventoryItem::withoutGlobalScopes()->whereIn('id', $itemIds)->get()[$j % count($itemIds)];
+                $reqItem = ProcurementRequestItem::create([
+                    'procurement_request_id' => $request->id,
+                    'item_name' => $item->name,
+                    'inventory_item_id' => $item->id,
+                    'quantity' => rand(2, 20),
+                    'estimated_unit_cost' => $item->average_unit_cost,
+                    'specifications' => null,
+                ]);
+                $track('procurement_request_items', [$reqItem->id]);
+            }
+
+            $orderNumber = 'TEST-PO-'.$schoolId.'-'.str_pad((string) ($i + 1), 3, '0', STR_PAD_LEFT);
+            $order = ProcurementOrder::create([
+                'school_id' => $schoolId,
+                'procurement_request_id' => $request->id,
+                'supplier_id' => $supplierIds[$i % max(1, count($supplierIds))],
+                'order_number' => $orderNumber,
+                'order_date' => now()->subDays(rand(5, 30))->toDateString(),
+                'expected_delivery_date' => now()->addDays(rand(3, 14))->toDateString(),
+                'status' => 'delivered',
+                'total_amount' => 0,
+            ]);
+            $track('procurement_orders', [$order->id]);
+
+            $orderItems = ProcurementRequest::withoutGlobalScopes()->find($request->id)
+                ->items()->get();
+            $total = 0;
+            foreach ($orderItems as $reqItem) {
+                $orderItem = ProcurementOrderItem::create([
+                    'procurement_order_id' => $order->id,
+                    'inventory_item_id' => $reqItem->inventory_item_id,
+                    'quantity_ordered' => $reqItem->quantity,
+                    'quantity_received' => $reqItem->quantity,
+                    'unit_cost' => $reqItem->estimated_unit_cost,
+                ]);
+                $track('procurement_order_items', [$orderItem->id]);
+                $total += $reqItem->quantity * $reqItem->estimated_unit_cost;
+            }
+            $order->update(['total_amount' => round($total, 2)]);
+        }
+    }
+
+    protected function seedLibraryAndKnowledge(int $schoolId, ?int $actorId, array $studentIdsList, array $staffUserIds, callable $track, callable $created): void
+    {
         $libCatFiction = $created(LibraryCategory::firstOrCreate(['school_id' => $schoolId, 'name' => 'Fiction']));
         $libCatReference = $created(LibraryCategory::firstOrCreate(['school_id' => $schoolId, 'name' => 'Reference']));
+        $libCatTextbook = $created(LibraryCategory::firstOrCreate(['school_id' => $schoolId, 'name' => 'Textbooks']));
         $fmtPrint = $created(LibraryFormat::firstOrCreate(['school_id' => $schoolId, 'name' => 'Print Book'], ['media_type' => 'physical']));
         $fmtEbook = $created(LibraryFormat::firstOrCreate(['school_id' => $schoolId, 'name' => 'E-Book'], ['media_type' => 'digital']));
 
-        $bookSpecs = [
-            [$libCatFiction->id, $fmtPrint->id, 'The House of Hunger', 'Dambudzo Marechera', 1978, 'Fiction'],
-            [$libCatFiction->id, $fmtPrint->id, 'Nervous Conditions', 'Tsitsi Dangarembga', 1988, 'Fiction'],
-            [$libCatFiction->id, $fmtEbook->id, 'An Elegy for Easterly', 'Petina Gappah', 2009, 'Fiction'],
-            [$libCatReference->id, $fmtPrint->id, 'O-Level Mathematics Revision', 'J. Sadler', 2015, 'Mathematics'],
-            [$libCatReference->id, $fmtPrint->id, 'Atlas of Southern Africa', 'Maskew Miller', 2012, 'Geography'],
-            [$libCatReference->id, $fmtEbook->id, 'Introduction to Programming', 'FreeTech Press', 2020, 'Computer Science'],
+        $authorSpecs = [
+            ['Dambudzo Marechera', 'Zimbabwean novelist and playwright.'],
+            ['Tsitsi Dangarembga', 'Author of the acclaimed "Nervous Conditions".'],
+            ['Petina Gappah', 'Zimbabwean short-story writer and novelist.'],
+            ['J. Sadler', 'Author of revision textbooks for secondary mathematics.'],
+            ['Doris Lessing', 'Zimbabwe-born Nobel laureate in literature.'],
+            ['FreeTech Press', 'Published educational and technical materials.'],
         ];
-        foreach ($bookSpecs as $n => [$categoryId, $formatId, $title, $author, $pubYear, $subjectName]) {
+        $authorIds = [];
+        foreach ($authorSpecs as [$name, $bio]) {
+            $author = LibraryAuthor::firstOrCreate(
+                ['school_id' => $schoolId, 'name' => $name],
+                ['bio' => $bio]
+            );
+            $authorIds[$name] = $author->id;
+            $created($author);
+        }
+
+        $bookSpecs = [
+            [$libCatFiction->id, $fmtPrint->id, 'The House of Hunger', 'Dambudzo Marechera', 1978, 'Fiction', 3],
+            [$libCatFiction->id, $fmtPrint->id, 'Nervous Conditions', 'Tsitsi Dangarembga', 1988, 'Fiction', 2],
+            [$libCatFiction->id, $fmtEbook->id, 'An Elegy for Easterly', 'Petina Gappah', 2009, 'Fiction', 2],
+            [$libCatReference->id, $fmtPrint->id, 'O-Level Mathematics Revision', 'J. Sadler', 2015, 'Mathematics', 4],
+            [$libCatReference->id, $fmtPrint->id, 'Atlas of Southern Africa', 'FreeTech Press', 2012, 'Geography', 1],
+            [$libCatTextbook->id, $fmtEbook->id, 'Introduction to Programming', 'FreeTech Press', 2020, 'Computer Science', 2],
+            [$libCatTextbook->id, $fmtPrint->id, 'The Grass is Singing', 'Doris Lessing', 1950, 'Literature', 2],
+            [$libCatReference->id, $fmtPrint->id, 'Physical Science Activity Book', 'FreeTech Press', 2018, 'Combined Science', 3],
+        ];
+
+        $bookCopyIds = [];
+        foreach ($bookSpecs as $n => [$categoryId, $formatId, $title, $authorName, $pubYear, $subjectName, $copies]) {
             $isbn = 'TEST-ISBN-'.$schoolId.'-'.str_pad((string) ($n + 1), 4, '0', STR_PAD_LEFT);
-            $existsBook = LibraryBook::withoutGlobalScopes()->where('school_id', $schoolId)->where('isbn', $isbn)->exists();
-            if ($existsBook) {
+            $book = LibraryBook::withoutGlobalScopes()->where('school_id', $schoolId)->where('isbn', $isbn)->first();
+            if (! $book) {
+                $book = LibraryBook::create([
+                    'school_id' => $schoolId,
+                    'library_category_id' => $categoryId,
+                    'library_format_id' => $formatId,
+                    'title' => $title,
+                    'publisher' => 'Demo Press',
+                    'publication_year' => (string) $pubYear,
+                    'isbn' => $isbn,
+                    'language' => 'English',
+                    'subject' => $subjectName,
+                    'media_type' => $formatId === $fmtEbook->id ? 'digital' : 'physical',
+                    'description' => 'Demonstration library title for testing circulation.',
+                ]);
+                $track('library_books', [$book->id]);
+            }
+
+            $pivot = DB::table('library_book_author')
+                ->where('library_book_id', $book->id)
+                ->where('library_author_id', $authorIds[$authorName])
+                ->first();
+            if (! $pivot) {
+                $pivotId = DB::table('library_book_author')->insertGetId([
+                    'library_book_id' => $book->id,
+                    'library_author_id' => $authorIds[$authorName],
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                $manifestRef = null;
+                $track('library_book_author', [$pivotId]);
+            }
+
+            if ($formatId !== $fmtEbook->id) {
+                for ($c = 1; $c <= $copies; $c++) {
+                    $barcode = 'TEST-BC-'.$schoolId.'-'.str_pad($book->id, 4, '0', STR_PAD_LEFT).'-'.$c;
+                    if (LibraryBookCopy::where('school_id', $schoolId)->where('barcode', $barcode)->exists()) {
+                        continue;
+                    }
+                    $copy = LibraryBookCopy::create([
+                        'school_id' => $schoolId,
+                        'library_book_id' => $book->id,
+                        'barcode' => $barcode,
+                        'qr_code' => 'QR-'.hash('crc32b', $barcode),
+                        'shelf' => ['S1', 'S2', 'R1'][$n % 3],
+                        'rack' => (string) (($n % 4) + 1),
+                        'position' => (string) (($c % 3) + 1),
+                        'condition' => 'good',
+                        'status' => 'available',
+                        'purchase_cost' => round(rand(600, 2400) / 100, 2),
+                        'replacement_cost' => round(rand(800, 3000) / 100, 2),
+                        'acquired_date' => now()->subYears(rand(0, 3))->toDateString(),
+                    ]);
+                    $track('library_book_copies', [$copy->id]);
+                    $bookCopyIds[] = $copy->id;
+                }
+            }
+        }
+
+        // Circulation: issue a handful of physical copies to students.
+        $students = Student::withoutGlobalScopes()->whereIn('id', $studentIdsList)->get();
+        $librarianUserId = $staffUserIds['non_teaching_staff'][5] ?? $staffUserIds['non_teaching_staff'][0] ?? $actorId;
+        $issueStatuses = [
+            ['issued', null],
+            ['returned', true],
+            ['issued', null],
+            ['returned', true],
+            ['overdue', null],
+        ];
+        foreach (array_slice($bookCopyIds, 0, 5) as $i => $copyId) {
+            [$status, $returned] = $issueStatuses[$i % count($issueStatuses)];
+            $student = $students[$i % max(1, $students->count())];
+            $issue = LibraryIssue::create([
+                'school_id' => $schoolId,
+                'library_book_copy_id' => $copyId,
+                'student_id' => $student->id,
+                'issued_by_id' => $librarianUserId,
+                'issued_at' => now()->subDays(rand(5, 25))->toDateString(),
+                'due_at' => now()->addDays(rand(3, 16))->toDateString(),
+                'returned_at' => $returned ? now()->subDays(rand(1, 5))->toDateString() : null,
+                'status' => $status,
+                'fine_amount' => $status === 'overdue' ? 1.5 : 0,
+                'fine_status' => $status === 'overdue' ? 'unpaid' : 'waived',
+                'renewals_count' => 0,
+                'notes' => 'Demonstration circulation record.',
+            ]);
+            $track('library_issues', [$issue->id]);
+        }
+
+        // Knowledge repository.
+        $fmtPrinted = $created(KnowledgeFormat::firstOrCreate(['school_id' => $schoolId, 'name' => 'Printed Set'], ['media_type' => 'physical']));
+        $fmtDigital = $created(KnowledgeFormat::firstOrCreate(['school_id' => $schoolId, 'name' => 'Digital'], ['media_type' => 'digital']));
+
+        $assetSpecs = [
+            [$libCatReference->id, $fmtPrinted->id, 'Form 3 Science Revision Notes', 'physical', 'FreeTech Press', 2021],
+            [$libCatReference->id, $fmtPrinted->id, 'O-Level Mathematics Past Papers', 'physical', 'Demo Press', 2022],
+            [$libCatReference->id, $fmtDigital->id, 'Campus ICT Handbook', 'digital', 'FreeTech Press', 2023],
+            [$libCatReference->id, $fmtDigital->id, 'Heritage Studies Resource Pack', 'digital', 'Demo Press', 2024],
+        ];
+        foreach ($assetSpecs as $n => [$categoryId, $formatId, $title, $mediaType, $publisher, $pubYear]) {
+            $isbn = 'TEST-KA-'.$schoolId.'-'.str_pad((string) ($n + 1), 4, '0', STR_PAD_LEFT);
+            if (KnowledgeAsset::withoutGlobalScopes()->where('school_id', $schoolId)->where('isbn', $isbn)->exists()) {
                 continue;
             }
 
-            $book = LibraryBook::create([
+            $asset = KnowledgeAsset::create([
                 'school_id' => $schoolId,
+                'uploaded_by_id' => $actorId ?? 1,
                 'library_category_id' => $categoryId,
-                'library_format_id' => $formatId,
+                'knowledge_format_id' => $formatId,
                 'title' => $title,
-                'publisher' => 'Demo Press',
-                'publication_year' => $pubYear,
+                'subtitle' => 'Repository demonstration asset',
+                'subtype' => null,
+                'abstract_description' => 'Sample knowledge repository asset used to exercise the repository module.',
+                'visibility' => 'library_only',
                 'isbn' => $isbn,
+                'publisher' => $publisher,
+                'publication_year' => (string) $pubYear,
                 'language' => 'English',
-                'subject' => $subjectName,
-                'media_type' => $formatId === $fmtEbook->id ? 'digital' : 'physical',
-                'description' => 'Demonstration library title for testing circulation.',
+                'media_type' => $mediaType,
+                'file_path' => $mediaType === 'digital' ? 'knowledge/demo/'.$schoolId.'/'.\Illuminate\Support\Str::slug($title).'.pdf' : null,
             ]);
-            $track('library_books', [$book->id]);
-        }
+            $track('knowledge_assets', [$asset->id]);
 
-        // ════════════════════════════════════════════════════════════════
-        // 7. CLINIC: medical records + visits
-        // ════════════════════════════════════════════════════════════════
+            $authorPivot = DB::table('knowledge_asset_author')
+                ->where('knowledge_asset_id', $asset->id)
+                ->where('library_author_id', $authorIds['FreeTech Press'])
+                ->first();
+            if (! $authorPivot) {
+                $authPivotId = DB::table('knowledge_asset_author')->insertGetId([
+                    'knowledge_asset_id' => $asset->id,
+                    'library_author_id' => $authorIds['FreeTech Press'],
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                $track('knowledge_asset_author', [$authPivotId]);
+            }
+
+            if ($mediaType === 'physical') {
+                $barcode = 'TEST-KB-'.$schoolId.'-'.str_pad($asset->id, 4, '0', STR_PAD_LEFT);
+                if (! KnowledgeAssetCopy::where('school_id', $schoolId)->where('barcode', $barcode)->exists()) {
+                    $copy = KnowledgeAssetCopy::create([
+                        'school_id' => $schoolId,
+                        'knowledge_asset_id' => $asset->id,
+                        'barcode' => $barcode,
+                        'qr_code' => 'KLQR-'.hash('crc32b', $barcode),
+                        'shelf' => 'K'.(($n % 3) + 1),
+                        'condition' => 'good',
+                        'status' => 'available',
+                    ]);
+                    $track('knowledge_asset_copies', [$copy->id]);
+                }
+            }
+        }
+    }
+
+    protected function seedClinic(int $schoolId, array $studentIdsList, array $bloodGroups, ?int $actorId, callable $track, callable $created): void
+    {
         $clinicStudents = Student::withoutGlobalScopes()->whereIn('id', $studentIdsList)->take(8)->get();
         foreach ($clinicStudents as $n => $student) {
             $hasRecord = StudentMedicalRecord::withoutGlobalScopes()
@@ -765,60 +1776,97 @@ class DummyDataSeeder
             ]);
             $track('clinic_visits', [$visit->id]);
         }
+    }
 
-        // ════════════════════════════════════════════════════════════════
-        // 8. HOSTELS: building → floor → wing → rooms → beds → allocations
-        // ════════════════════════════════════════════════════════════════
-        $boarders = Student::withoutGlobalScopes()->whereIn('id', $studentIdsList)
-            ->where('boarding_status', 'boarder')->get();
+    protected function seedHostels(int $schoolId, $year, array $studentIdsList, callable $track, callable $created): void
+    {
+        $hostelSpecs = [
+            ['Boys Hostel — Nyanga House', 'boys'],
+            ['Girls Hostel — Chiadzwa House', 'girls'],
+        ];
 
-        if ($boarders->isNotEmpty()) {
-            $hostel = $created(Hostel::firstOrCreate(
-                ['school_id' => $schoolId, 'name' => 'Main Boys Wing'],
-                ['type' => 'boys', 'capacity' => 32, 'status' => 'operational', 'description' => 'Demonstration boarding house.']
-            ));
+        foreach ($hostelSpecs as $hi => [$hostelName, $hostelType]) {
+            $hostel = Hostel::firstOrCreate(
+                ['school_id' => $schoolId, 'name' => $hostelName],
+                ['type' => $hostelType, 'capacity' => 32, 'status' => 'operational', 'description' => 'Demonstration boarding house.']
+            );
+            $created($hostel);
 
-            $building = $created(HostelBuilding::firstOrCreate(
-                ['school_id' => $schoolId, 'hostel_id' => $hostel->id, 'name' => 'Block A'],
-                ['description' => 'Ground floor block.']
-            ));
-            $floor = $created(HostelFloor::firstOrCreate(
-                ['school_id' => $schoolId, 'building_id' => $building->id, 'floor_number' => 1],
-                ['floor_name' => 'Ground Floor']
-            ));
-            $wing = $created(HostelWing::firstOrCreate(
-                ['school_id' => $schoolId, 'floor_id' => $floor->id, 'name' => 'East Wing']
-            ));
+            foreach (['Block A', 'Block B'] as $bi => $blockName) {
+                $building = HostelBuilding::firstOrCreate(
+                    ['school_id' => $schoolId, 'hostel_id' => $hostel->id, 'name' => $blockName],
+                    ['description' => $bi === 0 ? 'Ground floor block.' : 'Upper floor block.']
+                );
+                $created($building);
 
-            $freeBeds = collect();
-            foreach ([1, 2] as $roomNo) {
-                $room = $created(HostelRoom::firstOrCreate(
-                    ['school_id' => $schoolId, 'hostel_id' => $hostel->id, 'room_number' => 'A'.$roomNo],
-                    [
-                        'wing_id' => $wing->id,
-                        'floor_id' => $floor->id,
-                        'name' => 'Room A'.$roomNo,
-                        'room_type' => 'dormitory',
-                        'condition' => 'good',
-                        'status' => 'available',
-                        'capacity' => 4,
-                    ]
-                ));
-
-                foreach ([1, 2] as $bedNo) {
-                    $bedNumber = 'A'.$roomNo.'-B'.$bedNo;
-                    $bed = HostelBed::firstOrCreate(
-                        ['school_id' => $schoolId, 'room_id' => $room->id, 'bed_number' => $bedNumber],
-                        ['condition' => 'good', 'status' => 'vacant', 'cleaning_status' => 'clean']
+                for ($f = 1; $f <= 2; $f++) {
+                    $floor = HostelFloor::firstOrCreate(
+                        ['school_id' => $schoolId, 'hostel_id' => $hostel->id, 'floor_number' => $f],
+                        ['floor_name' => $f === 1 ? 'Ground Floor' : 'First Floor'.' '.$blockName]
                     );
-                    if ($bed->wasRecentlyCreated) {
-                        $track('hostel_beds', [$bed->id]);
-                    } elseif ($bed->status === 'vacant') {
-                        // reusable bed from a previous seed whose allocation was wiped
+                    $created($floor);
+
+                    $wing = HostelWing::firstOrCreate(
+                        ['school_id' => $schoolId, 'floor_id' => $floor->id, 'name' => [0 => 'East Wing', 1 => 'West Wing'][$f % 2]]
+                    );
+                    $created($wing);
+
+                    foreach ([1, 2] as $ri => $roomNo) {
+                        $roomNumber = substr((string) $blockName, -1).$f.$roomNo;
+                        $room = HostelRoom::firstOrCreate(
+                            ['school_id' => $schoolId, 'hostel_id' => $hostel->id, 'room_number' => $roomNumber],
+                            [
+                                'wing_id' => $wing->id,
+                                'floor_id' => $floor->id,
+                                'name' => 'Room '.$roomNumber,
+                                'room_type' => 'dormitory',
+                                'condition' => 'good',
+                                'status' => 'available',
+                                'capacity' => 2,
+                            ]
+                        );
+                        $created($room);
+
+                        foreach ([1, 2] as $bedNo) {
+                            $bedNumber = $roomNumber.'-B'.$bedNo;
+                            $bed = HostelBed::firstOrCreate(
+                                ['school_id' => $schoolId, 'room_id' => $room->id, 'bed_number' => $bedNumber],
+                                ['condition' => 'good', 'status' => 'vacant', 'cleaning_status' => 'clean']
+                            );
+                            if ($bed->wasRecentlyCreated) {
+                                $track('hostel_beds', [$bed->id]);
+                            }
+                        }
                     }
-                    $freeBeds->push($bed);
                 }
             }
+        }
+
+        $boardersByGender = Student::withoutGlobalScopes()->whereIn('id', $studentIdsList)
+            ->where('boarding_status', 'boarder')
+            ->get()
+            ->groupBy('gender');
+
+        $genderToHostel = ['male' => 'Boys Hostel — Nyanga House', 'female' => 'Girls Hostel — Chiadzwa House'];
+
+        foreach ($genderToHostel as $gender => $hostelName) {
+            if ($gender === 'other') {
+                continue;
+            }
+            $boarders = $boardersByGender->get($gender) ?? collect();
+            if ($boarders->isEmpty()) {
+                continue;
+            }
+
+            $hostel = Hostel::withoutGlobalScopes()->where('school_id', $schoolId)->where('name', $hostelName)->first();
+            if (! $hostel) {
+                continue;
+            }
+
+            $freeBeds = HostelBed::withoutGlobalScopes()
+                ->whereHas('room', fn ($q) => $q->where('hostel_id', $hostel->id))
+                ->where('status', 'vacant')
+                ->get();
 
             foreach ($boarders->zip($freeBeds) as [$student, $bed]) {
                 if (! $student || ! $bed) {
@@ -829,7 +1877,7 @@ class DummyDataSeeder
                     ->where('school_id', $schoolId)
                     ->where('student_id', $student->id)
                     ->where('academic_year_id', $year->id)
-                    ->whereIn('status', ['active'])
+                    ->where('status', 'active')
                     ->exists();
                 if ($alreadyAllocated) {
                     continue;
@@ -847,140 +1895,169 @@ class DummyDataSeeder
                 $track('hostel_allocations', [$allocation->id]);
             }
         }
+    }
 
-        // ════════════════════════════════════════════════════════════════
-        // 9. TIMETABLE + ATTENDANCE
-        // student_attendances.timetable_lesson_id is required, so we build a
-        // small demo timetable first (classroom, periods, lessons) and mark
-        // attendance against those lessons.
-        // ════════════════════════════════════════════════════════════════
-        if ($actorId) {
-            $classroom = $created(\Modules\Academics\Models\Classroom::firstOrCreate(
-                ['school_id' => $schoolId, 'name' => 'Demo Room 1'],
-                ['capacity' => 40, 'location' => 'Main Block']
-            ));
-
-            $periods = [
-                ['Period 1', '08:00', '08:45'],
-                ['Period 2', '08:50', '09:35'],
-                ['Period 3', '10:00', '10:45'],
-                ['Period 4', '10:50', '11:35'],
-                ['Period 5', '12:20', '13:05'],
-            ];
-            $slotIds = [];
-            foreach ($periods as [$slotName, $start, $end]) {
-                $slot = \Modules\Timetables\Models\TimeSlot::firstOrCreate(
-                    ['school_id' => $schoolId, 'name' => $slotName],
-                    ['start_time' => $start, 'end_time' => $end, 'is_break' => false]
-                );
-                $slotIds[] = $slot->id;
-                $created($slot);
-            }
-
-            // One globally-unique (day, slot) pair per lesson keeps every
-            // unique-conflict index happy with a single demo teacher.
-            $combos = [];
-            foreach (['monday', 'tuesday', 'wednesday', 'thursday', 'friday'] as $day) {
-                foreach ($slotIds as $slotId) {
-                    $combos[] = [$day, $slotId];
-                }
-            }
-            $comboIndex = 0;
-
-            $sectionLessonIds = [];
-
-            foreach ($sections as $section) {
-                if (! $section->course || ! isset($subjectIds[0])) {
-                    continue;
-                }
-
-                foreach (array_slice($subjectIds, 0, 2) as $subjectId) {
-                    if (! isset($combos[$comboIndex])) {
-                        break 2;
-                    }
-                    [$day, $slotId] = $combos[$comboIndex++];
-
-                    $lesson = \Modules\Timetables\Models\TimetableLesson::firstOrCreate([
-                        'school_id' => $schoolId,
-                        'academic_year_id' => $year->id,
-                        'term_id' => $term->id,
-                        'time_slot_id' => $slotId,
-                        'day_of_week' => $day,
-                        'section_id' => $section->id,
-                    ], [
-                        'course_id' => $section->course->id,
-                        'subject_id' => $subjectId,
-                        'teacher_id' => $actorId,
-                        'classroom_id' => $classroom->id,
-                    ]);
-                    $created($lesson);
-
-                    $sectionLessonIds[$section->id][] = $lesson->id;
-                }
-            }
-
-            // Mark attendance on each section's first lesson.
-            $weekdays = collect();
-            $cursor = now()->copy();
-            while ($weekdays->count() < 10) {
-                if (! $cursor->isWeekend()) {
-                    $weekdays->push($cursor->toDateString());
-                }
-                $cursor->subDay();
-            }
-
-            foreach ($sections as $section) {
-                $lessonId = $sectionLessonIds[$section->id][0] ?? null;
-                if (! $lessonId) {
-                    continue;
-                }
-
-                $sectionStudents = Student::withoutGlobalScopes()
-                    ->whereHas('enrollments', fn ($q) => $q->where('section_id', $section->id))
-                    ->whereIn('id', $studentIdsList)
-                    ->get();
-
-                foreach ($sectionStudents as $student) {
-                    foreach ($weekdays as $date) {
-                        $exists = StudentAttendance::withoutGlobalScopes()
-                            ->where('school_id', $schoolId)
-                            ->where('student_id', $student->id)
-                            ->where('timetable_lesson_id', $lessonId)
-                            ->where('date', $date)
-                            ->exists();
-                        if ($exists) {
-                            continue;
-                        }
-
-                        $status = collect(['present', 'present', 'present', 'present', 'absent', 'late'])->random();
-                        $row = new StudentAttendance([
-                            'school_id' => $schoolId,
-                            'student_id' => $student->id,
-                            'timetable_lesson_id' => $lessonId,
-                            'date' => $date,
-                            'status' => $status,
-                            'remarks' => $status === 'late' ? 'Arrived after assembly' : null,
-                            'marked_by_id' => $actorId,
-                        ]);
-                        $row->save();
-                        $track('student_attendances', [$row->id]);
-                    }
-                }
-            }
+    protected function seedTimetableAndAttendance(int $schoolId, $year, $term, $sections, array $studentIdsList, array $staffUserIds, array $courseTeacherByCourse, ?int $actorId, callable $track, callable $created): void
+    {
+        if (! $actorId) {
+            return;
         }
 
-        // ════════════════════════════════════════════════════════════════
-        // 10. LMS HOMEWORK
-        // ════════════════════════════════════════════════════════════════
+        $classroomNames = [
+            'Room 101 (ECD A)', 'Room 102 (ECD B)', 
+            'Room 103 (Grade 1A)', 'Room 104 (Grade 1B)', 
+            'Room 105 (Grade 2A)', 'Room 106 (Grade 2B)', 
+            'Room 107 (Grade 3A)', 'Room 108 (Grade 3B)', 
+            'Room 109 (Grade 4A)', 'Room 110 (Grade 4B)', 
+            'Room 111 (Grade 5A)', 'Room 112 (Grade 5B)', 
+            'Room 113 (Grade 6A)', 'Room 114 (Grade 6B)', 
+            'Room 115 (Grade 7A)', 'Room 116 (Grade 7B)', 
+            'Science Laboratory', 'Computer Laboratory'
+        ];
+        $classroomIds = [];
+        foreach ($classroomNames as $i => $name) {
+            $classroom = Classroom::firstOrCreate(
+                ['school_id' => $schoolId, 'name' => $name],
+                ['capacity' => 40, 'location' => 'Main Block']
+            );
+            $classroomIds[] = $classroom->id;
+            $created($classroom);
+        }
+
+        $periods = [
+            ['Period 1', '07:30', '08:15'],
+            ['Period 2', '08:20', '09:05'],
+            ['Period 3', '09:10', '09:55'],
+            ['Break', '10:00', '10:15'],
+            ['Period 4', '10:15', '11:00'],
+            ['Period 5', '11:05', '11:50'],
+            ['Period 6', '11:55', '12:40'],
+            ['Lunch', '12:40', '13:20'],
+            ['Period 7', '13:20', '14:05'],
+            ['Period 8', '14:10', '14:55'],
+            ['Period 9', '15:00', '15:45'],
+            ['Period 10', '15:50', '16:35'],
+        ];
+        $slotIds = [];
+        foreach ($periods as [$slotName, $start, $end]) {
+            $slot = TimeSlot::firstOrCreate(
+                ['school_id' => $schoolId, 'name' => $slotName],
+                ['start_time' => $start, 'end_time' => $end, 'is_break' => in_array($slotName, ['Break', 'Lunch'], true)]
+            );
+            $slotIds[] = $slot->id;
+            $created($slot);
+        }
+
+        $combos = [];
+        foreach (['monday', 'tuesday', 'wednesday', 'thursday', 'friday'] as $day) {
+            foreach ($slotIds as $slotId) {
+                $combos[] = [$day, $slotId];
+            }
+        }
+        $comboIndex = 0;
+
+        $sectionLessonIds = [];
+
         foreach ($sections as $section) {
             if (! $section->course) {
                 continue;
             }
-            foreach (array_slice($subjectIds, 0, 2) as $idx => $subjectId) {
+
+            $attachedSubjects = DB::table('course_subject')
+                ->where('school_id', $schoolId)
+                ->where('course_id', $section->course->id)
+                ->orderBy('id')
+                ->limit(2)
+                ->get();
+
+            foreach ($attachedSubjects as $attached) {
+                if (! isset($combos[$comboIndex])) {
+                    break 2;
+                }
+                [$day, $slotId] = $combos[$comboIndex++];
+
+                $teacherId = $courseTeacherByCourse[$section->course->id] ?? $actorId;
+                $classroomId = $classroomIds[$comboIndex % count($classroomIds)];
+
+                $lesson = TimetableLesson::firstOrCreate([
+                    'school_id' => $schoolId,
+                    'academic_year_id' => $year->id,
+                    'term_id' => $term->id,
+                    'time_slot_id' => $slotId,
+                    'day_of_week' => $day,
+                    'section_id' => $section->id,
+                ], [
+                    'course_id' => $section->course->id,
+                    'subject_id' => $attached->subject_id,
+                    'teacher_id' => $teacherId,
+                    'classroom_id' => $classroomId,
+                ]);
+                $created($lesson);
+                $sectionLessonIds[$section->id][] = $lesson->id;
+            }
+        }
+
+        $weekdays = $this->recentWeekdays(10);
+
+        foreach ($sections as $section) {
+            $lessonId = $sectionLessonIds[$section->id][0] ?? null;
+            if (! $lessonId) {
+                continue;
+            }
+
+            $sectionStudents = Student::withoutGlobalScopes()
+                ->whereHas('enrollments', fn ($q) => $q->where('section_id', $section->id))
+                ->whereIn('id', $studentIdsList)
+                ->get();
+
+            foreach ($sectionStudents as $student) {
+                foreach ($weekdays as $date) {
+                    $exists = StudentAttendance::withoutGlobalScopes()
+                        ->where('school_id', $schoolId)
+                        ->where('student_id', $student->id)
+                        ->where('timetable_lesson_id', $lessonId)
+                        ->where('date', $date)
+                        ->exists();
+                    if ($exists) {
+                        continue;
+                    }
+
+                    $status = collect(['present', 'present', 'present', 'present', 'absent', 'late'])->random();
+                    $row = new StudentAttendance([
+                        'school_id' => $schoolId,
+                        'student_id' => $student->id,
+                        'timetable_lesson_id' => $lessonId,
+                        'date' => $date,
+                        'status' => $status,
+                        'remarks' => $status === 'late' ? 'Arrived after assembly' : null,
+                        'marked_by_id' => $actorId,
+                    ]);
+                    $row->save();
+                    $track('student_attendances', [$row->id]);
+                }
+            }
+        }
+    }
+
+    protected function seedHomework(int $schoolId, $sections, array $studentIdsList, callable $track, callable $created): void
+    {
+        foreach ($sections as $section) {
+            if (! $section->course) {
+                continue;
+            }
+
+            $attachedSubjects = DB::table('course_subject')
+                ->where('school_id', $schoolId)
+                ->where('course_id', $section->course->id)
+                ->orderBy('id')
+                ->limit(2)
+                ->get();
+
+            foreach ($attachedSubjects as $idx => $attached) {
                 $existsHw = Homework::withoutGlobalScopes()
                     ->where('school_id', $schoolId)
                     ->where('section_id', $section->id)
-                    ->where('subject_id', $subjectId)
+                    ->where('subject_id', $attached->subject_id)
                     ->where('title', 'LIKE', 'TEST-%')
                     ->exists();
                 if ($existsHw) {
@@ -990,18 +2067,387 @@ class DummyDataSeeder
                 $hw = Homework::create([
                     'school_id' => $schoolId,
                     'section_id' => $section->id,
-                    'subject_id' => $subjectId,
-                    'title' => 'TEST-Homework '.($idx + 1).' — '.$section->course->name.' '.$section->name,
+                    'subject_id' => $attached->subject_id,
+                    'title' => 'TEST-Homework '.($idx + 1).' — '.$section->course->name,
                     'description' => 'Demonstration assignment covering this week’s topics.',
                     'due_date' => now()->addDays(rand(3, 14))->toDateString(),
                 ]);
                 $track('homeworks', [$hw->id]);
+
+                // A few section students submit.
+                $sectionStudents = Student::withoutGlobalScopes()
+                    ->whereHas('enrollments', fn ($q) => $q->where('section_id', $section->id))
+                    ->whereIn('id', $studentIdsList)
+                    ->get();
+                foreach ($sectionStudents->take(3) as $student) {
+                    $sub = HomeworkSubmission::create([
+                        'school_id' => $schoolId,
+                        'homework_id' => $hw->id,
+                        'student_id' => $student->id,
+                        'file_path' => 'homework/demo/'.$schoolId.'/'.$hw->id.'-'.$student->id.'.pdf',
+                        'grade_obtained' => rand(6, 10) / 2,
+                        'teacher_feedback' => 'Well done. Revise question 3 before the test.',
+                        'submitted_at' => now()->subDays(rand(0, 2)),
+                    ]);
+                    $track('homework_submissions', [$sub->id]);
+                }
+            }
+        }
+    }
+
+    protected function seedCommunication(int $schoolId, ?int $actorId, array $staffUserIds, callable $track): void
+    {
+        $announcements = [
+            ['Staff meeting — Monday 07:30', 'All teaching staff to assemble in the staff room for the term briefing.', 'important'],
+            ['Sports day registration open', 'Parents are reminded to register their children for the inter-house sports day.', 'normal'],
+            ['Library extended hours', 'The library will now close at 16:30 on weekdays during exam preparations.', 'normal'],
+        ];
+        foreach ($announcements as [$title, $content, $priority]) {
+            if (Announcement::withoutGlobalScopes()->where('school_id', $schoolId)->where('title', 'LIKE', 'TEST-%'.$title)->exists()) {
+                continue;
+            }
+            $ann = Announcement::create([
+                'school_id' => $schoolId,
+                'title' => 'TEST-'.$title,
+                'content' => $content,
+                'published_at' => now()->subDays(rand(1, 9)),
+                'status' => 'published',
+                'visibility' => ['staff'],
+                'priority' => $priority,
+                'display_style' => 'card',
+            ]);
+            $track('communication_announcements', [$ann->id]);
+        }
+
+        $allStaffUsers = array_merge($staffUserIds['teaching_staff'], $staffUserIds['non_teaching_staff'], $staffUserIds['administrator']);
+        $allStaffUsers = array_values(array_filter($allStaffUsers));
+
+        $tasks = [
+            ['Submit term 2 exam marks', now()->addDays(3), 'in_progress'],
+            ['Update hostel occupancy list', now()->addDays(7), 'open'],
+            ['Draft sports day budget', now()->addDays(5), 'open'],
+            ['Backup student records', now()->addDays(1), 'open'],
+            ['Review library overdue fines', now()->addDays(4), 'in_progress'],
+        ];
+        foreach ($tasks as $i => [$title, $due, $status]) {
+            $task = UserTask::create([
+                'school_id' => $schoolId,
+                'created_by_id' => $actorId,
+                'assigned_to_id' => $allStaffUsers[$i % max(1, count($allStaffUsers))],
+                'title' => 'TEST-Task: '.$title,
+                'description' => 'Demonstration task assigned to keep the task board alive.',
+                'due_date' => $due->toDateString(),
+                'due_time' => '12:00',
+                'priority' => $i % 2 === 0 ? 'high' : 'medium',
+                'status' => $status,
+            ]);
+            $track('user_tasks', [$task->id]);
+        }
+
+        $polls = [
+            ['Which day suits the inter-house sports day?', ['Friday', 'Saturday', 'Sunday', 'Holiday']],
+            ['Should the tuck shop stock healthy snacks only?', ['Yes', 'No', 'Mixed options', 'Not sure']],
+            ['Preferred end-of-term excursion', ['Matopos', 'Zimbabwe Museum of Human Sciences', 'Chinhoyi Caves', 'Nyanga']],
+        ];
+
+        $voters = array_slice($allStaffUsers, 0, 8);
+        foreach ($polls as $pi => [$question, $options]) {
+            if (Poll::withoutGlobalScopes()->where('school_id', $schoolId)->where('question', 'LIKE', 'TEST-%'.$question)->exists()) {
+                continue;
+            }
+            $poll = Poll::create([
+                'school_id' => $schoolId,
+                'question' => 'TEST-'.$question,
+                'description' => 'Demonstration poll for staff engagement.',
+                'type' => 'poll',
+                'is_anonymous' => false,
+                'target_roles' => ['teaching_staff', 'non_teaching_staff'],
+                'expires_at' => now()->addDays(rand(5, 20)),
+            ]);
+            $track('communication_polls', [$poll->id]);
+
+            $optionIds = [];
+            foreach ($options as $opt) {
+                $option = PollOption::create([
+                    'school_id' => $schoolId,
+                    'poll_id' => $poll->id,
+                    'option_value' => $opt,
+                ]);
+                $track('communication_poll_options', [$option->id]);
+                $optionIds[] = $option->id;
+            }
+
+            foreach ($voters as $userId) {
+                $vote = PollVote::create([
+                    'school_id' => $schoolId,
+                    'poll_id' => $poll->id,
+                    'option_id' => $optionIds[array_rand($optionIds)],
+                    'user_id' => $userId,
+                ]);
+                $track('communication_poll_votes', [$vote->id]);
+            }
+        }
+    }
+
+    protected function seedDigitalAssessment(int $schoolId, $year, $term, $sections, array $primarySubjects, array $secondarySubjects, array $subjectObjects, ?int $actorId, callable $track): void
+    {
+        if (! $actorId) {
+            return;
+        }
+
+        $questionTemplates = [
+            'Which of the following best completes the concept in this topic?',
+            'Identify the correct statement below.',
+            'Choose the most appropriate answer from the options.',
+            'Which statement is TRUE?',
+        ];
+        $optionSets = [
+            ['Option A', 'Option B', 'Option C', 'Option D'],
+            ['Statement P', 'Statement Q', 'Statement R', 'Statement S'],
+        ];
+
+        foreach ($sections->groupBy('course_id') as $courseId => $courseSections) {
+            $course = Course::withoutGlobalScopes()->find($courseId);
+            if (! $course) {
+                continue;
+            }
+
+            $firstSection = $courseSections->first();
+            $attached = DB::table('course_subject')
+                ->where('school_id', $schoolId)
+                ->where('course_id', $courseId)
+                ->orderBy('id')
+                ->first();
+            if (! $attached) {
+                continue;
+            }
+
+            $subject = Subject::withoutGlobalScopes()->find($attached->subject_id);
+            if (! $subject) {
+                continue;
+            }
+
+            // Ensure the subject has a small question bank.
+            $questionIds = [];
+            foreach ($questionTemplates as $qi => $text) {
+                $qbTitle = 'TEST-Q-'.$subject->code.'-'.($qi + 1);
+                $qb = QuestionBank::withoutGlobalScopes()
+                    ->where('school_id', $schoolId)
+                    ->where('subject_id', $subject->id)
+                    ->where('title', $qbTitle)
+                    ->first();
+                if (! $qb) {
+                    $qb = QuestionBank::create([
+                        'school_id' => $schoolId,
+                        'subject_id' => $subject->id,
+                        'created_by_id' => $actorId,
+                        'title' => $qbTitle,
+                        'description' => 'Auto-generated demonstration question.',
+                        'question_type' => 'multiple_choice',
+                        'question_text' => $text,
+                        'options' => ['A' => 'Option A', 'B' => 'Option B', 'C' => 'Option C', 'D' => 'Option D'],
+                        'correct_answer' => ['A'],
+                        'marks' => 2.00,
+                        'difficulty' => ['foundation', 'intermediate', 'expert'][$qi % 3],
+                        'topic' => $subject->name,
+                        'status' => 'published',
+                    ]);
+                    $track('question_bank', [$qb->id]);
+                }
+                $questionIds[] = $qb->id;
+            }
+
+            $assessmentTitle = 'TEST-DA-'.$course->name.' '.$subject->name;
+            $assessment = DigitalAssessment::withoutGlobalScopes()
+                ->where('school_id', $schoolId)
+                ->where('title', $assessmentTitle)
+                ->where('subject_id', $subject->id)
+                ->first();
+            if (! $assessment) {
+                $assessment = DigitalAssessment::create([
+                    'school_id' => $schoolId,
+                    'subject_id' => $subject->id,
+                    'section_id' => $firstSection->id,
+                    'academic_year_id' => $year->id,
+                    'term_id' => $term->id,
+                    'created_by_id' => $actorId,
+                    'title' => $assessmentTitle,
+                    'description' => 'Demo online assessment for '.$course->name,
+                    'assessment_mode' => 'standard',
+                    'assessment_category' => 'formative',
+                    'duration_minutes' => 20,
+                    'total_marks' => count($questionIds) * 2,
+                    'pass_mark' => 50,
+                    'max_attempts' => 2,
+                    'attempts_allowed' => 2,
+                    'randomize_questions' => true,
+                    'randomize_options' => true,
+                    'show_feedback' => true,
+                    'auto_submit' => true,
+                    'status' => 'published',
+                    'published_at' => now()->subDays(rand(1, 7)),
+                    'availability_start_at' => now()->subWeek(),
+                    'availability_end_at' => now()->addWeeks(2),
+                ]);
+                $track('digital_assessments', [$assessment->id]);
+
+                foreach ($questionIds as $order => $qbId) {
+                    $daq = DigitalAssessmentQuestion::create([
+                        'digital_assessment_id' => $assessment->id,
+                        'question_bank_id' => $qbId,
+                        'question_order' => $order + 1,
+                    ]);
+                    $track('digital_assessment_questions', [$daq->id]);
+                }
+            }
+
+            // Attempts + responses for this section's students.
+            $sectionStudents = Student::withoutGlobalScopes()
+                ->whereHas('enrollments', fn ($q) => $q->where('section_id', $firstSection->id))
+                ->take(5)
+                ->get();
+
+            foreach ($sectionStudents as $student) {
+                $enrollment = Enrollment::withoutGlobalScopes()
+                    ->where('school_id', $schoolId)
+                    ->where('student_id', $student->id)
+                    ->where('course_id', $courseId)
+                    ->first();
+
+                if (DigitalAssessmentAttempt::withoutGlobalScopes()
+                    ->where('school_id', $schoolId)
+                    ->where('digital_assessment_id', $assessment->id)
+                    ->where('student_id', $student->id)
+                    ->where('attempt_number', 1)
+                    ->exists()) {
+                    continue;
+                }
+
+                $score = rand(40, 96);
+                $attempt = DigitalAssessmentAttempt::create([
+                    'school_id' => $schoolId,
+                    'digital_assessment_id' => $assessment->id,
+                    'student_id' => $student->id,
+                    'enrollment_id' => $enrollment->id ?? null,
+                    'attempt_number' => 1,
+                    'started_at' => now()->subDays(rand(1, 6))->subMinutes(rand(5, 30)),
+                    'submitted_at' => now()->subDays(rand(0, 5)),
+                    'duration_seconds' => rand(300, 900),
+                    'score' => $score,
+                    'percentage' => $score,
+                    'final_score' => $score,
+                    'marks_obtained' => $score,
+                    'max_possible_marks' => 100,
+                    'status' => 'submitted',
+                ]);
+                $track('digital_assessment_attempts', [$attempt->id]);
+
+                foreach ($questionIds as $qbId) {
+                    $correct = (bool) random_int(0, 1);
+                    $response = DigitalAssessmentResponse::create([
+                        'digital_assessment_attempt_id' => $attempt->id,
+                        'question_bank_id' => $qbId,
+                        'learner_answer' => $correct ? ['A'] : ['C'],
+                        'correct_answer' => ['A'],
+                        'is_correct' => $correct,
+                        'marks_awarded' => $correct ? 2.00 : 0.00,
+                        'marks_possible' => 2.00,
+                        'time_spent_seconds' => rand(10, 90),
+                        'answered_at' => $attempt->submitted_at,
+                        'confidence_level' => rand(1, 3),
+                    ]);
+                    $track('digital_assessment_responses', [$response->id]);
+                }
             }
         }
 
-        // ════════════════════════════════════════════════════════════════
-        // 11. ENTERPRISE REPORTING: templates, compiled reports, schedules
-        // ════════════════════════════════════════════════════════════════
+        // Academic assessment type definitions powering the marks UI.
+        // Created globally (not per course/section) so they appear once in the
+        // "Select Specific Tests / Assessments" list: Test 1 (20%), Test 2 (20%),
+        // End of Term Exam (60%).
+        $existingTypes = AssessmentType::withoutGlobalScopes()->where('school_id', $schoolId)->count();
+        if ($existingTypes === 0) {
+            foreach ([
+                ['Test 1', 100, 20],
+                ['Test 2', 100, 20],
+                ['End of Term Exam', 100, 60],
+            ] as [$name, $max, $weight]) {
+                $type = AssessmentType::create([
+                    'school_id' => $schoolId,
+                    'term_id' => $term->id,
+                    'name' => $name,
+                    'max_mark' => $max,
+                    'weight_percentage' => $weight,
+                    'status' => 'published',
+                    'created_by_id' => $actorId,
+                ]);
+                $track('assessment_types', [$type->id]);
+            }
+        }
+    }
+
+    protected function seedSubjectMarks(int $schoolId, $term, ?int $actorId, callable $track): void
+    {
+        // Traditional per-subject marks so report cards print real data for at
+        // least the first four subjects attached to each course.
+        $types = AssessmentType::withoutGlobalScopes()
+            ->where('school_id', $schoolId)
+            ->orderBy('id')
+            ->get();
+
+        if ($types->isEmpty()) {
+            return;
+        }
+
+        $courseSubjects = DB::table('course_subject')
+            ->where('school_id', $schoolId)
+            ->orderBy('id')
+            ->get()
+            ->groupBy('course_id')
+            ->map(fn ($rows) => $rows->pluck('subject_id')->all());
+
+        Enrollment::withoutGlobalScopes()
+            ->where('school_id', $schoolId)
+            ->where('academic_year_id', $term->academic_year_id)
+            ->orderBy('id')
+            ->chunkById(200, function ($enrollments) use ($schoolId, $types, $courseSubjects, $track) {
+                foreach ($enrollments as $enrollment) {
+                    $subjectIds = $courseSubjects->get($enrollment->course_id) ?? [];
+                    if (empty($subjectIds)) {
+                        continue;
+                    }
+
+                    foreach ($subjectIds as $subjectId) {
+                        foreach ($types as $type) {
+                            if (AssessmentMark::withoutGlobalScopes()
+                                ->where('school_id', $schoolId)
+                                ->where('enrollment_id', $enrollment->id)
+                                ->where('subject_id', $subjectId)
+                                ->where('assessment_type_id', $type->id)
+                                ->exists()) {
+                                continue;
+                            }
+
+                            $max = (float) $type->max_mark;
+                            $mark = $max > 0 ? round($max * (rand(35, 95) / 100), 1) : rand(30, 90);
+
+                            $record = AssessmentMark::create([
+                                'school_id' => $schoolId,
+                                'enrollment_id' => $enrollment->id,
+                                'assessment_type_id' => $type->id,
+                                'subject_id' => $subjectId,
+                                'marks_obtained' => $mark,
+                                'teacher_initials' => 'TR',
+                            ]);
+                            $track('assessment_marks', [$record->id]);
+                        }
+                    }
+                }
+            });
+    }
+
+    protected function seedEnterpriseReports(int $schoolId, $term, ?int $actorId, callable $track): void
+    {
         $reportTemplateSpecs = [
             ['Student Directory Export', 'students', 'tabular', 'directory'],
             ['Fee Collection Summary', 'finance', 'summary', 'financial'],
@@ -1036,7 +2482,6 @@ class DummyDataSeeder
             ]);
             $track('enterprise_report_templates', [$template->id]);
 
-            // A couple of completed runs per template so the archive is alive.
             for ($g = 1; $g <= 2; $g++) {
                 $generated = \Modules\Reports\Models\GeneratedReport::create([
                     'school_id' => $schoolId,
@@ -1089,6 +2534,23 @@ class DummyDataSeeder
     }
 
     /**
+     * The most recent N school weekdays (as Y-m-d strings).
+     */
+    protected function recentWeekdays(int $count = 10): array
+    {
+        $weekdays = [];
+        $cursor = now()->copy();
+        while (count($weekdays) < $count) {
+            if (! $cursor->isWeekend()) {
+                $weekdays[] = $cursor->toDateString();
+            }
+            $cursor->subDay();
+        }
+
+        return $weekdays;
+    }
+
+    /**
      * The school's recorded contact email (used as demo schedule recipient).
      */
     protected function schoolContactEmail(int $schoolId): string
@@ -1099,7 +2561,7 @@ class DummyDataSeeder
 
     /**
      * Wipe every demonstration record this seeder previously created for the
-     * school (per the stored seed manifest), plus legacy TEST-STU students.
+     * school (per the stored seed manifest), plus legacy TEST-tagged rows.
      *
      * @return int number of student rows removed
      */
@@ -1108,6 +2570,17 @@ class DummyDataSeeder
         $manifest = $this->loadManifest($schoolId);
 
         DB::transaction(function () use ($manifest, $schoolId): void {
+            // Older demo datasets seeded hostel rooms/beds/allocations before
+            // the manifest existed, so the manifest may only track the rooms.
+            $roomIds = array_map('intval', $manifest['hostel_rooms'] ?? []);
+            if ($roomIds !== []) {
+                $bedIds = DB::table('hostel_beds')->whereIn('room_id', $roomIds)->pluck('id');
+                if ($bedIds->isNotEmpty()) {
+                    DB::table('hostel_allocations')->whereIn('bed_id', $bedIds)->delete();
+                    DB::table('hostel_beds')->whereIn('id', $bedIds)->delete();
+                }
+            }
+
             foreach (self::MANIFEST_DELETE_ORDER as $table) {
                 $ids = $manifest[$table] ?? [];
                 if (empty($ids)) {
@@ -1115,11 +2588,9 @@ class DummyDataSeeder
                 }
 
                 foreach (array_chunk($ids, 500) as $chunk) {
-                    // invoice_items carries no school_id column — the manifest
-                    // ids are already school-scoped by construction.
                     $query = DB::table($table);
 
-                    if ($table !== 'invoice_items') {
+                    if (! in_array($table, self::MANIFEST_NO_SCHOOL_COLUMN, true)) {
                         $query->where('school_id', $schoolId);
                     }
 
@@ -1148,8 +2619,35 @@ class DummyDataSeeder
 
             LibraryBook::withoutGlobalScopes()->where('school_id', $schoolId)
                 ->where('isbn', 'LIKE', 'TEST-ISBN-%')->delete();
+            LibraryBookCopy::withoutGlobalScopes()
+                ->where('school_id', $schoolId)
+                ->where('barcode', 'LIKE', 'TEST-BC-%')
+                ->delete();
+            KnowledgeAssetCopy::withoutGlobalScopes()
+                ->where('school_id', $schoolId)
+                ->where('barcode', 'LIKE', 'TEST-KB-%')
+                ->delete();
+            KnowledgeAsset::withoutGlobalScopes()
+                ->where('school_id', $schoolId)
+                ->where('isbn', 'LIKE', 'TEST-KA-%')
+                ->delete();
 
             Homework::withoutGlobalScopes()->where('school_id', $schoolId)
+                ->where('title', 'LIKE', 'TEST-%')->delete();
+
+            QuestionBank::withoutGlobalScopes()->where('school_id', $schoolId)
+                ->where('title', 'LIKE', 'TEST-Q-%')->delete();
+            DigitalAssessment::withoutGlobalScopes()->where('school_id', $schoolId)
+                ->where('title', 'LIKE', 'TEST-DA-%')->delete();
+            ProcurementRequest::withoutGlobalScopes()->where('school_id', $schoolId)
+                ->where('request_number', 'LIKE', 'TEST-PREQ-%')->delete();
+            ProcurementOrder::withoutGlobalScopes()->where('school_id', $schoolId)
+                ->where('order_number', 'LIKE', 'TEST-PO-%')->delete();
+            Application::withoutGlobalScopes()->where('school_id', $schoolId)
+                ->where('application_number', 'LIKE', 'TEST-APP-%')->delete();
+            Announcement::withoutGlobalScopes()->where('school_id', $schoolId)
+                ->where('title', 'LIKE', 'TEST-%')->delete();
+            UserTask::withoutGlobalScopes()->where('school_id', $schoolId)
                 ->where('title', 'LIKE', 'TEST-%')->delete();
 
             // Demo staff: Employee::creating() rewrites employee_number, so
@@ -1175,6 +2673,15 @@ class DummyDataSeeder
                 Enrollment::withoutGlobalScopes()->whereIn('student_id', $legacyIds)->delete();
                 Student::withoutGlobalScopes()->whereIn('id', $legacyIds)->forceDelete();
             }
+
+            // Demo student portal accounts (created by ensureDemoStudentAccounts).
+            // Deleted only after every TEST-STU student above is gone so the
+            // students.user_id FK is never violated.
+            DB::table('users')
+                ->where('school_id', $schoolId)
+                ->where('requested_role', 'student')
+                ->where('username', 'LIKE', 'TEST-STU-%')
+                ->delete();
         });
 
         // Clear the manifest — everything it described is gone.
@@ -1192,6 +2699,79 @@ class DummyDataSeeder
             ->where('school_id', $schoolId)
             ->where('student_id_number', 'LIKE', 'TEST-STU-%')
             ->exists();
+    }
+
+    /**
+     * Shared demo credential for every seeded student portal account.
+     */
+    public string $demoStudentPassword = 'password';
+
+    /**
+     * Create one student-portal login per seeded student that does not have
+     * a linked user yet. Idempotent: existing demo accounts are reused and
+     * students are never detached from a previously-linked account.
+     *
+     * @return array<int, array{name: string, username: string, password: string}>
+     */
+    public function ensureDemoStudentAccounts(int $schoolId): array
+    {
+        $students = Student::withoutGlobalScopes()
+            ->where('school_id', $schoolId)
+            ->where('student_id_number', 'LIKE', 'TEST-STU-%')
+            ->whereNull('user_id')
+            ->get();
+
+        $accounts = [];
+
+        foreach ($students as $student) {
+            $user = $this->findOrCreateDemoStudentUser($schoolId, $student);
+
+            if (! $user) {
+                continue;
+            }
+
+            if ($student->user_id !== $user->id) {
+                $student->forceFill(['user_id' => $user->id])->save();
+            }
+
+            $accounts[] = [
+                'name' => $student->full_name,
+                'username' => $student->student_id_number,
+                'password' => $this->demoStudentPassword,
+            ];
+        }
+
+        return $accounts;
+    }
+
+    protected function findOrCreateDemoStudentUser(int $schoolId, Student $student): ?User
+    {
+        $school = \App\Models\School::find($schoolId);
+        $slug = $school ? strtolower(preg_replace('/[^a-z0-9]+/', '', (string) $school->subdomain)) : 'school';
+        $email = 'student.'.$student->id.'@'.$slug.'.demo';
+
+        $user = User::withoutGlobalScopes()
+            ->where('school_id', $schoolId)
+            ->where('email', $email)
+            ->first();
+
+        if ($user) {
+            return $user;
+        }
+
+        $role = UserRegistrationService::ensureRoleForCategory($schoolId, 'student');
+
+        return User::withoutGlobalScopes()->create([
+            'school_id' => $schoolId,
+            'name' => $student->full_name,
+            'username' => $student->student_id_number,
+            'email' => $email,
+            'phone' => $student->phone,
+            'password' => $this->demoStudentPassword,
+            'account_status' => User::STATUS_ACTIVE,
+            'requested_role' => 'student',
+            'custom_role_id' => $role->id,
+        ]);
     }
 
     protected function manifestKey(): string

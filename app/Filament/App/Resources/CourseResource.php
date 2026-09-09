@@ -5,6 +5,7 @@ namespace App\Filament\App\Resources;
 use App\Filament\App\Resources\CourseResource\Pages;
 use App\Services\Academic\AcademicValidationEngine;
 use App\Services\ModuleVisibilityManager;
+use App\Support\TeacherOptions;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -12,6 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Support\Exceptions\Halt;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Modules\Academics\Models\Classroom;
 use Modules\Academics\Models\Course;
 use Modules\Admin\Services\PermissionRegistry;
 
@@ -81,9 +83,11 @@ class CourseResource extends Resource
 
                         Forms\Components\Select::make('teacher_id')
                             ->label(__('Form Teacher'))
-                            ->relationship('teacher', 'name')
+                            ->options(fn () => TeacherOptions::options())
                             ->searchable()
-                            ->helperText(__('Assign a teacher to this Form.')),
+                            ->getSearchResultsUsing(fn (string $search) => TeacherOptions::search($search))
+                            ->getOptionLabelUsing(fn ($value) => TeacherOptions::labelFor($value))
+                            ->allowHtml(),
                     ])->columns(3),
 
                 Forms\Components\Section::make('Workflow Status')
@@ -104,7 +108,7 @@ class CourseResource extends Resource
                     ])->columns(2),
 
                 Forms\Components\Section::make('Classes (Streams)')
-                    ->description(__('Create subdivision classes for this Form (e.g. A, B, C or Red, Blue, Green).'))
+                    ->description(__('Create subdivision classes for this Form (e.g. A, B, C or Red, Blue, Green). Each class can be pinned to its own classroom so the timetable always uses that room for this class only.'))
                     ->schema([
                         Forms\Components\Repeater::make('sections')
                             ->relationship('sections')
@@ -122,6 +126,23 @@ class CourseResource extends Resource
                                     ->default(40)
                                     ->minValue(1)
                                     ->required(),
+
+                                Forms\Components\Select::make('classroom_id')
+                                    ->label(__('Classroom'))
+                                    ->placeholder(__('-- Any classroom --'))
+                                    ->options(Classroom::where('school_id', current_tenant()?->id ?? auth()->user()?->school_id ?? 1)->pluck('name', 'id'))
+                                    ->searchable()
+                                    ->helperText(__('Lock this class to one room. No other class will use it during generation.')),
+
+                                Forms\Components\Select::make('class_teacher_id')
+                                    ->label(__('Class Teacher'))
+                                    ->placeholder(__('-- Not assigned --'))
+                                    ->options(fn () => TeacherOptions::options())
+                                    ->searchable()
+                                    ->getSearchResultsUsing(fn (string $search) => TeacherOptions::search($search))
+                                    ->getOptionLabelUsing(fn ($value) => TeacherOptions::labelFor($value))
+                                    ->allowHtml()
+                                    ->helperText(__('The teacher responsible for day-to-day running of this class. One teacher may lead more than one class.')),
                             ])
                             ->grid(3)
                             ->defaultItems(1),

@@ -26,7 +26,6 @@ use App\Filament\App\Pages\ExecutiveFinancialDashboard;
 use App\Filament\App\Pages\Finance\CoreAccountingHub;
 use App\Filament\App\Pages\Finance\ExpensesPurchasingHub;
 use App\Filament\App\Pages\Finance\StudentBillingHub;
-use App\Filament\App\Pages\GamificationSettingsPage;
 use App\Filament\App\Pages\Health\HealthRecordsHub;
 use App\Filament\App\Pages\Hr\AttendanceLeaveHub;
 use App\Filament\App\Pages\Hr\PayrollCompensationHub;
@@ -38,7 +37,6 @@ use App\Filament\App\Pages\IssueBook;
 use App\Filament\App\Pages\Knowledge\KnowledgeHub;
 use App\Filament\App\Pages\Library\CatalogueHub;
 use App\Filament\App\Pages\Library\CirculationHub;
-use App\Filament\App\Pages\ManualMarkingPage;
 use App\Filament\App\Pages\MyDay;
 use App\Filament\App\Pages\ReportingDashboard;
 use App\Filament\App\Pages\Reports\ReportsHub;
@@ -57,6 +55,7 @@ use App\Filament\App\Resources\ApplicationResource;
 use App\Filament\App\Resources\AssessmentMarkResource;
 use App\Filament\App\Resources\AssessmentTypeResource;
 use App\Filament\App\Resources\AssessmentWorkflowResource;
+use App\Filament\App\Pages\Exams\PortalReportsPublisher;
 use App\Filament\App\Resources\CampusResourceResource;
 use App\Filament\App\Resources\CardTemplateResource;
 use App\Filament\App\Resources\ChatThreadResource;
@@ -112,8 +111,7 @@ use App\Filament\App\Resources\StudentResource;
 use App\Filament\App\Resources\SubjectResource;
 use App\Filament\App\Resources\SystemAuditLogResource;
 use App\Filament\App\Resources\TeacherAssignmentResource;
-use App\Filament\App\Resources\TimeSlotResource;
-use App\Filament\App\Resources\TimetableLessonResource;
+
 use App\Filament\App\Resources\UserAccountResource;
 use Modules\Inventory\Filament\Resources\AssetMaintenanceResource;
 use Modules\Inventory\Filament\Resources\GoodsReceivedResource;
@@ -185,14 +183,11 @@ class ModuleNavigation
                     ['label' => __('Academic Years'), 'resource' => AcademicYearResource::class, 'group' => __('Setup & Structure')],
                     ['label' => __('Timetables & Teaching'), 'page' => TimetablesTeachingHub::class, 'group' => __('Timetables & Teaching'), 'hub' => true],
                     ['label' => __('Timetables'), 'page' => VisualTimetableBuilder::class, 'group' => __('Timetables & Teaching')],
-                    ['label' => __('Lessons'), 'resource' => TimetableLessonResource::class, 'group' => __('Timetables & Teaching')],
                     ['label' => __('Teacher Assignments'), 'resource' => TeacherAssignmentResource::class, 'group' => __('Timetables & Teaching')],
                     ['label' => __('Progression'), 'page' => ProgressionHub::class, 'group' => __('Progression'), 'hub' => true],
                     ['label' => __('Promotions'), 'resource' => PromotionWorkflowResource::class, 'group' => __('Progression')],
                 ],
-                'more' => [
-                    ['label' => __('Time Slots'), 'resource' => TimeSlotResource::class, 'group' => __('Timetables & Teaching')],
-                ],
+                'more' => [],
             ],
 
             [
@@ -204,8 +199,6 @@ class ModuleNavigation
                     ['label' => __('Assessment Center'), 'page' => AssessmentCenterHub::class, 'group' => __('Assessment Center'), 'hub' => true],
                     ['label' => __('Digital Assessments'), 'resource' => DigitalAssessmentResource::class, 'group' => __('Assessment Center')],
                     ['label' => __('Question Bank'), 'resource' => QuestionBankResource::class, 'group' => __('Assessment Center')],
-                    ['label' => __('Manual Marking'), 'page' => ManualMarkingPage::class, 'group' => __('Assessment Center')],
-                    ['label' => __('Gamification'), 'page' => GamificationSettingsPage::class, 'group' => __('Assessment Center')],
                     ['label' => __('Grading & Marks Management'), 'page' => GradingMarksHub::class, 'group' => __('Grading & Marks Management'), 'hub' => true],
                     ['label' => __('Assessment Workspace'), 'page' => AssessmentWorkspace::class, 'group' => __('Grading & Marks Management')],
                     ['label' => __('Marks Entry'), 'resource' => AssessmentMarkResource::class, 'group' => __('Grading & Marks Management')],
@@ -215,6 +208,7 @@ class ModuleNavigation
                     ['label' => __('Report Cards'), 'resource' => AcademicReportResource::class, 'group' => __('Reports & Academic Publishing')],
                     ['label' => __('Report Templates'), 'resource' => ReportTemplateResource::class, 'group' => __('Reports & Academic Publishing')],
                     ['label' => __('Workflows'), 'resource' => AssessmentWorkflowResource::class, 'group' => __('Reports & Academic Publishing')],
+                    ['label' => __('Publish to Student Portal'), 'page' => PortalReportsPublisher::class, 'group' => __('Reports & Academic Publishing')],
                 ],
                 'more' => [],
             ],
@@ -366,8 +360,10 @@ class ModuleNavigation
                 'label' => __('LMS'),
                 'icon' => 'heroicon-o-play-circle',
                 'description' => __('Homework and online learning activities.'),
+                'landing' => \App\Filament\App\Pages\Lms\LmsHub::class,
                 'tabs' => [
-                    ['label' => __('Homework'), 'resource' => HomeworkResource::class],
+                    ['label' => __('Homework'), 'resource' => HomeworkResource::class, 'group' => __('LMS')],
+                    ['label' => __('Homework & Lessons'), 'page' => \App\Filament\App\Pages\Lms\LmsHub::class, 'group' => __('LMS'), 'hub' => true],
                 ],
                 'more' => [],
             ],
