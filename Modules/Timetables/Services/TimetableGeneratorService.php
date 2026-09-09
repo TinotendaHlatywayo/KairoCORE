@@ -273,7 +273,7 @@ class TimetableGeneratorService
 
         $survivingLessons = TimetableLesson::where('school_id', $schoolId)
             ->where('template_id', $templateId)
-            ->get(['section_id', 'teacher_id', 'classroom_id', 'time_slot_id', 'day_of_week']);
+            ->get(['section_id', 'teacher_id', 'classroom_id', 'subject_id', 'time_slot_id', 'day_of_week']);
 
         foreach ($survivingLessons as $lesson) {
             foreach ($days as $day) { /* no-op guard for enum drift */ }
@@ -298,7 +298,7 @@ class TimetableGeneratorService
         // ------------------------------------------------------------------
         $assignments = CourseSubject::query()
             ->where('school_id', $schoolId)
-            ->with(['course.sections:id,course_id,name,school_id', 'subject:id,name', 'section:id,course_id,name'])
+            ->with(['course.sections:id,course_id,name,school_id,classroom_id', 'subject:id,name', 'section:id,course_id,name,classroom_id'])
             ->get();
 
         $requirements = [];
@@ -347,6 +347,9 @@ class TimetableGeneratorService
                         'subject_label' => $assignment->subject->name ?? 'Unknown subject',
                         'teacher_id' => $assignment->teacher_id,
                         'room_preference' => $assignment->room_preference,
+                        'fixed_room_id' => $section->classroom_id
+                            ? (int) $section->classroom_id
+                            : null,
                     ];
                 }
             }
@@ -388,6 +391,21 @@ class TimetableGeneratorService
         // Resolve room preferences to concrete classroom IDs up front.
         $preferredRooms = [];
         $classrooms = Classroom::where('school_id', $schoolId)->get(['id', 'name']);
+
+        // Classrooms pinned to a specific class (section) are reserved for that
+        // section only — no other class stream may ever use them.
+        $pinnedRoomIds = collect($requirements)
+            ->pluck('fixed_room_id')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        $genericRoomIds = $classrooms->pluck('id')
+            ->diff($pinnedRoomIds)
+            ->values()
+            ->all();
+
         foreach ($requirements as $index => $req) {
             $preferredRooms[$index] = $this->resolvePreferredRoom($req['room_preference'], $classrooms);
         }
@@ -407,8 +425,8 @@ class TimetableGeneratorService
                 $days,
                 $slots->pluck('id')->values()->all(),
                 compact('sectionBusy', 'teacherBusy', 'roomBusy', 'slotUsage', 'roomUsage', 'subjectDayCount'),
-                $preferredRooms[$index],
-                $classrooms->pluck('id')->values()->all(),
+                $req['fixed_room_id'] ?? $preferredRooms[$index],
+                $req['fixed_room_id'] ? [$req['fixed_room_id']] : $genericRoomIds,
                 $maxPerSubjectPerDay,
                 $lessonsToInsert,
             );
@@ -467,11 +485,11 @@ class TimetableGeneratorService
                     $days,
                     $slots->pluck('id')->values()->all(),
                     compact('sectionBusy', 'teacherBusy', 'roomBusy', 'slotUsage', 'roomUsage', 'subjectDayCount'),
-                    $preferredRooms[$index],
-                    $classrooms->pluck('id')->values()->all(),
-                    $maxPerSubjectPerDay,
-                    $lessonsToInsert,
-                );
+$req['fixed_room_id'] ?? $preferredRooms[$index],
+                                    $req['fixed_room_id'] ? [$req['fixed_room_id']] : $genericRoomIds,
+                                    $maxPerSubjectPerDay,
+                                    $lessonsToInsert,
+                                );
 
                 if ($placedCell !== null) {
                     [$day, $slotId, $roomId] = $placedCell;
@@ -560,7 +578,13 @@ class TimetableGeneratorService
 
         $subjectKey = $req['section_id'].'#'.$req['subject_id'];
 
-        foreach ($days as $dayIndex => $day) {
+        // Rotate the day visitation order per subject so different subjects
+        // naturally gravitate towards different "first" days — otherwise the
+        // highest-load teacher always claims Period 1 Monday and the same
+        // subject sits on the opening slot every single day.
+        $orderedDays = $this->rotateWeekDays($days, (string) $subjectKey);
+
+        foreach ($orderedDays as $dayIndex => $day) {
             // Spread heuristic: respect the per-day subject cap.
             if (($subjectDayCount[$subjectKey][$day] ?? 0) >= $maxPerSubjectPerDay) {
                 continue;
@@ -599,10 +623,13 @@ class TimetableGeneratorService
                 //   x10   grid balance        (avoid school-wide congested periods)
                 //   x2    day rotation        (even weekly distribution)
                 //   x1    slot position       (mild preference for earlier periods)
+                //   jitter (0-5)  breaks ties so the same subject does not always
+                //   land on Period 1 Monday on every regeneration run.
                 $score = (($subjectDayCount[$subjectKey][$day] ?? 0) * 100)
                     + (($slotUsage[$key] ?? 0) * 10)
                     + ($dayIndex * 2)
-                    + $slotIndex;
+                    + $slotIndex
+                    + mt_rand(0, 10);
 
                 if ($score < $bestScore) {
                     $bestScore = $score;
@@ -703,5 +730,23 @@ class TimetableGeneratorService
     protected function lessonSubjectKey($lesson): string
     {
         return $lesson->section_id.'#'.$lesson->subject_id;
+    }
+
+    /**
+     * Deterministically rotate a weekday list by a stable hash of the subject's
+     * seed key, so every subject evaluates the week from a different starting
+     * day. All five days are still visited and the day-spread cap is untouched;
+     * only the tie-breaking preference order changes.
+     */
+    protected function rotateWeekDays(array $days, string $seedKey): array
+    {
+        $count = count($days);
+        if ($count < 2) {
+            return $days;
+        }
+
+        $offset = crc32($seedKey) % $count;
+
+        return array_merge(array_slice($days, $offset), array_slice($days, 0, $offset));
     }
 }

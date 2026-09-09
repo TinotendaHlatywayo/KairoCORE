@@ -19,11 +19,23 @@ class Section extends Model
         'name',
         'code',
         'capacity',
+        'classroom_id',
+        'class_teacher_id',
     ];
 
     public function course()
     {
         return $this->belongsTo(Course::class, 'course_id');
+    }
+
+    public function classTeacher()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'class_teacher_id');
+    }
+
+    public function classroom()
+    {
+        return $this->belongsTo(Classroom::class, 'classroom_id');
     }
 
     public function enrollments()

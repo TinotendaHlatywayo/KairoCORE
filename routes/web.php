@@ -157,9 +157,10 @@ Route::domain('{tenant}.'.parse_url(config('app.url'), PHP_URL_HOST))->middlewar
             abort(403);
         }
 
-        return view('tenant.id-card-templates', [
-            'students' => collect([$student]),
-            'school' => app('current_tenant'),
+        return redirect()->route('students.print-cards', [
+            'scope' => 'selected',
+            'ids' => $student->id,
+            'layout' => 'pvc',
         ]);
     })->name('tenant.student.print-id')->middleware(['auth']);
 
@@ -175,16 +176,26 @@ Route::domain('{tenant}.'.parse_url(config('app.url'), PHP_URL_HOST))->middlewar
             return 'No students selected for card printing.';
         }
 
-        return view('tenant.id-card-templates', [
-            'students' => $students,
-            'school' => app('current_tenant'),
+        return redirect()->route('students.print-cards', [
+            'scope' => 'selected',
+            'ids' => $students->pluck('id')->implode(','),
+            'layout' => 'pvc',
         ]);
     })->name('tenant.student.print-ids-bulk')->middleware(['auth']);
 
-    // Official Class Timetable Print Compiler Route
-    Route::get('/classrooms/{section}/print-timetable', function (Section $section) {
-        if ($section->school_id !== app('current_tenant')->id) {
-            abort(403);
+    // Official Class Timetable Print Compiler Route.
+    // Parameters are read by name from the request route (never by closure
+    // argument position): the {tenant} subdomain placeholder is the FIRST
+    // route parameter, so a positional closure arg here used to receive the
+    // subdomain instead of the section id and every print request aborted 403.
+    Route::get('/classrooms/{section}/print-timetable', function (Request $request) {
+        $section = Section::withoutGlobalScopes()
+            ->whereKey((int) $request->route('section'))
+            ->where('school_id', app('current_tenant')->id)
+            ->first();
+
+        if (! $section) {
+            abort(404, 'Class not found for this school.');
         }
 
         $school = app('current_tenant');
@@ -196,6 +207,51 @@ Route::domain('{tenant}.'.parse_url(config('app.url'), PHP_URL_HOST))->middlewar
 
         return view('tenant.timetable-print', compact('section', 'school', 'days', 'timeSlots'));
     })->name('tenant.timetable.print')->middleware(['auth']);
+
+    // Official Whole-Stream (Form) Timetable Print Compiler Route — renders one
+    // merged schedule grid for every class stream in the selected Form level.
+    Route::get('/timetables/print-stream/{course}', function (Request $request) {
+        $course = \Modules\Academics\Models\Course::withoutGlobalScopes()
+            ->whereKey((int) $request->route('course'))
+            ->where('school_id', app('current_tenant')->id)
+            ->first();
+
+        if (! $course) {
+            abort(404, 'Form level not found for this school.');
+        }
+
+        $school = app('current_tenant');
+        $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+
+        $timeSlots = TimeSlot::where('school_id', $school->id)
+            ->orderBy('start_time', 'asc')
+            ->get();
+
+        $sections = $course->sections()
+            ->with(['classTeacher', 'course'])
+            ->orderBy('name')
+            ->get();
+
+        // Pre-group lessons by (slot, day) so the blade renders each class
+        // stream as a compact "Subject (Teacher Initials)" line.
+        $streamMatrix = [];
+        $lessons = \Modules\Timetables\Models\TimetableLesson::where('school_id', $school->id)
+            ->whereIn('section_id', $sections->pluck('id'))
+            ->with(['section.course', 'subject', 'teacher'])
+            ->get();
+
+        foreach ($lessons as $lesson) {
+            $key = $lesson->time_slot_id.'|'.$lesson->day_of_week;
+            $streamMatrix[$key][] = [
+                'section_label' => trim(($lesson->section->course->name ?? $course->name).' '.$lesson->section->name),
+                'subject' => $lesson->subject->name ?? '',
+                'teacher_initials' => \App\Support\TeacherInitials::for($lesson->teacher?->name),
+                'class_teacher' => $lesson->section->classTeacher?->name,
+            ];
+        }
+
+        return view('tenant.timetable-print-stream', compact('course', 'sections', 'school', 'days', 'timeSlots', 'streamMatrix'));
+    })->name('tenant.timetable.print-stream')->middleware(['auth']);
 
     // Standard Fallbacks: Redirect old routes directly to the student portal login
     Route::get('/login', function () {
@@ -234,6 +290,11 @@ Route::domain('{tenant}.'.parse_url(config('app.url'), PHP_URL_HOST))->middlewar
     Route::get('/workspace/students/cards/print', [StudentCardPrintController::class, 'generate'])
         ->middleware(['web', 'auth', 'tenant'])
         ->name('students.print-cards');
+
+    // Bulk download ID Cards PNG / ZIP endpoint
+    Route::get('/workspace/students/cards/download-png', [StudentCardPrintController::class, 'downloadPngs'])
+        ->middleware(['web', 'auth', 'tenant'])
+        ->name('students.download-pngs');
 
     Route::get('/e-resource/view/{id}', function ($id) {
         $book = LibraryBook::withoutGlobalScopes()->findOrFail($id);
@@ -387,6 +448,12 @@ Route::get('/student/fee-checkout/{invoiceId}', [StudentFeeCheckoutController::c
 Route::post('/student/fee-checkout/{invoiceId}', [StudentFeeCheckoutController::class, 'process'])
     ->name('student.fee-checkout.process')
     ->middleware(['auth']);
+
+// Student Portal: stream the student's own published report card PDF.
+// Both the tenant (school subdomain) and the student's ownership must match.
+Route::get('/student/reports/{report}/pdf', [AcademicReportPdfController::class, 'studentDownload'])
+    ->name('student.report.pdf')
+    ->middleware(['auth', 'tenant']);
 
 // Student Fee Paynow Sandbox Simulator Routes
 Route::get('/student/paynow/sandbox-redirect', function (Request $request) {
