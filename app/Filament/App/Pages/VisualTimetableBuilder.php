@@ -3,6 +3,7 @@
 namespace App\Filament\App\Pages;
 
 use App\Filament\App\Concerns\ModulePermissionAccess;
+use App\Support\TeacherInitials;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -12,7 +13,9 @@ use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Modules\Academics\Models\AcademicYear;
 use Modules\Academics\Models\Classroom;
+use Modules\Academics\Models\Course;
 use Modules\Academics\Models\Section;
+use Modules\Academics\Models\Subject;
 use Modules\Academics\Models\Term;
 use Modules\Timetables\Models\TimeSlot;
 use Modules\Timetables\Models\TimetableLesson;
@@ -61,10 +64,30 @@ class VisualTimetableBuilder extends Page implements Forms\Contracts\HasForms
 
     public array $timeSlots = [];
 
+    // Class | Stream scope toggle (a stream = every class in one Form level)
+    public string $viewScope = 'class';
+
+    public ?int $selectedCourseId = null;
+
+    public array $streamMatrix = [];
+
     // Searchable Combobox states
     public string $classSearchQuery = '';
 
     public bool $isSearchOpen = false;
+
+    // Add Lesson Modal States
+    public bool $isAddModalOpen = false;
+
+    public ?int $addSlotId = null;
+
+    public string $addDay = 'monday';
+
+    public ?int $addSubjectId = null;
+
+    public ?int $addTeacherId = null;
+
+    public ?int $addClassroomId = null;
 
     // Inline Card Editor Modal States
     public bool $isEditModalOpen = false;
@@ -287,6 +310,189 @@ class VisualTimetableBuilder extends Page implements Forms\Contracts\HasForms
         $this->loadTimetableMatrix();
     }
 
+    public function getAvailableCourses(): Collection
+    {
+        return Course::where('school_id', app('current_tenant')->id)
+            ->orderBy('name')
+            ->withCount('sections')
+            ->get();
+    }
+
+    public function selectScope(string $scope): void
+    {
+        $this->viewScope = $scope === 'stream' ? 'stream' : 'class';
+        $this->isSearchOpen = false;
+        $this->classSearchQuery = '';
+
+        if ($this->viewScope === 'stream' && ! $this->selectedCourseId) {
+            $this->selectedCourseId = Course::where('school_id', app('current_tenant')->id)->value('id');
+        }
+
+        $this->loadTimetableMatrix();
+    }
+
+    public function selectStreamCourse(int $courseId): void
+    {
+        $this->selectedCourseId = $courseId;
+        $this->loadTimetableMatrix();
+    }
+
+    protected function buildStreamMatrix(int $schoolId, int $templateId): void
+    {
+        $lessons = TimetableLesson::where('school_id', $schoolId)
+            ->with(['section.course', 'subject', 'teacher', 'classroom'])
+            ->where('template_id', $templateId)
+            ->whereHas('section', function ($query) {
+                $query->where('school_id', app('current_tenant')->id)
+                    ->where('course_id', $this->selectedCourseId);
+            })
+            ->get();
+
+        foreach ($lessons as $lesson) {
+            $key = $lesson->time_slot_id.'|'.$lesson->day_of_week;
+
+            $this->streamMatrix[$key][] = [
+                'lesson_id' => $lesson->id,
+                'section_label' => trim(($lesson->section->course->name ?? '').' '.$lesson->section->name),
+                'subject' => $lesson->subject->name ?? '',
+                'teacher' => $lesson->teacher->name ?? '',
+                'teacher_initials' => TeacherInitials::for($lesson->teacher?->name),
+                'room' => $lesson->classroom->name ?? '',
+                'color_classes' => $this->getSubjectColorClasses($lesson->subject->name ?? ''),
+                'is_locked' => (bool) $lesson->is_locked,
+            ];
+        }
+
+        foreach ($this->streamMatrix as $key => $entries) {
+            usort($entries, fn ($a, $b) => strcmp($a['section_label'], $b['section_label']));
+            $this->streamMatrix[$key] = $entries;
+        }
+    }
+
+    public function openAddLessonModal(int $slotId, string $day): void
+    {
+        $this->addSlotId = $slotId;
+        $this->addDay = $day;
+        $this->addSubjectId = null;
+        $this->addTeacherId = null;
+        $this->addClassroomId = null;
+        $this->isAddModalOpen = true;
+    }
+
+    public function saveNewLesson(): void
+    {
+        $schoolId = app('current_tenant')->id;
+
+        if (! $this->activeFilterClassId) {
+            Notification::make()->title(__('Select a class first.'))->warning()->send();
+
+            return;
+        }
+
+        $section = Section::where('school_id', $schoolId)->find($this->activeFilterClassId);
+
+        if (! $section) {
+            Notification::make()->title(__('Class not found.'))->danger()->send();
+
+            return;
+        }
+
+        if (! $this->addSlotId || ! in_array($this->addDay, $this->days, true)) {
+            Notification::make()->title(__('Missing slot or day.'))->danger()->send();
+
+            return;
+        }
+
+        if (! $this->addSubjectId || ! $this->addTeacherId) {
+            Notification::make()->title(__('Subject and teacher are required.'))->danger()->send();
+
+            return;
+        }
+
+        $activeTemplate = TimetableTemplate::where('school_id', $schoolId)->where('is_active', true)->first();
+
+        if (! $activeTemplate) {
+            Notification::make()->title(__('No Active Timetable Template'))->body('Activate a template before adding lessons.')->warning()->send();
+
+            return;
+        }
+
+        $formData = $this->form->getState();
+        $academicYearId = $formData['academic_year_id'] ?? null;
+        $termId = $formData['term_id'] ?? null;
+
+        $slot = TimeSlot::where('school_id', $schoolId)
+            ->where('template_id', $activeTemplate->id)
+            ->find($this->addSlotId);
+
+        if (! $slot) {
+            Notification::make()->title(__('Time slot no longer exists.'))->danger()->send();
+
+            return;
+        }
+
+        // Conflict 1: Teacher Overlap
+        $teacherConflict = TimetableLesson::where('school_id', $schoolId)
+            ->with(['subject', 'section.course'])
+            ->where('template_id', $activeTemplate->id)
+            ->where('time_slot_id', $slot->id)
+            ->where('day_of_week', $this->addDay)
+            ->where('teacher_id', $this->addTeacherId)
+            ->first();
+
+        if ($teacherConflict) {
+            Notification::make()
+                ->title(__('Scheduling Conflict Blocked'))
+                ->body("Teacher is already scheduled to teach [{$teacherConflict->subject->name}] in class [{$teacherConflict->section->course->name} {$teacherConflict->section->name}] at this period!")
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        // Conflict 2: Classroom Overlap
+        if ($this->addClassroomId) {
+            $roomConflict = TimetableLesson::where('school_id', $schoolId)
+                ->with(['section.course'])
+                ->where('template_id', $activeTemplate->id)
+                ->where('time_slot_id', $slot->id)
+                ->where('day_of_week', $this->addDay)
+                ->where('classroom_id', $this->addClassroomId)
+                ->first();
+
+            if ($roomConflict) {
+                Notification::make()
+                    ->title(__('Classroom Double-Booking Blocked'))
+                    ->body("This room is already occupied by class [{$roomConflict->section->course->name} {$roomConflict->section->name}] at this period!")
+                    ->danger()
+                    ->send();
+
+                return;
+            }
+        }
+
+        TimetableLesson::create([
+            'school_id' => $schoolId,
+            'template_id' => $activeTemplate->id,
+            'section_id' => $section->id,
+            'course_id' => $section->course_id,
+            'subject_id' => $this->addSubjectId,
+            'teacher_id' => $this->addTeacherId,
+            'classroom_id' => $this->addClassroomId,
+            'time_slot_id' => $slot->id,
+            'day_of_week' => $this->addDay,
+            'academic_year_id' => $academicYearId,
+            'term_id' => $termId,
+            'color' => '#ffffff',
+            'is_locked' => false,
+        ]);
+
+        Notification::make()->title(__('Lesson Added!'))->success()->send();
+
+        $this->isAddModalOpen = false;
+        $this->loadTimetableMatrix();
+    }
+
     public function loadTimetableMatrix(): void
     {
         $schoolId = app('current_tenant')->id;
@@ -300,6 +506,7 @@ class VisualTimetableBuilder extends Page implements Forms\Contracts\HasForms
             ->toArray();
 
         $this->matrix = [];
+        $this->streamMatrix = [];
 
         if ($activeTemplate) {
             $sets = $activeTemplate->settings;
@@ -317,7 +524,17 @@ class VisualTimetableBuilder extends Page implements Forms\Contracts\HasForms
             $this->activeTemplateSummary = [];
         }
 
-        if (! $this->activeFilterClassId || ! $activeTemplate) {
+        if (! $activeTemplate) {
+            return;
+        }
+
+        if ($this->viewScope === 'stream' && $this->selectedCourseId) {
+            $this->buildStreamMatrix($schoolId, $activeTemplate->id);
+
+            return;
+        }
+
+        if (! $this->activeFilterClassId) {
             return;
         }
 
