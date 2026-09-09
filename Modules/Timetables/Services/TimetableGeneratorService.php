@@ -32,11 +32,18 @@ class TimetableGeneratorService
 
         $periodCount = 1;
 
+        // Slot names written during THIS compile. Any slot of this template
+        // not in this set is stale (left over from an earlier compile with
+        // different settings) and must be removed so the grid never shows
+        // out-of-order or overlapping rows.
+        $touched = [];
+
         while ($currentTime->lt($endTimeOfLessons)) {
             $nextTime = $currentTime->copy()->addMinutes($periodLength);
 
             // 1. Intercept Closing Time Overrun Gaps
             if ($nextTime->gt($endTimeOfLessons)) {
+                $touched[] = 'Free / Buffer Slot';
                 TimeSlot::updateOrCreate(
                     [
                         'school_id' => $schoolId,
@@ -56,6 +63,7 @@ class TimetableGeneratorService
             // 2. Fixed Tea Break Placement
             if ($hasFixedBreak && $fixedBreakTime) {
                 if ($currentTime->lt($fixedBreakTime) && $nextTime->gt($fixedBreakTime)) {
+                    $touched[] = 'Free Slot (Pre-Break)';
                     TimeSlot::updateOrCreate(
                         [
                             'school_id' => $schoolId,
@@ -76,6 +84,7 @@ class TimetableGeneratorService
 
                 if ($currentTime->eq($fixedBreakTime)) {
                     $breakEnd = $currentTime->copy()->addMinutes($breakDuration);
+                    $touched[] = 'Tea Break';
                     TimeSlot::updateOrCreate(
                         [
                             'school_id' => $schoolId,
@@ -98,6 +107,7 @@ class TimetableGeneratorService
             // 3. Fixed Lunch Break Placement
             if ($hasFixedLunch && $fixedLunchTime) {
                 if ($currentTime->lt($fixedLunchTime) && $nextTime->gt($fixedLunchTime)) {
+                    $touched[] = 'Free Slot (Pre-Lunch)';
                     TimeSlot::updateOrCreate(
                         [
                             'school_id' => $schoolId,
@@ -118,6 +128,7 @@ class TimetableGeneratorService
 
                 if ($currentTime->eq($fixedLunchTime)) {
                     $lunchEnd = $currentTime->copy()->addMinutes($lunchDuration);
+                    $touched[] = 'Lunch Break';
                     TimeSlot::updateOrCreate(
                         [
                             'school_id' => $schoolId,
@@ -140,6 +151,7 @@ class TimetableGeneratorService
             // 4. Flexible Period-Count Tea Break
             if (! $hasFixedBreak && $periodCount === ($breakAfterPeriod + 1)) {
                 $breakEnd = $currentTime->copy()->addMinutes($breakDuration);
+                $touched[] = 'Tea Break';
                 TimeSlot::updateOrCreate(
                     [
                         'school_id' => $schoolId,
@@ -162,6 +174,7 @@ class TimetableGeneratorService
             // 5. Flexible Period-Count Lunch Break
             if (! $hasFixedLunch && $periodCount === ($lunchAfterPeriod + 1)) {
                 $lunchEnd = $currentTime->copy()->addMinutes($lunchDuration);
+                $touched[] = 'Lunch Break';
                 TimeSlot::updateOrCreate(
                     [
                         'school_id' => $schoolId,
@@ -182,6 +195,7 @@ class TimetableGeneratorService
             }
 
             // 6. Create Standard Period
+            $touched[] = 'Period '.$periodCount;
             TimeSlot::updateOrCreate(
                 [
                     'school_id' => $schoolId,
@@ -198,6 +212,26 @@ class TimetableGeneratorService
 
             $periodCount++;
             $currentTime = $nextTime->copy();
+        }
+
+        // Reset the template back to a single clean, chronological slot set.
+        // Anything not written by this compile is stale and keeps scrambled
+        // or overlapping times in the grid (and its lessons are orphans).
+        if ($templateId && $touched !== []) {
+            $stale = TimeSlot::where('school_id', $schoolId)
+                ->where('template_id', $templateId)
+                ->whereNotIn('name', $touched)
+                ->pluck('id');
+
+            if ($stale->isNotEmpty()) {
+                TimetableLesson::where('school_id', $schoolId)
+                    ->whereIn('time_slot_id', $stale)
+                    ->delete();
+                TimeSlot::where('school_id', $schoolId)
+                    ->where('template_id', $templateId)
+                    ->whereIn('id', $stale)
+                    ->delete();
+            }
         }
     }
 
