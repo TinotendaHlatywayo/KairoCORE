@@ -86,8 +86,9 @@ use Modules\Lms\Models\Homework;
 use Modules\Lms\Models\HomeworkSubmission;
 use Modules\Students\Models\Enrollment;
 use Modules\Students\Models\Student;
-use Modules\Timetables\Models\TimeSlot;
 use Modules\Timetables\Models\TimetableLesson;
+use Modules\Timetables\Models\TimetableTemplate;
+use Modules\Timetables\Services\TimetableGeneratorService;
 
 /**
  * Seeds (and wipes) the playground demonstration dataset for a school tenant.
@@ -396,84 +397,246 @@ class DummyDataSeeder
 
         // Course ⭢ subject syllabus (course_subject pivot).
         $staffUserIds = $this->seedStaff($schoolId, $actorId, $track, $created);
-        $artsSubjects = ['ENGLISH LANGUAGE', 'MATHEMATICS', 'SHONA LANGUAGE', 'HISTORY', 'HERITAGE', 'PE SPORTS AND MASS DISPLAYS'];
-        $commercialsSubjects = ['MATHEMATICS', 'ENGLISH LANGUAGE', 'GEOGRAPHY', 'HISTORY', 'HERITAGE', 'PE SPORTS AND MASS DISPLAYS'];
-        $sciencesSubjects = ['MATHEMATICS', 'PHYSICS', 'CHEMISTRY', 'BIOLOGY', 'COMBINED SCIENCE', 'ENGLISH LANGUAGE'];
-        $subjectKeyFor = function (Course $course) use ($artsSubjects, $commercialsSubjects, $sciencesSubjects, $secondarySubjects, $primarySubjects): array {
-            $upper = strtoupper((string) $course->name);
-            if (str_contains($upper, 'SCIENTIFIC') || str_contains($upper, 'SCI') || str_contains($upper, ' SCI ')) {
-                return $sciencesSubjects;
-            }
-            if (str_contains($upper, 'COMMERCIAL') || str_contains($upper, 'COM')) {
-                return $commercialsSubjects;
-            }
-            if (str_contains($upper, ' ARTS') || str_contains($upper, 'ART')) {
-                return $artsSubjects;
-            }
-            if (str_contains($upper, 'FORM')) {
-                return $secondarySubjects;
-            }
 
-            return $primarySubjects;
-        };
+        // ════════════════════════════════════════════════════════════════
+        // STAFFING MODELS (teacher assignment + timetable)
+        //   Model A — a Class Teacher teaches most subjects to ONE stream.
+        //   Model B — a subject specialist teaches one subject across selected
+        //   classes (whole grade via section_id = null, or a single stream).
+        // ════════════════════════════════════════════════════════════════
+        $teacherUsers = User::where('school_id', $schoolId)->get(['id', 'name']);
+        $teacherIdByName = $teacherUsers->pluck('id', 'name')->all();
 
-        $courseTeacherIdx = 0;
-        $courseTeacherByCourse = [];
-        foreach ($courseObjects as $course) {
-            $subjectNames = array_map(fn ($s) => is_array($s) ? $s[0] : $s, $subjectKeyFor($course));
-            foreach ($subjectNames as $si => $subjectName) {
-                $subject = $subjectObjects[$subjectName] ?? null;
-                if (! $subject) {
+        $specialistBySubject = [
+            'Science & Technology' => $teacherIdByName['Simbarashe Nyamupingidza'] ?? null,
+            'Physical Education' => $teacherIdByName['Fadzai Mupfumira'] ?? null,
+        ];
+
+        // Class-teacher fallback pool: teaching staff only (never students or
+        // non-teaching users), with the subject specialists reserved.
+        $specialistIds = array_values(array_filter([
+            $specialistBySubject['Science & Technology'] ?? null,
+            $specialistBySubject['Physical Education'] ?? null,
+        ]));
+
+        $classTeacherPool = collect($staffUserIds['teaching_staff'] ?? [])
+            ->reject(fn ($id) => in_array((int) $id, $specialistIds, true))
+            ->values()
+            ->all() ?: ($staffUserIds['teaching_staff'] ?: [$actorId]);
+
+        // Each primary stream gets its own Class Teacher, so both A and B are
+        // busy in the SAME periods and every teacher has distinct initials.
+        $primaryClassTeachers = [
+            'ECD A A' => 'Rumbidzai Mavhunga',
+            'ECD A B' => 'Mercy Moyo',
+            'ECD B A' => 'Grace Chengeta',
+            'ECD B B' => 'Elliot Nyandoro',
+            'Grade 1 A' => 'Chipo Mandizvidza',
+            'Grade 1 B' => 'Tariro Mutasa',
+            'Grade 2 A' => 'Rudo Chikomba',
+            'Grade 2 B' => 'Ruvimbo Mutsonziwa',
+            'Grade 3 A' => 'Kudakwashe Zhakata',
+            'Grade 3 B' => 'Panashe Mudimba',
+            'Grade 4 A' => 'Tonderayi Mashava',
+            'Grade 4 B' => 'Tatenda Gumbo',
+            'Grade 5 A' => 'Vongai Ndlovu',
+            'Grade 5 B' => 'Blessing Sithole',
+            'Grade 6 A' => 'Anesu Machiridza',
+            'Grade 6 B' => 'Chengetai Mutasa',
+            'Grade 7 A' => 'Nyaradzo Gumbo',
+            'Grade 7 B' => 'Pardon Mpofu',
+        ];
+
+        $classTeacherPool = $teacherUsers
+            ->reject(fn ($u) => in_array($u->name, ['Simbarashe Nyamupingidza', 'Fadzai Mupfumira'], true))
+            ->pluck('id')
+            ->values()
+            ->all() ?: ($staffUserIds['teaching_staff'] ?: [$actorId]);
+
+        // Each primary stream gets a named Class Teacher (Named positions
+        // OVERRIDE whatever is already set — a previous seed or a wipe that
+        // missed sections must not leave stale teachers behind). Streams with
+        // no named position keep any existing choice or fall back to the pool.
+        foreach ($sections as $si => $section) {
+            $ctName = $primaryClassTeachers[$section->course->name.' '.$section->name] ?? null;
+            $ctId = $ctName !== null ? ($teacherIdByName[$ctName] ?? null) : null;
+
+            if ($ctId === null) {
+                if ($section->class_teacher_id) {
                     continue;
                 }
-                $teacherId = $staffUserIds['teaching_staff'][$courseTeacherIdx % max(1, count($staffUserIds['teaching_staff']))] ?? $actorId;
-                $pivot = DB::table('course_subject')
-                    ->where('school_id', $schoolId)
-                    ->where('course_id', $course->id)
-                    ->where('subject_id', $subject->id)
-                    ->first();
-                if ($pivot) {
-                    $manifest['course_subject'][] = (int) $pivot->id;
-                } else {
-                    $pivotId = DB::table('course_subject')->insertGetId([
-                        'school_id' => $schoolId,
-                        'course_id' => $course->id,
-                        'subject_id' => $subject->id,
-                        'teacher_id' => $teacherId,
-                        'role' => 'main',
-                        'periods_per_week' => $si === 0 ? 6 : 4,
-                        'room_preference' => null,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-                    $manifest['course_subject'][] = (int) $pivotId;
-                }
+                $ctId = $classTeacherPool[$si % max(1, count($classTeacherPool))];
             }
-            $courseTeacherByCourse[$course->id] = $staffUserIds['teaching_staff'][$courseTeacherIdx % max(1, count($staffUserIds['teaching_staff']))] ?? $actorId;
-            $courseTeacherIdx++;
 
-            // Subject papers for the practical science subjects (secondary).
-            if ($isSecondary) {
-                foreach (['COMBINED SCIENCE', 'PHYSICS', 'CHEMISTRY', 'BIOLOGY', 'AGRICULTURE', 'PE SPORTS AND MASS DISPLAYS'] as $paperSubject) {
-                    $subj = $subjectObjects[$paperSubject] ?? null;
-                    if (! $subj) {
+            $section->class_teacher_id = $ctId;
+            Section::withoutGlobalScopes()
+                ->whereKey($section->id)
+                ->update(['class_teacher_id' => $ctId]);
+        }
+
+        // Create (or reattach) one course_subject row per scope. Re-seeding after
+        // a wipe finds the rows again so lesson placement stays idempotent.
+        $upsertCourseSubject = function (int $schoolId, Course $course, ?Subject $subject, int $teacherId, int $periodsPerWeek, ?int $sectionId = null, string $role = 'main') use (&$manifest): void {
+            if (! $subject) {
+                return;
+            }
+
+            $existing = DB::table('course_subject')
+                ->where('school_id', $schoolId)
+                ->where('course_id', $course->id)
+                ->where('subject_id', $subject->id)
+                ->where('section_id', $sectionId)
+                ->first();
+
+            if ($existing) {
+                $manifest['course_subject'][] = (int) $existing->id;
+
+                return;
+            }
+
+            $pivotId = DB::table('course_subject')->insertGetId([
+                'school_id' => $schoolId,
+                'course_id' => $course->id,
+                'subject_id' => $subject->id,
+                'section_id' => $sectionId,
+                'teacher_id' => $teacherId,
+                'role' => $role,
+                'periods_per_week' => $periodsPerWeek,
+                'room_preference' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            $manifest['course_subject'][] = (int) $pivotId;
+        };
+
+        $courseTeacherByCourse = [];
+
+        // Rebuild the syllabus from scratch: stale course-subject rows (old
+        // course-level repeats with different/wrong teachers) surviving a wipe
+        // would otherwise bleed extra requirements into auto-placement.
+        DB::table('course_subject')->where('school_id', $schoolId)->delete();
+
+        if ($isPrimary) {
+            // ════════════════════════════════════════════════════════════════
+            // MODEL A + MODEL B (primary) — two assignment styles coexist:
+            //   1. Every stream has its own Class Teacher who teaches 5 subjects
+            //      (25 periods) to THAT ONE stream → the whole class is being
+            //      taught while A and B are both busy in the same slots.
+            //   2. Subject specialists cover the 6th subject (5 periods):
+            //      - Simbarashe Nyamupingidza → Science & Technology for the
+            //        WHOLE of Grade 4 and Grade 5 (course-level row).
+            //      - Fadzai Mupfumira → Physical Education for Grade 3 A only.
+            // ════════════════════════════════════════════════════════════════
+            $scienceSpecialistId = $specialistBySubject['Science & Technology'] ?? null;
+            $peSpecialistId = $specialistBySubject['Physical Education'] ?? null;
+
+            if ($scienceSpecialistId) {
+                $science = $subjectObjects['Science & Technology'] ?? null;
+                foreach ($courseObjects as $courseName => $course) {
+                    if (! in_array($courseName, ['Grade 4', 'Grade 5'], true)) {
                         continue;
                     }
-                    foreach (['Paper 1', 'Paper 2'] as $paperName) {
-                        $exists = DB::table('subject_papers')
-                            ->where('school_id', $schoolId)
-                            ->where('subject_id', $subj->id)
-                            ->where('name', $paperName)
-                            ->exists();
-                        if (! $exists) {
-                            $paperId = DB::table('subject_papers')->insertGetId([
-                                'school_id' => $schoolId,
-                                'subject_id' => $subj->id,
-                                'name' => $paperName,
-                                'created_at' => now(),
-                                'updated_at' => now(),
-                            ]);
-                            $manifest['subject_papers'][] = (int) $paperId;
+                    $upsertCourseSubject($schoolId, $course, $science, $scienceSpecialistId, 5, null, 'specialist');
+                }
+            }
+
+            if ($peSpecialistId) {
+                foreach ($sections as $section) {
+                    if (trim($section->course->name.' '.$section->name) !== 'Grade 3 A') {
+                        continue;
+                    }
+                    $upsertCourseSubject($schoolId, $section->course, $subjectObjects['Physical Education'] ?? null, $peSpecialistId, 5, $section->id, 'specialist');
+                }
+            }
+
+            $primaryCore = ['Mathematics', 'English Language', 'Shona Language', 'Social Studies'];
+
+            foreach ($sections as $section) {
+                $course = $section->course;
+                $ctId = $section->class_teacher_id;
+                if (! $ctId) {
+                    continue;
+                }
+                $sectionLabel = trim($course->name.' '.$section->name);
+
+                foreach ($primaryCore as $subjectName) {
+                    $upsertCourseSubject($schoolId, $course, $subjectObjects[$subjectName] ?? null, $ctId, 5, $section->id);
+                }
+
+                $scienceCovered = $scienceSpecialistId && in_array($course->name, ['Grade 4', 'Grade 5'], true);
+                $peCovered = $peSpecialistId && $sectionLabel === 'Grade 3 A';
+
+                if (! $scienceCovered) {
+                    $upsertCourseSubject($schoolId, $course, $subjectObjects['Science & Technology'] ?? null, $ctId, 5, $section->id);
+                }
+                if (! $peCovered) {
+                    $upsertCourseSubject($schoolId, $course, $subjectObjects['Physical Education'] ?? null, $ctId, 5, $section->id);
+                }
+
+                Course::withoutGlobalScopes()
+                    ->where('school_id', $schoolId)
+                    ->whereKey($course->id)
+                    ->update(['teacher_id' => $ctId]);
+            }
+        } else {
+            $artsSubjects = ['ENGLISH LANGUAGE', 'MATHEMATICS', 'SHONA LANGUAGE', 'HISTORY', 'HERITAGE', 'PE SPORTS AND MASS DISPLAYS'];
+            $commercialsSubjects = ['MATHEMATICS', 'ENGLISH LANGUAGE', 'GEOGRAPHY', 'HISTORY', 'HERITAGE', 'PE SPORTS AND MASS DISPLAYS'];
+            $sciencesSubjects = ['MATHEMATICS', 'PHYSICS', 'CHEMISTRY', 'BIOLOGY', 'COMBINED SCIENCE', 'ENGLISH LANGUAGE'];
+            $subjectKeyFor = function (Course $course) use ($artsSubjects, $commercialsSubjects, $sciencesSubjects, $secondarySubjects, $primarySubjects): array {
+                $upper = strtoupper((string) $course->name);
+                if (str_contains($upper, 'SCIENTIFIC') || str_contains($upper, 'SCI') || str_contains($upper, ' SCI ')) {
+                    return $sciencesSubjects;
+                }
+                if (str_contains($upper, 'COMMERCIAL') || str_contains($upper, 'COM')) {
+                    return $commercialsSubjects;
+                }
+                if (str_contains($upper, ' ARTS') || str_contains($upper, 'ART')) {
+                    return $artsSubjects;
+                }
+                if (str_contains($upper, 'FORM')) {
+                    return $secondarySubjects;
+                }
+
+                return $primarySubjects;
+            };
+
+            $courseTeacherIdx = 0;
+            foreach ($courseObjects as $course) {
+                $subjectNames = array_map(fn ($s) => is_array($s) ? $s[0] : $s, $subjectKeyFor($course));
+                foreach ($subjectNames as $si => $subjectName) {
+                    $subject = $subjectObjects[$subjectName] ?? null;
+                    if (! $subject) {
+                        continue;
+                    }
+                    $teacherId = $staffUserIds['teaching_staff'][$courseTeacherIdx % max(1, count($staffUserIds['teaching_staff']))] ?? $actorId;
+                    $upsertCourseSubject($schoolId, $course, $subject, $teacherId, $si === 0 ? 6 : 4);
+                }
+                $courseTeacherByCourse[$course->id] = $staffUserIds['teaching_staff'][$courseTeacherIdx % max(1, count($staffUserIds['teaching_staff']))] ?? $actorId;
+                $courseTeacherIdx++;
+
+                // Subject papers for the practical science subjects (secondary).
+                if ($isSecondary) {
+                    foreach (['COMBINED SCIENCE', 'PHYSICS', 'CHEMISTRY', 'BIOLOGY', 'AGRICULTURE', 'PE SPORTS AND MASS DISPLAYS'] as $paperSubject) {
+                        $subj = $subjectObjects[$paperSubject] ?? null;
+                        if (! $subj) {
+                            continue;
+                        }
+                        foreach (['Paper 1', 'Paper 2'] as $paperName) {
+                            $exists = DB::table('subject_papers')
+                                ->where('school_id', $schoolId)
+                                ->where('subject_id', $subj->id)
+                                ->where('name', $paperName)
+                                ->exists();
+                            if (! $exists) {
+                                $paperId = DB::table('subject_papers')->insertGetId([
+                                    'school_id' => $schoolId,
+                                    'subject_id' => $subj->id,
+                                    'name' => $paperName,
+                                    'created_at' => now(),
+                                    'updated_at' => now(),
+                                ]);
+                                $manifest['subject_papers'][] = (int) $paperId;
+                            }
                         }
                     }
                 }
@@ -781,7 +944,7 @@ class DummyDataSeeder
         // ════════════════════════════════════════════════════════════════
         // 10. TIMETABLE + STUDENT ATTENDANCE
         // ════════════════════════════════════════════════════════════════
-        $this->seedTimetableAndAttendance($schoolId, $year, $term, $sections, $studentIdsList, $staffUserIds, $courseTeacherByCourse, $actorId, $track, $created);
+        $this->seedTimetableAndAttendance($schoolId, $year, $term, $sections, $studentIdsList, $staffUserIds, $actorId, $track, $created);
 
         // ════════════════════════════════════════════════════════════════
         // 11. LMS HOMEWORK + SUBMISSIONS
@@ -904,6 +1067,19 @@ class DummyDataSeeder
             ['Kudakwashe', 'Zhakata', 'male', 'Teacher — Practicals (Agriculture & BTD)', 'Academic', 'teaching_staff', 'T2 — Teacher'],
             ['Fadzai', 'Mupfumira', 'female', 'Teacher — PE, Sports & Mass Displays', 'Academic', 'teaching_staff', 'T2 — Teacher'],
             ['Tatenda', 'Gumbo', 'male', 'Senior Teacher — Combined Science', 'Academic', 'teaching_staff', 'T1 — Senior Teacher'],
+            ['Rumbidzai', 'Mavhunga', 'female', 'Class Teacher — Infant (ECD A)', 'Academic', 'teaching_staff', 'T2 — Teacher'],
+            ['Mercy', 'Moyo', 'female', 'Class Teacher — Infant (ECD A)', 'Academic', 'teaching_staff', 'T2 — Teacher'],
+            ['Grace', 'Chengeta', 'female', 'Class Teacher — Infant (ECD B)', 'Academic', 'teaching_staff', 'T2 — Teacher'],
+            ['Elliot', 'Nyandoro', 'male', 'Class Teacher — Infant (ECD B)', 'Academic', 'teaching_staff', 'T2 — Teacher'],
+            ['Ruvimbo', 'Mutsonziwa', 'female', 'Class Teacher — Grade 2', 'Academic', 'teaching_staff', 'T2 — Teacher'],
+            ['Tonderayi', 'Mashava', 'male', 'Class Teacher — Grade 4', 'Academic', 'teaching_staff', 'T2 — Teacher'],
+            ['Vongai', 'Ndlovu', 'female', 'Class Teacher — Grade 5', 'Academic', 'teaching_staff', 'T2 — Teacher'],
+            ['Blessing', 'Sithole', 'male', 'Class Teacher — Grade 5', 'Academic', 'teaching_staff', 'T2 — Teacher'],
+            ['Anesu', 'Machiridza', 'female', 'Class Teacher — Grade 6', 'Academic', 'teaching_staff', 'T2 — Teacher'],
+            ['Chengetai', 'Mutasa', 'female', 'Class Teacher — Grade 6', 'Academic', 'teaching_staff', 'T2 — Teacher'],
+            ['Nyaradzo', 'Gumbo', 'female', 'Class Teacher — Grade 7', 'Academic', 'teaching_staff', 'T2 — Teacher'],
+            ['Pardon', 'Mpofu', 'male', 'Class Teacher — Grade 7', 'Academic', 'teaching_staff', 'T2 — Teacher'],
+            ['Panashe', 'Mudimba', 'male', 'Class Teacher — Grade 3', 'Academic', 'teaching_staff', 'T2 — Teacher'],
             // Non-teaching staff (5+)
             ['Sharon', 'Chigumba', 'female', 'School Bursar', 'Finance', 'non_teaching_staff', 'S1 — Support Staff'],
             ['Tafadzwa', 'Moyo', 'male', 'School Nurse', 'Health & Wellness', 'non_teaching_staff', 'S1 — Support Staff'],
@@ -1904,104 +2080,118 @@ class DummyDataSeeder
         }
     }
 
-    protected function seedTimetableAndAttendance(int $schoolId, $year, $term, $sections, array $studentIdsList, array $staffUserIds, array $courseTeacherByCourse, ?int $actorId, callable $track, callable $created): void
+    protected function seedTimetableAndAttendance(int $schoolId, $year, $term, $sections, array $studentIdsList, array $staffUserIds, ?int $actorId, callable $track, callable $created): void
     {
         if (! $actorId) {
             return;
         }
 
-        $classroomNames = [
-            'Room 101 (ECD A)', 'Room 102 (ECD B)', 
-            'Room 103 (Grade 1A)', 'Room 104 (Grade 1B)', 
-            'Room 105 (Grade 2A)', 'Room 106 (Grade 2B)', 
-            'Room 107 (Grade 3A)', 'Room 108 (Grade 3B)', 
-            'Room 109 (Grade 4A)', 'Room 110 (Grade 4B)', 
-            'Room 111 (Grade 5A)', 'Room 112 (Grade 5B)', 
-            'Room 113 (Grade 6A)', 'Room 114 (Grade 6B)', 
-            'Room 115 (Grade 7A)', 'Room 116 (Grade 7B)', 
-            'Science Laboratory', 'Computer Laboratory'
+        // Generate Lessons uses app('current_tenant'), so bind it when running
+        // from the CLI/artisan or other non-HTTP context.
+        if (! app()->bound('current_tenant')) {
+            app()->instance('current_tenant', \App\Models\School::find($schoolId));
+        }
+
+        // One homeroom per stream plus the two purpose-built labs. The labs
+        // stay selectable in the classroom editor but are never chosen by the
+        // auto-placer (the school books them per lesson when it wants to).
+        $homeroomRooms = [
+            'Room 101 (ECD A A)' => 'ECD A A',
+            'Room 102 (ECD A B)' => 'ECD A B',
+            'Room 103 (ECD B A)' => 'ECD B A',
+            'Room 104 (ECD B B)' => 'ECD B B',
+            'Room 105 (Grade 1 A)' => 'Grade 1 A',
+            'Room 106 (Grade 1 B)' => 'Grade 1 B',
+            'Room 107 (Grade 2 A)' => 'Grade 2 A',
+            'Room 108 (Grade 2 B)' => 'Grade 2 B',
+            'Room 109 (Grade 3 A)' => 'Grade 3 A',
+            'Room 110 (Grade 3 B)' => 'Grade 3 B',
+            'Room 111 (Grade 4 A)' => 'Grade 4 A',
+            'Room 112 (Grade 4 B)' => 'Grade 4 B',
+            'Room 113 (Grade 5 A)' => 'Grade 5 A',
+            'Room 114 (Grade 5 B)' => 'Grade 5 B',
+            'Room 115 (Grade 6 A)' => 'Grade 6 A',
+            'Room 116 (Grade 6 B)' => 'Grade 6 B',
+            'Room 117 (Grade 7 A)' => 'Grade 7 A',
+            'Room 118 (Grade 7 B)' => 'Grade 7 B',
+            'Science Laboratory' => null,
+            'Computer Laboratory' => null,
         ];
-        $classroomIds = [];
-        foreach ($classroomNames as $i => $name) {
+
+        $sectionByLabel = $sections->keyBy(fn ($s) => trim($s->course->name.' '.$s->name));
+
+        foreach ($homeroomRooms as $roomName => $sectionLabel) {
             $classroom = Classroom::firstOrCreate(
-                ['school_id' => $schoolId, 'name' => $name],
+                ['school_id' => $schoolId, 'name' => $roomName],
                 ['capacity' => 40, 'location' => 'Main Block']
             );
-            $classroomIds[] = $classroom->id;
             $created($classroom);
-        }
 
-        $periods = [
-            ['Period 1', '07:30', '08:15'],
-            ['Period 2', '08:20', '09:05'],
-            ['Period 3', '09:10', '09:55'],
-            ['Break', '10:00', '10:15'],
-            ['Period 4', '10:15', '11:00'],
-            ['Period 5', '11:05', '11:50'],
-            ['Period 6', '11:55', '12:40'],
-            ['Lunch', '12:40', '13:20'],
-            ['Period 7', '13:20', '14:05'],
-            ['Period 8', '14:10', '14:55'],
-            ['Period 9', '15:00', '15:45'],
-            ['Period 10', '15:50', '16:35'],
-        ];
-        $slotIds = [];
-        foreach ($periods as [$slotName, $start, $end]) {
-            $slot = TimeSlot::firstOrCreate(
-                ['school_id' => $schoolId, 'name' => $slotName],
-                ['start_time' => $start, 'end_time' => $end, 'is_break' => in_array($slotName, ['Break', 'Lunch'], true)]
-            );
-            $slotIds[] = $slot->id;
-            $created($slot);
-        }
-
-        $combos = [];
-        foreach (['monday', 'tuesday', 'wednesday', 'thursday', 'friday'] as $day) {
-            foreach ($slotIds as $slotId) {
-                $combos[] = [$day, $slotId];
-            }
-        }
-        $comboIndex = 0;
-
-        $sectionLessonIds = [];
-
-        foreach ($sections as $section) {
-            if (! $section->course) {
+            if (! $sectionLabel) {
                 continue;
             }
 
-            $attachedSubjects = DB::table('course_subject')
-                ->where('school_id', $schoolId)
-                ->where('course_id', $section->course->id)
-                ->orderBy('id')
-                ->limit(2)
-                ->get();
-
-            foreach ($attachedSubjects as $attached) {
-                if (! isset($combos[$comboIndex])) {
-                    break 2;
-                }
-                [$day, $slotId] = $combos[$comboIndex++];
-
-                $teacherId = $courseTeacherByCourse[$section->course->id] ?? $actorId;
-                $classroomId = $classroomIds[$comboIndex % count($classroomIds)];
-
-                $lesson = TimetableLesson::firstOrCreate([
-                    'school_id' => $schoolId,
-                    'academic_year_id' => $year->id,
-                    'term_id' => $term->id,
-                    'time_slot_id' => $slotId,
-                    'day_of_week' => $day,
-                    'section_id' => $section->id,
-                ], [
-                    'course_id' => $section->course->id,
-                    'subject_id' => $attached->subject_id,
-                    'teacher_id' => $teacherId,
-                    'classroom_id' => $classroomId,
-                ]);
-                $created($lesson);
-                $sectionLessonIds[$section->id][] = $lesson->id;
+            $section = $sectionByLabel->get($sectionLabel);
+            if (! $section) {
+                continue;
             }
+
+            Section::withoutGlobalScopes()
+                ->whereKey($section->id)
+                ->update(['classroom_id' => $classroom->id]);
+        }
+
+        // Active template: "Summer Timetable" → 6 × 60-min periods (07:30-15:30),
+        // Tea after Period 3 (30 min), Lunch after Period 5 (60 min) and a
+        // closing Free/Buffer slot = exactly 30 teaching slots per stream.
+        $settings = [
+            'start_time' => '07:30',
+            'end_time_of_lessons' => '15:30',
+            'period_length' => 60,
+            'has_fixed_break' => false,
+            'fixed_break_time' => null,
+            'break_duration' => 30,
+            'break_after_period' => 3,
+            'has_fixed_lunch' => false,
+            'fixed_lunch_time' => null,
+            'lunch_duration' => 60,
+            'lunch_after_period' => 5,
+        ];
+
+        $template = TimetableTemplate::where('school_id', $schoolId)->where('name', 'Summer Timetable')->first();
+        if (! $template) {
+            $template = TimetableTemplate::create([
+                'school_id' => $schoolId,
+                'name' => 'Summer Timetable',
+                'is_active' => true,
+                'settings' => $settings,
+            ]);
+        } else {
+            $template->update(['is_active' => true, 'settings' => $settings]);
+        }
+
+        $generator = app(TimetableGeneratorService::class);
+        $generator->generate($settings, $template->id);
+
+        $result = $generator->autoPlaceLessons([
+            'template_id' => $template->id,
+            'academic_year_id' => $year->id,
+            'term_id' => $term->id,
+            'replace_unlocked' => true,
+            'max_per_subject_per_day' => 1,
+        ]);
+
+        $sectionLessonIds = [];
+        $lessons = TimetableLesson::withoutGlobalScopes()
+            ->where('school_id', $schoolId)
+            ->where('template_id', $template->id)
+            ->orderBy('section_id')
+            ->orderBy('day_of_week')
+            ->orderBy('time_slot_id')
+            ->get(['id', 'section_id']);
+
+        foreach ($lessons as $lesson) {
+            $sectionLessonIds[$lesson->section_id][] = $lesson->id;
         }
 
         $weekdays = $this->recentWeekdays(10);
