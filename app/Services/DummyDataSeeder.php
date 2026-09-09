@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\User;
 use App\Models\UserTask;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Modules\Academics\Models\AcademicReport;
 use Modules\Academics\Models\AcademicYear;
 use Modules\Academics\Models\Assessment;
@@ -218,6 +219,12 @@ class DummyDataSeeder
 
     public function seed(int $schoolId, ?callable $log = null): array
     {
+        // Demo seeding (students, reports, marks, payroll, invoices, timetables
+        // ...) and its password hashing comfortably exceed the default 30s PHP
+        // ceiling when triggered from a synchronous web/Livewire request, so
+        // lift the per-request execution limit for the whole run.
+        @set_time_limit(600);
+
         $log ??= fn () => null;
 
         // Demo seeding is idempotent: previously-seeded demo rows are removed
@@ -2567,6 +2574,8 @@ class DummyDataSeeder
      */
     public function wipe(int $schoolId): int
     {
+        @set_time_limit(600);
+
         $manifest = $this->loadManifest($schoolId);
 
         DB::transaction(function () use ($manifest, $schoolId): void {
@@ -2767,7 +2776,11 @@ class DummyDataSeeder
             'username' => $student->student_id_number,
             'email' => $email,
             'phone' => $student->phone,
-            'password' => $this->demoStudentPassword,
+            // Demo-only credentials: a low bcrypt cost keeps the ~90 student
+            // logins cheap to create during seeding while reusing the fresh
+            // Hash facade. The 'hashed' cast stores this value as-is (it is
+            // already a valid bcrypt hash, so no re-hash occurs).
+            'password' => Hash::make($this->demoStudentPassword, ['rounds' => 6]),
             'account_status' => User::STATUS_ACTIVE,
             'requested_role' => 'student',
             'custom_role_id' => $role->id,
