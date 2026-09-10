@@ -64,41 +64,11 @@
                             : 'rgba(245,158,11,.45)';
                     @endphp
                     <div x-data="{ 
-                        seeding: false, 
-                        progress: 0, 
-                        stage: 'Initializing...',
-                        timer: null,
-                        startSeeding() {
-                            this.seeding = true;
-                            this.progress = 5;
-                            this.stage = 'Initializing Academic Structure & Terms (5%)';
-                            
-                            let steps = [
-                                { p: 20, s: 'Seeding Staff, Roles & Permissions (20%)' },
-                                { p: 40, s: 'Seeding Courses, Levels & Class Streams (40%)' },
-                                { p: 60, s: 'Seeding Student Admissions & Enrollments (60%)' },
-                                { p: 75, s: 'Seeding Finance, Invoices & Fees (75%)' },
-                                { p: 88, s: 'Seeding Timetables, Library, Clinic & Hostels (88%)' },
-                                { p: 96, s: 'Seeding Academic Reports & Assessment Marks (96%)' },
-                                { p: 100, s: 'Finalizing Demonstration Dataset (100%)' }
-                            ];
-                            
-                            let i = 0;
-                            this.timer = setInterval(() => {
-                                if (i < steps.length && this.seeding) {
-                                    this.progress = steps[i].p;
-                                    this.stage = steps[i].s;
-                                    i++;
-                                }
-                            }, 700);
-                        },
-                        stopSeeding() {
-                            this.seeding = false;
-                            clearInterval(this.timer);
-                        }
+                        seeding: @js($isSeeding), 
+                        progress: @js($seedProgress), 
+                        stage: @js($seedStage ?: __('Initializing...'))
                     }"
-                    @seed-started.window="startSeeding()"
-                    @seed-finished.window="stopSeeding()"
+                    @if($isSeeding) wire:poll.500ms="pollProgress" @endif
                     class="w-full space-y-3">
                         <button type="button"
                                 wire:click="{{ $btnAction }}"
@@ -120,13 +90,13 @@
                             <span wire:loading wire:target="{{ $btnLoading }}">{{ $isWipe ? __('Removing...') : __('Seeding...') }}</span>
                         </button>
 
-                        <div x-show="seeding" x-cloak class="space-y-1.5 rounded-lg bg-amber-50 dark:bg-gray-900/80 p-3 border border-amber-200/60 dark:border-amber-900/40">
+                        <div x-show="seeding || @js($isSeeding)" x-cloak class="space-y-1.5 rounded-lg bg-amber-50 dark:bg-gray-900/80 p-3 border border-amber-200/60 dark:border-amber-900/40">
                             <div class="flex justify-between text-xs font-semibold text-amber-800 dark:text-amber-300">
-                                <span x-text="stage"></span>
-                                <span x-text="progress + '%'"></span>
+                                <span>{{ $seedStage ?: __('Initializing Academic Structure...') }}</span>
+                                <span>{{ $seedProgress }}%</span>
                             </div>
                             <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-800 overflow-hidden shadow-inner">
-                                <div class="bg-gradient-to-r from-amber-500 via-emerald-500 to-primary-600 h-2.5 rounded-full transition-all duration-700 ease-out" :style="'width: ' + progress + '%'"></div>
+                                <div class="bg-gradient-to-r from-amber-500 via-emerald-500 to-primary-600 h-2.5 rounded-full transition-all duration-300 ease-out" style="width: {{ $seedProgress }}%"></div>
                             </div>
                         </div>
                     </div>

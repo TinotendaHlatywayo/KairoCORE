@@ -50,6 +50,33 @@ class Dashboard extends BaseDashboard
         ];
     }
 
+    public bool $isSeeding = false;
+
+    public int $seedProgress = 0;
+
+    public string $seedStage = '';
+
+    public function pollProgress(): void
+    {
+        $schoolId = current_tenant()?->id ?? auth()->user()?->school_id;
+
+        if (! $schoolId || ! $this->isSeeding) {
+            return;
+        }
+
+        $data = \Illuminate\Support\Facades\Cache::get("seed_progress_{$schoolId}");
+
+        if ($data) {
+            $this->seedProgress = $data['percent'] ?? 0;
+            $this->seedStage = $data['message'] ?? '';
+
+            if ($this->seedProgress >= 100) {
+                $this->isSeeding = false;
+                $this->loadDemoDataStatus();
+            }
+        }
+    }
+
     public function seedDemoData(): void
     {
         $schoolId = current_tenant()?->id ?? auth()->user()?->school_id;
@@ -58,11 +85,22 @@ class Dashboard extends BaseDashboard
             return;
         }
 
+        $this->isSeeding = true;
+        $this->seedProgress = 5;
+        $this->seedStage = __('Initializing Academic Structure & Terms');
+        \Illuminate\Support\Facades\Cache::put("seed_progress_{$schoolId}", ['message' => $this->seedStage, 'percent' => 5], 600);
         $this->dispatch('seed-started');
 
         try {
-            $result = app(DummyDataSeeder::class)->seed($schoolId);
+            $result = app(DummyDataSeeder::class)->seed($schoolId, function ($message, $percent = null) use ($schoolId) {
+                if ($percent !== null) {
+                    \Illuminate\Support\Facades\Cache::put("seed_progress_{$schoolId}", ['message' => $message, 'percent' => $percent], 600);
+                }
+            });
 
+            \Illuminate\Support\Facades\Cache::put("seed_progress_{$schoolId}", ['message' => __('Demonstration data seeded successfully!'), 'percent' => 100], 600);
+            $this->seedProgress = 100;
+            $this->seedStage = __('Demonstration data seeded successfully!');
             $this->dispatch('seed-finished');
 
             Notification::make()
@@ -84,6 +122,7 @@ class Dashboard extends BaseDashboard
                 ->danger()
                 ->send();
         } finally {
+            $this->isSeeding = false;
             $this->loadDemoDataStatus();
         }
     }
