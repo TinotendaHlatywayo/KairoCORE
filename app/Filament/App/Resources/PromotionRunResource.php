@@ -20,6 +20,8 @@ class PromotionRunResource extends Resource
 {
     protected static ?string $model = PromotionRun::class;
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?string $navigationIcon = 'heroicon-o-arrow-trending-up';
 
     public static function canAccess(): bool
