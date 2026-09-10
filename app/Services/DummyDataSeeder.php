@@ -2837,16 +2837,10 @@ class DummyDataSeeder
         $manifest = $this->loadManifest($schoolId);
 
         DB::transaction(function () use ($manifest, $schoolId): void {
-            // Older demo datasets seeded hostel rooms/beds/allocations before
-            // the manifest existed, so the manifest may only track the rooms.
-            $roomIds = array_map('intval', $manifest['hostel_rooms'] ?? []);
-            if ($roomIds !== []) {
-                $bedIds = DB::table('hostel_beds')->whereIn('room_id', $roomIds)->pluck('id');
-                if ($bedIds->isNotEmpty()) {
-                    DB::table('hostel_allocations')->whereIn('bed_id', $bedIds)->delete();
-                    DB::table('hostel_beds')->whereIn('id', $bedIds)->delete();
-                }
-            }
+            // Clean up dependent child records first to prevent foreign key constraint violations
+            DB::table('student_attendances')->where('school_id', $schoolId)->delete();
+            DB::table('timetable_lessons')->where('school_id', $schoolId)->delete();
+            DB::table('timetable_templates')->where('school_id', $schoolId)->delete();
 
             $promoRunIds = DB::table('promotion_runs')->where('school_id', $schoolId)->pluck('id');
             if ($promoRunIds->isNotEmpty()) {
@@ -2859,6 +2853,8 @@ class DummyDataSeeder
                 DB::table('screening_items')->whereIn('screening_run_id', $screenRunIds)->delete();
                 DB::table('screening_runs')->whereIn('id', $screenRunIds)->delete();
             }
+
+            // Older demo datasets seeded hostel rooms/beds/allocations before
 
             foreach (self::MANIFEST_DELETE_ORDER as $table) {
                 $ids = $manifest[$table] ?? [];
