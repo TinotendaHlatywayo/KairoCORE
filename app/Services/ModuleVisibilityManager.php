@@ -128,7 +128,7 @@ class ModuleVisibilityManager
         if (str_contains($class, 'Application') || str_contains($class, 'Admission')) {
             return self::isPageVisible('admissions', 'applications');
         }
-        if (str_contains($class, 'Course') || str_contains($class, 'Subject') || str_contains($class, 'Classroom') || str_contains($class, 'AcademicYear') || str_contains($class, 'TimeSlot') || str_contains($class, 'TimetableLesson') || str_contains($class, 'TeacherAssignment') || str_contains($class, 'Promotion')) {
+        if (str_contains($class, 'Course') || str_contains($class, 'Subject') || str_contains($class, 'Classroom') || str_contains($class, 'AcademicYear') || str_contains($class, 'TimeSlot') || str_contains($class, 'TimetableLesson') || str_contains($class, 'TeacherAssignment') || str_contains($class, 'Promotion') || str_contains($class, 'Screening')) {
             return self::isVisible('academics');
         }
         if (str_contains($class, 'Assessment') || str_contains($class, 'GradingScale') || str_contains($class, 'AcademicReport') || str_contains($class, 'ReportTemplate')) {
@@ -180,7 +180,7 @@ class ModuleVisibilityManager
         if (str_contains($path, '/applications') || str_contains($path, '/admissions')) {
             return self::isPageVisible('admissions', 'applications');
         }
-        if (str_contains($path, '/courses') || str_contains($path, '/subjects') || str_contains($path, '/classrooms') || str_contains($path, '/academic-years') || str_contains($path, '/time-slots') || str_contains($path, '/timetable') || str_contains($path, '/teacher-assignments') || str_contains($path, '/promotions')) {
+        if (str_contains($path, '/courses') || str_contains($path, '/subjects') || str_contains($path, '/classrooms') || str_contains($path, '/academic-years') || str_contains($path, '/time-slots') || str_contains($path, '/timetable') || str_contains($path, '/teacher-assignments') || str_contains($path, '/promotions') || str_contains($path, '/screening')) {
             return self::isVisible('academics');
         }
         if (str_contains($path, '/assessments') || str_contains($path, '/grading') || str_contains($path, '/reports') || str_contains($path, '/marks')) {
