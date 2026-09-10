@@ -88,9 +88,17 @@ class StudentResource extends Resource
                                                 Forms\Components\DatePicker::make('date_of_birth')
                                                     ->required()
                                                     ->maxDate(now()),
-                                                Forms\Components\TextInput::make('national_id')
-                                                    ->label(__('National ID'))
-                                                    ->placeholder(__('e.g., 63-123456A78')),
+                                                 Forms\Components\TextInput::make('national_id')
+                                                     ->label(__('National ID'))
+                                                     ->placeholder(__('e.g., 63-123456A78')),
+                                                 Forms\Components\TextInput::make('phone')
+                                                     ->label(__('Contact Number'))
+                                                     ->tel()
+                                                     ->placeholder(__('e.g., +263 77 123 4567')),
+                                                 Forms\Components\Textarea::make('physical_address')
+                                                     ->label(__('Physical Address'))
+                                                     ->placeholder(__('e.g., 14 Links Lane, Borrowdale, Harare'))
+                                                     ->columnSpanFull(),
                                             ])->columns(2),
 
                                         Forms\Components\Section::make(__('Photo'))
@@ -152,17 +160,24 @@ class StudentResource extends Resource
                                                 Forms\Components\DatePicker::make('admission_date')
                                                     ->default(now())
                                                     ->required(),
-                                                Forms\Components\Select::make('status')
-                                                    ->options([
-                                                        'active' => __('Active'),
-                                                        'inactive' => __('Inactive'),
-                                                        'suspended' => __('Suspended'),
-                                                        'graduated' => __('Graduated'),
-                                                    ])
-                                                    ->default('active')
-                                                    ->required(),
-                                            ])->columns(4),
-                                    ]),
+                                                 Forms\Components\Select::make('status')
+                                                     ->options([
+                                                         'active' => __('Active'),
+                                                         'inactive' => __('Inactive'),
+                                                         'suspended' => __('Suspended'),
+                                                         'graduated' => __('Graduated'),
+                                                     ])
+                                                     ->default('active')
+                                                     ->required(),
+                                                  Forms\Components\Select::make('fee_waiver_id')
+                                                      ->label(__('Fee Waiver / Scholarship'))
+                                                      ->options(\Modules\Finance\Models\FeeWaiver::pluck('name', 'id'))
+                                                      ->searchable()
+                                                      ->preload()
+                                                      ->nullable()
+                                                      ->helperText(__('Apply a tuition waiver or scholarship to this student.')),
+                                              ])->columns(4),
+                                     ]),
                             ]),
 
                         Tab::make(__('Enrollment'))
@@ -170,24 +185,24 @@ class StudentResource extends Resource
                                 Forms\Components\Section::make(__('Current Enrollment'))
                                     ->description(__('Assign the student to a form / grade and stream for the active academic year.'))
                                     ->schema([
-                                        Forms\Components\Select::make('academic_year_id')
-                                            ->label(__('Academic Year'))
-                                            ->options(AcademicYear::pluck('name', 'id'))
-                                            ->required()
-                                            ->default(fn () => AcademicYear::where('is_active', true)->first()?->id),
-                                        Forms\Components\Select::make('course_id')
-                                            ->label(__('Form / Grade (Level)'))
-                                            ->options(Course::pluck('name', 'id'))
-                                            ->required()
-                                            ->live(),
-                                        Forms\Components\Select::make('section_id')
-                                            ->label(__('Stream / Class'))
-                                            ->options(fn (Forms\Get $get) => Section::where('course_id', $get('course_id'))->pluck('name', 'id'))
-                                            ->required()
-                                            ->live(),
-                                        Forms\Components\TextInput::make('roll_number')
-                                            ->label(__('Roll Number'))
-                                            ->numeric(),
+                                         Forms\Components\Select::make('academic_year_id')
+                                             ->label(__('Academic Year'))
+                                             ->options(AcademicYear::pluck('name', 'id'))
+                                             ->required()
+                                             ->default(fn () => AcademicYear::where('is_active', true)->first()?->id),
+                                         Forms\Components\Select::make('course_id')
+                                             ->label(__('Form / Grade (Level)'))
+                                             ->options(Course::pluck('name', 'id'))
+                                             ->required()
+                                             ->live(),
+                                         Forms\Components\Select::make('section_id')
+                                             ->label(__('Stream / Class'))
+                                             ->options(fn (Forms\Get $get) => Section::where('course_id', $get('course_id'))->pluck('name', 'id'))
+                                             ->required()
+                                             ->live(),
+                                         Forms\Components\TextInput::make('roll_number')
+                                             ->label(__('Roll Number'))
+                                             ->numeric(),
                                     ])->columns(2),
                             ]),
 
@@ -227,9 +242,20 @@ class StudentResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('first_name')
                     ->label(__('Name'))
-                    ->searchable()
+                    ->searchable(query: function (Builder $query, string $search) {
+                        return $query->where(function ($q) use ($search) {
+                            $q->where('first_name', 'like', "%{$search}%")
+                              ->orWhere('last_name', 'like', "%{$search}%")
+                              ->orWhere('admission_number', 'like', "%{$search}%")
+                              ->orWhere('student_id_number', 'like', "%{$search}%");
+                        });
+                    })
                     ->sortable()
                     ->formatStateUsing(fn ($record) => $record->full_name),
+                Tables\Columns\TextColumn::make('email')
+                    ->label(__('Email'))
+                    ->searchable(query: fn (Builder $query, string $search) => $query->where('parent_email', 'like', "%{$search}%")->orWhereHas('application', fn ($q) => $q->where('parent_email', 'like', "%{$search}%")))
+                    ->formatStateUsing(fn ($record) => $record->email ?? '—'),
                 Tables\Columns\TextColumn::make('gender')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
@@ -292,6 +318,70 @@ class StudentResource extends Resource
                         'layout' => 'pvc',
                     ]))
                     ->openUrlInNewTab(),
+
+                Tables\Actions\Action::make('approvePhoto')
+                    ->label(__('Approve Photo'))
+                    ->icon('heroicon-o-check-badge')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading(__('Approve Student Photo'))
+                    ->modalDescription(__('Approving this photo will lock it and prevent the student from replacing or uploading new photos in their portal.'))
+                    ->action(function (Student $record) {
+                        $record->update([
+                            'photo_approved_at' => now(),
+                            'photo_approved_by' => auth()->id(),
+                            'photo_rejected_at' => null,
+                            'photo_rejected_reason' => null,
+                        ]);
+                        Notification::make()
+                            ->title(__('Photo Approved & Locked'))
+                            ->body(__('The student photo has been approved and locked successfully.'))
+                            ->success()
+                            ->send();
+                    })
+                    ->visible(fn (Student $record) => filled($record->photo_path) && ! $record->photo_approved_at),
+
+                Tables\Actions\Action::make('removeStudentPhoto')
+                    ->label(__('Remove / Replace Photo'))
+                    ->icon('heroicon-o-photo')
+                    ->color('danger')
+                    ->visible(fn (Student $record) => filled($record->photo_path))
+                    ->requiresConfirmation()
+                    ->modalHeading(__('Remove Profile Photo'))
+                    ->modalDescription(__('The photo will be removed and the default placeholder will be used. The student will be notified and asked to upload a new passport-style photo. You can add a note explaining why it was removed.'))
+                    ->modalSubmitActionLabel(__('Remove Photo'))
+                    ->form([
+                                                Forms\Components\Textarea::make('reason')
+                                                    ->label(__('Reason'))
+                                                    ->placeholder(__('e.g. Photo was blurry / not a clear single face'))
+                                                    ->rows(3)
+                                                    ->maxLength(500)
+                                                    ->required(),
+                    ])
+                    ->action(function (array $data, Student $record) {
+                        app(\App\Services\ProfilePhotoService::class)->rejectPhoto(
+                            $record,
+                            $data['reason'] ?? null,
+                            'photo_path'
+                        );
+
+                        if ($record->user_id) {
+                            $user = \App\Models\User::find($record->user_id);
+                            if ($user) {
+                                $user->notify(new \App\Notifications\ProfilePhotoRejectedNotification(
+                                    subject: __('Your profile photo was removed'),
+                                    reason: $data['reason'] ?? null,
+                                    url: \App\Filament\Student\Pages\StudentProfile::getUrl(panel: 'student'),
+                                ));
+                            }
+                        }
+
+                        Notification::make()
+                            ->title(__('Photo Removed'))
+                            ->body(__('The profile photo has been removed and the user was notified.'))
+                            ->success()
+                            ->send();
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -305,6 +395,17 @@ class StudentResource extends Resource
                             return redirect()->route('students.print-cards', [
                                 'ids' => implode(',', $ids),
                                 'layout' => 'pvc',
+                            ]);
+                        }),
+                    Tables\Actions\BulkAction::make('downloadPngs')
+                        ->label(__('Download ID Cards as PNG/ZIP'))
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->color('primary')
+                        ->action(function (Collection $records) {
+                            $ids = $records->pluck('id')->toArray();
+
+                            return redirect()->route('students.download-pngs', [
+                                'ids' => implode(',', $ids),
                             ]);
                         }),
                     Tables\Actions\DeleteBulkAction::make(),
