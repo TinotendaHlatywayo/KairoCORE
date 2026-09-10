@@ -31,8 +31,6 @@ class PromotionService
                 ->with('course', 'section')
                 ->get();
 
-            $courseLevelCache = [];
-
             foreach ($activeEnrollments as $enrollment) {
                 $studentId = $enrollment->student_id;
                 $sourceCourse = $enrollment->course;
@@ -41,27 +39,45 @@ class PromotionService
                     continue;
                 }
 
-                $nextCourseId = $sourceCourse->next_level_id ?? $sourceCourse->id;
-                $isTerminal = (bool) $sourceCourse->is_terminal;
+                $nextCourse = null;
+                if ($sourceCourse->next_level_id) {
+                    $nextCourse = Course::withoutGlobalScopes()->find($sourceCourse->next_level_id);
+                } else {
+                    $nextCourse = Course::withoutGlobalScopes()
+                        ->where('school_id', $schoolId)
+                        ->where(function ($q) use ($sourceCourse) {
+                            if ($sourceCourse->sequence_order !== null) {
+                                $q->where('sequence_order', '>', $sourceCourse->sequence_order);
+                            } else {
+                                $q->where('id', '>', $sourceCourse->id);
+                            }
+                        })
+                        ->orderBy('sequence_order')
+                        ->orderBy('id')
+                        ->first();
+                }
+
+                $isTerminal = (bool) $sourceCourse->is_terminal || ! $nextCourse;
 
                 $decision = $isTerminal
-                    ? PromotionItem::DECISION_NEEDS_SCREENING
+                    ? PromotionItem::DECISION_GRADUATED
                     : PromotionItem::DECISION_PROMOTED;
 
+                $targetCourseId = $nextCourse?->id;
                 $targetSectionId = null;
 
-                if ($decision === PromotionItem::DECISION_PROMOTED) {
+                if ($decision === PromotionItem::DECISION_PROMOTED && $targetCourseId) {
                     $targetSectionId = $this->resolveParallelSection(
                         $schoolId,
                         $sourceCourse->id,
-                        $nextCourseId,
+                        $targetCourseId,
                         $enrollment->section->name ?? null,
                     );
                 }
 
                 $decisionReason = match ($decision) {
-                    PromotionItem::DECISION_PROMOTED => 'Auto-promoted via level progression',
-                    PromotionItem::DECISION_NEEDS_SCREENING => 'Terminal level — requires screening',
+                    PromotionItem::DECISION_PROMOTED => 'Auto-promoted via level progression (' . $sourceCourse->name . ' → ' . ($nextCourse?->name ?? '') . ')',
+                    PromotionItem::DECISION_GRADUATED => 'Terminal level (' . $sourceCourse->name . ') — graduated',
                     default => null,
                 };
 
@@ -71,7 +87,7 @@ class PromotionService
                     'student_id' => $studentId,
                     'source_enrollment_id' => $enrollment->id,
                     'decision' => $decision,
-                    'target_course_id' => $nextCourseId,
+                    'target_course_id' => $targetCourseId,
                     'target_section_id' => $targetSectionId,
                     'reason' => $decisionReason,
                 ]);
@@ -92,13 +108,17 @@ class PromotionService
 
             $run->update(['status' => PromotionRun::STATUS_IN_PROGRESS]);
 
-            $items = PromotionItem::where('promotion_run_id', $runId)
+            $promotedItems = PromotionItem::where('promotion_run_id', $runId)
                 ->where('decision', PromotionItem::DECISION_PROMOTED)
+                ->get();
+
+            $graduatedItems = PromotionItem::where('promotion_run_id', $runId)
+                ->where('decision', PromotionItem::DECISION_GRADUATED)
                 ->get();
 
             $now = Carbon::now();
 
-            foreach ($items as $item) {
+            foreach ($promotedItems as $item) {
                 $oldEnrollment = $item->sourceEnrollment;
 
                 if ($oldEnrollment) {
@@ -125,6 +145,19 @@ class PromotionService
                 ]);
             }
 
+            foreach ($graduatedItems as $item) {
+                $oldEnrollment = $item->sourceEnrollment;
+
+                if ($oldEnrollment) {
+                    $oldEnrollment->update([
+                        'status' => Enrollment::STATUS_GRADUATED,
+                        'effective_date' => $now,
+                        'reason' => $item->reason ?? 'Graduated / Terminal in run #' . $runId,
+                        'performed_by_id' => $performedBy,
+                    ]);
+                }
+            }
+
             $run->update([
                 'status' => PromotionRun::STATUS_COMMITTED,
                 'committed_at' => $now,
@@ -141,19 +174,35 @@ class PromotionService
                 throw new \RuntimeException("Run #{$runId} is not committed — only committed runs can be undone.");
             }
 
-            $items = PromotionItem::where('promotion_run_id', $runId)
+            $promotedItems = PromotionItem::where('promotion_run_id', $runId)
                 ->where('decision', PromotionItem::DECISION_PROMOTED)
+                ->get();
+
+            $graduatedItems = PromotionItem::where('promotion_run_id', $runId)
+                ->where('decision', PromotionItem::DECISION_GRADUATED)
                 ->get();
 
             $now = Carbon::now();
 
-            foreach ($items as $item) {
+            foreach ($promotedItems as $item) {
                 Enrollment::where('school_id', $run->school_id)
                     ->where('student_id', $item->student_id)
                     ->where('academic_year_id', $run->target_academic_year_id)
                     ->where('course_id', $item->target_course_id)
                     ->delete();
 
+                $oldEnrollment = $item->sourceEnrollment;
+                if ($oldEnrollment) {
+                    $oldEnrollment->update([
+                        'status' => Enrollment::STATUS_ACTIVE,
+                        'effective_date' => $now,
+                        'reason' => 'Promotion run #' . $runId . ' undone',
+                        'performed_by_id' => $performedBy,
+                    ]);
+                }
+            }
+
+            foreach ($graduatedItems as $item) {
                 $oldEnrollment = $item->sourceEnrollment;
                 if ($oldEnrollment) {
                     $oldEnrollment->update([
