@@ -19,7 +19,13 @@ class ItemsRelationManager extends RelationManager
             ->columns([
                 Tables\Columns\TextColumn::make('student.full_name')
                     ->label(__('Student'))
-                    ->searchable(),
+                    ->searchable(query: function ($query, string $search) {
+                        return $query->whereHas('student', function ($q) use ($search) {
+                            $q->where('first_name', 'like', "%{$search}%")
+                              ->orWhere('last_name', 'like', "%{$search}%")
+                              ->orWhere('admission_number', 'like', "%{$search}%");
+                        });
+                    }),
                 Tables\Columns\TextColumn::make('student.admission_number')
                     ->label(__('Admission #'))
                     ->searchable()
