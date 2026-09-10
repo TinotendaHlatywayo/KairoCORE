@@ -31,6 +31,23 @@ class PromotionService
                 ->with('course', 'section')
                 ->get();
 
+            if ($activeEnrollments->isEmpty()) {
+                $fallbackYearId = Enrollment::withoutGlobalScopes()
+                    ->where('school_id', $schoolId)
+                    ->where('status', Enrollment::STATUS_ACTIVE)
+                    ->orderByDesc('id')
+                    ->value('academic_year_id');
+
+                if ($fallbackYearId) {
+                    $activeEnrollments = Enrollment::withoutGlobalScopes()
+                        ->where('school_id', $schoolId)
+                        ->where('academic_year_id', $fallbackYearId)
+                        ->where('status', Enrollment::STATUS_ACTIVE)
+                        ->with('course', 'section')
+                        ->get();
+                }
+            }
+
             foreach ($activeEnrollments as $enrollment) {
                 $studentId = $enrollment->student_id;
                 $sourceCourse = $enrollment->course;
