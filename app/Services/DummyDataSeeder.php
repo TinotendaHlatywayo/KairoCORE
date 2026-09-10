@@ -191,6 +191,10 @@ class DummyDataSeeder
         'subject_papers',
         'course_subject',
         'assessment_marks_ledger',
+        'promotion_items',
+        'promotion_runs',
+        'screening_items',
+        'screening_runs',
         'enrollments',
         'academic_reports',
         'application_documents',
@@ -381,6 +385,11 @@ class DummyDataSeeder
             ['BUILDING TECHNOLOGY AND DESIGN', 'SEC-BTD', 'practical'],
             ['AGRICULTURE', 'SEC-AGR', 'practical'],
             ['HERITAGE', 'SEC-HER', 'theory'],
+            ['COMPUTER SCIENCE', 'SEC-CS', 'practical'],
+            ['FASHION AND FABRICS', 'SEC-FAF', 'practical'],
+            ['FOOD AND NUTRITION', 'SEC-FAN', 'practical'],
+            ['METALWORK', 'SEC-MTL', 'practical'],
+            ['WOODWORK', 'SEC-WDW', 'practical'],
         ];
 
         $subjectById = [];
@@ -432,19 +441,19 @@ class DummyDataSeeder
             'ECD B A' => 'Grace Chengeta',
             'ECD B B' => 'Elliot Nyandoro',
             'Grade 1 A' => 'Chipo Mandizvidza',
-            'Grade 1 B' => 'Tariro Mutasa',
+            'Grade 1 B' => 'Maita Mutasa',
             'Grade 2 A' => 'Rudo Chikomba',
             'Grade 2 B' => 'Ruvimbo Mutsonziwa',
-            'Grade 3 A' => 'Kudakwashe Zhakata',
+            'Grade 3 A' => 'Mufudzi Zhakata',
             'Grade 3 B' => 'Panashe Mudimba',
-            'Grade 4 A' => 'Tonderayi Mashava',
-            'Grade 4 B' => 'Tatenda Gumbo',
+            'Grade 4 A' => 'Tafadzwa Mashava',
+            'Grade 4 B' => 'Tinaye Gumbo',
             'Grade 5 A' => 'Vongai Ndlovu',
-            'Grade 5 B' => 'Blessing Sithole',
+            'Grade 5 B' => 'Tatenda Sithole',
             'Grade 6 A' => 'Anesu Machiridza',
-            'Grade 6 B' => 'Chengetai Mutasa',
-            'Grade 7 A' => 'Nyaradzo Gumbo',
-            'Grade 7 B' => 'Pardon Mpofu',
+            'Grade 6 B' => 'Mufaro Mutasa',
+            'Grade 7 A' => 'Tinotenda Hlatywayo',
+            'Grade 7 B' => 'Atipa Mpofu',
         ];
 
         $classTeacherPool = $teacherUsers
@@ -602,21 +611,53 @@ class DummyDataSeeder
 
             $courseTeacherIdx = 0;
             foreach ($courseObjects as $course) {
-                $subjectNames = array_map(fn ($s) => is_array($s) ? $s[0] : $s, $subjectKeyFor($course));
-                foreach ($subjectNames as $si => $subjectName) {
-                    $subject = $subjectObjects[$subjectName] ?? null;
-                    if (! $subject) {
-                        continue;
+                if (preg_match('/Form [56] /', (string) $course->name)) {
+                    // Form 5/6: keep the existing course-level subject sets
+                    // (Sciences / Commercials / Arts) assigned to the whole
+                    // course — every stream of that subject area shares them.
+                    $subjectNames = array_map(fn ($s) => is_array($s) ? $s[0] : $s, $subjectKeyFor($course));
+                    foreach ($subjectNames as $si => $subjectName) {
+                        $subject = $subjectObjects[$subjectName] ?? null;
+                        if (! $subject) {
+                            continue;
+                        }
+                        $teacherId = $staffUserIds['teaching_staff'][$courseTeacherIdx % max(1, count($staffUserIds['teaching_staff']))] ?? $actorId;
+                        $upsertCourseSubject($schoolId, $course, $subject, $teacherId, $si === 0 ? 6 : 4);
                     }
+                    $courseTeacherByCourse[$course->id] = $staffUserIds['teaching_staff'][$courseTeacherIdx % max(1, count($staffUserIds['teaching_staff']))] ?? $actorId;
+                    $courseTeacherIdx++;
+                } else {
+                    // Form 1-4: streams take the SAME core subjects but DIFFER
+                    // in their practical/option subjects. Stream A leans
+                    // sciences (Physics/Chemistry/Biology/Computer Science);
+                    // Stream B leans humanities & vocational (Geography, History,
+                    // Building Tech, Fashion & Fabrics). All streams study the
+                    // same core count, but the practical set differs per stream.
+                    $courseSections = $sections->where('course_id', $course->id);
+
+                    foreach ($courseSections as $section) {
+                        $isB = strtoupper((string) $section->name) === 'B';
+                        $subjectSet = $this->streamSubjectSetFor($course, $isB, $subjectObjects);
+
+                        foreach ($subjectSet as $si => $subject) {
+                            $teacherId = $staffUserIds['teaching_staff'][$courseTeacherIdx % max(1, count($staffUserIds['teaching_staff']))] ?? $actorId;
+                            $upsertCourseSubject($schoolId, $course, $subject, $teacherId, $si === 0 ? 6 : 4, $section->id);
+                        }
+                    }
+
                     $teacherId = $staffUserIds['teaching_staff'][$courseTeacherIdx % max(1, count($staffUserIds['teaching_staff']))] ?? $actorId;
-                    $upsertCourseSubject($schoolId, $course, $subject, $teacherId, $si === 0 ? 6 : 4);
+                    $courseTeacherByCourse[$course->id] = $teacherId;
+                    $courseTeacherIdx++;
+
+                    Course::withoutGlobalScopes()
+                        ->where('school_id', $schoolId)
+                        ->whereKey($course->id)
+                        ->update(['teacher_id' => $teacherId]);
                 }
-                $courseTeacherByCourse[$course->id] = $staffUserIds['teaching_staff'][$courseTeacherIdx % max(1, count($staffUserIds['teaching_staff']))] ?? $actorId;
-                $courseTeacherIdx++;
 
                 // Subject papers for the practical science subjects (secondary).
                 if ($isSecondary) {
-                    foreach (['COMBINED SCIENCE', 'PHYSICS', 'CHEMISTRY', 'BIOLOGY', 'AGRICULTURE', 'PE SPORTS AND MASS DISPLAYS'] as $paperSubject) {
+                    foreach (['COMBINED SCIENCE', 'PHYSICS', 'CHEMISTRY', 'BIOLOGY', 'AGRICULTURE', 'COMPUTER SCIENCE', 'BUILDING TECHNOLOGY AND DESIGN', 'FASHION AND FABRICS', 'FOOD AND NUTRITION', 'PE SPORTS AND MASS DISPLAYS'] as $paperSubject) {
                         $subj = $subjectObjects[$paperSubject] ?? null;
                         if (! $subj) {
                             continue;
@@ -972,6 +1013,32 @@ class DummyDataSeeder
         $this->seedEnterpriseReports($schoolId, $term, $actorId, $track);
     }
 
+    /**
+     * Returns the Subject set for a single Form 1-4 stream section. Every
+     * stream shares the same CORE subjects, but differs in practical/option
+     * subjects so learners in different streams study a different practical
+     * set while still carrying the same core load.
+     */
+    protected function streamSubjectSetFor(Course $course, bool $isB, array $subjectObjects): array
+    {
+        $core = ['MATHEMATICS', 'ENGLISH LANGUAGE', 'SHONA LANGUAGE', 'COMBINED SCIENCE', 'HERITAGE', 'PE SPORTS AND MASS DISPLAYS'];
+
+        $practicals = $isB
+            ? ['GEOGRAPHY', 'HISTORY', 'BUILDING TECHNOLOGY AND DESIGN', 'FASHION AND FABRICS']
+            : ['PHYSICS', 'CHEMISTRY', 'BIOLOGY', 'COMPUTER SCIENCE'];
+
+        $names = array_merge($core, $practicals);
+
+        $out = [];
+        foreach ($names as $name) {
+            if (isset($subjectObjects[$name])) {
+                $out[] = $subjectObjects[$name];
+            }
+        }
+
+        return $out;
+    }
+
     protected function syllabusSubjectsFor(Course $course, array $primarySubjects, array $secondarySubjects, array $subjectObjects): array
     {
         $upper = strtoupper((string) $course->name);
@@ -1061,25 +1128,26 @@ class DummyDataSeeder
             ['Agness', 'Taruvinga', 'female', 'HR & Finance Administrator', 'Finance', 'administrator', 'S1 — Support Staff'],
             // Teaching staff (5+)
             ['Chipo', 'Mandizvidza', 'female', 'Teacher — Mathematics', 'Academic', 'teaching_staff', 'T2 — Teacher'],
-            ['Tariro', 'Mutasa', 'female', 'Teacher — English Language', 'Academic', 'teaching_staff', 'T2 — Teacher'],
+            ['Maita', 'Mutasa', 'female', 'Teacher — English Language', 'Academic', 'teaching_staff', 'T2 — Teacher'],
             ['Simbarashe', 'Nyamupingidza', 'male', 'Teacher — Sciences (Physics & Chemistry)', 'Academic', 'teaching_staff', 'T1 — Senior Teacher'],
             ['Rudo', 'Chikomba', 'female', 'Teacher — Humanities (History & Heritage)', 'Academic', 'teaching_staff', 'T2 — Teacher'],
             ['Kudakwashe', 'Zhakata', 'male', 'Teacher — Practicals (Agriculture & BTD)', 'Academic', 'teaching_staff', 'T2 — Teacher'],
             ['Fadzai', 'Mupfumira', 'female', 'Teacher — PE, Sports & Mass Displays', 'Academic', 'teaching_staff', 'T2 — Teacher'],
-            ['Tatenda', 'Gumbo', 'male', 'Senior Teacher — Combined Science', 'Academic', 'teaching_staff', 'T1 — Senior Teacher'],
             ['Rumbidzai', 'Mavhunga', 'female', 'Class Teacher — Infant (ECD A)', 'Academic', 'teaching_staff', 'T2 — Teacher'],
             ['Mercy', 'Moyo', 'female', 'Class Teacher — Infant (ECD A)', 'Academic', 'teaching_staff', 'T2 — Teacher'],
             ['Grace', 'Chengeta', 'female', 'Class Teacher — Infant (ECD B)', 'Academic', 'teaching_staff', 'T2 — Teacher'],
             ['Elliot', 'Nyandoro', 'male', 'Class Teacher — Infant (ECD B)', 'Academic', 'teaching_staff', 'T2 — Teacher'],
             ['Ruvimbo', 'Mutsonziwa', 'female', 'Class Teacher — Grade 2', 'Academic', 'teaching_staff', 'T2 — Teacher'],
-            ['Tonderayi', 'Mashava', 'male', 'Class Teacher — Grade 4', 'Academic', 'teaching_staff', 'T2 — Teacher'],
-            ['Vongai', 'Ndlovu', 'female', 'Class Teacher — Grade 5', 'Academic', 'teaching_staff', 'T2 — Teacher'],
-            ['Blessing', 'Sithole', 'male', 'Class Teacher — Grade 5', 'Academic', 'teaching_staff', 'T2 — Teacher'],
-            ['Anesu', 'Machiridza', 'female', 'Class Teacher — Grade 6', 'Academic', 'teaching_staff', 'T2 — Teacher'],
-            ['Chengetai', 'Mutasa', 'female', 'Class Teacher — Grade 6', 'Academic', 'teaching_staff', 'T2 — Teacher'],
-            ['Nyaradzo', 'Gumbo', 'female', 'Class Teacher — Grade 7', 'Academic', 'teaching_staff', 'T2 — Teacher'],
-            ['Pardon', 'Mpofu', 'male', 'Class Teacher — Grade 7', 'Academic', 'teaching_staff', 'T2 — Teacher'],
-            ['Panashe', 'Mudimba', 'male', 'Class Teacher — Grade 3', 'Academic', 'teaching_staff', 'T2 — Teacher'],
+            ['Mufudzi', 'Zhakata', 'male', 'Class Teacher — Grade 3 A', 'Academic', 'teaching_staff', 'T2 — Teacher'],
+            ['Panashe', 'Mudimba', 'male', 'Class Teacher — Grade 3 B', 'Academic', 'teaching_staff', 'T2 — Teacher'],
+            ['Tafadzwa', 'Mashava', 'male', 'Class Teacher — Grade 4 A', 'Academic', 'teaching_staff', 'T2 — Teacher'],
+            ['Tinaye', 'Gumbo', 'female', 'Class Teacher — Grade 4 B', 'Academic', 'teaching_staff', 'T2 — Teacher'],
+            ['Vongai', 'Ndlovu', 'female', 'Class Teacher — Grade 5 A', 'Academic', 'teaching_staff', 'T2 — Teacher'],
+            ['Tatenda', 'Sithole', 'male', 'Class Teacher — Grade 5 B', 'Academic', 'teaching_staff', 'T2 — Teacher'],
+            ['Anesu', 'Machiridza', 'female', 'Class Teacher — Grade 6 A', 'Academic', 'teaching_staff', 'T2 — Teacher'],
+            ['Mufaro', 'Mutasa', 'female', 'Class Teacher — Grade 6 B', 'Academic', 'teaching_staff', 'T2 — Teacher'],
+            ['Tinotenda', 'Hlatywayo', 'male', 'Class Teacher — Grade 7 A', 'Academic', 'teaching_staff', 'T1 — Senior Teacher'],
+            ['Atipa', 'Mpofu', 'female', 'Class Teacher — Grade 7 B', 'Academic', 'teaching_staff', 'T2 — Teacher'],
             // Non-teaching staff (5+)
             ['Sharon', 'Chigumba', 'female', 'School Bursar', 'Finance', 'non_teaching_staff', 'S1 — Support Staff'],
             ['Tafadzwa', 'Moyo', 'male', 'School Nurse', 'Health & Wellness', 'non_teaching_staff', 'S1 — Support Staff'],
@@ -1728,7 +1796,7 @@ class DummyDataSeeder
         $fmtEbook = $created(LibraryFormat::firstOrCreate(['school_id' => $schoolId, 'name' => 'E-Book'], ['media_type' => 'digital']));
 
         $authorSpecs = [
-            ['Dambudzo Marechera', 'Zimbabwean novelist and playwright.'],
+            ['Wayne Maphosa', 'Zimbabwean novelist and playwright.'],
             ['Tsitsi Dangarembga', 'Author of the acclaimed "Nervous Conditions".'],
             ['Petina Gappah', 'Zimbabwean short-story writer and novelist.'],
             ['J. Sadler', 'Author of revision textbooks for secondary mathematics.'],
@@ -1746,7 +1814,7 @@ class DummyDataSeeder
         }
 
         $bookSpecs = [
-            [$libCatFiction->id, $fmtPrint->id, 'The House of Hunger', 'Dambudzo Marechera', 1978, 'Fiction', 3],
+            [$libCatFiction->id, $fmtPrint->id, 'The House of Hunger', 'Wayne Maphosa', 1978, 'Fiction', 3],
             [$libCatFiction->id, $fmtPrint->id, 'Nervous Conditions', 'Tsitsi Dangarembga', 1988, 'Fiction', 2],
             [$libCatFiction->id, $fmtEbook->id, 'An Elegy for Easterly', 'Petina Gappah', 2009, 'Fiction', 2],
             [$libCatReference->id, $fmtPrint->id, 'O-Level Mathematics Revision', 'J. Sadler', 2015, 'Mathematics', 4],
@@ -2778,6 +2846,18 @@ class DummyDataSeeder
                     DB::table('hostel_allocations')->whereIn('bed_id', $bedIds)->delete();
                     DB::table('hostel_beds')->whereIn('id', $bedIds)->delete();
                 }
+            }
+
+            $promoRunIds = DB::table('promotion_runs')->where('school_id', $schoolId)->pluck('id');
+            if ($promoRunIds->isNotEmpty()) {
+                DB::table('promotion_items')->whereIn('promotion_run_id', $promoRunIds)->delete();
+                DB::table('promotion_runs')->whereIn('id', $promoRunIds)->delete();
+            }
+
+            $screenRunIds = DB::table('screening_runs')->where('school_id', $schoolId)->pluck('id');
+            if ($screenRunIds->isNotEmpty()) {
+                DB::table('screening_items')->whereIn('screening_run_id', $screenRunIds)->delete();
+                DB::table('screening_runs')->whereIn('id', $screenRunIds)->delete();
             }
 
             foreach (self::MANIFEST_DELETE_ORDER as $table) {
