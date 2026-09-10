@@ -17,6 +17,7 @@ class PromotionItem extends Model
     public const DECISION_PROMOTED = 'promoted';
     public const DECISION_REPEATED = 'repeated';
     public const DECISION_NEEDS_SCREENING = 'needs_screening';
+    public const DECISION_GRADUATED = 'graduated';
 
     protected $fillable = [
         'school_id',
