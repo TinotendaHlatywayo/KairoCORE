@@ -421,4 +421,63 @@ class PromotionScreeningUiTest extends TestCase
             'ScreeningRunResource resolves to a navigation tab'
         );
     }
+
+    public function test_run_history_pages_render_end_to_end_over_http(): void
+    {
+        $sourceYear = $this->makeYear('SrcE');
+        $targetYear = $this->makeYear('TgtE');
+        $courseA = $this->makeCourse('PRUI_Form1');
+        $courseB = $this->makeCourse('PRUI_Form2');
+        $courseA->update(['next_level_id' => $courseB->id]);
+        $secA = $this->makeSection($courseA->id, 'A');
+        $secB = $this->makeSection($courseB->id, 'A');
+
+        $student = $this->makeStudent('PrevE');
+        $this->makeEnrollment($student, $courseA->id, $secA->id, $sourceYear->id);
+
+        $promotionRun = (new PromotionService())->preview(
+            $this->school->id,
+            $sourceYear->id,
+            $targetYear->id,
+            $this->user->id,
+        );
+
+        $screeningRun = ScreeningRun::withoutGlobalScopes()->create([
+            'school_id' => $this->school->id,
+            'source_academic_year_id' => $sourceYear->id,
+            'target_academic_year_id' => $targetYear->id,
+            'status' => ScreeningRun::STATUS_DRAFT,
+            'created_by_id' => $this->user->id,
+        ]);
+
+        URL::defaults(['tenant' => $this->school->subdomain]);
+
+        $this->actingAs($this->user)
+            ->withServerVariables(['HTTP_HOST' => $this->tenantHost()]);
+
+        $list = $this->get('/workspace/promotion-runs');
+        $list->assertOk();
+        $list->assertSee('Promotion Runs');
+        $list->assertSee('PRUI_SrcE');
+
+        $view = $this->get(PromotionRunResource::getUrl('view', ['record' => $promotionRun]));
+        $view->assertOk();
+        $view->assertSee('Run Overview');
+        $view->assertSee('draft');
+        $view->assertSee('Promoted: 1');
+
+        $list2 = $this->get('/workspace/screening-runs');
+        $list2->assertOk();
+        $list2->assertSee('Screening Runs');
+        $list2->assertSee('PRUI_SrcE');
+
+        $view2 = $this->get(ScreeningRunResource::getUrl('view', ['record' => $screeningRun]));
+        $view2->assertOk();
+        $view2->assertSee('Run Overview');
+    }
+
+    private function tenantHost(): string
+    {
+        return $this->school->subdomain.'.'.parse_url(config('app.url'), PHP_URL_HOST).':8000';
+    }
 }
