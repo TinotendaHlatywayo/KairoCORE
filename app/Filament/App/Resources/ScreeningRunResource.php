@@ -17,6 +17,8 @@ class ScreeningRunResource extends Resource
 {
     protected static ?string $model = ScreeningRun::class;
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?string $navigationIcon = 'heroicon-o-funnel';
 
     public static function canAccess(): bool
