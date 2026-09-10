@@ -126,11 +126,13 @@ class ScreeningRunResource extends Resource
                 Tables\Columns\TextColumn::make('placed_count')
                     ->label(__('Placed'))
                     ->state(fn (ScreeningRun $record): int => $record->previewSummary()['placed'])
-                    ->alignCenter(),
+                    ->alignCenter()
+                    ->sortable(false),
                 Tables\Columns\TextColumn::make('unplaced_count')
                     ->label(__('Unplaced'))
                     ->state(fn (ScreeningRun $record): int => $record->previewSummary()['unplaced'])
-                    ->alignCenter(),
+                    ->alignCenter()
+                    ->sortable(false),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label(__('Created'))
                     ->dateTime()
