@@ -159,6 +159,24 @@ class PromotionRunResource extends Resource
                             ->success()
                             ->send();
                     }),
+
+                Tables\Actions\Action::make('undo')
+                    ->label(__('Undo'))
+                    ->icon('heroicon-o-arrow-uturn-left')
+                    ->color('danger')
+                    ->visible(fn ($record) => $record->status === PromotionRun::STATUS_COMMITTED)
+                    ->requiresConfirmation()
+                    ->modalHeading(__('Undo Promotion Run'))
+                    ->modalDescription(__('Are you sure you want to undo this committed promotion run? This will remove target enrollments and revert source student enrollments back to active status.'))
+                    ->action(function (PromotionRun $record): void {
+                        app(PromotionService::class)->undo($record->id, auth()->id());
+
+                        \Filament\Notifications\Notification::make()
+                            ->title(__('Promotion run undone'))
+                            ->body(__('Enrollments reverted and run returned to draft.'))
+                            ->success()
+                            ->send();
+                    }),
             ])
             ->bulkActions([]);
     }

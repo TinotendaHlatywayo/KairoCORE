@@ -19,8 +19,7 @@ class ItemsRelationManager extends RelationManager
             ->columns([
                 Tables\Columns\TextColumn::make('student.full_name')
                     ->label(__('Student'))
-                    ->searchable()
-                    ->sortable(),
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('student.admission_number')
                     ->label(__('Admission #'))
                     ->searchable()
@@ -48,7 +47,6 @@ class ItemsRelationManager extends RelationManager
                     ->limit(40)
                     ->placeholder('-'),
             ])
-            ->defaultSort('overall_score', 'desc')
             ->bulkActions([]);
     }
 }
