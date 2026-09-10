@@ -122,11 +122,13 @@ class PromotionRunResource extends Resource
                 Tables\Columns\TextColumn::make('promoted_count')
                     ->label(__('Promoted'))
                     ->state(fn (PromotionRun $record): int => $record->previewSummary()['promoted'])
-                    ->alignCenter(),
+                    ->alignCenter()
+                    ->sortable(false),
                 Tables\Columns\TextColumn::make('needs_screening_count')
                     ->label(__('Needs Screening'))
                     ->state(fn (PromotionRun $record): int => $record->previewSummary()['needs_screening'])
-                    ->alignCenter(),
+                    ->alignCenter()
+                    ->sortable(false),
                 Tables\Columns\TextColumn::make('createdBy.name')
                     ->label(__('Created By'))
                     ->placeholder('-'),
