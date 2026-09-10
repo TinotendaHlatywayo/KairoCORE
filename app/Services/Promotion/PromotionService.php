@@ -132,6 +132,46 @@ class PromotionService
         });
     }
 
+    public function undo(int $runId, ?int $performedBy = null): void
+    {
+        DB::transaction(function () use ($runId, $performedBy) {
+            $run = PromotionRun::findOrFail($runId);
+
+            if ($run->status !== PromotionRun::STATUS_COMMITTED) {
+                throw new \RuntimeException("Run #{$runId} is not committed — only committed runs can be undone.");
+            }
+
+            $items = PromotionItem::where('promotion_run_id', $runId)
+                ->where('decision', PromotionItem::DECISION_PROMOTED)
+                ->get();
+
+            $now = Carbon::now();
+
+            foreach ($items as $item) {
+                Enrollment::where('school_id', $run->school_id)
+                    ->where('student_id', $item->student_id)
+                    ->where('academic_year_id', $run->target_academic_year_id)
+                    ->where('course_id', $item->target_course_id)
+                    ->delete();
+
+                $oldEnrollment = $item->sourceEnrollment;
+                if ($oldEnrollment) {
+                    $oldEnrollment->update([
+                        'status' => Enrollment::STATUS_ACTIVE,
+                        'effective_date' => $now,
+                        'reason' => 'Promotion run #' . $runId . ' undone',
+                        'performed_by_id' => $performedBy,
+                    ]);
+                }
+            }
+
+            $run->update([
+                'status' => PromotionRun::STATUS_DRAFT,
+                'committed_at' => null,
+            ]);
+        });
+    }
+
     protected function resolveParallelSection(
         int $schoolId,
         int $sourceCourseId,
