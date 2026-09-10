@@ -224,13 +224,14 @@ class DummyDataSeeder
 
     public function seed(int $schoolId, ?callable $log = null): array
     {
-        // Demo seeding (students, reports, marks, payroll, invoices, timetables
-        // ...) and its password hashing comfortably exceed the default 30s PHP
-        // ceiling when triggered from a synchronous web/Livewire request, so
-        // lift the per-request execution limit for the whole run.
         @set_time_limit(600);
 
         $log ??= fn () => null;
+
+        $wrappedLog = function (string $message, int $percent = 0) use ($schoolId, $log) {
+            \Illuminate\Support\Facades\Cache::put("seed_progress_{$schoolId}", ['message' => $message, 'percent' => $percent], 600);
+            $log($message, $percent);
+        };
 
         // Demo seeding is idempotent: previously-seeded demo rows are removed
         // first (manifest-scoped), then the school is (re)populated. This keeps
@@ -240,7 +241,9 @@ class DummyDataSeeder
         $manifest = [];
 
         try {
-            $this->runSeed($schoolId, $log, $manifest);
+            $wrappedLog('Initializing Academic Structure & Terms', 5);
+            $this->runSeed($schoolId, $wrappedLog, $manifest);
+            $wrappedLog('Finalizing Demonstration Dataset', 100);
         } catch (\Throwable $e) {
             // Persist whatever was created so far so wipe() can still undo it.
             $this->saveManifest($schoolId, $manifest);
