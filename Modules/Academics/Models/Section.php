@@ -19,6 +19,8 @@ class Section extends Model
         'name',
         'code',
         'capacity',
+        'target_size',
+        'rank_order',
         'classroom_id',
         'class_teacher_id',
     ];
