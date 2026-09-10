@@ -44,6 +44,7 @@ use App\Filament\App\Pages\SaaSBillingOverview;
 use App\Filament\App\Pages\Schedule;
 use App\Filament\App\Pages\SystemSettingsPage;
 use App\Filament\App\Pages\TenantDataExportPage;
+use App\Filament\App\Pages\TimetableViewerPage;
 use App\Filament\App\Pages\VisualTimetableBuilder;
 use App\Filament\App\Pages\Website\WebsiteTemplatesHub;
 use App\Filament\App\Pages\WebsiteContentManager;
@@ -95,8 +96,10 @@ use App\Filament\App\Resources\LeaveRequestResource;
 use App\Filament\App\Resources\PayrollPeriodResource;
 use App\Filament\App\Resources\PlatformInboxResource;
 use App\Filament\App\Resources\PollResource;
+use App\Filament\App\Resources\PromotionRunResource;
 use App\Filament\App\Resources\PromotionWorkflowResource;
 use App\Filament\App\Resources\QuestionBankResource;
+use App\Filament\App\Resources\ScreeningRunResource;
 use App\Filament\App\Resources\ReportTemplateResource;
 use App\Filament\App\Resources\RevenueCategoryResource;
 use App\Filament\App\Resources\RevenueStreamResource;
@@ -183,9 +186,12 @@ class ModuleNavigation
                     ['label' => __('Academic Years'), 'resource' => AcademicYearResource::class, 'group' => __('Setup & Structure')],
                     ['label' => __('Timetables & Teaching'), 'page' => TimetablesTeachingHub::class, 'group' => __('Timetables & Teaching'), 'hub' => true],
                     ['label' => __('Timetables'), 'page' => VisualTimetableBuilder::class, 'group' => __('Timetables & Teaching')],
+                    ['label' => __('View Timetable'), 'page' => TimetableViewerPage::class, 'group' => __('Timetables & Teaching')],
                     ['label' => __('Teacher Assignments'), 'resource' => TeacherAssignmentResource::class, 'group' => __('Timetables & Teaching')],
                     ['label' => __('Progression'), 'page' => ProgressionHub::class, 'group' => __('Progression'), 'hub' => true],
                     ['label' => __('Promotions'), 'resource' => PromotionWorkflowResource::class, 'group' => __('Progression')],
+                    ['label' => __('Promotion Runs'), 'resource' => PromotionRunResource::class, 'group' => __('Progression')],
+                    ['label' => __('Screening Runs'), 'resource' => ScreeningRunResource::class, 'group' => __('Progression')],
                 ],
                 'more' => [],
             ],
