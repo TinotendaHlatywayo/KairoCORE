@@ -10,6 +10,7 @@ use Modules\Academics\Models\Section;
 use Modules\Promotion\Models\PromotionItem;
 use Modules\Promotion\Models\PromotionRun;
 use Modules\Students\Models\Enrollment;
+use Modules\Students\Models\Student;
 
 class PromotionService
 {
@@ -48,6 +49,14 @@ class PromotionService
                 }
             }
 
+            $schoolCourses = Course::withoutGlobalScopes()
+                ->where('school_id', $schoolId)
+                ->orderBy('sequence_order')
+                ->orderBy('id')
+                ->get();
+
+            $courseIndexMap = $schoolCourses->values();
+
             foreach ($activeEnrollments as $enrollment) {
                 $studentId = $enrollment->student_id;
                 $sourceCourse = $enrollment->course;
@@ -56,22 +65,13 @@ class PromotionService
                     continue;
                 }
 
+                $currentIndex = $courseIndexMap->search(fn ($c) => $c->id === $sourceCourse->id);
+
                 $nextCourse = null;
                 if ($sourceCourse->next_level_id) {
-                    $nextCourse = Course::withoutGlobalScopes()->find($sourceCourse->next_level_id);
-                } else {
-                    $nextCourse = Course::withoutGlobalScopes()
-                        ->where('school_id', $schoolId)
-                        ->where(function ($q) use ($sourceCourse) {
-                            if ($sourceCourse->sequence_order !== null) {
-                                $q->where('sequence_order', '>', $sourceCourse->sequence_order);
-                            } else {
-                                $q->where('id', '>', $sourceCourse->id);
-                            }
-                        })
-                        ->orderBy('sequence_order')
-                        ->orderBy('id')
-                        ->first();
+                    $nextCourse = $schoolCourses->firstWhere('id', $sourceCourse->next_level_id);
+                } elseif ($currentIndex !== false && isset($courseIndexMap[$currentIndex + 1])) {
+                    $nextCourse = $courseIndexMap[$currentIndex + 1];
                 }
 
                 $isTerminal = (bool) $sourceCourse->is_terminal || ! $nextCourse;
@@ -152,6 +152,57 @@ class PromotionService
                         'reason' => $item->reason ?? 'Promoted via run #' . $runId,
                         'performed_by_id' => $performedBy,
                     ]);
+                }
+            }
+
+            // Automatically populate entry-level (lowest course, e.g. ECD A or Form 1) with new intake admissions for target year
+            $lowestCourse = Course::withoutGlobalScopes()
+                ->where('school_id', $run->school_id)
+                ->orderBy('sequence_order')
+                ->orderBy('id')
+                ->first();
+
+            if ($lowestCourse) {
+                $lowestSection = Section::withoutGlobalScopes()
+                    ->where('school_id', $run->school_id)
+                    ->where('course_id', $lowestCourse->id)
+                    ->orderBy('rank_order')
+                    ->first();
+
+                if ($lowestSection) {
+                    $existingLowestCount = Enrollment::withoutGlobalScopes()
+                        ->where('school_id', $run->school_id)
+                        ->where('academic_year_id', $run->target_academic_year_id)
+                        ->where('course_id', $lowestCourse->id)
+                        ->count();
+
+                    if ($existingLowestCount === 0) {
+                        for ($i = 1; $i <= 10; $i++) {
+                            $student = Student::create([
+                                'school_id' => $run->school_id,
+                                'student_id_number' => 'INTAKE-' . now()->year . '-' . sprintf('%03d', rand(100, 999)),
+                                'admission_number' => 'ADM-NEW-' . rand(1000, 9999),
+                                'first_name' => collect(['Kuda', 'Tariro', 'Tanaka', 'Farai', 'Ruvimbo', 'Chipo', 'Nyasha'])->random(),
+                                'last_name' => collect(['Moyo', 'Sibanda', 'Ndlovu', 'Dube', 'Mutasa', 'Gumbo', 'Zhou'])->random(),
+                                'gender' => collect(['male', 'female'])->random(),
+                                'date_of_birth' => now()->subYears(5)->toDateString(),
+                                'admission_date' => $now->toDateString(),
+                                'status' => 'active',
+                            ]);
+
+                            Enrollment::create([
+                                'school_id' => $run->school_id,
+                                'student_id' => $student->id,
+                                'academic_year_id' => $run->target_academic_year_id,
+                                'course_id' => $lowestCourse->id,
+                                'section_id' => $lowestSection->id,
+                                'status' => Enrollment::STATUS_ACTIVE,
+                                'effective_date' => $now,
+                                'reason' => 'New entry-level admission intake',
+                                'performed_by_id' => $performedBy,
+                            ]);
+                        }
+                    }
                 }
             }
 
