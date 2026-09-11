@@ -25,6 +25,42 @@
                 <div class="text-sm text-gray-500">{{ __('No pages available in this category.') }}</div>
             @endforelse
         </div>
+
+        @if(($creditStudents ?? collect())->isNotEmpty())
+            <div class="sc-hub-hero mt-6">
+                <div class="flex items-center justify-between gap-4">
+                    <div>
+                        <div class="sc-hub-hero-title">{{ __('Carried Forward Student Credits') }}</div>
+                        <div class="sc-hub-hero-desc">
+                            {{ __('Overpayments parents chose to keep instead of refunding — applied automatically to the next term\'s invoices. Total: $') }}{{ number_format($totalCredits ?? 0, 2) }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead>
+                            <tr class="border-b border-gray-200 text-xs uppercase text-gray-500 dark:border-gray-800">
+                                <th class="py-2 pr-4 font-semibold">{{ __('Student') }}</th>
+                                <th class="py-2 pr-4 font-semibold">{{ __('Class') }}</th>
+                                <th class="py-2 pr-4 font-semibold">{{ __('Stream') }}</th>
+                                <th class="py-2 font-semibold text-right">{{ __('Credit Balance') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($creditStudents as $cs)
+                                <tr class="border-b border-gray-100 dark:border-gray-800/60">
+                                    <td class="py-2 pr-4 font-medium text-gray-900 dark:text-white">{{ $cs->full_name ?? ($cs->first_name.' '.$cs->last_name) }}</td>
+                                    <td class="py-2 pr-4 text-gray-600 dark:text-gray-400">{{ $cs->currentEnrollment?->course?->name ?? '—' }}</td>
+                                    <td class="py-2 pr-4 text-gray-600 dark:text-gray-400">{{ $cs->currentEnrollment?->section?->name ?? '—' }}</td>
+                                    <td class="py-2 text-right font-semibold text-indigo-600 dark:text-indigo-400">${{ number_format((float) $cs->credit_balance, 2) }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        @endif
     </div>
 
     <style>

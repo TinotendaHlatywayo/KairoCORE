@@ -20,6 +20,7 @@ class InventorySupplier extends Model
         'contact_person',
         'phone',
         'email',
+        'website',
         'physical_address',
         'tax_number',
     ];

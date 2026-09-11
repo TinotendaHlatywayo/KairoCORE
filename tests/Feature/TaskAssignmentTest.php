@@ -46,7 +46,7 @@ class TaskAssignmentTest extends TestCase
         App::instance('current_tenant', $school);
         view()->share('school', $school);
         $this->schoolId = $school->id;
-        $user = User::where('school_id', $this->schoolId)->where('custom_role_id', 2)->firstOrFail();
+        $user = User::where('school_id', $this->schoolId)->where('requested_role', 'administrator')->firstOrFail();
         $user->forceFill(['account_status' => 'active'])->save();
         $this->actingAs($user);
 
@@ -129,7 +129,7 @@ class TaskAssignmentTest extends TestCase
     {
         $user = $this->admin();
         $member = User::where('school_id', $this->schoolId)
-            ->where('custom_role_id', 2)
+            ->where('requested_role', 'administrator')
             ->where('account_status', 'active')
             ->pluck('id')
             ->all();

@@ -17,6 +17,7 @@ class RevenueStream extends Model
         'name',
         'default_amount',
         'account_id',
+        'notes',
         'is_active',
     ];
 
@@ -32,6 +33,6 @@ class RevenueStream extends Model
 
     public function account()
     {
-        return $this->belongsTo(Account::class);
+        return $this->belongsTo(SchoolBankAccount::class, 'account_id');
     }
 }

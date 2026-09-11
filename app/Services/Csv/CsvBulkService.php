@@ -214,32 +214,50 @@ abstract class CsvBulkService
     }
 
     /**
+     * Normalise a header for fuzzy matching: lowercase, strip everything that
+     * is not a letter or digit, so "Student Name", "student_name" and
+     * "STUDENT-NAME" all resolve to the same key.
+     */
+    protected static function normaliseHeader(string $header): string
+    {
+        return strtolower((string) preg_replace('/[^a-z0-9]/i', '', $header));
+    }
+
+    /**
      * Auto-match each expected column to the closest matching CSV header.
      *
-     * Name-based matching is tried first (aliases from each column's
-     * "guesses"). Any column still unmatched then falls back to the CSV
-     * column in the same ordinal position, since files usually follow the
-     * template order. This keeps auto-matching working for the common "my own
-     * columns, template order" case so the Match Columns step only appears
-     * when a required column genuinely has no match.
+     * Name-based matching is tried first. Headers are normalised (case,
+     * spaces, underscores, dashes all ignored) and every alias in a column's
+     * "guesses" list is checked, so `student_name` matches `Student Name`.
+     * Any column still unmatched then falls back to the CSV column in the same
+     * ordinal position, since files usually follow the template order. The
+     * result is only a suggestion — the import wizard always lets the user
+     * override it manually.
      */
     public static function guessMapping(array $csvHeaders): array
     {
-        $lowerHeaders = array_map('strtolower', $csvHeaders);
+        $normalisedHeaders = array_map([static::class, 'normaliseHeader'], $csvHeaders);
         $used = [];
         $mapping = [];
 
         foreach (static::columns() as $key => $column) {
-            $guesses = array_map('strtolower', $column['guesses'] ?? [$column['label']]);
+            $guesses = array_map(
+                fn (string $guess): string => static::normaliseHeader($guess),
+                $column['guesses'] ?? [$column['label']],
+            );
             $mapping[$key] = null;
 
-            foreach ($lowerHeaders as $i => $lowerHeader) {
-                if (($used[$lowerHeader] ?? false) || ! in_array($lowerHeader, $guesses, true)) {
+            // Also compare against the column's system key itself, e.g. a
+            // header of "fee_waiver_id" maps to the fee_waiver_id column.
+            $guesses[] = static::normaliseHeader((string) $key);
+
+            foreach ($normalisedHeaders as $i => $normalisedHeader) {
+                if (($used[$normalisedHeader] ?? false) || ! in_array($normalisedHeader, $guesses, true)) {
                     continue;
                 }
 
                 $mapping[$key] = $csvHeaders[$i];
-                $used[$lowerHeader] = true;
+                $used[$normalisedHeader] = true;
                 break;
             }
         }
@@ -251,12 +269,12 @@ abstract class CsvBulkService
 
             $fallback = $csvHeaders[$order];
 
-            if ($used[strtolower($fallback)] ?? false) {
+            if ($used[static::normaliseHeader($fallback)] ?? false) {
                 continue;
             }
 
             $mapping[$key] = $fallback;
-            $used[strtolower($fallback)] = true;
+            $used[static::normaliseHeader($fallback)] = true;
         }
 
         return $mapping;

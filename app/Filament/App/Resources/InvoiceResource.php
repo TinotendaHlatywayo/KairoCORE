@@ -518,8 +518,17 @@ class InvoiceResource extends Resource
                     ->label(__('Record Payment'))
                     ->icon('heroicon-o-credit-card')
                     ->color('success')
-                    ->form([
-                        Forms\Components\TextInput::make('amount')->numeric()->required(),
+                    ->form(fn (Invoice $record): array => [
+                        Forms\Components\TextInput::make('amount')->numeric()->required()->live(),
+                        Forms\Components\Radio::make('excess_handling')
+                            ->label(__('Overpayment'))
+                            ->options([
+                                'credit' => __('Carry forward to next term\'s fees'),
+                                'refund' => __('Refund the excess'),
+                            ])
+                            ->default(PaymentSettlementService::MODE_CREDIT)
+                            ->helperText(fn (Forms\Get $get) => $this->excessHelper($record, $get))
+                            ->visible(fn (Forms\Get $get): bool => (float) max(0, $get('amount') ?? 0) > (float) $record->balance_amount),
                         Forms\Components\Select::make('currency')->options(['USD' => 'USD', 'ZiG' => 'ZiG'])->default('USD')->required(),
                         Forms\Components\Select::make('payment_method')->options([
                             'cash' => 'Cash',
@@ -527,6 +536,11 @@ class InvoiceResource extends Resource
                             'Ecocash' => 'EcoCash',
                             'zipit' => 'ZIPIT / RTGS',
                         ])->required(),
+                        Forms\Components\Select::make('bank_account_id')
+                            ->label(__('Deposit Bank Account'))
+                            ->options(SchoolBankAccount::where('school_id', $record->school_id)->where('is_active', true)->pluck('bank_name', 'id'))
+                            ->searchable()
+                            ->placeholder(__('Default active account')),
                         Forms\Components\TextInput::make('reference_number')->required()->label(__('TXN Reference Number')),
                     ])
                     ->action(function (Invoice $record, array $data, ExchangeRateService $rateService, FinancialSecurityService $securityService) {
@@ -540,26 +554,38 @@ class InvoiceResource extends Resource
                             return;
                         }
 
-                        $amt = $data['amount'];
+                        $amt = (float) $data['amount'];
                         if ($data['currency'] === 'ZiG') {
                             $amt = $rateService->convertToUSD($amt);
                         }
 
-                        Payment::create([
-                            'school_id' => $record->school_id,
-                            'invoice_id' => $record->id,
-                            'receipt_number' => 'RCP-'.mt_rand(10000, 99999),
-                            'reference_number' => $data['reference_number'],
-                            'amount' => $amt,
-                            'currency' => 'USD',
-                            'payment_method' => $data['payment_method'],
-                            'payment_date' => now(),
-                        ]);
+                        $result = PaymentSettlementService::settle(
+                            $record,
+                            $amt,
+                            [
+                                'reference_number' => $data['reference_number'],
+                                'payment_method' => $data['payment_method'],
+                                'payment_date' => now(),
+                                'currency' => 'USD',
+                            ],
+                            $data['excess_handling'] ?? PaymentSettlementService::MODE_CREDIT,
+                            $data['bank_account_id'] ?? null,
+                        );
 
-                        $record->paid_amount += $amt;
-                        $record->balance_amount = max(0, $record->total_amount - $record->paid_amount);
-                        $record->status = $record->balance_amount <= 0 ? 'paid' : 'partially_paid';
-                        $record->save();
+                        $record->refresh();
+
+                        $message = 'Payment of $'.number_format($result['applied'], 2).' recorded.';
+                        if ($result['excess'] > 0 && $result['credited'] > 0) {
+                            $message .= ' Excess of $'.number_format($result['credited'], 2).' carried forward as credit.';
+                        } elseif ($result['excess'] > 0 && $result['refunded'] > 0) {
+                            $message .= ' Excess of $'.number_format($result['refunded'], 2).' refunded.';
+                        }
+
+                        Notification::make()
+                            ->title(__('Payment Recorded'))
+                            ->body($message)
+                            ->success()
+                            ->send();
                     }),
 
                 Tables\Actions\Action::make('payWithPaynow')
@@ -769,6 +795,19 @@ class InvoiceResource extends Resource
             ]))
             ->paginated([8, 16, 24, 48, 'all'])
             ->defaultPaginationPageOption(8);
+    }
+
+    protected static function excessHelper(Invoice $record, Forms\Get $get): string
+    {
+        $amount = (float) $get('amount');
+        $balance = (float) $record->balance_amount;
+        $excess = max(0, $amount - $balance);
+
+        if ($excess <= 0) {
+            return '';
+        }
+
+        return 'The student will overpay by $'.number_format($excess, 2).'. Choose to refund it or carry it forward as a credit for the next term.';
     }
 
     public static function getPages(): array

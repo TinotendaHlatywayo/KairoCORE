@@ -19,9 +19,9 @@ class CreateStudent extends CreateRecord
         $sectionId = $data['section_id'] ?? null;
         $rollNumber = $data['roll_number'] ?? null;
         $parentEmail = $data['parent_email'] ?? null;
-        $waiverId = $data['fee_waiver_id'] ?? null;
+        $waiverId = ($data['apply_waiver'] ?? false) ? ($data['fee_waiver_id'] ?? null) : null;
 
-        unset($data['academic_year_id'], $data['course_id'], $data['section_id'], $data['roll_number'], $data['fee_waiver_id']);
+        unset($data['academic_year_id'], $data['course_id'], $data['section_id'], $data['roll_number'], $data['fee_waiver_id'], $data['apply_waiver']);
 
         $student = static::getModel()::create($data);
 

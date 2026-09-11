@@ -17,6 +17,7 @@ use Modules\Finance\Models\FinanceDocumentTemplate;
 use Modules\Finance\Models\Invoice;
 use Modules\Finance\Models\InvoiceItem;
 use Modules\Finance\Services\BillingDocumentSettingsService;
+use Modules\Students\Models\Student;
 
 class FinanceTemplateSmokeTest extends TestCase
 {
@@ -25,7 +26,7 @@ class FinanceTemplateSmokeTest extends TestCase
     /** The certified Administrator for the canonical single tenant. */
     protected function adminUser(): User
     {
-        return User::where('school_id', $this->schoolId)->where('custom_role_id', 2)->firstOrFail();
+        return User::where('school_id', $this->schoolId)->where('requested_role', 'administrator')->firstOrFail();
     }
 
     protected function setUp(): void
@@ -39,6 +40,24 @@ class FinanceTemplateSmokeTest extends TestCase
         app()->instance('current_tenant', $school);
         URL::defaults(['tenant' => $school->subdomain]);
         $this->withSession(['locale' => 'en']);
+
+        // The live document previews render against a real sample invoice or
+        // the school's newest enrolled student. Other suites wipe every
+        // school-created data row, so guarantee a sample student exists
+        // instead of coupling this suite's ordering to DemoDataWidgetTest.
+        if (! Student::withoutGlobalScopes()->where('school_id', $this->schoolId)->exists()) {
+            Student::create([
+                'school_id' => $this->schoolId,
+                'student_id_number' => 'SMOKE-STU-'.$this->schoolId,
+                'admission_number' => 'SMOKE-ADM-'.$this->schoolId,
+                'first_name' => 'Sample',
+                'last_name' => 'Student',
+                'gender' => 'female',
+                'date_of_birth' => '2012-01-01',
+                'admission_date' => now()->toDateString(),
+                'status' => 'active',
+            ]);
+        }
     }
 
     protected function tenantHost(): string

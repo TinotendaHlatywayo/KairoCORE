@@ -2,9 +2,9 @@
 
 namespace App\Services\Csv;
 
-use Modules\Finance\Models\Account;
 use Modules\Finance\Models\RevenueCategory;
 use Modules\Finance\Models\RevenueStream;
+use Modules\Finance\Models\SchoolBankAccount;
 
 class RevenueStreamCsvService extends CsvBulkService
 {
@@ -15,7 +15,7 @@ class RevenueStreamCsvService extends CsvBulkService
                 'label' => __('Revenue Category'),
                 'required' => true,
                 'guesses' => ['Revenue Category', 'Category'],
-                'example' => 'School Fees',
+                'example' => 'Tuition',
             ],
             'name' => [
                 'label' => __('Stream Name'),
@@ -27,14 +27,20 @@ class RevenueStreamCsvService extends CsvBulkService
                 'label' => __('Default Amount'),
                 'required' => false,
                 'guesses' => ['Default Amount', 'Amount'],
-                'example' => '500.00',
+                'example' => '420.00',
                 'default' => '0',
             ],
             'account' => [
-                'label' => __('GL Account'),
+                'label' => __('Bank Account'),
                 'required' => false,
-                'guesses' => ['GL Account', 'Account'],
-                'example' => 'School Fees Revenue',
+                'guesses' => ['Bank Account', 'Account', 'GL Account'],
+                'example' => 'CBZ Main Account',
+            ],
+            'notes' => [
+                'label' => __('Notes'),
+                'required' => false,
+                'guesses' => ['Notes', 'Remarks'],
+                'example' => 'Pay via EcoCash to school number 0772 000 000.',
             ],
             'is_active' => [
                 'label' => __('Is Active'),
@@ -49,7 +55,7 @@ class RevenueStreamCsvService extends CsvBulkService
 
     public static function exportHeaders(): array
     {
-        return ['Revenue Category', 'Stream Name', 'Default Amount', 'GL Account', 'Is Active'];
+        return ['Revenue Category', 'Stream Name', 'Default Amount', 'Bank Account', 'Notes', 'Is Active'];
     }
 
     public static function exportRows(int $schoolId): iterable
@@ -73,7 +79,8 @@ class RevenueStreamCsvService extends CsvBulkService
                     $stream->category?->name,
                     $stream->name,
                     $stream->default_amount,
-                    $stream->account?->name,
+                    $stream->account?->bank_name,
+                    $stream->notes,
                     $stream->is_active ? 'yes' : 'no',
                 ];
             }
@@ -105,10 +112,10 @@ class RevenueStreamCsvService extends CsvBulkService
         $existingNames = RevenueStream::withoutTenantScope()->where('school_id', $schoolId)->pluck('name')
             ->map(fn ($v): string => strtolower(trim((string) $v)))->flip();
 
-        $accounts = Account::withoutTenantScope()->where('school_id', $schoolId)->where('type', 'revenue')->get()
-            ->keyBy(fn ($a): string => strtolower(trim($a->name)));
+        $bankAccounts = SchoolBankAccount::withoutTenantScope()->where('school_id', $schoolId)->get()
+            ->keyBy(fn ($a): string => strtolower(trim($a->bank_name)));
 
-        return compact('revenueCategories', 'existingNames', 'accounts');
+        return compact('revenueCategories', 'existingNames', 'bankAccounts');
     }
 
     protected static function validateAndNormalize(array &$data, array $lookups): array
@@ -148,16 +155,18 @@ class RevenueStreamCsvService extends CsvBulkService
 
         $data['account'] = trim($data['account'] ?? '');
         if ($data['account'] !== '') {
-            $account = $lookups['accounts'][strtolower($data['account'])] ?? null;
+            $account = $lookups['bankAccounts'][strtolower($data['account'])] ?? null;
 
             if (! $account) {
-                $errors[] = 'GL Account ['.$data['account'].'] was not found in this school. Available revenue accounts: '.($lookups['accounts']->pluck('name')->implode(', ') ?: 'none').'.';
+                $errors[] = 'Bank Account ['.$data['account'].'] was not found in this school. Available bank accounts: '.($lookups['bankAccounts']->pluck('bank_name')->implode(', ') ?: 'none').'.';
             } else {
                 $data['_account'] = $account;
             }
         } else {
             $data['_account'] = null;
         }
+
+        $data['notes'] = trim($data['notes'] ?? '') ?: null;
 
         $active = strtolower(trim($data['is_active'] ?? ''));
         if ($active === '') {
@@ -180,6 +189,7 @@ class RevenueStreamCsvService extends CsvBulkService
             'name' => $data['name'],
             'default_amount' => (float) $data['default_amount'],
             'account_id' => $data['_account']?->id,
+            'notes' => $data['notes'],
             'is_active' => $data['is_active'],
         ]);
 

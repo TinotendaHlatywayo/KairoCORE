@@ -45,6 +45,12 @@ class FinancialStatementPage extends Page
         };
 
         $totalRevenue = Payment::where('school_id', $schoolId)
+            ->where('is_refund', false)
+            ->where('created_at', '>=', $startDate)
+            ->sum('amount');
+
+        $totalRefunds = Payment::where('school_id', $schoolId)
+            ->where('is_refund', true)
             ->where('created_at', '>=', $startDate)
             ->sum('amount');
 
@@ -52,15 +58,49 @@ class FinancialStatementPage extends Page
             ->where('expense_date', '>=', $startDate->toDateString())
             ->sum('amount');
 
-        $netCashFlow = $totalRevenue - $totalExpenses;
+        $netCashFlow = ($totalRevenue - $totalRefunds) - $totalExpenses;
+
+        $school = current_tenant();
+        $season = $this->currentSeasonLabel();
 
         return [
             'defaultBank' => $defaultBank,
             'totalRevenue' => $totalRevenue,
+            'totalRefunds' => $totalRefunds,
             'totalExpenses' => $totalExpenses,
             'netCashFlow' => $netCashFlow,
             'startDate' => $startDate->toDateString(),
             'endDate' => now()->toDateString(),
+            'company' => $school?->name ?? config('app.name'),
+            'companyTagline' => $school?->tagline ?? null,
+            'companyAddress' => $school?->address ?? (string) $school?->city,
+            'companyPhone' => $school?->phone ?? null,
+            'companyEmail' => $school?->email ?? null,
+            'season' => $season,
         ];
+    }
+
+    /**
+     * Resolve the current term/season label (e.g. "Term 1 - 2026") so the
+     * official statement header matches the reporting period.
+     */
+    protected function currentSeasonLabel(): ?string
+    {
+        $schoolId = current_tenant()?->id ?? 1;
+
+        $term = \Modules\Academics\Models\Term::where('school_id', $schoolId)
+            ->where('is_active', true)
+            ->with('academicYear')
+            ->orderByDesc('id')
+            ->first();
+
+        if (! $term) {
+            return null;
+        }
+
+        return trim(implode(' | ', array_filter([
+            $term->name,
+            $term->academicYear?->name,
+        ])));
     }
 }

@@ -127,7 +127,9 @@ class ProcurementPipelineService
 
                     Expense::create([
                         'school_id' => $schoolId,
+                        'expense_category_id' => $category->id,
                         'expense_type_id' => $expenseType->id,
+                        'expense_name' => 'Procurement (GRN '.$grn->grn_number.')',
                         'amount' => $totalGrnCost,
                         'expense_date' => now()->toDateString(),
                         'reference_number' => 'EXP-GRN-'.$grn->grn_number,
