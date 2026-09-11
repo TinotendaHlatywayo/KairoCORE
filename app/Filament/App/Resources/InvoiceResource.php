@@ -23,6 +23,7 @@ use Modules\Finance\Models\Payment;
 use Modules\Finance\Services\ExchangeRateService;
 use Modules\Finance\Services\FinancialSecurityService;
 use Modules\Finance\Services\InvoicingService;
+use Modules\Finance\Services\PaymentSettlementService;
 use Modules\Students\Models\Student;
 
 class InvoiceResource extends Resource
