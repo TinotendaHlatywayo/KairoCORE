@@ -164,8 +164,8 @@
                     color: {{ $cfg['body_text_color'] ?? '#1e293b' }};
                     line-height: {{ $lineSpacing }};
                     box-sizing: border-box;
-                    width: {{ $pageWidthMm }}mm;
-                    height: {{ $pageHeightMm }}mm;
+                    width: 100%;
+                    max-width: 100%;
                     padding: {{ $marginV }}mm {{ $marginH }}mm;
                     margin: 0;
                     border: {{ $borderW }}px solid {{ $borderC }};
