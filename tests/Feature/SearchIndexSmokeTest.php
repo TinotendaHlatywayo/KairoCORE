@@ -26,7 +26,7 @@ class SearchIndexSmokeTest extends TestCase
     public function test_search_index_includes_non_navigating_pages_for_school_admins(): void
     {
         $school = School::findOrFail(config('tenancy.single_tenant_id'));
-        $user = User::where('school_id', $school->id)->where('custom_role_id', 2)->firstOrFail();
+        $user = User::where('school_id', $school->id)->where('requested_role', 'administrator')->firstOrFail();
         $this->assertNotNull($user->school_id);
 
         $host = parse_url(config('app.url'), PHP_URL_HOST);

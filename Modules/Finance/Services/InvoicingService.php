@@ -178,6 +178,12 @@ class InvoicingService
                     ]);
                 }
 
+                // Apply any carried-forward credit (overpayment) the student
+                // chose to keep for the next term's fees.
+                if ((float) $student->credit_balance > 0 && $total > 0) {
+                    PaymentSettlementService::applyCredit($invoice, (float) $student->credit_balance);
+                }
+
                 $result['generated']++;
             }
         });

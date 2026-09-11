@@ -69,9 +69,24 @@ class StudentBillingHub extends Page
 
     protected function getViewData(): array
     {
+        $schoolId = current_tenant()?->id ?? 1;
+
+        // Students holding a carried-forward credit from a previous term.
+        $creditStudents = \Modules\Students\Models\Student::where('school_id', $schoolId)
+            ->where('credit_balance', '>', 0)
+            ->with(['currentEnrollment.course', 'currentEnrollment.section'])
+            ->orderByDesc('credit_balance')
+            ->limit(15)
+            ->get();
+
+        $totalCredits = (float) \Modules\Students\Models\Student::where('school_id', $schoolId)
+            ->sum('credit_balance');
+
         return [
             'categoryLabel' => __('Student Billing & Revenue (Receivables)'),
             'categoryPages' => $this->getCategoryPages(),
+            'creditStudents' => $creditStudents,
+            'totalCredits' => $totalCredits,
         ];
     }
 }

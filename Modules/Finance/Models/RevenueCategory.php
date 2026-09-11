@@ -25,7 +25,7 @@ class RevenueCategory extends Model
 
     public function account()
     {
-        return $this->belongsTo(Account::class);
+        return $this->belongsTo(SchoolBankAccount::class, 'account_id');
     }
 
     public function streams()
