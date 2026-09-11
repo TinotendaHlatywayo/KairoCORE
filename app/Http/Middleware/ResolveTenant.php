@@ -97,7 +97,15 @@ class ResolveTenant
 
         $this->applyFilamentTheme();
 
-        return $next($request);
+        $response = $next($request);
+
+        // Undo the per-request root URL override so later requests in the same
+        // process (tests, long-running workers) still see the platform base
+        // URL. Without this, the next request's host is wrongly treated as the
+        // base host and student-panel routes abort with a 404.
+        config(['app.url' => $baseDomain]);
+
+        return $response;
     }
 
     /**
