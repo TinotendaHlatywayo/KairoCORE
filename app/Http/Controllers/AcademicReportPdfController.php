@@ -186,10 +186,11 @@ class AcademicReportPdfController extends Controller
             // Resolve Student Enrollment
             $enrollment = null;
             if ($student) {
-                if ($report->academic_year_id) {
+                $reportYearId = $report->term?->academic_year_id;
+                if ($reportYearId) {
                     $enrollment = Enrollment::withoutGlobalScopes()
                         ->where('student_id', $student->id)
-                        ->where('academic_year_id', $report->academic_year_id)
+                        ->where('academic_year_id', $reportYearId)
                         ->first();
                 }
                 if (! $enrollment && $year) {
