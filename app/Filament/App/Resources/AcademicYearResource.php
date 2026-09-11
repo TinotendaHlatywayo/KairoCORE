@@ -71,6 +71,11 @@ class AcademicYearResource extends Resource
                             ->required()
                             ->helperText(__('End date of the academic year.'))
                             ->after('start_date'),
+
+                        Forms\Components\Toggle::make('is_active')
+                            ->label(__('Mark as Current Active Year'))
+                            ->helperText(__('Only one academic year can be active at a time.'))
+                            ->default(false),
                     ])->columns(3),
 
                 Forms\Components\Section::make('Workflow Status')
@@ -109,6 +114,9 @@ class AcademicYearResource extends Resource
                                 Forms\Components\DatePicker::make('end_date')
                                     ->required()
                                     ->after('start_date'),
+                                Forms\Components\Toggle::make('is_active')
+                                    ->label(__('Active Term'))
+                                    ->helperText(__('Used as the current term across the system (only one per year).')),
                             ])
                             ->grid(3)
                             ->defaultItems(3),

@@ -20,6 +20,7 @@ class AcademicReport extends Model
         'section_id',
         'term_id',
         'unhu_competencies',
+        'subject_teacher_remarks',
         'overall_score',
         'strength',
         'needs_improvement',
@@ -33,6 +34,7 @@ class AcademicReport extends Model
 
     protected $casts = [
         'unhu_competencies' => 'array',
+        'subject_teacher_remarks' => 'array',
         'overall_score' => 'decimal:2',
     ];
 
@@ -77,7 +79,7 @@ class AcademicReport extends Model
             if (is_array($report->unhu_competencies)) {
                 $scores = [];
                 foreach ($report->unhu_competencies as $key => $rating) {
-                    if ($rating && isset(self::$scalePoints[$rating])) {
+                    if (is_string($rating) && $rating && isset(self::$scalePoints[$rating])) {
                         $scores[$key] = self::$scalePoints[$rating];
                     }
                 }

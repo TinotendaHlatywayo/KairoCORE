@@ -3,6 +3,7 @@
 namespace Modules\DigitalAssessment\Services;
 
 use Illuminate\Support\Collection;
+use Modules\DigitalAssessment\Enums\XpType;
 use Modules\DigitalAssessment\Models\ChallengeParticipant;
 use Modules\DigitalAssessment\Models\GamificationAchievement;
 use Modules\DigitalAssessment\Models\GamificationBadge;
@@ -61,9 +62,9 @@ class GamificationService
         $this->awardXp(
             $attempt->student_id,
             $settings->xp_per_assessment_complete,
-            'assessment_complete',
+            XpType::AssessmentComplete->value,
             "Completed: {$attempt->assessment->title}",
-            $attempt->assessment
+            $attempt->assessment->school_id
         );
     }
 
@@ -76,7 +77,7 @@ class GamificationService
         }
 
         $amount = $settings->xp_per_streak_day * min($streakDays, 7);
-        $this->awardXp($studentId, $amount, 'streak_bonus', "Streak bonus: {$streakDays} days");
+        $this->awardXp($studentId, $amount, XpType::StreakBonus->value, "Streak bonus: {$streakDays} days");
     }
 
     public function getLearnerXp(int $studentId, ?int $schoolId = null): ?LearnerXp
@@ -129,7 +130,7 @@ class GamificationService
         ]);
 
         if ($badge->xp_reward > 0) {
-            $this->awardXp($studentId, $badge->xp_reward, 'badge_reward', "Earned badge: {$badge->name}");
+            $this->awardXp($studentId, $badge->xp_reward, XpType::BadgeReward->value, "Earned badge: {$badge->name}");
         }
 
         $this->notifyBadgeEarned($learnerBadge, $badge);
@@ -203,6 +204,7 @@ class GamificationService
         return LearnerBadge::where('school_id', $schoolId)
             ->where('student_id', $studentId)
             ->with('badge')
+            ->whereHas('badge', fn ($q) => $q->where('is_active', true))
             ->orderByDesc('earned_at')
             ->get();
     }
@@ -272,7 +274,7 @@ class GamificationService
         $participant->incrementProgress();
 
         if ($participant->fresh()->completed) {
-            $this->awardXp($studentId, $participant->xp_earned, 'challenge_complete', "Completed challenge");
+            $this->awardXp($studentId, $participant->xp_earned, XpType::ChallengeComplete->value, "Completed challenge");
             $challenge = GamificationChallenge::find($challengeId);
             if ($challenge && $challenge->reward_badge_id) {
                 $this->awardBadge($studentId, $challenge->reward_badge_id, $schoolId);
@@ -349,7 +351,7 @@ class GamificationService
                 ]);
 
                 if ($achievement->xp_reward > 0) {
-                    $this->awardXp($studentId, $achievement->xp_reward, 'achievement_reward', "Achievement: {$achievement->name}");
+                    $this->awardXp($studentId, $achievement->xp_reward, XpType::AchievementReward->value, "Achievement: {$achievement->name}");
                 }
 
                 $awarded[] = $achievement;
@@ -366,6 +368,7 @@ class GamificationService
         return LearnerAchievement::where('school_id', $schoolId)
             ->where('student_id', $studentId)
             ->with('achievement')
+            ->whereHas('achievement', fn ($q) => $q->where('is_active', true))
             ->orderByDesc('earned_at')
             ->get();
     }

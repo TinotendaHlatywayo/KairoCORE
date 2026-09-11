@@ -12,6 +12,7 @@ use App\Filament\App\Pages\Auth\EditProfile;
 use App\Filament\App\Pages\Auth\Login;
 use App\Filament\App\Pages\BillingDocumentSettingsPage;
 use App\Filament\App\Pages\CommunicationCenter;
+use App\Filament\App\Pages\Dashboard;
 use App\Filament\App\Pages\EmailConfigurationPage;
 use App\Filament\App\Pages\IssueBook;
 use App\Filament\App\Pages\MyDay;
@@ -60,7 +61,6 @@ use App\Http\Middleware\SetUserLocale;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\NavigationGroup;
-use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Assets\Css;
@@ -323,7 +323,7 @@ class AppPanelProvider extends PanelProvider
 
             ->discoverPages(in: app_path('Filament/App/Pages'), for: 'App\\Filament\\App\\Pages')
             ->pages([
-                Pages\Dashboard::class,
+                Dashboard::class,
                 SaaSBillingOverview::class,
                 VisualCmsBuilder::class,
 

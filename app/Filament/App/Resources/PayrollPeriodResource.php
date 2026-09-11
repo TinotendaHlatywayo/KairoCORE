@@ -14,6 +14,7 @@ use Filament\Tables\Actions\Action;
 use Filament\Tables\Table;
 use Modules\HR\Models\PayrollPeriod;
 use Modules\HR\Services\PayrollCalculationService;
+use App\Filament\App\Resources\PayrollPeriodResource\Pages;
 
 class PayrollPeriodResource extends Resource
 {
@@ -69,16 +70,54 @@ class PayrollPeriodResource extends Resource
                 Tables\Actions\EditAction::make(),
 
                 Action::make('calculate')
-                    ->label(__('Calculate'))
+                    ->label(__('Calculate & Populate Salaries'))
                     ->icon('heroicon-o-cpu-chip')
                     ->color('warning')
-                    ->requiresConfirmation()
-                    ->visible(fn ($record) => in_array($record->status, ['draft', 'calculated']))
-                    ->action(function ($record) {
-                        app(PayrollCalculationService::class)->executeRun($record);
+                    ->form([
+                        Forms\Components\Select::make('current_grade_id')
+                            ->label(__('Salary Grade'))
+                            ->options(\Modules\HR\Models\SalaryGrade::all()->pluck('name', 'id'))
+                            ->searchable()
+                            ->preload()
+                            ->nullable()
+                            ->placeholder(__('— All Salary Grades —')),
+                        Forms\Components\Select::make('department')
+                            ->label(__('Department'))
+                            ->options(\Modules\HR\Models\Employee::whereNotNull('department')->distinct()->pluck('department', 'department'))
+                            ->searchable()
+                            ->preload()
+                            ->nullable()
+                            ->placeholder(__('— All Departments —')),
+                        Forms\Components\Select::make('employment_type')
+                            ->label(__('Employment Type'))
+                            ->options([
+                                'full_time' => __('Full Time'),
+                                'part_time' => __('Part Time'),
+                                'contract' => __('Contract'),
+                            ])
+                            ->nullable()
+                            ->placeholder(__('— All Employment Types —')),
+                        Forms\Components\Select::make('designation')
+                            ->label(__('Designation / Job Title'))
+                            ->options(\Modules\HR\Models\Employee::whereNotNull('designation')->distinct()->pluck('designation', 'designation'))
+                            ->searchable()
+                            ->preload()
+                            ->nullable()
+                            ->placeholder(__('— All Designations —')),
+                        Forms\Components\Select::make('gender')
+                            ->label(__('Gender'))
+                            ->options([
+                                'male' => __('Male'),
+                                'female' => __('Female'),
+                            ])
+                            ->nullable()
+                            ->placeholder(__('— All Genders —')),
+                    ])
+                    ->action(function ($record, array $data) {
+                        app(PayrollCalculationService::class)->executeRun($record, array_filter($data));
 
                         Notification::make()
-                            ->title(__('Payroll Calculated'))
+                            ->title(__('Salaries Populated & Calculated Successfully'))
                             ->success()
                             ->send();
                     }),
@@ -115,6 +154,12 @@ class PayrollPeriodResource extends Resource
                             ->success()
                             ->send();
                     }),
+
+                Action::make('breakdown')
+                    ->label(__('View Ledger & Breakdown'))
+                    ->icon('heroicon-o-table-cells')
+                    ->color('info')
+                    ->url(fn (PayrollPeriod $record): string => static::getUrl('breakdown', ['record' => $record])),
             ]);
     }
 
@@ -122,6 +167,7 @@ class PayrollPeriodResource extends Resource
     {
         return [
             'index' => ListPayrollPeriods::route('/'),
+            'breakdown' => Pages\PayrollPeriodBreakdownPage::route('/{record}/breakdown'),
         ];
     }
 }

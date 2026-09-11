@@ -49,19 +49,22 @@ class TeacherAssignmentResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Section::make('Assignment Details')
+                    ->description(__('Two supported models: a Class Teacher teaches almost every subject to ONE stream; a Subject Specialist teaches particular subjects across many streams/levels. Pick exactly one Stream for Model A, or leave Stream empty to apply this subject to every stream in the Form (Model B).'))
                     ->schema([
                         Forms\Components\Select::make('course_id')
                             ->label(__('Form / Grade'))
-                            ->options(Course::where('school_id', current_tenant()?->id ?? auth()->user()?->school_id ?? 1)->pluck('name', 'id'))
+                            ->options(Course::where('school_id', current_tenant()?->id ?? auth()->user()?->school_id ?? 1)->orderBy('name')->pluck('name', 'id'))
                             ->required()
                             ->live()
-                            ->searchable(),
+                            ->searchable()
+                            ->helperText(__('e.g. Grade 1, Form 2, ECD A')),
 
                         Forms\Components\Select::make('section_id')
                             ->label(__('Stream (Optional)'))
-                            ->options(fn (Forms\Get $get) => Section::where('course_id', $get('course_id'))->pluck('name', 'id'))
+                            ->options(fn (Forms\Get $get) => Section::where('course_id', $get('course_id'))->orderBy('name')->pluck('name', 'id'))
                             ->searchable()
-                            ->placeholder(__('All streams in this form')),
+                            ->placeholder(__('All streams in this form (Subject Specialist across the whole grade)'))
+                            ->helperText(__('Leave empty → this subject+teacher applies to every stream in the Form above. Choose one stream (e.g. A) → only that class is taught this subject by this teacher.')),
 
                         Forms\Components\Select::make('subject_id')
                             ->label(__('Subject'))
@@ -77,7 +80,7 @@ class TeacherAssignmentResource extends Resource
                             ->getOptionLabelUsing(fn ($value) => TeacherOptions::labelFor($value))
                             ->required()
                             ->live()
-                            ->helperText(__('Fuzzy search supports fragments — "jhn" finds "John".')),
+                            ->helperText(__('Search Teacher...')),
 
                         Forms\Components\Select::make('role')
                             ->label(__('Role'))
@@ -94,9 +97,23 @@ class TeacherAssignmentResource extends Resource
                             ->default(4)
                             ->minValue(1),
 
+                        Forms\Components\TextInput::make('double_periods_per_week')
+                            ->label(__('Double Periods / Week'))
+                            ->numeric()
+                            ->default(0)
+                            ->minValue(0)
+                            ->helperText(__('How many combined double lessons this subject needs weekly (each counts as 2 periods).')),
+
+                        Forms\Components\TextInput::make('triple_periods_per_week')
+                            ->label(__('Triple Periods / Week'))
+                            ->numeric()
+                            ->default(0)
+                            ->minValue(0)
+                            ->helperText(__('How many combined triple lessons this subject needs weekly (each counts as 3 periods).')),
+
                         Forms\Components\Select::make('room_preference')
                             ->label(__('Preferred Room'))
-                            ->options(fn () => \Modules\Academics\Models\Classroom::where('school_id', app('current_tenant')->id)->pluck('name', 'id'))
+                            ->options(fn () => \Modules\Academics\Models\Classroom::where('school_id', current_tenant()?->id ?? auth()->user()?->school_id ?? 1)->pluck('name', 'id'))
                             ->searchable()
                             ->preload()
                             ->placeholder(__('Select a classroom...')),
@@ -138,6 +155,12 @@ class TeacherAssignmentResource extends Resource
                 Tables\Columns\TextColumn::make('periods_per_week')
                     ->label(__('Periods/Week'))
                     ->sortable(),
+                Tables\Columns\TextColumn::make('double_periods_per_week')
+                    ->label(__('Double'))
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('triple_periods_per_week')
+                    ->label(__('Triple'))
+                    ->sortable(),
                 Tables\Columns\IconColumn::make('has_conflict')
                     ->label(__('Schedule Conflict'))
                     ->boolean()
@@ -167,7 +190,7 @@ class TeacherAssignmentResource extends Resource
                             ->getSearchResultsUsing(fn (string $search) => TeacherOptions::search($search))
                             ->getOptionLabelUsing(fn ($value) => TeacherOptions::labelFor($value))
                             ->required()
-                            ->helperText(__('Fuzzy search supports fragments — "jhn" finds "John".')),
+                            ->helperText(__('Keyword Search')),
                         Forms\Components\Select::make('role')
                             ->label(__('Role'))
                             ->options([
@@ -329,6 +352,7 @@ class TeacherAssignmentResource extends Resource
         return [
             'index' => Pages\ListTeacherAssignments::route('/'),
             'create' => Pages\CreateTeacherAssignment::route('/create'),
+            'create-multi' => Pages\MultiClassTeacherAssignment::route('/create-multi'),
             'edit' => Pages\EditTeacherAssignment::route('/{record}/edit'),
         ];
     }

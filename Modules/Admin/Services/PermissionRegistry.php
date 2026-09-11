@@ -216,6 +216,7 @@ class PermissionRegistry
                     'manage_branding' => 'Customize Themes & Logos',
                     'manage_email_config' => 'Configure School Email Sending',
                     'clear_caches' => 'Run Application Maintenance',
+                    'manage_personal_details' => 'Edit Own Name / Email / Phone on Profile',
                 ],
             ],
             'saas' => [

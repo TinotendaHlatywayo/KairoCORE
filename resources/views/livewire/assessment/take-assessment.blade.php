@@ -6,14 +6,35 @@
     $answered = $this->getAnsweredCount();
 @endphp
 
-@if($this->submitted)
+<div>
+@if($this->requiresAccessCode())
+    {{-- ── ACCESS CODE GATE ── --}}
+    <div class="flex items-center justify-center min-h-[60vh]">
+        <div class="w-full max-w-md rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-8 shadow-sm text-center space-y-4">
+            <x-heroicon-o-lock-closed class="w-12 h-12 mx-auto text-primary-500" />
+            <h2 class="text-xl font-bold text-gray-900 dark:text-white">{{ __('Assessment Access Code') }}</h2>
+            <p class="text-sm text-gray-500">{{ __('This assessment is protected. Enter the access code provided by your teacher to begin.') }}</p>
+            <input type="password"
+                   wire:model="accessCode"
+                   wire:keydown.enter="verifyAccessCode"
+                   autocomplete="off"
+                   placeholder="Enter access code"
+                   class="w-full text-center rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-800 text-gray-900 dark:text-white text-lg focus:border-primary-500 focus:ring-primary-500" />
+            <button wire:click="verifyAccessCode"
+                    wire:loading.attr="disabled"
+                    class="w-full px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition">
+                {{ __('Unlock Assessment') }}
+            </button>
+        </div>
+    </div>
+@elseif($this->submitted)
     {{-- ── SUBMITTED STATE ── --}}
     <div class="flex items-center justify-center min-h-[60vh]">
         <div class="text-center space-y-4">
             <x-heroicon-o-check-circle class="w-16 h-16 mx-auto text-success-500" />
             <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Assessment Submitted!</h2>
             <p class="text-gray-500">Your answers have been recorded successfully.</p>
-            <a href="{{ route('filament.student.pages.attempt-result', ['attempt' => $this->attemptId]) }}"
+            <a href="{{ route('filament.student.pages.attempt-result-page', ['attempt' => $this->attemptId]) }}"
                class="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition">
                 <x-heroicon-o-chart-bar class="w-5 h-5 mr-2" />
                 View Results
@@ -61,6 +82,51 @@
                     </div>
                 @endif
 
+                {{-- Calculator --}}
+                @if($this->assessment?->calculator_enabled)
+                    <button type="button"
+                            x-data="{ open: false }"
+                            x-on:click="open = true"
+                            class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                        <x-heroicon-o-calculator class="w-4 h-4" />
+                        Calculator
+                    </button>
+
+                    <div x-data="{ exp: '', result: '' }"
+                         x-show="open"
+                         x-cloak
+                         x-on:keydown.escape.window="open = false"
+                         class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+                        <div class="w-full max-w-xs rounded-xl bg-white dark:bg-gray-900 shadow-xl border border-gray-200 dark:border-gray-800 p-5 space-y-4">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-sm font-bold text-gray-900 dark:text-white">Calculator</h3>
+                                <button type="button" x-on:click="open = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                    <x-heroicon-o-x-mark class="w-5 h-5" />
+                                </button>
+                            </div>
+                            <div class="rounded-lg bg-gray-100 dark:bg-gray-800 px-4 py-3 text-right font-mono text-xl text-gray-900 dark:text-white overflow-x-auto"
+                                 x-text="(result !== '' ? result : (exp || '0'))"></div>
+                            <div class="grid grid-cols-4 gap-2">
+                                <template x-for="(b, i) in ['7','8','9','/','4','5','6','*','1','2','3','-','0','.','C','+']" :key="i">
+                                    <button type="button"
+                                            class="rounded-lg py-2.5 text-sm font-semibold transition"
+                                            :class="b === 'C' ? 'bg-danger-100 text-danger-700 hover:bg-danger-200' : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'"
+                                            x-on:click="
+                                                if (b === 'C') { exp = ''; result = ''; }
+                                                else { exp += b; }
+                                            "
+                                            x-text="b"></button>
+                                </template>
+                                <button type="button"
+                                        x-on:click="try { result = String(Function('return (' + exp + ')')()); } catch (e) { result = 'Error'; }"
+                                        class="col-span-4 rounded-lg py-2.5 text-sm font-bold text-white bg-primary-600 hover:bg-primary-700 transition">
+                                    =
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
                 {{-- Submit --}}
                 <button wire:click="submit"
                         wire:confirm="Are you sure you want to submit? You cannot change your answers after submission."
@@ -97,11 +163,13 @@
                         @endphp
                         <button wire:click="goToQuestion({{ $i }})"
                                 @if($this->isAdaptive) disabled @endif
+                                @if(!$this->assessment?->allow_backward_navigation && $i < $this->currentQuestionIndex) disabled @endif
                                 class="w-10 h-10 rounded-lg text-sm font-medium transition
                                        {{ $isCurrent ? 'ring-2 ring-primary-500 bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300' : '' }}
                                        {{ !$isCurrent && $isAnswered ? 'bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400' : '' }}
                                        {{ !$isCurrent && !$isAnswered ? 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700' : '' }}
-                                       {{ $this->isAdaptive ? 'opacity-50 cursor-not-allowed' : '' }}">
+                                       {{ $this->isAdaptive ? 'opacity-50 cursor-not-allowed' : '' }}
+                                       {{ (!$this->assessment?->allow_backward_navigation && $i < $this->currentQuestionIndex) ? 'opacity-50 cursor-not-allowed' : '' }}">
                             {{ $i + 1 }}
                         </button>
                     @endforeach
@@ -165,7 +233,8 @@
                         {{-- Multiple Choice --}}
                         @if($q->question_type?->value === 'multiple_choice')
                             <div class="space-y-2">
-                                @foreach($q->options ?? [] as $optIdx => $opt)
+                                @foreach($this->optionOrder($qId, array_keys($q->options ?? [])) as $optIdx)
+                                    @php $opt = ($q->options ?? [])[$optIdx] ?? []; @endphp
                                     <label class="flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition
                                                 {{ $currentAnswer == $optIdx ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300' }}">
                                         <input type="radio"
@@ -180,8 +249,9 @@
                         {{-- Multiple Select --}}
                         @elseif($q->question_type?->value === 'multiple_select')
                             <div class="space-y-2">
-                                @foreach($q->options ?? [] as $optIdx => $opt)
+                                @foreach($this->optionOrder($qId, array_keys($q->options ?? [])) as $optIdx)
                                     @php
+                                        $opt = ($q->options ?? [])[$optIdx] ?? [];
                                         $selected = is_array($currentAnswer) && in_array($optIdx, $currentAnswer);
                                     @endphp
                                     <label class="flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition
@@ -384,7 +454,7 @@
                 {{-- Navigation --}}
                 <div class="flex items-center justify-between mt-4">
                     <button wire:click="previousQuestion"
-                            {{ $this->currentQuestionIndex === 0 ? 'disabled' : '' }}
+                            @if($this->currentQuestionIndex === 0 || ! $this->assessment?->allow_backward_navigation) disabled @endif
                             class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border rounded-lg
                                    hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition">
                         <x-heroicon-o-arrow-left class="w-4 h-4 mr-1" />
@@ -416,32 +486,62 @@
 
     {{-- Prevent leaving --}}
     @if(!$this->submitted)
-        <script>
-            window.addEventListener('beforeunload', function (e) {
-                e.preventDefault();
-                e.returnValue = '';
-            });
-
-            @if($this->assessment?->anti_cheating_enabled)
-            let tabSwitchCount = 0;
-            const maxSwitches = 5;
-
-            document.addEventListener('visibilitychange', function() {
-                if (document.hidden && !window.submitted) {
-                    tabSwitchCount++;
-
-                    if (tabSwitchCount >= maxSwitches) {
-                        Livewire.find('{{ $this->id }}').submit();
+        @if($this->assessment?->anti_cheating_enabled)
+            <script>
+                const logSuspicious = (type) => {
+                    if (window.submitted) {
+                        return;
                     }
-                }
-            });
+                    Livewire.find('{{ $this->id }}').call('logSuspiciousActivity', type);
+                };
 
-            window.addEventListener('blur', function() {
-                if (!window.submitted) {
-                    tabSwitchCount++;
+                let tabSwitchCount = 0;
+                const maxSwitches = 5;
+
+                window.addEventListener('beforeunload', function (e) {
+                    e.preventDefault();
+                    e.returnValue = '';
+                });
+
+                document.addEventListener('visibilitychange', function() {
+                    if (document.hidden && !window.submitted) {
+                        tabSwitchCount++;
+                        logSuspicious('tab_switch');
+
+                        if (tabSwitchCount >= maxSwitches) {
+                            Livewire.find('{{ $this->id }}').submit(true);
+                        }
+                    }
+                });
+
+                window.addEventListener('blur', function() {
+                    if (!window.submitted && document.hidden) {
+                        tabSwitchCount++;
+                        logSuspicious('tab_switch');
+                    }
+                });
+
+                document.addEventListener('paste', function (e) {
+                    e.preventDefault();
+                    logSuspicious('paste_blocked');
+                });
+
+                document.addEventListener('contextmenu', function (e) {
+                    e.preventDefault();
+                    logSuspicious('right_click');
+                });
+
+                if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen().catch(() => {});
                 }
-            });
-            @endif
-        </script>
+
+                document.addEventListener('fullscreenchange', function() {
+                    if (! document.fullscreenElement) {
+                        logSuspicious('exit_fullscreen');
+                    }
+                });
+            </script>
+        @endif
     @endif
+</div>
 @endif

@@ -36,7 +36,7 @@ class CmsStudioThemeHubTest extends TestCase
         Config::set('database.connections.mysql.password', env('DB_PASSWORD', ''));
         DB::purge('mysql');
 
-        $this->schoolId = 15;
+        $this->schoolId = (int) config('tenancy.single_tenant_id');
         $school = School::findOrFail($this->schoolId);
         app()->instance('current_tenant', $school);
         URL::defaults(['tenant' => $school->subdomain]);
@@ -44,7 +44,7 @@ class CmsStudioThemeHubTest extends TestCase
         // The VisualCmsBuilder page is permission-gated (module: website,
         // permission: manage_pages), so tests must authenticate as the school
         // administrator (role bypasses the module permission check).
-        $this->actingAs(User::findOrFail(13));
+        $this->actingAs(User::where('school_id', $this->schoolId)->where('custom_role_id', 2)->firstOrFail());
 
         $this->live = CmsWebsite::where('school_id', $this->schoolId)->where('is_template_site', false)->firstOrFail();
 
@@ -57,7 +57,7 @@ class CmsStudioThemeHubTest extends TestCase
         ]);
 
         $this->snapshots['pages'] = CmsPage::where('cms_website_id', $this->live->id)
-            ->get(['id', 'page_template', 'blocks', 'draft_blocks', 'is_homepage', 'is_published', 'hide_from_nav', 'sort_order'])
+            ->get(['id', 'page_template', 'page_theme', 'blocks', 'draft_blocks', 'is_homepage', 'is_published', 'hide_from_nav', 'sort_order'])
             ->toArray();
 
         $this->snapshots['site_templates'] = CmsSiteTemplate::where('school_id', $this->schoolId)
@@ -200,7 +200,7 @@ class CmsStudioThemeHubTest extends TestCase
     public function test_public_catchall_never_captures_workspace_panel(): void
     {
         $router = app('router');
-        $tenantHost = 'tinwayacademy.'.parse_url(config('app.url'), PHP_URL_HOST);
+        $tenantHost = School::findOrFail($this->schoolId)->subdomain.'.'.parse_url(config('app.url'), PHP_URL_HOST);
 
         $workspacePaths = ['/workspace', '/workspace/login', '/workspace/cms/builder/172', '/workspace/cms-websites'];
         foreach ($workspacePaths as $path) {

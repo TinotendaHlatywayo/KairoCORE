@@ -13,9 +13,9 @@ class Hostel extends Model
 
     protected $fillable = ['school_id', 'name', 'type', 'capacity', 'description', 'status'];
 
-    public function buildings(): HasMany
+    public function floors(): HasMany
     {
-        return $this->hasMany(HostelBuilding::class, 'hostel_id');
+        return $this->hasMany(HostelFloor::class, 'hostel_id');
     }
 
     public function rooms(): HasMany

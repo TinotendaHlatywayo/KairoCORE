@@ -25,10 +25,6 @@ class TeacherInitials
             }
 
             $initials .= strtoupper(mb_substr($cleaned, 0, 1));
-
-            if (mb_strlen($initials) >= 2) {
-                break;
-            }
         }
 
         return $initials;

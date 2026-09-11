@@ -140,6 +140,7 @@ class ProfilePhotoService
 
         $record->update([
             $photoColumn => null,
+            'photo_approved_at' => null,
             'photo_rejected_reason' => trim((string) $reason) ?: null,
             'photo_rejected_by' => auth()->id(),
             'photo_rejected_at' => now(),

@@ -78,28 +78,45 @@ class ApplicationResource extends Resource
                         Tab::make(__('Application'))
                             ->label(__('1. Application'))
                             ->schema([
-                                Forms\Components\Section::make(__('Student Information'))
-                                    ->schema([
-                                        Forms\Components\TextInput::make('application_number')
-                                            ->disabled()
-                                            ->label(__('Application Number')),
-                                        Forms\Components\TextInput::make('first_name')
-                                            ->required()
-                                            ->placeholder(__('e.g., John')),
-                                        Forms\Components\TextInput::make('last_name')
-                                            ->required()
-                                            ->placeholder(__('e.g., Smith')),
-                                        Forms\Components\Select::make('gender')
-                                            ->options(['male' => __('Male'), 'female' => __('Female'), 'other' => __('Other')])
-                                            ->required(),
-                                        Forms\Components\DatePicker::make('date_of_birth')
-                                            ->required(),
-                                        Forms\Components\Select::make('course_id')
-                                            ->label(__('Applying Level / Form'))
-                                            ->options(fn () => Course::pluck('name', 'id'))
-                                            ->required()
-                                            ->searchable(),
-                                    ])->columns(3),
+                                 Forms\Components\Section::make(__('Student Information'))
+                                     ->schema([
+                                         Forms\Components\TextInput::make('application_number')
+                                             ->disabled()
+                                             ->label(__('Application Number')),
+                                         Forms\Components\TextInput::make('first_name')
+                                             ->required()
+                                             ->placeholder(__('e.g., John')),
+                                         Forms\Components\TextInput::make('last_name')
+                                             ->required()
+                                             ->placeholder(__('e.g., Smith')),
+                                          Forms\Components\TextInput::make('national_id')
+                                              ->label(__('National ID / Birth Cert Number'))
+                                              ->placeholder(__('e.g., 65-2546896F88')),
+                                          Forms\Components\Textarea::make('physical_address')
+                                              ->label(__('Physical Address'))
+                                              ->placeholder(__('e.g. 14 Links Lane, Borrowdale, Harare'))
+                                              ->required()
+                                              ->columnSpanFull(),
+                                          Forms\Components\TextInput::make('phone')
+                                              ->label(__('Student Contact Number'))
+                                              ->tel()
+                                              ->placeholder(__('e.g. +263 77 123 4567'))
+                                              ->columnSpanFull(),
+                                          Forms\Components\TextInput::make('email')
+                                              ->email()
+                                              ->label(__('Student Email'))
+                                              ->placeholder(__('student@domain.com')),
+                                         Forms\Components\Select::make('gender')
+                                             ->options(['male' => __('Male'), 'female' => __('Female'), 'other' => __('Other')])
+                                             ->required(),
+                                         Forms\Components\DatePicker::make('date_of_birth')
+                                             ->required(),
+                                         Forms\Components\Select::make('course_id')
+                                             ->label(__('Applying Level / Form'))
+                                             ->options(fn () => Course::pluck('name', 'id'))
+                                             ->required()
+                                             ->searchable(),
+                                     ])->columns(3),
 
                                 Forms\Components\Section::make(__('Guardian Details'))
                                     ->schema([
@@ -355,6 +372,7 @@ class ApplicationResource extends Resource
                             'user_id' => $studentUser->id,
                             'application_id' => $record->id,
                             'admission_number' => $data['admission_number'],
+                            'national_id' => $record->national_id,
                             'first_name' => $record->first_name,
                             'last_name' => $record->last_name,
                             'gender' => $record->gender,
@@ -364,6 +382,7 @@ class ApplicationResource extends Resource
                             'photo_path' => $record->photo_path,
                             'emergency_contact_name' => $record->parent_name,
                             'emergency_contact_phone' => $record->parent_phone,
+                            'parent_email' => $record->email ?? $record->parent_email,
                         ]);
 
                         Enrollment::create([
@@ -417,21 +436,23 @@ class ApplicationResource extends Resource
 
                                 $studentUser = static::resolveOrCreateStudentUser($record);
 
-                                $student = Student::create([
-                                    'school_id' => $record->school_id,
-                                    'user_id' => $studentUser->id,
-                                    'application_id' => $record->id,
-                                    'admission_number' => date('Y').'/'.rand(100, 999),
-                                    'first_name' => $record->first_name,
-                                    'last_name' => $record->last_name,
-                                    'gender' => $record->gender,
-                                    'date_of_birth' => $record->date_of_birth,
-                                    'admission_date' => now(),
-                                    'status' => 'active',
-                                    'photo_path' => $record->photo_path,
-                                    'emergency_contact_name' => $record->parent_name,
-                                    'emergency_contact_phone' => $record->parent_phone,
-                                ]);
+                                 $student = Student::create([
+                                     'school_id' => $record->school_id,
+                                     'user_id' => $studentUser->id,
+                                     'application_id' => $record->id,
+                                     'admission_number' => date('Y').'/'.rand(100, 999),
+                                     'national_id' => $record->national_id,
+                                     'first_name' => $record->first_name,
+                                     'last_name' => $record->last_name,
+                                     'gender' => $record->gender,
+                                     'date_of_birth' => $record->date_of_birth,
+                                     'admission_date' => now(),
+                                     'status' => 'active',
+                                     'photo_path' => $record->photo_path,
+                                     'emergency_contact_name' => $record->parent_name,
+                                     'emergency_contact_phone' => $record->parent_phone,
+                                     'parent_email' => $record->email ?? $record->parent_email,
+                                 ]);
 
                                 Enrollment::create([
                                     'school_id' => $record->school_id,

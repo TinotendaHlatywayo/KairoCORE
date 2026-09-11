@@ -19,10 +19,10 @@ class LibraryIssueCsvService extends CsvBulkService
                 'example' => 'BC-1-0001',
             ],
             'student' => [
-                'label' => __('Student Admission No.'),
+                'label' => __('Student ID Number'),
                 'required' => false,
-                'guesses' => ['Student', 'Admission No', 'Student Admission Number'],
-                'example' => 'STU-2026-001',
+                'guesses' => ['Student', 'Student ID', 'Student ID Number', 'ID Number', 'Admission No', 'Student Admission Number'],
+                'example' => 'R261234567A',
             ],
             'staff' => [
                 'label' => __('Staff Name'),
@@ -86,7 +86,7 @@ class LibraryIssueCsvService extends CsvBulkService
     public static function exportHeaders(): array
     {
         return [
-            'Copy Barcode', 'Student Admission No.', 'Staff Name', 'Issue Date',
+            'Copy Barcode', 'Student ID Number', 'Staff Name', 'Issue Date',
             'Due Date', 'Returned Date', 'Status', 'Fine Amount', 'Fine Status', 'Notes',
         ];
     }
@@ -110,7 +110,7 @@ class LibraryIssueCsvService extends CsvBulkService
             foreach ($issues as $issue) {
                 yield [
                     $issue->copy?->barcode,
-                    $issue->student?->admission_number,
+                    $issue->student?->student_id_number,
                     $issue->borrowerUser?->name,
                     optional($issue->issued_at)->format('Y-m-d'),
                     optional($issue->due_at)->format('Y-m-d'),
@@ -132,7 +132,7 @@ class LibraryIssueCsvService extends CsvBulkService
             'copies' => LibraryBookCopy::withoutTenantScope()->where('school_id', $schoolId)->get()
                 ->keyBy(fn (LibraryBookCopy $c): string => strtolower(trim($c->barcode))),
             'students' => Student::withoutTenantScope()->where('school_id', $schoolId)->get()
-                ->keyBy(fn (Student $s): string => strtolower(trim($s->admission_number))),
+                ->keyBy(fn (Student $s): string => strtolower(trim($s->student_id_number))),
             'users' => User::withoutTenantScope()->where('school_id', $schoolId)->get()
                 ->keyBy(fn (User $u): string => strtolower(trim($u->name))),
             'issuerId' => User::withoutTenantScope()->where('school_id', $schoolId)->orderBy('id')->value('id'),
@@ -164,7 +164,7 @@ class LibraryIssueCsvService extends CsvBulkService
         $data['staff'] = trim($data['staff'] ?? '');
 
         if (($data['student'] === '') === ($data['staff'] === '')) {
-            $errors[] = 'Exactly one borrower is required: provide either Student Admission No. or Staff Name, not both and not neither.';
+            $errors[] = 'Exactly one borrower is required: provide either Student ID Number or Staff Name, not both and not neither.';
         }
 
         if (empty($errors) && $data['copy_barcode'] !== '') {
@@ -184,7 +184,7 @@ class LibraryIssueCsvService extends CsvBulkService
             $student = $lookups['students'][strtolower($data['student'])] ?? null;
 
             if (! $student) {
-                $errors[] = 'Student ['.$data['student'].'] was not found in this school by Admission No.';
+                $errors[] = 'Student ['.$data['student'].'] was not found in this school by Student ID Number.';
             } else {
                 $data['_student'] = $student;
             }

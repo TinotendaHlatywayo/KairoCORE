@@ -18,6 +18,7 @@ use Modules\Academics\Models\AcademicYear;
 use Modules\Academics\Models\Course;
 use Modules\Academics\Models\ReportTemplate;
 use Modules\Academics\Models\Section;
+use Modules\Academics\Models\Subject;
 use Modules\Academics\Models\Term;
 use Modules\Finance\Models\Invoice;
 use Modules\Students\Models\Student;
@@ -119,6 +120,7 @@ class AcademicReportResource extends Resource
 
                                 Forms\Components\Select::make('status')
                                     ->options([
+                                        'published' => __('Published'),
                                         'approved' => __('Approved'),
                                         'draft' => __('Draft'),
                                     ])
@@ -140,6 +142,32 @@ class AcademicReportResource extends Resource
                                     ->label(__('Headmaster Remarks'))
                                     ->placeholder(__('Principal review notes...'))
                                     ->rows(3),
+                            ])->columnSpan(1),
+
+                        Forms\Components\Section::make(__('Subject Teacher Remarks'))
+                            ->description(__('Optional remarks per subject for this learner. Displayed on the report card when the template has "Show Subject Teacher Remarks Column" enabled.'))
+                            ->schema([
+                                Forms\Components\Repeater::make('subject_teacher_remarks')
+                                    ->label(__('Per-Subject Remarks'))
+                                    ->schema([
+                                        Forms\Components\Select::make('subject_id')
+                                            ->label(__('Subject'))
+                                            ->options(fn () => Subject::where('school_id', app('current_tenant')->id ?? auth()->user()?->school_id)->pluck('name', 'id'))
+                                            ->searchable()
+                                            ->preload()
+                                            ->required()
+                                            ->live(),
+                                        Forms\Components\Textarea::make('remark')
+                                            ->label(__('Remark'))
+                                            ->rows(2)
+                                            ->required(),
+                                    ])
+                                    ->columns(2)
+                                    ->default([])
+                                    ->addActionLabel(__('Add Subject Remark'))
+                                    ->collapsible()
+                                    ->itemLabel(fn (array $state): ?string => $state['subject_id'] ?? null)
+                                    ->reorderable(false),
                             ])->columnSpan(1),
 
                         Forms\Components\Section::make(__('Heritage-Based Curriculum (HBC) Competencies'))
@@ -243,30 +271,18 @@ class AcademicReportResource extends Resource
                 Tables\Filters\Filter::make('scope')
                     ->label(__('Report Scope'))
                     ->form([
-                        Forms\Components\Select::make('scope_type')
-                            ->label(__('Scope'))
-                            ->options([
-                                'single_class' => __('Single Class Stream'),
-                                'whole_stream' => __('Whole Stream (Form Level)'),
-                                'whole_school' => __('Whole School'),
-                                'fee_paid' => __('Fee Payment Percentage'),
-                            ])
-                            ->default('single_class')
-                            ->live(),
-
-                        Forms\Components\Select::make('section_id')
-                            ->label(__('Class Stream'))
+                        Forms\Components\MultiSelect::make('sections')
+                            ->label(__('Class Streams'))
                             ->options(fn () => Section::with('course')->get()->pluck('full_name', 'id'))
                             ->searchable()
                             ->preload()
-                            ->visible(fn (Forms\Get $get) => $get('scope_type') === 'single_class'),
+                            ->helperText(__('Leave empty to include every class.')),
 
                         Forms\Components\Select::make('course_id')
                             ->label(__('Stream / Form Level'))
                             ->options(fn () => Course::where('school_id', app('current_tenant')->id ?? auth()->user()?->school_id)->pluck('name', 'id'))
                             ->searchable()
-                            ->preload()
-                            ->visible(fn (Forms\Get $get) => $get('scope_type') === 'whole_stream'),
+                            ->preload(),
 
                         Forms\Components\TextInput::make('min_paid_percentage')
                             ->label(__('Minimum Fees Paid %'))
@@ -274,25 +290,27 @@ class AcademicReportResource extends Resource
                             ->minValue(0)
                             ->maxValue(100)
                             ->suffix('%')
-                            ->helperText(__('Only include students who have paid at least this percentage of their total fees.'))
-                            ->visible(fn (Forms\Get $get) => $get('scope_type') === 'fee_paid'),
+                            ->helperText(__('Only include students who have paid at least this percentage of their total fees.')),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
-                        $scopeType = $data['scope_type'] ?? 'single_class';
+                        $sections = $data['sections'] ?? [];
 
-                        return $query
-                            ->when(
-                                $scopeType === 'single_class' && ! empty($data['section_id']),
-                                fn (Builder $q): Builder => $q->where('section_id', $data['section_id']),
-                            )
-                            ->when(
-                                $scopeType === 'whole_stream' && ! empty($data['course_id']),
-                                fn (Builder $q): Builder => $q->whereHas('section', fn (Builder $sq) => $sq->where('course_id', $data['course_id'])),
-                            )
-                            ->when(
-                                $scopeType === 'fee_paid' && ! empty($data['min_paid_percentage']),
-                                fn (Builder $q): Builder => $q->whereIn('student_id', self::studentsPaidAtLeast((float) $data['min_paid_percentage'])),
-                            );
+                        $query->when(
+                            ! empty($sections),
+                            fn (Builder $q): Builder => $q->whereIn('section_id', $sections),
+                        );
+
+                        $query->when(
+                            ! empty($data['course_id']),
+                            fn (Builder $q): Builder => $q->whereHas('section', fn (Builder $sq) => $sq->where('course_id', $data['course_id'])),
+                        );
+
+                        $query->when(
+                            ! empty($data['min_paid_percentage']),
+                            fn (Builder $q): Builder => $q->whereIn('student_id', self::studentsPaidAtLeast((float) $data['min_paid_percentage'])),
+                        );
+
+                        return $query;
                     }),
 
                 Tables\Filters\SelectFilter::make('status')
@@ -328,6 +346,46 @@ class AcademicReportResource extends Resource
                     ->iconButton()
                     ->tooltip(__('Edit Report')),
 
+                Tables\Actions\Action::make('publishReport')
+                    ->label(__('Publish to Portal'))
+                    ->icon('heroicon-o-cloud-arrow-up')
+                    ->iconButton()
+                    ->color('success')
+                    ->tooltip(__('Publish report to student portal'))
+                    ->visible(fn ($record) => $record->status !== 'published')
+                    ->action(function ($record) {
+                        if ($record->student && ! $record->student->user_id) {
+                            Notification::make()
+                                ->warning()
+                                ->title(__('Portal not created'))
+                                ->body(__('This learner has not created their student portal account yet. Skipped.'))
+                                ->send();
+                            return;
+                        }
+                        $record->update(['status' => 'published']);
+                        Notification::make()
+                            ->success()
+                            ->title(__('Report Published'))
+                            ->body(__('Report card published to student portal.'))
+                            ->send();
+                    }),
+
+                Tables\Actions\Action::make('unpublishReport')
+                    ->label(__('Unpublish from Portal'))
+                    ->icon('heroicon-o-cloud-arrow-down')
+                    ->iconButton()
+                    ->color('warning')
+                    ->tooltip(__('Remove report from student portal'))
+                    ->visible(fn ($record) => $record->status === 'published')
+                    ->action(function ($record) {
+                        $record->update(['status' => 'approved']);
+                        Notification::make()
+                            ->success()
+                            ->title(__('Report Unpublished'))
+                            ->body(__('Report card removed from student portal.'))
+                            ->send();
+                    }),
+
                 Tables\Actions\Action::make('printReport')
                     ->label(__('Print Report'))
                     ->icon('heroicon-o-printer')
@@ -350,33 +408,19 @@ class AcademicReportResource extends Resource
                         Forms\Components\Section::make(__('Report Generation'))
                             ->description(__('Reports are generated from the active report template. Only one template may be active at a time.'))
                             ->schema([
-                                Forms\Components\Select::make('scope_type')
-                                    ->label(__('Report Scope'))
-                                    ->options([
-                                        'single_class' => __('Single Class Stream'),
-                                        'whole_stream' => __('Whole Stream (Form Level)'),
-                                        'whole_school' => __('Whole School'),
-                                        'fee_paid' => __('Fee Payment Percentage'),
-                                    ])
-                                    ->default('single_class')
-                                    ->live()
-                                    ->required(),
-
-                                Forms\Components\Select::make('section_id')
-                                    ->label(__('Class Stream'))
+                                Forms\Components\MultiSelect::make('sections')
+                                    ->label(__('Class Streams'))
                                     ->options(fn () => Section::with('course')->get()->pluck('full_name', 'id'))
                                     ->searchable()
                                     ->preload()
-                                    ->visible(fn (Forms\Get $get) => $get('scope_type') === 'single_class')
-                                    ->required(fn (Forms\Get $get) => $get('scope_type') === 'single_class'),
+                                    ->helperText(__('Leave empty to include every class. Combine with the filters below (all selected criteria apply together).')),
 
                                 Forms\Components\Select::make('course_id')
                                     ->label(__('Stream / Form Level'))
                                     ->options(fn () => Course::where('school_id', app('current_tenant')->id ?? auth()->user()?->school_id)->pluck('name', 'id'))
                                     ->searchable()
                                     ->preload()
-                                    ->visible(fn (Forms\Get $get) => $get('scope_type') === 'whole_stream')
-                                    ->required(fn (Forms\Get $get) => $get('scope_type') === 'whole_stream'),
+                                    ->helperText(__('Optional. Keep only students enrolled in this form level.')),
 
                                 Forms\Components\TextInput::make('min_paid_percentage')
                                     ->label(__('Minimum Fees Paid %'))
@@ -384,9 +428,7 @@ class AcademicReportResource extends Resource
                                     ->minValue(0)
                                     ->maxValue(100)
                                     ->suffix('%')
-                                    ->helperText(__('Only generate for students who have paid at least this percentage of total fees.'))
-                                    ->visible(fn (Forms\Get $get) => $get('scope_type') === 'fee_paid')
-                                    ->required(fn (Forms\Get $get) => $get('scope_type') === 'fee_paid'),
+                                    ->helperText(__('Optional. Only include students who have paid at least this percentage of total fees.')),
 
                                 Forms\Components\Select::make('term_id')
                                     ->label(__('Academic Term'))
@@ -435,43 +477,64 @@ class AcademicReportResource extends Resource
                         }
 
                         $created = 0;
+                        $regenerated = 0;
                         $skipped = 0;
 
+                        $term = Term::find($data['term_id']);
+
                         foreach ($students as $student) {
-                            $enrollment = $student->enrollments()
-                                ->where('academic_year_id', $data['term_id'] ? Term::find($data['term_id'])->academic_year_id : null)
-                                ->first();
+                            $enrollments = $student->enrollments()
+                                ->where('academic_year_id', $term?->academic_year_id)
+                                ->get();
 
-                            $sectionId = $data['scope_type'] === 'single_class'
-                                ? $data['section_id']
-                                : ($enrollment?->section_id ?? $student->enrollments()->first()?->section_id);
-
-                            $exists = AcademicReport::where('student_id', $student->id)
-                                ->where('term_id', $data['term_id'])
-                                ->where('section_id', $sectionId)
-                                ->exists();
-
-                            if ($exists || ! $sectionId) {
+                            if ($enrollments->isEmpty()) {
                                 $skipped++;
 
                                 continue;
                             }
 
-                            AcademicReport::create([
-                                'school_id' => $schoolId,
-                                'student_id' => $student->id,
-                                'section_id' => $sectionId,
-                                'term_id' => $data['term_id'],
-                                'status' => 'draft',
-                                'unhu_competencies' => [],
-                            ]);
+                            foreach ($enrollments as $enrollment) {
+                                $sectionId = $enrollment->section_id
+                                    ?? ($data['sections'][0] ?? null)
+                                    ?? $student->enrollments()->first()?->section_id;
 
-                            $created++;
+                                if (! $sectionId) {
+                                    $skipped++;
+
+                                    continue;
+                                }
+
+                                $existing = AcademicReport::where('student_id', $student->id)
+                                    ->where('term_id', $data['term_id'])
+                                    ->where('section_id', $sectionId)
+                                    ->first();
+
+                                if ($existing) {
+                                    $existing->update([
+                                        'status' => 'draft',
+                                        'unhu_competencies' => [],
+                                    ]);
+                                    $regenerated++;
+
+                                    continue;
+                                }
+
+                                AcademicReport::create([
+                                    'school_id' => $schoolId,
+                                    'student_id' => $student->id,
+                                    'section_id' => $sectionId,
+                                    'term_id' => $data['term_id'],
+                                    'status' => 'draft',
+                                    'unhu_competencies' => [],
+                                ]);
+
+                                $created++;
+                            }
                         }
 
                         Notification::make()
                             ->title(__('Report generation complete'))
-                            ->body(__('Generated')." {$created} ".__('report card(s) using')." '{$template->name}'. {$skipped} ".__('skipped (already exists or missing class).'))
+                            ->body(__('Generated')." {$created} ".__('report card(s) using')." '{$template->name}'. {$regenerated} ".__('regenerated as draft,')." {$skipped} ".__('skipped (missing class or term match).'))
                             ->success()
                             ->send();
                     }),
@@ -509,6 +572,39 @@ class AcademicReportResource extends Resource
                         ]);
 
                         $livewire->js("window.open('{$url}', '_blank');");
+                    }),
+
+                Tables\Actions\Action::make('addClassTeacherRemarks')
+                    ->label(__('Add Class Teacher Remarks'))
+                    ->icon('heroicon-o-chat-bubble-bottom-center-text')
+                    ->color('warning')
+                    ->form([
+                        Forms\Components\Select::make('section_id')
+                            ->label(__('Class Stream'))
+                            ->options(fn () => Section::with('course')->get()->pluck('full_name', 'id'))
+                            ->searchable()
+                            ->preload()
+                            ->required(),
+                        Forms\Components\Textarea::make('remark')
+                            ->label(__('Class Teacher Remark'))
+                            ->placeholder(__('This remark will be applied to every learner in the selected class.'))
+                            ->helperText(__('Bulk-apply the same observation to each learner in this class stream.'))
+                            ->rows(3)
+                            ->required(),
+                    ])
+                    ->action(function (array $data): void {
+                        $schoolId = app('current_tenant')->id ?? auth()->user()?->school_id;
+
+                        $updated = AcademicReport::withoutGlobalScopes()
+                            ->where('school_id', $schoolId)
+                            ->where('section_id', $data['section_id'])
+                            ->update(['teacher_comment' => $data['remark']]);
+
+                        Notification::make()
+                            ->title(__('Class teacher remarks applied'))
+                            ->body(__('Updated').' '.$updated.' '.__('report card(s) in the selected class.'))
+                            ->success()
+                            ->send();
                     }),
             ])
             ->bulkActions([
@@ -558,25 +654,27 @@ class AcademicReportResource extends Resource
 
     protected static function resolveScopeStudents(array $data, $schoolId)
     {
-        $scopeType = $data['scope_type'] ?? 'single_class';
+        $sections = $data['sections'] ?? [];
 
-        return match ($scopeType) {
-            'single_class' => Student::where('school_id', $schoolId)
-                ->whereHas('enrollments', fn (Builder $q) => $q->where('section_id', $data['section_id']))
-                ->get(),
+        $query = Student::where('school_id', $schoolId);
 
-            'whole_stream' => Student::where('school_id', $schoolId)
-                ->whereHas('enrollments.section', fn (Builder $q) => $q->where('course_id', $data['course_id']))
-                ->get(),
+        if (! empty($sections)) {
+            $query->whereHas('enrollments', fn (Builder $q) => $q->whereIn('section_id', $sections));
+        }
 
-            'whole_school' => Student::where('school_id', $schoolId)->get(),
+        if (! empty($sections) && ! empty($data['section_id'])) {
+            $query->whereHas('enrollments', fn (Builder $q) => $q->where('section_id', $data['section_id']));
+        }
 
-            'fee_paid' => Student::where('school_id', $schoolId)
-                ->whereIn('id', self::studentsPaidAtLeast((float) ($data['min_paid_percentage'] ?? 0)))
-                ->get(),
+        if (! empty($data['course_id'])) {
+            $query->whereHas('enrollments.section', fn (Builder $q) => $q->where('course_id', $data['course_id']));
+        }
 
-            default => collect(),
-        };
+        if (! empty($data['min_paid_percentage'])) {
+            $query->whereIn('id', self::studentsPaidAtLeast((float) $data['min_paid_percentage']));
+        }
+
+        return $query->get();
     }
 
     protected static function studentsPaidAtLeast(float $percentage): array

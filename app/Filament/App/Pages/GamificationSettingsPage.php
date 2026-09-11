@@ -31,6 +31,11 @@ class GamificationSettingsPage extends Page implements HasForms
 
     public ?array $data = [];
 
+    public static function canAccess(): bool
+    {
+        return false;
+    }
+
     public function mount(): void
     {
         $settings = app(GamificationService::class)->getSettings();

@@ -13,12 +13,14 @@ class ProcurementOrderItem extends Model
         'quantity_ordered',
         'quantity_received',
         'unit_cost',
+        'is_fixed_asset',
     ];
 
     protected $casts = [
         'quantity_ordered' => 'integer',
         'quantity_received' => 'integer',
         'unit_cost' => 'decimal:4',
+        'is_fixed_asset' => 'boolean',
     ];
 
     public function order(): BelongsTo

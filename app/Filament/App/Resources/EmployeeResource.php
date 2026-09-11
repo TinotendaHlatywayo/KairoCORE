@@ -128,6 +128,12 @@ class EmployeeResource extends Resource
                                 ->options(SalaryGrade::all()->pluck('name', 'id'))
                                 ->placeholder(__('Select Assigned Salary Grade'))
                                 ->required(),
+                            Forms\Components\Repeater::make('individual_allowances')
+                                ->label(__('Specific Individual Allowances (For this employee only)'))
+                                ->schema([
+                                    Forms\Components\TextInput::make('name')->required()->label(__('Allowance Name')),
+                                    Forms\Components\TextInput::make('amount')->numeric()->prefix('$')->required()->label(__('Amount')),
+                                ])->columns(2),
                         ]),
 
                     FormWizard\Step::make('Family & Medical')

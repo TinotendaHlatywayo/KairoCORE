@@ -19,7 +19,8 @@
     class="relative"
 >
     <button
-        x-on:click="open = !open"
+        type="button"
+        @click.stop="open = !open"
         class="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-white/10 dark:bg-white/5 dark:text-gray-200 dark:hover:bg-white/10"
         title="{{ __('Switch language') }}"
     >
@@ -30,6 +31,7 @@
 
     <div
         x-show="open"
+        @click.stop
         x-transition:enter="transition ease-out duration-150"
         x-transition:enter-start="opacity-0 scale-95 translate-y-1"
         x-transition:enter-end="opacity-100 scale-100 translate-y-0"
@@ -41,8 +43,8 @@
     >
         <div class="py-1">
             @foreach($languages as $code => $lang)
-                <button
-                    wire:click="switchLocale('{{ $code }}')"
+                <a
+                    href="{{ route('locale.switch', ['locale' => $code]) }}"
                     class="flex w-full items-center gap-2.5 px-3 py-2 text-sm transition hover:bg-gray-50 dark:hover:bg-white/5 {{ $code === $current ? 'bg-gray-50 font-semibold text-blue-600 dark:bg-white/5 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300' }}"
                 >
                     <span class="text-base leading-none">{{ $lang['flag'] }}</span>
@@ -50,7 +52,7 @@
                     @if($code === $current)
                         <x-heroicon-s-check class="ml-auto h-4 w-4 text-blue-500" />
                     @endif
-                </button>
+                </a>
             @endforeach
         </div>
     </div>

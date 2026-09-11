@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 use Modules\Admin\Models\SystemSetting;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -65,11 +66,14 @@ class ResolveTenant
         $baseHost = parse_url($baseDomain, PHP_URL_HOST) ?? $baseDomain;
 
         if ($host === $baseHost) {
+            if (Str::startsWith($request->path(), 'student')) {
+                abort(404, 'The student portal is only available under a school subdomain.');
+            }
+
             return $next($request);
         }
 
         $school = $this->resolveSchool($host, $baseHost);
-
         if (! $school) {
             abort(404, 'School platform domain not registered.');
         }

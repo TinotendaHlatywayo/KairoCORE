@@ -39,7 +39,9 @@ class StudentFees extends Page
         return __('My Fees');
     }
 
-    // Term selector
+    // Search & Term selector
+    public string $search = '';
+
     public ?int $selectedTermId = null;
 
     // Bank deposit form properties
@@ -299,10 +301,19 @@ class StudentFees extends Page
                 ->get();
         }
 
-        // Filter invoices by selected term
+        // Filter invoices by selected term and search query
         $invoices = $this->selectedTermId
             ? $allInvoices->where('term_id', $this->selectedTermId)
             : $allInvoices;
+
+        if (filled($this->search)) {
+            $termSearch = strtolower($this->search);
+            $invoices = $invoices->filter(function ($inv) use ($termSearch) {
+                return str_contains(strtolower($inv->invoice_number), $termSearch)
+                    || str_contains(strtolower($inv->term?->name ?? ''), $termSearch)
+                    || str_contains(strtolower($inv->status ?? ''), $termSearch);
+            });
+        }
 
         // Term totals (always across ALL invoices for context)
         $totalBilledAll = (float) $allInvoices->sum('total_amount');
@@ -348,6 +359,7 @@ class StudentFees extends Page
             'bankAccounts' => $bankAccounts,
             'bankList' => $bankList,
             'submissions' => $submissions,
+            'search' => $this->search,
         ];
     }
 }

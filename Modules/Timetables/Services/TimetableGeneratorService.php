@@ -264,8 +264,10 @@ class TimetableGeneratorService
     {
         $schoolId = app('current_tenant')->id;
         $templateId = (int) $params['template_id'];
-        $academicYearId = (int) $params['academic_year_id'];
-        $termId = (int) $params['term_id'];
+        $academicYearId = isset($params['academic_year_id']) && filled($params['academic_year_id'])
+            ? (int) $params['academic_year_id'] : null;
+        $termId = isset($params['term_id']) && filled($params['term_id'])
+            ? (int) $params['term_id'] : null;
         $maxPerSubjectPerDay = max(1, (int) ($params['max_per_subject_per_day'] ?? 1));
 
         $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
@@ -277,11 +279,18 @@ class TimetableGeneratorService
             ->where('template_id', $templateId)
             ->where('is_break', false)
             ->orderBy('start_time')
-            ->get(['id']);
+            ->get(['id', 'start_time', 'end_time', 'duration_minutes']);
 
         if ($slots->isEmpty()) {
             throw new \Exception('No teaching periods found for this template. Compile the time slots first.');
         }
+
+        $slotIds = $slots->pluck('id')->values()->all();
+
+        // Short slots (<= 40 minutes) are automatically grouped into double
+        // blocks so the grid is not littered with too many single free cells.
+        $avgDuration = (int) round($slots->avg(fn ($s) => $s->duration_minutes ?? (int) round((strtotime($s->end_time) - strtotime($s->start_time)) / 60)));
+        $autoPairShortSlots = $avgDuration > 0 && $avgDuration <= 40;
 
         // ------------------------------------------------------------------
         // 2. Optionally clear unlocked lessons; locked ones stay as obstacles.
@@ -372,19 +381,50 @@ class TimetableGeneratorService
             foreach ($targetSections as $section) {
                 $weeklyPeriods = max(1, (int) $assignment->periods_per_week);
 
-                for ($i = 0; $i < $weeklyPeriods; $i++) {
-                    $requirements[] = [
-                        'course_id' => $assignment->course_id,
-                        'section_id' => $section->id,
-                        'section_label' => trim(($assignment->course->name ?? '').' '.$section->name),
-                        'subject_id' => $assignment->subject_id,
-                        'subject_label' => $assignment->subject->name ?? 'Unknown subject',
-                        'teacher_id' => $assignment->teacher_id,
-                        'room_preference' => $assignment->room_preference,
-                        'fixed_room_id' => $section->classroom_id
-                            ? (int) $section->classroom_id
-                            : null,
-                    ];
+                $explicitDoubles = max(0, (int) ($assignment->double_periods_per_week ?? 0));
+                $explicitTriples = max(0, (int) ($assignment->triple_periods_per_week ?? 0));
+
+                // When nobody asked for a specific block pattern and the slot
+                // duration is short, the engine auto-pairs periods into
+                // doubles so free slots never dominate the weekly grid.
+                if ($explicitDoubles === 0 && $explicitTriples === 0 && $autoPairShortSlots) {
+                    $explicitDoubles = intdiv($weeklyPeriods, 2);
+                    $explicitTriples = 0;
+                }
+
+                $blockedPeriods = ($explicitDoubles * 2) + ($explicitTriples * 3);
+
+                if ($blockedPeriods > $weeklyPeriods) {
+                    $overflow = $blockedPeriods - $weeklyPeriods;
+                    $explicitTriples = max(0, $explicitTriples - $overflow);
+                    $blockedPeriods = ($explicitDoubles * 2) + ($explicitTriples * 3);
+                }
+
+                $singleCount = max(0, $weeklyPeriods - $blockedPeriods);
+
+                $blockTemplate = [
+                    'course_id' => $assignment->course_id,
+                    'section_id' => $section->id,
+                    'section_label' => trim(($assignment->course->name ?? '').' '.$section->name),
+                    'subject_id' => $assignment->subject_id,
+                    'subject_label' => $assignment->subject->name ?? 'Unknown subject',
+                    'teacher_id' => $assignment->teacher_id,
+                    'room_preference' => $assignment->room_preference,
+                    'fixed_room_id' => $section->classroom_id
+                        ? (int) $section->classroom_id
+                        : null,
+                ];
+
+                for ($i = 0; $i < $explicitTriples; $i++) {
+                    $requirements[] = $blockTemplate + ['block_size' => 3];
+                }
+
+                for ($i = 0; $i < $explicitDoubles; $i++) {
+                    $requirements[] = $blockTemplate + ['block_size' => 2];
+                }
+
+                for ($i = 0; $i < $singleCount; $i++) {
+                    $requirements[] = $blockTemplate + ['block_size' => 1];
                 }
             }
         }
@@ -435,7 +475,13 @@ class TimetableGeneratorService
             ->values()
             ->all();
 
-        $genericRoomIds = $classrooms->pluck('id')
+        // Auto-placement only uses ordinary classrooms. Purpose-built rooms
+        // (science / computer laboratories, etc.) are excluded by default —
+        // a teacher can still book one explicitly per lesson or via the
+        // assignment's room_preference.
+        $genericRoomIds = $classrooms
+            ->reject(fn ($room) => $this->isLabRoom($room->name))
+            ->pluck('id')
             ->diff($pinnedRoomIds)
             ->values()
             ->all();
@@ -446,65 +492,47 @@ class TimetableGeneratorService
 
         // ------------------------------------------------------------------
         // 6. Placement loop + repair pass. Every candidate cell is scored and
-        //    the globally best-scoring feasible cell wins.
+        //    the globally best-scoring feasible cell wins. Requirements with a
+        //    block_size > 1 occupy several consecutive time slots so the grid
+        //    packs double/triple lessons tightly and free slots stay few.
         // ------------------------------------------------------------------
         $lessonsToInsert = [];
         $unplaced = [];
         $requirementIndex = 0;
 
         foreach ($requirements as $index => $req) {
-            $placedCell = $this->findBestCell(
+            $blockSize = (int) ($req['block_size'] ?? 1);
+
+            $placed = $this->placeRequirement(
                 $req,
                 $index,
+                $blockSize,
                 $days,
-                $slots->pluck('id')->values()->all(),
-                compact('sectionBusy', 'teacherBusy', 'roomBusy', 'slotUsage', 'roomUsage', 'subjectDayCount'),
+                $slotIds,
+                $maxPerSubjectPerDay,
                 $req['fixed_room_id'] ?? $preferredRooms[$index],
                 $req['fixed_room_id'] ? [$req['fixed_room_id']] : $genericRoomIds,
-                $maxPerSubjectPerDay,
+                $sectionBusy,
+                $teacherBusy,
+                $roomBusy,
+                $slotUsage,
+                $roomUsage,
+                $subjectDayCount,
                 $lessonsToInsert,
+                $schoolId,
+                $templateId,
+                $academicYearId,
+                $termId,
             );
 
-            if ($placedCell === null) {
+            if ($placed) {
+                unset($unplaced[$index]);
+            } else {
                 $unplaced[$index] = [
-                    'label' => sprintf('%s — %s', $req['section_label'], $req['subject_label']),
-                    'reason' => $this->diagnoseFailure($req, $days, $slots->count(), $teacherBusy, $sectionBusy, $roomBusy, $classrooms->count()),
+                    'label' => sprintf('%s — %s (%s)', $req['section_label'], $req['subject_label'], $blockSize > 1 ? $blockSize.'-period block' : 'single'),
+                    'reason' => $this->diagnoseFailure($req, $days, count($slotIds), $teacherBusy, $sectionBusy, $roomBusy, $classrooms->count()),
                 ];
-
-                continue;
             }
-
-            [$day, $slotId, $roomId] = $placedCell;
-            $key = $day.'|'.$slotId;
-
-            $sectionBusy[$req['section_id']][$key] = true;
-            $teacherBusy[$req['teacher_id']][$key] = true;
-            $roomBusy[$roomId][$key] = true;
-
-            $slotUsage[$key] = ($slotUsage[$key] ?? 0) + 1;
-            $roomUsage[$roomId] = ($roomUsage[$roomId] ?? 0) + 1;
-
-            $subjectDayCount[$req['section_id'].'#'.$req['subject_id']][$day]
-                = ($subjectDayCount[$req['section_id'].'#'.$req['subject_id']][$day] ?? 0) + 1;
-
-            $lessonsToInsert[] = [
-                'school_id' => $schoolId,
-                'template_id' => $templateId,
-                'academic_year_id' => $academicYearId,
-                'term_id' => $termId,
-                'course_id' => $req['course_id'],
-                'section_id' => $req['section_id'],
-                'subject_id' => $req['subject_id'],
-                'teacher_id' => $req['teacher_id'],
-                'classroom_id' => $roomId,
-                'time_slot_id' => $slotId,
-                'day_of_week' => $day,
-                'is_locked' => false,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
-
-            unset($unplaced[$index]);
         }
 
         // Repair pass: failures earlier in the run may now have open cells the
@@ -512,48 +540,31 @@ class TimetableGeneratorService
         if (! empty($unplaced)) {
             foreach (array_keys($unplaced) as $index) {
                 $req = $requirements[$index];
+                $blockSize = (int) ($req['block_size'] ?? 1);
 
-                $placedCell = $this->findBestCell(
+                $placed = $this->placeRequirement(
                     $req,
                     $index,
+                    $blockSize,
                     $days,
-                    $slots->pluck('id')->values()->all(),
-                    compact('sectionBusy', 'teacherBusy', 'roomBusy', 'slotUsage', 'roomUsage', 'subjectDayCount'),
-$req['fixed_room_id'] ?? $preferredRooms[$index],
-                                    $req['fixed_room_id'] ? [$req['fixed_room_id']] : $genericRoomIds,
-                                    $maxPerSubjectPerDay,
-                                    $lessonsToInsert,
-                                );
+                    $slotIds,
+                    $maxPerSubjectPerDay,
+                    $req['fixed_room_id'] ?? $preferredRooms[$index],
+                    $req['fixed_room_id'] ? [$req['fixed_room_id']] : $genericRoomIds,
+                    $sectionBusy,
+                    $teacherBusy,
+                    $roomBusy,
+                    $slotUsage,
+                    $roomUsage,
+                    $subjectDayCount,
+                    $lessonsToInsert,
+                    $schoolId,
+                    $templateId,
+                    $academicYearId,
+                    $termId,
+                );
 
-                if ($placedCell !== null) {
-                    [$day, $slotId, $roomId] = $placedCell;
-                    $key = $day.'|'.$slotId;
-
-                    $sectionBusy[$req['section_id']][$key] = true;
-                    $teacherBusy[$req['teacher_id']][$key] = true;
-                    $roomBusy[$roomId][$key] = true;
-                    $slotUsage[$key] = ($slotUsage[$key] ?? 0) + 1;
-                    $roomUsage[$roomId] = ($roomUsage[$roomId] ?? 0) + 1;
-                    $subjectDayCount[$req['section_id'].'#'.$req['subject_id']][$day]
-                        = ($subjectDayCount[$req['section_id'].'#'.$req['subject_id']][$day] ?? 0) + 1;
-
-                    $lessonsToInsert[] = [
-                        'school_id' => $schoolId,
-                        'template_id' => $templateId,
-                        'academic_year_id' => $academicYearId,
-                        'term_id' => $termId,
-                        'course_id' => $req['course_id'],
-                        'section_id' => $req['section_id'],
-                        'subject_id' => $req['subject_id'],
-                        'teacher_id' => $req['teacher_id'],
-                        'classroom_id' => $roomId,
-                        'time_slot_id' => $slotId,
-                        'day_of_week' => $day,
-                        'is_locked' => false,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ];
-
+                if ($placed) {
                     unset($unplaced[$index]);
                 }
             }
@@ -576,8 +587,103 @@ $req['fixed_room_id'] ?? $preferredRooms[$index],
     }
 
     /**
+     * Place a requirement (single, double or triple period) into the weekly
+     * grid. Mutates the busy maps and appends all generated lessons to
+     * $lessonsToInsert. Returns true when the whole block was placed.
+     */
+    protected function placeRequirement(
+        array $req,
+        int $index,
+        int $blockSize,
+        array $days,
+        array $slotIds,
+        int $maxPerSubjectPerDay,
+        ?int $preferredRoomId,
+        array $roomIds,
+        array &$sectionBusy,
+        array &$teacherBusy,
+        array &$roomBusy,
+        array &$slotUsage,
+        array &$roomUsage,
+        array &$subjectDayCount,
+        array &$pendingLessons,
+        int $schoolId,
+        int $templateId,
+        ?int $academicYearId,
+        ?int $termId,
+    ): bool {
+        $placedCell = $this->findBestCell(
+            $req,
+            $index,
+            $days,
+            $slotIds,
+            [
+                'sectionBusy' => $sectionBusy,
+                'teacherBusy' => $teacherBusy,
+                'roomBusy' => $roomBusy,
+                'slotUsage' => $slotUsage,
+                'roomUsage' => $roomUsage,
+                'subjectDayCount' => $subjectDayCount,
+            ],
+            $preferredRoomId,
+            $roomIds,
+            $maxPerSubjectPerDay,
+            $blockSize,
+            $pendingLessons,
+        );
+
+        if ($placedCell === null) {
+            return false;
+        }
+
+        [$day, $firstSlotIndex, $roomId] = $placedCell;
+        $slotCount = count($slotIds);
+
+        for ($b = 0; $b < $blockSize; $b++) {
+            $slotIndex = $firstSlotIndex + $b;
+            if ($slotIndex >= $slotCount) {
+                return false;
+            }
+
+            $slotId = $slotIds[$slotIndex];
+            $key = $day.'|'.$slotId;
+
+            $sectionBusy[$req['section_id']][$key] = true;
+            $teacherBusy[$req['teacher_id']][$key] = true;
+            $roomBusy[$roomId][$key] = true;
+
+            $slotUsage[$key] = ($slotUsage[$key] ?? 0) + 1;
+            $roomUsage[$roomId] = ($roomUsage[$roomId] ?? 0) + 1;
+
+            $pendingLessons[] = [
+                'school_id' => $schoolId,
+                'template_id' => $templateId,
+                'academic_year_id' => $academicYearId,
+                'term_id' => $termId,
+                'course_id' => $req['course_id'],
+                'section_id' => $req['section_id'],
+                'subject_id' => $req['subject_id'],
+                'teacher_id' => $req['teacher_id'],
+                'classroom_id' => $roomId,
+                'time_slot_id' => $slotId,
+                'day_of_week' => $day,
+                'is_locked' => false,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+
+        $subjectKey = $req['section_id'].'#'.$req['subject_id'];
+        $subjectDayCount[$subjectKey][$day] = ($subjectDayCount[$subjectKey][$day] ?? 0) + $blockSize;
+
+        return true;
+    }
+
+    /**
      * Scan every feasible (day, slot) cell and return the best-scoring one
-     * as [day, slotId, roomId], or null when nothing is feasible.
+     * as [day, firstSlotIndex, roomId], or null when nothing is feasible.
+     * With a blockSize > 1 the chosen room must be free for every consecutive
+     * slot of the block.
      */
     protected function findBestCell(
         array $req,
@@ -588,21 +694,15 @@ $req['fixed_room_id'] ?? $preferredRooms[$index],
         ?int $preferredRoomId,
         array $roomIds,
         int $maxPerSubjectPerDay,
-        array &$pendingLessons,
+        int $blockSize = 1,
+        array &$pendingLessons = [],
     ): ?array {
         extract($state, EXTR_SKIP);
 
         $best = null;
         $bestScore = PHP_FLOAT_MAX;
 
-        // Pending (not yet inserted) placements must also block their cells.
         $pendingSectionBusy = $pendingTeacherBusy = $pendingRoomBusy = [];
-        foreach ($pendingLessons as $lesson) {
-            if ((int) $lesson['section_id'] === (int) $req['section_id']
-                || (int) $lesson['teacher_id'] === (int) $req['teacher_id']) {
-                continue; // handled below per-key
-            }
-        }
         foreach ($pendingLessons as $lesson) {
             $pKey = $lesson['day_of_week'].'|'.$lesson['time_slot_id'];
             $pendingSectionBusy[$lesson['section_id']][$pKey] = true;
@@ -611,6 +711,7 @@ $req['fixed_room_id'] ?? $preferredRooms[$index],
         }
 
         $subjectKey = $req['section_id'].'#'.$req['subject_id'];
+        $slotCount = count($slotIds);
 
         // Rotate the day visitation order per subject so different subjects
         // naturally gravitate towards different "first" days — otherwise the
@@ -619,30 +720,48 @@ $req['fixed_room_id'] ?? $preferredRooms[$index],
         $orderedDays = $this->rotateWeekDays($days, (string) $subjectKey);
 
         foreach ($orderedDays as $dayIndex => $day) {
-            // Spread heuristic: respect the per-day subject cap.
-            if (($subjectDayCount[$subjectKey][$day] ?? 0) >= $maxPerSubjectPerDay) {
+            // Allow a block of blockSize to occupy its own slots on a day even
+            // when the per-day single cap looks tighter: the user asked for it.
+            $dayCap = max($maxPerSubjectPerDay, $blockSize);
+            if (($subjectDayCount[$subjectKey][$day] ?? 0) + $blockSize > $dayCap) {
                 continue;
             }
 
             foreach ($slotIds as $slotIndex => $slotId) {
-                $key = $day.'|'.$slotId;
-
-                // Hard constraint checks (existing + pending placements).
-                if (isset($sectionBusy[$req['section_id']][$key])
-                    || isset($pendingSectionBusy[$req['section_id']][$key])) {
+                if ($slotIndex + $blockSize > $slotCount) {
                     continue;
                 }
 
-                if (isset($teacherBusy[$req['teacher_id']][$key])
-                    || isset($pendingTeacherBusy[$req['teacher_id']][$key])) {
+                // Collect the consecutive slot ids belonging to this block.
+                $blockIds = array_slice($slotIds, $slotIndex, $blockSize);
+
+                $blockFree = true;
+                foreach ($blockIds as $bsId) {
+                    $key = $day.'|'.$bsId;
+
+                    if (isset($sectionBusy[$req['section_id']][$key])
+                        || isset($pendingSectionBusy[$req['section_id']][$key])) {
+                        $blockFree = false;
+                        break;
+                    }
+
+                    if (isset($teacherBusy[$req['teacher_id']][$key])
+                        || isset($pendingTeacherBusy[$req['teacher_id']][$key])) {
+                        $blockFree = false;
+                        break;
+                    }
+                }
+
+                if (! $blockFree) {
                     continue;
                 }
 
-                // Pick the best available room for this cell.
-                $roomId = $this->pickRoom(
+                // Pick a room free for the entire block (preferred first).
+                $roomId = $this->pickBlockRoom(
                     $preferredRoomId,
                     $roomIds,
-                    $key,
+                    $day,
+                    $blockIds,
                     $roomBusy,
                     $pendingRoomBusy,
                     $roomUsage,
@@ -652,6 +771,8 @@ $req['fixed_room_id'] ?? $preferredRooms[$index],
                     continue;
                 }
 
+                $firstKey = $day.'|'.$blockIds[0];
+
                 // Composite score — lower is better:
                 //   x100  subject-day balance  (spread same subject over days)
                 //   x10   grid balance        (avoid school-wide congested periods)
@@ -660,14 +781,14 @@ $req['fixed_room_id'] ?? $preferredRooms[$index],
                 //   jitter (0-5)  breaks ties so the same subject does not always
                 //   land on Period 1 Monday on every regeneration run.
                 $score = (($subjectDayCount[$subjectKey][$day] ?? 0) * 100)
-                    + (($slotUsage[$key] ?? 0) * 10)
+                    + (($slotUsage[$firstKey] ?? 0) * 10)
                     + ($dayIndex * 2)
                     + $slotIndex
                     + mt_rand(0, 10);
 
                 if ($score < $bestScore) {
                     $bestScore = $score;
-                    $best = [$day, $slotId, $roomId];
+                    $best = [$day, $slotIndex, $roomId];
                 }
             }
         }
@@ -676,27 +797,45 @@ $req['fixed_room_id'] ?? $preferredRooms[$index],
     }
 
     /**
-     * Choose a free classroom: preferred first, then least-used.
+     * Choose a free classroom for a block of consecutive slots: preferred
+     * first, then least-used among the rooms free in every slot of the block.
      */
-    protected function pickRoom(
+    protected function pickBlockRoom(
         ?int $preferredRoomId,
         array $roomIds,
-        string $key,
+        string $day,
+        array $blockIds,
         array $roomBusy,
         array $pendingRoomBusy,
         array $roomUsage,
     ): ?int {
-        if ($preferredRoomId !== null
-            && ! isset($roomBusy[$preferredRoomId][$key])
-            && ! isset($pendingRoomBusy[$preferredRoomId][$key])) {
-            return $preferredRoomId;
+        $preferredFree = $preferredRoomId !== null;
+        if ($preferredFree) {
+            foreach ($blockIds as $bsId) {
+                $key = $day.'|'.$bsId;
+                if (isset($roomBusy[$preferredRoomId][$key]) || isset($pendingRoomBusy[$preferredRoomId][$key])) {
+                    $preferredFree = false;
+                    break;
+                }
+            }
+            if ($preferredFree) {
+                return $preferredRoomId;
+            }
         }
 
         $bestRoom = null;
         $lowestUse = PHP_INT_MAX;
 
         foreach ($roomIds as $roomId) {
-            if (isset($roomBusy[$roomId][$key]) || isset($pendingRoomBusy[$roomId][$key])) {
+            $free = true;
+            foreach ($blockIds as $bsId) {
+                $key = $day.'|'.$bsId;
+                if (isset($roomBusy[$roomId][$key]) || isset($pendingRoomBusy[$roomId][$key])) {
+                    $free = false;
+                    break;
+                }
+            }
+            if (! $free) {
                 continue;
             }
 
@@ -759,6 +898,16 @@ $req['fixed_room_id'] ?? $preferredRooms[$index],
         }
 
         return $classrooms->first(fn ($room) => strcasecmp($room->name, (string) $roomPreference) === 0)?->id;
+    }
+
+    /**
+     * Purpose-built rooms (science / computer laboratories, media centres, etc.)
+     * are never chosen automatically; the school decides per lesson whether a
+     * practical has to take place there.
+     */
+    protected function isLabRoom(string $roomName): bool
+    {
+        return (bool) preg_match('/(laboratory|computer\s*(lab|room)|media\s*centre?|workshop)\b/i', $roomName);
     }
 
     protected function lessonSubjectKey($lesson): string

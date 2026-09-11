@@ -52,5 +52,20 @@ class AttemptResultPage extends Page
         $this->attemptModel = $service->getAttemptWithResponses($attemptModel);
 
         $this->summary = $service->getAttemptSummary($this->attemptModel);
+
+        // Mark feedback as viewed (once) when the student may actually see the
+        // correct-answer / explanation feedback for this attempt.
+        $assessment = $this->attemptModel->assessment;
+        $mode = $assessment?->feedback_mode?->value ?? 'after_submission';
+        $feedbackVisible = match ($mode) {
+            'never' => false,
+            'after_deadline' => (bool) ($assessment->deadline_at && now()->gte($assessment->deadline_at)),
+            default => true,
+        };
+
+        if ($feedbackVisible && ! $this->attemptModel->feedback_viewed_at) {
+            $this->attemptModel->update(['feedback_viewed_at' => now()]);
+            $this->attemptModel->refresh();
+        }
     }
 }

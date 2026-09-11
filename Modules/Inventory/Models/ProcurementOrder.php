@@ -42,4 +42,9 @@ class ProcurementOrder extends Model
     {
         return $this->hasMany(ProcurementOrderItem::class, 'procurement_order_id');
     }
+
+    public function grns(): HasMany
+    {
+        return $this->hasMany(GoodsReceivedNote::class, 'procurement_order_id');
+    }
 }

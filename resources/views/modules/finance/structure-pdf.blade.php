@@ -16,7 +16,7 @@
 
     <div class="header">
         <div class="school-name">{{ $school->name }}</div>
-        <div style="font-weight: bold; font-size: 12px; margin-top: 5px;">FEE STRUCTURE: {{ ucwords(strtolower($term->name)) }} ({{ $term->academicYear->name }})</div>
+        <div style="font-weight: bold; font-size: 12px; margin-top: 5px;">FEE STRUCTURE: {{ ucwords(strtolower($term->name)) }}@if($term->academicYear) ({{ $term->academicYear->name }})@endif</div>
     </div>
 
     @foreach($structures as $className => $fees)

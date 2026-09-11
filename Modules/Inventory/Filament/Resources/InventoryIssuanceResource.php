@@ -51,21 +51,27 @@ class InventoryIssuanceResource extends Resource
                 Forms\Components\Section::make(__('Distribution Details'))
                     ->schema([
                         Forms\Components\Select::make('inventory_item_id')
-                            ->relationship('inventoryItem', 'name')
+                            ->label(__('Inventory Item'))
+                            ->options(fn (?string $search = '') => inventory_item_search_options($search))
+                            ->getOptionLabelUsing(fn ($value) => inventory_item_label(\Modules\Inventory\Models\InventoryItem::find($value)))
                             ->searchable()
-                            ->preload()
+                            ->optionsLimit(50)
                             ->required()
                             ->reactive()
-                            ->placeholder(__('Type or select a catalog item...'))
-                            ->afterStateUpdated(fn ($state, callable $set) => $set('inventory_batch_id', null)),
+                            ->placeholder(__('Type to search (matches name, SKU or type — typos are OK)...'))
+                            ->searchPrompt(__('Search by item name, SKU or type...'))
+                            ->afterStateUpdated(function ($state, callable $set) {
+                                $set('inventory_batch_id', null);
+                                $set('quantity', null);
+                            }),
 
                         Forms\Components\Select::make('inventory_location_id')
                             ->relationship('location', 'name')
                             ->searchable()
                             ->preload()
-                            ->nullable() // OPTIONAL [1.2]
+                            ->nullable()
                             ->placeholder(__('Type to search or create a storage location...'))
-                            ->createOptionForm([ // Type to create inline [3]
+                            ->createOptionForm([
                                 Forms\Components\TextInput::make('name')
                                     ->required()
                                     ->placeholder(__('e.g., Room 104, Lab Cabinet B'))
@@ -90,6 +96,26 @@ class InventoryIssuanceResource extends Resource
                             ->numeric()
                             ->required()
                             ->default(1)
+                            ->minValue(1)
+                            ->helperText(fn (Forms\Get $get): ?string => $get('inventory_item_id') ? __('Available on hand: ').(\Modules\Inventory\Models\InventoryItem::find($get('inventory_item_id'))?->current_quantity ?? 0).' unit(s).' : null)
+                            ->rule(function (Forms\Get $get): \Closure {
+                                return function (string $attribute, $value, \Closure $fail) use ($get): void {
+                                    $itemId = $get('inventory_item_id');
+
+                                    if (! $itemId) {
+                                        $fail(__('Select an inventory item before entering a quantity.'));
+
+                                        return;
+                                    }
+
+                                    $item = \Modules\Inventory\Models\InventoryItem::find($itemId);
+                                    $available = (int) ($item?->current_quantity ?? 0);
+
+                                    if ((int) $value > $available) {
+                                        $fail(__('You can only issue ').$available.__(' unit(s) of "').($item?->name ?? '').__('" — this item does not have enough on hand. Please reduce the quantity or contact the storekeeper.'));
+                                    }
+                                };
+                            })
                             ->placeholder(__('Enter quantity to issue...')),
                     ])->columns(4),
 
@@ -109,13 +135,42 @@ class InventoryIssuanceResource extends Resource
                             ->searchable()
                             ->required()
                             ->placeholder(__('Search and select recipient...'))
-                            ->options(function (Forms\Get $get) {
+                            ->searchPrompt(__('Type part of the name — typos are OK (e.g. "crls" finds "Charles")...'))
+                            ->options(function (Forms\Get $get, ?string $search = '') {
                                 $type = $get('issued_to_type');
+
                                 if (! $type) {
                                     return [];
                                 }
 
-                                return $type::query()->pluck('name', 'id');
+                                if ($type === Student::class) {
+                                    $query = Student::query();
+                                    fuzzy_search_where($query, ['name', 'student_id_number', 'admission_number'], $search);
+
+                                    return $query->limit(50)->get()->mapWithKeys(fn ($s) => [
+                                        $s->id => $s->name.' ('.$s->student_id_number.($s->currentEnrollment?->grade?->name ? ', '.$s->currentEnrollment->grade->name : '').')',
+                                    ])->all();
+                                }
+
+                                $query = User::query();
+                                fuzzy_search_where($query, ['name', 'email', 'phone'], $search);
+
+                                return $query->limit(50)->get()->mapWithKeys(fn ($u) => [
+                                    $u->id => $u->name.($u->employee?->employee_number ? ' ('.$u->employee->employee_number.')' : ''),
+                                ])->all();
+                            })
+                            ->getOptionLabelUsing(function (Forms\Get $get, $value): ?string {
+                                $type = $get('issued_to_type');
+
+                                if (! $type) {
+                                    return null;
+                                }
+
+                                if ($type === Student::class) {
+                                    return optional(Student::find($value))->name;
+                                }
+
+                                return optional(User::find($value))->name;
                             }),
                     ])->columns(2),
 

@@ -625,6 +625,12 @@ class FinanceDocumentTemplateResource extends Resource
                 'name' => 'Term 1',
             ]);
             $term->setRelation('academicYear', $year);
+        } elseif (! $term->relationLoaded('academicYear') || ! $term->academicYear) {
+            $year = new \Modules\Academics\Models\AcademicYear([
+                'school_id' => $school->id,
+                'name' => now()->format('Y').' Academic Year',
+            ]);
+            $term->setRelation('academicYear', $year);
         }
 
         $invoice = new Invoice([

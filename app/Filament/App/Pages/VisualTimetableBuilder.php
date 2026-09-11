@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Modules\Academics\Models\AcademicYear;
 use Modules\Academics\Models\Classroom;
 use Modules\Academics\Models\Course;
+use Modules\Academics\Models\CourseSubject;
 use Modules\Academics\Models\Section;
 use Modules\Academics\Models\Subject;
 use Modules\Academics\Models\Term;
@@ -160,7 +161,7 @@ class VisualTimetableBuilder extends Page implements Forms\Contracts\HasForms
 
                         Forms\Components\Select::make('active_template_id')
                             ->label(__('Select Existing Timetable Template'))
-                            ->options(TimetableTemplate::pluck('name', 'id'))
+                            ->options(TimetableTemplate::where('school_id', app('current_tenant')->id)->pluck('name', 'id'))
                             ->required(fn (Forms\Get $get) => $get('template_lifecycle') === 'existing')
                             ->visible(fn (Forms\Get $get) => $get('template_lifecycle') === 'existing')
                             ->live()
@@ -170,7 +171,13 @@ class VisualTimetableBuilder extends Page implements Forms\Contracts\HasForms
                                 }
                                 $template = TimetableTemplate::find($state);
                                 if ($template && is_array($template->settings)) {
-                                    foreach ($template->settings as $key => $value) {
+                                    // Preserve the current template lifecycle and active template
+                                    // so loading an existing template doesn't revert the UI state.
+                                    $settings = $template->settings;
+                                    $settings['template_lifecycle'] = 'existing';
+                                    $settings['active_template_id'] = $template->id;
+
+                                    foreach ($settings as $key => $value) {
                                         $set($key, $value);
                                     }
                                     $set('save_strategy', 'overwrite');
@@ -258,19 +265,19 @@ class VisualTimetableBuilder extends Page implements Forms\Contracts\HasForms
                     ]),
 
                 Forms\Components\Section::make('Automatic Lesson Placement Engine')
-                    ->description('Automatically fill all teaching periods using subjects, teachers, and class assignments without manual slot entry.')
+                    ->description('Automatically fill all teaching periods using subjects, teachers, and class assignments without manual slot entry. Leaving Academic Year or Term empty applies the schedule to all years / all terms.')
                     ->schema([
                         Forms\Components\Select::make('academic_year_id')
                             ->label(__('Academic Year'))
-                            ->options(AcademicYear::where('school_id', app('current_tenant')->id)->pluck('name', 'id'))
-                            ->required()
-                            ->default(AcademicYear::where('school_id', app('current_tenant')->id)->latest()->first()?->id),
-
+                            ->options(AcademicYear::where('school_id', app('current_tenant')->id)->orderByDesc('start_date')->pluck('name', 'id'))
+                            ->placeholder(__('All academic years'))
+                            ->live(),
                         Forms\Components\Select::make('term_id')
                             ->label(__('Term'))
-                            ->options(fn (Forms\Get $get) => Term::where('academic_year_id', $get('academic_year_id'))->pluck('name', 'id'))
-                            ->required()
-                            ->default(Term::latest()->first()?->id),
+                            ->options(fn (Forms\Get $get) => ($get('academic_year_id') ? Term::where('academic_year_id', $get('academic_year_id')) : Term::where('school_id', app('current_tenant')->id))->orderBy('start_date')->pluck('name', 'id'))
+                            ->placeholder(__('All terms'))
+                            ->visible(fn (Forms\Get $get) => true)
+                            ->live(),
 
                         Forms\Components\Toggle::make('replace_unlocked')
                             ->label(__('Clear existing unlocked lessons before generating'))
@@ -283,6 +290,42 @@ class VisualTimetableBuilder extends Page implements Forms\Contracts\HasForms
                             ->minValue(1)
                             ->maxValue(3),
                     ])->columns(2),
+
+                Forms\Components\Section::make('Double / Triple Period Preferences')
+                    ->description(__('Choose which subjects combine consecutive periods into one longer teaching block. Each double lesson counts as 2 periods and each triple as 3. Short slots (≤ 40 min) are automatically paired into doubles when no preference is given, so free slots never clutter the grid.'))
+                    ->schema([
+                        Forms\Components\Repeater::make('period_patterns')
+                            ->label(__('Per-Subject Block Preferences'))
+                            ->schema([
+                                Forms\Components\Select::make('course_id')
+                                    ->label(__('Form / Grade'))
+                                    ->options(Course::where('school_id', app('current_tenant')->id)->orderBy('name')->pluck('name', 'id'))
+                                    ->searchable()
+                                    ->required(),
+                                Forms\Components\Select::make('subject_id')
+                                    ->label(__('Subject'))
+                                    ->options(Subject::where('school_id', app('current_tenant')->id)->orderBy('name')->pluck('name', 'id'))
+                                    ->searchable()
+                                    ->required(),
+                                Forms\Components\TextInput::make('double_count')
+                                    ->label(__('Double Lessons / Week'))
+                                    ->numeric()
+                                    ->default(0)
+                                    ->minValue(0)
+                                    ->helperText(__('Each placed as 2 consecutive periods = 2 periods.')),
+                                Forms\Components\TextInput::make('triple_count')
+                                    ->label(__('Triple Lessons / Week'))
+                                    ->numeric()
+                                    ->default(0)
+                                    ->minValue(0)
+                                    ->helperText(__('Each placed as 3 consecutive periods = 3 periods.')),
+                            ])
+                            ->columns(2)
+                            ->defaultItems(0)
+                            ->reorderable()
+                            ->collapsible()
+                            ->addActionLabel(__('Add Subject Pattern')),
+                    ]),
             ])
             ->statePath('data');
     }
@@ -291,6 +334,8 @@ class VisualTimetableBuilder extends Page implements Forms\Contracts\HasForms
     {
         $schoolId = app('current_tenant')->id;
 
+        // The class combobox is deliberately capped so a school with many
+        // streams never renders an overwhelming list; typing narrows it down.
         return Section::where('school_id', $schoolId)
             ->with('course')
             ->where(function ($query) {
@@ -299,6 +344,8 @@ class VisualTimetableBuilder extends Page implements Forms\Contracts\HasForms
                         $q->where('name', 'like', "%{$this->classSearchQuery}%");
                     });
             })
+            ->orderBy('name')
+            ->limit(5)
             ->get();
     }
 
@@ -551,7 +598,7 @@ class VisualTimetableBuilder extends Page implements Forms\Contracts\HasForms
                 $this->matrix[$slot['id']][$day] = $lesson ? [
                     'id' => $lesson->id,
                     'subject' => $lesson->subject->name,
-                    'teacher' => $lesson->teacher->name,
+                    'teacher' => \App\Support\TeacherInitials::for($lesson->teacher?->name),
                     'room' => $lesson->classroom->name,
                     'is_locked' => $lesson->is_locked,
                     'color_classes' => $this->getSubjectColorClasses($lesson->subject->name),
@@ -632,6 +679,8 @@ class VisualTimetableBuilder extends Page implements Forms\Contracts\HasForms
                 }
             }
 
+            $this->applyPeriodPatterns($formData['period_patterns'] ?? []);
+
             $generator = app(TimetableGeneratorService::class);
             $generator->generate($formData, $template->id);
 
@@ -663,13 +712,10 @@ class VisualTimetableBuilder extends Page implements Forms\Contracts\HasForms
         $academicYearId = $formData['academic_year_id'] ?? null;
         $termId = $formData['term_id'] ?? null;
 
-        if (! $academicYearId || ! $termId) {
-            Notification::make()->title(__('Academic Year & Term Required'))->body('Please select Academic Year and Term for the timetable lessons.')->danger()->send();
-            return;
-        }
-
         DB::beginTransaction();
         try {
+            $this->applyPeriodPatterns($formData['period_patterns'] ?? []);
+
             $service = app(TimetableGeneratorService::class);
             $result = $service->autoPlaceLessons([
                 'template_id' => $activeTemplate->id,
@@ -692,6 +738,39 @@ class VisualTimetableBuilder extends Page implements Forms\Contracts\HasForms
         } catch (\Exception $e) {
             DB::rollBack();
             Notification::make()->title(__('Auto-Generation Failed'))->body($e->getMessage())->danger()->send();
+        }
+    }
+
+    /**
+     * Persist the double / triple period preferences chosen on this page onto
+     * the matching teacher assignment rows (course_subject) so the placement
+     * engine packs those subjects into longer consecutive teaching blocks.
+     */
+    protected function applyPeriodPatterns(array $patterns): void
+    {
+        $schoolId = app('current_tenant')->id;
+
+        foreach ($patterns as $pattern) {
+            $courseId = (int) ($pattern['course_id'] ?? 0);
+            $subjectId = (int) ($pattern['subject_id'] ?? 0);
+            $doubleCount = max(0, (int) ($pattern['double_count'] ?? 0));
+            $tripleCount = max(0, (int) ($pattern['triple_count'] ?? 0));
+
+            if (! $courseId || ! $subjectId) {
+                continue;
+            }
+
+            CourseSubject::where('school_id', $schoolId)
+                ->where('course_id', $courseId)
+                ->where('subject_id', $subjectId)
+                ->get(['id', 'double_periods_per_week', 'triple_periods_per_week'])
+                ->each(function ($assignment) use ($doubleCount, $tripleCount) {
+                    $assignment->timestamps = false;
+                    $assignment->update([
+                        'double_periods_per_week' => $doubleCount,
+                        'triple_periods_per_week' => $tripleCount,
+                    ]);
+                });
         }
     }
 
@@ -802,8 +881,82 @@ class VisualTimetableBuilder extends Page implements Forms\Contracts\HasForms
 
     public function moveLesson(int $lessonId, int $targetSlotId, string $targetDay): void
     {
-        $lesson = TimetableLesson::find($lessonId);
-        if ($lesson) {
+        $schoolId = app('current_tenant')->id;
+
+        if (! in_array($targetDay, $this->days, true)) {
+            Notification::make()->title(__('Invalid day.'))->danger()->send();
+
+            return;
+        }
+
+        $lesson = TimetableLesson::with(['section', 'subject', 'teacher', 'classroom'])
+            ->where('school_id', $schoolId)
+            ->find($lessonId);
+
+        if (! $lesson) {
+            Notification::make()->title(__('Lesson not found.'))->danger()->send();
+
+            return;
+        }
+
+        $targetSlot = TimeSlot::where('school_id', $schoolId)
+            ->where('template_id', $lesson->template_id)
+            ->find($targetSlotId);
+
+        if (! $targetSlot) {
+            Notification::make()->title(__('Time slot for this template no longer exists.'))->danger()->send();
+
+            return;
+        }
+
+        if ($targetSlot->is_break) {
+            Notification::make()->title(__('Cannot drop a lesson on a break.'))->warning()->send();
+
+            return;
+        }
+
+        if ((int) $lesson->time_slot_id === (int) $targetSlotId && $lesson->day_of_week === $targetDay) {
+            return;
+        }
+
+        // Occupied cell → try to swap the two lessons (same class, teachers and
+        // rooms must remain clash-free after the exchange).
+        $occupant = TimetableLesson::where('school_id', $schoolId)
+            ->where('template_id', $lesson->template_id)
+            ->where('academic_year_id', $lesson->academic_year_id)
+            ->where('term_id', $lesson->term_id)
+            ->where('time_slot_id', $targetSlotId)
+            ->where('day_of_week', $targetDay)
+            ->where('section_id', $lesson->section_id)
+            ->where('id', '!=', $lesson->id)
+            ->first();
+
+        if ($occupant) {
+            $this->attemptSwap($lesson, $occupant);
+
+            return;
+        }
+
+        $conflict = $this->firstCellConflict(
+            $targetSlotId,
+            $targetDay,
+            $lesson->section_id,
+            $lesson->teacher_id,
+            $lesson->classroom_id,
+            [$lesson->id]
+        );
+
+        if ($conflict) {
+            Notification::make()
+                ->title(__('Scheduling Conflict Blocked'))
+                ->body($conflict)
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        try {
             $lesson->update([
                 'time_slot_id' => $targetSlotId,
                 'day_of_week' => $targetDay,
@@ -811,7 +964,112 @@ class VisualTimetableBuilder extends Page implements Forms\Contracts\HasForms
 
             Notification::make()->title(__('Lesson Rescheduled!'))->success()->send();
             $this->loadTimetableMatrix();
+        } catch (QueryException $e) {
+            Notification::make()
+                ->title(__('Reschedule Blocked'))
+                ->body('That move clashes with another scheduled lesson.')
+                ->danger()
+                ->send();
         }
+    }
+
+    /**
+     * Validate (and perform) a swap between two lessons occupying two cells of
+     * the same class, recomputing every hard constraint for both new cells.
+     */
+    protected function attemptSwap(TimetableLesson $a, TimetableLesson $b): void
+    {
+        $aConflicts = $this->firstCellConflict(
+            $b->time_slot_id,
+            $b->day_of_week,
+            $a->section_id,
+            $a->teacher_id,
+            $a->classroom_id,
+            [$a->id, $b->id]
+        );
+        $bConflicts = $this->firstCellConflict(
+            $a->time_slot_id,
+            $a->day_of_week,
+            $b->section_id,
+            $b->teacher_id,
+            $b->classroom_id,
+            [$a->id, $b->id]
+        );
+
+        $blocked = $aConflicts ?? $bConflicts;
+
+        if ($blocked) {
+            Notification::make()
+                ->title(__('Swap Blocked'))
+                ->body($blocked)
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        try {
+            DB::transaction(function () use ($a, $b) {
+                $a->update(['time_slot_id' => $b->time_slot_id, 'day_of_week' => $b->day_of_week]);
+                $b->update(['time_slot_id' => $a->time_slot_id, 'day_of_week' => $a->day_of_week]);
+            });
+
+            Notification::make()->title(__('Lessons Swapped!'))->success()->send();
+            $this->loadTimetableMatrix();
+        } catch (QueryException $e) {
+            Notification::make()
+                ->title(__('Swap Blocked'))
+                ->body('The exchange clashes with another scheduled lesson.')
+                ->danger()
+                ->send();
+        }
+    }
+
+    /**
+     * Return a human-readable conflict when placing the given lesson into a
+     * cell would break a section / teacher / classroom constraint, or null
+     * when the cell is free. The excluded ids are the lessons being moved.
+     */
+    protected function firstCellConflict(
+        int $slotId,
+        string $day,
+        int $sectionId,
+        ?int $teacherId,
+        ?int $roomId,
+        array $excludeIds
+    ): ?string {
+        $schoolId = app('current_tenant')->id;
+
+        if ($slotId && $day && $sectionId) {
+            $conflict = TimetableLesson::where('school_id', $schoolId)
+                ->where('time_slot_id', $slotId)
+                ->where('day_of_week', $day)
+                ->whereNotIn('id', $excludeIds)
+                ->where(function ($query) use ($sectionId, $teacherId, $roomId) {
+                    $query->where('section_id', $sectionId);
+                    if ($teacherId) {
+                        $query->orWhere('teacher_id', $teacherId);
+                    }
+                    if ($roomId) {
+                        $query->orWhere('classroom_id', $roomId);
+                    }
+                })
+                ->with(['subject', 'section.course'])
+                ->first();
+
+            if ($conflict) {
+                if ((int) $conflict->section_id === $sectionId) {
+                    return "Class {$conflict->section->course->name} {$conflict->section->name} already has a lesson here.";
+                }
+                if ($conflict->teacher_id === $teacherId) {
+                    return 'This teacher is already booked for ['.$conflict->subject->name.'] in ['.$conflict->section->course->name.' '.$conflict->section->name.'] at this period.';
+                }
+
+                return 'This classroom is already occupied by ['.$conflict->section->course->name.' '.$conflict->section->name.'] at this period.';
+            }
+        }
+
+        return null;
     }
 
     public function deleteLesson(int $lessonId): void

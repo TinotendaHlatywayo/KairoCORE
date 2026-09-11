@@ -60,9 +60,9 @@
         </div>
 
         <!-- 3. VIEW SCOPE TOOLBAR (Class ⇄ Stream) -->
-        <div class="fi-section rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
+        <div class="fi-section rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10 overflow-visible relative z-30">
             @if(\Modules\Academics\Models\Section::exists())
-                <div class="flex flex-wrap items-center gap-4">
+                <div class="flex flex-wrap items-center gap-4 overflow-visible">
                     <!-- Class | Stream Scope Toggle -->
                     <div class="inline-flex rounded-lg p-1 bg-gray-100 dark:bg-gray-800 ring-1 ring-gray-200 dark:ring-gray-700">
                         <button
@@ -85,13 +85,12 @@
                         @php
                             $selectedSection = \Modules\Academics\Models\Section::with(['course', 'classTeacher'])->find($activeFilterClassId);
                         @endphp
-                        <div class="relative" x-data="{ open: @entangle('isSearchOpen'), top: 0, left: 0 }">
+                        <div class="relative" x-data="{ open: false }">
                             <div class="flex items-center gap-3">
                                 <label class="text-sm font-bold text-gray-700 dark:text-gray-300">{{ __('Active View Class:') }}</label>
                                 <button
                                     type="button"
-                                    x-ref="comboboxTrigger"
-                                    @click="open = !open; if(open) { $nextTick(() => { const r = $refs.comboboxTrigger.getBoundingClientRect(); top = r.bottom + window.scrollY + 8; left = r.left + window.scrollX; }); }"
+                                    @click="open = !open"
                                     class="inline-flex items-center gap-x-1.5 rounded-lg bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-white dark:ring-gray-700"
                                 >
                                     {{ $selectedSection ? "{$selectedSection->course->name} {$selectedSection->name}" : 'Select Class...' }}
@@ -101,39 +100,43 @@
                                 </button>
                             </div>
 
-                            <!-- Teleported searchable dropdown (escapes any overflow-hiding ancestor) -->
-                            <template x-teleport="body">
-                                <div
-                                    x-show="open"
-                                    @click.away="open = false"
-                                    :style="`position: fixed; left: ${left}px; top: ${top}px; width: 280px; max-width: calc(100vw - 32px); z-index: 9999;`"
-                                    class="rounded-xl bg-white p-3 shadow-lg ring-1 ring-black/5 focus:outline-none dark:bg-gray-800 dark:ring-white/10"
-                                    style="display: none;"
+                            <!-- Searchable dropdown -->
+                            <div
+                                x-show="open"
+                                @click.away="open = false"
+                                x-cloak
+                                x-transition
+                                class="absolute left-0 top-full mt-2 z-[9999] w-80 rounded-xl bg-white p-3 shadow-2xl ring-1 ring-black/5 focus:outline-none dark:bg-gray-800 dark:ring-white/10"
+                            >
+                                <input
+                                    type="text"
+                                    wire:model.live.debounce.150ms="classSearchQuery"
+                                    placeholder="{{ __('Type to filter classes...') }}"
+                                    class="w-full text-xs rounded-lg border-gray-300 dark:bg-gray-900 dark:border-gray-700 mb-2 dark:text-white px-3 py-2"
                                 >
-                                    <input
-                                        type="text"
-                                        wire:model.live.debounce.150ms="classSearchQuery"
-                                        placeholder="{{ __('Type to filter classes...') }}"
-                                        class="w-full text-xs rounded-lg border-gray-300 dark:bg-gray-900 dark:border-gray-700 mb-2 dark:text-white"
-                                    >
-                                    <div class="overflow-y-auto max-h-48 divide-y divide-gray-100 dark:divide-gray-700">
-                                        @php $filtered = $this->getFilteredSections(); @endphp
-                                        @if($filtered->count() > 0)
-                                            @foreach($filtered as $sec)
-                                                <button
-                                                    type="button"
-                                                    wire:click="selectClass({{ $sec->id }})"
-                                                    class="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-green-50 dark:hover:bg-green-500/10 hover:text-green-700 dark:hover:text-green-400 font-semibold text-gray-700 dark:text-gray-300"
-                                                >
-                                                    {{ $sec->course->name }} {{ $sec->name }}
-                                                </button>
-                                            @endforeach
-                                        @else
-                                            <div class="text-center py-4 text-xs text-gray-400 italic">{{ __('No matching classes found.') }}</div>
+                                <div class="overflow-y-auto max-h-72 divide-y divide-gray-100 dark:divide-gray-700">
+                                    @php
+                                        $filtered = $this->getFilteredSections();
+                                        $hasMore = $this->classSearchQuery === '' && \Modules\Academics\Models\Section::where('school_id', app('current_tenant')->id)->count() > $filtered->count();
+                                    @endphp
+                                    @if($filtered->count() > 0)
+                                        @foreach($filtered as $sec)
+                                            <button
+                                                type="button"
+                                                wire:click="selectClass({{ $sec->id }}); open = false;"
+                                                class="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-green-50 dark:hover:bg-green-500/10 hover:text-green-700 dark:hover:text-green-400 font-semibold text-gray-700 dark:text-gray-300"
+                                            >
+                                                {{ $sec->course->name }} {{ $sec->name }}
+                                            </button>
+                                        @endforeach
+                                        @if($hasMore)
+                                            <div class="text-center py-2 text-[10px] text-gray-400 italic">{{ __('Showing first 5 classes — type to search more.') }}</div>
                                         @endif
-                                    </div>
+                                    @else
+                                        <div class="text-center py-4 text-xs text-gray-400 italic">{{ __('No matching classes found.') }}</div>
+                                    @endif
                                 </div>
-                            </template>
+                            </div>
                         </div>
                         @if($selectedSection?->classTeacher)
                             <span class="inline-flex items-center gap-1.5 rounded-full bg-green-100 dark:bg-green-500/10 px-3 py-1 text-xs font-bold text-green-800 dark:text-green-400">

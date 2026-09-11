@@ -19,6 +19,8 @@ class SalaryGrade extends Model
         'transport_allowance',
         'duty_allowance',
         'overtime_eligible',
+        'custom_allowances',
+        'custom_deductions',
     ];
 
     protected $casts = [
@@ -28,6 +30,8 @@ class SalaryGrade extends Model
         'transport_allowance' => 'decimal:4',
         'duty_allowance' => 'decimal:4',
         'overtime_eligible' => 'boolean',
+        'custom_allowances' => 'array',
+        'custom_deductions' => 'array',
     ];
 
     public function employees(): HasMany

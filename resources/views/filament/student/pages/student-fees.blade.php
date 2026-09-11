@@ -81,6 +81,10 @@
                     @endif
                 </h3>
 
+                <div class="mb-4">
+                    <input type="text" wire:model.live.debounce.300ms="search" placeholder="{{ __('Search invoices by number, term or status...') }}" class="w-full text-xs rounded-lg border-slate-300 bg-white text-slate-950 dark:border-slate-700 dark:bg-slate-950 dark:text-white focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+
                 <div class="overflow-x-auto">
                     <table class="w-full text-xs">
                         <thead>
@@ -138,14 +142,27 @@
             <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
 
                 <!-- Option A: Paynow -->
-                <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                    <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-green-600 text-white font-bold mb-4 shadow-sm shadow-green-600/20">
-                        <x-heroicon-o-shield-check class="h-5 w-5"/>
+                <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 flex flex-col justify-between">
+                    <div>
+                        <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-green-600 text-white font-bold mb-4 shadow-sm shadow-green-600/20">
+                            <x-heroicon-o-shield-check class="h-5 w-5"/>
+                        </div>
+                        <h3 class="text-sm font-bold text-slate-900 dark:text-white">{{ __('Pay Online via Paynow') }}</h3>
+                        <p class="mt-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                            {{ __('Pay your outstanding fees instantly using Paynow. Supports EcoCash, OneMoney, Zimswitch, Visa/Mastercard.') }}
+                        </p>
                     </div>
-                    <h3 class="text-sm font-bold text-slate-900 dark:text-white">{{ __('Pay Online via Paynow') }}</h3>
-                    <p class="mt-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                        {{ __('Pay your outstanding fees instantly using the "Pay via Paynow" button on your invoice above. Supports EcoCash, OneMoney, Zimswitch, Visa/Mastercard.') }}
-                    </p>
+                    @php
+                        $firstUnpaid = $invoices->first(fn($i) => (float)$i->balance_amount > 0);
+                    @endphp
+                    @if($firstUnpaid)
+                        <div class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                            <button wire:click="initializeOnlinePayment({{ $firstUnpaid->id }})" class="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-4 py-2.5 text-xs font-extrabold text-white shadow-md transition">
+                                <x-heroicon-o-credit-card class="h-4 w-4"/>
+                                {{ __('Pay via Paynow ($') }}{{ number_format($totalDue, 2) }}{{ __(')') }}
+                            </button>
+                        </div>
+                    @endif
                 </div>
 
                 <!-- Option B: Bank Deposit -->

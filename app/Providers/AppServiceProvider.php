@@ -158,6 +158,29 @@ class AppServiceProvider extends ServiceProvider
         // Register the unified topbar command center (date/time + task manager)
         Livewire::component('topbar-command-center', TopbarCommandCenter::class);
 
+        // Globally disable row-click record navigation across all Filament tables so clicking a record does nothing
+        if (class_exists(\Filament\Tables\Table::class)) {
+            \Filament\Tables\Table::configureUsing(function (\Filament\Tables\Table $table): void {
+                $table->recordUrl(null);
+            });
+        }
+
+        // Restrict system access for suspended or terminated staff
+        \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Authenticated::class, function ($event) {
+            $user = $event->user;
+            if ($user) {
+                $employee = \Modules\HR\Models\Employee::where('user_id', $user->id)->first();
+                if ($employee && in_array($employee->status, ['suspended', 'terminated'], true)) {
+                    \Illuminate\Support\Facades\Auth::logout();
+                    if (request()->hasSession()) {
+                        request()->session()->invalidate();
+                        request()->session()->regenerateToken();
+                    }
+                    abort(403, __('Your staff account has been suspended or terminated. You cannot access the system until cleared by an administrator.'));
+                }
+            }
+        });
+
         // ChatWorkspace lives in the Modules namespace, outside Livewire's
         // default class_namespace (App\Livewire). Without an explicit alias,
         // Livewire can resolve it when first rendered (by class) but cannot
@@ -166,6 +189,7 @@ class AppServiceProvider extends ServiceProvider
         Livewire::component('communication.chat-workspace', ChatWorkspace::class);
         Livewire::component('assessment.take-assessment', \App\Livewire\Assessment\TakeAssessment::class);
         Livewire::component('assessment.marking-queue', \App\Livewire\Assessment\MarkingQueue::class);
+        Livewire::component('exams.portal-reports-publisher', \App\Livewire\Exams\PortalReportsPublisher::class);
 
         // 3. Register the strict platform policy mapping
         Gate::policy(School::class, SchoolPolicy::class);

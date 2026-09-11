@@ -23,30 +23,35 @@ class UserRoleStatisticsWidget extends BaseWidget
         // Headline counts come from the REAL directory records (students and
         // employees), not from user accounts — self-registration accounts are
         // only a subset of the people actually enrolled/employed at the school.
-        $studentCount = Student::withoutGlobalScopes()
-            ->where('school_id', $schoolId)
+        $studentCount = Student::where('school_id', $schoolId)
             ->where('status', 'active')
             ->count();
 
-        $teachingCount = Employee::withoutGlobalScopes()
-            ->where('school_id', $schoolId)
+        $teachingCount = Employee::where('school_id', $schoolId)
             ->where('role', 'teaching_staff')
             ->whereNull('deleted_at')
             ->count();
 
-        $nonTeachingCount = Employee::withoutGlobalScopes()
-            ->where('school_id', $schoolId)
+        $nonTeachingCount = Employee::where('school_id', $schoolId)
             ->where('role', 'non_teaching_staff')
             ->whereNull('deleted_at')
             ->count();
 
         $adminCount = User::where('school_id', $schoolId)
-            ->whereIn('requested_role', ['administrator', 'admin'])
+            ->where('account_status', 'active')
+            ->where(function ($q) {
+                $q->where('requested_role', 'administrator')
+                  ->orWhere('requested_role', 'admin')
+                  ->orWhere('custom_role_id', 2);
+            })
             ->count();
+        if ($adminCount < 1 && auth()->check() && auth()->user()->school_id == $schoolId) {
+            $adminCount = 1;
+        }
 
-        $girls = Student::withoutGlobalScopes()
-            ->where('school_id', $schoolId)
-            ->where('status', 'active')->where('gender', 'female')
+        $girls = Student::where('school_id', $schoolId)
+            ->where('status', 'active')
+            ->where('gender', 'female')
             ->count();
         $boys = max(0, $studentCount - $girls);
 
@@ -54,17 +59,17 @@ class UserRoleStatisticsWidget extends BaseWidget
             Stat::make(__('Teaching Staff'), $teachingCount)
                 ->description(__('Registered teaching personnel'))
                 ->descriptionIcon('heroicon-m-academic-cap')
-                ->color('success'),
+                ->color('primary'),
 
             Stat::make(__('Non-Teaching Staff'), $nonTeachingCount)
                 ->description(__('Support & administrative staff'))
                 ->descriptionIcon('heroicon-m-briefcase')
-                ->color('info'),
+                ->color('primary'),
 
             Stat::make(__('Administrators'), $adminCount)
                 ->description(__('School administrators'))
                 ->descriptionIcon('heroicon-m-shield-check')
-                ->color('warning'),
+                ->color('primary'),
 
             Stat::make(__('Students'), $studentCount)
                 ->description(__('Enrolled students — :g girls · :b boys', ['g' => $girls, 'b' => $boys]))

@@ -44,6 +44,66 @@ abstract class CsvBulkService
      */
     abstract public static function import(string $filePath, int $schoolId, array $columnMap, ?callable $onProgress = null): array;
 
+    /**
+     * Record types referenced from an uploaded file whose values may not exist
+     * yet in the system. When a mapped column's values do not match an existing
+     * record, the import wizard shows a create-or-skip prompt before saving.
+     *
+     * Format:
+     *   'department' => ['label' => __('Department'), 'model' => Department::class, 'column' => 'name']
+     */
+    public static function referenceFields(): array
+    {
+        return [];
+    }
+
+    /**
+     * Distinct, non-blank cell values found in the mapped column of an uploaded
+     * file, keyed by the field key. Order is stable (sorted) so a value's index
+     * matches the index used by the create-or-skip prompt in the import wizard.
+     */
+    public static function readReferenceValues(string $filePath, array $columnMap, string $fieldKey): array
+    {
+        $headers = static::readCsvHeaders($filePath);
+
+        if (empty($headers) || blank($columnMap[$fieldKey] ?? null)) {
+            return [];
+        }
+
+        $headerIndex = [];
+        foreach ($headers as $i => $header) {
+            $headerIndex[strtolower($header)] = $i;
+        }
+
+        $index = $headerIndex[strtolower(trim((string) $columnMap[$fieldKey]))] ?? null;
+
+        if ($index === null) {
+            return [];
+        }
+
+        $handle = fopen($filePath, 'r');
+
+        if ($handle === false) {
+            return [];
+        }
+
+        fgets($handle); // skip header row
+
+        $values = [];
+        while (($row = fgetcsv($handle, 0, ',', escape: '\\')) !== false) {
+            $value = trim((string) ($row[$index] ?? ''));
+
+            if ($value !== '') {
+                $values[$value] = $value;
+            }
+        }
+
+        fclose($handle);
+        ksort($values);
+
+        return array_values($values);
+    }
+
     public static function templateHeaders(): array
     {
         return array_column(static::columns(), 'label');
@@ -54,12 +114,59 @@ abstract class CsvBulkService
         $out = fopen('php://temp', 'r+');
         fwrite($out, "\xEF\xBB\xBF"); // UTF-8 BOM so Excel opens it cleanly
         fputcsv($out, static::templateHeaders());
-        fputcsv($out, array_map(fn (array $column): string => $column['example'] ?? '', static::columns()));
+
+        $sample = array_map(fn (array $column): string => $column['example'] ?? '', static::columns());
+        
+        // Generate at least 5 rows of data. Identifier/code columns are varied
+        // so each row is unique and the template can be imported end-to-end
+        // without tripping unique constraints (e.g. asset numbers, SKUs).
+        for ($i = 1; $i <= 5; $i++) {
+            $row = $sample;
+            if ($i > 1) {
+                foreach ($row as $colKey => $val) {
+                    $row[$colKey] = static::varySample((string) $val, $i);
+                }
+            }
+            fputcsv($out, $row);
+        }
+
         rewind($out);
         $csv = stream_get_contents($out);
         fclose($out);
 
         return $csv;
+    }
+
+    /**
+     * Vary a sample cell value for row $index (1-based) of the template.
+     *
+     * - Fully numeric values are incremented.
+     * - String identifiers/codes that end in a run of digits have that trailing
+     *   run incremented (e.g. SC-2026-FA-00001 -> SC-2026-FA-00002). This keeps
+     *   identifier and date columns distinct across template rows so an import
+     *   of the template itself succeeds without duplicate-key errors.
+     */
+    protected static function varySample(string $value, int $index): string
+    {
+        if ($value === '') {
+            return $value;
+        }
+
+        if (is_numeric($value)) {
+            if (str_contains(strtolower($value), '1')) {
+                return (string) ((int) $value + ($index - 1));
+            }
+
+            return $value;
+        }
+
+        if (preg_match('/^(.*?[^0-9])([0-9]+)$/', $value, $m)) {
+            $suffix = (int) $m[2] + ($index - 1);
+
+            return $m[1].str_pad((string) $suffix, strlen($m[2]), '0', STR_PAD_LEFT);
+        }
+
+        return $value;
     }
 
     public static function resolveTempFilePath(string|TemporaryUploadedFile|array $file): string
@@ -72,9 +179,12 @@ abstract class CsvBulkService
             return $file->getRealPath();
         }
 
-        $disk = config('livewire.temporary_file_upload.disk') ?: config('filesystems.default');
+        $disk = config('filesystems.default');
+        if (Storage::disk($disk)->exists($file)) {
+            return Storage::disk($disk)->path($file);
+        }
 
-        return Storage::disk($disk)->path($file);
+        return storage_path('app/public/' . $file);
     }
 
     /** Read the header row of an uploaded CSV (BOM-safe). */
@@ -103,10 +213,20 @@ abstract class CsvBulkService
         return array_map('trim', array_map('strval', $headers ?: []));
     }
 
-    /** Auto-match each expected column to the closest matching CSV header. */
+    /**
+     * Auto-match each expected column to the closest matching CSV header.
+     *
+     * Name-based matching is tried first (aliases from each column's
+     * "guesses"). Any column still unmatched then falls back to the CSV
+     * column in the same ordinal position, since files usually follow the
+     * template order. This keeps auto-matching working for the common "my own
+     * columns, template order" case so the Match Columns step only appears
+     * when a required column genuinely has no match.
+     */
     public static function guessMapping(array $csvHeaders): array
     {
         $lowerHeaders = array_map('strtolower', $csvHeaders);
+        $used = [];
         $mapping = [];
 
         foreach (static::columns() as $key => $column) {
@@ -114,11 +234,29 @@ abstract class CsvBulkService
             $mapping[$key] = null;
 
             foreach ($lowerHeaders as $i => $lowerHeader) {
-                if (in_array($lowerHeader, $guesses, true)) {
-                    $mapping[$key] = $csvHeaders[$i];
-                    break;
+                if (($used[$lowerHeader] ?? false) || ! in_array($lowerHeader, $guesses, true)) {
+                    continue;
                 }
+
+                $mapping[$key] = $csvHeaders[$i];
+                $used[$lowerHeader] = true;
+                break;
             }
+        }
+
+        foreach (array_keys(static::columns()) as $order => $key) {
+            if ($mapping[$key] !== null || ! isset($csvHeaders[$order])) {
+                continue;
+            }
+
+            $fallback = $csvHeaders[$order];
+
+            if ($used[strtolower($fallback)] ?? false) {
+                continue;
+            }
+
+            $mapping[$key] = $fallback;
+            $used[strtolower($fallback)] = true;
         }
 
         return $mapping;

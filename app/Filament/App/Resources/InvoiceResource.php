@@ -230,8 +230,8 @@ class InvoiceResource extends Resource
                 Tables\Columns\TextColumn::make('invoice_number')->searchable(),
                 Tables\Columns\TextColumn::make('student.full_name')
                     ->label(__('Student'))
-                    ->formatStateUsing(fn ($record) => "{$record->student->first_name} ".($record->student->last_name ?? ''))
-                    ->searchable(),
+                    ->formatStateUsing(fn ($record) => "{$record->student?->first_name} ".($record->student?->last_name ?? ''))
+                    ->searchable(query: fn (Builder $query, string $search) => $query->whereHas('student', fn ($q) => $q->where('first_name', 'like', "%{$search}%")->orWhere('last_name', 'like', "%{$search}%"))),
                 Tables\Columns\TextColumn::make('student.currentEnrollment.section.name')
                     ->label(__('Class'))
                     ->formatStateUsing(fn ($record) => ($record->student->currentEnrollment?->course?->name ?? '').' '.($record->student->currentEnrollment?->section?->name ?? '')),
@@ -561,6 +561,14 @@ class InvoiceResource extends Resource
                         $record->status = $record->balance_amount <= 0 ? 'paid' : 'partially_paid';
                         $record->save();
                     }),
+
+                Tables\Actions\Action::make('payWithPaynow')
+                    ->label(__('Pay via Paynow'))
+                    ->icon('heroicon-o-credit-card')
+                    ->color('success')
+                    ->url(fn (Invoice $record) => route('student.fee-checkout', $record->id))
+                    ->openUrlInNewTab()
+                    ->visible(fn (Invoice $record) => (float) $record->balance_amount > 0),
 
                 Tables\Actions\Action::make('printInvoice')
                     ->icon('heroicon-o-document-text')

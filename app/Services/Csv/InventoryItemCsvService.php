@@ -98,6 +98,32 @@ class InventoryItemCsvService extends CsvBulkService
         ];
     }
 
+    /**
+     * Export rows for an already-selected set of records (used by the table's
+     * "Export Selected (CSV)" bulk action).
+     *
+     * @param  \Illuminate\Support\Collection<int, InventoryItem>  $records
+     * @return iterable<int, array<int, mixed>>
+     */
+    public static function rowsForRecords($records): iterable
+    {
+        foreach ($records as $item) {
+            yield [
+                $item->sku,
+                $item->name,
+                $item->barcode,
+                $item->category?->name,
+                $item->item_type,
+                $item->unit_of_measure,
+                $item->reorder_level,
+                $item->current_quantity,
+                $item->average_unit_cost,
+                $item->is_saleable ? 'yes' : 'no',
+                $item->sale_price,
+            ];
+        }
+    }
+
     public static function exportRows(int $schoolId): iterable
     {
         $query = InventoryItem::withoutTenantScope()
