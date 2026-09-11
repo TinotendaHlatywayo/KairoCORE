@@ -5,7 +5,7 @@
     <title>{{ __('Academic Report Cards Print Run') }}</title>
     <style>
         @page {
-            size: a4 landscape;
+            size: a4 {{ $isLandscape ? 'landscape' : 'portrait' }};
             margin: 0;
         }
         body {
@@ -173,7 +173,7 @@
                     box-sizing: border-box;
                     width: 100%;
                     max-width: 100%;
-                    padding: {{ $marginV }}mm {{ $marginH + 6 }}mm {{ $marginV }}mm {{ $marginH }}mm;
+                    padding: {{ $marginV }}mm {{ $marginH }}mm;
                     margin: 0;
                     border: {{ $borderW }}px solid {{ $borderC }};
                     --header-color: {{ $accentColor }};
