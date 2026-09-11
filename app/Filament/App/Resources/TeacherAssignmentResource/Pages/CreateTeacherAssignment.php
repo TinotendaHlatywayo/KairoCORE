@@ -7,6 +7,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\DB;
 use Modules\Academics\Models\CourseSubject;
+use Modules\Academics\Models\Subject;
 
 class CreateTeacherAssignment extends CreateRecord
 {
@@ -17,6 +18,45 @@ class CreateTeacherAssignment extends CreateRecord
         $schoolId = current_tenant()?->id
             ?? auth()->user()?->school_id
             ?? ($data['school_id'] ?? null);
+
+        $subjectId = $data['subject_id'] ?? null;
+
+        if (! $subjectId) {
+            $subjects = Subject::where('school_id', $schoolId)->get();
+            if ($subjects->isEmpty()) {
+                throw new \Exception(__('No subjects found for this school. Please add subjects first.'));
+            }
+            $lastRecord = null;
+            foreach ($subjects as $subj) {
+                $payload = array_merge($data, [
+                    'school_id' => $schoolId,
+                    'subject_id' => $subj->id,
+                    'section_id' => $data['section_id'] ?? null,
+                ]);
+                $existing = CourseSubject::query()
+                    ->withoutGlobalScopes()
+                    ->where('school_id', $schoolId)
+                    ->where('course_id', $data['course_id'])
+                    ->where('subject_id', $subj->id)
+                    ->where('section_id', $data['section_id'] ?? null)
+                    ->first();
+
+                if ($existing) {
+                    $existing->update($payload);
+                    $lastRecord = $existing;
+                } else {
+                    $lastRecord = CourseSubject::create($payload);
+                }
+            }
+
+            Notification::make()
+                ->title(__('Teacher Assigned to All Subjects'))
+                ->body(__('Teacher was successfully assigned to teach all subjects for this class/course.'))
+                ->success()
+                ->send();
+
+            return $lastRecord;
+        }
 
         // The same (school, course, subject, section) pivot can only exist
         // once — a natural side-effect of the unique index. Rather than 500ing

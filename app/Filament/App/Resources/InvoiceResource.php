@@ -20,6 +20,7 @@ use Modules\Finance\Models\FeeStructure;
 use Modules\Finance\Models\FeeWaiver;
 use Modules\Finance\Models\Invoice;
 use Modules\Finance\Models\Payment;
+use Modules\Finance\Models\SchoolBankAccount;
 use Modules\Finance\Services\ExchangeRateService;
 use Modules\Finance\Services\FinancialSecurityService;
 use Modules\Finance\Services\InvoicingService;

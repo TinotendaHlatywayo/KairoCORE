@@ -67,10 +67,11 @@ class TeacherAssignmentResource extends Resource
                             ->helperText(__('Leave empty → this subject+teacher applies to every stream in the Form above. Choose one stream (e.g. A) → only that class is taught this subject by this teacher.')),
 
                         Forms\Components\Select::make('subject_id')
-                            ->label(__('Subject'))
+                            ->label(__('Subject (Optional)'))
                             ->options(Subject::where('school_id', current_tenant()?->id ?? auth()->user()?->school_id ?? 1)->pluck('name', 'id'))
-                            ->required()
-                            ->searchable(),
+                            ->nullable()
+                            ->searchable()
+                            ->helperText(__('Leave empty to assign this teacher to ALL subjects in this Form/Class.')),
 
                         Forms\Components\Select::make('teacher_id')
                             ->label(__('Teacher'))
