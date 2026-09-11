@@ -20,7 +20,7 @@ class ListTeacherAssignments extends ListRecords
                 ->url(static::getResource()::getUrl('create-multi'))
                 ->openUrlInNewTab(false),
             Actions\CreateAction::make()
-                ->label(__('Assign Teacher to Subject'))
+                ->label(__('Assign Teacher to a Class'))
                 ->icon('heroicon-o-user-plus'),
         ];
     }

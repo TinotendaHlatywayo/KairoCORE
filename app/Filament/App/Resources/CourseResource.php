@@ -48,6 +48,27 @@ class CourseResource extends Resource
 
     protected static ?int $navigationSort = 2;
 
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = parent::getEloquentQuery();
+        $school = current_tenant();
+        if ($school) {
+            $type = strtolower((string) ($school->institution_type ?? 'secondary'));
+            if ($type === 'primary') {
+                $query->where(function ($q) {
+                    $q->where('name', 'LIKE', '%ECD%')
+                      ->orWhere('name', 'LIKE', '%Grade%');
+                });
+            } elseif ($type === 'secondary') {
+                $query->where(function ($q) {
+                    $q->where('name', 'LIKE', '%Form%')
+                      ->orWhere('name', 'LIKE', '%Six%');
+                });
+            }
+        }
+        return $query;
+    }
+
     public static function getNavigationLabel(): string
     {
         return term('label.course_plural', 'Forms');

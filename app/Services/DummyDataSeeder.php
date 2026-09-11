@@ -191,10 +191,6 @@ class DummyDataSeeder
         'subject_papers',
         'course_subject',
         'assessment_marks_ledger',
-        'promotion_items',
-        'promotion_runs',
-        'screening_items',
-        'screening_runs',
         'enrollments',
         'academic_reports',
         'application_documents',
@@ -224,14 +220,13 @@ class DummyDataSeeder
 
     public function seed(int $schoolId, ?callable $log = null): array
     {
+        // Demo seeding (students, reports, marks, payroll, invoices, timetables
+        // ...) and its password hashing comfortably exceed the default 30s PHP
+        // ceiling when triggered from a synchronous web/Livewire request, so
+        // lift the per-request execution limit for the whole run.
         @set_time_limit(600);
 
         $log ??= fn () => null;
-
-        $wrappedLog = function (string $message, int $percent = 0) use ($schoolId, $log) {
-            \Illuminate\Support\Facades\Cache::put("seed_progress_{$schoolId}", ['message' => $message, 'percent' => $percent], 600);
-            $log($message, $percent);
-        };
 
         // Demo seeding is idempotent: previously-seeded demo rows are removed
         // first (manifest-scoped), then the school is (re)populated. This keeps
@@ -241,9 +236,7 @@ class DummyDataSeeder
         $manifest = [];
 
         try {
-            $wrappedLog('Initializing Academic Structure & Terms', 5);
-            $this->runSeed($schoolId, $wrappedLog, $manifest);
-            $wrappedLog('Finalizing Demonstration Dataset', 100);
+            $this->runSeed($schoolId, $log, $manifest);
         } catch (\Throwable $e) {
             // Persist whatever was created so far so wipe() can still undo it.
             $this->saveManifest($schoolId, $manifest);
@@ -2840,24 +2833,16 @@ class DummyDataSeeder
         $manifest = $this->loadManifest($schoolId);
 
         DB::transaction(function () use ($manifest, $schoolId): void {
-            // Clean up dependent child records first to prevent foreign key constraint violations
-            DB::table('student_attendances')->where('school_id', $schoolId)->delete();
-            DB::table('timetable_lessons')->where('school_id', $schoolId)->delete();
-            DB::table('timetable_templates')->where('school_id', $schoolId)->delete();
-
-            $promoRunIds = DB::table('promotion_runs')->where('school_id', $schoolId)->pluck('id');
-            if ($promoRunIds->isNotEmpty()) {
-                DB::table('promotion_items')->whereIn('promotion_run_id', $promoRunIds)->delete();
-                DB::table('promotion_runs')->whereIn('id', $promoRunIds)->delete();
-            }
-
-            $screenRunIds = DB::table('screening_runs')->where('school_id', $schoolId)->pluck('id');
-            if ($screenRunIds->isNotEmpty()) {
-                DB::table('screening_items')->whereIn('screening_run_id', $screenRunIds)->delete();
-                DB::table('screening_runs')->whereIn('id', $screenRunIds)->delete();
-            }
-
             // Older demo datasets seeded hostel rooms/beds/allocations before
+            // the manifest existed, so the manifest may only track the rooms.
+            $roomIds = array_map('intval', $manifest['hostel_rooms'] ?? []);
+            if ($roomIds !== []) {
+                $bedIds = DB::table('hostel_beds')->whereIn('room_id', $roomIds)->pluck('id');
+                if ($bedIds->isNotEmpty()) {
+                    DB::table('hostel_allocations')->whereIn('bed_id', $bedIds)->delete();
+                    DB::table('hostel_beds')->whereIn('id', $bedIds)->delete();
+                }
+            }
 
             foreach (self::MANIFEST_DELETE_ORDER as $table) {
                 $ids = $manifest[$table] ?? [];
@@ -3054,6 +3039,51 @@ class DummyDataSeeder
             'requested_role' => 'student',
             'custom_role_id' => $role->id,
         ]);
+    }
+
+    public function enforceInstitutionTypeScope(int $schoolId): void
+    {
+        $school = \App\Models\School::find($schoolId);
+        if (! $school) {
+            return;
+        }
+
+        $schoolType = strtolower((string) ($school->institution_type ?? 'secondary'));
+        $isPrimary = in_array($schoolType, ['primary'], true);
+        $isSecondary = in_array($schoolType, ['secondary'], true);
+
+        if ($isPrimary) {
+            $validPrimaryNames = ['ECD A', 'ECD B', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7'];
+            $invalidCourseIds = Course::where('school_id', $schoolId)
+                ->whereNotIn('name', $validPrimaryNames)
+                ->pluck('id');
+
+            if ($invalidCourseIds->isNotEmpty()) {
+                Section::whereIn('course_id', $invalidCourseIds)->delete();
+                Course::whereIn('id', $invalidCourseIds)->delete();
+            }
+
+            $validPrimarySubjects = ['Mathematics', 'English Language', 'Shona Language', 'Science & Technology', 'Social Studies', 'Physical Education'];
+            $invalidSubjectIds = Subject::where('school_id', $schoolId)
+                ->whereNotIn('name', $validPrimarySubjects)
+                ->pluck('id');
+
+            if ($invalidSubjectIds->isNotEmpty()) {
+                Subject::whereIn('id', $invalidSubjectIds)->delete();
+            }
+        } elseif ($isSecondary) {
+            $invalidCourseIds = Course::where('school_id', $schoolId)
+                ->where(function ($q) {
+                    $q->where('name', 'LIKE', '%ECD%')
+                      ->orWhere('name', 'LIKE', '%Grade%');
+                })
+                ->pluck('id');
+
+            if ($invalidCourseIds->isNotEmpty()) {
+                Section::whereIn('course_id', $invalidCourseIds)->delete();
+                Course::whereIn('id', $invalidCourseIds)->delete();
+            }
+        }
     }
 
     protected function manifestKey(): string
