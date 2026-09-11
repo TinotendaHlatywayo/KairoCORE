@@ -25,7 +25,7 @@ class CommunicationRestructureRenderTest extends TestCase
     {
         $user = User::find(15);
         $this->actingAs($user)
-            ->withServerVariables(['HTTP_HOST' => 'tinwayacademy.lvh.me:8000']);
+            ->withServerVariables(['HTTP_HOST' => 'chiwariraprimary.lvh.me:8000']);
 
         // Hub URLs redirect to the remembered/first page in the category.
         foreach ([
