@@ -46,6 +46,7 @@ use Modules\Finance\Models\FeeCategory;
 use Modules\Finance\Models\FeeStructure;
 use Modules\Finance\Models\Invoice;
 use Modules\Finance\Models\InvoiceItem;
+use Modules\Finance\Models\Payment;
 use Modules\Finance\Models\Supplier;
 use Modules\Hostels\Models\Hostel;
 use Modules\Hostels\Models\HostelAllocation;
@@ -1339,6 +1340,20 @@ class DummyDataSeeder
                 'amount' => 40.00,
             ]);
             $track('invoice_items', [$item2->id]);
+
+            if ($paid > 0) {
+                $payment = Payment::create([
+                    'school_id' => $schoolId,
+                    'invoice_id' => $invoice->id,
+                    'amount' => $paid,
+                    'currency' => 'USD',
+                    'payment_method' => collect(['cash', 'bank_transfer', 'Ecocash', 'zipit'])->random(),
+                    'reference_number' => 'TEST-PAY-'.$invoice->invoice_number,
+                    'receipt_number' => 'TEST-RCP-'.str_pad((string) rand(1000, 9999), 6, '0', STR_PAD_LEFT),
+                    'payment_date' => now()->subDays(rand(1, 30))->toDateString(),
+                ]);
+                $track('payments', [$payment->id]);
+            }
         }
 
         $supplierRows = [
@@ -1355,24 +1370,50 @@ class DummyDataSeeder
             $supplierIds[] = $supplier->id;
         }
 
-        $expenseCategory = $created(ExpenseCategory::firstOrCreate(
-            ['school_id' => $schoolId, 'name' => 'Operational Expenses'],
-            ['description' => 'Day-to-day running costs']
-        ));
+        $expenseCategories = [
+            'Operational Expenses' => 'Day-to-day running costs',
+            'Teaching & Learning' => 'Books, stationery and learning aids',
+            'Utilities & Maintenance' => 'Electricity, water, repairs and upkeep',
+            'Administration' => 'Office supplies and communication',
+        ];
+
+        $categoryObjects = [];
+        foreach ($expenseCategories as $catName => $desc) {
+            $cat = $created(ExpenseCategory::firstOrCreate(
+                ['school_id' => $schoolId, 'name' => $catName],
+                ['description' => $desc]
+            ));
+            $categoryObjects[$catName] = $cat;
+        }
+
         $expenseType = $created(ExpenseType::firstOrCreate(
-            ['school_id' => $schoolId, 'expense_category_id' => $expenseCategory->id, 'name' => 'Stationery & Printing']
+            ['school_id' => $schoolId, 'expense_category_id' => $categoryObjects['Operational Expenses']->id, 'name' => 'Stationery & Printing']
         ));
 
-        for ($e = 1; $e <= 8; $e++) {
+        $sampleExpenses = [
+            ['Classroom Stationery Pack', 'Operational Expenses'],
+            ['Textbook Replacements', 'Teaching & Learning'],
+            ['Electricity & Water Bill', 'Utilities & Maintenance'],
+            ['Laboratory Chemicals', 'Teaching & Learning'],
+            ['Sports Equipment', 'Operational Expenses'],
+            ['Internet & Fibre Subscription', 'Administration'],
+            ['Roof Repairs & Maintenance', 'Utilities & Maintenance'],
+            ['Printer Toner & Paper', 'Administration'],
+        ];
+
+        foreach ($sampleExpenses as $idx => [$expName, $catName]) {
+            $cat = $categoryObjects[$catName] ?? $categoryObjects['Operational Expenses'];
             $expense = Expense::create([
                 'school_id' => $schoolId,
+                'expense_category_id' => $cat->id,
                 'expense_type_id' => $expenseType->id,
+                'expense_name' => $expName,
                 'supplier_id' => $supplierIds[array_rand($supplierIds)],
                 'amount' => rand(45, 850),
                 'expense_date' => now()->subDays(rand(1, 60))->toDateString(),
-                'reference_number' => 'TEST-EXP-'.$schoolId.'-'.str_pad((string) $e, 4, '0', STR_PAD_LEFT),
-                'notes' => 'Demonstration expense entry.',
-                'status' => collect(['pending', 'approved', 'paid'])->random(),
+                'reference_number' => 'TEST-EXP-'.$schoolId.'-'.str_pad((string) ($idx + 1), 4, '0', STR_PAD_LEFT),
+                'notes' => 'Demonstration expense entry with category and name.',
+                'status' => collect(['approved', 'paid'])->random(),
                 'user_id' => $actorId,
             ]);
             $track('expenses', [$expense->id]);
