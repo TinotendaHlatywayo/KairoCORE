@@ -2,6 +2,16 @@
     $attempt = $this->attemptModel;
     $summary = $this->summary;
     $assessment = $attempt->assessment;
+
+    // feedback_mode governs when the correct answer / explanation are visible:
+    // immediate + after_submission -> show now, after_deadline -> after the
+    // assessment deadline, never -> never shown.
+    $feedbackMode = $assessment?->feedback_mode?->value ?? 'after_submission';
+    $feedbackVisible = match ($feedbackMode) {
+        'never' => false,
+        'after_deadline' => (bool) ($assessment->deadline_at && now()->gte($assessment->deadline_at)),
+        default => true,
+    };
 @endphp
 
 <x-filament-panels::page>
@@ -130,7 +140,7 @@
                             </div>
                         @endif
 
-                        @if($response->correct_answer !== null && $response->is_correct === false && ($assessment?->show_feedback ?? true))
+                        @if($response->correct_answer !== null && $response->is_correct === false && ($assessment?->show_feedback ?? true) && $feedbackVisible)
                             <div class="text-sm">
                                 <span class="text-gray-500">Correct answer:</span>
                                 <span class="font-medium text-success-600">

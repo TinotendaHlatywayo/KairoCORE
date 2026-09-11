@@ -220,19 +220,25 @@ class StudentPortalTest extends TestCase
 
     public function test_student_panel_home_path_resolves_instead_of_404(): void
     {
+        \Illuminate\Support\Facades\Cache::flush();
         $school = School::firstOrFail();
+        $subdomain = $school->subdomain ?: 'chiwariraprimary';
+        if (! $school->subdomain) {
+            $school->subdomain = $subdomain;
+            $school->save();
+        }
         $student = $this->studentUser($school);
 
-        // Student panel home + pages must resolve to the Filament panel even
-        // though the tenant CMS {slug} fallback resolver could shadow them.
+        // Verify bare domain student portal is blocked with 404
+        $this->get('/student/my-results')->assertStatus(404);
+
+        // Student panel home + pages must resolve to the Filament panel under subdomain
         $this->actingAs($student, Filament::getPanel('student')->getAuthGuard());
-        $this->withServerVariables(['HTTP_HOST' => $school->subdomain.'.lvh.me']);
 
-        $this->get('/student')
-            ->assertRedirect('/student/student-portal');
-
-        $this->get('/student/student-portal')
-            ->assertStatus(200);
+        $this->get('http://'.$subdomain.'.lvh.me/student')->assertStatus(302);
+        $this->get('http://'.$subdomain.'.lvh.me/student/student-portal')->assertStatus(200);
+        $this->get('http://'.$subdomain.'.lvh.me/student/my-results')->assertStatus(200);
+        $this->get('http://'.$subdomain.'.lvh.me/student/digital-assessments')->assertStatus(200);
     }
 
     public function test_student_is_redirected_from_workspace_to_student_panel(): void

@@ -7,10 +7,13 @@ namespace Modules\Inventory\Filament\Resources;
 use App\Filament\App\Concerns\ModulePermissionAccess;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Resources\Resource;
+use Filament\Support\Enums\ActionSize;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Modules\Inventory\Filament\Resources\GoodsReceivedResource\Pages;
+use Modules\Inventory\Filament\Resources\PurchaseOrderResource;
 use Modules\Inventory\Models\GoodsReceivedNote;
 use Modules\Inventory\Models\ProcurementOrder;
 
@@ -48,12 +51,27 @@ class GoodsReceivedResource extends Resource
                         Forms\Components\TextInput::make('grn_number')
                             ->required()
                             ->disabled()
+                            ->dehydrated()
                             ->default(fn () => 'GRN-'.now()->year.'-'.str_pad((string) rand(100, 9999), 4, '0', STR_PAD_LEFT)),
                         Forms\Components\Select::make('procurement_order_id')
-                            ->relationship('procurementOrder', 'order_number')
+                            ->label(__('Purchase Order'))
                             ->required()
                             ->searchable()
-                            ->preload()
+                            ->options(fn () => ProcurementOrder::query()
+                                ->latest('order_date')
+                                ->latest('id')
+                                ->limit(5)
+                                ->pluck('order_number', 'id'))
+                            ->getOptionLabelUsing(fn ($value): ?string => optional(ProcurementOrder::find($value))->order_number)
+                            ->getSearchResultsUsing(fn (string $search): array => ProcurementOrder::query()
+                                ->where('order_number', 'like', "%{$search}%")
+                                ->orWhereHas('supplier', fn ($query) => $query->where('name', 'like', "%{$search}%"))
+                                ->orWhereHas('request', fn ($query) => $query->where('request_number', 'like', "%{$search}%"))
+                                ->latest('order_date')
+                                ->latest('id')
+                                ->limit(50)
+                                ->pluck('order_number', 'id')
+                                ->all())
                             ->reactive()
                             ->afterStateUpdated(function ($state, callable $set) {
                                 // Dynamically preload LPO items into the repeater on change
@@ -65,7 +83,22 @@ class GoodsReceivedResource extends Resource
                                     ])->toArray();
                                     $set('items', $items);
                                 }
-                            }),
+                            })
+                            ->suffixActions([
+                                Forms\Components\Actions\Action::make('compare_po')
+                                    ->label(__('Compare with PO'))
+                                    ->icon('heroicon-o-scale')
+                                    ->color('primary')
+                                    ->size(ActionSize::Small)
+                                    ->tooltip(__('Open the GRN vs Purchase Order comparison for this LPO'))
+                                    ->disabled(fn (Get $get): bool => blank($get('procurement_order_id')))
+                                    ->url(
+                                        fn (Get $get): ?string => filled($get('procurement_order_id'))
+                                            ? PurchaseOrderResource::getUrl('view', ['record' => $get('procurement_order_id')])
+                                            : null,
+                                        shouldOpenInNewTab: true,
+                                    ),
+                            ]),
                         Forms\Components\DatePicker::make('received_date')
                             ->default(now())
                             ->required(),
@@ -113,7 +146,16 @@ class GoodsReceivedResource extends Resource
                 Tables\Columns\TextColumn::make('procurementOrder.order_number')->label(__('LPO Reference'))->searchable(),
                 Tables\Columns\TextColumn::make('received_date')->date(),
                 Tables\Columns\TextColumn::make('receivedBy.name')->label(__('Received By')),
-            ]);
+            ])
+            ->actions([
+                Tables\Actions\Action::make('compare_po')
+                    ->label(__('Compare with PO'))
+                    ->icon('heroicon-o-scale')
+                    ->color('primary')
+                    ->visible(fn (GoodsReceivedNote $record): bool => filled($record->procurement_order_id))
+                    ->url(fn (GoodsReceivedNote $record): string => PurchaseOrderResource::getUrl('view', ['record' => $record->procurement_order_id]), shouldOpenInNewTab: true),
+            ])
+            ->bulkActions([]);
     }
 
     public static function getPages(): array

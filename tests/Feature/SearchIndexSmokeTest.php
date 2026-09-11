@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\School;
 use App\Models\User;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -25,12 +25,14 @@ class SearchIndexSmokeTest extends TestCase
 
     public function test_search_index_includes_non_navigating_pages_for_school_admins(): void
     {
-        $user = User::findOrFail(13);
-        Auth::loginUsingId(13);
+        $school = School::findOrFail(config('tenancy.single_tenant_id'));
+        $user = User::where('school_id', $school->id)->where('custom_role_id', 2)->firstOrFail();
         $this->assertNotNull($user->school_id);
 
+        $host = parse_url(config('app.url'), PHP_URL_HOST);
+
         $response = $this->actingAs($user)
-            ->get('https://tinwayacademy.lvh.me/workspace');
+            ->get('https://'.$school->subdomain.'.'.$host.'/workspace');
 
         $response->assertOk();
 

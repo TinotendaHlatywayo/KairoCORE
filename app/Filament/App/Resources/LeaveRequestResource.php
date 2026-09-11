@@ -49,11 +49,35 @@ class LeaveRequestResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Select::make('employee_id')
-                    ->options(Employee::all()->pluck('first_name', 'id'))
+                    ->label(__('Employee'))
+                    ->options(Employee::all()->mapWithKeys(fn ($emp) => [$emp->id => "{$emp->first_name} {$emp->last_name} ({$emp->employee_number})"]))
+                    ->searchable()
+                    ->preload()
                     ->required(),
                 Forms\Components\Select::make('leave_type_id')
+                    ->label(__('Leave Type'))
                     ->options(LeaveType::all()->pluck('name', 'id'))
-                    ->required(),
+                    ->searchable()
+                    ->preload()
+                    ->required()
+                    ->createOptionForm([
+                        Forms\Components\TextInput::make('name')
+                            ->required()
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('max_days_per_year')
+                            ->numeric()
+                            ->default(21)
+                            ->required(),
+                        Forms\Components\Textarea::make('description'),
+                    ])
+                    ->createOptionUsing(function (array $data): int {
+                        return LeaveType::create([
+                            'school_id' => current_tenant()?->id ?? 1,
+                            'name' => $data['name'],
+                            'max_days_per_year' => $data['max_days_per_year'] ?? 21,
+                            'description' => $data['description'] ?? null,
+                        ])->id;
+                    }),
                 Forms\Components\DatePicker::make('start_date')->required(),
                 Forms\Components\DatePicker::make('end_date')->required(),
                 Forms\Components\Textarea::make('reason')->required(),
@@ -64,7 +88,10 @@ class LeaveRequestResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('employee.first_name')->searchable()->label(__('Employee')),
+                Tables\Columns\TextColumn::make('employee')
+                    ->label(__('Employee'))
+                    ->getStateUsing(fn ($record) => optional($record->employee)->first_name ? "{$record->employee->first_name} {$record->employee->last_name} ({$record->employee->employee_number})" : '-')
+                    ->searchable(['first_name', 'last_name', 'employee_number']),
                 Tables\Columns\TextColumn::make('leaveType.name')->label(__('Type')),
                 Tables\Columns\TextColumn::make('start_date')->date(),
                 Tables\Columns\TextColumn::make('end_date')->date(),

@@ -3,7 +3,6 @@
 namespace App\Services\Csv;
 
 use Modules\Hostels\Models\Hostel;
-use Modules\Hostels\Models\HostelBuilding;
 use Modules\Hostels\Models\HostelFloor;
 use Modules\Hostels\Models\HostelRoom;
 use Modules\Hostels\Models\HostelWing;
@@ -18,12 +17,6 @@ class HostelRoomCsvService extends CsvBulkService
                 'required' => true,
                 'guesses' => ['Hostel', 'Hostel Name'],
                 'example' => 'Mbare Hostel',
-            ],
-            'building' => [
-                'label' => __('Building Name'),
-                'required' => true,
-                'guesses' => ['Building', 'Building Name'],
-                'example' => 'Block A',
             ],
             'floor_number' => [
                 'label' => __('Floor Number'),
@@ -70,7 +63,7 @@ class HostelRoomCsvService extends CsvBulkService
     public static function exportHeaders(): array
     {
         return [
-            'Hostel Name', 'Building Name', 'Floor Number', 'Wing Name',
+            'Hostel Name', 'Floor Number', 'Wing Name',
             'Room Number', 'Room Name', 'Room Type', 'Capacity',
         ];
     }
@@ -79,7 +72,7 @@ class HostelRoomCsvService extends CsvBulkService
     {
         $query = HostelRoom::withoutTenantScope()
             ->where('school_id', $schoolId)
-            ->with('wing.floor.building.hostel')
+            ->with(['wing.floor.hostel'])
             ->orderBy('id');
 
         $lastId = 0;
@@ -93,11 +86,9 @@ class HostelRoomCsvService extends CsvBulkService
 
             foreach ($rooms as $room) {
                 $floor = $room->wing?->floor;
-                $building = $floor?->building;
 
                 yield [
-                    $building?->hostel?->name,
-                    $building?->name,
+                    $floor?->hostel?->name,
                     $floor?->floor_number,
                     $room->wing?->name,
                     $room->room_number,
@@ -116,11 +107,8 @@ class HostelRoomCsvService extends CsvBulkService
         $hostels = Hostel::withoutTenantScope()->where('school_id', $schoolId)->get()
             ->keyBy(fn ($h): string => strtolower(trim($h->name)));
 
-        $buildings = HostelBuilding::withoutTenantScope()->where('school_id', $schoolId)->get()
-            ->keyBy(fn ($b): string => $b->hostel_id.'::'.strtolower(trim($b->name)));
-
         $floors = HostelFloor::withoutTenantScope()->where('school_id', $schoolId)->get()
-            ->keyBy(fn ($f): string => $f->building_id.'::'.trim((string) $f->floor_number));
+            ->keyBy(fn ($f): string => $f->hostel_id.'::'.trim((string) $f->floor_number));
 
         $wings = HostelWing::withoutTenantScope()->where('school_id', $schoolId)->get()
             ->keyBy(fn ($w): string => $w->floor_id.'::'.strtolower(trim($w->name)));
@@ -130,7 +118,6 @@ class HostelRoomCsvService extends CsvBulkService
 
         $lookups = [
             'hostels' => $hostels,
-            'buildings' => $buildings,
             'floors' => $floors,
             'wings' => $wings,
             'existingRoomNumbers' => $existingRoomNumbers,
@@ -151,7 +138,7 @@ class HostelRoomCsvService extends CsvBulkService
     {
         $errors = [];
 
-        foreach (['hostel', 'building', 'floor_number', 'wing', 'room_number'] as $required) {
+        foreach (['hostel', 'floor_number', 'wing', 'room_number'] as $required) {
             $data[$required] = trim($data[$required] ?? '');
 
             if ($data[$required] === '') {
@@ -166,20 +153,10 @@ class HostelRoomCsvService extends CsvBulkService
         }
 
         if ($data['_hostel']) {
-            $buildingName = strtolower($data['building'] ?? '');
-            $data['_building'] = $buildingName !== ''
-                ? ($lookups['buildings'][$data['_hostel']->id.'::'.$buildingName] ?? null)
-                : null;
-            if ($buildingName !== '' && ! $data['_building']) {
-                $errors[] = 'Building ['.$data['building'].'] was not found in Hostel ['.$data['_hostel']->name.'].';
-            }
-        }
-
-        if (isset($data['_building']) && $data['_building']) {
-            $floorKey = $data['_building']->id.'::'.trim($data['floor_number'] ?? '');
+            $floorKey = $data['_hostel']->id.'::'.trim($data['floor_number'] ?? '');
             $data['_floor'] = $lookups['floors'][$floorKey] ?? null;
             if (! $data['_floor']) {
-                $errors[] = 'Floor Number ['.$data['floor_number'].'] was not found in Building ['.$data['_building']->name.'].';
+                $errors[] = 'Floor Number ['.$data['floor_number'].'] was not found in Hostel ['.$data['_hostel']->name.'].';
             }
         }
 

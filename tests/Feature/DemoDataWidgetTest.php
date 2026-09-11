@@ -12,13 +12,16 @@ use Modules\Students\Models\Student;
 
 class DemoDataWidgetTest extends TestCase
 {
+    protected int $schoolId;
+
     protected function setUp(): void
     {
         parent::setUp();
         config(['database.default' => 'mysql']);
         config(['database.connections.mysql.database' => 'schoolcore']);
 
-        $school = School::find(15);
+        $this->schoolId = (int) config('tenancy.single_tenant_id');
+        $school = School::findOrFail($this->schoolId);
         app()->instance('current_tenant', $school);
         URL::defaults(['tenant' => $school->subdomain]);
         $this->withSession(['locale' => 'en']);
@@ -26,7 +29,7 @@ class DemoDataWidgetTest extends TestCase
 
     private function widget(): DemoDataWidget
     {
-        $this->actingAs(User::find(13));
+        $this->actingAs(User::where('school_id', $this->schoolId)->where('custom_role_id', 2)->firstOrFail());
 
         return new DemoDataWidget;
     }
@@ -43,7 +46,7 @@ class DemoDataWidgetTest extends TestCase
         $widget->seed();
 
         $students = Student::withoutGlobalScopes()
-            ->where('school_id', 15)
+            ->where('school_id', $this->schoolId)
             ->where('student_id_number', 'LIKE', 'TEST-STU-%')
             ->get();
 
@@ -58,7 +61,7 @@ class DemoDataWidgetTest extends TestCase
         $widget->wipe();
 
         $this->assertFalse(Student::withoutGlobalScopes()
-            ->where('school_id', 15)
+            ->where('school_id', $this->schoolId)
             ->where('student_id_number', 'LIKE', 'TEST-STU-%')
             ->exists(), 'Wiping should remove all TEST-STU students');
 

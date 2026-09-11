@@ -3,7 +3,7 @@
     @php
         $initialStep = 1;
         if (isset($errors) && $errors->any()) {
-            $initialStep = $errors->hasAny(['first_name','last_name','gender','date_of_birth','course_id','applying_year','applying_term']) ? 1
+            $initialStep = $errors->hasAny(['first_name','last_name','gender','date_of_birth','physical_address','course_id','applying_year','applying_term']) ? 1
                 : ($errors->hasAny(['parent_name','parent_email','parent_phone']) ? 2 : 3);
         }
 
@@ -129,9 +129,21 @@
                         </select>
                     </div>
                     <div>
-                        <label class="sc-label">{{ __('Date of Birth') }} <span class="sc-required">*</span></label>
-                        <input type="date" name="date_of_birth" value="{{ $oldInput('date_of_birth') }}" required max="{{ date('Y-m-d') }}"
+                        <label class="sc-label">{{ __('National ID / Birth Cert No.') }}</label>
+                        <input type="text" name="national_id" value="{{ $oldInput('national_id') }}" maxlength="50"
+                               placeholder="e.g. 63-284928X42"
                                class="sc-input">
+                    </div>
+                    <div>
+                        <label class="sc-label">{{ __('Student Email (Optional)') }}</label>
+                        <input type="email" name="email" value="{{ $oldInput('email') }}" maxlength="255"
+                               placeholder="student@domain.com"
+                               class="sc-input">
+                    </div>
+                    <div style="grid-column: 1 / -1;">
+                        <label class="sc-label">{{ __('Physical Address') }} <span class="sc-required">*</span></label>
+                        <textarea name="physical_address" required maxlength="500" rows="2" class="sc-input"
+                                  placeholder="e.g. 14 Links Lane, Borrowdale, Harare">{{ $oldInput('physical_address') }}</textarea>
                     </div>
                     <div>
                         <label class="sc-label">{{ __('Year Applying For') }} <span class="sc-required">*</span></label>

@@ -36,7 +36,13 @@
             @endif
             <td class="school-info">
                 <div class="school-name">{{ $school->name ?? 'KAIRO DEMO ACADEMY' }}</div>
-                <div class="meta-row" style="text-align:left;margin-bottom:0;">{{ $school->address ?? '' }} {{ $school->phone ?? '' }}</div>
+                <div class="meta-row" style="text-align:left;margin-bottom:0;">
+                    {{ implode('  |  ', array_filter([
+                        $school->physical_address ?? ($school->address ?? ''),
+                        ($school->phone_number ?? '') ?: ($school->phone ?? ''),
+                        $school->email_address ?? '',
+                    ])) }}
+                </div>
             </td>
             <td style="text-align: right; vertical-align: bottom; font-size: 8px; color: #64748b;">
                 Date Run: {{ now()->format('Y-m-d H:i') }}<br>

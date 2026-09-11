@@ -154,6 +154,6 @@
         </div>
     @endforeach
 
-<div class="powered-by">Powered by Tinway Technologies</div>
+<div class="powered-by">Powered by Kairo CORE</div>
 </body>
 </html>

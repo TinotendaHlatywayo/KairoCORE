@@ -17,16 +17,11 @@ class InventorySupplier extends Model
     protected $fillable = [
         'school_id',
         'name',
-        'contact_name',
-        'email',
+        'contact_person',
         'phone',
-        'address',
-        'rating',
-        'lead_time_days',
-    ];
-
-    protected $casts = [
-        'rating' => 'decimal:2',
+        'email',
+        'physical_address',
+        'tax_number',
     ];
 
     public function items(): HasMany

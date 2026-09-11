@@ -20,23 +20,39 @@ use Modules\Finance\Services\BillingDocumentSettingsService;
 
 class FinanceTemplateSmokeTest extends TestCase
 {
+    protected int $schoolId;
+
+    /** The certified Administrator for the canonical single tenant. */
+    protected function adminUser(): User
+    {
+        return User::where('school_id', $this->schoolId)->where('custom_role_id', 2)->firstOrFail();
+    }
+
     protected function setUp(): void
     {
         parent::setUp();
         config(['database.default' => 'mysql']);
         config(['database.connections.mysql.database' => 'schoolcore']);
 
-        $school = School::find(15);
+        $this->schoolId = (int) config('tenancy.single_tenant_id');
+        $school = School::findOrFail($this->schoolId);
         app()->instance('current_tenant', $school);
         URL::defaults(['tenant' => $school->subdomain]);
         $this->withSession(['locale' => 'en']);
     }
 
+    protected function tenantHost(): string
+    {
+        $school = School::findOrFail($this->schoolId);
+
+        return $school->subdomain.'.'.parse_url(config('app.url'), PHP_URL_HOST).':8000';
+    }
+
     public function test_finance_template_pages_render_live_preview(): void
     {
-        $user = User::find(13);
+        $user = $this->adminUser();
         $this->actingAs($user)
-            ->withServerVariables(['HTTP_HOST' => 'tinwayacademy.lvh.me:8000']);
+            ->withServerVariables(['HTTP_HOST' => $this->tenantHost()]);
 
         $r = $this->get('/workspace/finance-document-templates/create');
         $r->assertOk();
@@ -51,7 +67,7 @@ class FinanceTemplateSmokeTest extends TestCase
         $this->assertStringContainsString('A4 · live preview', $html);
 
         $tpl = FinanceDocumentTemplate::create([
-            'school_id' => 15,
+            'school_id' => $this->schoolId,
             'document_type' => 'invoice',
             'name' => 'Smoke Test Invoice',
             'design_theme' => 'elegant_editorial',
@@ -75,12 +91,12 @@ class FinanceTemplateSmokeTest extends TestCase
 
     public function test_new_themes_and_template_logo_render_in_preview(): void
     {
-        $user = User::find(13);
+        $user = $this->adminUser();
         $this->actingAs($user)
-            ->withServerVariables(['HTTP_HOST' => 'tinwayacademy.lvh.me:8000']);
+            ->withServerVariables(['HTTP_HOST' => $this->tenantHost()]);
 
         $tpl = FinanceDocumentTemplate::create([
-            'school_id' => 15,
+            'school_id' => $this->schoolId,
             'document_type' => 'invoice',
             'name' => 'Smoke Swiss Invoice',
             'design_theme' => 'swiss_minimal',
@@ -100,16 +116,16 @@ class FinanceTemplateSmokeTest extends TestCase
 
     public function test_logo_upload_render_does_not_crash_livewire(): void
     {
-        $user = User::find(13);
+        $user = $this->adminUser();
         $this->actingAs($user)
-            ->withServerVariables(['HTTP_HOST' => 'tinwayacademy.lvh.me:8000']);
+            ->withServerVariables(['HTTP_HOST' => $this->tenantHost()]);
 
         Filament::setCurrentPanel(Filament::getPanel('app'));
 
         $file = UploadedFile::fake()->image('logo.png', 120, 120);
 
         $tpl = FinanceDocumentTemplate::create([
-            'school_id' => 15,
+            'school_id' => $this->schoolId,
             'document_type' => 'invoice',
             'name' => 'Smoke Logo Upload',
             'design_theme' => 'classic_line',
@@ -162,7 +178,7 @@ class FinanceTemplateSmokeTest extends TestCase
     private function makeFinanceFixture(float $paid = 40.00): array
     {
         $student = \Modules\Students\Models\Student::create([
-            'school_id' => 15,
+            'school_id' => $this->schoolId,
             'student_id_number' => 'TEST-FIN-'.uniqid(),
             'admission_number' => 'TEST-FADM-'.uniqid(),
             'first_name' => 'Finance',
@@ -174,7 +190,7 @@ class FinanceTemplateSmokeTest extends TestCase
         ]);
 
         $invoice = Invoice::create([
-            'school_id' => 15,
+            'school_id' => $this->schoolId,
             'student_id' => $student->id,
             'invoice_number' => 'TEST-FINV-'.strtoupper(uniqid()),
             'currency' => 'USD',
@@ -220,18 +236,18 @@ class FinanceTemplateSmokeTest extends TestCase
 
     public function test_active_template_config_appears_in_actual_document(): void
     {
-        $user = User::find(13);
+        $user = $this->adminUser();
         $this->actingAs($user);
-        $school = School::find(15);
+        $school = School::findOrFail($this->schoolId);
 
         $storedPath = 'tenant/branding/templates/smoke_doc_logo.png';
         Storage::disk('public')->makeDirectory('tenant/branding/templates');
         $file = UploadedFile::fake()->image('smoke_doc_logo.png', 90, 90);
         Storage::disk('public')->put($storedPath, file_get_contents($file->getRealPath()));
 
-        FinanceDocumentTemplate::where('school_id', 15)->where('document_type', 'invoice')->update(['is_active' => false]);
+        FinanceDocumentTemplate::where('school_id', $this->schoolId)->where('document_type', 'invoice')->update(['is_active' => false]);
         $tpl = FinanceDocumentTemplate::create([
-            'school_id' => 15,
+            'school_id' => $this->schoolId,
             'document_type' => 'invoice',
             'name' => 'Smoke Active Config',
             'design_theme' => 'classic_line',
@@ -247,12 +263,12 @@ class FinanceTemplateSmokeTest extends TestCase
 
         // Term context for the PDF view (term.academicYear chain).
         $year = \Modules\Academics\Models\AcademicYear::firstOrCreate(
-            ['school_id' => 15, 'is_active' => true],
+            ['school_id' => $this->schoolId, 'is_active' => true],
             ['name' => now()->format('Y').' Academic Year', 'start_date' => now()->startOfYear(), 'end_date' => now()->endOfYear()]
         );
-        $term = \Modules\Academics\Models\Term::where('school_id', 15)->where('academic_year_id', $year->id)->orderBy('id')->first()
+        $term = \Modules\Academics\Models\Term::where('school_id', $this->schoolId)->where('academic_year_id', $year->id)->orderBy('id')->first()
             ?? \Modules\Academics\Models\Term::create([
-                'school_id' => 15, 'academic_year_id' => $year->id, 'name' => 'Term 1',
+                'school_id' => $this->schoolId, 'academic_year_id' => $year->id, 'name' => 'Term 1',
                 'start_date' => now()->startOfYear(), 'end_date' => now()->startOfYear()->addMonths(3),
             ]);
 
@@ -260,7 +276,7 @@ class FinanceTemplateSmokeTest extends TestCase
         $invoice->update(['term_id' => $term->id]);
 
         try {
-            $resolved = FinanceDocumentTemplate::resolveFor(15, 'invoice');
+            $resolved = FinanceDocumentTemplate::resolveFor($this->schoolId, 'invoice');
             $this->assertSame($tpl->id, $resolved->id);
 
             $html = view('modules.finance.invoice-pdf', [
@@ -277,7 +293,7 @@ class FinanceTemplateSmokeTest extends TestCase
             $this->assertStringContainsString('float: none; margin: 0 auto', $html);
             $this->assertStringContainsString('Scan to Verify', $html);
         } finally {
-            FinanceDocumentTemplate::where('school_id', 15)->where('document_type', 'invoice')->update(['is_active' => false]);
+            FinanceDocumentTemplate::where('school_id', $this->schoolId)->where('document_type', 'invoice')->update(['is_active' => false]);
             $tpl->delete();
             @unlink(public_path('storage/'.$storedPath));
             InvoiceItem::where('invoice_id', $invoice->id)->delete();

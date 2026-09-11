@@ -79,53 +79,47 @@
 
         {{-- Tab Content: Books --}}
         @if($tab === 'books')
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div class="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7">
                 @forelse($this->books as $book)
-                    <div class="group flex flex-col rounded-xl border border-slate-100 bg-white p-4 shadow-sm transition hover:border-indigo-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-700">
-                        <div class="mb-3 flex h-32 items-center justify-center overflow-hidden rounded-lg bg-slate-50 dark:bg-slate-950/40">
-                            @if($book->cover_image_path)
-                                <img src="{{ resolve_public_asset_path($book->cover_image_path) }}"
-                                     alt="{{ $book->title }}"
-                                     class="h-full w-full object-cover">
-                            @elseif($book->media_type === 'digital' && $book->external_url)
-                                <x-heroicon-o-play-circle class="h-10 w-10 text-green-400"/>
-                            @else
-                                <x-heroicon-o-book-open class="h-10 w-10 text-indigo-300 dark:text-indigo-600"/>
-                            @endif
-                        </div>
+                    <div class="group flex flex-col rounded-lg border border-slate-100 bg-white p-2 shadow-sm transition hover:border-indigo-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-700">
+                        <x-library.book-cover
+                            :src="$book->cover_image_path ? asset(resolve_public_asset_path($book->cover_image_path)) : null"
+                            :alt="$book->title"
+                            class="mb-2 w-full"
+                        />
 
-                        <h4 class="text-sm font-bold text-slate-900 dark:text-white line-clamp-2">{{ $book->title }}</h4>
+                        <h4 class="text-xs font-bold text-slate-900 dark:text-white line-clamp-2">{{ $book->title }}</h4>
                         @if($book->authors->count())
-                            <p class="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1">
+                            <p class="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400 line-clamp-1">
                                 {{ $book->authors->pluck('name')->join(', ') }}
                             </p>
                         @endif
 
-                        <div class="mt-2 flex flex-wrap gap-1.5">
+                        <div class="mt-1.5 flex flex-wrap gap-1">
                             @if($book->category)
-                                <span class="inline-flex rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300">
+                                <span class="inline-flex rounded-full bg-indigo-50 px-1.5 py-px text-[9px] font-bold text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300">
                                     {{ $book->category->name }}
                                 </span>
                             @endif
-                            <span class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold {{ $book->media_type === 'digital' ? 'bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-300' : 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300' }}">
+                            <span class="inline-flex rounded-full px-1.5 py-px text-[9px] font-bold {{ $book->media_type === 'digital' ? 'bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-300' : 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300' }}">
                                 {{ ucfirst($book->media_type ?? 'Book') }}
                             </span>
                             @if($book->format)
-                                <span class="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                <span class="inline-flex rounded-full bg-slate-100 px-1.5 py-px text-[9px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                                     {{ $book->format->name }}
                                 </span>
                             @endif
                         </div>
 
                         @if($book->description)
-                            <p class="mt-2 line-clamp-2 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">{{ $book->description }}</p>
+                            <p class="mt-1.5 line-clamp-1 text-[10px] leading-relaxed text-slate-500 dark:text-slate-400">{{ $book->description }}</p>
                         @endif
 
-                        <div class="mt-auto pt-3">
+                        <div class="mt-auto pt-2">
                             @if($book->media_type === 'digital' && ($book->external_url || $book->file_path))
                                 <a href="{{ $book->external_url ?? asset('storage/'.$book->file_path) }}"
                                    target="_blank" rel="noopener"
-                                   class="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-[11px] font-bold text-white transition hover:bg-indigo-500">
+                                   class="inline-flex w-full items-center justify-center gap-1 rounded-lg bg-indigo-600 px-2 py-1 text-[10px] font-bold text-white transition hover:bg-indigo-500">
                                     <x-heroicon-o-arrow-top-right-on-square class="h-3 w-3"/>
                                     {{ __('Access Resource') }}
                                 </a>
@@ -134,7 +128,7 @@
                                     $total = $book->getTotalCopiesCount();
                                     $available = $book->getAvailableCopiesCount();
                                 @endphp
-                                <div class="flex items-center justify-between text-[11px]">
+                                <div class="flex items-center justify-between text-[10px]">
                                     <span class="font-semibold {{ $available > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400' }}">
                                         {{ $available }}/{{ $total }} {{ __('available') }}
                                     </span>
@@ -143,7 +137,7 @@
                                     @endif
                                 </div>
                             @else
-                                <span class="text-[11px] font-semibold text-slate-400">{{ __('Physical copy') }}</span>
+                                <span class="text-[10px] font-semibold text-slate-400">{{ __('Physical copy') }}</span>
                             @endif
                         </div>
                     </div>
@@ -163,59 +157,55 @@
 
         {{-- Tab Content: Knowledge Hub --}}
         @if($tab === 'knowledge')
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div class="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7">
                 @forelse($this->knowledgeAssets as $asset)
-                    <div class="group flex flex-col rounded-xl border border-slate-100 bg-white p-4 shadow-sm transition hover:border-purple-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-purple-700">
-                        <div class="mb-3 flex h-32 items-center justify-center overflow-hidden rounded-lg bg-purple-50/50 dark:bg-purple-900/10">
-                            @if($asset->cover_image_path)
-                                <img src="{{ resolve_public_asset_path($asset->cover_image_path) }}"
-                                     alt="{{ $asset->title }}"
-                                     class="h-full w-full object-cover">
-                            @else
-                                <x-heroicon-o-academic-cap class="h-10 w-10 text-purple-300 dark:text-purple-600"/>
-                            @endif
-                        </div>
+                    <div class="group flex flex-col rounded-lg border border-slate-100 bg-white p-2 shadow-sm transition hover:border-purple-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-purple-700">
+                        <x-library.book-cover
+                            :src="$asset->cover_image_path ? asset(resolve_public_asset_path($asset->cover_image_path)) : null"
+                            :alt="$asset->title"
+                            class="mb-2 w-full"
+                        />
 
-                        <h4 class="text-sm font-bold text-slate-900 dark:text-white line-clamp-2">{{ $asset->title }}</h4>
+                        <h4 class="text-xs font-bold text-slate-900 dark:text-white line-clamp-2">{{ $asset->title }}</h4>
                         @if($asset->subtitle)
-                            <p class="mt-0.5 text-[11px] text-slate-400 line-clamp-1">{{ $asset->subtitle }}</p>
+                            <p class="mt-0.5 text-[10px] text-slate-400 line-clamp-1">{{ $asset->subtitle }}</p>
                         @endif
                         @if($asset->authors->count())
-                            <p class="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1">
+                            <p class="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400 line-clamp-1">
                                 {{ $asset->authors->pluck('name')->join(', ') }}
                             </p>
                         @endif
 
-                        <div class="mt-2 flex flex-wrap gap-1.5">
+                        <div class="mt-1.5 flex flex-wrap gap-1">
                             @if($asset->category)
-                                <span class="inline-flex rounded-full bg-purple-50 px-2 py-0.5 text-[10px] font-bold text-purple-600 dark:bg-purple-900/30 dark:text-purple-300">
+                                <span class="inline-flex rounded-full bg-purple-50 px-1.5 py-px text-[9px] font-bold text-purple-600 dark:bg-purple-900/30 dark:text-purple-300">
                                     {{ $asset->category->name }}
                                 </span>
                             @endif
                             @if($asset->subtype)
-                                <span class="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                <span class="inline-flex rounded-full bg-slate-100 px-1.5 py-px text-[9px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                                     {{ ucfirst($asset->subtype) }}
                                 </span>
                             @endif
-                            <span class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold {{ $asset->media_type === 'digital' ? 'bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-300' : 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300' }}">
+                            <span class="inline-flex rounded-full px-1.5 py-px text-[9px] font-bold {{ $asset->media_type === 'digital' ? 'bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-300' : 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300' }}">
                                 {{ ucfirst($asset->media_type) }}
                             </span>
                         </div>
 
                         @if($asset->abstract_description)
-                            <p class="mt-2 line-clamp-2 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">{{ $asset->abstract_description }}</p>
+                            <p class="mt-1.5 line-clamp-1 text-[10px] leading-relaxed text-slate-500 dark:text-slate-400">{{ $asset->abstract_description }}</p>
                         @endif
 
-                        <div class="mt-auto pt-3">
+                        <div class="mt-auto pt-2">
                             @if($asset->media_type === 'digital' && ($asset->external_url || $asset->file_path))
                                 <a href="{{ $asset->external_url ?? asset('storage/'.$asset->file_path) }}"
                                    target="_blank" rel="noopener"
-                                   class="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-purple-600 px-3 py-1.5 text-[11px] font-bold text-white transition hover:bg-purple-500">
+                                   class="inline-flex w-full items-center justify-center gap-1 rounded-lg bg-purple-600 px-2 py-1 text-[10px] font-bold text-white transition hover:bg-purple-500">
                                     <x-heroicon-o-arrow-top-right-on-square class="h-3 w-3"/>
                                     {{ __('Access') }}
                                 </a>
                             @else
-                                <span class="text-[11px] font-semibold text-slate-400">{{ __('Physical copy') }}</span>
+                                <span class="text-[10px] font-semibold text-slate-400">{{ __('Physical copy') }}</span>
                             @endif
                         </div>
                     </div>

@@ -21,6 +21,11 @@ class ListProcurementRequests extends ListRecords
         return ProcurementRequestCsvService::class;
     }
 
+    protected function csvUploadHelperText(): ?string
+    {
+        return __("Download the template below, then add one request per row. Request Number and Requester are generated automatically. Put each requested item in the Item Name(s) column — separate multiple items with a semicolon (;), pipe (|) or a new line, and line up quantities and unit costs the same way.");
+    }
+
     protected function getHeaderActions(): array
     {
         return [

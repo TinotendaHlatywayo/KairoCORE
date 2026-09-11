@@ -3,6 +3,7 @@
 namespace App\Livewire\Assessment;
 
 use App\Filament\Student\Resources\StudentAssessmentResource;
+use Filament\Notifications\Notification;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Modules\DigitalAssessment\Models\DigitalAssessment;
@@ -44,6 +45,12 @@ class TakeAssessment extends Component
 
     public bool $uploadSuccess = false;
 
+    public string $accessCode = '';
+
+    public bool $accessCodeVerified = false;
+
+    protected array $shuffledOptionOrders = [];
+
     protected AttemptService $attemptService;
 
     protected ?AdaptiveEngine $adaptiveEngine = null;
@@ -56,12 +63,12 @@ class TakeAssessment extends Component
         $this->adaptiveEngine = app(AdaptiveEngine::class);
     }
 
-    public function mount(int $assessment): void
+    public function mount(int $assessmentId): void
     {
-        $this->assessmentId = $assessment;
+        $this->assessmentId = $assessmentId;
 
         $this->assessment = DigitalAssessment::with(['questions.question', 'subject'])
-            ->findOrFail($assessment);
+            ->findOrFail($assessmentId);
 
         $this->isAdaptive = $this->adaptiveEngine->getAdaptiveConfig($this->assessment)?->is_active ?? false;
         $this->totalQuestions = $this->assessment->questions()->count();
@@ -80,6 +87,61 @@ class TakeAssessment extends Component
             if (! in_array((int) $this->assessment->section_id, $sectionIds, true)) {
                 abort(403, 'This assessment is not assigned to your class.');
             }
+        }
+
+        $requiresAccessCode = $this->assessment->password_protection
+            && filled($this->assessment->settings['access_code'] ?? null);
+
+        $this->accessCodeVerified = ! $requiresAccessCode;
+
+        if ($this->accessCodeVerified) {
+            $this->beginAttemptSession($student);
+        }
+    }
+
+    public function requiresAccessCode(): bool
+    {
+        return $this->assessment?->password_protection === true && ! $this->accessCodeVerified;
+    }
+
+    public function verifyAccessCode(): void
+    {
+        if ($this->requiresAccessCode()) {
+            $expected = trim((string) ($this->assessment->settings['access_code'] ?? ''));
+
+            if ($expected !== '' && hash_equals($expected, trim((string) $this->accessCode))) {
+                $this->accessCodeVerified = true;
+                $this->accessCode = '';
+
+                $student = StudentAssessmentResource::currentStudent();
+
+                if ($student) {
+                    $this->beginAttemptSession($student);
+                }
+
+                return;
+            }
+
+            $this->accessCode = '';
+            Notification::make()
+                ->title(__('Incorrect Access Code'))
+                ->body(__('The access code you entered is not correct. Please try again.'))
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        $student = StudentAssessmentResource::currentStudent();
+        if ($student) {
+            $this->beginAttemptSession($student);
+        }
+    }
+
+    protected function beginAttemptSession($student): void
+    {
+        if ($this->attempt) {
+            return;
         }
 
         $this->attempt = $this->attemptService->startAttempt(
@@ -132,6 +194,10 @@ class TakeAssessment extends Component
             return;
         }
 
+        if ($this->assessment && ! $this->assessment->allow_backward_navigation && $index < $this->currentQuestionIndex) {
+            return;
+        }
+
         if ($index >= 0 && $index < $this->questions->count()) {
             $this->currentQuestionIndex = $index;
         }
@@ -148,9 +214,63 @@ class TakeAssessment extends Component
 
     public function previousQuestion(): void
     {
+        if ($this->isAdaptive) {
+            return;
+        }
+
+        if ($this->assessment && ! $this->assessment->allow_backward_navigation) {
+            return;
+        }
+
         if ($this->currentQuestionIndex > 0) {
             $this->currentQuestionIndex--;
         }
+    }
+
+    /**
+     * Stable per-attempt permutation of option keys so option order differs
+     * between attempts (when randomize_options is enabled) but is identical for
+     * every render of the same attempt. Keys (letters like A/B/C/D) are
+     * shuffled so `$q->options[$key]` keeps resolving to the correct text.
+     */
+    public function optionOrder(string $qId, array $keys = []): array
+    {
+        if ($keys === []) {
+            return [];
+        }
+
+        if ($this->assessment?->randomize_options !== true) {
+            return array_values($keys);
+        }
+
+        $cacheKey = (string) $this->attemptId.'-'.$qId;
+
+        if (! array_key_exists($cacheKey, $this->shuffledOptionOrders)) {
+            $order = array_values($keys);
+            if (count($order) > 1) {
+                mt_srand(((int) $this->attemptId) * 31 + (int) $qId);
+                shuffle($order);
+                mt_srand();
+            }
+            $this->shuffledOptionOrders[$cacheKey] = $order;
+        }
+
+        return $this->shuffledOptionOrders[$cacheKey];
+    }
+
+    public function logSuspiciousActivity(string $type): void
+    {
+        if (! $this->attempt) {
+            return;
+        }
+
+        $log = $this->attempt->suspicious_activity_log ?? [];
+        $log[] = [
+            'type' => $type,
+            'at' => now()->toDateTimeString(),
+        ];
+
+        $this->attempt->update(['suspicious_activity_log' => $log]);
     }
 
     /**
@@ -291,13 +411,23 @@ class TakeAssessment extends Component
         }
 
         if ($this->secondsRemaining <= 0 && $this->assessment?->auto_submit) {
-            $this->submit();
+            $this->submit(true);
         }
     }
 
-    public function submit(): void
+    public function submit(bool $force = false): void
     {
         if ($this->submitted || ! $this->attempt) {
+            return;
+        }
+
+        if ($this->assessment && ! $force && ! $this->assessment->allow_question_skipping && $this->getAnsweredCount() < $this->questions->count()) {
+            Notification::make()
+                ->title(__('Unanswered Questions'))
+                ->body(__('Please answer all questions before submitting. Unanswered questions will be marked as blank.'))
+                ->warning()
+                ->send();
+
             return;
         }
 

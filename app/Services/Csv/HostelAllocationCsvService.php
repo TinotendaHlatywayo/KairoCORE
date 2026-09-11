@@ -7,7 +7,6 @@ use Modules\Academics\Models\AcademicYear;
 use Modules\Hostels\Models\Hostel;
 use Modules\Hostels\Models\HostelAllocation;
 use Modules\Hostels\Models\HostelBed;
-use Modules\Hostels\Models\HostelBuilding;
 use Modules\Hostels\Models\HostelFloor;
 use Modules\Hostels\Models\HostelRoom;
 use Modules\Hostels\Models\HostelWing;
@@ -19,10 +18,10 @@ class HostelAllocationCsvService extends CsvBulkService
     {
         return [
             'student' => [
-                'label' => __('Student Admission No.'),
+                'label' => __('Student ID Number'),
                 'required' => true,
-                'guesses' => ['Student', 'Admission No', 'Student Admission Number'],
-                'example' => 'STU-2026-001',
+                'guesses' => ['Student', 'Student ID', 'Student ID Number', 'ID Number', 'Admission No', 'Student Admission Number'],
+                'example' => 'R261234567A',
             ],
             'academic_year' => [
                 'label' => __('Academic Year'),
@@ -35,12 +34,6 @@ class HostelAllocationCsvService extends CsvBulkService
                 'required' => true,
                 'guesses' => ['Hostel', 'Hostel Name'],
                 'example' => 'Mbare Hostel',
-            ],
-            'building' => [
-                'label' => __('Building Name'),
-                'required' => true,
-                'guesses' => ['Building', 'Building Name'],
-                'example' => 'Block A',
             ],
             'floor_number' => [
                 'label' => __('Floor Number'),
@@ -100,7 +93,7 @@ class HostelAllocationCsvService extends CsvBulkService
     public static function exportHeaders(): array
     {
         return [
-            'Student Admission No', 'Academic Year', 'Hostel Name', 'Building Name',
+            'Student ID Number', 'Academic Year', 'Hostel Name',
             'Floor Number', 'Wing Name', 'Room Number', 'Bed Number', 'Allocated Date',
             'Expected Checkout', 'Status', 'Notes',
         ];
@@ -110,7 +103,7 @@ class HostelAllocationCsvService extends CsvBulkService
     {
         $query = HostelAllocation::withoutTenantScope()
             ->where('school_id', $schoolId)
-            ->with(['bed.room.wing.floor.building.hostel', 'student', 'academicYear'])
+            ->with(['bed.room.wing.floor.hostel', 'student', 'academicYear'])
             ->orderBy('id');
 
         $lastId = 0;
@@ -125,13 +118,11 @@ class HostelAllocationCsvService extends CsvBulkService
             foreach ($allocations as $allocation) {
                 $room = $allocation->bed?->room;
                 $floor = $room?->wing?->floor;
-                $building = $floor?->building;
 
                 yield [
-                    $allocation->student?->admission_number,
+                    $allocation->student?->student_id_number,
                     $allocation->academicYear?->name,
-                    $building?->hostel?->name,
-                    $building?->name,
+                    $floor?->hostel?->name,
                     $floor?->floor_number,
                     $room?->wing?->name,
                     $room?->room_number,
@@ -150,7 +141,7 @@ class HostelAllocationCsvService extends CsvBulkService
     public static function import(string $filePath, int $schoolId, array $columnMap, ?callable $onProgress = null): array
     {
         $students = Student::withoutTenantScope()->where('school_id', $schoolId)->get()
-            ->keyBy(fn ($s): string => strtolower(trim($s->admission_number)));
+            ->keyBy(fn ($s): string => strtolower(trim($s->student_id_number)));
 
         $academicYears = AcademicYear::withoutTenantScope()->where('school_id', $schoolId)->get()
             ->keyBy(fn ($y): string => strtolower(trim($y->name)));
@@ -158,11 +149,8 @@ class HostelAllocationCsvService extends CsvBulkService
         $hostels = Hostel::withoutTenantScope()->where('school_id', $schoolId)->get()
             ->keyBy(fn ($h): string => strtolower(trim($h->name)));
 
-        $buildings = HostelBuilding::withoutTenantScope()->where('school_id', $schoolId)->get()
-            ->keyBy(fn ($b): string => $b->hostel_id.'::'.strtolower(trim($b->name)));
-
         $floors = HostelFloor::withoutTenantScope()->where('school_id', $schoolId)->get()
-            ->keyBy(fn ($f): string => $f->building_id.'::'.trim((string) $f->floor_number));
+            ->keyBy(fn ($f): string => $f->hostel_id.'::'.trim((string) $f->floor_number));
 
         $wings = HostelWing::withoutTenantScope()->where('school_id', $schoolId)->get()
             ->keyBy(fn ($w): string => $w->floor_id.'::'.strtolower(trim($w->name)));
@@ -188,7 +176,6 @@ class HostelAllocationCsvService extends CsvBulkService
             'students' => $students,
             'academicYears' => $academicYears,
             'hostels' => $hostels,
-            'buildings' => $buildings,
             'floors' => $floors,
             'wings' => $wings,
             'rooms' => $rooms,
@@ -212,7 +199,7 @@ class HostelAllocationCsvService extends CsvBulkService
     {
         $errors = [];
 
-        foreach (['student', 'academic_year', 'hostel', 'building', 'floor_number', 'wing', 'room_number', 'bed_number'] as $required) {
+        foreach (['student', 'academic_year', 'hostel', 'floor_number', 'wing', 'room_number', 'bed_number'] as $required) {
             $data[$required] = trim($data[$required] ?? '');
 
             if ($data[$required] === '') {
@@ -235,24 +222,14 @@ class HostelAllocationCsvService extends CsvBulkService
         $hostelName = strtolower($data['hostel'] ?? '');
         $data['_hostel'] = $hostelName !== '' ? ($lookups['hostels'][$hostelName] ?? null) : null;
         if ($hostelName !== '' && ! $data['_hostel']) {
-            $errors[] = 'Hostel ['.$data['hostel'].'] was not found in this school. Available hostels: '.($lookups['hostels']->pluck('name')->implode(', ') ?: 'none').'.';
+            $errors[] = ucwords($data['hostel']) . ' hostel is not found or not yet configured in the system.';
         }
 
         if ($data['_hostel']) {
-            $buildingName = strtolower($data['building'] ?? '');
-            $data['_building'] = $buildingName !== ''
-                ? ($lookups['buildings'][$data['_hostel']->id.'::'.$buildingName] ?? null)
-                : null;
-            if ($buildingName !== '' && ! $data['_building']) {
-                $errors[] = 'Building ['.$data['building'].'] was not found in Hostel ['.$data['_hostel']->name.'].';
-            }
-        }
-
-        if (isset($data['_building']) && $data['_building']) {
-            $floorKey = $data['_building']->id.'::'.trim($data['floor_number'] ?? '');
+            $floorKey = $data['_hostel']->id.'::'.trim($data['floor_number'] ?? '');
             $data['_floor'] = $lookups['floors'][$floorKey] ?? null;
             if (! $data['_floor']) {
-                $errors[] = 'Floor Number ['.$data['floor_number'].'] was not found in Building ['.$data['_building']->name.'].';
+                $errors[] = 'Floor Number ['.$data['floor_number'].'] was not found in Hostel ['.$data['_hostel']->name.'].';
             }
         }
 
@@ -266,11 +243,25 @@ class HostelAllocationCsvService extends CsvBulkService
             }
         }
 
-        if (isset($data['_wing']) && $data['_wing'] && $data['room_number'] !== '') {
-            $roomKey = $data['_wing']->floor_id.'::'.strtolower(trim($data['room_number']));
-            $data['_room'] = $lookups['rooms'][$roomKey] ?? null;
-            if (! $data['_room']) {
-                $errors[] = 'Room Number ['.$data['room_number'].'] was not found in Wing ['.$data['_wing']->name.'].';
+        if (isset($data['_floor']) && $data['_floor']) {
+            $roomNumber = strtolower(trim($data['room_number'] ?? ''));
+            $data['_room'] = $roomNumber !== ''
+                ? ($lookups['rooms'][$data['_floor']->id.'::'.$roomNumber] ?? null)
+                : null;
+            if ($roomNumber !== '' && ! $data['_room']) {
+                $errors[] = 'Room Number ['.$data['room_number'].'] was not found in Floor ['.$data['_floor']->floor_number.'].';
+            }
+        }
+
+        if (isset($data['_room']) && $data['_room'] && $data['room_number'] !== '') {
+            $room = $data['_room'];
+            $activeCount = HostelAllocation::withoutTenantScope()
+                ->where('room_id', $room->id)
+                ->where('status', 'active')
+                ->count();
+            $capacity = $room->capacity ?? 1;
+            if ($activeCount >= $capacity) {
+                $errors[] = 'Room ' . $room->room_number . ' in ' . ($data['_hostel']?->name ?? $data['hostel']) . ' is full (capacity: ' . $capacity . ', current occupants: ' . $activeCount . ').';
             }
         }
 

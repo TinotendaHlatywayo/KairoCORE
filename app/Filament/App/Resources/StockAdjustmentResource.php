@@ -51,9 +51,10 @@ class StockAdjustmentResource extends Resource
                             ->default(fn () => 'ADJ-'.now()->year.'-'.str_pad((string) rand(100, 9999), 4, '0', STR_PAD_LEFT)),
                         Forms\Components\Select::make('inventory_location_id')
                             ->relationship('location', 'name')
-                            ->required()
+                            ->nullable()
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->placeholder(__('Optional — select a storage location if this audit targets a specific store...')),
                         Forms\Components\DatePicker::make('conducted_date')
                             ->default(now())
                             ->required(),
@@ -65,11 +66,14 @@ class StockAdjustmentResource extends Resource
                             ->relationship('items')
                             ->schema([
                                 Forms\Components\Select::make('inventory_item_id')
-                                    ->relationship('inventoryItem', 'name')
+                                    ->label(__('Inventory Item / Variant'))
+                                    ->options(fn (?string $search = '') => inventory_item_search_options($search))
+                                    ->getOptionLabelUsing(fn ($value) => inventory_item_label(InventoryItem::find($value)))
                                     ->required()
                                     ->reactive()
                                     ->searchable()
-                                    ->preload()
+                                    ->optionsLimit(50)
+                                    ->searchPrompt(__('Search by name, SKU or type — typos are OK...'))
                                     ->afterStateUpdated(function ($state, callable $set) {
                                         $item = InventoryItem::find($state);
                                         if ($item) {
@@ -133,6 +137,13 @@ class StockAdjustmentResource extends Resource
                     ->visible(fn (InventoryStockAdjustment $record) => $record->status === 'draft')
                     ->action(function (InventoryStockAdjustment $record) {
                         DB::transaction(function () use ($record) {
+                            $locationId = $record->inventory_location_id
+                                ?? (int) DB::table('inventory_locations')
+                                    ->where('school_id', $record->school_id)
+                                    ->where('type', 'general')
+                                    ->orderBy('id', 'ASC')
+                                    ->value('id');
+
                             foreach ($record->items as $adjustmentItem) {
                                 /** @var InventoryItem $item */
                                 $item = $adjustmentItem->inventoryItem;
@@ -143,7 +154,7 @@ class StockAdjustmentResource extends Resource
                                     InventoryStockMovement::create([
                                         'school_id' => $record->school_id,
                                         'inventory_item_id' => $item->id,
-                                        'inventory_location_id' => $record->inventory_location_id,
+                                        'inventory_location_id' => $locationId,
                                         'type' => 'adjustment',
                                         'quantity' => $variance,
                                         'unit_cost' => $item->average_unit_cost,

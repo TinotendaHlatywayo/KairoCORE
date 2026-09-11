@@ -20,6 +20,11 @@ class ManualMarkingPage extends Page
 
     public ?int $assessment = null;
 
+    public static function canAccess(): bool
+    {
+        return false;
+    }
+
     public static function getRoutePath(): string
     {
         return 'manual-marking/{assessment?}';

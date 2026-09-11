@@ -20,6 +20,17 @@ class ProcurementRequest extends Model
         'status',
         'urgency',
         'notes',
+        'purpose',
+        'approved_by_id',
+        'approved_at',
+        'requester_signature',
+        'officer_signature',
+        'date_signed',
+    ];
+
+    protected $casts = [
+        'approved_at' => 'datetime',
+        'date_signed' => 'date',
     ];
 
     public function requester(): BelongsTo
@@ -27,8 +38,18 @@ class ProcurementRequest extends Model
         return $this->belongsTo(User::class, 'requester_id');
     }
 
+    public function approver(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by_id');
+    }
+
     public function items(): HasMany
     {
         return $this->hasMany(ProcurementRequestItem::class, 'procurement_request_id');
+    }
+
+    public function orders(): HasMany
+    {
+        return $this->hasMany(\Modules\Inventory\Models\ProcurementOrder::class, 'procurement_request_id');
     }
 }

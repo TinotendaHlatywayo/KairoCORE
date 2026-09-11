@@ -11,11 +11,14 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
+use Illuminate\Database\Eloquent\Builder;
+use Modules\Academics\Models\AcademicYear;
 use Modules\Academics\Models\AssessmentMark;
 use Modules\Academics\Models\AssessmentType;
 use Modules\Academics\Models\Course;
 use Modules\Academics\Models\Section;
 use Modules\Academics\Models\Subject;
+use Modules\Academics\Models\Term;
 use Modules\Admin\Services\PermissionRegistry;
 use Modules\Students\Models\Enrollment;
 use Modules\Students\Models\Student;
@@ -488,6 +491,45 @@ class AssessmentMarkResource extends Resource
                     }),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('academic_year_id')
+                    ->label(__('Academic Year'))
+                    ->options(fn () => AcademicYear::where('school_id', current_tenant()?->id ?? auth()->user()?->school_id)->pluck('name', 'id'))
+                    ->query(function (Builder $query, array $data) {
+                        $value = $data['value'] ?? null;
+
+                        return $query->when($value, function (Builder $q, $yearId) {
+                            return $q->whereHas('assessmentType.term', fn ($t) => $t->where('academic_year_id', $yearId));
+                        });
+                    })
+                    ->default(function () {
+                        return AcademicYear::where('school_id', current_tenant()?->id ?? auth()->user()?->school_id)
+                            ->where('is_active', true)
+                            ->value('id');
+                    }),
+                Tables\Filters\SelectFilter::make('term_id')
+                    ->label(__('Term'))
+                    ->options(fn () => Term::where('school_id', current_tenant()?->id ?? auth()->user()?->school_id)->orderByDesc('id')->pluck('name', 'id'))
+                    ->query(function (Builder $query, array $data) {
+                        $value = $data['value'] ?? null;
+
+                        return $query->when($value, function (Builder $q, $termId) {
+                            return $q->whereHas('assessmentType', fn ($at) => $at->where('term_id', $termId));
+                        });
+                    })
+                    ->default(function () {
+                        $schoolId = current_tenant()?->id ?? auth()->user()?->school_id;
+                        $activeYear = AcademicYear::where('school_id', $schoolId)->where('is_active', true)->first();
+
+                        if (! $activeYear) {
+                            return null;
+                        }
+
+                        return Term::where('school_id', $schoolId)
+                            ->where('academic_year_id', $activeYear->id)
+                            ->orderBy('is_active', 'desc')
+                            ->orderByDesc('id')
+                            ->value('id');
+                    }),
                 Tables\Filters\SelectFilter::make('section_id')
                     ->label(__('Class Stream'))
                     ->options(fn () => Section::with('course')->get()->pluck('full_name', 'id'))

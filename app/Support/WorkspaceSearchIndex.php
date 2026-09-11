@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Navigation\ModuleNavigationService;
 use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Auth;
 
@@ -31,7 +32,7 @@ class WorkspaceSearchIndex
         }
 
         try {
-            $panel = Filament::getCurrentOrDefaultPanel();
+            $panel = Filament::getCurrentPanel() ?? Filament::getDefaultPanel();
         } catch (\Throwable) {
             return [];
         }
@@ -93,6 +94,37 @@ class WorkspaceSearchIndex
             } catch (\Throwable) {
                 continue;
             }
+        }
+
+        // ── Module sub-pages (contextual tab bar + "more" menu) ──────────
+        // Whatever page you are on, every sub-page underneath any visible
+        // module stays reachable from the search bar. Tabs are permission-
+        // filtered by ModuleNavigationService (module visibility + Resource::
+        // canViewAny / Page::canAccess), exactly like the module header the
+        // user would see on that page.
+        try {
+            $moduleNav = app(ModuleNavigationService::class);
+
+            foreach ($moduleNav->modules() as $module) {
+                foreach (array_merge($moduleNav->moduleTabs($module), $moduleNav->moduleMoreTabs($module)) as $tab) {
+                    $url = $tab['url'] ?? null;
+
+                    if (blank($url)) {
+                        continue;
+                    }
+
+                    $path = parse_url($url, PHP_URL_PATH) ?? $url;
+
+                    $items[] = [
+                        'label' => $tab['label'] ?? $module['label'] ?? 'Module',
+                        'group' => ($module['label'] ?? '').' · '.($tab['group'] ?? 'Overview'),
+                        'url' => '/'.ltrim($path, '/'),
+                        'icon' => $tab['icon'] ?? $module['icon'] ?? 'heroicon-o-square-3-stack-3d',
+                    ];
+                }
+            }
+        } catch (\Throwable) {
+            // Module registry unavailable — sub-pages are simply not searchable.
         }
 
         // Dedupe by URL (resources may also appear via DOM collection).

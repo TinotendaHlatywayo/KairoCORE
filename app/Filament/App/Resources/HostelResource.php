@@ -36,7 +36,7 @@ class HostelResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Card::make()
+                Forms\Components\Section::make()
                     ->schema([
                         Forms\Components\TextInput::make('name')
                             ->required()
@@ -61,43 +61,31 @@ class HostelResource extends Resource
                             ->default('active'),
                         Forms\Components\Textarea::make('description')
                             ->columnSpanFull(),
-                        Forms\Components\Repeater::make('buildings')
-                            ->relationship('buildings')
-                            ->label(__('Buildings, Floors & Wings'))
+                        Forms\Components\Repeater::make('floors')
+                            ->relationship('floors')
+                            ->label(__('Floors & Wings'))
                             ->collapsible()
                             ->defaultItems(0)
                             ->columnSpanFull()
                             ->schema([
-                                Forms\Components\TextInput::make('name')
-                                    ->label(__('Building Name'))
+                                Forms\Components\TextInput::make('floor_number')
+                                    ->label(__('Floor Number'))
                                     ->required()
                                     ->maxLength(255),
-                                Forms\Components\TextInput::make('description')
-                                    ->label(__('Building Description')),
-                                Forms\Components\Repeater::make('floors')
-                                    ->relationship('floors')
-                                    ->label(__('Floors'))
+                                Forms\Components\TextInput::make('floor_name')
+                                    ->label(__('Floor Name'))
+                                    ->maxLength(255),
+                                Forms\Components\Repeater::make('wings')
+                                    ->relationship('wings')
+                                    ->label(__('Wings'))
                                     ->collapsible()
                                     ->schema([
-                                        Forms\Components\TextInput::make('floor_number')
-                                            ->label(__('Floor Number'))
+                                        Forms\Components\TextInput::make('name')
+                                            ->label(__('Wing Name'))
                                             ->required()
                                             ->maxLength(255),
-                                        Forms\Components\TextInput::make('floor_name')
-                                            ->label(__('Floor Name'))
-                                            ->maxLength(255),
-                                        Forms\Components\Repeater::make('wings')
-                                            ->relationship('wings')
-                                            ->label(__('Wings'))
-                                            ->collapsible()
-                                            ->schema([
-                                                Forms\Components\TextInput::make('name')
-                                                    ->label(__('Wing Name'))
-                                                    ->required()
-                                                    ->maxLength(255),
-                                                Forms\Components\TextInput::make('description')
-                                                    ->label(__('Wing Description')),
-                                            ]),
+                                        Forms\Components\TextInput::make('description')
+                                            ->label(__('Wing Description')),
                                     ]),
                             ]),
                     ])->columns(2),

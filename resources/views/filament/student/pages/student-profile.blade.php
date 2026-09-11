@@ -31,7 +31,7 @@
                 <div class="flex flex-col gap-6 sm:flex-row sm:items-start">
                     <div class="shrink-0">
                         @if($student->photo_path)
-                            <img src="{{ resolve_public_asset_path($student->photo_path) }}"
+                            <img src="{{ asset(resolve_public_asset_path($student->photo_path)) }}"
                                  alt="{{ $student->full_name }}"
                                  class="h-32 w-24 rounded-lg object-cover shadow-sm ring-2 ring-slate-100 dark:ring-slate-800">
                         @else
@@ -59,17 +59,31 @@
                             </span>
                         </div>
 
-                        @if($hasPhoto)
-                            <p class="text-sm text-slate-600 dark:text-slate-400">{{ __('Your profile photo is on file.') }}</p>
-                            <p class="mt-1 text-[11px] text-slate-400 dark:text-slate-500">{{ __('You can upload a new one below to replace it.') }}</p>
-                        @endif
+                        @if($isApproved)
+                            <div class="rounded-lg border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900 dark:bg-emerald-950/30">
+                                <div class="flex items-center gap-3">
+                                    <x-heroicon-o-check-badge class="h-6 w-6 shrink-0 text-emerald-600 dark:text-emerald-400"/>
+                                    <div>
+                                        <p class="text-sm font-bold text-emerald-800 dark:text-emerald-200">{{ __('Photo Locked & Fixed') }}</p>
+                                        <p class="mt-0.5 text-xs text-emerald-700 dark:text-emerald-300">
+                                            {{ __('Your profile photo is locked and fixed. Only an administrator can remove it.') }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        @else
+                            @if($hasPhoto)
+                                <p class="text-sm text-slate-600 dark:text-slate-400">{{ __('Your profile photo is on file.') }}</p>
+                                <p class="mt-1 text-[11px] text-slate-400 dark:text-slate-500">{{ __('You can upload a new one below to replace it.') }}</p>
+                            @endif
 
-                        <x-passport-photo-uploader
-                            wire-method="savePhoto"
-                            :current-photo="$student->photo_path ? resolve_public_asset_path($student->photo_path) : null"
-                            :placeholder="$student->photo_path ? null : (($student->gender === 'female') ? asset('images/no_profile_female.jpg') : asset('images/no_profile_male.png'))"
-                            :has-photo="$hasPhoto"
-                        />
+                            <x-passport-photo-uploader
+                                wire-method="savePhoto"
+                                :current-photo="$student->photo_path ? asset(resolve_public_asset_path($student->photo_path)) : null"
+                                :placeholder="$student->photo_path ? null : (($student->gender === 'female') ? asset('images/no_profile_female.jpg') : asset('images/no_profile_male.png'))"
+                                :has-photo="$hasPhoto"
+                            />
+                        @endif
                     </div>
                 </div>
             </div>

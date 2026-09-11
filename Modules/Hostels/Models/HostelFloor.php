@@ -11,11 +11,11 @@ class HostelFloor extends Model
 {
     use BelongsToTenant;
 
-    protected $fillable = ['school_id', 'building_id', 'floor_number', 'floor_name'];
+    protected $fillable = ['school_id', 'hostel_id', 'floor_number', 'floor_name'];
 
-    public function building(): BelongsTo
+    public function hostel(): BelongsTo
     {
-        return $this->belongsTo(HostelBuilding::class, 'building_id');
+        return $this->belongsTo(Hostel::class, 'hostel_id');
     }
 
     public function wings(): HasMany

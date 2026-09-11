@@ -90,7 +90,7 @@ class AcademicOperationsCenter extends Page
 
     public function mount(): void
     {
-        $schoolId = auth()->user()?->school_id ?? config('current_tenant_id');
+        $schoolId = auth()->user()?->school_id ?? (current_tenant()?->id ?? auth()->user()?->school_id ?? 1);
 
         $engine = new AcademicWorkflowEngine($schoolId);
         $scorer = new AcademicReadinessScorer($schoolId);
@@ -296,7 +296,7 @@ class AcademicOperationsCenter extends Page
 
     protected function getRecentActivity(): array
     {
-        $schoolId = auth()->user()?->school_id ?? config('current_tenant_id');
+        $schoolId = auth()->user()?->school_id ?? (current_tenant()?->id ?? auth()->user()?->school_id ?? 1);
         if (! $schoolId) {
             return [];
         }

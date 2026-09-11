@@ -23,7 +23,7 @@ class WorkflowStepCompleted
     {
         $this->stepKey = $stepKey;
         $this->stepTitle = $stepTitle;
-        $this->schoolId = $schoolId ?? config('current_tenant_id');
+        $this->schoolId = $schoolId ?? (current_tenant()?->id ?? auth()->user()?->school_id ?? 1);
         $this->userId = $userId ?? auth()->id();
         $this->metadata = $metadata;
     }

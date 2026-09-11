@@ -380,7 +380,7 @@
         <span style="margin:0 .4rem;opacity:.4;">·</span>
         <a href="{{ route('platform.terms') }}" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:none;font-weight:600;">{{ __('Terms of Use') }}</a>
         <span style="margin:0 .4rem;opacity:.4;">·</span>
-        <span>{{ __('Powered by Tinway Technologies') }}</span>
+        <span>{{ __('Powered by Kairo CORE') }}</span>
     </footer>
 
 <style>

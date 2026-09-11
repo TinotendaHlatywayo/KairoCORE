@@ -41,13 +41,16 @@ class AssessmentDetailPage extends Page
         return 'assessment-detail/{assessment}';
     }
 
-    public function mount(int $assessment): void
+    public function mount($assessment): void
     {
-        $this->assessmentId = $assessment;
+        $assessmentId = $assessment instanceof DigitalAssessment ? $assessment->id : (int) $assessment;
+        $this->assessmentId = $assessmentId;
 
-        $this->assessment = DigitalAssessment::with(['subject', 'attempts'])
-            ->withCount('questions')
-            ->findOrFail($assessment);
+        $this->assessment = $assessment instanceof DigitalAssessment
+            ? $assessment->load(['subject', 'attempts'])->loadCount('questions')
+            : DigitalAssessment::with(['subject', 'attempts'])
+                ->withCount('questions')
+                ->findOrFail($assessmentId);
 
         $student = StudentAssessmentResource::currentStudent();
 

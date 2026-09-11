@@ -18,6 +18,8 @@ class BankingSettingsTest extends TestCase
 
     private array $preExistingIds = [];
 
+    private int $schoolId;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -30,8 +32,10 @@ class BankingSettingsTest extends TestCase
         Config::set('database.connections.mysql.password', env('DB_PASSWORD', ''));
         DB::purge('mysql');
 
+        $this->schoolId = (int) config('tenancy.single_tenant_id');
+
         $this->preExistingIds = SchoolBankAccount::withoutTenantScope()
-            ->where('school_id', 15)
+            ->where('school_id', $this->schoolId)
             ->pluck('id')
             ->all();
     }
@@ -40,7 +44,7 @@ class BankingSettingsTest extends TestCase
     {
         // Remove any rows created during the test (keep pre-existing data intact).
         SchoolBankAccount::withoutTenantScope()
-            ->where('school_id', 15)
+            ->where('school_id', $this->schoolId)
             ->whereNotIn('id', $this->preExistingIds)
             ->forceDelete();
 
@@ -56,7 +60,7 @@ class BankingSettingsTest extends TestCase
 
     public function test_invoice_resolution_uses_all_active_accounts_without_default(): void
     {
-        $school = School::firstOrFail();
+        $school = School::findOrFail($this->schoolId);
         App::instance('current_tenant', $school);
 
         $a = $this->createAccount('Test Bank A', '111111', true);
@@ -76,7 +80,7 @@ class BankingSettingsTest extends TestCase
 
     public function test_invoice_resolution_prints_only_selected_default_account(): void
     {
-        $school = School::firstOrFail();
+        $school = School::findOrFail($this->schoolId);
         App::instance('current_tenant', $school);
 
         $a = $this->createAccount('Test Bank A', '111111', true);
@@ -93,7 +97,7 @@ class BankingSettingsTest extends TestCase
 
     public function test_invoice_resolution_ignores_selected_inactive_account(): void
     {
-        $school = School::firstOrFail();
+        $school = School::findOrFail($this->schoolId);
         App::instance('current_tenant', $school);
 
         $a = $this->createAccount('Test Bank A', '111111', true);
@@ -110,7 +114,7 @@ class BankingSettingsTest extends TestCase
 
     public function test_invoice_resolution_legacy_fallback_only_when_no_accounts(): void
     {
-        $school = School::firstOrFail();
+        $school = School::findOrFail($this->schoolId);
         App::instance('current_tenant', $school);
 
         // Snapshot existing rows so we can temporarily hide them and restore
@@ -152,7 +156,7 @@ class BankingSettingsTest extends TestCase
     protected function createAccount(string $name, string $number, bool $active): SchoolBankAccount
     {
         return SchoolBankAccount::create([
-            'school_id' => 15,
+            'school_id' => $this->schoolId,
             'bank_name' => $name,
             'account_name' => 'School '.$name,
             'account_number' => $number,

@@ -1,4 +1,4 @@
-<div class="fi-widget sc-demo-data-widget rounded-xl border border-slate-200/70 bg-white p-5 shadow-sm dark:border-slate-700/60 dark:bg-gray-900">
+<div class="fi-widget sc-demo-data-widget">
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex items-start gap-3.5">
             <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg"

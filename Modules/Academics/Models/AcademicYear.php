@@ -10,7 +10,7 @@ class AcademicYear extends Model
 {
     use BelongsToTenant;
 
-    protected $fillable = ['school_id', 'name', 'start_date', 'end_date', 'is_active'];
+    protected $fillable = ['school_id', 'name', 'start_date', 'end_date', 'is_active', 'workflow_status', 'workflow_completed_at'];
 
     protected $casts = [
         'start_date' => 'date',

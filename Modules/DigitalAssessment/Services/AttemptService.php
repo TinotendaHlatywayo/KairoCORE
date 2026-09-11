@@ -48,7 +48,7 @@ class AttemptService
             throw new \DomainException('This assessment is not available yet.');
         }
 
-        if ($assessment->availability_end_at && now()->gt($assessment->availability_end_at)) {
+        if ($assessment->availability_end_at && now()->gt($assessment->availability_end_at) && ! $assessment->late_submission_allowed) {
             throw new \DomainException('This assessment is no longer available.');
         }
 
@@ -106,11 +106,53 @@ class AttemptService
             ->orderBy('question_order')
             ->pluck('question_bank_id');
 
+        if ($assessment->shuffle_question_pool) {
+            return $this->resolveFromQuestionPool($assessment, $questions);
+        }
+
         if ($assessment->randomize_questions) {
             $questions = $questions->shuffle();
         }
 
         return $questions;
+    }
+
+    /**
+     * When "Shuffle Question Pool" is enabled, draw a configured number of
+     * questions from each named pool (falling back to a plain shuffle when no
+     * selection map has been configured). Question order is shuffled as well
+     * so each attempt sees a different subset/order.
+     */
+    protected function resolveFromQuestionPool(DigitalAssessment $assessment, Collection $questions): Collection
+    {
+        if ($questions->isEmpty()) {
+            return $questions;
+        }
+
+        $config = $assessment->question_pool_config ?? [];
+        $selections = $config['selections'] ?? $config['pools'] ?? [];
+
+        if (! is_array($selections) || $selections === []) {
+            return $questions->shuffle();
+        }
+
+        $metadata = $assessment->questions()
+            ->get()
+            ->keyBy('question_bank_id');
+
+        $grouped = $questions->groupBy(fn ($id) => $metadata->get($id)?->pool_name ?: 'default');
+
+        $chosen = collect();
+
+        foreach ($selections as $pool => $count) {
+            $poolQuestions = $grouped->get($pool, $grouped->get('default', collect()));
+
+            if ($poolQuestions->isNotEmpty()) {
+                $chosen = $chosen->merge($poolQuestions->shuffle()->take(max(0, (int) $count)));
+            }
+        }
+
+        return $chosen->values()->shuffle();
     }
 
     public function saveAnswer(DigitalAssessmentAttempt $attempt, int $questionBankId, mixed $answer): DigitalAssessmentResponse
@@ -127,7 +169,7 @@ class AttemptService
             throw new \DomainException('Question not found in this attempt.');
         }
 
-        if ($attempt->assessment->deadline_at && now()->gt($attempt->assessment->deadline_at)) {
+        if ($attempt->assessment->deadline_at && now()->gt($attempt->assessment->deadline_at) && ! $attempt->assessment->late_submission_allowed) {
             throw new \DomainException('The deadline for this assessment has passed.');
         }
 
@@ -153,7 +195,7 @@ class AttemptService
             throw new \DomainException('Question not found in this attempt.');
         }
 
-        if ($attempt->assessment->deadline_at && now()->gt($attempt->assessment->deadline_at)) {
+        if ($attempt->assessment->deadline_at && now()->gt($attempt->assessment->deadline_at) && ! $attempt->assessment->late_submission_allowed) {
             throw new \DomainException('The deadline for this assessment has passed.');
         }
 

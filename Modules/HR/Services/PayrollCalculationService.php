@@ -4,6 +4,9 @@ namespace Modules\HR\Services;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Modules\Finance\Models\Expense;
+use Modules\Finance\Models\ExpenseCategory;
+use Modules\Finance\Models\ExpenseType;
 use Modules\HR\Models\Employee;
 use Modules\HR\Models\LeaveRequest;
 use Modules\HR\Models\PayrollPeriod;
@@ -17,9 +20,9 @@ class PayrollCalculationService
     /**
      * STAGE 1: Calculate and generate draft payroll for a given period.
      */
-    public function executeRun(PayrollPeriod $period): PayrollRun
+    public function executeRun(PayrollPeriod $period, array $filters = []): PayrollRun
     {
-        return DB::transaction(function () use ($period) {
+        return DB::transaction(function () use ($period, $filters) {
             // Delete existing run and items for this period if recalculating
             $existingRun = PayrollRun::where('school_id', $period->school_id)
                 ->where('payroll_period_id', $period->id)
@@ -40,10 +43,27 @@ class PayrollCalculationService
                 'net_total' => 0.0000,
             ]);
 
-            $employees = Employee::where('school_id', $period->school_id)
+            $query = Employee::where('school_id', $period->school_id)
                 ->where('status', 'active')
-                ->with(['currentGrade'])
-                ->get();
+                ->with(['currentGrade']);
+
+            if (!empty($filters['current_grade_id'])) {
+                $query->where('current_grade_id', $filters['current_grade_id']);
+            }
+            if (!empty($filters['department'])) {
+                $query->where('department', $filters['department']);
+            }
+            if (!empty($filters['employment_type'])) {
+                $query->where('employment_type', $filters['employment_type']);
+            }
+            if (!empty($filters['designation'])) {
+                $query->where('designation', $filters['designation']);
+            }
+            if (!empty($filters['gender'])) {
+                $query->where('gender', $filters['gender']);
+            }
+
+            $employees = $query->get();
 
             $totalGross = 0.0000;
             $totalDeductions = 0.0000;
@@ -75,9 +95,9 @@ class PayrollCalculationService
                 $unpaidDeduction = round($unpaidLeaveDays * $dailyRate, 4);
 
                 // Resolve Standard Allowances
-                $housing = $grade->housing_allowance;
-                $transport = $grade->transport_allowance;
-                $duty = $grade->duty_allowance;
+                $housing = (float) $grade->housing_allowance;
+                $transport = (float) $grade->transport_allowance;
+                $duty = (float) $grade->duty_allowance;
 
                 $grossPay = $baseSalary + $housing + $transport + $duty;
 
@@ -100,7 +120,42 @@ class PayrollCalculationService
                 $this->createPayslipItem($payslip, 'TRANS', 'Transport Allowance', 'earning', $transport, false);
                 $this->createPayslipItem($payslip, 'DUTY', 'Duty Allowance', 'earning', $duty, true);
 
+                // Add Grade Custom Allowances
+                if (is_array($grade->custom_allowances)) {
+                    foreach ($grade->custom_allowances as $ca) {
+                        $amt = (float) ($ca['amount'] ?? 0);
+                        if ($amt > 0) {
+                            $grossPay += $amt;
+                            $this->createPayslipItem($payslip, strtoupper(\Illuminate\Support\Str::slug($ca['name'] ?? 'CUSTOM', '_')), $ca['name'], 'earning', $amt, true);
+                        }
+                    }
+                }
+
+                // Add Employee Individual Allowances
+                if (is_array($employee->individual_allowances)) {
+                    foreach ($employee->individual_allowances as $ia) {
+                        $amt = (float) ($ia['amount'] ?? 0);
+                        if ($amt > 0) {
+                            $grossPay += $amt;
+                            $this->createPayslipItem($payslip, strtoupper(\Illuminate\Support\Str::slug($ia['name'] ?? 'IND_ALL', '_')), $ia['name'], 'earning', $amt, true);
+                        }
+                    }
+                }
+
+                $payslip->update(['gross_pay' => $grossPay]);
+
                 $calculatedDeductions = 0.0000;
+
+                // Add Grade Custom Deductions
+                if (is_array($grade->custom_deductions)) {
+                    foreach ($grade->custom_deductions as $cd) {
+                        $amt = (float) ($cd['amount'] ?? 0);
+                        if ($amt > 0) {
+                            $calculatedDeductions += $amt;
+                            $this->createPayslipItem($payslip, strtoupper(\Illuminate\Support\Str::slug($cd['name'] ?? 'CUSTOM_DED', '_')), $cd['name'], 'deduction', $amt, false);
+                        }
+                    }
+                }
 
                 if ($unpaidDeduction > 0) {
                     $this->createPayslipItem($payslip, 'UNPAID_DED', 'Unpaid Leave', 'deduction', $unpaidDeduction, false);
@@ -173,6 +228,8 @@ class PayrollCalculationService
                 ->where('payroll_period_id', $period->id)
                 ->get();
 
+            $totalPeriodNet = 0.00;
+
             foreach ($runs as $run) {
                 $run->update([
                     'status' => 'released',
@@ -188,6 +245,7 @@ class PayrollCalculationService
                         'status' => 'released',
                         'payment_date' => Carbon::now(),
                     ]);
+                    $totalPeriodNet += (float) $payslip->net_pay;
 
                     // Check if this payslip contains a LOAN_REC item
                     $loanItem = PayslipItem::where('school_id', $period->school_id)
@@ -215,6 +273,32 @@ class PayrollCalculationService
                             }
                         }
                     }
+                }
+            }
+
+            // Record School Expense for Payroll Disbursement
+            if ($totalPeriodNet > 0) {
+                try {
+                    $category = ExpenseCategory::firstOrCreate(
+                        ['school_id' => $period->school_id, 'name' => 'Payroll & Compensation'],
+                        ['description' => __('Staff salaries and payroll disbursements')]
+                    );
+
+                    $expenseType = ExpenseType::firstOrCreate(
+                        ['school_id' => $period->school_id, 'expense_category_id' => $category->id, 'name' => 'Salaries & Wages']
+                    );
+
+                    Expense::create([
+                        'school_id' => $period->school_id,
+                        'expense_type_id' => $expenseType->id,
+                        'amount' => $totalPeriodNet,
+                        'expense_date' => now()->toDateString(),
+                        'reference_number' => 'EXP-PAYROLL-'.$period->id.'-'.now()->timestamp,
+                        'notes' => 'Disbursement of salaries for payroll period: '.$period->name,
+                        'status' => 'paid',
+                    ]);
+                } catch (\Throwable $e) {
+                    // Fail gracefully if finance module tables unconfigured
                 }
             }
         });

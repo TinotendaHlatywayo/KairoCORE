@@ -54,10 +54,6 @@ class SalaryGradeResource extends Resource
                     ->numeric()
                     ->prefix('$')
                     ->required(),
-                Forms\Components\TextInput::make('hourly_rate')
-                    ->numeric()
-                    ->prefix('$')
-                    ->required(),
                 Forms\Components\TextInput::make('housing_allowance')
                     ->numeric()
                     ->prefix('$')
@@ -72,6 +68,22 @@ class SalaryGradeResource extends Resource
                     ->required(),
                 Forms\Components\Toggle::make('overtime_eligible')
                     ->required(),
+
+                Forms\Components\Section::make(__('Custom Allowances & Deductions'))
+                    ->schema([
+                        Forms\Components\Repeater::make('custom_allowances')
+                            ->label(__('Additional Allowances'))
+                            ->schema([
+                                Forms\Components\TextInput::make('name')->required()->label(__('Allowance Name')),
+                                Forms\Components\TextInput::make('amount')->numeric()->prefix('$')->required()->label(__('Amount')),
+                            ])->columns(2),
+                        Forms\Components\Repeater::make('custom_deductions')
+                            ->label(__('Additional Deductions'))
+                            ->schema([
+                                Forms\Components\TextInput::make('name')->required()->label(__('Deduction Name')),
+                                Forms\Components\TextInput::make('amount')->numeric()->prefix('$')->required()->label(__('Amount')),
+                            ])->columns(2),
+                    ]),
             ]);
     }
 
@@ -105,6 +117,38 @@ class SalaryGradeResource extends Resource
                             ->title(__('Salary Grade Cloned'))
                             ->success()
                             ->send();
+                    }),
+            ])
+            ->bulkActions([
+                Tables\Actions\DeleteBulkAction::make(),
+                Tables\Actions\BulkAction::make('exportPdf')
+                    ->label(__('Export Selected as PDF'))
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->action(function (\Illuminate\Database\Eloquent\Collection $records) {
+                        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('modules.hr.salary-grades-pdf', [
+                            'school' => current_tenant(),
+                            'grades' => $records,
+                        ])->setPaper('a4', 'landscape');
+
+                        return response()->streamDownload(
+                            fn () => print($pdf->output()),
+                            'Salary-Grades-Report.pdf',
+                            ['Content-Type' => 'application/pdf']
+                        );
+                    }),
+                Tables\Actions\BulkAction::make('exportCsv')
+                    ->label(__('Export Selected as CSV'))
+                    ->icon('heroicon-o-document-text')
+                    ->action(function (\Illuminate\Database\Eloquent\Collection $records) {
+                        $csv = "Grade Name,Base Salary,Housing Allowance,Transport Allowance,Overtime Eligible\n";
+                        foreach ($records as $r) {
+                            $csv .= "\"{$r->name}\",\"{$r->base_salary}\",\"{$r->housing_allowance}\",\"{$r->transport_allowance}\",\"" . ($r->overtime_eligible ? 'Yes' : 'No') . "\"\n";
+                        }
+                        return response()->streamDownload(
+                            fn () => print($csv),
+                            'Salary-Grades.csv',
+                            ['Content-Type' => 'text/csv']
+                        );
                     }),
             ]);
     }

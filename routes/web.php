@@ -201,11 +201,17 @@ Route::domain('{tenant}.'.parse_url(config('app.url'), PHP_URL_HOST))->middlewar
         $school = app('current_tenant');
         $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
 
+        $activeTemplate = \Modules\Timetables\Models\TimetableTemplate::where('school_id', $school->id)->where('is_active', true)->first();
+
+        // Only the active template's slots belong in the official print — mixing
+        // every historical template's periods into one grid duplicates names
+        // and shows overlapping/clashing rows.
         $timeSlots = TimeSlot::where('school_id', $school->id)
+            ->where('template_id', $activeTemplate?->id)
             ->orderBy('start_time', 'asc')
             ->get();
 
-        return view('tenant.timetable-print', compact('section', 'school', 'days', 'timeSlots'));
+        return view('tenant.timetable-print', compact('section', 'school', 'days', 'timeSlots', 'activeTemplate'));
     })->name('tenant.timetable.print')->middleware(['auth']);
 
     // Official Whole-Stream (Form) Timetable Print Compiler Route — renders one
@@ -223,7 +229,13 @@ Route::domain('{tenant}.'.parse_url(config('app.url'), PHP_URL_HOST))->middlewar
         $school = app('current_tenant');
         $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
 
+        $activeTemplate = \Modules\Timetables\Models\TimetableTemplate::where('school_id', $school->id)->where('is_active', true)->first();
+
+        // Only the active template's slots belong in the official print — mixing
+        // every historical template's periods into one grid duplicates names
+        // and shows overlapping/clashing rows.
         $timeSlots = TimeSlot::where('school_id', $school->id)
+            ->where('template_id', $activeTemplate?->id)
             ->orderBy('start_time', 'asc')
             ->get();
 
@@ -237,7 +249,8 @@ Route::domain('{tenant}.'.parse_url(config('app.url'), PHP_URL_HOST))->middlewar
         $streamMatrix = [];
         $lessons = \Modules\Timetables\Models\TimetableLesson::where('school_id', $school->id)
             ->whereIn('section_id', $sections->pluck('id'))
-            ->with(['section.course', 'subject', 'teacher'])
+            ->where('template_id', $activeTemplate?->id)
+            ->with(['section.course', 'subject', 'teacher', 'classroom'])
             ->get();
 
         foreach ($lessons as $lesson) {
@@ -247,6 +260,7 @@ Route::domain('{tenant}.'.parse_url(config('app.url'), PHP_URL_HOST))->middlewar
                 'subject' => $lesson->subject->name ?? '',
                 'teacher_initials' => \App\Support\TeacherInitials::for($lesson->teacher?->name),
                 'class_teacher' => $lesson->section->classTeacher?->name,
+                'room' => $lesson->classroom->name ?? '',
             ];
         }
 

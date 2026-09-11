@@ -144,10 +144,10 @@ class AssessmentWorkspace extends Page implements HasForms
         foreach ($assessments as $assessment) {
             $stats = $marksStats->get($assessment->id);
 
-            $markedCount = (int) ($stats->marked_count ?? 0);
-            $average = $stats->avg !== null ? round((float) $stats->avg, 1) : 0;
-            $highest = $stats->highest ?? 0;
-            $lowest = $stats->lowest ?? 0;
+            $markedCount = (int) ($stats?->marked_count ?? 0);
+            $average = $stats?->avg !== null ? round((float) $stats?->avg, 1) : 0;
+            $highest = $stats?->highest ?? 0;
+            $lowest = $stats?->lowest ?? 0;
             $missing = max(0, $totalStudents - $markedCount);
 
             $progressPercentage = $totalStudents > 0 ? round(($markedCount / $totalStudents) * 100) : 0;

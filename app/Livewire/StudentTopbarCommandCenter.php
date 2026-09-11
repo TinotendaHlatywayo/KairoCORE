@@ -31,6 +31,11 @@ class StudentTopbarCommandCenter extends TopbarCommandCenter
         return StudentSchedule::getUrl();
     }
 
+    public function getCanClearProperty(): bool
+    {
+        return true;
+    }
+
     /**
      * Students only see school events aimed at them plus their own events.
      */

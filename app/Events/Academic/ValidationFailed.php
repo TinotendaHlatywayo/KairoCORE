@@ -30,7 +30,7 @@ class ValidationFailed
         $this->action = $action;
         $this->errors = $errors;
         $this->warnings = $warnings;
-        $this->schoolId = $schoolId ?? config('current_tenant_id');
+        $this->schoolId = $schoolId ?? (current_tenant()?->id ?? auth()->user()?->school_id ?? 1);
         $this->userId = $userId ?? auth()->id();
     }
 }

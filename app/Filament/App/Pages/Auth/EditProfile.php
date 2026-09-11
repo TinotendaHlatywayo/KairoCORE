@@ -11,6 +11,7 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Auth\EditProfile as BaseEditProfile;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\Rule;
+use Modules\Admin\Services\PermissionRegistry;
 
 /**
  * App-panel account/profile page.
@@ -29,26 +30,54 @@ class EditProfile extends BaseEditProfile
     {
         $tenant = current_tenant();
 
-        return TextInput::make('email')
+        $component = TextInput::make('email')
             ->label(__('filament-panels::pages/auth/edit-profile.form.email.label'))
             ->email()
             ->required()
             ->maxLength(255)
             ->unique(
                 ignoreRecord: true,
-                modifyRuleUsing: function (Rule $rule) use ($tenant) {
+                modifyRuleUsing: function (\Illuminate\Validation\Rules\Unique $rule) use ($tenant) {
                     return $rule->where('school_id', $tenant?->id);
                 }
             );
+
+        if (! $this->canManagePersonalDetails()) {
+            $component->disabled()->dehydrated()->helperText(__('Contact your school administrator to change this — it is used as your login and by the team directory.'));
+        }
+
+        return $component;
     }
 
     protected function getPhoneFormComponent(): Component
     {
-        return TextInput::make('phone')
+        $component = TextInput::make('phone')
             ->label(__('Phone'))
             ->tel()
             ->maxLength(60)
             ->placeholder(__('+263 ...'));
+
+        if (! $this->canManagePersonalDetails()) {
+            $component->disabled()->helperText(__('Contact your school administrator to change this.'));
+        }
+
+        return $component;
+    }
+
+    protected function getNameFormComponent(): Component
+    {
+        $component = parent::getNameFormComponent();
+
+        if (! $this->canManagePersonalDetails()) {
+            $component->disabled()->helperText(__('Your displayed name is managed by the school directory.'));
+        }
+
+        return $component;
+    }
+
+    protected function canManagePersonalDetails(): bool
+    {
+        return PermissionRegistry::checkPermission('administration.manage_personal_details');
     }
 
     protected function getLocaleFormComponent(): Component

@@ -12,7 +12,6 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
-use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\Livewire;
 use Modules\Academics\Models\AcademicYear;
 use Modules\Academics\Models\Course;
@@ -176,38 +175,40 @@ class StudentCsvActionsTest extends TestCase
         $component->assertOk();
 
         $component->assertSee('Download CSV Template', false);
-        $component->assertSee('Upload your CSV first', false);
+        // The wizard opens on the Upload step (the Match Columns step is hidden
+        // until a file is uploaded), so assert the upload field renders.
+        $component->assertSee('CSV File', false);
 
         $this->assertTrue(true);
     }
 
-    public function test_import_wizard_submit_streams_progress_and_creates_students()
+public function test_import_wizard_submit_streams_progress_and_creates_students()
     {
         [$school, $user] = $this->tenantUser();
 
         $this->actingAs($user);
 
-        // Livewire fakes the temp-upload disk during tests (wiping its contents),
-        // so fake it first, then write the CSV into the livewire-tmp directory.
-        // The TemporaryUploadedFile path is relative and gets the livewire-tmp/
-        // prefix applied again by FileUploadConfiguration::path().
-        Storage::fake('tmp-for-tests');
+        // The upload field targets the 'public' disk (csv-imports directory).
+        // The wizard's submit path resolves the uploaded file as a stored-path
+        // string, so pre-stage the CSV as a real file there — an in-memory
+        // faked disk cannot survive Livewire's temp-upload hydration across
+        // the wizard steps.
+        config(['livewire.temporary_file_upload.disk' => 'public']);
 
-        Storage::disk('tmp-for-tests')->put(
-            'livewire-tmp/wizard-import-test.csv',
-            "First Name,Last Name,Gender,Date of Birth,Form / Grade,Stream / Class\n"
-            ."RenderTest Three,Third,female,2013-05-14,Grade 1,North\n"
-            ."RenderTest Four,Fourth,male,2012-01-02,Grade 1,South\n"
-        );
+        $csvContent = "First Name,Last Name,Gender,Date of Birth,Form / Grade,Stream / Class\n"
+            .'RenderTest Three,Third,female,2013-05-14,Grade 1,North'."\n"
+            .'RenderTest Four,Fourth,male,2012-01-02,Grade 1,South'."\n";
 
-        $file = new TemporaryUploadedFile('wizard-import-test.csv', 'tmp-for-tests');
+        $csvPath = storage_path('app/public/csv-imports/wizard-import-test.csv');
+        @mkdir(dirname($csvPath), 0777, true);
+        file_put_contents($csvPath, $csvContent);
 
         $before = Student::where('school_id', $school->id)->count();
 
         $component = Livewire::test(ListStudents::class);
         $component->mountAction('importStudentsCsv');
         $component->set('mountedActionsData.0', [
-            'csv_file' => ['test-upload' => $file],
+            'csv_file' => ['csv-imports/wizard-import-test.csv'],
             'columnMap' => [
                 'first_name' => 'First Name',
                 'last_name' => 'Last Name',
@@ -225,7 +226,7 @@ class StudentCsvActionsTest extends TestCase
         $this->assertSame($before + 2, $after, 'two students created through the wizard submit');
         $component->assertNotified();
 
-        Storage::disk('tmp-for-tests')->delete('livewire-tmp/wizard-import-test.csv');
+        @unlink($csvPath);
         Student::where('school_id', $school->id)
             ->where('first_name', 'like', 'RenderTest%')
             ->forceDelete();

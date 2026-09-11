@@ -241,11 +241,10 @@ class LibraryBookResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\ImageColumn::make('cover_image_path')
+                Tables\Columns\ViewColumn::make('cover_image_path')
                     ->label(__('Cover'))
-                    ->square()
-                    // Set custom local webp asset as default fallback
-                    ->defaultImageUrl(asset('images/book-reading-in-library-icon-svg-download-png-1399548.webp')),
+                    ->view('library.cover-cell')
+                    ->viewData(['coverClass' => 'w-28']),
 
                 Tables\Columns\TextColumn::make('title')
                     ->searchable()

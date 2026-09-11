@@ -10,6 +10,7 @@ use Filament\Forms;
 use Filament\Forms\Get;
 use Filament\Notifications\Notification;
 use Filament\Support\Enums\MaxWidth;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -79,6 +80,15 @@ trait HasCsvBulkActions
         return Str::plural(Str::headline($entity ?: 'Data'));
     }
 
+    /**
+     * Optional override for the CSV upload helper text (e.g. when the template
+     * carries no example row, like procurement requests).
+     */
+    protected function csvUploadHelperText(): ?string
+    {
+        return null;
+    }
+
     protected function makeImportAction(): Action
     {
         $service = static::csvService();
@@ -90,36 +100,107 @@ trait HasCsvBulkActions
             ->icon('heroicon-o-arrow-up-tray')
             ->color('warning')
             ->modalHeading(__("Import {$title} from CSV"))
-            ->modalDescription(__('Two-phase import: upload your file, then match its columns to the system columns. Any mismatch is flagged before anything is saved.'))
+            ->modalDescription(__('Upload your file and the system matches the columns automatically. The Match Columns step only appears when a column cannot be matched.'))
             ->modalWidth(MaxWidth::ExtraLarge)
             ->modalSubmitActionLabel(__("Import {$title}"))
-            ->steps([
-                Forms\Components\Wizard\Step::make(__('Upload'))
-                    ->description(__('Download the template and fill it in'))
-                    ->schema([
-                        Forms\Components\Actions::make([
-                            Forms\Components\Actions\Action::make('download_csv_template')
-                                ->label(__('Download CSV Template'))
-                                ->icon('heroicon-o-arrow-down-tray')
-                                ->color('primary')
-                                ->action(fn (): StreamedResponse => $this->downloadCsvTemplate($service)),
-                        ]),
-                        Forms\Components\FileUpload::make('csv_file')
-                            ->label(__('CSV File'))
-                            ->helperText(__("The template above contains the exact system columns. Replace the example row with your {$title} records."))
-                            ->acceptedFileTypes(['text/csv', 'text/plain', 'text/x-csv', 'application/csv', 'application/vnd.ms-excel'])
-                            ->maxSize(4096)
-                            ->required()
-                            ->live()
-                            ->storeFiles(false),
-                    ]),
-                Forms\Components\Wizard\Step::make(__('Match Columns'))
-                    ->description(__('Map your file columns to the system columns'))
-                    ->schema(fn (Get $get): array => $this->columnMatchingSchema($get, $service, $streamName)),
-            ])
+            ->steps($this->csvImportSteps($service, $streamName, $title))
             ->action(function (array $data) use ($service, $streamName) {
                 $this->runCsvImport($data, $service, $streamName);
             });
+    }
+
+    /**
+     * Build the import wizard steps. The Match Columns step only appears when
+     * the uploaded file has a column that cannot be matched automatically —
+     * otherwise the upload step is the only step and the user goes straight to
+     * Import.
+     */
+    protected function csvImportSteps(string $service, string $streamName, string $title): array
+    {
+        return [
+            Forms\Components\Wizard\Step::make(__('Upload'))
+                ->description(__('Download the template and fill it in'))
+                ->schema(fn (Get $get): array => $this->uploadStepSchema($get, $service, $streamName, $title)),
+            Forms\Components\Wizard\Step::make(__('Match Columns'))
+                ->description(__('Map your file columns to the system columns'))
+                ->visible(fn (Get $get): bool => $this->requiresColumnMatching($get, $service))
+                ->schema(fn (Get $get): array => $this->columnMatchingSchema($get, $service, $streamName)),
+        ];
+    }
+
+    /** Schema for the Upload step: template download, file picker, status + progress. */
+    protected function uploadStepSchema(Get $get, string $service, string $streamName, string $title): array
+    {
+        $matchNeeded = $this->requiresColumnMatching($get, $service);
+
+        $schema = [
+            Forms\Components\Actions::make([
+                Forms\Components\Actions\Action::make('download_csv_template')
+                    ->label(__('Download CSV Template'))
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->color('primary')
+                    ->action(fn (): StreamedResponse => $this->downloadCsvTemplate($service)),
+            ]),
+            Forms\Components\FileUpload::make('csv_file')
+                ->label(__('CSV File'))
+                ->helperText($this->csvUploadHelperText() ?? __("The template above contains the exact system columns. Replace the example row with your {$title} records."))
+                ->acceptedFileTypes(['text/csv', 'text/plain', 'text/x-csv', 'application/csv', 'application/vnd.ms-excel'])
+                ->maxSize(4096)
+                ->required()
+                ->live()
+                ->disk('public')
+                ->directory('csv-imports'),
+        ];
+
+        if (filled($get('csv_file'))) {
+            $schema[] = Forms\Components\View::make('filament.app.components.csv-import.column-status')
+                ->viewData([
+                    'matched' => ! $matchNeeded,
+                    'fileHeaders' => $service::readCsvHeaders($service::resolveTempFilePath($get('csv_file'))),
+                ]);
+        }
+
+        if (! $matchNeeded) {
+            $schema[] = Forms\Components\View::make('filament.app.components.csv-import.progress-panel')
+                ->viewData([
+                    'streamName' => $streamName,
+                    'message' => __('Click "Import" to begin — progress appears here.'),
+                ]);
+        }
+
+        return $schema;
+    }
+
+    /**
+     * Whether the uploaded file has a column that could not be matched
+     * automatically (name-based + positional). Only then is the Match Columns
+     * step shown.
+     */
+    protected function requiresColumnMatching(Get $get, string $service): bool
+    {
+        $file = $get('csv_file');
+
+        if (! $file) {
+            return false;
+        }
+
+        $filePath = $service::resolveTempFilePath($file);
+        $headers = $service::readCsvHeaders($filePath);
+
+        if (empty($headers)) {
+            return true;
+        }
+
+        $guess = $service::guessMapping($headers);
+        $columns = $service::columns();
+
+        foreach ($columns as $key => $column) {
+            if (($column['required'] ?? false) && blank($guess[$key] ?? null)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     protected function exportCsv(string $service, string $filename): StreamedResponse
@@ -236,7 +317,88 @@ trait HasCsvBulkActions
             Forms\Components\Fieldset::make(__('Column matching'))
                 ->columns(2)
                 ->schema($selects),
+            ...$this->missingReferenceSchema($get, $service),
         ];
+    }
+
+    /**
+     * Popup-style "create or skip" cards for reference values (departments,
+     * suppliers, ...) that appear in the file but do not exist in the system
+     * yet. The user picks, per value, whether the import should create the
+     * record automatically or skip it (leave the field blank).
+     */
+    protected function missingReferenceSchema(Get $get, string $service): array
+    {
+        $references = $service::referenceFields();
+
+        if ($references === []) {
+            return [];
+        }
+
+        $file = $get('csv_file');
+
+        if (! $file) {
+            return [];
+        }
+
+        $filePath = $service::resolveTempFilePath($file);
+        $headers = $service::readCsvHeaders($filePath);
+
+        if (empty($headers)) {
+            return [];
+        }
+
+        $columnMap = $get('columnMap') ?? [];
+        $schoolId = app('current_tenant')->id;
+
+        $fieldsets = [];
+
+        foreach ($references as $key => $reference) {
+            $candidates = $service::readReferenceValues($filePath, $columnMap, $key);
+
+            if ($candidates === []) {
+                continue;
+            }
+
+            $existing = $reference['model']::withoutTenantScope()
+                ->where('school_id', $schoolId)
+                ->pluck($reference['column'])
+                ->map(fn ($value): string => strtolower(trim((string) $value)))
+                ->flip();
+
+            $missing = [];
+            foreach ($candidates as $value) {
+                if (! $existing->has(strtolower($value))) {
+                    $missing[] = $value;
+                }
+            }
+
+            if ($missing === []) {
+                continue;
+            }
+
+            $rows = [];
+
+            foreach (array_values($missing) as $i => $value) {
+                $rows[] = Forms\Components\Select::make("missingRefs.{$key}.{$i}")
+                    ->label((string) $value)
+                    ->options([
+                        'create' => __('Create it'),
+                        'skip' => __('Skip (leave blank)'),
+                    ])
+                    ->default('create')
+                    ->required();
+            }
+
+            $fieldsets[] = Forms\Components\Fieldset::make(
+                __('Create or skip missing :label', ['label' => $reference['label']])
+            )
+                ->description(__(':label values in your file are not in the system yet. Choose whether each one is created automatically during the import, or skipped (its field is left blank).', ['label' => $reference['label']]))
+                ->columns(2)
+                ->schema($rows);
+        }
+
+        return $fieldsets;
     }
 
     /** Builds the exact mismatch list shown live in step 2. */
@@ -315,10 +477,39 @@ trait HasCsvBulkActions
         return in_array(strtolower($header), $guesses, true) ? $header : null;
     }
 
+    /**
+     * The final column map used by an import.
+     *
+     * When the file's columns were matched automatically (the Match Columns
+     * step was hidden), no `columnMap` fields are submitted by the wizard, so
+     * the submitted map is empty. In that case — or when a mapped value is
+     * missing — re-derive the map from the actual file headers so the import
+     * still goes through. Any map explicitly chosen in the Match Columns step
+     * is preserved (filled columns win, blanks fall back to the auto-guess).
+     */
+    protected function effectiveColumnMap(array $data, string $service, string|array|null $file): array
+    {
+        $submitted = $data['columnMap'] ?? [];
+
+        if (blank($file)) {
+            return [];
+        }
+
+        $headers = $service::readCsvHeaders($service::resolveTempFilePath($file));
+        $guessed = $service::guessMapping($headers);
+
+        $map = [];
+        foreach ($guessed as $key => $defaultHeader) {
+            $map[$key] = filled($submitted[$key] ?? null) ? $submitted[$key] : $defaultHeader;
+        }
+
+        return $map;
+    }
+
     protected function runCsvImport(array $data, string $service, string $streamName): void
     {
         $file = $data['csv_file'] ?? null;
-        $columnMap = $data['columnMap'] ?? [];
+        $columnMap = $this->effectiveColumnMap($data, $service, $file);
 
         if (! $file) {
             Notification::make()
@@ -355,23 +546,11 @@ trait HasCsvBulkActions
                 $filePath,
                 $schoolId,
                 $columnMap,
-                function (int $processed, int $total, bool $rowFailed, array $errors) use ($streamName) {
-                    $percent = $total > 0 ? (int) floor(($processed / $total) * 100) : 100;
-
-                    $status = $rowFailed
-                        ? '<span class="text-danger-600">'.count($errors).__(' row(s) rejected so far').'</span>'
-                        : '<span class="text-gray-400">'.__('No errors yet').'</span>';
-
-                    $html = '<div class="flex items-center gap-3">'
-                        .'<div class="h-2 flex-1 overflow-hidden rounded-full bg-gray-200">'
-                        .'<div class="h-full rounded-full bg-primary-500 transition-all duration-200" style="width: '.$percent.'%"></div>'
-                        .'</div>'
-                        .'<span class="w-16 text-right text-xs font-medium text-gray-500">'.$percent.'%</span>'
-                        .'</div>'
-                        .'<p class="mt-1 text-xs">'.$status.'</p>';
-
-                    $this->stream($streamName, $html, replace: true);
-                }
+                $this->importProgressClosure($streamName),
+                [
+                    'missingRefs' => $data['missingRefs'] ?? [],
+                    'requester_id' => Auth::id(),
+                ]
             );
         } catch (\Throwable $e) {
             Notification::make()
@@ -391,6 +570,8 @@ trait HasCsvBulkActions
                 ->body(__('Imported ').$result['success'].__(' of ').$result['total'].__(' records.'))
                 ->success()
                 ->send();
+
+            $this->redirect(request()->header('Referer'));
 
             return;
         }
@@ -434,5 +615,46 @@ trait HasCsvBulkActions
         fclose($out);
 
         return $csv;
+    }
+
+    /**
+     * Progress callback for the import wizard. Streams a status update to the
+     * progress panel at most once every ~2 percentage points (plus the first
+     * and final rows) so large imports do not hammer the UI with updates —
+     * this is the usual source of "Importing…" appearing to hang.
+     */
+    protected function importProgressClosure(string $streamName): callable
+    {
+        $lastPercent = -1;
+
+        return function (int $processed, int $total, bool $rowFailed, array $errors) use ($streamName, &$lastPercent) {
+            $percent = $total > 0 ? (int) floor(($processed / $total) * 100) : 100;
+
+            if ($processed !== 1 && $percent < 100 && ($percent - $lastPercent) < 2) {
+                $lastPercent = $percent;
+
+                return;
+            }
+
+            $lastPercent = $percent;
+
+            $status = $rowFailed
+                ? '<span class="text-red-600">'.count($errors).' '. __('row(s) rejected so far').'</span>'
+                : '<span class="text-gray-400">'.__('No errors yet').'</span>';
+
+            if ($percent >= 100) {
+                $status = '<span class="text-green-600">'.__('Import finished').'</span>';
+            }
+
+            $html = '<div class="flex items-center gap-3">'
+                .'<div class="h-2 flex-1 overflow-hidden rounded-full bg-gray-200">'
+                .'<div class="h-full rounded-full bg-primary-500 transition-all duration-200" style="width: '.$percent.'%"></div>'
+                .'</div>'
+                .'<span class="w-16 text-right text-xs font-medium text-gray-500">'.$percent.'%</span>'
+                .'</div>'
+                .'<p class="mt-1 text-xs">'.$status.'</p>';
+
+            $this->stream($streamName, $html, replace: true);
+        };
     }
 }

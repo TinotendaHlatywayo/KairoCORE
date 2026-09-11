@@ -51,6 +51,16 @@ class StudentProfile extends Page
             return;
         }
 
+        if ($student->photo_approved_at) {
+            Notification::make()
+                ->title(__('Photo Locked'))
+                ->body(__('Your photo is locked. You can no longer change it; only an administrator can remove it.'))
+                ->warning()
+                ->send();
+
+            return;
+        }
+
         [$path, $error] = app(ProfilePhotoService::class)
             ->storeFromDataUrl($dataUrl, 'student-photos');
 
@@ -68,6 +78,8 @@ class StudentProfile extends Page
 
         $student->update([
             'photo_path' => $path,
+            'photo_approved_at' => now(),
+            'photo_approved_by' => null,
             'photo_rejected_at' => null,
             'photo_rejected_reason' => null,
             'photo_rejected_by' => null,
@@ -81,7 +93,7 @@ class StudentProfile extends Page
 
         Notification::make()
             ->title(__('Photo Uploaded'))
-            ->body(__('Your profile photo has been saved successfully.'))
+            ->body(__('Your profile photo has been saved and locked. It can only be removed by the administration.'))
             ->success()
             ->send();
     }
@@ -101,6 +113,7 @@ class StudentProfile extends Page
             'enrollment' => $student?->currentEnrollment,
             'user' => $user,
             'hasPhoto' => filled($student?->photo_path),
+            'isApproved' => filled($student?->photo_approved_at),
             'photoRejection' => filled($student?->photo_rejected_at) ? [
                 'reason' => $student->photo_rejected_reason,
                 'rejected_at' => $student->photo_rejected_at,

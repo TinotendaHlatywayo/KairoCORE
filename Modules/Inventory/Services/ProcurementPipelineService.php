@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Modules\Finance\Models\Expense;
 use Modules\Finance\Models\ExpenseCategory;
 use Modules\Finance\Models\ExpenseType;
+use Modules\Inventory\Models\FixedAsset;
 use Modules\Inventory\Models\GoodsReceivedNote;
 use Modules\Inventory\Models\InventoryBatch;
 use Modules\Inventory\Models\InventoryItem;
@@ -73,6 +74,31 @@ class ProcurementPipelineService
 
                 // Recalculate the Moving Average Cost (MAC)
                 $this->updateMovingAverageCost($item, $receivedItem->quantity_accepted, $unitCost);
+
+                // If this is a capitalized fixed asset, automatically register each accepted unit into the Fixed Assets register
+                if ($item->item_type === 'fixed_asset' && $receivedItem->quantity_accepted > 0) {
+                    for ($q = 0; $q < $receivedItem->quantity_accepted; $q++) {
+                        $assetNumber = 'FA-'.now()->year.'-'.str_pad((string) rand(10, 99999), 5, '0', STR_PAD_LEFT);
+                        while (FixedAsset::withoutTenantScope()->where('school_id', $grn->school_id)->where('asset_number', $assetNumber)->exists()) {
+                            $assetNumber = 'FA-'.now()->year.'-'.str_pad((string) rand(10, 99999), 5, '0', STR_PAD_LEFT);
+                        }
+
+                        FixedAsset::create([
+                            'school_id' => $grn->school_id,
+                            'inventory_item_id' => $item->id,
+                            'asset_number' => $assetNumber,
+                            'acquisition_date' => $grn->received_date ?? now(),
+                            'purchase_cost' => $unitCost,
+                            'salvage_value' => round($unitCost * 0.1, 2),
+                            'useful_life_years' => 5,
+                            'depreciation_method' => 'straight_line',
+                            'current_value' => $unitCost,
+                            'assigned_location_id' => $po->destination_location_id ?? $defaultLocation,
+                            'custodian_id' => $grn->received_by_id,
+                            'status' => 'active',
+                        ]);
+                    }
+                }
             }
 
             // Update the state machine of the primary Purchase Order

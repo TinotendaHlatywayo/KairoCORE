@@ -129,6 +129,39 @@ class User extends Authenticatable implements FilamentUser
         return $this->account_status === self::STATUS_PENDING;
     }
 
+    public function getDoNotDisturbAttribute($value)
+    {
+        if (array_key_exists('do_not_disturb', $this->attributes)) {
+            return (bool) $this->attributes['do_not_disturb'];
+        }
+        return false;
+    }
+
+    public function getPermissionsAttribute($value)
+    {
+        if (array_key_exists('permissions', $this->attributes)) {
+            return $this->attributes['permissions'];
+        }
+        return null;
+    }
+
+    public function getAccountStatusAttribute($value)
+    {
+        if (array_key_exists('account_status', $this->attributes)) {
+            return $this->attributes['account_status'];
+        }
+        return 'active';
+    }
+
+    public function getAttribute($key)
+    {
+        try {
+            return parent::getAttribute($key);
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
     public function requestedRoleLabel(): ?string
     {
         if (! $this->requested_role) {

@@ -2,6 +2,8 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Admin\Pages\Dashboard;
+
 use App\Filament\Admin\Pages\Auth\Login;
 use App\Filament\Admin\Pages\PlatformBackupManager;
 use App\Filament\Admin\Pages\PlatformIntelligenceDashboard;
@@ -25,7 +27,6 @@ use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 // Explicit platform management resources
 use Filament\Navigation\NavigationGroup;
-use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -73,7 +74,7 @@ class AdminPanelProvider extends PanelProvider
                 'warning' => Color::Amber,
             ])
             ->pages([
-                Pages\Dashboard::class,
+                Dashboard::class,
                 PlatformIntelligenceDashboard::class,
                 PlatformBackupManager::class,
                 PlatformMaintenancePage::class,

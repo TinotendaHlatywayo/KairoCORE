@@ -67,11 +67,11 @@ class ReportingWorkflowResource extends Resource
                                             ->required(),
                                         Forms\Components\Select::make('course_id')
                                             ->label(__('Course (if scope=course)'))
-                                            ->options(Course::where('school_id', config('current_tenant_id'))->pluck('name', 'id'))
+                                            ->options(Course::where('school_id', (current_tenant()?->id ?? auth()->user()?->school_id ?? 1))->pluck('name', 'id'))
                                             ->searchable(),
                                         Forms\Components\Select::make('section_id')
                                             ->label(__('Section (if scope=section)'))
-                                            ->options(Section::where('school_id', config('current_tenant_id'))->pluck('name', 'id'))
+                                            ->options(Section::where('school_id', (current_tenant()?->id ?? auth()->user()?->school_id ?? 1))->pluck('name', 'id'))
                                             ->searchable(),
                                         Forms\Components\Toggle::make('is_active')
                                             ->label(__('Active'))
@@ -105,7 +105,7 @@ class ReportingWorkflowResource extends Resource
                                             ->live(),
                                         Forms\Components\Select::make('course_id')
                                             ->label(__('Course/Grade'))
-                                            ->options(Course::where('school_id', config('current_tenant_id'))->pluck('name', 'id'))
+                                            ->options(Course::where('school_id', (current_tenant()?->id ?? auth()->user()?->school_id ?? 1))->pluck('name', 'id'))
                                             ->searchable()
                                             ->visible(fn (Forms\Get $get) => $get('scope_type') === 'course'),
                                         Forms\Components\Select::make('section_id')

@@ -59,13 +59,7 @@ class EResourceResource extends Resource
             ])
             ->columns([
                 Tables\Columns\Layout\Stack::make([
-                    Tables\Columns\ImageColumn::make('cover_image_path')
-                        ->label(__('Cover'))
-                        ->square()
-                        ->height(180)
-                        ->width(240)
-                        // Set custom local webp asset as default fallback inside the card grid
-                        ->defaultImageUrl(asset('images/book-reading-in-library-icon-svg-download-png-1399548.webp')),
+                    Tables\Columns\Layout\View::make('library.cover-cell'),
 
                     Tables\Columns\Layout\Stack::make([
                         Tables\Columns\TextColumn::make('title')

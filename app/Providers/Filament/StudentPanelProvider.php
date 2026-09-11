@@ -102,6 +102,11 @@ class StudentPanelProvider extends PanelProvider
                 fn () => view('components.back-button')
             )
 
+            ->renderHook(
+                PanelsRenderHook::TOPBAR_START,
+                fn () => Blade::render('@livewire(\'admin-language-switcher\')')
+            )
+
             // 🚀 UNIFIED DATE & TIME + TASK MANAGER COMMAND CENTER
             // Mirrors the staff workspace topbar: a centered live date/time
             // trigger opening a Task Manager + interactive calendar dropdown.

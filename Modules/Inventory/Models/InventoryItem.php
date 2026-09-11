@@ -22,6 +22,7 @@ class InventoryItem extends Model
         'barcode',
         'name',
         'description',
+        'received_date',
         'item_type', // consumable, returnable, fixed_asset
         'unit_of_measure',
         'reorder_level',
@@ -34,6 +35,7 @@ class InventoryItem extends Model
 
     protected $casts = [
         'meta_data' => 'array',
+        'received_date' => 'date',
         'is_saleable' => 'boolean',
         'reorder_level' => 'integer',
         'current_quantity' => 'integer',

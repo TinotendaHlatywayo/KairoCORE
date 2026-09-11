@@ -56,9 +56,8 @@ class ThreadInlineReplyTest extends TestCase
                 ->firstOrFail();
 
             $component = new ListPlatformInboxes;
-            $component->threadReplyParentId = $parent->id;
             $component->threadReplyBody = 'Inline reply body';
-            $component->sendThreadReply();
+            $component->sendThreadReply($parent->id);
 
             $this->assertDatabaseHas('platform_messages', [
                 'thread_id' => $parent->thread_id,
@@ -96,7 +95,7 @@ class ThreadInlineReplyTest extends TestCase
             $component->threadReplyBody = 'hijack';
 
             $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
-            $component->sendThreadReply();
+            $component->sendThreadReply($foreignParent->id);
         } finally {
             DB::rollBack();
         }

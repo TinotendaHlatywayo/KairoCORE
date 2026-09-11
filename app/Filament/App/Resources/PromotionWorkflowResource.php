@@ -59,13 +59,13 @@ class PromotionWorkflowResource extends Resource
                                     ->schema([
                                         Forms\Components\Select::make('academic_year_id')
                                             ->label(__('Current Academic Year'))
-                                            ->options(AcademicYear::where('school_id', config('current_tenant_id'))->pluck('name', 'id'))
+                                            ->options(AcademicYear::where('school_id', (current_tenant()?->id ?? auth()->user()?->school_id ?? 1))->pluck('name', 'id'))
                                             ->required()
-                                            ->default(fn () => AcademicYear::where('school_id', config('current_tenant_id'))->where('is_active', true)->first()?->id),
+                                            ->default(fn () => AcademicYear::where('school_id', (current_tenant()?->id ?? auth()->user()?->school_id ?? 1))->where('is_active', true)->first()?->id),
 
                                         Forms\Components\Select::make('course_id')
                                             ->label(__('Form to Screen'))
-                                            ->options(Course::where('school_id', config('current_tenant_id'))->pluck('name', 'id'))
+                                            ->options(Course::where('school_id', (current_tenant()?->id ?? auth()->user()?->school_id ?? 1))->pluck('name', 'id'))
                                             ->required()
                                             ->live(),
 
@@ -82,7 +82,7 @@ class PromotionWorkflowResource extends Resource
 
                                         Forms\Components\CheckboxList::make('required_subjects')
                                             ->label(__('Required Pass Subjects'))
-                                            ->options(Subject::where('school_id', config('current_tenant_id'))->pluck('name', 'id'))
+                                            ->options(Subject::where('school_id', (current_tenant()?->id ?? auth()->user()?->school_id ?? 1))->pluck('name', 'id'))
                                             ->columns(3),
                                     ])->columns(2),
                             ]),
@@ -108,7 +108,7 @@ class PromotionWorkflowResource extends Resource
                                             ->schema([
                                                 Forms\Components\Select::make('student_id')
                                                     ->label(__('Student'))
-                                                    ->options(fn () => Student::where('school_id', config('current_tenant_id'))->where('status', 'active')->pluck('full_name', 'id'))
+                                                    ->options(fn () => Student::where('school_id', (current_tenant()?->id ?? auth()->user()?->school_id ?? 1))->where('status', 'active')->pluck('full_name', 'id'))
                                                     ->searchable()
                                                     ->required(),
                                                 Forms\Components\Select::make('recommendation')
@@ -138,7 +138,7 @@ class PromotionWorkflowResource extends Resource
                                             ->schema([
                                                 Forms\Components\Select::make('student_id')
                                                     ->label(__('Student'))
-                                                    ->options(fn () => Student::where('school_id', config('current_tenant_id'))->where('status', 'active')->pluck('full_name', 'id'))
+                                                    ->options(fn () => Student::where('school_id', (current_tenant()?->id ?? auth()->user()?->school_id ?? 1))->where('status', 'active')->pluck('full_name', 'id'))
                                                     ->searchable()
                                                     ->required(),
                                                 Forms\Components\Select::make('decision')
@@ -151,11 +151,11 @@ class PromotionWorkflowResource extends Resource
                                                     ->required(),
                                                 Forms\Components\Select::make('next_course_id')
                                                     ->label(__('Next Form'))
-                                                    ->options(Course::where('school_id', config('current_tenant_id'))->pluck('name', 'id'))
+                                                    ->options(Course::where('school_id', (current_tenant()?->id ?? auth()->user()?->school_id ?? 1))->pluck('name', 'id'))
                                                     ->required(),
                                                 Forms\Components\Select::make('next_section_id')
                                                     ->label(__('Next Stream'))
-                                                    ->options(fn () => Section::where('school_id', config('current_tenant_id'))->pluck('name', 'id'))
+                                                    ->options(fn () => Section::where('school_id', (current_tenant()?->id ?? auth()->user()?->school_id ?? 1))->pluck('name', 'id'))
                                                     ->required(),
                                                 Forms\Components\Textarea::make('conditions')
                                                     ->label(__('Conditions (if any)'))
@@ -183,7 +183,7 @@ class PromotionWorkflowResource extends Resource
 
     public static function table(Table $table): Table
     {
-        $year = AcademicYear::where('school_id', config('current_tenant_id'))->where('is_active', true)->first();
+        $year = AcademicYear::where('school_id', (current_tenant()?->id ?? auth()->user()?->school_id ?? 1))->where('is_active', true)->first();
 
         return $table
             ->modifyQueryUsing(fn ($query) => $query
@@ -268,7 +268,7 @@ class PromotionWorkflowResource extends Resource
                                         $newEnrollment = $enrollment->replicate();
                                         $newEnrollment->course_id = $enrollment->next_course_id;
                                         $newEnrollment->section_id = $enrollment->next_section_id;
-                                        $newEnrollment->academic_year_id = AcademicYear::where('school_id', config('current_tenant_id'))->where('is_active', true)->first()?->id ?? $enrollment->academic_year_id;
+                                        $newEnrollment->academic_year_id = AcademicYear::where('school_id', (current_tenant()?->id ?? auth()->user()?->school_id ?? 1))->where('is_active', true)->first()?->id ?? $enrollment->academic_year_id;
                                         $newEnrollment->save();
                                         $promoted++;
                                     }

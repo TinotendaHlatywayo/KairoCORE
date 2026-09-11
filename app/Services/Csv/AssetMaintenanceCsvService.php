@@ -2,11 +2,34 @@
 
 namespace App\Services\Csv;
 
+use Illuminate\Support\Str;
 use Modules\Inventory\Models\AssetMaintenanceLog;
 use Modules\Inventory\Models\FixedAsset;
+use Modules\Inventory\Models\InventoryCategory;
+use Modules\Inventory\Models\InventoryItem;
 
 class AssetMaintenanceCsvService extends CsvBulkService
 {
+    /**
+     * Maintenance logs reference a fixed asset by its asset number. When an
+     * imported row references an asset that does not exist yet, the import
+     * auto-creates a minimal fixed asset (and its Registry item) so the log can
+     * attach to it — unless the user explicitly chose "Skip" in the Match
+     * Columns step.
+     *
+     * @return array<string, array{label: string, model: string, column: string}>
+     */
+    public static function referenceFields(): array
+    {
+        return [
+            'asset' => [
+                'label' => __('Asset Number'),
+                'model' => FixedAsset::class,
+                'column' => 'asset_number',
+            ],
+        ];
+    }
+
     public static function columns(): array
     {
         return [
@@ -132,11 +155,17 @@ class AssetMaintenanceCsvService extends CsvBulkService
         } while (true);
     }
 
-    public static function import(string $filePath, int $schoolId, array $columnMap, ?callable $onProgress = null): array
+    public static function import(string $filePath, int $schoolId, array $columnMap, ?callable $onProgress = null, array $options = []): array
     {
+        $missingRefs = $options['missingRefs'] ?? [];
+
         $lookups = [
             'fixedAssets' => FixedAsset::withoutTenantScope()->where('school_id', $schoolId)->get()
                 ->keyBy(fn ($a): string => strtolower(trim($a->asset_number))),
+            'missingRefs' => $missingRefs,
+            'unknownAssets' => static::unknownReferenceValues($filePath, $schoolId, $columnMap, 'asset'),
+            'items' => InventoryItem::withoutTenantScope()->where('school_id', $schoolId)->get()
+                ->keyBy(fn ($i): string => strtolower(trim($i->sku))),
         ];
 
         return static::runImport(
@@ -148,6 +177,45 @@ class AssetMaintenanceCsvService extends CsvBulkService
             fn (array &$data, array $lookups) => static::validateAndNormalize($data, $lookups),
             fn (array $data, int $schoolId, array &$lookups) => static::createRow($data, $schoolId, $lookups),
         );
+    }
+
+    protected static function unknownReferenceValues(string $filePath, int $schoolId, array $columnMap, string $fieldKey): array
+    {
+        $candidates = static::readReferenceValues($filePath, $columnMap, $fieldKey);
+        $reference = static::referenceFields()[$fieldKey] ?? null;
+
+        if ($reference === null || empty($candidates)) {
+            return [];
+        }
+
+        $existing = $reference['model']::withoutTenantScope()
+            ->where('school_id', $schoolId)
+            ->pluck($reference['column'])
+            ->map(fn ($value): string => strtolower(trim((string) $value)))
+            ->flip();
+
+        $unknown = [];
+        foreach ($candidates as $value) {
+            if (! $existing->has(strtolower($value))) {
+                $unknown[] = $value;
+            }
+        }
+
+        return array_values($unknown);
+    }
+
+    protected static function assetPolicy(array $lookups, string $value): string
+    {
+        $missingRefs = $lookups['missingRefs'] ?? [];
+        $unknownValues = $lookups['unknownAssets'] ?? [];
+
+        foreach (array_keys($missingRefs['asset'] ?? []) as $index) {
+            if (($unknownValues[(int) $index] ?? null) === $value) {
+                return (string) ($missingRefs['asset'][$index] ?? 'create');
+            }
+        }
+
+        return 'create';
     }
 
     protected static function validateAndNormalize(array &$data, array $lookups): array
@@ -164,8 +232,10 @@ class AssetMaintenanceCsvService extends CsvBulkService
 
         $assetNumber = trim($data['asset'] ?? '');
         $data['_fixedAsset'] = $assetNumber !== '' ? ($lookups['fixedAssets'][strtolower($assetNumber)] ?? null) : null;
+        $data['_create_asset'] = false;
+
         if ($assetNumber !== '' && ! $data['_fixedAsset']) {
-            $errors[] = 'Asset Number ['.$assetNumber.'] was not found in this school. Available assets: '.($lookups['fixedAssets']->pluck('asset_number')->implode(', ') ?: 'none').'.';
+            $data['_create_asset'] = static::assetPolicy($lookups, $assetNumber) !== 'skip';
         }
 
         $data['type'] = strtolower(trim($data['type'] ?? ''));
@@ -223,9 +293,19 @@ class AssetMaintenanceCsvService extends CsvBulkService
 
     protected static function createRow(array $data, int $schoolId, array &$lookups): void
     {
+        $asset = $data['_fixedAsset'];
+
+        if (($data['_create_asset'] ?? false) && $asset === null && ($data['asset'] ?? '') !== '') {
+            $asset = static::createFixedAsset($data['asset'], $schoolId, $lookups);
+        }
+
+        if ($asset === null) {
+            throw new \RuntimeException('Asset Number ['.($data['asset'] ?? '').'] was not found and could not be created.');
+        }
+
         AssetMaintenanceLog::create([
             'school_id' => $schoolId,
-            'fixed_asset_id' => $data['_fixedAsset']->id,
+            'fixed_asset_id' => $asset->id,
             'title' => $data['title'],
             'type' => $data['type'] !== '' ? $data['type'] : 'preventive',
             'schedule_type' => $data['schedule_type'] !== '' ? $data['schedule_type'] : 'one_time',
@@ -237,5 +317,81 @@ class AssetMaintenanceCsvService extends CsvBulkService
             'status' => $data['status'] !== '' ? $data['status'] : 'pending',
             'notes' => $data['notes'] !== '' ? $data['notes'] : null,
         ]);
+    }
+
+    protected static function createFixedAsset(string $assetNumber, int $schoolId, array &$lookups): FixedAsset
+    {
+        $assetNumber = trim($assetNumber);
+        $key = strtolower($assetNumber);
+
+        if (isset($lookups['fixedAssets'][$key])) {
+            return $lookups['fixedAssets'][$key];
+        }
+
+        $category = InventoryCategory::withoutTenantScope()
+            ->where('school_id', $schoolId)
+            ->orderBy('id')
+            ->first();
+
+        if ($category === null) {
+            $category = InventoryCategory::withoutTenantScope()->create([
+                'school_id' => $schoolId,
+                'name' => 'Fixed Assets',
+            ]);
+        }
+
+        $sku = static::makeUniqueSku($schoolId, 'Asset '.$assetNumber);
+        $item = InventoryItem::withoutTenantScope()->create([
+            'school_id' => $schoolId,
+            'category_id' => $category->id,
+            'name' => 'Fixed Asset '.$assetNumber,
+            'sku' => $sku,
+            'item_type' => 'fixed_asset',
+            'unit_of_measure' => 'units',
+            'current_quantity' => 1,
+        ]);
+
+        $asset = FixedAsset::withoutTenantScope()->create([
+            'school_id' => $schoolId,
+            'inventory_item_id' => $item->id,
+            'asset_number' => $assetNumber,
+            'acquisition_date' => now()->toDateString(),
+            'purchase_cost' => 0,
+            'salvage_value' => 0,
+            'useful_life_years' => 5,
+            'depreciation_method' => 'straight_line',
+            'current_value' => 0,
+            'status' => 'active',
+        ]);
+
+        $lookups['fixedAssets'][strtolower($assetNumber)] = $asset;
+
+        return $asset;
+    }
+
+    protected static function makeUniqueSku(int $schoolId, string $name): string
+    {
+        $base = strtoupper(Str::slug($name, '-') ?: 'ITEM');
+        $base = Str::limit($base, 20, '');
+
+        if ($base === '') {
+            $base = 'ITEM';
+        }
+
+        $existing = InventoryItem::withoutTenantScope()
+            ->where('school_id', $schoolId)
+            ->pluck('sku')
+            ->map(fn ($v): string => strtolower(trim((string) $v)))
+            ->flip();
+
+        $code = $base;
+        $suffix = 1;
+
+        while (isset($existing[strtolower($code)])) {
+            $suffix++;
+            $code = $base.'-'.$suffix;
+        }
+
+        return $code;
     }
 }

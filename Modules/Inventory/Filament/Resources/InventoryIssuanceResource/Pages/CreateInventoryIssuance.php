@@ -4,15 +4,35 @@ declare(strict_types=1);
 
 namespace Modules\Inventory\Filament\Resources\InventoryIssuanceResource\Pages;
 
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Modules\Inventory\Filament\Resources\InventoryIssuanceResource;
+use Modules\Inventory\Models\InventoryItem;
 use Modules\Inventory\Models\InventoryStockMovement;
 
 class CreateInventoryIssuance extends CreateRecord
 {
     protected static string $resource = InventoryIssuanceResource::class;
+
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        $item = InventoryItem::find($data['inventory_item_id'] ?? null);
+
+        if ($item && isset($data['quantity']) && (int) $data['quantity'] > (int) $item->current_quantity) {
+            Notification::make()
+                ->title(__('Insufficient stock'))
+                ->body(__('You tried to issue ').$data['quantity'].__(' unit(s) of "').$item->name.__('", but only ').$item->current_quantity.__(' unit(s) are on hand. Reduce the quantity on the form and try again.'))
+                ->danger()
+                ->persistent()
+                ->send();
+
+            $this->halt();
+        }
+
+        return $data;
+    }
 
     protected function afterCreate(): void
     {

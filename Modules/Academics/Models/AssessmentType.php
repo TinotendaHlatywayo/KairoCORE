@@ -19,6 +19,7 @@ class AssessmentType extends Model
         'course_id',
         'section_id',
         'created_by_id',
+        'status',
     ];
 
     public function term()

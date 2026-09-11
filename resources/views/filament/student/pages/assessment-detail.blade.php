@@ -18,15 +18,14 @@
                         <h1 class="text-xl font-extrabold text-slate-900 dark:text-white">{{ $assessment->title }}</h1>
                         <p class="mt-1 text-sm text-slate-500">{{ $assessment->subject?->name ?? 'General' }}</p>
                     </div>
-                    @php
-                        $catColor = match($assessment->assessment_category?->value ?? 'quiz') {
-                            'quiz' => 'blue',
-                            'test' => 'purple',
-                            'exam' => 'red',
-                            'assignment' => 'green',
-                            default => 'gray',
-                        };
-                    @endphp
+@php
+    $catColor = match($assessment->assessment_category?->color() ?? 'gray') {
+        'info' => 'blue',
+        'warning' => 'yellow',
+        'danger' => 'red',
+        default => 'gray',
+    };
+@endphp
                     <span class="inline-flex rounded-full bg-{{ $catColor }}-100 px-3 py-1 text-xs font-bold text-{{ $catColor }}-700 dark:bg-{{ $catColor }}-900/30 dark:text-{{ $catColor }}-300">
                         {{ $assessment->assessment_category?->label() ?? 'Quiz' }}
                     </span>

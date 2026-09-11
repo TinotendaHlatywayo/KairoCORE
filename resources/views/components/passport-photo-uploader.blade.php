@@ -59,12 +59,6 @@
                 class="block w-full text-xs text-slate-600 file:mr-3 file:rounded-md file:border-0 file:bg-indigo-600 file:px-3 file:py-1.5 file:text-[10px] file:font-bold file:text-white dark:text-slate-300"
             />
 
-            <template x-if="error">
-                <div class="rounded-lg border border-rose-200 bg-rose-50 p-3 dark:border-rose-900 dark:bg-rose-950/30">
-                    <p class="text-xs font-bold text-rose-700 dark:text-rose-300" x-text="error"></p>
-                </div>
-            </template>
-
             {{-- Crop + validation modal --}}
             <div x-show="stage === 'crop'" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
                 <div class="w-full max-w-2xl overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900">
@@ -78,6 +72,12 @@
                         <div class="relative overflow-hidden rounded-lg bg-slate-900" style="max-height: 380px;">
                             <img x-ref="cropImg" alt="{{ __('Photo to crop') }}" class="max-w-full">
                         </div>
+
+                        <template x-if="error">
+                            <div class="mt-3 rounded-lg border border-rose-200 bg-rose-50 p-3 dark:border-rose-900 dark:bg-rose-950/30">
+                                <p class="text-xs font-bold text-rose-700 dark:text-rose-300" x-text="error"></p>
+                            </div>
+                        </template>
 
                         <div class="mt-3 flex flex-wrap items-center gap-2">
                             <span class="text-[11px] font-bold uppercase tracking-wide text-slate-400">{{ __('Aspect Ratio') }}</span>
@@ -101,36 +101,15 @@
                         <button
                             type="button"
                             @click="validateAndSave()"
-                            :disabled="validating"
+                            :disabled="validating || uploading"
                             class="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                            <span x-show="validating" class="h-3 w-3 animate-spin rounded-full border-2 border-white/40 border-t-white"></span>
-                            <span x-text="validating ? '{{ __('Validating…') }}' : '{{ __('Verify & Save') }}'"></span>
+                            <span x-show="validating || uploading" class="h-3 w-3 animate-spin rounded-full border-2 border-white/40 border-t-white"></span>
+                            <span x-text="(validating || uploading) ? '{{ __('Saving…') }}' : '{{ __('Save Photo') }}'"></span>
                         </button>
                     </div>
                 </div>
             </div>
-
-            <template x-if="stage === 'review'">
-                <div class="rounded-lg border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-900 dark:bg-emerald-950/30">
-                    <p class="text-xs font-bold text-emerald-700 dark:text-emerald-300">{{ __('Photo verified') }}</p>
-                    <p class="mt-0.5 text-[11px] text-emerald-600 dark:text-emerald-400">{{ __('Single clear face detected. Ready to save.') }}</p>
-                    <div class="mt-2 flex flex-wrap items-center gap-2">
-                        <button
-                            type="button"
-                            @click="upload()"
-                            :disabled="uploading"
-                            class="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                            <span x-show="uploading" class="h-3 w-3 animate-spin rounded-full border-2 border-white/40 border-t-white"></span>
-                            <span x-text="uploading ? '{{ __('Uploading…') }}' : '{{ __('Save Photo') }}'"></span>
-                        </button>
-                        <button type="button" @click="reset()" class="text-[11px] font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
-                            {{ __('Cancel') }}
-                        </button>
-                    </div>
-                </div>
-            </template>
 
             <p x-show="processing" x-cloak class="text-[11px] text-indigo-500">{{ __('Processing image…') }}</p>
         </div>
@@ -199,9 +178,9 @@
                                 viewMode: 1,
                                 dragMode: 'move',
                                 autoCropArea: 0.75,
-                                cropBoxMovable: false,
-                                cropBoxResizable: false,
-                                toggleDragModeOnDblclick: false,
+                                cropBoxMovable: true,
+                                cropBoxResizable: true,
+                                toggleDragModeOnDblclick: true,
                             });
                         };
                     });
@@ -278,14 +257,24 @@
                         }
                     }
 
+                    // Validation passed - now upload to server
+                    this.uploading = true;
                     this.dataUrl = croppedBase64;
-                    this.preview = croppedBase64;
-                    this.stage = 'review';
-                    this.closeCropper();
+                    
+                    // Use this.$wire for Livewire 3 compatibility
+                    const wire = this.$wire || $wire;
+                    if (!wire) {
+                        throw new Error('Livewire $wire not available');
+                    }
+                    
+                    await wire[this.wireMethod](croppedBase64);
+                    this.reset();
                 } catch (e) {
-                    this.error = @js(__('The photo could not be validated. Please try a clearer image.'));
+                    console.error('Photo save error:', e);
+                    this.error = e.message || @js(__('The photo could not be saved. Please try again.'));
                 } finally {
                     this.validating = false;
+                    this.uploading = false;
                 }
             },
 
@@ -328,14 +317,6 @@
                 }
 
                 return { ok: true, message: null };
-            },
-
-            upload() {
-                if (! this.dataUrl || this.uploading) return;
-                this.uploading = true;
-                $wire[this.wireMethod](this.dataUrl)
-                    .then(() => { this.reset(); this.uploading = false; })
-                    .catch(() => { this.uploading = false; });
             },
 
             reset() {

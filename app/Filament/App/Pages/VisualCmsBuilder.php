@@ -542,8 +542,8 @@ class VisualCmsBuilder extends Page
         // site-wide template follow the switch; pages with an explicit per-page
         // theme override keep their own template.
         CmsPage::where('cms_website_id', $this->website->id)
-            ->where('page_theme', $previousTemplate)
-            ->update(['page_theme' => $val]);
+            ->where(fn ($q) => $q->whereNull('page_theme')->orWhere('page_theme', '')->orWhere('page_theme', $previousTemplate))
+            ->update(['page_theme' => $val, 'page_template' => $val]);
         $this->page = $this->page->fresh() ?? $this->page;
         $this->pageTemplate = CmsTemplateService::resolvePageTheme($this->page->page_theme, $this->page->page_template, $val);
         $this->loadSitePages();

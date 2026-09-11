@@ -112,7 +112,12 @@ class DigitalAssessmentResource extends Resource
 
                         Forms\Components\Select::make('section_id')
                             ->label('Class Stream')
-                            ->relationship('section', 'name')
+                            ->options(fn () => \Modules\Academics\Models\Section::where('school_id', current_tenant()?->id)
+                                ->with('course')
+                                ->get()
+                                ->sortBy(fn ($section) => ($section->course?->name ?? '').' '.$section->name)
+                                ->mapWithKeys(fn ($section) => [$section->id => $section->full_name])
+                                ->toArray())
                             ->searchable()
                             ->preload()
                             ->placeholder('All Classes (optional)'),
@@ -274,7 +279,9 @@ class DigitalAssessmentResource extends Resource
 
                         Forms\Components\Toggle::make('password_protection')
                             ->label('Password Protection')
-                            ->default(false),
+                            ->helperText('Require an access code before the attempt starts')
+                            ->default(false)
+                            ->live(),
 
                         Forms\Components\Toggle::make('anti_cheating_enabled')
                             ->label('Anti-Cheating')
@@ -294,6 +301,18 @@ class DigitalAssessmentResource extends Resource
                             ->default(false)
                             ->live(),
                     ]),
+
+                Forms\Components\Section::make('Access Code')
+                    ->schema([
+                        Forms\Components\TextInput::make('settings.access_code')
+                            ->label('Access Code')
+                            ->revealable()
+                            ->password()
+                            ->placeholder('e.g. SPRING-24')
+                            ->helperText('Students must enter this code before the attempt begins. Leave blank to disable the gate.'),
+                    ])
+                    ->visible(fn (Forms\Get $get) => (bool) $get('password_protection'))
+                    ->reactive(),
 
                 Forms\Components\Section::make('Adaptive Settings')
                     ->schema([
@@ -435,9 +454,14 @@ class DigitalAssessmentResource extends Resource
 
                 Tables\Filters\SelectFilter::make('section_id')
                     ->label('Class')
-                    ->relationship('section', 'name')
-                    ->preload()
-                    ->searchable(),
+                    ->options(fn () => \Modules\Academics\Models\Section::where('school_id', current_tenant()?->id)
+                        ->with('course')
+                        ->get()
+                        ->sortBy(fn ($section) => ($section->course?->name ?? '').' '.$section->name)
+                        ->mapWithKeys(fn ($section) => [$section->id => $section->full_name])
+                        ->toArray())
+                    ->searchable()
+                    ->preload(),
 
                 Tables\Filters\SelectFilter::make('assessment_mode')
                     ->label('Mode')
@@ -455,8 +479,7 @@ class DigitalAssessmentResource extends Resource
                     ->label('Status')
                     ->options(collect(AssessmentStatus::cases())
                         ->mapWithKeys(fn ($s) => [$s->value => $s->label()])
-                        ->toArray())
-                    ->default(AssessmentStatus::Draft->value),
+                        ->toArray()),
 
                 Tables\Filters\Filter::make('contributes_to_grade')
                     ->label('Contributes to Grade')
@@ -515,15 +538,6 @@ class DigitalAssessmentResource extends Resource
                     ->tooltip('View Analytics')
                     ->color('success')
                     ->url(fn (DigitalAssessment $record) => \App\Filament\App\Pages\AssessmentAnalyticsPage::getUrl([$record->id]))
-                    ->openUrlInNewTab()
-                    ->visible(fn (DigitalAssessment $record) => $record->attempts()->complete()->count() > 0),
-
-                Tables\Actions\Action::make('markResponses')
-                    ->icon('heroicon-o-pencil-square')
-                    ->iconButton()
-                    ->tooltip('Mark Responses')
-                    ->color('info')
-                    ->url(fn (DigitalAssessment $record) => \App\Filament\App\Pages\ManualMarkingPage::getUrl([$record->id]))
                     ->openUrlInNewTab()
                     ->visible(fn (DigitalAssessment $record) => $record->attempts()->complete()->count() > 0),
 

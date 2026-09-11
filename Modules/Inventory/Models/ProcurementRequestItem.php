@@ -14,11 +14,13 @@ class ProcurementRequestItem extends Model
         'quantity',
         'estimated_unit_cost',
         'specifications',
+        'is_fixed_asset',
     ];
 
     protected $casts = [
         'quantity' => 'integer',
         'estimated_unit_cost' => 'decimal:2',
+        'is_fixed_asset' => 'boolean',
     ];
 
     public function request(): BelongsTo

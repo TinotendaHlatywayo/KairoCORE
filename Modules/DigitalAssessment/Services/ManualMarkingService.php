@@ -35,7 +35,7 @@ class ManualMarkingService
             $query->whereHas('attempt', fn ($q) => $q->where('school_id', $schoolId));
         }
 
-        return $query->orderBy('attempt_id')->get();
+        return $query->orderBy('digital_assessment_attempt_id')->get();
     }
 
     public function getMarkingQueueForAssessment(DigitalAssessment $assessment): Collection
@@ -45,7 +45,7 @@ class ManualMarkingService
             ->whereNull('marked_at')
             ->whereNotNull('learner_answer')
             ->with(['question', 'attempt.student'])
-            ->orderBy('attempt_id')
+            ->orderBy('digital_assessment_attempt_id')
             ->get();
     }
 
