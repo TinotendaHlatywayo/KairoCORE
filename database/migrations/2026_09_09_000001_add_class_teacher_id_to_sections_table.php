@@ -11,7 +11,6 @@ return new class extends Migration
         Schema::table('sections', function (Blueprint $table) {
             $table->foreignId('class_teacher_id')
                 ->nullable()
-                ->after('classroom_id')
                 ->constrained('users')
                 ->onDelete('set null');
         });
