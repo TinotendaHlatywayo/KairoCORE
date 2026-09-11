@@ -46,6 +46,35 @@ class SubjectResource extends Resource
 
     protected static ?int $navigationSort = 3;
 
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = parent::getEloquentQuery();
+        $school = current_tenant();
+        if ($school) {
+            $type = strtolower((string) ($school->institution_type ?? 'secondary'));
+            if ($type === 'primary') {
+                $query->whereIn('name', [
+                    'Mathematics',
+                    'English Language',
+                    'Shona Language',
+                    'Science & Technology',
+                    'Social Studies',
+                    'Physical Education',
+                ]);
+            } elseif ($type === 'secondary') {
+                $query->whereNotIn('name', [
+                    'Mathematics',
+                    'English Language',
+                    'Shona Language',
+                    'Science & Technology',
+                    'Social Studies',
+                    'Physical Education',
+                ]);
+            }
+        }
+        return $query;
+    }
+
     public static function form(Form $form): Form
     {
         return $form
