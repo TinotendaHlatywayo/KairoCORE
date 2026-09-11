@@ -5,7 +5,6 @@ namespace App\Filament\App\Widgets;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Modules\Finance\Models\Expense;
-use Illuminate\Support\Facades\DB;
 
 class ExpenseAnalyticsWidget extends BaseWidget
 {
@@ -23,20 +22,6 @@ class ExpenseAnalyticsWidget extends BaseWidget
         $highestExpense = Expense::where('school_id', $schoolId)->orderByDesc('amount')->first();
         $highestText = $highestExpense ? "{$highestExpense->expense_name} ($" . number_format($highestExpense->amount, 2) . ")" : __('None');
 
-        // Top category breakdown description
-        $categories = DB::table('expenses')
-            ->join('expense_categories', 'expenses.expense_category_id', '=', 'expense_categories.id')
-            ->where('expenses.school_id', $schoolId)
-            ->select('expense_categories.name', DB::raw('SUM(expenses.amount) as total'))
-            ->groupBy('expense_categories.name')
-            ->orderByDesc('total')
-            ->get();
-
-        $catSummary = $categories->map(fn ($c) => "{$c->name}: $" . number_format($c->total, 2))->implode(' | ');
-        if (empty($catSummary)) {
-            $catSummary = __('No category breakdown available');
-        }
-
         return [
             Stat::make(__('Total Expenses Disbursed'), '$'.number_format($totalExpenses, 2))
                 ->description(__('All registered operating & procurement expenses'))
@@ -46,10 +31,6 @@ class ExpenseAnalyticsWidget extends BaseWidget
                 ->description(__('Largest single disbursement recorded'))
                 ->descriptionIcon('heroicon-m-arrow-trending-up')
                 ->color('gray'),
-            Stat::make(__('Total per Each Category'), $catSummary)
-                ->description(__('Category-wise expenditure aggregation'))
-                ->descriptionIcon('heroicon-m-chart-pie')
-                ->color('primary'),
         ];
     }
 }
