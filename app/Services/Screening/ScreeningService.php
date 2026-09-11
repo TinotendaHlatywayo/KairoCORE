@@ -19,21 +19,27 @@ class ScreeningService
         int $targetYearId,
         ?int $promotionRunId = null,
         ?int $createdBy = null,
+        array $criteria = [],
     ): ScreeningRun {
-        return \DB::transaction(function () use ($schoolId, $sourceYearId, $targetYearId, $promotionRunId, $createdBy) {
+        return \DB::transaction(function () use ($schoolId, $sourceYearId, $targetYearId, $promotionRunId, $createdBy, $criteria) {
             $run = ScreeningRun::create([
                 'school_id' => $schoolId,
                 'source_academic_year_id' => $sourceYearId,
                 'target_academic_year_id' => $targetYearId,
                 'promotion_run_id' => $promotionRunId,
                 'status' => ScreeningRun::STATUS_DRAFT,
+                'score_basis' => ($criteria['score_basis'] ?? 'overall') === 'subjects' ? 'subjects' : 'overall',
+                'academic_year_mode' => ($criteria['academic_year_mode'] ?? 'current') === 'selected' ? 'selected' : 'current',
+                'subject_ids' => empty($criteria['subject_ids']) ? null : array_values(array_map('intval', $criteria['subject_ids'])),
+                'term_ids' => empty($criteria['term_ids']) ? null : array_values(array_map('intval', $criteria['term_ids'])),
+                'academic_year_ids' => empty($criteria['academic_year_ids']) ? null : array_values(array_map('intval', $criteria['academic_year_ids'])),
                 'created_by_id' => $createdBy,
             ]);
 
             $candidates = $this->resolveCandidates($schoolId, $sourceYearId, $promotionRunId);
 
             foreach ($candidates as $enrollment) {
-                $profile = $this->scoreService->studentScreeningProfile($enrollment->student_id, $sourceYearId);
+                $profile = $this->scoreService->studentScreeningProfile($enrollment->student_id, $sourceYearId, $criteria);
                 $overallScore = $profile['overall_score'];
 
                 $placement = $this->resolvePlacement(
@@ -70,38 +76,46 @@ class ScreeningService
 
             $run->update(['status' => ScreeningRun::STATUS_IN_PROGRESS]);
 
-            $items = ScreeningItem::where('screening_run_id', $runId)
-                ->where('decision', ScreeningItem::DECISION_PLACED)
-                ->get();
+$items = ScreeningItem::where('screening_run_id', $runId)
+                    ->where('decision', ScreeningItem::DECISION_PLACED)
+                    ->get();
 
-            $now = \Illuminate\Support\Carbon::now();
+                $now = \Illuminate\Support\Carbon::now();
 
-            foreach ($items as $item) {
-                $oldEnrollment = $item->sourceEnrollment;
+                foreach ($items as $item) {
+                    $oldEnrollment = $item->sourceEnrollment;
 
-                if ($oldEnrollment) {
-                    $oldEnrollment->update([
-                        'status' => \Modules\Students\Models\Enrollment::STATUS_PROMOTED,
+                    $courseId = $item->target_course_id ?? $oldEnrollment?->course_id;
+
+                    if (! $courseId) {
+                        continue;
+                    }
+
+                    $targetSectionId = $this->resolveTargetSectionId($run->school_id, $courseId, $item->target_section_id);
+
+                    if ($oldEnrollment) {
+                        $oldEnrollment->update([
+                            'status' => \Modules\Students\Models\Enrollment::STATUS_PROMOTED,
+                            'effective_date' => $now,
+                            'reason' => $item->reason ?? 'Placed via screening run #' . $runId,
+                            'performed_by_id' => $performedBy,
+                        ]);
+                    }
+
+                    \Modules\Students\Models\Enrollment::create([
+                        'school_id' => $run->school_id,
+                        'student_id' => $item->student_id,
+                        'academic_year_id' => $run->target_academic_year_id,
+                        'course_id' => $courseId,
+                        'section_id' => $targetSectionId,
+                        'roll_number' => $oldEnrollment?->roll_number,
+                        'term_id' => $oldEnrollment?->term_id,
+                        'status' => \Modules\Students\Models\Enrollment::STATUS_ACTIVE,
                         'effective_date' => $now,
                         'reason' => $item->reason ?? 'Placed via screening run #' . $runId,
                         'performed_by_id' => $performedBy,
                     ]);
                 }
-
-                \Modules\Students\Models\Enrollment::create([
-                    'school_id' => $run->school_id,
-                    'student_id' => $item->student_id,
-                    'academic_year_id' => $run->target_academic_year_id,
-                    'course_id' => $item->target_course_id,
-                    'section_id' => $item->target_section_id,
-                    'roll_number' => $oldEnrollment?->roll_number,
-                    'term_id' => $oldEnrollment?->term_id,
-                    'status' => \Modules\Students\Models\Enrollment::STATUS_ACTIVE,
-                    'effective_date' => $now,
-                    'reason' => $item->reason ?? 'Placed via screening run #' . $runId,
-                    'performed_by_id' => $performedBy,
-                ]);
-            }
 
             $run->update([
                 'status' => ScreeningRun::STATUS_COMMITTED,
@@ -167,5 +181,39 @@ class ScreeningService
             'target_section_id' => null,
             'reason' => 'No screening rule matched for available scores',
         ];
+    }
+
+    /**
+     * Resolve a concrete target section for a placed student.
+     *
+     * Falls back to the first section of the target course, and as a last
+     * resort auto-creates a default section named after the course so the
+     * commit never fails with a null section_id.
+     */
+    protected function resolveTargetSectionId(int $schoolId, int $courseId, ?int $sectionId): int
+    {
+        if ($sectionId) {
+            return $sectionId;
+        }
+
+        $first = \Modules\Academics\Models\Section::withoutGlobalScopes()
+            ->where('school_id', $schoolId)
+            ->where('course_id', $courseId)
+            ->orderBy('rank_order')
+            ->orderBy('id')
+            ->first();
+
+        if ($first) {
+            return $first->id;
+        }
+
+        $course = \Modules\Academics\Models\Course::withoutGlobalScopes()->find($courseId);
+
+        return \Modules\Academics\Models\Section::create([
+            'school_id' => $schoolId,
+            'course_id' => $courseId,
+            'name' => $course?->name ?? "Course #{$courseId}",
+            'rank_order' => 1,
+        ])->id;
     }
 }

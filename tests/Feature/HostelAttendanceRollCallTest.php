@@ -31,7 +31,7 @@ class HostelAttendanceRollCallTest extends TestCase
     {
         $user = User::find(15);
         $this->actingAs($user)
-            ->withServerVariables(['HTTP_HOST' => 'tinwayacademy.lvh.me:8000']);
+            ->withServerVariables(['HTTP_HOST' => 'chiwariraprimary.lvh.me:8000']);
 
         $r = $this->get('/workspace/hostel-attendances/create');
         $r->assertOk();
@@ -44,7 +44,7 @@ class HostelAttendanceRollCallTest extends TestCase
     {
         $user = User::find(15);
         $this->actingAs($user)
-            ->withServerVariables(['HTTP_HOST' => 'tinwayacademy.lvh.me:8000']);
+            ->withServerVariables(['HTTP_HOST' => 'chiwariraprimary.lvh.me:8000']);
 
         $hostel = Hostel::create([
             'name' => 'Roll Call Smoke '.uniqid(),

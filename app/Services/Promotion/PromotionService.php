@@ -139,12 +139,18 @@ class PromotionService
                 }
 
                 if ($item->target_course_id) {
+                    $targetSectionId = $this->resolveTargetSectionId(
+                        $run->school_id,
+                        $item->target_course_id,
+                        $item->target_section_id,
+                    );
+
                     Enrollment::create([
                         'school_id' => $run->school_id,
                         'student_id' => $item->student_id,
                         'academic_year_id' => $run->target_academic_year_id,
                         'course_id' => $item->target_course_id,
-                        'section_id' => $item->target_section_id,
+                        'section_id' => $targetSectionId,
                         'roll_number' => $oldEnrollment?->roll_number,
                         'term_id' => $oldEnrollment?->term_id,
                         'status' => Enrollment::STATUS_ACTIVE,
@@ -253,6 +259,40 @@ class PromotionService
                 'committed_at' => null,
             ]);
         });
+    }
+
+    /**
+     * Resolve a concrete target section for a promoted student.
+     *
+     * Falls back to the first section of the target course, and as a last
+     * resort auto-creates a default section named after the course so the
+     * promotion never fails with a null section_id.
+     */
+    protected function resolveTargetSectionId(int $schoolId, int $courseId, ?int $sectionId): int
+    {
+        if ($sectionId) {
+            return $sectionId;
+        }
+
+        $first = Section::withoutGlobalScopes()
+            ->where('school_id', $schoolId)
+            ->where('course_id', $courseId)
+            ->orderBy('rank_order')
+            ->orderBy('id')
+            ->first();
+
+        if ($first) {
+            return $first->id;
+        }
+
+        $course = Course::withoutGlobalScopes()->find($courseId);
+
+        return Section::create([
+            'school_id' => $schoolId,
+            'course_id' => $courseId,
+            'name' => $course?->name ?? "Course #{$courseId}",
+            'rank_order' => 1,
+        ])->id;
     }
 
     protected function resolveParallelSection(

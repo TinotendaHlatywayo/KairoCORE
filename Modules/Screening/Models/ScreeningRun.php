@@ -25,11 +25,19 @@ class ScreeningRun extends Model
         'target_academic_year_id',
         'promotion_run_id',
         'status',
+        'score_basis',
+        'academic_year_mode',
+        'subject_ids',
+        'term_ids',
+        'academic_year_ids',
         'created_by_id',
         'committed_at',
     ];
 
     protected $casts = [
+        'subject_ids' => 'array',
+        'term_ids' => 'array',
+        'academic_year_ids' => 'array',
         'committed_at' => 'datetime',
     ];
 
@@ -71,5 +79,36 @@ class ScreeningRun extends Model
             'unplaced' => $counts['unplaced'] ?? 0,
             'total' => array_sum($counts),
         ];
+    }
+
+    public function criteriaSummary(): string
+    {
+        $basis = ($this->score_basis ?? 'overall') === 'subjects'
+            ? __('Selected subject(s)')
+            : __('Overall average (all subjects)');
+
+        $period = $this->academic_year_mode === 'selected'
+            ? $this->criteriaNameList('academic_year_ids', \Modules\Academics\Models\AcademicYear::class, 'name')
+            : __('Current academic year');
+
+        $terms = $this->criteriaNameList('term_ids', \Modules\Academics\Models\Term::class, 'name');
+
+        return $basis.' · '.$period.($terms === null ? '' : ' · '.$terms);
+    }
+
+    protected function criteriaNameList(string $column, string $modelClass, string $attr): ?string
+    {
+        $ids = $this->{$column} ?? null;
+
+        if (empty($ids)) {
+            return null;
+        }
+
+        $names = $modelClass::withoutGlobalScopes()
+            ->whereIn('id', $ids)
+            ->pluck($attr)
+            ->implode(', ');
+
+        return $names === '' ? null : $names;
     }
 }

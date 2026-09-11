@@ -31,7 +31,7 @@ class EnrollmentHistoryPhase1Test extends TestCase
         Config::set('database.connections.mysql.password', env('DB_PASSWORD', ''));
         DB::purge('mysql');
 
-        $this->school = School::where('subdomain', 'tinwayacademy')->first() ?? School::first();
+        $this->school = School::where('subdomain', 'chiwariraprimary')->first() ?? School::first();
         $this->assertNotNull($this->school, 'A school record is required.');
         $this->actingAsTenant($this->school);
     }

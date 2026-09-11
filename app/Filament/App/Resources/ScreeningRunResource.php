@@ -82,6 +82,13 @@ class ScreeningRunResource extends Resource
                             ->placeholder('-'),
                     ])->columns(3),
 
+                Infolists\Components\Section::make(__('Screening Criteria'))
+                    ->schema([
+                        Infolists\Components\TextEntry::make('criteria_summary')
+                            ->label(__('Criteria'))
+                            ->state(fn (ScreeningRun $record): string => $record->criteriaSummary()),
+                    ]),
+
                 Infolists\Components\Section::make(__('Preview Summary'))
                     ->schema([
                         Infolists\Components\TextEntry::make('preview_summary')
@@ -113,6 +120,9 @@ class ScreeningRunResource extends Resource
                     ->label(__('Promotion Run'))
                     ->formatStateUsing(fn (?string $state): ?string => $state === null ? null : '#'.$state)
                     ->placeholder('-'),
+                Tables\Columns\TextColumn::make('criteria_summary')
+                    ->label(__('Criteria'))
+                    ->state(fn (ScreeningRun $record): string => $record->criteriaSummary()),
                 Tables\Columns\TextColumn::make('status')
                     ->label(__('Status'))
                     ->badge()
