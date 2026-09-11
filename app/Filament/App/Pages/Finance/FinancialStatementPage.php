@@ -86,7 +86,7 @@ class FinancialStatementPage extends Page
             'endDate' => now()->toDateString(),
             'company' => $school?->name ?? config('app.name'),
             'companyTagline' => $school?->tagline ?? null,
-            'companyAddress' => $school?->address ?? (string) $school?->city,
+            'companyAddress' => $school?->physical_address ?? $school?->address ?? '',
             'companyPhone' => $school?->phone ?? null,
             'companyEmail' => $school?->email ?? null,
             'season' => $season,
