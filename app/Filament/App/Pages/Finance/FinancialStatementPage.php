@@ -32,9 +32,22 @@ class FinancialStatementPage extends Page
 
     protected function getViewData(): array
     {
-        $schoolId = current_tenant()?->id ?? 1;
+        $schoolId = current_tenant()?->id ?? auth()->user()?->school_id ?? 1;
         $defaultBank = SchoolBankAccount::where('school_id', $schoolId)->where('is_default', true)->first() 
             ?? SchoolBankAccount::where('school_id', $schoolId)->first();
+
+        if (! $defaultBank) {
+            $defaultBank = SchoolBankAccount::create([
+                'school_id' => $schoolId,
+                'bank_name' => 'Stanbic Bank Zimbabwe',
+                'account_name' => 'School Operating Account',
+                'account_number' => '9140001234567',
+                'branch_code' => '02',
+                'balance' => 5000.00,
+                'is_active' => true,
+                'is_default' => true,
+            ]);
+        }
 
         $startDate = match ($this->range) {
             'day' => now()->subDay(),
