@@ -3,6 +3,7 @@
 namespace App\Filament\App\Widgets;
 
 use App\Models\User;
+use App\Services\UserRegistrationService;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Modules\HR\Models\Employee;
@@ -42,7 +43,7 @@ class UserRoleStatisticsWidget extends BaseWidget
             ->where(function ($q) {
                 $q->where('requested_role', 'administrator')
                   ->orWhere('requested_role', 'admin')
-                  ->orWhere('custom_role_id', 2);
+                  ->orWhereHas('customRole', fn ($role) => $role->where('name', UserRegistrationService::roleNameForCategory('administrator')));
             })
             ->count();
         if ($adminCount < 1 && auth()->check() && auth()->user()->school_id == $schoolId) {
