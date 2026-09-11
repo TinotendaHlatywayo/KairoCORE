@@ -18,6 +18,11 @@ class GamificationProfilePage extends Page
 
     protected static ?string $title = 'My Achievements';
 
+    public static function canAccess(): bool
+    {
+        return false;
+    }
+
     public array $stats = [];
     public bool $gamificationEnabled = false;
 

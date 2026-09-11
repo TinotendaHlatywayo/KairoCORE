@@ -70,20 +70,33 @@ class TimeSlotResource extends Resource
                                 'registration' => __('Registration'),
                             ])
                             ->required()
-                            ->default('teaching'),
+                            ->default('teaching')
+                            ->live()
+                            ->afterStateUpdated(function (Forms\Set $set, ?string $state) {
+                                $set('is_break', $state !== 'teaching');
+                            }),
                         Forms\Components\TimePicker::make('start_time')
                             ->label(__('Start Time'))
                             ->required()
-                            ->seconds(false),
+                            ->seconds(false)
+                            ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, ?string $state) {
+                                self::refreshDuration($set, $get);
+                            }),
                         Forms\Components\TimePicker::make('end_time')
                             ->label(__('End Time'))
                             ->required()
                             ->seconds(false)
-                            ->after('start_time'),
+                            ->after('start_time')
+                            ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, ?string $state) {
+                                self::refreshDuration($set, $get);
+                            }),
+                        Forms\Components\Hidden::make('is_break')
+                            ->default(false),
                         Forms\Components\TextInput::make('duration_minutes')
                             ->label(__('Duration (minutes)'))
                             ->numeric()
-                            ->required()
+                            ->disabled()
+                            ->dehydrated()
                             ->helperText(__('Auto-calculated from start/end time')),
                         Forms\Components\TextInput::make('period_order')
                             ->label(__('Period Order'))
@@ -188,7 +201,7 @@ class TimeSlotResource extends Resource
                         ->label(__('Validate All for Conflicts'))
                         ->icon('heroicon-o-shield-check')
                         ->action(function () {
-                            $all = TimeSlot::where('school_id', config('current_tenant_id'))->get();
+                            $all = TimeSlot::where('school_id', current_tenant()?->id ?? auth()->user()?->school_id ?? 1)->get();
                             $conflicts = [];
                             foreach ($all as $slot) {
                                 $slotConflicts = self::detectConflicts($slot);
@@ -208,6 +221,17 @@ class TimeSlotResource extends Resource
                 ]),
             ])
             ->defaultSort('period_order', 'asc');
+    }
+
+    protected static function refreshDuration(Forms\Set $set, Forms\Get $get): void
+    {
+        $start = $get('start_time');
+        $end = $get('end_time');
+
+        if ($start && $end) {
+            $minutes = max(0, (int) round((strtotime($end) - strtotime($start)) / 60));
+            $set('duration_minutes', $minutes);
+        }
     }
 
     protected static function detectConflicts(TimeSlot $slot): Collection

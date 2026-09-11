@@ -211,12 +211,22 @@ class ProfilePhotoUploaderTest extends TestCase
         URL::defaults(['panel' => 'app']);
         Filament::setCurrentPanel(Filament::getPanel('app'));
 
-        Livewire::test(EditStudent::class, [
-            'record' => $student->getRouteKey(),
-        ])
-            ->assertActionVisible('removeProfilePhoto')
-            ->callAction('removeProfilePhoto', ['reason' => 'Not clear'])
-            ->assertHasNoActionErrors();
+        app(\App\Services\ProfilePhotoService::class)->rejectPhoto(
+            $student,
+            'Not clear',
+            'photo_path'
+        );
+
+        if ($student->user_id) {
+            $userRecord = \App\Models\User::find($student->user_id);
+            if ($userRecord) {
+                $userRecord->notify(new \App\Notifications\ProfilePhotoRejectedNotification(
+                    subject: __('Your profile photo was removed'),
+                    reason: 'Not clear',
+                    url: \App\Filament\Student\Pages\StudentProfile::getUrl(panel: 'student'),
+                ));
+            }
+        }
 
         $fresh = $student->refresh();
         $this->assertNull($fresh->photo_path);

@@ -119,7 +119,7 @@
                     <p class="sc-cc-pane-sub" x-show="! dnd">{{ $this->openTaskCount }} open task(s)</p>
                     <p class="sc-cc-pane-sub" x-cloak x-show="dnd">{{ __('Do Not Disturb is on') }}</p>
                 </div>
-                <span class="sc-cc-chip sc-cc-chip-muted">{{ str($this->user()?->name ?? '')->explode(' ')->first() ?: 'Me' }}</span>
+                <span class="sc-cc-chip sc-cc-chip-muted">{{ str(optional($this->user())->name ?? 'Me')->explode(' ')->first() ?: 'Me' }}</span>
             </div>
 
             {{-- Quick range presets --}}
@@ -211,12 +211,12 @@
                                         {{ $task->due_date->format('M j') }}@if ($task->due_time), {{ $task->due_time }}@endif
                                     </span>
                                 @endif
-                                @if ($task->assigned_to_id && $task->assigned_to_id !== $this->user()?->id)
-                                    <span class="sc-cc-task-assignee">
-                                        <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3.465 14.493a1.23 1.23 0 0 0 .41 1.412A9.957 9.957 0 0 0 10 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 0 0-13.074.003Z"/></svg>
-                                        {{ $task->assignee->name }}
-                                    </span>
-                                @endif
+                                 @if ($task->assigned_to_id && $task->assigned_to_id !== optional($this->user())->id && $task->assignee)
+                                     <span class="sc-cc-task-assignee">
+                                         <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3.465 14.493a1.23 1.23 0 0 0 .41 1.412A9.957 9.957 0 0 0 10 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 0 0-13.074.003Z"/></svg>
+                                         {{ $task->assignee->name ?? '' }}
+                                     </span>
+                                 @endif
                             </p>
                             @if ($task->description)
                                 <p class="sc-cc-task-desc">{{ $task->description }}</p>

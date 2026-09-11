@@ -15,7 +15,11 @@ class StaffLoan extends Model
         'school_id',
         'employee_id',
         'loan_type',
+        'loan_type_other',
         'principal_amount',
+        'interest_rate',
+        'interest_type',
+        'total_repayable',
         'balance_remaining',
         'monthly_deduction',
         'status',
@@ -24,6 +28,8 @@ class StaffLoan extends Model
 
     protected $casts = [
         'principal_amount' => 'decimal:4',
+        'interest_rate' => 'decimal:4',
+        'total_repayable' => 'decimal:4',
         'balance_remaining' => 'decimal:4',
         'monthly_deduction' => 'decimal:4',
     ];

@@ -35,6 +35,8 @@ class Student extends Model
         'photo_rejected_reason',
         'photo_rejected_by',
         'photo_rejected_at',
+        'photo_approved_at',
+        'photo_approved_by',
         'house',
         'boarding_status',
         'blood_group',
@@ -42,6 +44,13 @@ class Student extends Model
         'emergency_contact_name',
         'emergency_contact_phone',
         'parent_email',
+        'physical_address',
+        'phone',
+        'fee_waiver_id',
+        'academic_year_id',
+        'course_id',
+        'section_id',
+        'roll_number',
     ];
 
     protected $casts = [
@@ -49,6 +58,7 @@ class Student extends Model
         'admission_date' => 'date',
         'card_expiry_date' => 'date',
         'photo_rejected_at' => 'datetime',
+        'photo_approved_at' => 'datetime',
     ];
 
     public static array $levelSuffixes = [
@@ -71,6 +81,12 @@ class Student extends Model
 
     protected static function booted()
     {
+        static::saved(function (Student $student) {
+            if ($student->user_id && $student->phone) {
+                User::where('id', $student->user_id)->update(['phone' => $student->phone]);
+            }
+        });
+
         static::creating(function ($student) {
             $schoolId = $student->school_id ?? app('current_tenant')->id;
             $admDate = Carbon::parse($student->admission_date ?? now());
@@ -206,5 +222,19 @@ class Student extends Model
     public function getFullNameAttribute()
     {
         return "{$this->first_name} {$this->last_name}";
+    }
+
+    public function getEmailAttribute()
+    {
+        return $this->application?->email ?? $this->user?->email ?? $this->parent_email ?? $this->application?->parent_email;
+    }
+
+    public function getAttribute($key)
+    {
+        try {
+            return parent::getAttribute($key);
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 }

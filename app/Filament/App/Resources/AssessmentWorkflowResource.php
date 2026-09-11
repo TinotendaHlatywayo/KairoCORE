@@ -2,27 +2,23 @@
 
 namespace App\Filament\App\Resources;
 
-use App\Filament\App\Concerns\ModulePermissionAccess;
 use App\Filament\App\Resources\AssessmentWorkflowResource\Pages;
 use Filament\Forms;
-use Filament\Forms\Components\Tabs\Tab;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Auth;
+use Modules\Academics\Models\AcademicYear;
 use Modules\Academics\Models\AssessmentType;
+use Modules\Academics\Models\Course;
 use Modules\Academics\Models\Section;
+use Modules\Academics\Models\Subject;
+use Modules\Academics\Models\Term;
 
 class AssessmentWorkflowResource extends Resource
 {
-    use ModulePermissionAccess;
-
-    public static function getNavigationGroup(): ?string
-    {
-        return __('Exams & Grading');
-    }
-
     protected static ?string $model = AssessmentType::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-presentation-chart-bar';
@@ -33,6 +29,11 @@ class AssessmentWorkflowResource extends Resource
 
     // Reached via the module contextual tabs, not the sidebar.
     protected static bool $shouldRegisterNavigation = false;
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Exams & Grading');
+    }
 
     public static function getNavigationLabel(): string
     {
@@ -45,59 +46,62 @@ class AssessmentWorkflowResource extends Resource
             ->schema([
                 Forms\Components\Tabs::make('Assessment Workflow')
                     ->tabs([
-                        Tab::make('Create')
+                        Forms\Components\Tabs\Tab::make('Create')
                             ->label(__('1. Create Assessment'))
                             ->schema([
                                 Forms\Components\Section::make('Assessment Details')
                                     ->schema([
                                         Forms\Components\TextInput::make('name')
+                                            ->label(__('Assessment / Test Name'))
                                             ->required()
-                                            ->placeholder(__('e.g., Mid-Year Exam, Term 2 Test')),
+                                            ->placeholder(__('e.g., Test 1, Test 2, End of Term Exam')),
                                         Forms\Components\Select::make('subject_id')
                                             ->label(__('Subject'))
-                                            ->relationship('subject', 'name')
-                                            ->required()
-                                            ->searchable(),
+                                            ->options(Subject::all()->pluck('name', 'id'))
+                                            ->searchable()
+                                            ->preload()
+                                            ->placeholder(__('All Subjects')),
                                         Forms\Components\Select::make('section_id')
                                             ->label(__('Class Stream'))
                                             ->options(function () {
                                                 return Section::with('course')
-                                                    ->where('school_id', config('current_tenant_id'))
+                                                    ->where('school_id', (current_tenant()?->id ?? auth()->user()?->school_id ?? 1))
                                                     ->get()
                                                     ->pluck('full_name', 'id');
                                             })
-                                            ->required()
-                                            ->searchable(),
-                                        Forms\Components\Select::make('type')
-                                            ->label(__('Assessment Type'))
-                                            ->options([
-                                                'exam' => __('Exam'),
-                                                'test' => __('Test'),
-                                                'assignment' => __('Assignment'),
-                                                'project' => __('Project'),
-                                                'practical' => __('Practical'),
-                                                'oral' => __('Oral'),
-                                            ])
-                                            ->required(),
+                                            ->searchable()
+                                            ->placeholder(__('All Streams')),
                                         Forms\Components\Select::make('term_id')
                                             ->label(__('Term'))
-                                            ->relationship('term', 'name')
-                                            ->required(),
+                                            ->options(function () {
+                                                $activeYear = AcademicYear::where('is_active', true)->first();
+                                                if (! $activeYear) {
+                                                    return [];
+                                                }
+
+                                                return Term::where('academic_year_id', $activeYear->id)
+                                                    ->pluck('name', 'id');
+                                            })
+                                            ->required()
+                                            ->preload()
+                                            ->placeholder(__('Select Term...')),
                                     ])->columns(2),
 
-                                Forms\Components\Section::make('Grading & Scheduling')
+                                Forms\Components\Section::make('Grading & Weighting')
                                     ->schema([
-                                        Forms\Components\TextInput::make('max_marks')
-                                            ->label(__('Max Marks'))
+                                        Forms\Components\TextInput::make('max_mark')
+                                            ->label(__('Max Attainable Mark'))
                                             ->numeric()
                                             ->default(100)
                                             ->required(),
-                                        Forms\Components\DatePicker::make('scheduled_date')
-                                            ->label(__('Scheduled Date'))
-                                            ->required(),
-                                        Forms\Components\DatePicker::make('due_date')
-                                            ->label(__('Submission Due Date')),
+                                        Forms\Components\TextInput::make('weight_percentage')
+                                            ->label(__('Weight towards Final Term Grade (%)'))
+                                            ->numeric()
+                                            ->default(20)
+                                            ->required()
+                                            ->helperText(__('e.g. Test 1 = 20%, Test 2 = 20%, Exam = 60%')),
                                         Forms\Components\Select::make('status')
+                                            ->label(__('Workflow Status'))
                                             ->options([
                                                 'draft' => __('Draft'),
                                                 'scheduled' => __('Scheduled'),
@@ -111,84 +115,28 @@ class AssessmentWorkflowResource extends Resource
                                     ])->columns(3),
                             ]),
 
-                        Tab::make('Rubric')
-                            ->label(__('2. Attach Rubric'))
+                        Forms\Components\Tabs\Tab::make('Scope')
+                            ->label(__('2. Define Scope'))
                             ->schema([
-                                Forms\Components\Section::make('Rubric Criteria')
-                                    ->description(__('Define marking criteria for this assessment'))
+                                Forms\Components\Section::make('Assessment Scope Constraints (Optional)')
+                                    ->description(__('Leave scope values empty if this test applies globally to all levels and subjects.'))
                                     ->schema([
-                                        Forms\Components\Repeater::make('rubric_criteria')
-                                            ->schema([
-                                                Forms\Components\TextInput::make('criterion')
-                                                    ->label(__('Criterion'))
-                                                    ->required(),
-                                                Forms\Components\Textarea::make('description')
-                                                    ->label(__('Description')),
-                                                Forms\Components\TextInput::make('max_points')
-                                                    ->label(__('Max Points'))
-                                                    ->numeric()
-                                                    ->required(),
-                                                Forms\Components\Select::make('criterion_type')
-                                                    ->label(__('Type'))
-                                                    ->options([
-                                                        'knowledge' => __('Knowledge'),
-                                                        'understanding' => __('Understanding'),
-                                                        'application' => __('Application'),
-                                                        'analysis' => __('Analysis'),
-                                                        'creativity' => __('Creativity'),
-                                                    ]),
-                                            ])
-                                            ->grid(3)
-                                            ->defaultItems(1),
-                                    ]),
-                            ]),
-
-                        Tab::make('Assign')
-                            ->label(__('3. Assign & Notify'))
-                            ->schema([
-                                Forms\Components\Section::make('Teacher Assignment')
-                                    ->schema([
-                                        Forms\Components\Select::make('examiner_id')
-                                            ->label(__('Examiner / Marker'))
-                                            ->relationship('examiner', 'name')
-                                            ->searchable(),
-                                        Forms\Components\Select::make('moderator_id')
-                                            ->label(__('Moderator'))
-                                            ->relationship('moderator', 'name')
-                                            ->searchable(),
+                                        Forms\Components\Select::make('course_id')
+                                            ->label(__('Restrict to Specific Grade / Form'))
+                                            ->options(Course::all()->pluck('name', 'id'))
+                                            ->searchable()
+                                            ->preload()
+                                            ->placeholder(__('All Form Levels'))
+                                            ->live(),
                                     ])->columns(2),
-
-                                Forms\Components\Section::make('Notifications')
-                                    ->schema([
-                                        Forms\Components\Toggle::make('notify_students')
-                                            ->label(__('Notify Students'))
-                                            ->default(true),
-                                        Forms\Components\Toggle::make('notify_parents')
-                                            ->label(__('Notify Parents'))
-                                            ->default(false),
-                                        Forms\Components\DatePicker::make('notification_date')
-                                            ->label(__('Notification Date'))
-                                            ->default(now()),
-                                    ]),
                             ]),
+                    ])
+                    ->columnSpanFull(),
 
-                        Tab::make('Marking')
-                            ->label(__('4. Mark Entry'))
-                            ->schema([
-                                Forms\Components\Section::make('Marking Status')
-                                    ->schema([
-                                        Forms\Components\TextInput::make('marks_entered')
-                                            ->label(__('Marks Entered'))
-                                            ->disabled(),
-                                        Forms\Components\TextInput::make('total_students')
-                                            ->label(__('Total Students'))
-                                            ->disabled(),
-                                        Forms\Components\TextInput::make('completion_percentage')
-                                            ->label(__('Completion %'))
-                                            ->disabled(),
-                                    ])->columns(3),
-                            ]),
-                    ]),
+                Forms\Components\Hidden::make('created_by_id')
+                    ->default(fn () => Auth::id()),
+                Forms\Components\Hidden::make('school_id')
+                    ->default(fn () => app('current_tenant')->id ?? auth()->user()?->school_id ?? 1),
             ]);
     }
 
@@ -196,25 +144,37 @@ class AssessmentWorkflowResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('id')
+                    ->label(__('ID'))
+                    ->sortable(),
+
                 Tables\Columns\TextColumn::make('name')
+                    ->label(__('Assessment Name'))
                     ->searchable()
                     ->sortable()
-                    ->description(fn ($record) => $record->subject?->name ?? ''),
-                Tables\Columns\TextColumn::make('subject.name')
-                    ->label(__('Subject'))
-                    ->searchable(),
+                    ->description(fn ($record) => $record->subject?->name ?? 'Global (All Subjects)'),
+
+                Tables\Columns\TextColumn::make('max_mark')
+                    ->label(__('Max Mark'))
+                    ->numeric()
+                    ->alignCenter(),
+
+                Tables\Columns\TextColumn::make('weight_percentage')
+                    ->label(__('Weight %'))
+                    ->numeric()
+                    ->badge()
+                    ->color('info')
+                    ->alignCenter(),
+
                 Tables\Columns\TextColumn::make('section.full_name')
                     ->label(__('Class Stream'))
+                    ->default('Global (All Streams)')
                     ->searchable(),
-                Tables\Columns\BadgeColumn::make('type')
-                    ->colors([
-                        'info' => 'exam',
-                        'warning' => 'test',
-                        'success' => 'assignment',
-                        'primary' => 'project',
-                        'gray' => 'practical',
-                        'purple' => 'oral',
-                    ]),
+
+                Tables\Columns\TextColumn::make('term.name')
+                    ->label(__('Term'))
+                    ->default('N/A'),
+
                 Tables\Columns\BadgeColumn::make('status')
                     ->colors([
                         'gray' => 'draft',
@@ -225,16 +185,6 @@ class AssessmentWorkflowResource extends Resource
                         'success' => 'published',
                         'danger' => 'locked',
                     ]),
-                Tables\Columns\TextColumn::make('scheduled_date')
-                    ->label(__('Scheduled'))
-                    ->date()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('marks_entered')
-                    ->label(__('Marked'))
-                    ->state(fn ($record) => $record->marks()->whereNotNull('marks_obtained')->count()),
-                Tables\Columns\TextColumn::make('total_students')
-                    ->label(__('Total'))
-                    ->state(fn ($record) => $record->section?->enrollments()->count() ?? 0),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
@@ -247,9 +197,6 @@ class AssessmentWorkflowResource extends Resource
                         'published' => 'Published',
                         'locked' => 'Locked',
                     ]),
-                Tables\Filters\SelectFilter::make('type'),
-                Tables\Filters\SelectFilter::make('term_id')
-                    ->relationship('term', 'name'),
                 Tables\Filters\SelectFilter::make('subject_id')
                     ->relationship('subject', 'name'),
             ])
@@ -262,11 +209,6 @@ class AssessmentWorkflowResource extends Resource
                     ->url(fn ($record) => route('filament.app.resources.assessment-marks.index', [
                         'tableFilters[assessment_type_id][value]' => $record->id,
                     ])),
-                Tables\Actions\Action::make('moderate')
-                    ->label(__('Moderate'))
-                    ->icon('heroicon-o-eye')
-                    ->color('warning')
-                    ->visible(fn ($record) => in_array($record->status, ['marking', 'review'])),
                 Tables\Actions\Action::make('publish')
                     ->label(__('Publish'))
                     ->icon('heroicon-o-check-circle')
@@ -281,18 +223,6 @@ class AssessmentWorkflowResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\BulkAction::make('bulkSchedule')
-                        ->label(__('Schedule Selected'))
-                        ->icon('heroicon-o-calendar')
-                        ->form([
-                            Forms\Components\DatePicker::make('scheduled_date')->required(),
-                        ])
-                        ->action(function ($records, $data) {
-                            $records->each->update([
-                                'status' => 'scheduled',
-                                'scheduled_date' => $data['scheduled_date'],
-                            ]);
-                        }),
                     Tables\Actions\BulkAction::make('bulkOpen')
                         ->label(__('Open for Marking'))
                         ->icon('heroicon-o-lock-open')
@@ -305,7 +235,7 @@ class AssessmentWorkflowResource extends Resource
                         ->action(fn ($records) => $records->each->update(['status' => 'published'])),
                 ]),
             ])
-            ->defaultSort('scheduled_date', 'desc');
+            ->defaultSort('id', 'desc');
     }
 
     public static function getRelations(): array

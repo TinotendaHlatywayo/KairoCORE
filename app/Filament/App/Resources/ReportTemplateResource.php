@@ -30,27 +30,21 @@ class ReportTemplateResource extends Resource
 
     public static function canAccess(): bool
     {
-        // Check if the academics module is visible
         if (! ModuleVisibilityManager::isVisible('academics')) {
             return false;
         }
 
-        // Try to check permissions, but fail gracefully if the method doesn't exist
         try {
             if (class_exists('\Modules\Admin\Services\PermissionRegistry')) {
                 $permissionRegistry = app(PermissionRegistry::class);
-
-                // Try to call the method if it exists
                 if (method_exists($permissionRegistry, 'checkAcademicPermission')) {
                     return $permissionRegistry->checkAcademicPermission('academic_ops.manage_reports');
                 }
             }
         } catch (\Exception $e) {
-            // Log the error but allow access for now
             \Log::warning('Permission check failed in ReportTemplateResource: '.$e->getMessage());
         }
 
-        // Default: allow access if module is visible
         return true;
     }
 
@@ -75,7 +69,7 @@ class ReportTemplateResource extends Resource
                         Forms\Components\Group::make([
                             Forms\Components\Tabs::make(__('Report Template Designer'))
                                 ->tabs([
-                                    // TAB 1: BRACKET MAPPING, THEMES & TARGET SCOPING
+                                    // TAB 1: SCOPES & THEME
                                     Forms\Components\Tabs\Tab::make(__('1. Scopes & Theme'))
                                         ->icon('heroicon-o-tag')
                                         ->schema([
@@ -171,20 +165,55 @@ class ReportTemplateResource extends Resource
                                                         ->live(),
                                                 ])->columns(3),
 
-                                            Forms\Components\Fieldset::make(__('Branding Visibilities'))
-                                                ->schema([
-                                                    Forms\Components\Toggle::make('layout_config.show_school_logo')->label(__('Display School Logo'))->default(true)->live(),
-                                                    Forms\Components\Toggle::make('layout_config.show_school_motto')->label(__('Display School Motto'))->default(true)->live(),
-                                                    Forms\Components\Toggle::make('layout_config.show_phone')->label(__('Display Contact Phone'))->default(true)->live(),
-                                                    Forms\Components\Toggle::make('layout_config.show_email')->label(__('Display Contact Email'))->default(true)->live(),
-                                                    Forms\Components\Toggle::make('layout_config.show_address')->label(__('Display Physical Address'))->default(true)->live(),
-                                                ])->columns(5),
+                                             Forms\Components\Fieldset::make(__('Branding Visibilities'))
+                                                 ->schema([
+                                                     Forms\Components\Toggle::make('layout_config.show_school_logo')->label(__('Display School Logo'))->default(true)->live(),
+                                                     Forms\Components\Toggle::make('layout_config.show_school_motto')->label(__('Display School Motto'))->default(true)->live(),
+                                                     Forms\Components\Toggle::make('layout_config.show_phone')->label(__('Display Contact Phone'))->default(true)->live(),
+                                                     Forms\Components\Toggle::make('layout_config.show_email')->label(__('Display Contact Email'))->default(true)->live(),
+                                                     Forms\Components\Toggle::make('layout_config.show_address')->label(__('Display Physical Address'))->default(true)->live(),
+                                                 ])->columns(5),
+
+                                             Forms\Components\Fieldset::make(__('Logo Size Configuration'))
+                                                 ->schema([
+                                                     Forms\Components\TextInput::make('layout_config.logo_width')
+                                                         ->label(__('School Logo Width (px)'))
+                                                         ->numeric()
+                                                         ->default(55)
+                                                         ->live(),
+                                                 ])->columns(1),
                                         ]),
 
-                                    // TAB 3: SPACING & BOARD SPACES
-                                    Forms\Components\Tabs\Tab::make(__('3. Margins & Padding'))
+                                    // TAB 3: LAYOUT, ORIENTATION & SPACING
+                                    Forms\Components\Tabs\Tab::make(__('3. Layout & Density'))
                                         ->icon('heroicon-o-arrows-pointing-out')
                                         ->schema([
+                                             Forms\Components\Select::make('layout_config.page_orientation')
+                                                 ->label(__('Page Orientation'))
+                                                 ->options([
+                                                     'portrait' => __('Portrait'),
+                                                     'landscape' => __('Landscape'),
+                                                 ])
+                                                 ->default('landscape')
+                                                 ->required()
+                                                 ->live()
+                                                 ->helperText(__('Landscape is recommended when many assessment columns are selected.')),
+
+                                            Forms\Components\TextInput::make('layout_config.line_spacing')
+                                                ->label(__('Line Spacing / Row Height (multiplier)'))
+                                                ->numeric()
+                                                ->step(0.1)
+                                                ->default(1.2)
+                                                ->live()
+                                                ->required(),
+
+                                            Forms\Components\TextInput::make('layout_config.table_padding')
+                                                ->label(__('Table Cell Padding (px)'))
+                                                ->numeric()
+                                                ->default(5)
+                                                ->live()
+                                                ->required(),
+
                                             Forms\Components\TextInput::make('layout_config.page_margin_v')
                                                 ->label(__('Page Vertical Margin (mm)'))
                                                 ->numeric()
@@ -196,13 +225,6 @@ class ReportTemplateResource extends Resource
                                                 ->label(__('Page Horizontal Margin (mm)'))
                                                 ->numeric()
                                                 ->default(15)
-                                                ->live()
-                                                ->required(),
-
-                                            Forms\Components\TextInput::make('layout_config.table_padding')
-                                                ->label(__('Table Cell Padding (px)'))
-                                                ->numeric()
-                                                ->default(5)
                                                 ->live()
                                                 ->required(),
 
@@ -220,91 +242,126 @@ class ReportTemplateResource extends Resource
                                                 ->required(),
                                         ])->columns(3),
 
-                                    // TAB 4: ACADEMIC TABLE COLUMNS CUSTOMIZER
+                                    // TAB 4: ACADEMIC COLUMNS & WEIGHTING
                                     Forms\Components\Tabs\Tab::make(__('4. Academic Columns'))
                                         ->icon('heroicon-o-table-cells')
                                         ->schema([
-                                            Forms\Components\Fieldset::make(__('Select Columns to Display'))
-                                                ->schema([
-                                                    Forms\Components\CheckboxList::make('layout_config.included_assessments')
-                                                        ->label(__('Select Included Tests/Assessments'))
-                                                        ->options(fn () => AssessmentType::where('school_id', app('current_tenant')->id)
-                                                            ->pluck('name', 'id')
-                                                            ->toArray()
-                                                        )
-                                                        ->columns(2)
-                                                        ->live()
-                                                        ->default(function () {
-                                                            return AssessmentType::where('school_id', app('current_tenant')->id)
-                                                                ->pluck('id')
-                                                                ->toArray();
-                                                        }),
+                                             Forms\Components\Fieldset::make(__('Select Assessments to Include as Columns'))
+                                                 ->schema([
+                                                     Forms\Components\CheckboxList::make('layout_config.included_assessments')
+                                                         ->label(__('Select Specific Tests / Assessments (e.g. Test 1, Test 2, Test 3, Exercise 1, Exam)'))
+                                                         ->options(fn (): array => self::numberedAssessmentOptions())
+                                                         ->columns(2)
+                                                         ->live()
+                                                         ->default(function (): array {
+                                                             return array_slice(
+                                                                 array_keys(self::numberedAssessmentOptions()),
+                                                                 0,
+                                                                 3
+                                                             );
+                                                         }),
+                                                 ])->columns(1),
 
-                                                    Forms\Components\Toggle::make('layout_config.show_class_average')
-                                                        ->label(__('Include Class Average Column'))
-                                                        ->default(true)
-                                                        ->live(),
+Forms\Components\Fieldset::make(__('Select Table Summary & Metric Columns'))
+                                                  ->schema([
+                                                      Forms\Components\Toggle::make('layout_config.show_overall_subject_mark')
+                                                          ->label(__('Show Overall Subject Mark Column'))
+                                                          ->helperText(__('Weighted from each assessment\'s contribution (Weighted %).'))
+                                                          ->default(true)
+                                                          ->live(),
 
-                                                    Forms\Components\Toggle::make('layout_config.show_stream_average')
-                                                        ->label(__('Include Stream / Level Average Column'))
-                                                        ->default(true)
-                                                        ->live(),
-                                                ])->columns(1),
+                                                     Forms\Components\Toggle::make('layout_config.show_grade')
+                                                         ->label(__('Show Subject Letter Grade Column'))
+                                                         ->default(true)
+                                                         ->live(),
+
+                                                     Forms\Components\Toggle::make('layout_config.show_class_average')
+                                                         ->label(__('Show Class Average Column'))
+                                                         ->default(true)
+                                                         ->live(),
+
+                                                     Forms\Components\Toggle::make('layout_config.show_stream_average')
+                                                         ->label(__('Show Stream Average Column'))
+                                                         ->default(true)
+                                                         ->live(),
+
+                                                      Forms\Components\Toggle::make('layout_config.show_subject_position')
+                                                          ->label(__('Show Subject Position / Rank Column'))
+                                                          ->default(true)
+                                                          ->live(),
+                                                 ])->columns(2),
                                         ]),
 
-                                    // TAB 5: VISIBILITY CONTROLS, RANKINGS & DYNAMIC SELECTIONS
-                                    Forms\Components\Tabs\Tab::make(__('5. Section Visibilities'))
-                                        ->icon('heroicon-o-eye')
+                                    // TAB 5: POSITIONS & FEATURES
+                                    Forms\Components\Tabs\Tab::make(__('5. Positions & Features'))
+                                        ->icon('heroicon-o-academic-cap')
                                         ->schema([
-                                            Forms\Components\Fieldset::make(__('Information Modules & Rankings'))
-                                                ->schema([
-                                                    Forms\Components\Toggle::make('layout_config.show_student_photo')->label(__('Display Student Photo'))->default(true)->live(),
-                                                    Forms\Components\Toggle::make('layout_config.show_class_position')->label(__('Display Class Position / Rank'))->default(true)->live(),
-                                                    Forms\Components\Toggle::make('layout_config.show_stream_position')->label(__('Display Overall Stream / Level Rank'))->default(true)->live(),
-                                                    Forms\Components\Toggle::make('layout_config.show_subject_position')->label(__('Display Subject Positions'))->default(true)->live(),
-                                                    Forms\Components\Toggle::make('layout_config.show_outstanding_achievements')->label(__('Display Outstanding Achievements Section'))->default(true)->live(),
-                                                    Forms\Components\Toggle::make('layout_config.show_next_term_fees')->label(__('Display Next Term Fees / Schedule Box'))->default(true)->live(),
-                                                    Forms\Components\Toggle::make('layout_config.show_ubuntu_competencies')->label(__('Display Unhu/Ubuntu Skills Table'))->default(true)->live(),
-                                                    Forms\Components\Toggle::make('layout_config.show_ubuntu_percentage')->label(__('Display Unhu Grade as a Percentage'))->default(true)->live(),
-                                                    Forms\Components\Toggle::make('layout_config.show_grading_keys')->label(__('Display Grading Scales Key in Footer'))->default(true)->live(),
-                                                ])->columns(3),
+                                             Forms\Components\Fieldset::make(__('Subject Position Calculation Scope'))
+                                                 ->schema([
+                                                     Forms\Components\Select::make('layout_config.ranking_scope')
+                                                         ->label(__('Subject Position Calculation Scope'))
+                                                         ->options([
+                                                             'class' => __('Per Class (Position: 2 of 25)'),
+                                                             'stream' => __('Per Stream (Stream Position: 4 of 60)'),
+                                                             'both' => __('Show Both (Class & Stream)'),
+                                                         ])
+                                                         ->default('class')
+                                                         ->required()
+                                                         ->live(),
 
-                                            Forms\Components\Fieldset::make(__('Select Unhu/Ubuntu Traits to Display'))
-                                                ->visible(fn (Forms\Get $get) => $get('layout_config.show_ubuntu_competencies'))
-                                                ->schema([
-                                                    Forms\Components\CheckboxList::make('layout_config.displayed_ubuntu_traits')
-                                                        ->label(__('Select Core Traits'))
-                                                        ->options([
-                                                            'respect' => __('Respect'),
-                                                            'honesty' => __('Honesty'),
-                                                            'responsibility' => __('Responsibility'),
-                                                            'discipline' => __('Discipline'),
-                                                            'patriotism' => __('Patriotism'),
-                                                            'cooperation' => __('Cooperation'),
-                                                            'leadership' => __('Leadership'),
-                                                            'critical_thinking' => __('Critical Thinking'),
-                                                            'creativity' => __('Creativity'),
-                                                            'environment' => __('Environment'),
-                                                            'communication' => __('Communication'),
-                                                            'digital_literacy' => __('Digital Literacy'),
-                                                            'entrepreneurship' => __('Entrepreneurship'),
-                                                            'cultural_appreciation' => __('Cultural Appreciation'),
-                                                            'community_service' => __('Community Service'),
-                                                            'perseverance' => __('Perseverance'),
-                                                            'compassion' => __('Compassion'),
-                                                            'time_management' => __('Time Management'),
-                                                            'self_confidence' => __('Self Confidence'),
-                                                            'adaptability' => __('Adaptability'),
-                                                        ])
-                                                        ->default(['respect', 'honesty', 'responsibility', 'discipline', 'cooperation'])
-                                                        ->columns(3)
-                                                        ->live()
-                                                        ->required(fn (Forms\Get $get) => $get('layout_config.show_ubuntu_competencies')),
-                                                ])->columns(1),
+                                                     Forms\Components\Toggle::make('layout_config.show_class_position')
+                                                         ->label(__('Display Class Position (e.g. Position: 2 of 25)'))
+                                                         ->default(true)
+                                                         ->live(),
+
+                                                     Forms\Components\Toggle::make('layout_config.show_stream_position')
+                                                         ->label(__('Display Stream Position (e.g. Stream Position: 4 of 60)'))
+                                                         ->default(true)
+                                                         ->live(),
+                                                 ])->columns(1),
+
+Forms\Components\Fieldset::make(__('Information Modules & Features'))
+                                                  ->schema([
+                                                      Forms\Components\Toggle::make('layout_config.show_student_photo')->label(__('Display Student Photo'))->default(true)->live(),
+                                                      Forms\Components\Toggle::make('layout_config.show_outstanding_achievements')->label(__('Display Outstanding Achievements Section'))->default(true)->live(),
+                                                      Forms\Components\Toggle::make('layout_config.show_next_term_fees')->label(__('Display Next Term Fees / Schedule Box'))->default(true)->live(),
+                                                      Forms\Components\Toggle::make('layout_config.show_ubuntu_competencies')->label(__('Display Unhu/Ubuntu Skills Table'))->default(true)->live(),
+                                                      Forms\Components\Toggle::make('layout_config.show_ubuntu_percentage')->label(__('Display Unhu Grade as a Percentage'))->default(true)->live(),
+                                                      Forms\Components\Toggle::make('layout_config.show_grading_keys')->label(__('Display Grading Scales Key in Footer'))->default(true)->live(),
+                                                  ])->columns(3),
+
+                                              Forms\Components\Fieldset::make(__('Report Sign-off & Validation'))
+                                                  ->schema([
+                                                      Forms\Components\Toggle::make('layout_config.show_qr_verification')
+                                                          ->label(__('Display QR Verification Code'))
+                                                          ->helperText(__('Scannable QR code that parents can use to verify the report is genuine.'))
+                                                          ->default(true)
+                                                          ->live(),
+                                                      Forms\Components\Toggle::make('layout_config.show_class_teacher_remarks')
+                                                          ->label(__('Display Class Teacher Remarks (per learner)'))
+                                                          ->default(true)
+                                                          ->live(),
+                                                      Forms\Components\Toggle::make('layout_config.show_class_teacher_signature')
+                                                          ->label(__('Display Class Teacher Signature Line'))
+                                                          ->default(true)
+                                                          ->live(),
+                                                      Forms\Components\Toggle::make('layout_config.show_principal_remarks')
+                                                          ->label(__('Display Principal\'s Remarks'))
+                                                          ->default(true)
+                                                          ->live(),
+                                                      Forms\Components\Toggle::make('layout_config.show_headmaster_stamp')
+                                                          ->label(__('Display Headmaster / Principal Stamp'))
+                                                          ->default(true)
+                                                          ->live(),
+                                                      Forms\Components\Toggle::make('layout_config.show_subject_teacher_remarks')
+                                                          ->label(__('Show Subject Teacher Remarks Column (per student)'))
+                                                          ->default(false)
+                                                          ->live(),
+                                                  ])->columns(2),
                                         ]),
 
-                                    // TAB 6: CUSTOM ANNOUNCEMENTS, FEES & SCHEDULES
-                                    Forms\Components\Tabs\Tab::make(__('6. Schedule & Fees Settings'))
+                                    // TAB 6: SCHEDULE & FEES SETTINGS
+                                    Forms\Components\Tabs\Tab::make(__('6. Schedule & Fees'))
                                         ->icon('heroicon-o-banknotes')
                                         ->schema([
                                             Forms\Components\DatePicker::make('layout_config.next_term_begins')
@@ -384,21 +441,15 @@ class ReportTemplateResource extends Resource
         ];
     }
 
-    /**
-     * Helper to render highly precise live visual A4 report card previews within the Filament Form
-     */
     protected static function generateLivePreviewHtml(Forms\Get $get): string
     {
-        // Get the actual school details from the database
         $school = null;
         try {
             $school = School::find(app('current_tenant')->id);
         } catch (\Exception $e) {
-            // Fallback if tenant is not available
             try {
                 $school = School::first();
             } catch (\Exception $e2) {
-                // If all else fails, use defaults
             }
         }
 
@@ -408,26 +459,42 @@ class ReportTemplateResource extends Resource
         $schoolEmail = $school && $school->email_address ? $school->email_address : 'info@school.com';
         $schoolAddress = $school && $school->physical_address ? $school->physical_address : 'P.O BOX 001 KLA';
 
+        $logoBase64 = '';
+        $schoolId = $school ? $school->id : null;
+        if ($schoolId && file_exists(public_path($schoolId.'_logo.png'))) {
+            $logoBase64 = 'data:image/png;base64,'.base64_encode(file_get_contents(public_path($schoolId.'_logo.png')));
+        } elseif ($school && !empty($school->logo_path) && file_exists(public_path($school->logo_path))) {
+            $logoBase64 = 'data:image/'.pathinfo($school->logo_path, PATHINFO_EXTENSION).';base64,'.base64_encode(file_get_contents(public_path($school->logo_path)));
+        } elseif (file_exists(public_path('images/school_logo.png'))) {
+            $logoBase64 = 'data:image/png;base64,'.base64_encode(file_get_contents(public_path('images/school_logo.png')));
+        } else {
+            $defaultLogo = public_path('images/id-card-default-logo.png');
+            if (file_exists($defaultLogo)) {
+                $logoBase64 = 'data:image/png;base64,'.base64_encode(file_get_contents($defaultLogo));
+            }
+        }
+
         $theme = $get('design_theme') ?? 'classic_line';
+        $orientation = $get('layout_config.page_orientation') ?? 'landscape';
         $fontFamily = $get('layout_config.font_family') ?? 'sans-serif';
         $bodyTextColor = $get('layout_config.body_text_color') ?? '#1e293b';
         $headerColor = $get('layout_config.header_color') ?? '#1e3a8a';
         $headerSize = $get('layout_config.header_font_size') ?? 20;
         $tableHeaderBg = $get('layout_config.table_header_bg') ?? '#f1f5f9';
+        $lineSpacing = $get('layout_config.line_spacing') ?? 1.2;
+        $logoWidth = $get('layout_config.logo_width') ?? 55;
+        $previewLogoWidth = min(round($logoWidth * 0.6), 48);
 
-        // Minimalist Compact is strictly black & white, so force all accents to grayscale
         $accentColor = ($theme === 'minimal_compact') ? '#111827' : $headerColor;
         $successColor = ($theme === 'minimal_compact') ? '#111827' : '#16a34a';
         $dangerColor = ($theme === 'minimal_compact') ? '#111827' : '#b91c1c';
 
-        // Margins & Paddings
         $marginV = $get('layout_config.page_margin_v') ?? 12;
         $marginH = $get('layout_config.page_margin_h') ?? 15;
         $padding = $get('layout_config.table_padding') ?? 5;
         $borderW = $get('layout_config.page_border_width') ?? 0;
         $borderC = $get('layout_config.page_border_color') ?? '#fbbf24';
 
-        // Visibilities & Custom settings
         $showSchoolLogo = $get('layout_config.show_school_logo') ?? true;
         $showSchoolMotto = $get('layout_config.show_school_motto') ?? true;
         $showPhone = $get('layout_config.show_phone') ?? true;
@@ -439,43 +506,78 @@ class ReportTemplateResource extends Resource
         $showUbuntuPercentage = $get('layout_config.show_ubuntu_percentage') ?? true;
         $displayedTraits = $get('layout_config.displayed_ubuntu_traits') ?? ['respect', 'honesty', 'responsibility'];
 
-        $showClassRank = $get('layout_config.show_class_position') ?? true;
-        $showStreamRank = $get('layout_config.show_stream_position') ?? true;
+        $showClassPos = $get('layout_config.show_class_position') ?? true;
+        $showStreamPos = $get('layout_config.show_stream_position') ?? true;
         $showSubjectRank = $get('layout_config.show_subject_position') ?? true;
         $showOutstandingAchievements = $get('layout_config.show_outstanding_achievements') ?? true;
+        $showGradingKeys = $get('layout_config.show_grading_keys') ?? true;
+
+        $showQrVerification = $get('layout_config.show_qr_verification') ?? true;
+        $showClassRemarks = $get('layout_config.show_class_teacher_remarks') ?? true;
+        $showClassSignature = $get('layout_config.show_class_teacher_signature') ?? true;
+        $showPrincipalRemarks = $get('layout_config.show_principal_remarks') ?? true;
+        $showHeadmasterStamp = $get('layout_config.show_headmaster_stamp') ?? true;
+        $showSubjectRemarks = $get('layout_config.show_subject_teacher_remarks') ?? false;
+        $showGradeColumn = $get('layout_config.show_grade') ?? true;
 
         $includedAssessments = $get('layout_config.included_assessments') ?? [];
         $showClassAverage = $get('layout_config.show_class_average') ?? true;
         $showStreamAverage = $get('layout_config.show_stream_average') ?? true;
+        $showOverallMark = $get('layout_config.show_overall_subject_mark') ?? true;
 
-        // Custom announcements & schedule text
         $nextTermBegins = $get('layout_config.next_term_begins') ? date('d-M-Y', strtotime($get('layout_config.next_term_begins'))) : date('d-M-Y', strtotime('+1 month'));
         $nextTermEnds = $get('layout_config.next_term_ends') ? date('d-M-Y', strtotime($get('layout_config.next_term_ends'))) : date('d-M-Y', strtotime('+4 months'));
         $nextTermFees = $get('layout_config.next_term_fees') ?? '$800.00 USD';
-        $requirements = $get('layout_config.requirements') ?? '1 Ream of Paper, 4 Rolls of Toilet Paper';
         $announcements = $get('layout_config.special_announcements') ?? '';
 
-        // Render dynamic table header columns based on column switches
-        $tableHeadersHtml = '<th style="text-align: left; width: 30%;">Subject</th>';
-
+        $tableHeadersHtml = '<th style="width: 9%;">Code</th><th style="text-align: left; width: 26%;">Subject</th>';
         foreach ($includedAssessments as $assessmentId) {
             $assessmentType = AssessmentType::find($assessmentId);
             $testLabel = $assessmentType ? $assessmentType->name : 'Test';
-            $tableHeadersHtml .= "<th style='width: 10%;'>{$testLabel}</th>";
+            $tableHeadersHtml .= "<th style='width: 9%;'>{$testLabel}</th>";
         }
-
+        if ($showOverallMark) {
+            $tableHeadersHtml .= '<th style="width: 10%;">Overall</th>';
+        }
+        if ($showGradeColumn) {
+            $tableHeadersHtml .= '<th style="width: 7%;">Grade</th>';
+        }
         if ($showClassAverage) {
-            $tableHeadersHtml .= '<th style="width: 12%;">Class Avg</th>';
+            $tableHeadersHtml .= '<th style="width: 10%;">Class Avg</th>';
         }
         if ($showStreamAverage) {
-            $tableHeadersHtml .= '<th style="width: 12%;">Strm Avg</th>';
+            $tableHeadersHtml .= '<th style="width: 10%;">Stream Avg</th>';
         }
         if ($showSubjectRank) {
-            $tableHeadersHtml .= '<th style="width: 10%;">Rank</th>';
+            $tableHeadersHtml .= '<th style="width: 7%;">Rank</th>';
         }
-        $tableHeadersHtml .= '<th style="width: 10%;">Grade</th>';
+        if ($showSubjectRemarks) {
+            $tableHeadersHtml .= '<th style="width: 15%;">Subject Remark</th>';
+        }
 
-        // Render dynamic Unhu rows
+        $tableCellsHtml = "<td style='font-family: monospace; font-weight: bold;'>MATH</td><td style='text-align: left; font-weight: bold;'>Mathematics</td>";
+        foreach ($includedAssessments as $assessmentId) {
+            $tableCellsHtml .= "<td>82%</td>";
+        }
+        if ($showOverallMark) {
+            $tableCellsHtml .= "<td style='font-weight: bold; color: {$accentColor};'>81%</td>";
+        }
+        if ($showGradeColumn) {
+            $tableCellsHtml .= "<td style='font-weight: bold;'>A</td>";
+        }
+        if ($showClassAverage) {
+            $tableCellsHtml .= "<td style='color: #64748b;'>72.4%</td>";
+        }
+        if ($showStreamAverage) {
+            $tableCellsHtml .= "<td style='color: #64748b;'>75.0%</td>";
+        }
+        if ($showSubjectRank) {
+            $tableCellsHtml .= "<td>1st</td>";
+        }
+        if ($showSubjectRemarks) {
+            $tableCellsHtml .= "<td style='text-align: left; font-style: italic;'>Consistent effort and great progress.</td>";
+        }
+
         $unhuRowsHtml = '';
         if ($showUbuntuCompetencies) {
             $traitsFormatted = array_map(fn ($t) => ucfirst(str_replace('_', ' ', $t)), $displayedTraits);
@@ -488,6 +590,8 @@ class ReportTemplateResource extends Resource
                 ";
             }
         }
+
+        $canvasWidth = ($orientation === 'landscape') ? '400px' : '320px';
 
         return "
             <style>
@@ -502,17 +606,15 @@ class ReportTemplateResource extends Resource
                 .preview-sheet-canvas {
                     position: relative;
                     background-color: #ffffff;
-                    width: 320px;
+                    width: {$canvasWidth};
                     min-height: 450px;
                     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
                     box-sizing: border-box;
-                    line-height: 1.2;
+                    line-height: {$lineSpacing};
                 }
-                .ps-element { font-size: 7px; margin-bottom: 4px; }
                 .ps-school-name { font-weight: bold; text-transform: uppercase; margin: 0; }
                 .ps-school-motto { font-size: 5px; font-style: italic; margin-top: 1px; text-transform: uppercase; }
 
-                /* THEME SIMULATORS */
                 .pt-classic_line .school-hdr { border-bottom: 2px double {$headerColor}; padding-bottom: 4px; text-align: center; }
                 .pt-classic_line th { background-color: {$tableHeaderBg}; color: {$headerColor}; border: 0.5px solid {$headerColor}; }
                 .pt-classic_line td { border: 0.5px solid #cbd5e1; }
@@ -556,24 +658,28 @@ class ReportTemplateResource extends Resource
                             padding: calc({$marginV}px * 0.7) calc({$marginH}px * 0.7) !important;
                             border: {$borderW}px solid {$borderC};'>
                     
-                    <!-- Branded Header -->
+                    <!-- Branded Header (Actual School Logo, No Emojis) -->
                     <div class='school-hdr'>
-                        <div style='display: flex; align-items: center; justify-content: center;'>
-                            ".($showSchoolLogo ? "<div style='font-size: 14px; margin-right: 4px;'>🏫</div>" : '')."
-                            <div class='ps-school-name' style='font-size: calc({$headerSize}px * 0.6); color: {$accentColor};'>{$schoolName}</div>
-                        </div>
-                        ".($showSchoolMotto ? "<div class='ps-school-motto'>\"{$schoolMotto}\"</div>" : '')."
-                        <div style='font-size: 5px; color: #64748b; margin-top: 1px;'>
-                            ".($showAddress ? "Address: {$schoolAddress}" : '').'
-                            '.($showPhone ? " | Tel: {$schoolPhone}" : '').'
-                            '.($showEmail ? " | Email: {$schoolEmail}" : '')."
-                        </div>
+                        <table style='width: 100%; border: none; margin-bottom: 0;'>
+                            <tr style='border: none;'>
+                                " . ($showSchoolLogo && !empty($logoBase64) ? "<td style='width: 30px; text-align: left; border: none; padding: 0;'><img src='{$logoBase64}' style='width: {$previewLogoWidth}px; height: auto; object-fit: contain;' /></td>" : "") . "
+                                <td style='text-align: center; border: none; padding: 0;'>
+                                    <div class='ps-school-name' style='font-size: calc({$headerSize}px * 0.6); color: {$accentColor};'>{$schoolName}</div>
+                                    " . ($showSchoolMotto ? "<div class='ps-school-motto'>\"{$schoolMotto}\"</div>" : "") . "
+                                    <div style='font-size: 5px; color: #64748b; margin-top: 1px;'>
+                                        " . ($showAddress ? "Address: {$schoolAddress}" : "") . "
+                                        " . ($showPhone ? " | Tel: {$schoolPhone}" : "") . "
+                                        " . ($showEmail ? " | Email: {$schoolEmail}" : "") . "
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
                     </div>
 
                     <!-- Metadata Grid -->
                     <table class='ps-meta-table' style='margin-top: 6px;'>
                         <tr>
-                            ".($showStudentPhoto ? "<td rowspan='3' style='width: 35px; text-align: center;'><div style='width: 25px; height: 25px; background: #e2e8f0; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 4px; color: #94a3b8;'>Photo</div></td>" : '')."
+                            " . ($showStudentPhoto ? "<td rowspan='3' style='width: 35px; text-align: center;'><div style='width: 25px; height: 25px; background: #e2e8f0; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 4px; color: #94a3b8;'>Photo</div></td>" : "") . "
                             <td style='font-weight: bold; background: #f8fafc; width: 25%;'>Student Name:</td>
                             <td>Sophia Mercer</td>
                             <td style='font-weight: bold; background: #f8fafc; width: 25%;'>Admission No:</td>
@@ -586,14 +692,11 @@ class ReportTemplateResource extends Resource
                             <td>Term 1 (2025)</td>
                         </tr>
                         <tr>
-                            <td style='font-weight: bold; background: #f8fafc;'>
-                                ".($showClassRank ? 'Class Rank' : ($showStreamRank ? 'Stream Rank' : 'HBC Score'))."
+                            <td style='font-weight: bold; background: #f8fafc;'>Rankings & Standing:</td>
+                            <td style='font-weight: bold; color: {$accentColor};' colspan='3'>
+                                " . ($showClassPos ? "Position: 2 of 25" : "") . "
+                                " . ($showStreamPos ? " | Stream Position: 4 of 60" : "") . "
                             </td>
-                            <td style='font-weight: bold; color: {$accentColor};'>
-                                ".($showClassRank ? '2nd of 25' : ($showStreamRank ? '4th of 120' : '9.20 / 10.00'))."
-                            </td>
-                            <td style='font-weight: bold; background: #f8fafc;'>Student ID:</td>
-                            <td>VHS-1741271</td>
                         </tr>
                     </table>
 
@@ -606,34 +709,23 @@ class ReportTemplateResource extends Resource
                         </thead>
                         <tbody>
                             <tr>
-                                <td style='text-align: left; font-weight: bold;'>Mathematics</td>
-                                ".(in_array('bot', $includedAssessments) ? '<td>85%</td>' : '').'
-                                '.(in_array('mot', $includedAssessments) ? '<td>78%</td>' : '').'
-                                '.(in_array('eot', $includedAssessments) ? '<td>82%</td>' : '').'
-                                '.(in_array('c1', $includedAssessments) ? '<td>18/20</td>' : '').'
-                                '.(in_array('c2', $includedAssessments) ? '<td>17/20</td>' : '').'
-                                '.(in_array('c3', $includedAssessments) ? '<td>19/20</td>' : '').'
-                                '.(in_array('exam', $includedAssessments) ? '<td>80%</td>' : '').'
-                                '.($showClassAverage ? "<td style='color: #64748b;'>72.4%</td>" : '').'
-                                '.($showStreamAverage ? "<td style='color: #64748b;'>70.1%</td>" : '').'
-                                '.($showSubjectRank ? '<td>1st</td>' : '')."
-                                <td style='font-weight: bold;'>A</td>
+                                {$tableCellsHtml}
                             </tr>
                         </tbody>
                     </table>
 
                     <!-- Outstanding Achievements Section -->
-                    ".($showOutstandingAchievements ? "
+                    " . ($showOutstandingAchievements ? "
                     <div style='font-weight: bold; font-size: 6.5px; margin-bottom: 2px; text-transform: uppercase; color: {$accentColor};'>Outstanding Achievements</div>
                     <div class='ps-remarks-container' style='font-style: italic; font-size: 5.5px; line-height: 1.3; color: {$successColor};'>
                         ★ First Place in National Mathematics Olympiad (Senior Category)<br>
                         ★ Captain of the School Debating Society (Outstanding Leadership)
-                    </div>" : '').'
+                    </div>" : "") . "
 
                     <!-- Competencies Mock -->
-                    '.($showUbuntuCompetencies ? "
+                    " . ($showUbuntuCompetencies ? "
                     <div style='font-weight: bold; font-size: 6px; margin-bottom: 2px; text-transform: uppercase; color: {$accentColor};'>Unhu / Ubuntu Competencies</div>
-                    ".($showUbuntuPercentage ? "<div style='font-weight: bold; font-size: 5px; margin-bottom: 2px; color: {$accentColor};'>Overall Ubuntu Rating: 86.4%</div>" : '')."
+                    " . ($showUbuntuPercentage ? "<div style='font-weight: bold; font-size: 5px; margin-bottom: 2px; color: {$accentColor};'>Overall Ubuntu Rating: 86.4%</div>" : "") . "
                     <table class='ps-table'>
                         <thead>
                             <tr>
@@ -644,16 +736,23 @@ class ReportTemplateResource extends Resource
                         <tbody>
                             {$unhuRowsHtml}
                         </tbody>
-                    </table>" : '')."
+                    </table>" : "") . "
 
                     <!-- Teacher Comments -->
+                    " . ($showClassRemarks ? "
                     <div class='ps-remarks-container'>
                         <div class='ps-remarks-title'>Class Teacher's Remark:</div>
                         <div class='ps-manual-line'>\"A very hardworking and consistent student.\"</div>
-                    </div>
+                    </div>" : "") . "
+
+                    " . ($showPrincipalRemarks ? "
+                    <div class='ps-remarks-container'>
+                        <div class='ps-remarks-title'>Principal's Remark:</div>
+                        <div class='ps-manual-line'>\"Excellent results. Keep up the high standard.\"</div>
+                    </div>" : "") . "
 
                     <!-- Next Term Fees Box -->
-                    ".($showNextTermFees ? "
+                    " . ($showNextTermFees ? "
                     <table class='ps-meta-table'>
                         <tr>
                             <td style='width: 50%; line-height: 1.3;'>
@@ -666,14 +765,40 @@ class ReportTemplateResource extends Resource
                                 Base Tuition: {$nextTermFees}
                             </td>
                         </tr>
-                        ".(! empty($announcements) ? "
+                        " . (!empty($announcements) ? "
                         <tr>
                             <td colspan='2' style='line-height: 1.3; color: {$dangerColor};'>
                                 <strong>Special Announcements:</strong><br>
                                 {$announcements}
                             </td>
-                        </tr>" : '').'
-                    </table>' : '')."
+                        </tr>" : "") . "
+                    </table>" : "") . "
+
+                    <!-- Grading Scales Key in Footer -->
+                    " . ($showGradingKeys ? self::gradingKeyFooterHtml($school, $theme) : "") . "
+
+                    <!-- Signatures & QR Verification -->
+                    <div style='margin-top: 8px;'>
+                        <table style='width: 100%; border: none; margin-bottom: 0;'>
+                            <tr style='border: none;'>
+                                <td style='width: 62%; border: none; vertical-align: bottom;'>
+                                    <div style='font-size: 5.5px; color: #64748b;'>
+                                        " . ($showClassSignature ? "<div style='display: inline-block; width: 45%; margin-right: 5%; border-top: 0.5px solid #94a3b8; padding-top: 1px; text-align: center; box-sizing: border-box;'>Class Teacher Signature</div>" : "") . "
+                                        " . ($showHeadmasterStamp ? "<div style='display: inline-block; width: 45%; border-top: 0.5px solid #94a3b8; padding-top: 1px; text-align: center; box-sizing: border-box;'>Headmaster / Principal Stamp</div>" : "") . "
+                                    </div>
+                                </td>
+                                <td style='width: 38%; border: none; text-align: right; vertical-align: bottom;'>
+                                    " . ($showQrVerification ? "
+                                    <div style='display: inline-block; text-align: center;'>
+                                        <div style='width: 22px; height: 22px; border: 0.5px solid #cbd5e1; background: #f8fafc; display: flex; align-items: center; justify-content: center;'>
+                                            <span style='font-size: 4.5px; color: #94a3b8; letter-spacing: 1px;'>QR</span>
+                                        </div>
+                                        <div style='font-size: 4px; color: #94a3b8; margin-top: 1px;'>Scan to Verify</div>
+                                    </div>" : "") . "
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
 
                     <!-- Verification Warning -->
                     <div style='text-align: center; font-weight: bold; color: {$dangerColor}; font-size: 5px; margin-top: 4px;'>
@@ -683,5 +808,79 @@ class ReportTemplateResource extends Resource
                 </div>
             </div>
         ";
+    }
+
+    protected static function numberedAssessmentOptions(): array
+    {
+        $tenantId = app('current_tenant')->id ?? null;
+        if (! $tenantId) {
+            return [];
+        }
+        $types = AssessmentType::withoutGlobalScopes()
+            ->where('school_id', $tenantId)
+            ->orderBy('id')
+            ->get();
+
+        $options = [];
+        $seen = [];
+        foreach ($types as $type) {
+            $name = trim($type->name);
+            $key = mb_strtolower($name);
+            if ($key === '' || isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+            $options[$type->id] = $name;
+        }
+
+        if (empty($options)) {
+            $options = [
+                1 => 'Test 1',
+                2 => 'Test 2',
+                3 => 'Exercise 1',
+                4 => 'Exercise 2',
+                5 => 'End of Term Exam',
+            ];
+        }
+
+        return $options;
+    }
+
+    protected static function gradingKeyFooterHtml($school, string $theme): string
+    {
+        $gradingScale = self::resolveDefaultGradingScale($school);
+        if (empty($gradingScale)) {
+            return '';
+        }
+        $isDark = in_array($theme, ['modern_dark', 'dark_minimal']);
+        $bgColor = $isDark ? '#0f172a' : '#f8fafc';
+        $textColor = $isDark ? '#f1f5f9' : '#0f172a';
+        $accentColor = $isDark ? '#38bdf8' : '#2563eb';
+
+        $items = '';
+        foreach ($gradingScale as $grade => $range) {
+            $items .= "<span style='display:inline-block; margin-right:12px; font-size:5px;'><strong style='color:{$accentColor}'>{$grade}</strong> {$range}</span>";
+        }
+
+        return "
+            <div style='margin-top:6px; padding-top:4px; border-top:1px dashed {$accentColor}; font-size:5px; color:{$textColor}; background:{$bgColor};'>
+                <strong style='color:{$accentColor}'>".__('Grading Scale Key').":</strong> {$items}
+            </div>
+        ";
+    }
+
+    protected static function resolveDefaultGradingScale($school): array
+    {
+        if ($school && isset($school->gradingScale) && !empty($school->gradingScale)) {
+            return $school->gradingScale;
+        }
+        return [
+            'A+' => '90-100',
+            'A'  => '80-89',
+            'B'  => '70-79',
+            'C'  => '60-69',
+            'D'  => '50-59',
+            'F'  => '0-49',
+        ];
     }
 }

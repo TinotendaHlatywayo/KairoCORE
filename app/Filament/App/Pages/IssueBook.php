@@ -183,7 +183,7 @@ class IssueBook extends Page
                 ->map(fn ($s) => [
                     'id' => $s->id,
                     'name' => trim($s->first_name.' '.$s->last_name),
-                    'number' => $s->admission_number ?? '',
+                    'number' => $s->student_id_number ?? '',
                 ])
                 ->toArray();
         } else {
@@ -212,7 +212,7 @@ class IssueBook extends Page
 
         $this->selectedStudentId = $studentId;
         $this->selectedUserId = null;
-        $this->recipientSearch = trim($student->first_name.' '.$student->last_name).' ('.($student->admission_number ?? '').')';
+        $this->recipientSearch = trim($student->first_name.' '.$student->last_name).' ('.($student->student_id_number ?? '').')';
         $this->recipientResults = [];
     }
 

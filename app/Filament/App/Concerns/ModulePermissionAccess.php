@@ -10,6 +10,7 @@ use App\Filament\App\Pages\IssueBook;
 use App\Filament\App\Pages\ReportGeneratorPage;
 use App\Filament\App\Pages\ReportingDashboard;
 use App\Filament\App\Pages\TenantDataExportPage;
+use App\Filament\App\Pages\TimetableViewerPage;
 use App\Filament\App\Pages\VisualCmsBuilder;
 use App\Filament\App\Pages\VisualTimetableBuilder;
 use App\Filament\App\Pages\WebsiteContentManager;
@@ -173,6 +174,7 @@ trait ModulePermissionAccess
         WebsiteContentManager::class => ['website', 'website.manage_pages'],
         WebsiteTemplatesHub::class => ['website', 'website.manage_settings'],
         VisualTimetableBuilder::class => ['academics', 'academic_ops.manage_timetable'],
+        TimetableViewerPage::class => ['academics', 'academic_ops.manage_timetable'],
         IssueBook::class => ['library', 'library.view_module'],
     ];
 

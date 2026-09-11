@@ -59,10 +59,11 @@ class RemoveProfilePhotoAction extends Action
             ->modalSubmitActionLabel(__('Remove Photo'))
             ->form([
                 Textarea::make('reason')
-                    ->label(__('Reason (optional)'))
+                    ->label(__('Reason'))
                     ->placeholder(__('e.g. Photo was blurry / not a clear single face / not a passport-style photo'))
                     ->rows(3)
                     ->maxLength(500)
+                    ->required()
                     ->helperText(__('Shown to the user in their portal so they know why their photo was removed.')),
             ])
             ->action(function (array $data, Model $record, Action $action) {

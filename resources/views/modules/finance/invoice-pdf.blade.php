@@ -71,7 +71,7 @@
             <!-- Parent Details Block -->
             @if($config['show_parent_address'])
             <td colspan="2" style="width: 50%; line-height: 1.4;">
-                <strong>{{ __('Term Billing Period:') }}</strong> {{ ucwords(strtolower($invoice->term->name)) }} ({{ $invoice->term->academicYear->name }})<br/>
+                @if($invoice->term)<strong>{{ __('Term Billing Period:') }}</strong> {{ ucwords(strtolower($invoice->term->name)) }}@if($invoice->term->academicYear) ({{ $invoice->term->academicYear->name }})@endif<br/>@endif
                 <strong>{{ __('Base Currency:') }}</strong> {{ __('USD Ledger Standard') }}<br/>
                 <strong>{{ __('Parent Name:') }}</strong> {{ $student->emergency_contact_name ?? 'Parent / Guardian' }}<br/>
                 <strong>{{ __('Parent Phone:') }}</strong> {{ $student->emergency_contact_phone ?? 'N/A' }}<br/>
@@ -175,6 +175,6 @@
 
 </div>
 
-<div class="powered-by">Powered by Tinway Technologies</div>
+<div class="powered-by">Powered by Kairo CORE</div>
 </body>
 </html>

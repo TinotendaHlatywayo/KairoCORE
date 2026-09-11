@@ -318,10 +318,17 @@ if (! function_exists('resolve_public_asset_path')) {
 
         $trimmed = ltrim($path, '/');
 
-        if (file_exists(public_path($trimmed))) {
+        // If it's already a full URL or starts with storage/, return as-is
+        if (str_starts_with($trimmed, 'http') || str_starts_with($trimmed, 'storage/')) {
             return $trimmed;
         }
 
+        // Check using Storage disk (most reliable for symlinks)
+        if (Storage::disk('public')->exists($trimmed)) {
+            return 'storage/'.$trimmed;
+        }
+
+        // Fallback: check common filesystem paths
         if (file_exists(public_path('storage/'.$trimmed))) {
             return 'storage/'.$trimmed;
         }
@@ -330,7 +337,32 @@ if (! function_exists('resolve_public_asset_path')) {
             return 'storage/'.$trimmed;
         }
 
-        return null;
+        if (file_exists(public_path($trimmed))) {
+            return $trimmed;
+        }
+
+        // Last resort: assume it's a valid public disk path and construct URL
+        // This handles cases where file_exists fails due to symlink/permission issues
+        // but the file actually exists. The browser will show 404 if truly missing.
+        return 'storage/'.$trimmed;
+    }
+}
+
+if (! function_exists('random_library_cover')) {
+    /**
+     * Return a random default library cover image URL.
+     * Randomly picks from the 4 generated book cover design images.
+     */
+    function random_library_cover(): string
+    {
+        $covers = [
+            'images/Book_cover_design_for_Kairo_202609010032.jpeg',
+            'images/Book_cover_design_for_Kairo_202609010040.jpeg',
+            'images/Book_cover_design_prompt_202609010035.jpeg',
+            'images/Designing_default_school_book_cover_202609010037.jpeg',
+        ];
+
+        return asset($covers[array_rand($covers)]);
     }
 }
 
@@ -352,6 +384,238 @@ if (! function_exists('student_photo_src')) {
             : 'images/no_profile_male.png';
 
         return public_path($fallback);
+    }
+}
+
+if (! function_exists('id_card_hex_to_rgba')) {
+    /**
+     * Convert any CSS color (hex / rgb / rgba / named) to an rgba() string
+     * carrying the given alpha (0..1). Used to apply logo/card background
+     * transparency to ID card elements in a DomPDF-safe way.
+     */
+    function id_card_hex_to_rgba(string $color, float $alpha = 1.0): string
+    {
+        $c = trim($color);
+        $a = max(0, min(1, (float) $alpha));
+
+        if (preg_match('/^#([a-fA-F0-9]{6})$/', $c, $m)) {
+            $r = hexdec(substr($m[1], 0, 2));
+            $g = hexdec(substr($m[1], 2, 2));
+            $b = hexdec(substr($m[1], 4, 2));
+
+            return "rgba({$r}, {$g}, {$b}, {$a})";
+        }
+
+        if (preg_match('/^#([a-fA-F0-9]{3})$/', $c, $m)) {
+            $r = hexdec(str_repeat($m[1][0], 2));
+            $g = hexdec(str_repeat($m[1][1], 2));
+            $b = hexdec(str_repeat($m[1][2], 2));
+
+            return "rgba({$r}, {$g}, {$b}, {$a})";
+        }
+
+        if (preg_match('/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i', $c, $m)) {
+            return "rgba({$m[1]}, {$m[2]}, {$m[3]}, {$a})";
+        }
+
+        return $c;
+    }
+}
+
+if (! function_exists('id_card_gradient_data_uri')) {
+    /**
+     * Rasterise a 135° linear gradient between two colors into a base64 PNG
+     * data URI. DomPDF cannot render CSS linear-gradient backgrounds, so the
+     * gradient is pre-rendered with GD (when available) and cached on disk so
+     * the browser preview, the printed PDF and the PNG export are identical.
+     */
+    function id_card_gradient_data_uri(string $start, string $end, int $width, int $height, float $opacity = 1.0): ?string
+    {
+        if (! function_exists('imagecreatetruecolor') || $width < 2 || $height < 2) {
+            return null;
+        }
+
+        $width = max(2, (int) $width);
+        $height = max(2, (int) $height);
+        $opacity = max(0, min(1, (float) $opacity));
+        $key = sha1(implode('|', [$start, $end, $width, $height, $opacity]));
+
+        $dir = storage_path('app/public/id-card-bg-cache');
+        if (! is_dir($dir)) {
+            @mkdir($dir, 0755, true);
+        }
+
+        $file = $dir."/{$key}.png";
+        if (is_file($file)) {
+            $data = (string) @file_get_contents($file);
+
+            return $data !== '' ? 'data:image/png;base64,'.base64_encode($data) : null;
+        }
+
+        $img = @imagecreatetruecolor($width, $height);
+        if ($img === false) {
+            return null;
+        }
+
+        // Parse both stops into [r, g, b].
+        $hex = function (string $color): array {
+            $c = trim($color);
+            if (preg_match('/^#([a-fA-F0-9]{6})$/', $c, $m)) {
+                return [hexdec(substr($m[1], 0, 2)), hexdec(substr($m[1], 2, 2)), hexdec(substr($m[1], 4, 2))];
+            }
+            if (preg_match('/^#([a-fA-F0-9]{3})$/', $c, $m)) {
+                return [hexdec(str_repeat($m[1][0], 2)), hexdec(str_repeat($m[1][1], 2)), hexdec(str_repeat($m[1][2], 2))];
+            }
+            if (preg_match('/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i', $c, $m)) {
+                return [(int) $m[1], (int) $m[2], (int) $m[3]];
+            }
+
+            return [255, 255, 255];
+        };
+
+        [$r1, $g1, $b1] = $hex($start);
+        [$r2, $g2, $b2] = $hex($end);
+
+        $lerp = function (float $t, int $a, int $b): int {
+            return (int) round($a + ($b - $a) * $t);
+        };
+
+        for ($y = 0; $y < $height; $y++) {
+            for ($x = 0; $x < $width; $x++) {
+                // 135deg diagonal: normalized position across both axes.
+                $t = (($x / max(1, $width - 1)) + ($y / max(1, $height - 1))) / 2;
+                $t = max(0, min(1, $t));
+                $col = imagecolorallocate($img, $lerp($t, $r1, $r2), $lerp($t, $g1, $g2), $lerp($t, $b1, $b2));
+                imagesetpixel($img, $x, $y, $col);
+            }
+        }
+
+        if ($opacity < 1.0) {
+            $overlay = imagecolorallocatealpha($img, 255, 255, 255, (int) round((1 - $opacity) * 127));
+            imagefilledrectangle($img, 0, 0, $width - 1, $height - 1, $overlay);
+        }
+
+        ob_start();
+        imagepng($img);
+        $png = (string) ob_get_clean();
+        imagedestroy($img);
+
+        @file_put_contents($file, $png);
+
+        return 'data:image/png;base64,'.base64_encode($png);
+    }
+}
+
+if (! function_exists('id_card_file_data_uri')) {
+    /**
+     * Base64 data URI of a stored asset (public disk / public path / URL),
+     * used to embed logos, photos and watermark images in DomPDF.
+     */
+    function id_card_file_data_uri(mixed $path): ?string
+    {
+        if (is_string($path)) {
+            $trimmedPath = trim($path);
+            if (str_starts_with($trimmedPath, '[') || str_starts_with($trimmedPath, '{')) {
+                $decoded = json_decode($trimmedPath, true);
+                if (is_array($decoded)) {
+                    $path = reset($decoded) ?: null;
+                }
+            }
+        }
+        if (is_array($path)) {
+            $path = reset($path) ?: null;
+        }
+        if (empty($path) || !is_string($path)) {
+            return null;
+        }
+
+        $trimmed = ltrim($path, '/');
+
+        if (str_starts_with($trimmed, 'http') || str_starts_with($trimmed, 'data:')) {
+            return $trimmed;
+        }
+
+        $file = null;
+        $cleanPath = str_replace('storage/', '', $trimmed);
+
+        $candidates = [
+            storage_path('app/public/' . $cleanPath),
+            public_path('storage/' . $cleanPath),
+            public_path($trimmed),
+            storage_path('app/public/' . $trimmed),
+        ];
+
+        foreach ($candidates as $candidate) {
+            if ($candidate && is_file($candidate)) {
+                $file = $candidate;
+                break;
+            }
+        }
+
+        if (! $file || ! is_file($file)) {
+            return null;
+        }
+
+        $mime = function_exists('mime_content_type') ? @mime_content_type($file) : 'image/png';
+
+        return 'data:'.($mime ?: 'image/png').';base64,'.base64_encode((string) @file_get_contents($file));
+    }
+
+    /**
+     * Generate a QR code as a base64 data URI using the local chillerlan/php-qrcode library.
+     *
+     * The PNG is rendered with ECC level H (30% redundancy) and a standard 4-module quiet
+     * zone. The pixel scale is derived from the QR's actual module count so the output is
+     * generated as close as possible to the requested $size in pixels, producing a crisp,
+     * high-resolution image that scans reliably at any display size.
+     *
+     * Falls back to the external API only if the library is unavailable.
+     */
+    function id_card_generate_qr(string $data, int $size = 600): string
+    {
+        try {
+            if (class_exists(\chillerlan\QRCode\QRCode::class)) {
+                $probe = new \chillerlan\QRCode\QROptions([
+                    'outputInterface' => \chillerlan\QRCode\Output\QRGdImagePNG::class,
+                    'eccLevel'        => \chillerlan\QRCode\Common\EccLevel::H,
+                    'scale'           => 1,
+                    'addQuietzone'    => true,
+                    'quietzoneSize'   => 4,
+                ]);
+                $probeCode = new \chillerlan\QRCode\QRCode($probe);
+                foreach (\chillerlan\QRCode\Common\Mode::INTERFACES as $interface) {
+                    if ($interface::validateString($data)) {
+                        $probeCode->addSegment(new $interface($data));
+                        break;
+                    }
+                }
+                $matrix = $probeCode->getQRMatrix();
+
+                $moduleCount = max(1, $matrix->moduleCount);
+                $scale       = max(2, (int) ceil(max(1, (int) $size) / $moduleCount));
+
+                $options = new \chillerlan\QRCode\QROptions([
+                    'outputInterface'  => \chillerlan\QRCode\Output\QRGdImagePNG::class,
+                    'eccLevel'         => \chillerlan\QRCode\Common\EccLevel::H,
+                    'scale'            => $scale,
+                    'addQuietzone'     => true,
+                    'quietzoneSize'    => 4,
+                    'outputBase64'     => false,
+                    'imageTransparent' => false,
+                    'drawLightModules' => true,
+                    'backgroundColor'  => 'FFFFFF',
+                    'gdImageUseUpscale' => false,
+                ]);
+                $pngData = (new \chillerlan\QRCode\QRCode($options))->render($data);
+                return 'data:image/png;base64,'.base64_encode((string) $pngData);
+            }
+        } catch (\Throwable $e) {
+            // Fall through to external API
+        }
+
+        $url = 'https://api.qrserver.com/v1/create-qr-code/?size='.$size.'x'.$size.'&ecc=H&format=png&data='.urlencode($data);
+        $raw = @file_get_contents($url);
+        return $raw ? 'data:image/png;base64,'.base64_encode($raw) : $url;
     }
 }
 
@@ -623,5 +887,114 @@ if (! function_exists('tenant_workspace_url')) {
         }
 
         return rtrim(school_website_url($school), '/').'/'.ltrim($path, '/');
+    }
+}
+
+if (! function_exists('fuzzy_regex')) {
+    /**
+     * Build a MySQL REGEXP pattern that matches an ordered character
+     * subsequence, so a typo like "crles" still finds "Charles".
+     * Each typed character must appear in order somewhere in the value.
+     */
+    function fuzzy_regex(?string $term): string
+    {
+        $term = trim((string) $term);
+
+        if ($term === '') {
+            return '.*';
+        }
+
+        $parts = preg_split('//u', preg_quote($term, '/'), -1, PREG_SPLIT_NO_EMPTY);
+
+        return ($parts ? implode('.*', $parts) : '.*').'.*';
+    }
+}
+
+if (! function_exists('fuzzy_search_where')) {
+    /**
+     * Apply an ordered character subsequence match against one or more columns.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     */
+    function fuzzy_search_where($query, array $columns, ?string $term): void
+    {
+        $pattern = fuzzy_regex($term);
+
+        if ($pattern === '.*') {
+            return;
+        }
+
+        $query->where(function ($q) use ($columns, $pattern) {
+            foreach ($columns as $i => $column) {
+                if ($i === 0) {
+                    $q->whereRaw("{$column} REGEXP ?", [$pattern]);
+                } else {
+                    $q->orWhereRaw("{$column} REGEXP ?", [$pattern]);
+                }
+            }
+        });
+    }
+}
+
+if (! function_exists('inventory_item_search_options')) {
+    /**
+     * Searchable options for an inventory item picker: fuzzy match on name, sku
+     * and item_type and render "Name — Type (Qty on hand)" labels so users can
+     * see the item type and its current stock before choosing.
+     *
+     * @return array<int|string, string>
+     */
+    function inventory_item_search_options(?string $search, int $limit = 50): array
+    {
+        $query = \Modules\Inventory\Models\InventoryItem::query()
+            ->with('category');
+
+        fuzzy_search_where($query, ['name', 'sku', 'item_type'], $search);
+
+        return $query
+            ->orderBy('name')
+            ->limit($limit)
+            ->get()
+            ->mapWithKeys(function ($item) {
+                $label = $item->name;
+
+                $metaBlock = '';
+                if (is_array($item->meta_data) && count($item->meta_data)) {
+                    $metaBlock = ' — '.collect($item->meta_data)
+                        ->map(fn ($value, $key) => "{$key}: {$value}")
+                        ->implode(' | ');
+                }
+
+                return [
+                    $item->id => $label.' ('.ucfirst((string) $item->item_type).')'
+                        .$metaBlock
+                        ." — {$item->current_quantity} left",
+                ];
+            })
+            ->all();
+    }
+}
+
+if (! function_exists('inventory_item_label')) {
+    /**
+     * Display label for a single selected inventory item (used when a searchable
+     * select shows the already-chosen record).
+     */
+    function inventory_item_label($item): ?string
+    {
+        if (! $item) {
+            return null;
+        }
+
+        $label = $item->name.' ('.ucfirst((string) $item->item_type).')';
+
+        if (is_array($item->meta_data) && count($item->meta_data)) {
+            $metaBlock = collect($item->meta_data)
+                ->map(fn ($value, $key) => "{$key}: {$value}")
+                ->implode(' | ');
+            $label .= ' — '.$metaBlock;
+        }
+
+        return $label;
     }
 }

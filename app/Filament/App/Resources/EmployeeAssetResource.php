@@ -52,8 +52,31 @@ class EmployeeAssetResource extends Resource
                     ->searchable()
                     ->preload()
                     ->required(),
-                Forms\Components\TextInput::make('asset_name')->required(),
-                Forms\Components\TextInput::make('serial_number')->required(),
+                Forms\Components\Select::make('fixed_asset_selector')
+                    ->label(__('Select Asset from System'))
+                    ->options(fn () => \Modules\Inventory\Models\FixedAsset::with('inventoryItem')->get()->mapWithKeys(function ($asset) {
+                        $itemName = optional($asset->inventoryItem)->name ?? 'Asset';
+                        return [$asset->id => "{$asset->asset_number} — {$itemName} (Serial: {$asset->serial_number})"];
+                    }))
+                    ->searchable()
+                    ->preload()
+                    ->reactive()
+                    ->afterStateUpdated(function ($state, callable $set) {
+                        $asset = \Modules\Inventory\Models\FixedAsset::with('inventoryItem')->find($state);
+                        if ($asset) {
+                            $itemName = optional($asset->inventoryItem)->name ?? $asset->asset_number;
+                            $set('asset_name', $itemName);
+                            $set('serial_number', $asset->serial_number ?? '');
+                        }
+                    })
+                    ->dehydrated(false)
+                    ->placeholder(__('Search and select system asset (autofills serial & name)...')),
+                Forms\Components\TextInput::make('asset_name')
+                    ->label(__('Asset Name'))
+                    ->required(),
+                Forms\Components\TextInput::make('serial_number')
+                    ->label(__('Serial Number'))
+                    ->required(),
                 Forms\Components\DatePicker::make('issued_date')->required(),
                 Forms\Components\DatePicker::make('returned_date'),
                 Forms\Components\Select::make('status')
@@ -69,9 +92,12 @@ class EmployeeAssetResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('employee.first_name')->label(__('Assigned To')),
-                Tables\Columns\TextColumn::make('asset_name'),
-                Tables\Columns\TextColumn::make('serial_number'),
+                Tables\Columns\TextColumn::make('employee')
+                    ->label(__('Assigned To'))
+                    ->getStateUsing(fn ($record) => optional($record->employee)->first_name ? "{$record->employee->first_name} {$record->employee->last_name} ({$record->employee->employee_number})" : '-')
+                    ->searchable(['first_name', 'last_name', 'employee_number']),
+                Tables\Columns\TextColumn::make('asset_name')->searchable(),
+                Tables\Columns\TextColumn::make('serial_number')->searchable(),
                 Tables\Columns\TextColumn::make('issued_date')->date(),
                 Tables\Columns\BadgeColumn::make('status')
                     ->colors([

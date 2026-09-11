@@ -6,6 +6,7 @@ enum FeedbackMode: string
 {
     case Immediate = 'immediate';
     case Delayed = 'delayed';
+    case AfterSubmission = 'after_submission';
     case AfterDeadline = 'after_deadline';
     case Never = 'never';
 
@@ -13,7 +14,7 @@ enum FeedbackMode: string
     {
         return match ($this) {
             self::Immediate => 'Immediate',
-            self::Delayed => 'After Submission',
+            self::Delayed, self::AfterSubmission => 'After Submission',
             self::AfterDeadline => 'After Deadline',
             self::Never => 'No Feedback',
         };
@@ -23,7 +24,7 @@ enum FeedbackMode: string
     {
         return match ($this) {
             self::Immediate => 'Show feedback for each question as the learner answers.',
-            self::Delayed => 'Show feedback after the attempt is submitted.',
+            self::Delayed, self::AfterSubmission => 'Show feedback after the attempt is submitted.',
             self::AfterDeadline => 'Show feedback after the assessment deadline passes.',
             self::Never => 'Do not show feedback to learners.',
         };

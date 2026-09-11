@@ -219,13 +219,15 @@ class SystemSettingsPage extends Page implements HasForms
                                                 'dev_choice_2' => __('Developer\'s Choice 2 (Fuchsia + Violet Blend)'),
                                                 'dev_choice_3' => __('Developer\'s Choice 3 (Cyan + Emerald Blend)'),
                                                 'dev_choice_4' => __('Developer\'s Choice 4 (Midnight Navy + Flame Blend)'),
-                                            ])->default('emerald_heritage'),
-                                        Select::make('branding_font_family')
-                                            ->label(__('System Typography Font'))
-                                            ->options($this->getFontDropdownOptions())
-                                            ->allowHtml()
-                                            ->default('inter')
-                                            ->live(),
+                                             ])->default('emerald_heritage')
+                                             ->native(true),
+                                         Select::make('branding_font_family')
+                                             ->label(__('System Typography Font'))
+                                             ->options($this->getFontDropdownOptions())
+                                             ->allowHtml()
+                                             ->default('inter')
+                                             ->native(true)
+                                             ->live(),
 
                                         /* -----------------------------------------------------------------
                                          * TYPOGRAPHY PREVIEW BLOCKS - COMMENTED OUT

@@ -1,5 +1,5 @@
 {{-- Standard low-profile footer shown on every App Panel page.
-     The "Powered by Tinway Technologies" hyperlink and its destination URL
+     The "Powered by Kairo CORE" hyperlink and its destination URL
      are configurable under System Administration → System Settings. --}}
 @php
     use Modules\Admin\Models\SystemSetting;
@@ -7,8 +7,8 @@
     $schoolId = session('current_tenant')?->id ?? (auth()->check() ? auth()->user()->school_id : null);
     $schoolName = session('current_tenant')?->name ?? 'Kairo CORE';
 
-    $poweredByText = 'Powered by Tinway Technologies';
-    $poweredByUrl = 'https://www.tinwaytechnologies.com';
+    $poweredByText = 'Powered by Kairo CORE';
+    $poweredByUrl = config('app.url') ?: url('/');
 
     if ($schoolId) {
         $poweredByText = SystemSetting::get('footer', 'powered_by_text', $poweredByText);

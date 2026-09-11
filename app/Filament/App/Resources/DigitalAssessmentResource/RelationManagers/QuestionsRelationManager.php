@@ -23,9 +23,10 @@ class QuestionsRelationManager extends RelationManager
     {
         return $form
             ->schema([
-                Forms\Components\Select::make('question_bank_id')
+                 Forms\Components\Select::make('question_bank_id')
                     ->label('Question')
-                    ->options(fn () => QuestionBank::where('school_id', current_tenant()?->id)
+                    ->options(fn () => QuestionBank::with('subject')
+                        ->where('school_id', current_tenant()?->id)
                         ->where('status', 'published')
                         ->get()
                         ->mapWithKeys(fn ($q) => [
@@ -117,10 +118,11 @@ class QuestionsRelationManager extends RelationManager
                     ->icon('heroicon-o-plus-circle')
                     ->color('success')
                     ->form([
-                        Forms\Components\Select::make('question_ids')
+                         Forms\Components\Select::make('question_ids')
                             ->label('Select Questions')
                             ->multiple()
-                            ->options(fn () => QuestionBank::where('school_id', current_tenant()?->id)
+                            ->options(fn () => QuestionBank::with('subject')
+                                ->where('school_id', current_tenant()?->id)
                                 ->where('status', 'published')
                                 ->get()
                                 ->mapWithKeys(fn ($q) => [
@@ -134,11 +136,11 @@ class QuestionsRelationManager extends RelationManager
                         Forms\Components\TextInput::make('starting_order')
                             ->label('Starting Order Position')
                             ->numeric()
-                            ->default(fn ($record) => $record?->questions()->max('question_order') + 1 ?? 1)
+                            ->default(fn () => $this->getOwnerRecord()?->questions()->max('question_order') + 1 ?? 1)
                             ->minValue(1),
                     ])
-                    ->action(function (array $data, RelationManager $manager): void {
-                        $assessment = $manager->getRecord();
+                    ->action(function (array $data): void {
+                        $assessment = $this->getOwnerRecord();
                         $service = app(DigitalAssessmentService::class);
 
                         $service->attachQuestions($assessment, $data['question_ids']);

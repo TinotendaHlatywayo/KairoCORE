@@ -95,7 +95,6 @@ class SaaSBillingOverview extends Page
                 'status' => 'trialing',
                 'trial_ends_at' => now()->addDays(14),
                 'next_payment_date' => now()->addDays(14)->toDateString(),
-                'auto_renew' => false,
             ]);
         }
         $this->subscription = $sub;

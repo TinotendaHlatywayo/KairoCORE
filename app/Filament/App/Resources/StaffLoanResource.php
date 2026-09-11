@@ -60,17 +60,69 @@ class StaffLoanResource extends Resource
                         'salary_advance' => __('Salary Advance'),
                         'emergency' => __('Emergency Loan'),
                         'device_loan' => __('Device Loan'),
-                    ])->required(),
+                        'other' => __('Other (Specify below)'),
+                    ])
+                    ->reactive()
+                    ->required(),
+                Forms\Components\TextInput::make('loan_type_other')
+                    ->label(__('Specify Other Loan Type'))
+                    ->required()
+                    ->visible(fn (Forms\Get $get) => $get('loan_type') === 'other'),
                 Forms\Components\TextInput::make('principal_amount')
                     ->numeric()
+                    ->prefix('$')
                     ->required()
                     ->reactive()
-                    ->afterStateUpdated(fn ($state, callable $set) => $set('balance_remaining', $state)),
-                Forms\Components\TextInput::make('balance_remaining')
+                    ->afterStateUpdated(function (Forms\Get $get, Forms\Set $set, $state) {
+                        $principal = (float) $state;
+                        $rate = (float) $get('interest_rate');
+                        $type = $get('interest_type');
+                        $total = $type === 'fixed_amount' ? ($principal + $rate) : ($principal + ($principal * ($rate / 100)));
+                        $set('total_repayable', round($total, 2));
+                        $set('balance_remaining', round($total, 2));
+                    }),
+                Forms\Components\TextInput::make('interest_rate')
                     ->numeric()
+                    ->default(0)
+                    ->reactive()
+                    ->afterStateUpdated(function (Forms\Get $get, Forms\Set $set, $state) {
+                        $principal = (float) $get('principal_amount');
+                        $rate = (float) $state;
+                        $type = $get('interest_type');
+                        $total = $type === 'fixed_amount' ? ($principal + $rate) : ($principal + ($principal * ($rate / 100)));
+                        $set('total_repayable', round($total, 2));
+                        $set('balance_remaining', round($total, 2));
+                    }),
+                Forms\Components\Select::make('interest_type')
+                    ->options([
+                        'percentage' => __('Percentage (%)'),
+                        'fixed_amount' => __('Fixed Amount ($)'),
+                    ])
+                    ->default('percentage')
+                    ->reactive()
+                    ->afterStateUpdated(function (Forms\Get $get, Forms\Set $set, $state) {
+                        $principal = (float) $get('principal_amount');
+                        $rate = (float) $get('interest_rate');
+                        $total = $state === 'fixed_amount' ? ($principal + $rate) : ($principal + ($principal * ($rate / 100)));
+                        $set('total_repayable', round($total, 2));
+                        $set('balance_remaining', round($total, 2));
+                    }),
+                Forms\Components\TextInput::make('total_repayable')
+                    ->label(__('Total Repayable (Principal + Interest)'))
+                    ->numeric()
+                    ->prefix('$')
+                    ->disabled()
+                    ->dehydrated()
+                    ->required(),
+                Forms\Components\TextInput::make('balance_remaining')
+                    ->label(__('Balance Remaining'))
+                    ->numeric()
+                    ->prefix('$')
                     ->required(),
                 Forms\Components\TextInput::make('monthly_deduction')
+                    ->label(__('Monthly Deduction Amount'))
                     ->numeric()
+                    ->prefix('$')
                     ->required(),
             ]);
     }

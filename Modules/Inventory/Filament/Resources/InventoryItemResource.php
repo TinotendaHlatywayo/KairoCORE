@@ -91,10 +91,20 @@ class InventoryItemResource extends Resource
                                     ->default('pieces')
                                     ->placeholder(__('e.g., pieces, reams, kg'))
                                     ->required(),
+                                Forms\Components\TextInput::make('current_quantity')
+                                    ->label(__('Quantity on Hand'))
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->default(0)
+                                    ->helperText(__('Opening stock count for this item. Varies it can also be broken down per variant in the metadata section below.')),
                                 Forms\Components\TextInput::make('reorder_level')
                                     ->numeric()
                                     ->default(10)
                                     ->label(__('Low Stock Warning Threshold')),
+                                Forms\Components\DatePicker::make('received_date')
+                                    ->label(__('Date Received'))
+                                    ->placeholder(__('Select the date this item was received...'))
+                                    ->maxDate(now()->toDateString()),
                             ])->columnSpan(1),
                     ]),
 
@@ -113,8 +123,9 @@ class InventoryItemResource extends Resource
                             ]),
                         Forms\Components\KeyValue::make('meta_data')
                             ->label(__('Technical Properties'))
-                            ->keyPlaceholder(__('e.g., Size, Color, Hazard Rating')) // Corrected Method
-                            ->valuePlaceholder(__('e.g., Large, Blue, Haz-3')), // Corrected Method
+                            ->keyPlaceholder(__('e.g., Size, Color, Model'))
+                            ->valuePlaceholder(__('e.g., Blue — 20 units'))
+                            ->helperText(__('Record per-variant details, e.g. key "Color" with value "Blue — 20" and "Green — 4", so you can tell exactly how many of each variant are in stock. These variants appear in every picker so you can issue or adjust only the variant you want.')),
                     ]),
             ]);
     }
@@ -126,6 +137,10 @@ class InventoryItemResource extends Resource
                 Tables\Columns\TextColumn::make('sku')->label(__('SKU'))->searchable()->sortable(),
                 Tables\Columns\TextColumn::make('name')->searchable()->sortable(),
                 Tables\Columns\TextColumn::make('category.name')->label(__('Category'))->searchable(),
+                Tables\Columns\TextColumn::make('received_date')
+                    ->label(__('Date Received'))
+                    ->date()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('item_type')
                     ->badge()
                     ->colors([
@@ -141,7 +156,8 @@ class InventoryItemResource extends Resource
                 Tables\Columns\TextColumn::make('average_unit_cost')
                     ->label(__('Average Cost'))
                     ->money('USD')
-                    ->alignEnd(),
+                    ->alignEnd()
+                    ->sortable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('item_type')
@@ -150,6 +166,56 @@ class InventoryItemResource extends Resource
                         'returnable' => __('Returnable'),
                         'fixed_asset' => __('Fixed Asset'),
                     ]),
+                Tables\Filters\SelectFilter::make('category_id')
+                    ->label(__('Category'))
+                    ->relationship('category', 'name')
+                    ->searchable()
+                    ->preload(),
+                Tables\Filters\Filter::make('received_date')
+                    ->label(__('Date Received'))
+                    ->form([
+                        Forms\Components\DatePicker::make('from')->placeholder(fn () => __('From')),
+                        Forms\Components\DatePicker::make('until')->placeholder(fn () => __('Until')),
+                    ])
+                    ->query(function ($query, array $data): void {
+                        $query
+                            ->when($data['from'], fn ($query, $date) => $query->where('received_date', '>=', $date))
+                            ->when($data['until'], fn ($query, $date) => $query->where('received_date', '<=', $date));
+                    }),
+                Tables\Filters\Filter::make('value_range')
+                    ->label(__('Average Cost Range'))
+                    ->form([
+                        Forms\Components\TextInput::make('min')->label(fn () => __('Min Cost'))->numeric()->prefix('$'),
+                        Forms\Components\TextInput::make('max')->label(fn () => __('Max Cost'))->numeric()->prefix('$'),
+                    ])
+                    ->query(function ($query, array $data): void {
+                        $query
+                            ->when($data['min'] !== null && $data['min'] !== '' && $data['min'] !== 'null', fn ($query, $value) => $query->where('average_unit_cost', '>=', $value))
+                            ->when($data['max'] !== null && $data['max'] !== '' && $data['max'] !== 'null', fn ($query, $value) => $query->where('average_unit_cost', '<=', $value));
+                    }),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\BulkAction::make('export_selected_csv')
+                        ->label(__('Export Selected (CSV)'))
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->color('success')
+                        ->action(function ($records) {
+                            $csv = \App\Services\Csv\InventoryItemCsvService::rowsForRecords(collect($records));
+
+                            return response()->streamDownload(function () use ($csv) {
+                                echo "\xEF\xBB\xBF";
+                                fputcsv($out = fopen('php://output', 'w'), \App\Services\Csv\InventoryItemCsvService::exportHeaders());
+
+                                foreach ($csv as $row) {
+                                    fputcsv($out, $row);
+                                }
+
+                                fclose($out);
+                            }, 'inventory-items-selected-'.now()->format('Y-m-d-His').'.csv', ['Content-Type' => 'text/csv']);
+                        }),
+                ]),
             ]);
     }
 

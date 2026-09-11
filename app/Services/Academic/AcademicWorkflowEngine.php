@@ -105,7 +105,7 @@ class AcademicWorkflowEngine
 
     public function __construct(?int $schoolId = null)
     {
-        $this->schoolId = $schoolId ?? config('current_tenant_id') ?? auth()->user()?->school_id;
+        $this->schoolId = $schoolId ?? (current_tenant()?->id ?? auth()->user()?->school_id ?? 1) ?? auth()->user()?->school_id;
     }
 
     /**

@@ -77,7 +77,13 @@ class DisciplinaryCaseResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('employee.first_name')->label(__('Employee')),
+                Tables\Columns\TextColumn::make('employee')
+                    ->label(__('Employee'))
+                    ->getStateUsing(fn ($record) => optional($record->employee)->first_name ? "{$record->employee->first_name} {$record->employee->last_name} ({$record->employee->employee_number})" : '-')
+                    ->searchable(['first_name', 'last_name', 'employee_number']),
+                Tables\Columns\TextColumn::make('employee.employee_number')
+                    ->label(__('Staff ID'))
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('incident_date')->date(),
                 Tables\Columns\TextColumn::make('severity'),
                 Tables\Columns\BadgeColumn::make('status')

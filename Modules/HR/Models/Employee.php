@@ -52,12 +52,14 @@ class Employee extends Model
         'document_contract',
         'document_academic',
         'document_professional',
+        'individual_allowances',
     ];
 
     protected $casts = [
         'spouse_details' => 'array',
         'dependents' => 'array',
         'next_of_kin' => 'array',
+        'individual_allowances' => 'array',
         'date_of_birth' => 'date',
         'contract_end_date' => 'date',
         'date_joined' => 'date',

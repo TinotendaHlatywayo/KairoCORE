@@ -251,7 +251,7 @@ class StudentAssessmentResource extends Resource
                             ->orderByDesc('percentage')
                             ->first();
 
-                        return route('filament.student.pages.attempt-result', [
+                        return route('filament.student.pages.attempt-result-page', [
                             'attempt' => $bestAttempt->id,
                         ]);
                     })
@@ -321,7 +321,7 @@ class StudentAssessmentResource extends Resource
 
     protected static function getStartUrl(DigitalAssessment $record): string
     {
-        return route('filament.student.pages.assessment-detail', [
+        return route('filament.student.pages.assessment-detail-page', [
             'assessment' => $record->id,
         ]);
     }

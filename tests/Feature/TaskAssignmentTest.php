@@ -35,16 +35,46 @@ class TaskAssignmentTest extends TestCase
         DB::purge('mysql');
     }
 
+    /** The fixture tenant is the canonical single tenant (config), which has a
+     * certified Administrator (role 2) and a user-linked student so every test
+     * can fan out real rows instead of relying on dev-only data. */
+    private int $schoolId;
+
     protected function admin(): User
     {
-        $school = School::find(15);
+        $school = School::findOrFail(config('tenancy.single_tenant_id'));
         App::instance('current_tenant', $school);
         view()->share('school', $school);
-        $user = User::find(13);
+        $this->schoolId = $school->id;
+        $user = User::where('school_id', $this->schoolId)->where('custom_role_id', 2)->firstOrFail();
         $user->forceFill(['account_status' => 'active'])->save();
         $this->actingAs($user);
 
         return $user;
+    }
+
+    protected function colleague(): User
+    {
+        // The canonical tenant only has one Administrator, but fan-out tests
+        // need a distinct assignee, so mint a stable staff user for it.
+        $schoolId = $this->schoolId ?? (int) config('tenancy.single_tenant_id');
+
+        return User::firstOrCreate(
+            ['email' => 'colleague@fixture.schoolcore.test'],
+            [
+                'school_id' => $schoolId,
+                'name' => 'Colleague Fixture',
+                'password' => bcrypt(\Illuminate\Support\Str::random(64)),
+                'account_status' => 'active',
+                'custom_role_id' => 2,
+                'requested_role' => 'administrator',
+            ]
+        );
+    }
+
+    protected function student(): Student
+    {
+        return Student::where('school_id', $this->schoolId)->whereNotNull('user_id')->with('user')->first();
     }
 
     public function test_myday_renders_new_assignee_picker(): void
@@ -80,7 +110,7 @@ class TaskAssignmentTest extends TestCase
     public function test_assign_to_specific_staff_fans_out(): void
     {
         $user = $this->admin();
-        $colleague = User::find(18);
+        $colleague = $this->colleague();
 
         Livewire::test(MyDay::class)
             ->call('openTaskModal', now()->toDateString())
@@ -98,7 +128,7 @@ class TaskAssignmentTest extends TestCase
     public function test_assign_to_everyone_in_role_fans_out_to_members(): void
     {
         $user = $this->admin();
-        $member = User::where('school_id', 15)
+        $member = User::where('school_id', $this->schoolId)
             ->where('custom_role_id', 2)
             ->where('account_status', 'active')
             ->pluck('id')
@@ -124,7 +154,7 @@ class TaskAssignmentTest extends TestCase
     {
         $user = $this->admin();
 
-        $studentUserIds = Student::where('school_id', 15)
+        $studentUserIds = Student::where('school_id', $this->schoolId)
             ->whereNotNull('user_id')
             ->pluck('user_id')
             ->filter()
@@ -151,13 +181,13 @@ class TaskAssignmentTest extends TestCase
         $user = $this->admin();
 
         // Self-sufficient fixture: the dev database cannot be relied on to
-        // always contain a user-linked student enrolled in section 3.
-        $sectionId = DB::table('sections')->where('school_id', 15)->orderBy('id')->value('id');
-        $this->assertNotNull($sectionId, 'School 15 must have at least one section');
+        // always contain a user-linked student enrolled in a section.
+        $sectionId = DB::table('sections')->where('school_id', $this->schoolId)->orderBy('id')->value('id');
+        $this->assertNotNull($sectionId, 'School '.$this->schoolId.' must have at least one section');
 
         $suffix = uniqid();
         $linkedUser = User::create([
-            'school_id' => 15,
+            'school_id' => $this->schoolId,
             'name' => 'Class Fixture Student',
             'email' => "class.fixture.{$suffix}@demo.schoolcore.test",
             'password' => bcrypt(\Illuminate\Support\Str::random(64)),
@@ -166,7 +196,7 @@ class TaskAssignmentTest extends TestCase
         ]);
 
         $student = Student::create([
-            'school_id' => 15,
+            'school_id' => $this->schoolId,
             'user_id' => $linkedUser->id,
             'student_id_number' => 'TEST-TASK-'.strtoupper($suffix),
             'admission_number' => 'TEST-TADM-'.strtoupper($suffix),
@@ -178,14 +208,14 @@ class TaskAssignmentTest extends TestCase
             'status' => 'active',
         ]);
 
-        $year = \Modules\Academics\Models\AcademicYear::withoutGlobalScopes()->where('school_id', 15)->orderBy('id')->first()
+        $year = \Modules\Academics\Models\AcademicYear::withoutGlobalScopes()->where('school_id', $this->schoolId)->orderBy('id')->first()
             ?? \Modules\Academics\Models\AcademicYear::create([
-                'school_id' => 15, 'name' => now()->format('Y').' Academic Year', 'is_active' => true,
+                'school_id' => $this->schoolId, 'name' => now()->format('Y').' Academic Year', 'is_active' => true,
                 'start_date' => now()->startOfYear(), 'end_date' => now()->endOfYear(),
             ]);
 
         $enrollment = \Modules\Students\Models\Enrollment::create([
-            'school_id' => 15,
+            'school_id' => $this->schoolId,
             'student_id' => $student->id,
             'academic_year_id' => $year->id,
             'course_id' => DB::table('sections')->where('id', $sectionId)->value('course_id'),
@@ -214,12 +244,12 @@ class TaskAssignmentTest extends TestCase
 
     public function test_edit_task_shows_single_assignee_spec(): void
     {
-        $this->admin();
-        $colleague = User::find(18);
+        $user = $this->admin();
+        $colleague = $this->colleague();
 
         $task = UserTask::create([
-            'school_id' => 15,
-            'created_by_id' => 13,
+            'school_id' => $this->schoolId,
+            'created_by_id' => $user->id,
             'assigned_to_id' => $colleague->id,
             'title' => 'Editable',
             'status' => UserTask::STATUS_OPEN,
@@ -236,10 +266,7 @@ class TaskAssignmentTest extends TestCase
     public function test_student_schedule_mirrors_staff_ui_without_assignee_picker(): void
     {
         $this->admin();
-        $student = Student::where('school_id', 15)
-            ->whereNotNull('user_id')
-            ->with('user')
-            ->first();
+        $student = $this->student();
         $this->assertNotNull($student);
         $this->assertFalse(PermissionRegistry::userCan($student->user, 'tasks.assign'));
 
@@ -264,10 +291,7 @@ class TaskAssignmentTest extends TestCase
     public function test_student_cannot_assign_task_to_others(): void
     {
         $this->admin();
-        $student = Student::where('school_id', 15)
-            ->whereNotNull('user_id')
-            ->with('user')
-            ->first();
+        $student = $this->student();
         $this->assertNotNull($student);
         $this->actingAs($student->user);
         Filament::setCurrentPanel(Filament::getPanel('student'));
@@ -275,7 +299,7 @@ class TaskAssignmentTest extends TestCase
         Livewire::test(StudentSchedule::class)
             ->call('openTaskModal', now()->toDateString())
             ->set('taskForm.title', 'Student self task')
-            ->set('taskForm.assignee_spec', json_encode(['mode' => 'staff', 'staff_ids' => [18]]))
+            ->set('taskForm.assignee_spec', json_encode(['mode' => 'staff', 'staff_ids' => [$this->colleague()->id]]))
             ->call('saveTask');
 
         // Fan-out is clamped to the student themselves.
@@ -288,17 +312,14 @@ class TaskAssignmentTest extends TestCase
         $this->assertDatabaseMissing('user_tasks', [
             'title' => 'Student self task',
             'created_by_id' => $student->user_id,
-            'assigned_to_id' => 18,
+            'assigned_to_id' => $this->colleague()->id,
         ]);
     }
 
     public function test_student_event_creation_targets_students(): void
     {
         $this->admin();
-        $student = Student::where('school_id', 15)
-            ->whereNotNull('user_id')
-            ->with('user')
-            ->first();
+        $student = $this->student();
         $this->assertNotNull($student);
         $this->actingAs($student->user);
         Filament::setCurrentPanel(Filament::getPanel('student'));
@@ -326,10 +347,7 @@ class TaskAssignmentTest extends TestCase
     public function test_student_topbar_command_center_hides_assignee_picker(): void
     {
         $this->admin();
-        $student = Student::where('school_id', 15)
-            ->whereNotNull('user_id')
-            ->with('user')
-            ->first();
+        $student = $this->student();
         $this->assertNotNull($student);
         $this->actingAs($student->user);
         Filament::setCurrentPanel(Filament::getPanel('student'));
@@ -353,12 +371,12 @@ class TaskAssignmentTest extends TestCase
 
     public function test_command_center_links_point_at_schedule_with_deep_link_params(): void
     {
-        $this->admin();
+        $user = $this->admin();
 
         $task = UserTask::create([
-            'school_id' => 15,
-            'created_by_id' => 13,
-            'assigned_to_id' => 13,
+            'school_id' => $this->schoolId,
+            'created_by_id' => $user->id,
+            'assigned_to_id' => $user->id,
             'title' => 'Deep link task',
             'status' => UserTask::STATUS_OPEN,
             'due_date' => now()->toDateString(),
@@ -380,12 +398,12 @@ class TaskAssignmentTest extends TestCase
 
     public function test_schedule_deep_link_task_opens_task_modal(): void
     {
-        $this->admin();
+        $user = $this->admin();
 
         $task = UserTask::create([
-            'school_id' => 15,
-            'created_by_id' => 13,
-            'assigned_to_id' => 13,
+            'school_id' => $this->schoolId,
+            'created_by_id' => $user->id,
+            'assigned_to_id' => $user->id,
             'title' => 'Deep link task',
             'status' => UserTask::STATUS_OPEN,
             'due_date' => now()->toDateString(),
@@ -399,12 +417,12 @@ class TaskAssignmentTest extends TestCase
 
     public function test_schedule_deep_link_event_opens_event_modal(): void
     {
-        $this->admin();
+        $user = $this->admin();
 
         $event = EventCalendar::create([
-            'school_id' => 15,
-            'created_by_id' => 13,
-            'organizer_id' => 13,
+            'school_id' => $this->schoolId,
+            'created_by_id' => $user->id,
+            'organizer_id' => $user->id,
             'title' => 'Deep link event',
             'category' => 'general',
             'start_time' => now()->startOfDay()->addHours(9),
@@ -421,16 +439,13 @@ class TaskAssignmentTest extends TestCase
     public function test_student_deep_link_to_task_opens_task_modal(): void
     {
         $this->admin();
-        $student = Student::where('school_id', 15)
-            ->whereNotNull('user_id')
-            ->with('user')
-            ->first();
+        $student = $this->student();
         $this->assertNotNull($student);
         $this->actingAs($student->user);
         Filament::setCurrentPanel(Filament::getPanel('student'));
 
         $task = UserTask::create([
-            'school_id' => 15,
+            'school_id' => $this->schoolId,
             'created_by_id' => $student->user_id,
             'assigned_to_id' => $student->user_id,
             'title' => 'Student deep link task',
@@ -446,19 +461,16 @@ class TaskAssignmentTest extends TestCase
 
     public function test_student_cannot_open_others_event_via_deep_link(): void
     {
-        $this->admin();
-        $student = Student::where('school_id', 15)
-            ->whereNotNull('user_id')
-            ->with('user')
-            ->first();
+        $admin = $this->admin();
+        $student = $this->student();
         $this->assertNotNull($student);
         $this->actingAs($student->user);
         Filament::setCurrentPanel(Filament::getPanel('student'));
 
         $event = EventCalendar::create([
-            'school_id' => 15,
-            'created_by_id' => 13,
-            'organizer_id' => 13,
+            'school_id' => $this->schoolId,
+            'created_by_id' => $admin->id,
+            'organizer_id' => $admin->id,
             'title' => 'Admin only event',
             'category' => 'general',
             'start_time' => now()->startOfDay()->addHours(9),

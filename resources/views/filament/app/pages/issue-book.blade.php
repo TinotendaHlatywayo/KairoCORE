@@ -21,16 +21,18 @@
                                         <x-heroicon-o-book-open class="h-4 w-4"/>
                                     </div>
                                     <div class="min-w-0 flex-1">
-                                        <p class="text-sm font-bold text-slate-900 dark:text-white truncate">{{ $result['title'] }}</p>
+                                        <p class="text-sm font-bold text-slate-900 dark:text-white truncate">
+                                            {{ $result['title'] }}
+                                            <span class="ml-1 text-[11px] font-semibold {{ $result['available'] > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400' }}">
+                                                ({{ $result['available'] }}/{{ $result['total'] }} {{ __('available') }})
+                                            </span>
+                                        </p>
                                         <p class="text-[11px] text-slate-500 dark:text-slate-400">
                                             @if($result['authors']) {{ $result['authors'] }} · @endif
                                             {{ $result['category'] }}
                                             @if($result['format']) · {{ $result['format'] }} @endif
                                         </p>
                                     </div>
-                                    <span class="shrink-0 text-[11px] font-bold {{ $result['available'] > 0 ? 'text-green-600' : 'text-red-500' }}">
-                                        {{ $result['available'] }}/{{ $result['total'] }}
-                                    </span>
                                 </button>
                             @endforeach
                         </div>

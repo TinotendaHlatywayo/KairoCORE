@@ -93,6 +93,13 @@ class ModuleVisibilityTest extends TestCase
         return [$school, $user];
     }
 
+    private function workspaceUrl(): string
+    {
+        $host = parse_url(config('app.url'), PHP_URL_HOST);
+
+        return 'https://'.$this->school->subdomain.'.'.$host.'/workspace';
+    }
+
     public function test_master_toggles_resolve_visibility(): void
     {
         $this->tenant();
@@ -118,10 +125,24 @@ class ModuleVisibilityTest extends TestCase
             SystemSetting::set('modules', $module, '0');
         }
 
-        $html = $this->get('/workspace')->assertOk()->getContent();
+        $html = $this->get($this->workspaceUrl())->assertOk()->getContent();
 
-        foreach (['Homework &amp; Lessons', 'School Repository', 'Analytics Explorer', 'Generate Report', 'User Accounts', 'Overview &amp; Billing'] as $needle) {
-            $this->assertStringNotContainsString($needle, $html, "closed module item '$needle' should be hidden");
+        // Assert each module's own sidebar markers are gone: one link unique to
+        // the module plus its top-level item label.
+        foreach ([
+            'lms' => [['workspace/lms-lms', 'LMS']],
+            'knowledge' => [['workspace/knowledge-knowledge', 'Knowledge']],
+            'reports' => [['workspace/analytics-explorer', 'Analytics Explorer'], ['workspace/report-generator-page', 'Generate Report']],
+            'administration' => [['workspace/admin-system-settings', 'User Management'], ['workspace/administration-dashboard', null]],
+            'saas' => [['workspace/saas-billing-overview', 'Overview &amp; Billing']],
+        ] as $markers) {
+            foreach ($markers as $marker) {
+                $url = $marker[0];
+                $this->assertStringNotContainsString($url, $html, "closed module should hide link '$url'");
+                if (isset($marker[1])) {
+                    $this->assertStringNotContainsString($marker[1], $html, "closed module should hide item '{$marker[1]}'");
+                }
+            }
         }
 
         // Even with all modules closed, the topbar settings shortcut must remain accessible for admins
@@ -139,8 +160,8 @@ class ModuleVisibilityTest extends TestCase
         PermissionRegistry::ensureAdminHasRole($user, $user->school_id);
         $user->forceFill(['account_status' => 'active'])->save();
         $this->actingAs($user);
-        $html = $this->get('/workspace')->assertOk()->getContent();
-        $this->assertStringContainsString('Homework', $html, 'LMS item should reappear when re-enabled');
+        $html = $this->get($this->workspaceUrl())->assertOk()->getContent();
+        $this->assertStringContainsString('/workspace/lms-lms', $html, 'LMS item should reappear when re-enabled');
     }
 
     public function test_system_settings_page_renders_new_module_toggles(): void

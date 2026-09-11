@@ -44,8 +44,17 @@
         }
 
         h1{font-size:1.5rem;font-weight:700;margin:1rem 0 .5rem;color:#f1f5f9}
-        p{font-size:0.9rem;color:#94a3b8;line-height:1.6;margin-bottom:2rem}
-        .actions{display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap}
+        p{font-size:0.9rem;color:#94a3b8;line-height:1.6;margin-bottom:1rem}
+
+        .hint{
+            font-size:.8rem;color:#64748b;margin:1rem auto 1.5rem;
+            padding:1rem;border-radius:.75rem;max-width:460px;
+            background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);
+            line-height:1.6;text-align:left;
+        }
+        .hint strong{color:#94a3b8}
+
+        .actions{display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;margin-bottom:1.5rem}
         .btn{
             display:inline-flex;align-items:center;gap:.5rem;
             padding:.7rem 1.5rem;border-radius:.75rem;
@@ -61,7 +70,7 @@
         .btn-ghost:hover{background:rgba(255,255,255,.1);color:#f1f5f9;border-color:rgba(255,255,255,.2)}
 
         .search-box{
-            display:flex;gap:0;margin-top:1.5rem;
+            display:flex;gap:0;margin-top:1rem;
             border-radius:.75rem;overflow:hidden;
             border:1.5px solid rgba(255,255,255,.1);
             background:rgba(255,255,255,.04);
@@ -96,8 +105,13 @@
         <h1>{{ __('Page Not Found') }}</h1>
         <p>{{ __('The page you\'re looking for doesn\'t exist, has been moved, or is temporarily unavailable.') }}</p>
 
+        <div class="hint">
+            <strong>{{ __('Quick Navigation Help:') }}</strong><br>
+            {{ __('Check the URL for typos or use the search box below to locate the requested resource quickly.') }}
+        </div>
+
         <div class="actions">
-            <a href="/" class="btn btn-primary">
+            <a href="/workspace" class="btn btn-primary">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="m3 12 2-2m0 0 7-7 7 7M5 10v10a1 1 0 0 0 1 1h3m10-11 2 2m-2-2v10a1 1 0 0 1-1 1h-3m-4 0a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1"/></svg>
                 {{ __('Back to Home') }}
             </a>
