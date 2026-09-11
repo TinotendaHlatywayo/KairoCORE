@@ -1,3 +1,7 @@
+@php
+    $firstReport = $reportsCompiled[0] ?? null;
+    $isLandscape = (($firstReport['template']->layout_config['page_orientation'] ?? 'landscape') === 'landscape');
+@endphp
 <!DOCTYPE html>
 <html>
 <head>
