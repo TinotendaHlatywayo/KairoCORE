@@ -39,7 +39,7 @@ class FinancialStatementDownloadWidget extends Widget
 
     protected function streamReport(string $format): \Symfony\Component\HttpFoundation\StreamedResponse
     {
-        $schoolId = current_tenant()?->id ?? 1;
+        $schoolId = current_tenant()?->id ?? auth()->user()?->school_id ?? 5;
         $range = $this->currentRange();
         $startDate = match ($range) {
             'day' => now()->subDay(),
@@ -50,24 +50,25 @@ class FinancialStatementDownloadWidget extends Widget
         };
         $endDate = now();
 
-        $totalRevenue = (float) Payment::where('school_id', $schoolId)
-            ->where('is_refund', false)
-            ->where('created_at', '>=', $startDate)
+        $totalRevenue = (float) Payment::withoutGlobalScopes()
+            ->where('school_id', $schoolId)
+            ->where(fn ($q) => $q->where('is_refund', false)->orWhereNull('is_refund'))
             ->sum('amount');
-        $totalRefunds = (float) Payment::where('school_id', $schoolId)
+        $totalRefunds = (float) Payment::withoutGlobalScopes()
+            ->where('school_id', $schoolId)
             ->where('is_refund', true)
-            ->where('created_at', '>=', $startDate)
             ->sum('amount');
-        $totalExpenses = (float) Expense::where('school_id', $schoolId)
-            ->where('expense_date', '>=', $startDate->toDateString())
+        $totalExpenses = (float) Expense::withoutGlobalScopes()
+            ->where('school_id', $schoolId)
             ->sum('amount');
 
+        $school = current_tenant();
         $data = [
-            'school' => current_tenant()?->name ?? config('app.name'),
-            'companyTagline' => current_tenant()?->tagline,
-            'companyAddress' => current_tenant()?->address ?? (string) (current_tenant()?->city ?? ''),
-            'companyPhone' => current_tenant()?->phone,
-            'companyEmail' => current_tenant()?->email,
+            'school' => $school?->name ?? config('app.name'),
+            'companyTagline' => $school?->tagline,
+            'companyAddress' => $school?->physical_address ?? $school?->address ?? '',
+            'companyPhone' => $school?->phone,
+            'companyEmail' => $school?->email,
             'startDate' => $startDate->toDateString(),
             'endDate' => $endDate->toDateString(),
             'totalRevenue' => $totalRevenue,

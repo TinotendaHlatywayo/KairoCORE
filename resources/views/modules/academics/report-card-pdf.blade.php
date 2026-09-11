@@ -333,28 +333,7 @@
                 </tbody>
             </table>
 
-            <!-- Primary/ECD Competencies Table -->
-            @if(($level === 'primary' || $level === 'ecd') && ($cfg['show_ubuntu_competencies'] ?? true) && count($competencies) > 0)
-                <div style="font-weight: bold; font-size: 9px; margin-bottom: 4px; text-transform: uppercase; color: {{ $accentColor }};">{{ __('Practical Skills & Competencies') }}</div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th style="text-align: left; width: 40%;">{{ __('Skill / Competency Area') }}</th>
-                            <th style="width: 20%;">Score (Out of 10)</th>
-                            <th style="text-align: left; width: 40%;">{{ __('Descriptive Progress Remark') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($competencies as $comp)
-                            <tr>
-                                <td style="text-align: left; font-weight: bold;">{{ $comp->skill_area }}</td>
-                                <td style="font-weight: bold; color: {{ $successColor }};">{{ $comp->score }} / 10.0</td>
-                                <td style="text-align: left; font-style: italic;">{{ $comp->remark }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            @endif
+
 
             <!-- Outstanding Achievements -->
             @if(($cfg['show_outstanding_achievements'] ?? true) && count($achievements) > 0)
