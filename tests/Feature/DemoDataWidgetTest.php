@@ -29,7 +29,7 @@ class DemoDataWidgetTest extends TestCase
 
     private function widget(): DemoDataWidget
     {
-        $this->actingAs(User::where('school_id', $this->schoolId)->where('custom_role_id', 2)->firstOrFail());
+        $this->actingAs(User::where('school_id', $this->schoolId)->where('requested_role', 'administrator')->firstOrFail());
 
         return new DemoDataWidget;
     }
