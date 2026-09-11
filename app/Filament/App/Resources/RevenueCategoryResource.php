@@ -9,7 +9,6 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Modules\Finance\Models\Account;
 use Modules\Finance\Models\RevenueCategory;
 
 class RevenueCategoryResource extends Resource
@@ -52,9 +51,10 @@ class RevenueCategoryResource extends Resource
                             ->placeholder(__('e.g., Student Fees, Transport, Uniform Sales')),
                         Forms\Components\Select::make('account_id')
                             ->label(__('Default Ledger Account'))
-                            ->options(Account::where('type', 'revenue')->pluck('name', 'id'))
+                            ->relationship('account', 'bank_name')
                             ->searchable()
-                            ->placeholder(__('Select General Ledger Revenue Account')),
+                            ->preload()
+                            ->placeholder(__('Select the School Bank Account this income is deposited into')),
                         Forms\Components\Toggle::make('is_active')
                             ->default(true)
                             ->required(),

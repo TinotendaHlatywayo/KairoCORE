@@ -20,11 +20,13 @@ class SchoolBankAccount extends Model
         'swift_code',
         'is_default',
         'is_active',
+        'balance',
     ];
 
     protected $casts = [
         'is_default' => 'boolean',
         'is_active' => 'boolean',
+        'balance' => 'decimal:2',
     ];
 
     public function school(): BelongsTo

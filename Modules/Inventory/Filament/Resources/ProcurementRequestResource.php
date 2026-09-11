@@ -354,7 +354,7 @@ class ProcurementRequestResource extends Resource
             'name' => $name,
             'description' => $item->specifications ?: null,
             'received_date' => now()->toDateString(),
-            'item_type' => 'consumable',
+            'item_type' => $item->is_fixed_asset ? 'fixed_asset' : 'consumable',
             'unit_of_measure' => 'pieces',
             'reorder_level' => 10,
             'current_quantity' => 0,
@@ -363,6 +363,24 @@ class ProcurementRequestResource extends Resource
             'sale_price' => 0,
             'meta_data' => ['source' => 'auto-provisioned from requisition '.$request->request_number],
         ]);
+
+        // Capitalized purchases land in the Fixed Assets register immediately;
+        // the quantity/stock ledger is fed later when the purchase order's
+        // Goods Received Note is processed (see ProcurementPipelineService).
+        if ($item->is_fixed_asset) {
+            \Modules\Inventory\Models\FixedAsset::create([
+                'school_id' => $request->school_id,
+                'inventory_item_id' => $newItem->id,
+                'asset_number' => 'FA-'.now()->year.'-'.str_pad((string) rand(10, 99999), 5, '0', STR_PAD_LEFT),
+                'acquisition_date' => now(),
+                'purchase_cost' => (float) $item->estimated_unit_cost,
+                'salvage_value' => round((float) $item->estimated_unit_cost * 0.1, 2),
+                'useful_life_years' => 5,
+                'depreciation_method' => 'straight_line',
+                'current_value' => (float) $item->estimated_unit_cost,
+                'status' => 'active',
+            ]);
+        }
 
         $item->inventory_item_id = $newItem->id;
         $item->save();

@@ -36,7 +36,7 @@
          data-tabs="{{ json_encode(array_column($allTabs, 'label')) }}"></div>
 @endif
 
-@if ($module && count($allTabs) > 0 && ! request()->routeIs('*.courses.edit') && ! request()->routeIs('*courses.edit'))
+@if ($module && count($allTabs) > 0)
 <div class="sc-module-navigation" x-data="{}">
     <div class="sc-module-head">
         <span class="sc-module-icon">

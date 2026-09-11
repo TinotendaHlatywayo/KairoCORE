@@ -43,20 +43,78 @@ class ExpenseResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Section::make('Expense Transaction')
-                    ->description(__('Record procurement and operating expenses linked to suppliers and expense types.'))
+                    ->description(__('Record procurement and operating expenses. Salaries and procured inventory/asset items are posted here automatically; use this form for ad-hoc manual expenses.'))
                     ->schema([
-                        Forms\Components\Select::make('expense_type_id')
-                            ->label(__('Expense Type'))
-                            ->relationship('expenseType', 'name')
+                        Forms\Components\TextInput::make('expense_name')
+                            ->label(__('Expense Name'))
+                            ->required()
+                            ->maxLength(255)
+                            ->placeholder(__('e.g., Classroom Chalk Purchase, Electricity Bill')),
+                        Forms\Components\Select::make('expense_category_id')
+                            ->label(__('Expense Category'))
+                            ->relationship('expenseCategory', 'name')
                             ->required()
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->createOptionLabel(__('Add expense category'))
+                            ->createOptionAction(fn (Forms\Components\Actions\Action $action) => $action
+                                ->modalHeading(__('New Expense Category'))
+                                ->modalSubmitActionLabel(__('Save Category')))
+                            ->createOptionForm([
+                                Forms\Components\TextInput::make('name')
+                                    ->label(__('Category Name'))
+                                    ->required()
+                                    ->maxLength(255)
+                                    ->placeholder(__('e.g., Textbooks, Repairs, Utilities')),
+                                Forms\Components\Textarea::make('description')
+                                    ->label(__('Description'))
+                                    ->columnSpanFull(),
+                            ]),
+                        Forms\Components\Select::make('expense_type_id')
+                            ->label(__('Expense Type (optional)'))
+                            ->relationship('expenseType', 'name')
+                            ->searchable()
+                            ->preload()
+                            ->nullable()
+                            ->helperText(__('Optional legacy type for extra classification.')),
                         Forms\Components\Select::make('supplier_id')
                             ->label(__('Supplier / Vendor'))
                             ->relationship('supplier', 'name')
                             ->searchable()
                             ->preload()
-                            ->placeholder(__('Optional supplier')),
+                            ->placeholder(__('Optional supplier'))
+                            ->createOptionLabel(__('Add supplier'))
+                            ->createOptionAction(fn (Forms\Components\Actions\Action $action) => $action
+                                ->modalHeading(__('New Supplier / Vendor'))
+                                ->modalSubmitActionLabel(__('Save Supplier')))
+                            ->createOptionForm([
+                                Forms\Components\TextInput::make('name')
+                                    ->label(__('Company / Supplier Name'))
+                                    ->required()
+                                    ->maxLength(255),
+                                Forms\Components\TextInput::make('contact_person')
+                                    ->label(__('Contact Person'))
+                                    ->maxLength(255),
+                                Forms\Components\TextInput::make('phone')
+                                    ->label(__('Phone'))
+                                    ->tel()
+                                    ->maxLength(60),
+                                Forms\Components\TextInput::make('email')
+                                    ->label(__('Email'))
+                                    ->email()
+                                    ->maxLength(191),
+                                Forms\Components\TextInput::make('website')
+                                    ->label(__('Website (optional)'))
+                                    ->url()
+                                    ->maxLength(191),
+                                Forms\Components\TextInput::make('address')
+                                    ->label(__('Address'))
+                                    ->maxLength(255)
+                                    ->columnSpanFull(),
+                                Forms\Components\TextInput::make('tax_number')
+                                    ->label(__('Tax / VAT Number'))
+                                    ->maxLength(60),
+                            ]),
                         Forms\Components\TextInput::make('amount')
                             ->numeric()
                             ->prefix('$')
@@ -87,8 +145,34 @@ class ExpenseResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('expense_date')->date()->sortable(),
-                Tables\Columns\TextColumn::make('expenseType.name')->label(__('Expense Type'))->searchable()->sortable()->weight('bold'),
-                Tables\Columns\TextColumn::make('supplier.name')->label(__('Supplier'))->searchable(),
+                Tables\Columns\TextColumn::make('expense_name')->label(__('Expense'))->searchable()->sortable()->weight('bold'),
+                Tables\Columns\TextColumn::make('expenseCategory.name')->label(__('Category'))->searchable()->badge(),
+                Tables\Columns\TextColumn::make('supplier.name')
+                    ->label(__('Supplier / Company'))
+                    ->searchable()
+                    ->formatStateUsing(fn ($state, $record) => $state ?? __('—')),
+                Tables\Columns\TextColumn::make('supplier')
+                    ->label(__('Supplier Contact'))
+                    ->state(fn (Expense $record) => $record->supplier)
+                    ->formatStateUsing(function (Expense $record): string {
+                        $supplier = $record->supplier;
+
+                        if (! $supplier) {
+                            return __('—');
+                        }
+
+                        $lines = array_filter([
+                            $supplier->contact_person ? __('Contact: ').$supplier->contact_person : null,
+                            $supplier->phone ? __('Tel: ').$supplier->phone : null,
+                            $supplier->email ? $supplier->email : null,
+                            $supplier->address ? $supplier->address : null,
+                        ]);
+
+                        return $lines !== [] ? implode('  •  ', array_values($lines)) : __('—');
+                    })
+                    ->icon('heroicon-o-phone')
+                    ->toggleable()
+                    ->wrap(),
                 Tables\Columns\TextColumn::make('amount')->money('USD')->sortable(),
                 Tables\Columns\BadgeColumn::make('status')
                     ->colors([
@@ -99,6 +183,9 @@ class ExpenseResource extends Resource
                 Tables\Columns\TextColumn::make('reference_number')->label(__('Ref #'))->toggleable(),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('expense_category_id')
+                    ->label(__('Category'))
+                    ->relationship('expenseCategory', 'name'),
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
                         'pending' => __('Pending'),

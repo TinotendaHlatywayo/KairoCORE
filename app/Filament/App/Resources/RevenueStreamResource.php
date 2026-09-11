@@ -9,7 +9,6 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Modules\Finance\Models\Account;
 use Modules\Finance\Models\RevenueStream;
 
 class RevenueStreamResource extends Resource
@@ -51,7 +50,21 @@ class RevenueStreamResource extends Resource
                             ->relationship('category', 'name')
                             ->required()
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->createOptionLabel(__('Add revenue category'))
+                            ->createOptionAction(fn (Forms\Components\Actions\Action $action) => $action
+                                ->modalHeading(__('New Revenue Category'))
+                                ->modalSubmitActionLabel(__('Save Category')))
+                            ->createOptionForm([
+                                Forms\Components\TextInput::make('name')
+                                    ->label(__('Category Name'))
+                                    ->required()
+                                    ->maxLength(255)
+                                    ->placeholder(__('e.g., Tuition, Transport, Uniform Sales')),
+                                Forms\Components\Textarea::make('description')
+                                    ->label(__('Description'))
+                                    ->columnSpanFull(),
+                            ]),
                         Forms\Components\TextInput::make('name')
                             ->required()
                             ->maxLength(255)
@@ -63,9 +76,13 @@ class RevenueStreamResource extends Resource
                             ->required(),
                         Forms\Components\Select::make('account_id')
                             ->label(__('Ledger Account Override'))
-                            ->options(Account::where('type', 'revenue')->pluck('name', 'id'))
+                            ->relationship('account', 'bank_name')
                             ->searchable()
-                            ->placeholder(__('Optional override account')),
+                            ->preload()
+                            ->placeholder(__('Optional — defaults to the school bank account')),
+                        Forms\Components\Textarea::make('notes')
+                            ->label(__('Notes'))
+                            ->placeholder(__('Payment instructions, credentials, or accounting rules for this revenue stream...')),
                         Forms\Components\Toggle::make('is_active')
                             ->default(true)
                             ->required(),
@@ -80,7 +97,7 @@ class RevenueStreamResource extends Resource
                 Tables\Columns\TextColumn::make('category.name')->label(__('Category'))->badge()->sortable(),
                 Tables\Columns\TextColumn::make('name')->searchable()->sortable()->weight('bold'),
                 Tables\Columns\TextColumn::make('default_amount')->money('USD')->sortable(),
-                Tables\Columns\TextColumn::make('account.name')->label(__('Ledger Account'))->toggleable(),
+                Tables\Columns\TextColumn::make('account.bank_name')->label(__('Bank Account'))->toggleable(),
                 Tables\Columns\IconColumn::make('is_active')->boolean()->label(__('Active')),
             ])
             ->filters([

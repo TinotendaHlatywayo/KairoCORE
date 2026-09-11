@@ -35,7 +35,7 @@ class SystemSettingsBankingTabTest extends TestCase
     public function test_banking_tab_renders_invoice_account_select(): void
     {
         $school = School::findOrFail(config('tenancy.single_tenant_id'));
-        $admin = User::where('school_id', $school->id)->where('custom_role_id', 2)->firstOrFail();
+        $admin = User::where('school_id', $school->id)->where('requested_role', 'administrator')->firstOrFail();
         $this->actingAs($admin);
 
         App::instance('current_tenant', $school);
@@ -50,7 +50,7 @@ class SystemSettingsBankingTabTest extends TestCase
     public function test_banking_tab_can_save_invoice_account_selection(): void
     {
         $school = School::findOrFail(config('tenancy.single_tenant_id'));
-        $admin = User::where('school_id', $school->id)->where('custom_role_id', 2)->firstOrFail();
+        $admin = User::where('school_id', $school->id)->where('requested_role', 'administrator')->firstOrFail();
         $this->actingAs($admin);
 
         App::instance('current_tenant', $school);

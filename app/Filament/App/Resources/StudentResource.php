@@ -169,13 +169,19 @@ class StudentResource extends Resource
                                                      ])
                                                      ->default('active')
                                                      ->required(),
-                                                  Forms\Components\Select::make('fee_waiver_id')
-                                                      ->label(__('Fee Waiver / Scholarship'))
-                                                      ->options(\Modules\Finance\Models\FeeWaiver::pluck('name', 'id'))
-                                                      ->searchable()
-                                                      ->preload()
-                                                      ->nullable()
-                                                      ->helperText(__('Apply a tuition waiver or scholarship to this student.')),
+Forms\Components\Toggle::make('apply_waiver')
+                                                      ->label(__('Apply Fee Waiver'))
+                                                      ->reactive()
+                                                      ->helperText(__('Turn on to grant this student a tuition waiver or scholarship.')),
+                                                   Forms\Components\Select::make('fee_waiver_id')
+                                                       ->label(__('Fee Waiver / Scholarship'))
+                                                       ->options(\Modules\Finance\Models\FeeWaiver::pluck('name', 'id'))
+                                                       ->searchable()
+                                                       ->preload()
+                                                       ->nullable()
+                                                       ->visible(fn (Forms\Get $get): bool => (bool) $get('apply_waiver'))
+                                                       ->required(fn (Forms\Get $get): bool => (bool) $get('apply_waiver'))
+                                                       ->helperText(__('Waivers apply to all open (unpaid) invoices and are factored into expected revenue.')),
                                               ])->columns(4),
                                      ]),
                             ]),

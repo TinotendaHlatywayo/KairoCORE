@@ -44,7 +44,7 @@ class CmsStudioThemeHubTest extends TestCase
         // The VisualCmsBuilder page is permission-gated (module: website,
         // permission: manage_pages), so tests must authenticate as the school
         // administrator (role bypasses the module permission check).
-        $this->actingAs(User::where('school_id', $this->schoolId)->where('custom_role_id', 2)->firstOrFail());
+        $this->actingAs(User::where('school_id', $this->schoolId)->where('requested_role', 'administrator')->firstOrFail());
 
         $this->live = CmsWebsite::where('school_id', $this->schoolId)->where('is_template_site', false)->firstOrFail();
 

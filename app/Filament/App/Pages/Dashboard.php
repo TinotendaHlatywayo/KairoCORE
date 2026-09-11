@@ -166,6 +166,7 @@ class Dashboard extends BaseDashboard
     protected function getFooterWidgets(): array
     {
         return [
+            \App\Filament\App\Widgets\FinanceDashboardSummaryWidget::class,
             \App\Filament\App\Widgets\UserRoleStatisticsWidget::class,
         ];
     }

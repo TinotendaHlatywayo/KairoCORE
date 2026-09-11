@@ -14,7 +14,7 @@ class ReportTemplateLivePreviewSmokeTest extends TestCase
 
     protected function adminUser(): User
     {
-        return User::where('school_id', $this->schoolId)->where('custom_role_id', 2)->firstOrFail();
+        return User::where('school_id', $this->schoolId)->where('requested_role', 'administrator')->firstOrFail();
     }
 
     protected function setUp(): void

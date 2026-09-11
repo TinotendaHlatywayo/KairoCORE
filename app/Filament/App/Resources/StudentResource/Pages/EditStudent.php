@@ -6,6 +6,7 @@ use App\Filament\App\Actions\RemoveProfilePhotoAction;
 use App\Filament\App\Resources\StudentResource;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Database\Eloquent\Model;
+use Modules\Finance\Services\FeeWaiverApplicationService;
 use Modules\Students\Models\Enrollment;
 
 class EditStudent extends EditRecord
@@ -34,7 +35,9 @@ class EditStudent extends EditRecord
             $data['roll_number'] = $currentEnrollment->roll_number;
         }
 
-        $data['fee_waiver_id'] = $student->waivers()->first()?->id;
+        $waiver = $student->waivers()->first();
+        $data['apply_waiver'] = (bool) $waiver;
+        $data['fee_waiver_id'] = $waiver?->id;
 
         return $data;
     }
@@ -45,9 +48,16 @@ class EditStudent extends EditRecord
         $courseId = $data['course_id'] ?? null;
         $sectionId = $data['section_id'] ?? null;
         $rollNumber = $data['roll_number'] ?? null;
-        $waiverId = $data['fee_waiver_id'] ?? null;
+        $waiverId = ($data['apply_waiver'] ?? false) ? ($data['fee_waiver_id'] ?? null) : null;
 
-        unset($data['academic_year_id'], $data['course_id'], $data['section_id'], $data['roll_number'], $data['fee_waiver_id']);
+        unset(
+            $data['academic_year_id'],
+            $data['course_id'],
+            $data['section_id'],
+            $data['roll_number'],
+            $data['fee_waiver_id'],
+            $data['apply_waiver']
+        );
 
         // Update core student columns
         $record->update($data);
@@ -68,42 +78,9 @@ class EditStudent extends EditRecord
             );
         }
 
-        // Update fee waiver / scholarship
-        if ($waiverId) {
-            $record->waivers()->sync([$waiverId]);
-            $waiver = \Modules\Finance\Models\FeeWaiver::find($waiverId);
-            if ($waiver) {
-                $invoice = \Modules\Finance\Models\Invoice::where('student_id', $record->id)
-                    ->where('status', '!=', 'paid')
-                    ->latest('id')
-                    ->first();
-                if ($invoice) {
-                    $subtotal = (float) $invoice->subtotal_amount;
-                    $discount = 0.00;
-                    if ($waiver->type === 'percentage') {
-                        $discount = round($subtotal * ((float) $waiver->value / 100), 2);
-                    } else {
-                        $discount = min($subtotal, (float) $waiver->value);
-                    }
-                    $invoice->update([
-                        'fee_waiver_id' => $waiver->id,
-                        'discount_amount' => $discount,
-                    ]);
-                }
-            }
-        } else {
-            $record->waivers()->detach();
-            $invoice = \Modules\Finance\Models\Invoice::where('student_id', $record->id)
-                ->where('status', '!=', 'paid')
-                ->latest('id')
-                ->first();
-            if ($invoice) {
-                $invoice->update([
-                    'fee_waiver_id' => null,
-                    'discount_amount' => 0.00,
-                ]);
-            }
-        }
+        // Apply (or remove) the waiver across ALL open invoices so every billing
+        // document and the expected revenue figures stay consistent.
+        FeeWaiverApplicationService::applyToStudent($record, $waiverId);
 
         return $record;
     }

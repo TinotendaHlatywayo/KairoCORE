@@ -100,7 +100,7 @@ trait HasCsvBulkActions
             ->icon('heroicon-o-arrow-up-tray')
             ->color('warning')
             ->modalHeading(__("Import {$title} from CSV"))
-            ->modalDescription(__('Upload your file and the system matches the columns automatically. The Match Columns step only appears when a column cannot be matched.'))
+            ->modalDescription(__('Upload your file and the system matches the columns automatically. Review the suggested mapping on the "Match Columns" step and override anything that looks wrong before importing.'))
             ->modalWidth(MaxWidth::ExtraLarge)
             ->modalSubmitActionLabel(__("Import {$title}"))
             ->steps($this->csvImportSteps($service, $streamName, $title))
@@ -110,10 +110,9 @@ trait HasCsvBulkActions
     }
 
     /**
-     * Build the import wizard steps. The Match Columns step only appears when
-     * the uploaded file has a column that cannot be matched automatically —
-     * otherwise the upload step is the only step and the user goes straight to
-     * Import.
+     * Build the import wizard steps. Step 2 (Match Columns) is always shown:
+     * the system suggests a mapping from the uploaded headers, and the user
+     * can accept it as-is or override any column manually before importing.
      */
     protected function csvImportSteps(string $service, string $streamName, string $title): array
     {
@@ -122,10 +121,40 @@ trait HasCsvBulkActions
                 ->description(__('Download the template and fill it in'))
                 ->schema(fn (Get $get): array => $this->uploadStepSchema($get, $service, $streamName, $title)),
             Forms\Components\Wizard\Step::make(__('Match Columns'))
-                ->description(__('Map your file columns to the system columns'))
-                ->visible(fn (Get $get): bool => $this->requiresColumnMatching($get, $service))
+                ->description(__('Review the auto-matched columns and override if needed'))
                 ->schema(fn (Get $get): array => $this->columnMatchingSchema($get, $service, $streamName)),
         ];
+    }
+
+    /**
+     * Whether every required column of the uploaded file was matched
+     * automatically. Used to badge the upload step as ready or not.
+     */
+    protected function requiresColumnMatching(Get $get, string $service): bool
+    {
+        $file = $get('csv_file');
+
+        if (! $file) {
+            return false;
+        }
+
+        $filePath = $service::resolveTempFilePath($file);
+        $headers = $service::readCsvHeaders($filePath);
+
+        if (empty($headers)) {
+            return true;
+        }
+
+        $guess = $service::guessMapping($headers);
+        $columns = $service::columns();
+
+        foreach ($columns as $key => $column) {
+            if (($column['required'] ?? false) && blank($guess[$key] ?? null)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** Schema for the Upload step: template download, file picker, status + progress. */
@@ -160,47 +189,13 @@ trait HasCsvBulkActions
                 ]);
         }
 
-        if (! $matchNeeded) {
-            $schema[] = Forms\Components\View::make('filament.app.components.csv-import.progress-panel')
-                ->viewData([
-                    'streamName' => $streamName,
-                    'message' => __('Click "Import" to begin — progress appears here.'),
-                ]);
-        }
+        $schema[] = Forms\Components\View::make('filament.app.components.csv-import.progress-panel')
+            ->viewData([
+                'streamName' => $streamName,
+                'message' => __('Click "Import" on the Match Columns step to begin — progress appears here.'),
+            ]);
 
         return $schema;
-    }
-
-    /**
-     * Whether the uploaded file has a column that could not be matched
-     * automatically (name-based + positional). Only then is the Match Columns
-     * step shown.
-     */
-    protected function requiresColumnMatching(Get $get, string $service): bool
-    {
-        $file = $get('csv_file');
-
-        if (! $file) {
-            return false;
-        }
-
-        $filePath = $service::resolveTempFilePath($file);
-        $headers = $service::readCsvHeaders($filePath);
-
-        if (empty($headers)) {
-            return true;
-        }
-
-        $guess = $service::guessMapping($headers);
-        $columns = $service::columns();
-
-        foreach ($columns as $key => $column) {
-            if (($column['required'] ?? false) && blank($guess[$key] ?? null)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     protected function exportCsv(string $service, string $filename): StreamedResponse

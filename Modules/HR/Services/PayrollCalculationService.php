@@ -290,7 +290,9 @@ class PayrollCalculationService
 
                     Expense::create([
                         'school_id' => $period->school_id,
+                        'expense_category_id' => $category->id,
                         'expense_type_id' => $expenseType->id,
+                        'expense_name' => 'Payroll — '.$period->name,
                         'amount' => $totalPeriodNet,
                         'expense_date' => now()->toDateString(),
                         'reference_number' => 'EXP-PAYROLL-'.$period->id.'-'.now()->timestamp,

@@ -69,6 +69,15 @@
                     <p class="text-xs font-semibold text-rose-600 dark:text-rose-400">{{ __('Outstanding Balance') }}</p>
                     <p class="mt-1 text-2xl font-extrabold text-rose-700 dark:text-rose-400">${{ number_format($totalDue, 2) }}</p>
                 </div>
+                @if($creditBalance > 0)
+                    <div class="rounded-xl border border-indigo-200 bg-indigo-50/50 p-5 shadow-sm dark:border-indigo-800 dark:bg-indigo-950/20 sm:col-span-3">
+                        <p class="text-xs font-semibold text-indigo-600 dark:text-indigo-400">{{ __('Carried Forward Credit') }}</p>
+                        <p class="mt-1 text-2xl font-extrabold text-indigo-700 dark:text-indigo-400">${{ number_format($creditBalance, 2) }}</p>
+                        <p class="mt-1 text-xs text-indigo-500 dark:text-indigo-300">
+                            {{ __('This credit comes from an overpayment you chose to keep. It will automatically be applied to your next term\'s fees.') }}
+                        </p>
+                    </div>
+                @endif
             </div>
 
             <!-- Invoices Table -->

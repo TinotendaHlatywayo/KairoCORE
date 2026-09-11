@@ -47,6 +47,7 @@ class Student extends Model
         'physical_address',
         'phone',
         'fee_waiver_id',
+        'credit_balance',
         'academic_year_id',
         'course_id',
         'section_id',
@@ -59,6 +60,7 @@ class Student extends Model
         'card_expiry_date' => 'date',
         'photo_rejected_at' => 'datetime',
         'photo_approved_at' => 'datetime',
+        'credit_balance' => 'decimal:2',
     ];
 
     public static array $levelSuffixes = [

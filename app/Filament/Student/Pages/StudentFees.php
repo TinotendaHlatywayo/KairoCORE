@@ -325,6 +325,9 @@ class StudentFees extends Page
         $totalPaid = (float) $invoices->sum('paid_amount');
         $totalDue = (float) $invoices->sum('balance_amount');
 
+        // Carried-forward credit (overpayments kept for the next term)
+        $creditBalance = (float) ($student?->credit_balance ?? 0);
+
         // School bank accounts
         $bankAccounts = $schoolId
             ? SchoolBankAccount::where('school_id', $schoolId)->where('is_active', true)->get()
@@ -359,6 +362,7 @@ class StudentFees extends Page
             'bankAccounts' => $bankAccounts,
             'bankList' => $bankList,
             'submissions' => $submissions,
+            'creditBalance' => $creditBalance,
             'search' => $this->search,
         ];
     }

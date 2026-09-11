@@ -15,6 +15,8 @@ class Expense extends Model
     protected $fillable = [
         'school_id',
         'expense_type_id',
+        'expense_category_id',
+        'expense_name',
         'supplier_id',
         'account_id',
         'amount',
@@ -33,6 +35,11 @@ class Expense extends Model
     public function expenseType()
     {
         return $this->belongsTo(ExpenseType::class);
+    }
+
+    public function expenseCategory()
+    {
+        return $this->belongsTo(ExpenseCategory::class);
     }
 
     public function supplier()

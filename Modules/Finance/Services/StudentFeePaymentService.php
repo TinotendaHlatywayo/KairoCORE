@@ -24,19 +24,22 @@ class StudentFeePaymentService
             return false;
         }
 
-        Payment::create([
-            'school_id' => $submission->school_id,
-            'invoice_id' => $invoice->id,
-            'receipt_number' => 'RCP-'.strtoupper(substr(uniqid(), -6)),
-            'reference_number' => $submission->reference_number ?? ('PAYNOW-'.$submission->id),
-            'amount' => $submission->amount,
-            'currency' => $submission->currency ?: 'USD',
-            'payment_method' => $submission->gateway === 'paynow' ? 'Ecocash' : 'bank_transfer',
-            'payment_date' => $submission->payment_date ?? now(),
-        ]);
-
-        $invoice->paid_amount = (float) $invoice->paid_amount + (float) $submission->amount;
-        $invoice->save();
+        // Overpayments on student submissions are automatically carried forward
+        // as a credit for the next term (students repay a stated amount, so a
+        // refund edge-case is not offered here).
+        PaymentSettlementService::settle(
+            $invoice,
+            (float) $submission->amount,
+            [
+                'receipt_number' => 'RCP-'.strtoupper(substr(uniqid(), -6)),
+                'reference_number' => $submission->reference_number ?? ('PAYNOW-'.$submission->id),
+                'payment_method' => $submission->gateway === 'paynow' ? 'Ecocash' : 'bank_transfer',
+                'payment_date' => $submission->payment_date ?? now(),
+                'currency' => $submission->currency ?: 'USD',
+            ],
+            PaymentSettlementService::MODE_CREDIT,
+            null,
+        );
 
         $submission->forceFill([
             'status' => StudentPaymentSubmission::STATUS_APPROVED,
