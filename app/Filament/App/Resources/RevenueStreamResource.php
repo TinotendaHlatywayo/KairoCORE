@@ -51,7 +51,6 @@ class RevenueStreamResource extends Resource
                             ->required()
                             ->searchable()
                             ->preload()
-                            ->createOptionLabel(__('Add revenue category'))
                             ->createOptionAction(fn (Forms\Components\Actions\Action $action) => $action
                                 ->modalHeading(__('New Revenue Category'))
                                 ->modalSubmitActionLabel(__('Save Category')))
