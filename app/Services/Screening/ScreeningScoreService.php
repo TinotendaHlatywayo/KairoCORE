@@ -100,47 +100,106 @@ class ScreeningScoreService
 
     /**
      * Rich result: per-subject scores + overall score.
+     *
+     * @param  array  $criteria  Optional screening criteria:
+     *                           [
+     *                               'score_basis' => 'overall'|'subjects',
+     *                               'subject_ids' => int[],
+     *                               'term_ids' => int[],
+     *                               'academic_year_ids' => int[],
+     *                           ]
      */
-    public function studentScreeningProfile(int $studentId, int $academicYearId): array
+    public function studentScreeningProfile(int $studentId, int $academicYearId, array $criteria = []): array
     {
-        $enrollmentId = $this->resolveEnrollmentId($studentId, $academicYearId);
+        $includedYears = array_values(array_filter(array_map('intval', $criteria['academic_year_ids'] ?? [])))
+            ?: [$academicYearId];
 
-        if (! $enrollmentId) {
+        $enrollmentIds = Enrollment::withoutGlobalScopes()
+            ->where('student_id', $studentId)
+            ->whereIn('academic_year_id', $includedYears)
+            ->pluck('id');
+
+        if ($enrollmentIds->isEmpty()) {
             return [
                 'enrollment_id' => null,
                 'student_id' => $studentId,
                 'academic_year_id' => $academicYearId,
+                'score_basis' => ($criteria['score_basis'] ?? 'overall') === 'subjects' ? 'subjects' : 'overall',
                 'subject_scores' => collect(),
                 'overall_score' => null,
             ];
         }
 
-        $subjectIds = AssessmentMark::query()
-            ->where('enrollment_id', $enrollmentId)
-            ->distinct()
-            ->pluck('subject_id');
+        $termIds = array_values(array_filter(array_map('intval', $criteria['term_ids'] ?? [])));
+        $basis = ($criteria['score_basis'] ?? 'overall') === 'subjects' ? 'subjects' : 'overall';
+        $subjectIds = $basis === 'subjects'
+            ? array_values(array_filter(array_map('intval', $criteria['subject_ids'] ?? [])))
+            : [];
 
-        $subjectScores = $subjectIds->mapWithKeys(function (int $subjectId) use ($enrollmentId) {
-            $subject = Subject::find($subjectId);
+        $marks = AssessmentMark::query()
+            ->whereIn('enrollment_id', $enrollmentIds)
+            ->with('assessmentType');
 
-            return [
-                $subjectId => [
-                    'subject_id' => $subjectId,
-                    'subject_name' => $subject?->name ?? "Subject #{$subjectId}",
-                    'score' => $this->subjectScore($enrollmentId, $subjectId),
-                ],
-            ];
-        });
+        if ($basis === 'subjects' && $subjectIds) {
+            $marks->whereIn('subject_id', $subjectIds);
+        }
+
+        if ($termIds) {
+            $marks->whereHas('assessmentType', function ($q) use ($termIds) {
+                $q->whereIn('term_id', $termIds);
+            });
+        }
+
+        $subjectScores = $this->subjectScoresFromMarks($marks->get());
 
         $scores = $subjectScores->pluck('score')->filter(fn (?float $score) => $score !== null);
 
         return [
-            'enrollment_id' => $enrollmentId,
+            'enrollment_id' => $enrollmentIds->first(),
             'student_id' => $studentId,
             'academic_year_id' => $academicYearId,
+            'score_basis' => $basis,
             'subject_scores' => $subjectScores,
             'overall_score' => $scores->isEmpty() ? null : round($scores->avg(), 2),
         ];
+    }
+
+    /**
+     * Build per-subject weighted scores from a pooled set of assessment marks.
+     */
+    protected function subjectScoresFromMarks(Collection $marks): Collection
+    {
+        return $marks->groupBy('subject_id')->mapWithKeys(function ($subjectMarks, $subjectId) {
+            $subject = Subject::find((int) $subjectId);
+
+            $weightedPct = 0.0;
+            $weightTotal = 0.0;
+
+            foreach ($subjectMarks as $mark) {
+                $type = $mark->assessmentType;
+
+                if (! $type || $type->max_mark <= 0 || $type->weight_percentage <= 0) {
+                    continue;
+                }
+
+                $pct = $this->percentage($mark->marks_obtained, $type);
+
+                if ($pct === null) {
+                    continue;
+                }
+
+                $weightedPct += $pct * $type->weight_percentage;
+                $weightTotal += $type->weight_percentage;
+            }
+
+            return [
+                (int) $subjectId => [
+                    'subject_id' => (int) $subjectId,
+                    'subject_name' => $subject?->name ?? "Subject #{$subjectId}",
+                    'score' => $weightTotal <= 0 ? null : round($weightedPct / $weightTotal, 2),
+                ],
+            ];
+        });
     }
 
     /**
