@@ -4,10 +4,10 @@ namespace App\Filament\Admin\Resources;
 
 use App\Filament\Admin\Resources\SchoolResource\Pages;
 use App\Filament\Admin\Resources\SchoolResource\RelationManagers\UsersRelationManager;
-use App\Jobs\SeedSchoolDemoDataJob;
 use App\Models\School;
 use App\Models\User;
 use App\Services\AccountActivationService;
+use App\Services\SchoolApprovalService;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -270,35 +270,9 @@ class SchoolResource extends Resource
                     ->visible(fn (School $record) => $record->status === 'pending')
                     ->requiresConfirmation()
                     ->action(function (School $record) {
-                        $adminUser = $record->users()
-                            ->where('requested_role', 'administrator')
-                            ->where('account_status', User::STATUS_PENDING)
-                            ->first() ?? $record->users()->where('account_status', User::STATUS_PENDING)->first();
-
-                        $token = null;
-                        if ($adminUser) {
-                            // Issued via the secure account-activation service:
-                            // single-use, expires after 48 hours, cryptographically random.
-                            $token = app(AccountActivationService::class)->issueAndSend($adminUser);
-
-                            $adminUser->forceFill([
-                                'approved_by' => auth()->id(),
-                                'approved_at' => now(),
-                            ])->save();
-                        }
-
-                        $record->update([
-                            'status' => 'pending', // Still pending — becomes 'active' when the contact completes activation
-                            'trial_ends_at' => now()->addMonths(3),
-                        ]);
-
-                        // Demo data (if the applicant opted in) is generated in
-                        // the background now, while the school awaits activation.
-                        // This gives the slow seeder time to finish before the
-                        // new admin logs in, without blocking this approval click.
-                        if ($record->has_dummy_data && $record->seed_status !== 'seeded') {
-                            SeedSchoolDemoDataJob::dispatch($record->id);
-                        }
+                        $result = app(SchoolApprovalService::class)->approve($record);
+                        $adminUser = $result['admin_user'];
+                        $token = $result['token'];
 
                         if (! $adminUser || ! $token) {
                             Notification::make()
