@@ -18,8 +18,6 @@ class ExpenseAnalyticsWidget extends BaseWidget
         }
 
         $totalExpenses = (float) Expense::where('school_id', $schoolId)->sum('amount');
-        $paidExpenses = (float) Expense::where('school_id', $schoolId)->where('status', 'paid')->sum('amount');
-        $pendingExpenses = (float) Expense::where('school_id', $schoolId)->where('status', 'pending')->sum('amount');
 
         // Highest single expense
         $highestExpense = Expense::where('school_id', $schoolId)->orderByDesc('amount')->first();
@@ -44,10 +42,6 @@ class ExpenseAnalyticsWidget extends BaseWidget
                 ->description(__('All registered operating & procurement expenses'))
                 ->descriptionIcon('heroicon-m-receipt-refund')
                 ->color('danger'),
-            Stat::make(__('Paid vs Pending'), __('Paid: $%s | Pending: $%s', [number_format($paidExpenses, 2), number_format($pendingExpenses, 2)]))
-                ->description(__('Status breakdown of expense ledger'))
-                ->descriptionIcon('heroicon-m-wallet')
-                ->color('warning'),
             Stat::make(__('Highest Expense'), $highestText)
                 ->description(__('Largest single disbursement recorded'))
                 ->descriptionIcon('heroicon-m-arrow-trending-up')
