@@ -73,6 +73,10 @@ class RevenueStreamResource extends Resource
                             ->prefix('$')
                             ->default(0)
                             ->required(),
+                        Forms\Components\DatePicker::make('created_at')
+                            ->label(__('Creation Date'))
+                            ->default(now())
+                            ->required(),
                         Forms\Components\Select::make('account_id')
                             ->label(__('Ledger Account Override'))
                             ->relationship('account', 'bank_name')
