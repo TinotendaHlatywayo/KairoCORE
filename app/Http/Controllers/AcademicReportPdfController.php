@@ -185,10 +185,35 @@ class AcademicReportPdfController extends Controller
 
             // Resolve Student Enrollment
             $enrollment = null;
-            if ($student && $year) {
-                $enrollment = Enrollment::where('student_id', $student->id)
-                    ->where('academic_year_id', $year->id)
-                    ->first();
+            if ($student) {
+                if ($report->academic_year_id) {
+                    $enrollment = Enrollment::withoutGlobalScopes()
+                        ->where('student_id', $student->id)
+                        ->where('academic_year_id', $report->academic_year_id)
+                        ->first();
+                }
+                if (! $enrollment && $year) {
+                    $enrollment = Enrollment::withoutGlobalScopes()
+                        ->where('student_id', $student->id)
+                        ->where('academic_year_id', $year->id)
+                        ->first();
+                }
+                if (! $enrollment) {
+                    $enrollment = Enrollment::withoutGlobalScopes()
+                        ->where('student_id', $student->id)
+                        ->orderByDesc('id')
+                        ->first();
+                }
+            }
+
+            if (! $section && $enrollment) {
+                $section = $enrollment->section;
+            }
+            if (! $course && $section) {
+                $course = $section->course;
+            }
+            if (! $year && $enrollment) {
+                $year = $enrollment->academicYear;
             }
 
             $compiledSubjects = [];

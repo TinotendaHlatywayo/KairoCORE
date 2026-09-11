@@ -21,6 +21,13 @@
             position: relative;
             box-sizing: border-box;
             overflow: hidden;
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
+        @media print {
+            body { width: 100%; margin: 0; padding: 0; }
+            .report-card-page { width: 100% !important; max-width: 100% !important; height: auto !important; page-break-after: always; }
         }
 
         /* THEMES */
