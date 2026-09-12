@@ -25,13 +25,11 @@
             position: relative;
             box-sizing: border-box;
             overflow: hidden;
-            width: 100% !important;
-            max-width: 100% !important;
         }
 
         @media print {
             body { width: 100%; margin: 0; padding: 0; }
-            .report-card-page { width: 100% !important; max-width: 100% !important; height: auto !important; page-break-after: always; }
+            .report-card-page { height: auto !important; page-break-after: always; }
         }
 
         /* THEMES */
@@ -160,6 +158,14 @@
             $pageWidthMm = $isLandscape ? 297 : 210;
             $pageHeightMm = $isLandscape ? 210 : 297;
 
+            // Dompdf ignores `box-sizing: border-box` and adds padding/border
+            // on top of `width`. So instead of `width: 100%` we give the card an
+            // explicit width equal to page width minus margins and borders, so
+            // the outer (border-box) edges land exactly on the page edge and no
+            // content bleeds off the right side.
+            $borderWmm = round($borderW * 0.264583, 4);
+            $cardWidthMm = round($pageWidthMm - (2 * $marginH) - (2 * $borderWmm), 4);
+
             $includedAssessmentIds = $cfg['included_assessments'] ?? [];
             $assessmentTypes = \Modules\Academics\Models\AssessmentType::whereIn('id', $includedAssessmentIds)->get();
 
@@ -175,10 +181,9 @@
                     color: {{ $cfg['body_text_color'] ?? '#1e293b' }};
                     line-height: {{ $lineSpacing }};
                     box-sizing: border-box;
-                    width: 100%;
-                    max-width: 100%;
+                    width: {{ $cardWidthMm }}mm;
+                    margin: 0 auto;
                     padding: {{ $marginV }}mm {{ $marginH }}mm;
-                    margin: 0;
                     border: {{ $borderW }}px solid {{ $borderC }};
                     --header-color: {{ $accentColor }};
                     --table-header-bg: {{ $cfg['table_header_bg'] ?? '#f1f5f9' }};">
