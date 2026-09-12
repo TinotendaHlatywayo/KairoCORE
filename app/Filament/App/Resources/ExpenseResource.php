@@ -56,7 +56,6 @@ class ExpenseResource extends Resource
                             ->required()
                             ->searchable()
                             ->preload()
-                            ->createOptionLabel(__('Add expense category'))
                             ->createOptionAction(fn (Forms\Components\Actions\Action $action) => $action
                                 ->modalHeading(__('New Expense Category'))
                                 ->modalSubmitActionLabel(__('Save Category')))
@@ -83,7 +82,6 @@ class ExpenseResource extends Resource
                             ->searchable()
                             ->preload()
                             ->placeholder(__('Optional supplier'))
-                            ->createOptionLabel(__('Add supplier'))
                             ->createOptionAction(fn (Forms\Components\Actions\Action $action) => $action
                                 ->modalHeading(__('New Supplier / Vendor'))
                                 ->modalSubmitActionLabel(__('Save Supplier')))
