@@ -414,6 +414,41 @@ Forms\Components\Toggle::make('apply_waiver')
                                 'ids' => implode(',', $ids),
                             ]);
                         }),
+                    Tables\Actions\BulkAction::make('downloadFinancialHistory')
+                        ->label(__('Download Financial History'))
+                        ->icon('heroicon-o-book-open')
+                        ->color('info')
+                        ->form([
+                            Forms\Components\Select::make('scope')
+                                ->label(__('History Period'))
+                                ->options([
+                                    'term' => __('Current Term (This Year)'),
+                                    'full' => __('Whole Financial History (from Enrolment)'),
+                                ])
+                                ->default('term')
+                                ->required(),
+                            Forms\Components\Select::make('format')
+                                ->label(__('Output Format'))
+                                ->options([
+                                    'pdf' => __('Single Combined PDF'),
+                                    'zip' => __('ZIP Archive (Individual PDFs)'),
+                                    'csv' => __('CSV'),
+                                ])
+                                ->default('pdf')
+                                ->required(),
+                        ])
+                        ->action(function (Collection $records, array $data) {
+                            $scope = $data['scope'] ?? 'full';
+                            $format = $data['format'] ?? 'pdf';
+                            $mode = $format === 'zip' ? 'zip' : 'combined';
+
+                            return redirect()->route('finance.students.history.bulk', [
+                                'ids' => $records->pluck('id')->join(','),
+                                'scope' => $scope,
+                                'format' => $format,
+                                'mode' => $mode,
+                            ]);
+                        }),
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ])

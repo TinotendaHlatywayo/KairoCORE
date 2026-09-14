@@ -353,6 +353,175 @@ class FinanceDocumentController extends Controller
     }
 
     /**
+     * Prints an individual student's financial history (from enrolment), or a
+     * filtered window scoped via year_id / term_id / start / end query params.
+     */
+    public function printStudentFinancialHistory(Request $request, $id)
+    {
+        $school = app('current_tenant');
+        $student = Student::withoutTenantScope()->findOrFail($id);
+
+        if ((int) $student->school_id !== (int) $school->id) {
+            abort(403);
+        }
+
+        $scope = $request->query('scope', 'active_year');
+        $start = $request->query('start');
+        $end = $request->query('end');
+        $yearId = $scope === 'full' ? null : $request->query('year_id');
+        $termId = $scope === 'term' ? $request->query('term_id') : null;
+
+        $dates = \Modules\Finance\Services\StudentFinancialHistoryService::scopeDates($school->id, $yearId, $termId, $start, $end);
+
+        $ledger = \Modules\Finance\Services\StudentFinancialHistoryService::buildLedger($student, $dates['start'], $dates['end']);
+
+        $pdf = Pdf::loadView('modules.finance.student-financial-history-pdf', [
+            'student' => $student,
+            'school' => $school,
+            'ledger' => $ledger,
+            'scopeLabel' => $dates['label'],
+            'config' => BillingDocumentSettingsService::get(),
+            'template' => FinanceDocumentTemplate::resolveFor($school->id, 'statement'),
+        ])->setPaper('a4', 'portrait');
+
+        $safeAdmission = str_replace(['/', '\\'], '_', $student->admission_number);
+
+        return $pdf->stream("Financial_History_{$safeAdmission}.pdf");
+    }
+
+    /**
+     * Bulk downloads financial history for many students at once. Query params:
+     * ids (csv of student ids), scope (term|full), format (pdf|csv), and for
+     * pdf mode: combined|zip.
+     */
+    public function bulkStudentFinancialHistory(Request $request)
+    {
+        $idsString = $request->query('ids');
+        if (! $idsString) {
+            return redirect()->back()->with('error', 'No students selected.');
+        }
+
+        $ids = explode(',', $idsString);
+        $format = $request->query('format', 'pdf');
+        $scope = $request->query('scope', 'full');
+        $school = app('current_tenant');
+
+        $start = $end = null;
+        $scopeLabel = 'Entire history (from enrolment)';
+
+        if ($scope === 'term') {
+            $term = Term::withoutTenantScope()
+                ->where('school_id', $school->id)
+                ->with('academicYear')
+                ->whereHas('academicYear', fn ($q) => $q->where('is_active', true))
+                ->where('is_active', true)
+                ->first();
+
+            if ($term) {
+                $start = $term->start_date?->copy()?->startOfDay();
+                $end = $term->end_date?->copy()?->endOfDay();
+                $scopeLabel = ucwords(strtolower((string) $term->name)).' — '.($term->academicYear?->name ?? '');
+            }
+        }
+
+        $students = Student::withoutTenantScope()
+            ->with(['currentEnrollment.course', 'currentEnrollment.section'])
+            ->whereIn('id', $ids)
+            ->get();
+
+        if ($students->isEmpty()) {
+            return redirect()->back()->with('error', 'No matching students found.');
+        }
+
+        $config = BillingDocumentSettingsService::get();
+        $template = FinanceDocumentTemplate::resolveFor($school->id, 'statement');
+
+        if ($format === 'csv') {
+            $rows = [];
+            $rows[] = ['Student Financial History — '.$scopeLabel];
+            $rows[] = [];
+
+            foreach ($students as $student) {
+                $ledger = \Modules\Finance\Services\StudentFinancialHistoryService::buildLedger($student, $start, $end);
+
+                $rows[] = ['STUDENT', $student->full_name];
+                $rows[] = ['Admission No.', $student->admission_number];
+                $rows[] = ['Class', trim(($student->currentEnrollment?->course?->name ?? '').' '.($student->currentEnrollment?->section?->name ?? ''))];
+                $rows[] = ['Enrolled', $student->admission_date?->toDateString()];
+                $rows[] = [];
+                $rows[] = ['Date', 'Description', 'Receipt', 'Reference', 'Method', 'Debit ($)', 'Credit ($)', 'Balance ($)', 'Received By'];
+
+                foreach ($ledger['rows'] as $row) {
+                    $rows[] = [
+                        ($row['date'] instanceof \Carbon\Carbon ? $row['date']->toDateString() : ''),
+                        $row['description'],
+                        $row['receipt'] ?? '',
+                        $row['reference'] ?? '',
+                        $row['method'] ?? '',
+                        number_format($row['debit'], 2, '.', ''),
+                        number_format($row['credit'], 2, '.', ''),
+                        number_format($row['running_balance'], 2, '.', ''),
+                        $row['received_by'] ?? '',
+                    ];
+                }
+
+                $rows[] = ['Opening Balance', number_format($ledger['opening_balance'], 2)];
+                $rows[] = ['Closing Balance', number_format($ledger['closing_balance'], 2)];
+                $rows[] = [];
+            }
+
+            $filename = 'Financial_Histories_'.now()->format('Ymd_His').'.csv';
+
+            return response()->streamDownload(function () use ($rows) {
+                $out = fopen('php://output', 'w');
+                fwrite($out, "\xEF\xBB\xBF");
+                foreach ($rows as $row) {
+                    fputcsv($out, $row);
+                }
+                fclose($out);
+            }, $filename, ['Content-Type' => 'text/csv']);
+        }
+
+        $histories = [];
+        foreach ($students as $student) {
+            $ledger = \Modules\Finance\Services\StudentFinancialHistoryService::buildLedger($student, $start, $end);
+            $histories[] = [
+                'student' => $student,
+                'school' => $school,
+                'ledger' => $ledger,
+                'scopeLabel' => $scopeLabel,
+                'config' => $config,
+                'template' => $template,
+            ];
+        }
+
+        if ($request->query('mode', 'combined') === 'zip') {
+            $zip = new ZipArchive;
+            $zipFileName = storage_path('app/public/Financial_Histories_Archive_'.time().'.zip');
+
+            if ($zip->open($zipFileName, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
+                foreach ($histories as $history) {
+                    $pdf = Pdf::loadView('modules.finance.student-financial-history-pdf', $history)->setPaper('a4', 'portrait');
+                    $safeName = str_replace(['/', '\\'], '_', $history['student']->admission_number);
+                    $zip->addFromString('Financial_History_'.$safeName.'.pdf', $pdf->output());
+                }
+                $zip->close();
+
+                return response()->download($zipFileName, 'Financial_Histories_Archive.zip')->deleteFileAfterSend(true);
+            }
+
+            return response()->json(['error' => 'Failed to build ZIP archive.'], 500);
+        }
+
+        $pdf = Pdf::loadView('modules.finance.student-financial-history-bulk-pdf', [
+            'school' => $school,
+            'histories' => $histories,
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->stream('Bulk_Financial_Histories.pdf');
+    }
+
+    /**
      * Prints the Fee Structure sheet
      */
     public function printFeeStructure($termId)

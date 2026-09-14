@@ -42,6 +42,7 @@ class PaymentSettlementService
                 Payment::create([
                     'school_id' => $invoice->school_id,
                     'bank_account_id' => $bankAccountId,
+                    'received_by_id' => $attributes['received_by_id'] ?? auth()->id(),
                     'invoice_id' => $invoice->id,
                     'receipt_number' => $attributes['receipt_number'] ?? 'RCP-'.mt_rand(10000, 99999),
                     'reference_number' => $attributes['reference_number'] ?? null,
@@ -77,6 +78,7 @@ class PaymentSettlementService
                 Payment::create([
                     'school_id' => $invoice->school_id,
                     'bank_account_id' => $bankAccount?->id,
+                    'received_by_id' => $attributes['received_by_id'] ?? auth()->id(),
                     'invoice_id' => $invoice->id,
                     'receipt_number' => 'REF-'.mt_rand(10000, 99999),
                     'reference_number' => ($attributes['reference_number'] ?? 'REFUND').'-REF',

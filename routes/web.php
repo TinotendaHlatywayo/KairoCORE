@@ -409,6 +409,10 @@ Route::middleware(['tenant', 'auth', 'throttle:rate_limit:exports'])->group(func
         ->name('structure.pdf');
     Route::get('/documents/finance/bulk-invoices/pdf', [FinanceDocumentController::class, 'bulkGenerate'])
         ->name('invoices.bulk-pdf');
+    Route::get('/documents/finance/students/{student}/history/pdf', [FinanceDocumentController::class, 'printStudentFinancialHistory'])
+        ->name('finance.student.history.pdf');
+    Route::get('/documents/finance/students/history/bulk', [FinanceDocumentController::class, 'bulkStudentFinancialHistory'])
+        ->name('finance.students.history.bulk');
 
     // Student & application documents
     Route::get('/documents/students/{student}/documents/{document}/download', [DocumentDownloadController::class, 'studentDocument'])
