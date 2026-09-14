@@ -61,7 +61,14 @@ class AuditHub extends Page
     {
         $last = session('nav.last.administration.'.$this->getCategoryLabel());
         $pages = $this->getCategoryPages();
-        $target = $last ?: ($pages[0]['url'] ?? null);
+
+        if (empty($pages)) {
+            return;
+        }
+
+        $validUrls = collect($pages)->pluck('url')->all();
+        $target = in_array($last, $validUrls, true) ? $last : ($pages[0]['url'] ?? null);
+
         if ($target && $target !== request()->url()) {
             redirect($target);
         }

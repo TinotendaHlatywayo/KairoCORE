@@ -4,6 +4,8 @@ namespace App\Filament\App\Resources\StudentResource\Pages;
 
 use App\Filament\App\Resources\StudentResource;
 use App\Services\AdmissionNotificationService;
+use App\Services\RosterAccountProvisioningService;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
 use Modules\Students\Models\Enrollment;
@@ -43,5 +45,26 @@ class CreateStudent extends CreateRecord
         app(AdmissionNotificationService::class)->send($student, $parentEmail, $student->school_id);
 
         return $student;
+    }
+
+    protected function afterCreate(): void
+    {
+        parent::afterCreate();
+
+        $user = app(RosterAccountProvisioningService::class)->provisionStudent($this->record);
+
+        if ($user) {
+            Notification::make()
+                ->title(__('Portal account created'))
+                ->body(__('An activation email was sent to').' '.$user->email.'.')
+                ->success()
+                ->send();
+        } elseif (blank($this->record->getRawOriginal('email'))) {
+            Notification::make()
+                ->title(__('No portal account created'))
+                ->body(__('Add an email address to this student to create their portal account and send the activation email.'))
+                ->warning()
+                ->send();
+        }
     }
 }

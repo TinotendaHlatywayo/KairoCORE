@@ -8,6 +8,7 @@ use App\Filament\App\Concerns\ModulePermissionAccess;
 use App\Filament\Imports\EmployeeImporter;
 use App\Services\Csv\EmployeeCsvService;
 use App\Services\ProfilePhotoService;
+use App\Services\RosterAccountProvisioningService;
 use Filament\Actions;
 use Filament\Actions\ImportAction;
 use Filament\Forms;
@@ -695,6 +696,27 @@ class ListEmployees extends ListRecords
 class CreateEmployee extends CreateRecord
 {
     protected static string $resource = EmployeeResource::class;
+
+    protected function afterCreate(): void
+    {
+        parent::afterCreate();
+
+        $user = app(RosterAccountProvisioningService::class)->provisionEmployee($this->record);
+
+        if ($user) {
+            Notification::make()
+                ->title(__('Portal account ready'))
+                ->body(__('An activation email was sent to').' '.$user->email.'.')
+                ->success()
+                ->send();
+        } elseif (blank($this->record->email)) {
+            Notification::make()
+                ->title(__('No portal account created'))
+                ->body(__('Add an email address to this employee to create their portal account and send the activation email.'))
+                ->warning()
+                ->send();
+        }
+    }
 }
 class EditEmployee extends EditRecord
 {

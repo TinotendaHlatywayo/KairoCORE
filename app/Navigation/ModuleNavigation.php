@@ -21,11 +21,14 @@ use App\Filament\App\Pages\CommunicationCenter;
 use App\Filament\App\Pages\EmailConfigurationPage;
 use App\Filament\App\Pages\Exams\AssessmentCenterHub;
 use App\Filament\App\Pages\Exams\GradingMarksHub;
+use App\Filament\App\Pages\Exams\PortalReportsPublisher;
 use App\Filament\App\Pages\Exams\ReportsPublishingHub;
 use App\Filament\App\Pages\ExecutiveFinancialDashboard;
 use App\Filament\App\Pages\Finance\CoreAccountingHub;
 use App\Filament\App\Pages\Finance\ExpensesPurchasingHub;
+use App\Filament\App\Pages\Finance\FeeCollectionsPage;
 use App\Filament\App\Pages\Finance\StudentBillingHub;
+use App\Filament\App\Pages\Finance\StudentFinancialHistoryPage;
 use App\Filament\App\Pages\Health\HealthRecordsHub;
 use App\Filament\App\Pages\Hr\AttendanceLeaveHub;
 use App\Filament\App\Pages\Hr\PayrollCompensationHub;
@@ -37,6 +40,7 @@ use App\Filament\App\Pages\IssueBook;
 use App\Filament\App\Pages\Knowledge\KnowledgeHub;
 use App\Filament\App\Pages\Library\CatalogueHub;
 use App\Filament\App\Pages\Library\CirculationHub;
+use App\Filament\App\Pages\Lms\LmsHub;
 use App\Filament\App\Pages\MyDay;
 use App\Filament\App\Pages\ReportingDashboard;
 use App\Filament\App\Pages\Reports\ReportsHub;
@@ -50,13 +54,11 @@ use App\Filament\App\Pages\Website\WebsiteTemplatesHub;
 use App\Filament\App\Pages\WebsiteContentManager;
 use App\Filament\App\Resources\AcademicReportResource;
 use App\Filament\App\Resources\AcademicYearResource;
-use App\Filament\App\Resources\AccountResource;
 use App\Filament\App\Resources\AnnouncementResource;
 use App\Filament\App\Resources\ApplicationResource;
 use App\Filament\App\Resources\AssessmentMarkResource;
 use App\Filament\App\Resources\AssessmentTypeResource;
 use App\Filament\App\Resources\AssessmentWorkflowResource;
-use App\Filament\App\Pages\Exams\PortalReportsPublisher;
 use App\Filament\App\Resources\CampusResourceResource;
 use App\Filament\App\Resources\CardTemplateResource;
 use App\Filament\App\Resources\ChatThreadResource;
@@ -72,9 +74,7 @@ use App\Filament\App\Resources\DisciplinaryCaseResource;
 use App\Filament\App\Resources\EmployeeAssetResource;
 use App\Filament\App\Resources\EmployeeResource;
 use App\Filament\App\Resources\EventCalendarResource;
-use App\Filament\App\Resources\ExpenseCategoryResource;
 use App\Filament\App\Resources\ExpenseResource;
-use App\Filament\App\Resources\ExpenseTypeResource;
 use App\Filament\App\Resources\FeeCategoryResource;
 use App\Filament\App\Resources\FeePaymentSubmissionResource;
 use App\Filament\App\Resources\FeeStructureResource;
@@ -91,21 +91,18 @@ use App\Filament\App\Resources\HostelOutPassResource;
 use App\Filament\App\Resources\HostelResource;
 use App\Filament\App\Resources\HostelRoomResource;
 use App\Filament\App\Resources\InvoiceResource;
-use App\Filament\App\Resources\JournalEntryResource;
 use App\Filament\App\Resources\LeaveRequestResource;
 use App\Filament\App\Resources\PayrollPeriodResource;
 use App\Filament\App\Resources\PlatformInboxResource;
 use App\Filament\App\Resources\PollResource;
 use App\Filament\App\Resources\PromotionRunResource;
-use App\Filament\App\Resources\PromotionWorkflowResource;
 use App\Filament\App\Resources\QuestionBankResource;
-use App\Filament\App\Resources\ScreeningRunResource;
 use App\Filament\App\Resources\ReportTemplateResource;
-use App\Filament\App\Resources\RevenueCategoryResource;
 use App\Filament\App\Resources\RevenueStreamResource;
 use App\Filament\App\Resources\SaaSMySubscriptionResource;
 use App\Filament\App\Resources\SalaryGradeResource;
 use App\Filament\App\Resources\SchoolBankAccountResource;
+use App\Filament\App\Resources\ScreeningRunResource;
 use App\Filament\App\Resources\StaffAttendanceResource;
 use App\Filament\App\Resources\StaffLoanResource;
 use App\Filament\App\Resources\StockAdjustmentResource;
@@ -114,7 +111,6 @@ use App\Filament\App\Resources\StudentResource;
 use App\Filament\App\Resources\SubjectResource;
 use App\Filament\App\Resources\SystemAuditLogResource;
 use App\Filament\App\Resources\TeacherAssignmentResource;
-
 use App\Filament\App\Resources\UserAccountResource;
 use Modules\Inventory\Filament\Resources\AssetMaintenanceResource;
 use Modules\Inventory\Filament\Resources\GoodsReceivedResource;
@@ -126,7 +122,6 @@ use Modules\Inventory\Filament\Resources\SupplierResource;
 use Modules\Knowledge\Filament\Resources\KnowledgeAssetResource;
 use Modules\Knowledge\Filament\Resources\KnowledgeGalleryResource;
 use Modules\Library\Filament\Resources\EResourceResource;
-use Modules\Library\Filament\Resources\LibraryBookResource;
 /**
  * Central registry of the application's information architecture.
  *
@@ -138,6 +133,7 @@ use Modules\Library\Filament\Resources\LibraryBookResource;
  * and active-state detection are always derived from the live application
  * rather than hard-coded strings.
  */
+use Modules\Library\Filament\Resources\LibraryBookResource;
 use Modules\Library\Filament\Resources\LibraryIssueResource;
 
 class ModuleNavigation
@@ -230,6 +226,8 @@ class ModuleNavigation
                     ['label' => __('Fee Categories'), 'resource' => FeeCategoryResource::class, 'group' => __('Student Billing & Revenue')],
                     ['label' => __('Fee Structures'), 'resource' => FeeStructureResource::class, 'group' => __('Student Billing & Revenue')],
                     ['label' => __('Invoices'), 'resource' => InvoiceResource::class, 'group' => __('Student Billing & Revenue')],
+                    ['label' => __('Fee Collections'), 'page' => FeeCollectionsPage::class, 'group' => __('Student Billing & Revenue')],
+                    ['label' => __('Student Financial History'), 'page' => StudentFinancialHistoryPage::class, 'group' => __('Student Billing & Revenue')],
                     ['label' => __('Payment Proofs'), 'resource' => FeePaymentSubmissionResource::class, 'group' => __('Student Billing & Revenue')],
                     ['label' => __('Fee Waivers'), 'resource' => FeeWaiverResource::class, 'group' => __('Student Billing & Revenue')],
                     ['label' => __('Expenses & Purchasing'), 'page' => ExpensesPurchasingHub::class, 'group' => __('Expenses & Purchasing'), 'hub' => true],
@@ -361,10 +359,10 @@ class ModuleNavigation
                 'label' => __('LMS'),
                 'icon' => 'heroicon-o-play-circle',
                 'description' => __('Homework and online learning activities.'),
-                'landing' => \App\Filament\App\Pages\Lms\LmsHub::class,
+                'landing' => LmsHub::class,
                 'tabs' => [
                     ['label' => __('Homework'), 'resource' => HomeworkResource::class, 'group' => __('LMS')],
-                    ['label' => __('Homework & Lessons'), 'page' => \App\Filament\App\Pages\Lms\LmsHub::class, 'group' => __('LMS'), 'hub' => true],
+                    ['label' => __('Homework & Lessons'), 'page' => LmsHub::class, 'group' => __('LMS'), 'hub' => true],
                 ],
                 'more' => [],
             ],

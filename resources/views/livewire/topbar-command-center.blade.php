@@ -263,13 +263,13 @@
                     @if ($this->showNotificationHistory)
                         {{-- History filters: category + age window --}}
                         <div class="sc-cc-filter-bar">
-                            <select wire:model.live="historyCategory" class="sc-cc-filter-select" aria-label="{{ __('Filter by type') }}">
+                            <select wire:model.change="historyCategory" class="sc-cc-filter-select" aria-label="{{ __('Filter by type') }}">
                                 <option value="all">{{ __('All types') }}</option>
                                 <option value="chat">{{ __('Chat messages') }}</option>
                                 <option value="registration">{{ __('Registrations') }}</option>
                                 <option value="system">{{ __('System & tasks') }}</option>
                             </select>
-                            <select wire:model.live="historyDays" class="sc-cc-filter-select" aria-label="{{ __('Filter by period') }}">
+                            <select wire:model.change="historyDays" class="sc-cc-filter-select" aria-label="{{ __('Filter by period') }}">
                                 <option value="7">{{ __('Last 7 days') }}</option>
                                 <option value="14">{{ __('Last 14 days') }}</option>
                                 <option value="30">{{ __('Last 30 days') }}</option>

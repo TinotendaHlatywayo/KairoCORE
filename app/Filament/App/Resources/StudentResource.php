@@ -4,7 +4,11 @@ namespace App\Filament\App\Resources;
 
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Filament\App\Resources\StudentResource\Pages;
+use App\Filament\Student\Pages\StudentProfile;
+use App\Models\User;
+use App\Notifications\ProfilePhotoRejectedNotification;
 use App\Services\ModuleVisibilityManager;
+use App\Services\ProfilePhotoService;
 use Filament\Forms;
 use Filament\Forms\Components\Tabs\Tab;
 use Filament\Forms\Form;
@@ -17,6 +21,7 @@ use Modules\Academics\Models\AcademicYear;
 use Modules\Academics\Models\Course;
 use Modules\Academics\Models\Section;
 use Modules\Admin\Services\PermissionRegistry;
+use Modules\Finance\Models\FeeWaiver;
 use Modules\Students\Models\Student;
 
 class StudentResource extends Resource
@@ -88,17 +93,22 @@ class StudentResource extends Resource
                                                 Forms\Components\DatePicker::make('date_of_birth')
                                                     ->required()
                                                     ->maxDate(now()),
-                                                 Forms\Components\TextInput::make('national_id')
-                                                     ->label(__('National ID'))
-                                                     ->placeholder(__('e.g., 63-123456A78')),
-                                                 Forms\Components\TextInput::make('phone')
-                                                     ->label(__('Contact Number'))
-                                                     ->tel()
-                                                     ->placeholder(__('e.g., +263 77 123 4567')),
-                                                 Forms\Components\Textarea::make('physical_address')
-                                                     ->label(__('Physical Address'))
-                                                     ->placeholder(__('e.g., 14 Links Lane, Borrowdale, Harare'))
-                                                     ->columnSpanFull(),
+                                                Forms\Components\TextInput::make('national_id')
+                                                    ->label(__('National ID'))
+                                                    ->placeholder(__('e.g., 63-123456A78')),
+                                                Forms\Components\TextInput::make('phone')
+                                                    ->label(__('Contact Number'))
+                                                    ->tel()
+                                                    ->placeholder(__('e.g., +263 77 123 4567')),
+                                                Forms\Components\TextInput::make('email')
+                                                    ->label(__('Email Address'))
+                                                    ->email()
+                                                    ->helperText(__('Used for the student portal account and activation emails.'))
+                                                    ->placeholder(__('e.g., tendai.moyo@example.com')),
+                                                Forms\Components\Textarea::make('physical_address')
+                                                    ->label(__('Physical Address'))
+                                                    ->placeholder(__('e.g., 14 Links Lane, Borrowdale, Harare'))
+                                                    ->columnSpanFull(),
                                             ])->columns(2),
 
                                         Forms\Components\Section::make(__('Photo'))
@@ -160,30 +170,30 @@ class StudentResource extends Resource
                                                 Forms\Components\DatePicker::make('admission_date')
                                                     ->default(now())
                                                     ->required(),
-                                                 Forms\Components\Select::make('status')
-                                                     ->options([
-                                                         'active' => __('Active'),
-                                                         'inactive' => __('Inactive'),
-                                                         'suspended' => __('Suspended'),
-                                                         'graduated' => __('Graduated'),
-                                                     ])
-                                                     ->default('active')
-                                                     ->required(),
-Forms\Components\Toggle::make('apply_waiver')
-                                                      ->label(__('Apply Fee Waiver'))
-                                                      ->reactive()
-                                                      ->helperText(__('Turn on to grant this student a tuition waiver or scholarship.')),
-                                                   Forms\Components\Select::make('fee_waiver_id')
-                                                       ->label(__('Fee Waiver / Scholarship'))
-                                                       ->options(\Modules\Finance\Models\FeeWaiver::pluck('name', 'id'))
-                                                       ->searchable()
-                                                       ->preload()
-                                                       ->nullable()
-                                                       ->visible(fn (Forms\Get $get): bool => (bool) $get('apply_waiver'))
-                                                       ->required(fn (Forms\Get $get): bool => (bool) $get('apply_waiver'))
-                                                       ->helperText(__('Waivers apply to all open (unpaid) invoices and are factored into expected revenue.')),
-                                              ])->columns(4),
-                                     ]),
+                                                Forms\Components\Select::make('status')
+                                                    ->options([
+                                                        'active' => __('Active'),
+                                                        'inactive' => __('Inactive'),
+                                                        'suspended' => __('Suspended'),
+                                                        'graduated' => __('Graduated'),
+                                                    ])
+                                                    ->default('active')
+                                                    ->required(),
+                                                Forms\Components\Toggle::make('apply_waiver')
+                                                    ->label(__('Apply Fee Waiver'))
+                                                    ->reactive()
+                                                    ->helperText(__('Turn on to grant this student a tuition waiver or scholarship.')),
+                                                Forms\Components\Select::make('fee_waiver_id')
+                                                    ->label(__('Fee Waiver / Scholarship'))
+                                                    ->options(FeeWaiver::pluck('name', 'id'))
+                                                    ->searchable()
+                                                    ->preload()
+                                                    ->nullable()
+                                                    ->visible(fn (Forms\Get $get): bool => (bool) $get('apply_waiver'))
+                                                    ->required(fn (Forms\Get $get): bool => (bool) $get('apply_waiver'))
+                                                    ->helperText(__('Waivers apply to all open (unpaid) invoices and are factored into expected revenue.')),
+                                            ])->columns(4),
+                                    ]),
                             ]),
 
                         Tab::make(__('Enrollment'))
@@ -191,24 +201,24 @@ Forms\Components\Toggle::make('apply_waiver')
                                 Forms\Components\Section::make(__('Current Enrollment'))
                                     ->description(__('Assign the student to a form / grade and stream for the active academic year.'))
                                     ->schema([
-                                         Forms\Components\Select::make('academic_year_id')
-                                             ->label(__('Academic Year'))
-                                             ->options(AcademicYear::pluck('name', 'id'))
-                                             ->required()
-                                             ->default(fn () => AcademicYear::where('is_active', true)->first()?->id),
-                                         Forms\Components\Select::make('course_id')
-                                             ->label(__('Form / Grade (Level)'))
-                                             ->options(Course::pluck('name', 'id'))
-                                             ->required()
-                                             ->live(),
-                                         Forms\Components\Select::make('section_id')
-                                             ->label(__('Stream / Class'))
-                                             ->options(fn (Forms\Get $get) => Section::where('course_id', $get('course_id'))->pluck('name', 'id'))
-                                             ->required()
-                                             ->live(),
-                                         Forms\Components\TextInput::make('roll_number')
-                                             ->label(__('Roll Number'))
-                                             ->numeric(),
+                                        Forms\Components\Select::make('academic_year_id')
+                                            ->label(__('Academic Year'))
+                                            ->options(AcademicYear::pluck('name', 'id'))
+                                            ->required()
+                                            ->default(fn () => AcademicYear::where('is_active', true)->first()?->id),
+                                        Forms\Components\Select::make('course_id')
+                                            ->label(__('Form / Grade (Level)'))
+                                            ->options(Course::pluck('name', 'id'))
+                                            ->required()
+                                            ->live(),
+                                        Forms\Components\Select::make('section_id')
+                                            ->label(__('Stream / Class'))
+                                            ->options(fn (Forms\Get $get) => Section::where('course_id', $get('course_id'))->pluck('name', 'id'))
+                                            ->required()
+                                            ->live(),
+                                        Forms\Components\TextInput::make('roll_number')
+                                            ->label(__('Roll Number'))
+                                            ->numeric(),
                                     ])->columns(2),
                             ]),
 
@@ -249,11 +259,30 @@ Forms\Components\Toggle::make('apply_waiver')
                 Tables\Columns\TextColumn::make('first_name')
                     ->label(__('Name'))
                     ->searchable(query: function (Builder $query, string $search) {
-                        return $query->where(function ($q) use ($search) {
-                            $q->where('first_name', 'like', "%{$search}%")
-                              ->orWhere('last_name', 'like', "%{$search}%")
-                              ->orWhere('admission_number', 'like', "%{$search}%")
-                              ->orWhere('student_id_number', 'like', "%{$search}%");
+                        $terms = preg_split('/\s+/', trim($search)) ?: [];
+
+                        if (count($terms) <= 1) {
+                            return $query->where(function ($q) use ($search) {
+                                $q->where('first_name', 'like', "%{$search}%")
+                                    ->orWhere('last_name', 'like', "%{$search}%")
+                                    ->orWhere('admission_number', 'like', "%{$search}%")
+                                    ->orWhere('student_id_number', 'like', "%{$search}%");
+                            });
+                        }
+
+                        // Multi-word "character search": every typed word is a
+                        // partial match against either name (or the ID numbers),
+                        // so "Tendai Moyo" and even a misspelt "Tenday Moyo"
+                        // still find the student.
+                        return $query->where(function ($q) use ($terms) {
+                            foreach ($terms as $term) {
+                                $q->where(function ($qq) use ($term) {
+                                    $qq->where('first_name', 'like', "%{$term}%")
+                                        ->orWhere('last_name', 'like', "%{$term}%")
+                                        ->orWhere('admission_number', 'like', "%{$term}%")
+                                        ->orWhere('student_id_number', 'like', "%{$term}%");
+                                });
+                            }
                         });
                     })
                     ->sortable()
@@ -357,27 +386,27 @@ Forms\Components\Toggle::make('apply_waiver')
                     ->modalDescription(__('The photo will be removed and the default placeholder will be used. The student will be notified and asked to upload a new passport-style photo. You can add a note explaining why it was removed.'))
                     ->modalSubmitActionLabel(__('Remove Photo'))
                     ->form([
-                                                Forms\Components\Textarea::make('reason')
-                                                    ->label(__('Reason'))
-                                                    ->placeholder(__('e.g. Photo was blurry / not a clear single face'))
-                                                    ->rows(3)
-                                                    ->maxLength(500)
-                                                    ->required(),
+                        Forms\Components\Textarea::make('reason')
+                            ->label(__('Reason'))
+                            ->placeholder(__('e.g. Photo was blurry / not a clear single face'))
+                            ->rows(3)
+                            ->maxLength(500)
+                            ->required(),
                     ])
                     ->action(function (array $data, Student $record) {
-                        app(\App\Services\ProfilePhotoService::class)->rejectPhoto(
+                        app(ProfilePhotoService::class)->rejectPhoto(
                             $record,
                             $data['reason'] ?? null,
                             'photo_path'
                         );
 
                         if ($record->user_id) {
-                            $user = \App\Models\User::find($record->user_id);
+                            $user = User::find($record->user_id);
                             if ($user) {
-                                $user->notify(new \App\Notifications\ProfilePhotoRejectedNotification(
+                                $user->notify(new ProfilePhotoRejectedNotification(
                                     subject: __('Your profile photo was removed'),
                                     reason: $data['reason'] ?? null,
-                                    url: \App\Filament\Student\Pages\StudentProfile::getUrl(panel: 'student'),
+                                    url: StudentProfile::getUrl(panel: 'student'),
                                 ));
                             }
                         }
@@ -412,41 +441,6 @@ Forms\Components\Toggle::make('apply_waiver')
 
                             return redirect()->route('students.download-pngs', [
                                 'ids' => implode(',', $ids),
-                            ]);
-                        }),
-                    Tables\Actions\BulkAction::make('downloadFinancialHistory')
-                        ->label(__('Download Financial History'))
-                        ->icon('heroicon-o-book-open')
-                        ->color('info')
-                        ->form([
-                            Forms\Components\Select::make('scope')
-                                ->label(__('History Period'))
-                                ->options([
-                                    'term' => __('Current Term (This Year)'),
-                                    'full' => __('Whole Financial History (from Enrolment)'),
-                                ])
-                                ->default('term')
-                                ->required(),
-                            Forms\Components\Select::make('format')
-                                ->label(__('Output Format'))
-                                ->options([
-                                    'pdf' => __('Single Combined PDF'),
-                                    'zip' => __('ZIP Archive (Individual PDFs)'),
-                                    'csv' => __('CSV'),
-                                ])
-                                ->default('pdf')
-                                ->required(),
-                        ])
-                        ->action(function (Collection $records, array $data) {
-                            $scope = $data['scope'] ?? 'full';
-                            $format = $data['format'] ?? 'pdf';
-                            $mode = $format === 'zip' ? 'zip' : 'combined';
-
-                            return redirect()->route('finance.students.history.bulk', [
-                                'ids' => $records->pluck('id')->join(','),
-                                'scope' => $scope,
-                                'format' => $format,
-                                'mode' => $mode,
                             ]);
                         }),
                     Tables\Actions\DeleteBulkAction::make(),

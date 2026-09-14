@@ -2,13 +2,11 @@
 
 namespace App\Services;
 
+use App\Models\School;
 use App\Services\Csv\CsvBulkService;
 use Carbon\Carbon;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
-use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Modules\Academics\Models\AcademicYear;
 use Modules\Academics\Models\Course;
 use Modules\Academics\Models\Section;
@@ -27,6 +25,12 @@ class StudentCsvService extends CsvBulkService
     public static function columns(): array
     {
         return [
+            'student_id_number' => [
+                'label' => __('Student ID'),
+                'required' => false,
+                'guesses' => ['Student ID', 'Student Id', 'Student No', 'Student Number', 'ID', 'Admission No', 'Admission Number'],
+                'example' => '',
+            ],
             'first_name' => [
                 'label' => __('First Name'),
                 'required' => true,
@@ -78,13 +82,13 @@ class StudentCsvService extends CsvBulkService
                 'label' => __('Form / Grade'),
                 'required' => true,
                 'guesses' => ['Form / Grade', 'Form', 'Grade', 'Level', 'Course', 'Class Level'],
-                'example' => 'Form 1',
+                'example' => 'Grade 1',
             ],
             'section' => [
                 'label' => __('Stream / Class'),
                 'required' => true,
-                'guesses' => ['Stream / Class', 'Stream', 'Class', 'Section'],
-                'example' => 'Form 1A',
+                'guesses' => ['Stream / Class', 'Stream', 'Class', 'Section', 'Class Stream'],
+                'example' => 'A',
             ],
             'academic_year' => [
                 'label' => __('Academic Year'),
@@ -122,8 +126,26 @@ class StudentCsvService extends CsvBulkService
             'parent_email' => [
                 'label' => __('Parent / Guardian Email'),
                 'required' => false,
-                'guesses' => ['Parent / Guardian Email', 'Parent Email', 'Guardian Email', 'Email'],
+                'guesses' => ['Parent / Guardian Email', 'Parent Email', 'Guardian Email'],
                 'example' => 'parent@example.com',
+            ],
+            'email' => [
+                'label' => __('Email Address'),
+                'required' => false,
+                'guesses' => ['Email Address', 'Student Email', 'Email', 'E-Mail', 'E-Mail Address'],
+                'example' => 'tendai.moyo@example.com',
+            ],
+            'phone' => [
+                'label' => __('Phone Number'),
+                'required' => false,
+                'guesses' => ['Phone Number', 'Phone', 'Telephone', 'Mobile Number', 'Contact Number'],
+                'example' => '+263 771 234 567',
+            ],
+            'physical_address' => [
+                'label' => __('Physical Address'),
+                'required' => false,
+                'guesses' => ['Physical Address', 'Home Address', 'Address', 'Residential Address'],
+                'example' => '14 Links Lane, Borrowdale, Harare',
             ],
             'emergency_contact_name' => [
                 'label' => __('Emergency Contact Name'),
@@ -148,15 +170,51 @@ class StudentCsvService extends CsvBulkService
 
     public static function templateHeaders(): array
     {
-        return array_column(static::columns(), 'label');
+        $schoolType = self::currentSchoolType();
+        $isPrimary = in_array($schoolType, ['primary', 'both'], true);
+
+        return collect(static::columns())
+            ->map(fn (array $column): string => static::templateLabelFor($column, $isPrimary))
+            ->values()
+            ->all();
+    }
+
+    protected static function templateLabelFor(array $column, bool $isPrimary): string
+    {
+        $label = $column['label'];
+
+        if ($isPrimary) {
+            $label = match ($label) {
+                'Form / Grade' => 'Grade',
+                'Stream / Class' => 'Class / Stream',
+                default => $label,
+            };
+        }
+
+        return $label;
+    }
+
+    protected static function currentSchoolType(): string
+    {
+        $schoolId = current_tenant()?->id;
+
+        if (! $schoolId) {
+            return 'secondary';
+        }
+
+        return strtolower((string) (School::find($schoolId)->institution_type ?? 'secondary'));
     }
 
     public static function templateCsv(): string
     {
+        $schoolType = self::currentSchoolType();
+        $isPrimary = in_array($schoolType, ['primary', 'both'], true);
         $out = fopen('php://temp', 'r+');
-        fwrite($out, "\xEF\xBB\xBF"); // UTF-8 BOM so Excel opens it cleanly
-        fputcsv($out, static::templateHeaders());
-        fputcsv($out, array_column(static::columns(), 'example'));
+        fwrite($out, "\xEF\xBB\xBF");
+        fputcsv($out, static::templateHeaders(), escape: '\\');
+
+        $example = static::templateExampleRow($isPrimary);
+        fputcsv($out, $example, escape: '\\');
         rewind($out);
         $csv = stream_get_contents($out);
         fclose($out);
@@ -164,14 +222,81 @@ class StudentCsvService extends CsvBulkService
         return $csv;
     }
 
+    protected static function templateExampleRow(bool $isPrimary): array
+    {
+        [$course, $stream] = static::resolveExampleCourseAndSection($isPrimary);
+        $year = static::resolveExampleAcademicYear();
+
+        return [
+            '', 'Tendai', 'Moyo', 'female', '2013-05-14', '2026-01-12', '', 'active',
+            $course, $stream, $year, '12', 'Nelson', 'day_scholar', 'O+',
+            'parent@example.com', 'tendai.moyo@example.com', '+263 771 234 567',
+            '14 Links Lane, Borrowdale, Harare', 'Mercy Moyo', '+263 771 234 567', 'Asthmatic',
+        ];
+    }
+
+    /**
+     * Choose a real course + section from the tenant school (preferring the
+     * school-type prefix, e.g. "Grade" for primary / "Form" for secondary) so
+     * the downloaded template can be imported end-to-end as-is. Falls back to
+     * the generic defaults when the school has no matching course yet.
+     *
+     * @return array{0: string, 1: string} [course name, section name]
+     */
+    protected static function resolveExampleCourseAndSection(bool $isPrimary): array
+    {
+        $schoolId = current_tenant()?->id;
+        $defaultCourse = $isPrimary ? 'Grade 1' : 'Form 1';
+        $needle = $isPrimary ? 'grade' : 'form';
+
+        if (! $schoolId) {
+            return [$defaultCourse, 'A'];
+        }
+
+        $course = Course::withoutTenantScope()->where('school_id', $schoolId)->get()
+            ->first(fn (Course $course): bool => str_contains(strtolower($course->name), $needle));
+
+        if (! $course) {
+            return [$defaultCourse, 'A'];
+        }
+
+        $section = Section::withoutTenantScope()
+            ->where('school_id', $schoolId)
+            ->where('course_id', $course->id)
+            ->orderBy('name')
+            ->value('name') ?? 'A';
+
+        return [$course->name, $section];
+    }
+
+    /** Active academic year first, then any built year, then the current calendar year. */
+    protected static function resolveExampleAcademicYear(): string
+    {
+        $schoolId = current_tenant()?->id;
+
+        if ($schoolId) {
+            $year = AcademicYear::where('school_id', $schoolId)
+                ->orderByDesc('is_active')
+                ->orderByDesc('start_date')
+                ->value('name');
+
+            if ($year) {
+                return $year;
+            }
+        }
+
+        return (string) now()->year;
+    }
+
     public static function exportHeaders(): array
     {
         return [
             'Student ID', 'Admission Number', 'National ID', 'First Name', 'Last Name',
             'Gender', 'Date of Birth', 'Admission Date', 'Status',
-            'Form / Grade', 'Stream / Class', 'Academic Year', 'Roll Number',
+            'Grade', 'Class / Stream', 'Academic Year', 'Roll Number',
             'House', 'Boarding Status', 'Blood Group',
-            'Parent / Guardian Email', 'Emergency Contact Name', 'Emergency Contact Phone',
+            'Parent / Guardian Email', 'Email Address', 'Phone Number', 'Physical Address',
+            'Emergency Contact Name', 'Emergency Contact Phone',
             'Medical Notes', 'Guardian Name', 'Guardian Phone', 'Guardian Email',
         ];
     }
@@ -199,6 +324,9 @@ class StudentCsvService extends CsvBulkService
             $student->boarding_status,
             $student->blood_group,
             $student->parent_email,
+            $student->email,
+            $student->phone,
+            $student->physical_address,
             $student->emergency_contact_name,
             $student->emergency_contact_phone,
             $student->medical_notes,
@@ -232,68 +360,6 @@ class StudentCsvService extends CsvBulkService
         } while (true);
     }
 
-    public static function resolveTempFilePath(string|TemporaryUploadedFile|array $file): string
-    {
-        if (is_array($file)) {
-            $file = Arr::first($file);
-        }
-
-        if ($file instanceof TemporaryUploadedFile) {
-            return $file->getRealPath();
-        }
-
-        $disk = config('livewire.temporary_file_upload.disk') ?: config('filesystems.default');
-
-        return Storage::disk($disk)->path($file);
-    }
-
-    /** Read the header row of an uploaded CSV (BOM-safe). */
-    public static function readCsvHeaders(string $filePath): array
-    {
-        if (! is_readable($filePath)) {
-            return [];
-        }
-
-        $handle = fopen($filePath, 'r');
-
-        if ($handle === false) {
-            return [];
-        }
-
-        $line = fgets($handle);
-        fclose($handle);
-
-        if ($line === false) {
-            return [];
-        }
-
-        $line = preg_replace('/^\xEF\xBB\xBF/', '', $line);
-        $headers = str_getcsv(trim($line), escape: '\\');
-
-        return array_map('trim', array_map('strval', $headers ?: []));
-    }
-
-    /** Auto-match each expected column to the closest matching CSV header. */
-    public static function guessMapping(array $csvHeaders): array
-    {
-        $lowerHeaders = array_map('strtolower', $csvHeaders);
-        $mapping = [];
-
-        foreach (static::columns() as $key => $column) {
-            $guesses = array_map('strtolower', $column['guesses']);
-            $mapping[$key] = null;
-
-            foreach ($lowerHeaders as $i => $lowerHeader) {
-                if (in_array($lowerHeader, $guesses, true)) {
-                    $mapping[$key] = $csvHeaders[$i];
-                    break;
-                }
-            }
-        }
-
-        return $mapping;
-    }
-
     /**
      * Synchronously import a CSV into students + enrollments for a school.
      * Valid rows are saved; invalid rows are reported per-row with exact messages.
@@ -312,7 +378,7 @@ class StudentCsvService extends CsvBulkService
 
         $headerIndex = [];
         foreach ($csvHeaders as $i => $header) {
-            $headerIndex[strtolower($header)] = $i;
+            $headerIndex[static::normaliseHeader($header)] = $i;
         }
 
         $mappedIndexes = [];
@@ -322,7 +388,7 @@ class StudentCsvService extends CsvBulkService
 
                 continue;
             }
-            $mappedIndexes[$key] = $headerIndex[strtolower($header)] ?? null;
+            $mappedIndexes[$key] = $headerIndex[static::normaliseHeader($header)] ?? null;
         }
 
         $handle = fopen($filePath, 'r');
@@ -331,7 +397,7 @@ class StudentCsvService extends CsvBulkService
             throw new \RuntimeException('Could not open the CSV file.');
         }
 
-        fgets($handle); // skip header row
+        static::skipHeaderBlock($handle); // skip header row
 
         $total = 0;
         while (fgetcsv($handle, 0, ',', escape: '\\') !== false) {
@@ -339,7 +405,7 @@ class StudentCsvService extends CsvBulkService
         }
 
         rewind($handle);
-        fgets($handle); // skip header row again
+        static::skipHeaderBlock($handle); // skip header row again
 
         $courses = Course::withoutTenantScope()->where('school_id', $schoolId)->get()
             ->keyBy(fn (Course $c): string => strtolower(trim($c->name)));
@@ -355,6 +421,13 @@ class StudentCsvService extends CsvBulkService
             ->where('school_id', $schoolId)
             ->whereNotNull('national_id')
             ->pluck('national_id')
+            ->map(fn ($v): string => strtolower(trim((string) $v)))
+            ->flip();
+
+        $existingStudentIds = Student::withoutTenantScope()
+            ->where('school_id', $schoolId)
+            ->whereNotNull('student_id_number')
+            ->pluck('student_id_number')
             ->map(fn ($v): string => strtolower(trim((string) $v)))
             ->flip();
 
@@ -380,7 +453,7 @@ class StudentCsvService extends CsvBulkService
                 continue;
             }
 
-            $errors = static::validateAndNormalize($data, $courses, $sectionsByCourse, $academicYears, $activeAcademicYear, $existingNationalIds);
+            $errors = static::validateAndNormalize($data, $courses, $sectionsByCourse, $academicYears, $activeAcademicYear, $existingNationalIds, $existingStudentIds);
 
             if (! empty($errors)) {
                 $failures[] = ['row' => $rowNumber, 'errors' => $errors, 'data' => $data];
@@ -390,7 +463,7 @@ class StudentCsvService extends CsvBulkService
             }
 
             try {
-                DB::transaction(function () use (&$existingNationalIds, $data, $schoolId) {
+                DB::transaction(function () use (&$existingNationalIds, &$existingStudentIds, $data, $schoolId) {
                     $course = $data['_course'];
                     $section = $data['_section'];
                     $year = $data['_academic_year'];
@@ -398,9 +471,13 @@ class StudentCsvService extends CsvBulkService
                     $suffix = Student::$levelSuffixes[$course->name] ?? 'X';
                     $admissionDate = $data['admission_date'] !== '' ? $data['admission_date'] : now()->toDateString();
 
+                    $studentId = $data['student_id_number'] !== ''
+                        ? $data['student_id_number']
+                        : static::generateStudentIdNumber($schoolId, Carbon::parse($admissionDate), $suffix);
+
                     $student = Student::create([
                         'school_id' => $schoolId,
-                        'student_id_number' => static::generateStudentIdNumber($schoolId, Carbon::parse($admissionDate), $suffix),
+                        'student_id_number' => $studentId,
                         'national_id' => $data['national_id'] !== '' ? $data['national_id'] : null,
                         'first_name' => $data['first_name'],
                         'last_name' => $data['last_name'],
@@ -412,6 +489,9 @@ class StudentCsvService extends CsvBulkService
                         'boarding_status' => $data['boarding_status'] !== '' ? $data['boarding_status'] : 'day_scholar',
                         'blood_group' => $data['blood_group'] !== '' ? $data['blood_group'] : null,
                         'parent_email' => $data['parent_email'] !== '' ? $data['parent_email'] : null,
+                        'email' => $data['email'] !== '' ? $data['email'] : null,
+                        'phone' => $data['phone'] !== '' ? $data['phone'] : null,
+                        'physical_address' => $data['physical_address'] !== '' ? $data['physical_address'] : null,
                         'emergency_contact_name' => $data['emergency_contact_name'] !== '' ? $data['emergency_contact_name'] : null,
                         'emergency_contact_phone' => $data['emergency_contact_phone'] !== '' ? $data['emergency_contact_phone'] : null,
                         'medical_notes' => $data['medical_notes'] !== '' ? $data['medical_notes'] : null,
@@ -428,6 +508,10 @@ class StudentCsvService extends CsvBulkService
 
                     if (filled($student->national_id)) {
                         $existingNationalIds[strtolower(trim($student->national_id))] = true;
+                    }
+
+                    if (filled($student->student_id_number)) {
+                        $existingStudentIds[strtolower(trim($student->student_id_number))] = true;
                     }
                 });
 
@@ -461,11 +545,13 @@ class StudentCsvService extends CsvBulkService
         Collection $academicYears,
         ?AcademicYear $activeAcademicYear,
         Collection $existingNationalIds,
+        Collection $existingStudentIds,
     ): array {
         $errors = [];
 
         $data['first_name'] = trim($data['first_name'] ?? '');
         $data['last_name'] = trim($data['last_name'] ?? '');
+        $data['student_id_number'] = trim($data['student_id_number'] ?? '');
         $data['national_id'] = trim($data['national_id'] ?? '');
         $data['course'] = trim($data['course'] ?? '');
         $data['section'] = trim($data['section'] ?? '');
@@ -473,6 +559,9 @@ class StudentCsvService extends CsvBulkService
         $data['roll_number'] = trim($data['roll_number'] ?? '');
         $data['house'] = trim($data['house'] ?? '');
         $data['parent_email'] = trim($data['parent_email'] ?? '');
+        $data['email'] = trim($data['email'] ?? '');
+        $data['phone'] = trim($data['phone'] ?? '');
+        $data['physical_address'] = trim($data['physical_address'] ?? '');
         $data['emergency_contact_name'] = trim($data['emergency_contact_name'] ?? '');
         $data['emergency_contact_phone'] = trim($data['emergency_contact_phone'] ?? '');
         $data['medical_notes'] = trim($data['medical_notes'] ?? '');
@@ -507,6 +596,14 @@ class StudentCsvService extends CsvBulkService
 
         if ($data['parent_email'] !== '' && filter_var($data['parent_email'], FILTER_VALIDATE_EMAIL) === false) {
             $errors[] = 'Parent / Guardian Email ['.$data['parent_email'].'] is not a valid email address.';
+        }
+
+        if ($data['email'] !== '' && filter_var($data['email'], FILTER_VALIDATE_EMAIL) === false) {
+            $errors[] = 'Email Address ['.$data['email'].'] is not a valid email address.';
+        }
+
+        if ($data['email'] !== '' && $data['parent_email'] !== '' && mb_strtolower($data['email']) === mb_strtolower($data['parent_email'])) {
+            $errors[] = 'Email Address must differ from Parent / Guardian Email.';
         }
 
         foreach (['date_of_birth', 'admission_date'] as $dateField) {
@@ -570,6 +667,10 @@ class StudentCsvService extends CsvBulkService
             $errors[] = 'National ID ['.$data['national_id'].'] is already registered for a student in this school.';
         }
 
+        if ($data['student_id_number'] !== '' && isset($existingStudentIds[strtolower($data['student_id_number'])])) {
+            $errors[] = 'Student ID ['.$data['student_id_number'].'] is already registered for a student in this school.';
+        }
+
         $data['_course'] = $course;
         $data['_section'] = $section;
         $data['_academic_year'] = $year;
@@ -577,13 +678,13 @@ class StudentCsvService extends CsvBulkService
         return $errors;
     }
 
-    /** Replicates the Student model's R-YY-XXXXXXX-letter scheme with the correct level suffix. */
+    /** Replicates the Student model's R-YY-XXXX-letter scheme with the correct level suffix. */
     protected static function generateStudentIdNumber(int $schoolId, Carbon $admissionDate, string $suffix): string
     {
         $yearYY = $admissionDate->format('y');
 
         do {
-            $randomMiddle = mt_rand(1000000, 9999999);
+            $randomMiddle = mt_rand(1000, 9999);
             $candidate = "R{$yearYY}{$randomMiddle}{$suffix}";
         } while (Student::withoutTenantScope()->where('school_id', $schoolId)->where('student_id_number', $candidate)->exists());
 

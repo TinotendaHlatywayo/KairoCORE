@@ -10,7 +10,6 @@ use Illuminate\Foundation\Testing\Concerns\InteractsWithDatabase;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Livewire\Livewire;
 use Modules\Academics\Models\AcademicYear;
@@ -182,7 +181,7 @@ class StudentCsvActionsTest extends TestCase
         $this->assertTrue(true);
     }
 
-public function test_import_wizard_submit_streams_progress_and_creates_students()
+    public function test_import_wizard_submit_streams_progress_and_creates_students()
     {
         [$school, $user] = $this->tenantUser();
 
@@ -271,5 +270,90 @@ public function test_import_wizard_submit_streams_progress_and_creates_students(
         Student::where('school_id', $school->id)
             ->where('first_name', 'like', 'RenderTest%')
             ->forceDelete();
+    }
+
+    public function test_template_headers_and_example_row_follow_school_type()
+    {
+        [$school, $user] = $this->tenantUser();
+        $savedType = $school->institution_type;
+
+        try {
+            $school->forceFill(['institution_type' => 'primary'])->save();
+            app()->instance('current_tenant', $school);
+
+            $primaryCsv = StudentCsvService::templateCsv();
+            $this->assertStringContainsString('Grade,"Class / Stream"', $primaryCsv);
+            $this->assertStringNotContainsString('Form / Grade', $primaryCsv);
+
+            // The example row resolves the school's real Grade 1 course and one
+            // of its existing sections, so a fresh template imports as-is.
+            $this->assertStringContainsString('"Grade 1"', $primaryCsv);
+            $this->assertStringContainsString('North', $primaryCsv);
+            $this->assertStringNotContainsString('63-123456A78', $primaryCsv);
+
+            $school->forceFill(['institution_type' => 'secondary'])->save();
+            app()->instance('current_tenant', $school);
+
+            $secondaryCsv = StudentCsvService::templateCsv();
+            $this->assertStringContainsString('"Form / Grade","Stream / Class"', $secondaryCsv);
+            $this->assertStringContainsString('"Form 1"', $secondaryCsv);
+            $this->assertStringNotContainsString('"Class / Stream"', $secondaryCsv);
+        } finally {
+            $school->forceFill(['institution_type' => $savedType])->save();
+            app()->instance('current_tenant', $school);
+        }
+    }
+
+    public function test_downloaded_template_round_trips_through_import()
+    {
+        [$school, $user] = $this->tenantUser();
+        $savedType = $school->institution_type;
+
+        try {
+            $school->forceFill(['institution_type' => 'primary'])->save();
+            app()->instance('current_tenant', $school);
+
+            $csv = StudentCsvService::templateCsv();
+            $path = tempnam(sys_get_temp_dir(), 'roundtrip');
+            file_put_contents($path, $csv);
+
+            $headers = StudentCsvService::readCsvHeaders($path);
+            $map = StudentCsvService::guessMapping($headers);
+
+            $this->assertSame('Grade', $map['course'], 'course auto-matched');
+            $this->assertSame('Class / Stream', $map['section'], 'section auto-matched');
+
+            $before = Student::where('school_id', $school->id)->count();
+
+            $result = StudentCsvService::import($path, $school->id, $map);
+
+            $this->assertSame(1, $result['success'], 'the template example row imports');
+            $this->assertCount(0, $result['failures'], 'no failures on a fresh template');
+
+            $created = Student::withoutGlobalScopes()
+                ->where('school_id', $school->id)
+                ->where('first_name', 'Tendai')
+                ->where('last_name', 'Moyo')
+                ->orderByDesc('id')
+                ->first();
+
+            $this->assertNotNull($created, 'the example student was created');
+            $this->assertSame('Grade 1', $created->currentEnrollment?->course?->name);
+            $this->assertSame('2026', $created->currentEnrollment?->academicYear?->name);
+
+            // Downloaded template has no national ID, so a second identical
+            // import must not trip the unique national-id check.
+            $second = StudentCsvService::import($path, $school->id, $map);
+            $this->assertSame(1, $second['success'], 'template is re-importable');
+
+            Student::where('school_id', $school->id)
+                ->where('first_name', 'Tendai')
+                ->where('last_name', 'Moyo')
+                ->forceDelete();
+        } finally {
+            @unlink($path ?? null);
+            $school->forceFill(['institution_type' => $savedType])->save();
+            app()->instance('current_tenant', $school);
+        }
     }
 }
