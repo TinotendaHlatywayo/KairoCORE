@@ -7,7 +7,6 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 use Modules\Finance\Models\Expense;
 use Modules\Finance\Models\Invoice;
 use Modules\Finance\Models\Payment;
-use Modules\Finance\Models\SchoolBankAccount;
 use Modules\Students\Models\Student;
 
 /**
@@ -39,23 +38,7 @@ class FinanceDashboardSummaryWidget extends BaseWidget
 
         $studentCredits = (float) Student::where('school_id', $schoolId)->sum('credit_balance');
 
-        $bank = SchoolBankAccount::where('school_id', $schoolId)->first();
-        if (! $bank) {
-            $bank = SchoolBankAccount::create([
-                'school_id' => $schoolId,
-                'bank_name' => 'Stanbic Bank Zimbabwe',
-                'account_name' => 'School Operating Account',
-                'account_number' => '9140001234567',
-                'branch_code' => '02',
-                'balance' => max(0, 5000.00 + $net),
-                'is_active' => true,
-                'is_default' => true,
-            ]);
-        }
-        $bankBalance = (float) SchoolBankAccount::where('school_id', $schoolId)->sum('balance');
-        if ($bankBalance <= 0) {
-            $bankBalance = max(0, 5000.00 + $net);
-        }
+        $bankBalance = max(0, $net);
 
         return [
             Stat::make(__('Total Revenue Collected'), '$'.number_format($totalRevenue, 2))
