@@ -32,9 +32,13 @@ class SchoolRegisteredNotification extends Notification
     {
         $branding = email_branding(); // platform identity
 
+        $workspaceUrl = $this->workspaceUrl();
+
         $rows = [
             __('Institution') => $this->school->name,
-            __('Workspace') => ($this->school->subdomain ?? '—'),
+            __('Workspace') => $workspaceUrl !== null
+                ? '<a href="'.e($workspaceUrl).'" style="color:#059669;text-decoration:none;">'.e((string) ($this->school->subdomain ?? '—')).'</a>'
+                : ($this->school->subdomain ?? '—'),
             __('Country') => ($this->school->country ?? '—'),
             __('Address') => ($this->school->physical_address ?? '—'),
             __('Phone') => ($this->school->phone ?? '—'),
@@ -58,17 +62,39 @@ class SchoolRegisteredNotification extends Notification
                 'introLines' => [
                     __('A new institution has just registered on Kairo CORE and is waiting for your review.'),
                     collect($rows)
-                        ->map(fn ($v, $k) => '<strong>'.e($k).':</strong> '.e((string) $v))
+                        ->map(fn ($v, $k) => '<strong>'.e($k).':</strong> '.$v)
                         ->implode('<br>'),
                 ],
                 'actionUrl' => $this->reviewUrl(),
                 'actionText' => __('Review & approve institution'),
-                'outroLines' => [
+                'outroLines' => array_filter([
+                    $workspaceUrl !== null
+                        ? __('You can visit the institution workspace at: <a href=":url" style="color:#059669;text-decoration:none;">:url</a>.', ['url' => e($workspaceUrl)])
+                        : null,
                     __('Approving the institution emails the contact an activation link so they can set up their administrator account.'),
-                ],
+                ]),
                 'signature' => __('The ').platform_name().__(' Platform Team'),
                 'footerNote' => __('You received this alert because you are a platform administrator.'),
             ]));
+    }
+
+    /**
+     * The public workspace URL for the registered school's subdomain.
+     */
+    protected function workspaceUrl(): ?string
+    {
+        if (blank($this->school->subdomain)) {
+            return null;
+        }
+
+        $host = parse_url(config('app.url'), PHP_URL_HOST);
+        if (blank($host)) {
+            return null;
+        }
+
+        $scheme = request()->secure() ? 'https' : (parse_url(config('app.url'), PHP_URL_SCHEME) ?: 'https');
+
+        return $scheme.'://'.$this->school->subdomain.'.'.$host;
     }
 
     public function toArray(object $notifiable): array
@@ -93,7 +119,7 @@ class SchoolRegisteredNotification extends Notification
     protected function reviewUrl(): string
     {
         try {
-            return SchoolResource::getUrl('edit', ['record' => $this->school]);
+            return SchoolResource::getUrl('edit', ['record' => $this->school], true, 'admin');
         } catch (\Throwable $e) {
             return route('marketing.home');
         }
