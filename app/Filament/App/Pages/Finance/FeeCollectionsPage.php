@@ -5,6 +5,7 @@ namespace App\Filament\App\Pages\Finance;
 use Carbon\Carbon;
 use Filament\Pages\Page;
 use Modules\Finance\Services\StudentFinancialHistoryService;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class FeeCollectionsPage extends Page
 {
@@ -17,6 +18,8 @@ class FeeCollectionsPage extends Page
     protected static ?string $navigationLabel = 'Fee Collections';
 
     protected static ?int $navigationSort = 5;
+
+    protected static bool $shouldRegisterNavigation = false;
 
     protected static ?string $slug = 'fee-collections';
 
@@ -92,7 +95,7 @@ class FeeCollectionsPage extends Page
         ];
     }
 
-    public function downloadCsv(): \Symfony\Component\HttpFoundation\StreamedResponse
+    public function downloadCsv(): StreamedResponse
     {
         $schoolId = current_tenant()?->id ?? auth()->user()?->school_id;
         $range = $this->resolveRange();

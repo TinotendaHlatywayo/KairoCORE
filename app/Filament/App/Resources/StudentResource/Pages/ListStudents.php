@@ -8,7 +8,6 @@ use App\Services\StudentCsvService;
 use Filament\Actions;
 use Filament\Actions\Action;
 use Filament\Forms;
-use Filament\Forms\Components\Wizard;
 use Filament\Forms\Get;
 use Filament\Notifications\Actions\Action as NotificationAction;
 use Filament\Notifications\Notification;
@@ -65,7 +64,7 @@ class ListStudents extends ListRecords
                 ->icon('heroicon-o-arrow-up-tray')
                 ->color('warning')
                 ->modalHeading(__('Import Students from CSV'))
-                ->modalDescription('Upload your file and the system matches the columns automatically. The Match Columns step only appears when a column cannot be matched.')
+                ->modalDescription('Upload your file and the system matches every column automatically — no manual column mapping needed.')
                 ->modalWidth(MaxWidth::ExtraLarge)
                 ->modalSubmitActionLabel(__('Import Students'))
                 ->steps($this->csvImportSteps($service, $streamName, 'Students'))
@@ -236,7 +235,7 @@ class ListStudents extends ListRecords
                 ->title(__('Import not started — required columns are not mapped'))
                 ->body('Match these columns before importing: '.$requiredMissing->keys()->map(fn (string $key): string => $columns[$key]['label'])->implode(', ').'.')
                 ->danger()
-                ->persistent()
+                ->duration(8)
                 ->send();
 
             return;
@@ -280,7 +279,7 @@ class ListStudents extends ListRecords
             ->title(__('Import finished with errors'))
             ->body('Imported '.$result['success'].' of '.$result['total'].' students. '.$failures->count().' row(s) were rejected — download the error report below.')
             ->warning()
-            ->persistent()
+            ->duration(15)
             ->actions([
                 NotificationAction::make('downloadFailedRows')
                     ->label(__('Download rejected rows (CSV)'))

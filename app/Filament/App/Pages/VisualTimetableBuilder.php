@@ -257,11 +257,11 @@ class VisualTimetableBuilder extends Page implements Forms\Contracts\HasForms
                                     ->visible(fn (Forms\Get $get) => $get('has_fixed_lunch') === false)
                                     ->required(fn (Forms\Get $get) => $get('has_fixed_lunch') === false),
 
-                                 Forms\Components\TextInput::make('lunch_duration')
-                                     ->label(__('Lunch Duration (Minutes)'))
-                                     ->numeric()
-                                     ->required(),
-                             ])->columnSpan(1),
+                                Forms\Components\TextInput::make('lunch_duration')
+                                    ->label(__('Lunch Duration (Minutes)'))
+                                    ->numeric()
+                                    ->required(),
+                            ])->columnSpan(1),
                     ]),
 
                 Forms\Components\Section::make('Automatic Lesson Placement Engine')
@@ -598,7 +598,7 @@ class VisualTimetableBuilder extends Page implements Forms\Contracts\HasForms
                 $this->matrix[$slot['id']][$day] = $lesson ? [
                     'id' => $lesson->id,
                     'subject' => $lesson->subject->name,
-                    'teacher' => \App\Support\TeacherInitials::for($lesson->teacher?->name),
+                    'teacher' => TeacherInitials::for($lesson->teacher?->name),
                     'room' => $lesson->classroom->name,
                     'is_locked' => $lesson->is_locked,
                     'color_classes' => $this->getSubjectColorClasses($lesson->subject->name),
@@ -705,12 +705,30 @@ class VisualTimetableBuilder extends Page implements Forms\Contracts\HasForms
 
         if (! $activeTemplate) {
             Notification::make()->title(__('No Active Timetable Template'))->body('Please compile and activate a template first before auto-generating lessons.')->warning()->send();
+
             return;
         }
 
         $formData = $this->form->getState();
         $academicYearId = $formData['academic_year_id'] ?? null;
         $termId = $formData['term_id'] ?? null;
+
+        if (blank($academicYearId)) {
+            $academicYearId = AcademicYear::where('school_id', $schoolId)->where('is_active', true)->value('id');
+        }
+
+        if (blank($termId)) {
+            $termId = Term::where('school_id', $schoolId)
+                ->when($academicYearId, fn ($query) => $query->where('academic_year_id', $academicYearId))
+                ->orderBy('start_date')
+                ->value('id');
+        }
+
+        if (blank($academicYearId) || blank($termId)) {
+            Notification::make()->title(__('No Academic Year or Term Found'))->body('Set an active academic year and at least one term before auto-generating lessons.')->warning()->send();
+
+            return;
+        }
 
         DB::beginTransaction();
         try {
@@ -729,7 +747,7 @@ class VisualTimetableBuilder extends Page implements Forms\Contracts\HasForms
 
             $msg = "Successfully placed {$result['placed']} lesson(s) automatically with zero clashes!";
             if (! empty($result['unplaced'])) {
-                $msg .= ' (' . count($result['unplaced']) . ' could not be placed due to tight constraints).';
+                $msg .= ' ('.count($result['unplaced']).' could not be placed due to tight constraints).';
             }
 
             Notification::make()->title(__('Timetable Auto-Generated Successfully!'))->body($msg)->success()->send();

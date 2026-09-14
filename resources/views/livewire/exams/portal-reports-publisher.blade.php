@@ -10,7 +10,7 @@
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div>
                 <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400">{{ __('Scope') }}</label>
-                <select wire:model.live="scope" class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                <select wire:model.change="scope" class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
                     <option value="school">{{ __('Whole School') }}</option>
                     <option value="course">{{ __('Class') }}</option>
                     <option value="section">{{ __('Stream') }}</option>
@@ -20,7 +20,7 @@
             @if($scope === 'course')
                 <div>
                     <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400">{{ __('Class') }}</label>
-                    <select wire:model.live="courseId" class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                    <select wire:model.change="courseId" class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
                         <option value="">—</option>
                         @foreach($courses as $course)
                             <option value="{{ $course->id }}">{{ $course->name }}</option>
@@ -32,7 +32,7 @@
             @if($scope === 'section')
                 <div>
                     <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400">{{ __('Stream') }}</label>
-                    <select wire:model.live="sectionId" class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                    <select wire:model.change="sectionId" class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
                         <option value="">—</option>
                         @foreach($sections as $section)
                             <option value="{{ $section->id }}">{{ $section->name }}</option>
@@ -43,7 +43,7 @@
 
             <div>
                 <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400">{{ __('Term (optional)') }}</label>
-                <select wire:model.live="termId" class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                <select wire:model.change="termId" class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
                     <option value="">{{ __('All Terms') }}</option>
                     @foreach($terms as $term)
                         <option value="{{ $term->id }}">{{ $term->name }}</option>

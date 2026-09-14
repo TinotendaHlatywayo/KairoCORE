@@ -49,8 +49,8 @@
 
                         <div class="mb-3">
                             <label class="form-label fw-semibold text-secondary">{{ __('Username') }}</label>
-                            <input type="text" name="username" id="username" class="form-control @error('username') is-invalid @enderror" value="{{ old('username', explode('@', $user->email)[0]) }}" maxlength="50" autocomplete="username" required>
-                            <div class="form-text small">{{ __('Letters, numbers, dashes and underscores only (at least 3 characters).') }}</div>
+                            <input type="text" name="username" id="username" class="form-control @error('username') is-invalid @enderror" value="{{ old('username', $user->username ?: explode('@', $user->email)[0]) }}" maxlength="50" autocomplete="username" required>
+                            <div class="form-text small">{{ __('Letters, numbers, spaces, dashes, underscores and dots (at least 3 characters).') }}</div>
                             <div id="username-feedback" class="small mt-1 d-none text-danger"></div>
                             @error('username')
                                 <div class="invalid-feedback d-block">{{ $message }}</div>
@@ -136,7 +136,7 @@
             var un = document.getElementById('username');
             var unFb = document.getElementById('username-feedback');
             if (un && unFb) {
-                var usernameAllowed = /^[a-zA-Z0-9_-]+$/;
+                var usernameAllowed = /^[a-zA-Z0-9 ._-]+$/;
                 function checkUsername() {
                     var value = un.value;
                     var bad = [];
@@ -156,7 +156,7 @@
                         un.classList.add('is-invalid');
                         un.classList.remove('is-valid');
                     } else if (bad.length > 0) {
-                        unFb.textContent = 'Invalid character' + (bad.length > 1 ? 's' : '') + ': ' + bad.join(' ') + '. Only letters, numbers, dashes and underscores are allowed.';
+                        unFb.textContent = 'Invalid character' + (bad.length > 1 ? 's' : '') + ': ' + bad.join(' ') + '. Only letters, numbers, spaces, dashes, underscores and dots are allowed.';
                         unFb.classList.remove('d-none');
                         un.classList.add('is-invalid');
                         un.classList.remove('is-valid');

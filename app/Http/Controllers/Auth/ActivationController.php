@@ -53,7 +53,7 @@ class ActivationController extends Controller
     {
         $request->validate([
             'token' => 'required|string',
-            'username' => ['required', 'string', 'min:3', 'max:50', 'alpha_dash', 'unique:users,username'],
+            'username' => ['required', 'string', 'min:3', 'max:50', 'regex:/^[\pL\pN][\pL\pN ._\-]+$/u'],
             'password' => [
                 'required',
                 'string',
@@ -63,7 +63,7 @@ class ActivationController extends Controller
             ],
         ], [
             'password.regex' => 'The password must contain at least 8 characters, at least one capital letter, one number, and one special character.',
-            'username.alpha_dash' => 'The username may only contain letters, numbers, dashes and underscores.',
+            'username.regex' => 'The username may only contain letters, numbers, spaces, dashes, underscores and dots.',
         ]);
 
         [$user, $reason] = $this->resolveToken((string) $request->token);

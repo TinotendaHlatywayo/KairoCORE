@@ -138,6 +138,42 @@
         cursor: pointer;
     }
 
+    .sc-card-history {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        z-index: 5;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.62rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #ffffff;
+        background: rgba(71, 85, 105, 0.88);
+        border-radius: 9999px;
+        padding: 4px 10px;
+        box-shadow: 0 4px 12px -4px rgba(71, 85, 105, 0.5);
+        text-decoration: none;
+        cursor: pointer;
+        transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .sc-card-history:hover {
+        background: #334155;
+        color: #ffffff;
+    }
+
+    .dark .sc-card-history {
+        background: rgba(148, 163, 184, 0.82);
+        color: #0f172a;
+    }
+    .dark .sc-card-history:hover {
+        background: #94a3b8;
+        color: #0f172a;
+    }
+
     .sc-gender-pill {
         display: inline-flex;
         align-items: center;

@@ -46,6 +46,7 @@ class Student extends Model
         'parent_email',
         'physical_address',
         'phone',
+        'email',
         'fee_waiver_id',
         'credit_balance',
         'academic_year_id',
@@ -84,8 +85,22 @@ class Student extends Model
     protected static function booted()
     {
         static::saved(function (Student $student) {
-            if ($student->user_id && $student->phone) {
-                User::where('id', $student->user_id)->update(['phone' => $student->phone]);
+            if (! $student->user_id) {
+                return;
+            }
+
+            $sync = [];
+
+            if ($student->phone) {
+                $sync['phone'] = $student->phone;
+            }
+
+            if ($student->getRawOriginal('email')) {
+                $sync['email'] = $student->getRawOriginal('email');
+            }
+
+            if ($sync !== []) {
+                User::where('id', $student->user_id)->update($sync);
             }
         });
 
@@ -95,7 +110,7 @@ class Student extends Model
             $yearYY = $admDate->format('y');
             $monthMM = $admDate->format('m');
 
-            // 1. UNIQUE STUDENT ID GENERATOR (R + YY + XXXXXXX + Level Letter)
+            // 1. UNIQUE STUDENT ID GENERATOR (R + YY + XXXX + Level Letter)
             // =========================================================================
             if (empty($student->student_id_number)) {
                 $suffix = 'X'; // Fallback letter
@@ -115,7 +130,7 @@ class Student extends Model
 
                 // Loop until a completely unique ID is generated
                 do {
-                    $randomMiddle = mt_rand(1000000, 9999999);
+                    $randomMiddle = mt_rand(1000, 9999);
                     $candidateId = 'R'.$yearYY.$randomMiddle.$suffix;
                 } while (self::where('school_id', $schoolId)->where('student_id_number', $candidateId)->exists());
 
@@ -228,6 +243,10 @@ class Student extends Model
 
     public function getEmailAttribute()
     {
+        if (! empty($this->attributes['email'] ?? null)) {
+            return $this->attributes['email'];
+        }
+
         return $this->application?->email ?? $this->user?->email ?? $this->parent_email ?? $this->application?->parent_email;
     }
 

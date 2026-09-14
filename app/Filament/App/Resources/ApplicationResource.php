@@ -6,6 +6,7 @@ use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Filament\App\Resources\ApplicationResource\Pages;
 use App\Models\User;
 use App\Services\AdmissionNotificationService;
+use App\Services\RosterAccountProvisioningService;
 use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Forms\Components\Tabs\Tab;
@@ -78,45 +79,45 @@ class ApplicationResource extends Resource
                         Tab::make(__('Application'))
                             ->label(__('1. Application'))
                             ->schema([
-                                 Forms\Components\Section::make(__('Student Information'))
-                                     ->schema([
-                                         Forms\Components\TextInput::make('application_number')
-                                             ->disabled()
-                                             ->label(__('Application Number')),
-                                         Forms\Components\TextInput::make('first_name')
-                                             ->required()
-                                             ->placeholder(__('e.g., John')),
-                                         Forms\Components\TextInput::make('last_name')
-                                             ->required()
-                                             ->placeholder(__('e.g., Smith')),
-                                          Forms\Components\TextInput::make('national_id')
-                                              ->label(__('National ID / Birth Cert Number'))
-                                              ->placeholder(__('e.g., 65-2546896F88')),
-                                          Forms\Components\Textarea::make('physical_address')
-                                              ->label(__('Physical Address'))
-                                              ->placeholder(__('e.g. 14 Links Lane, Borrowdale, Harare'))
-                                              ->required()
-                                              ->columnSpanFull(),
-                                          Forms\Components\TextInput::make('phone')
-                                              ->label(__('Student Contact Number'))
-                                              ->tel()
-                                              ->placeholder(__('e.g. +263 77 123 4567'))
-                                              ->columnSpanFull(),
-                                          Forms\Components\TextInput::make('email')
-                                              ->email()
-                                              ->label(__('Student Email'))
-                                              ->placeholder(__('student@domain.com')),
-                                         Forms\Components\Select::make('gender')
-                                             ->options(['male' => __('Male'), 'female' => __('Female'), 'other' => __('Other')])
-                                             ->required(),
-                                         Forms\Components\DatePicker::make('date_of_birth')
-                                             ->required(),
-                                         Forms\Components\Select::make('course_id')
-                                             ->label(__('Applying Level / Form'))
-                                             ->options(fn () => Course::pluck('name', 'id'))
-                                             ->required()
-                                             ->searchable(),
-                                     ])->columns(3),
+                                Forms\Components\Section::make(__('Student Information'))
+                                    ->schema([
+                                        Forms\Components\TextInput::make('application_number')
+                                            ->disabled()
+                                            ->label(__('Application Number')),
+                                        Forms\Components\TextInput::make('first_name')
+                                            ->required()
+                                            ->placeholder(__('e.g., John')),
+                                        Forms\Components\TextInput::make('last_name')
+                                            ->required()
+                                            ->placeholder(__('e.g., Smith')),
+                                        Forms\Components\TextInput::make('national_id')
+                                            ->label(__('National ID / Birth Cert Number'))
+                                            ->placeholder(__('e.g., 65-2546896F88')),
+                                        Forms\Components\Textarea::make('physical_address')
+                                            ->label(__('Physical Address'))
+                                            ->placeholder(__('e.g. 14 Links Lane, Borrowdale, Harare'))
+                                            ->required()
+                                            ->columnSpanFull(),
+                                        Forms\Components\TextInput::make('phone')
+                                            ->label(__('Student Contact Number'))
+                                            ->tel()
+                                            ->placeholder(__('e.g. +263 77 123 4567'))
+                                            ->columnSpanFull(),
+                                        Forms\Components\TextInput::make('email')
+                                            ->email()
+                                            ->label(__('Student Email'))
+                                            ->placeholder(__('student@domain.com')),
+                                        Forms\Components\Select::make('gender')
+                                            ->options(['male' => __('Male'), 'female' => __('Female'), 'other' => __('Other')])
+                                            ->required(),
+                                        Forms\Components\DatePicker::make('date_of_birth')
+                                            ->required(),
+                                        Forms\Components\Select::make('course_id')
+                                            ->label(__('Applying Level / Form'))
+                                            ->options(fn () => Course::pluck('name', 'id'))
+                                            ->required()
+                                            ->searchable(),
+                                    ])->columns(3),
 
                                 Forms\Components\Section::make(__('Guardian Details'))
                                     ->schema([
@@ -369,7 +370,7 @@ class ApplicationResource extends Resource
 
                         $student = Student::create([
                             'school_id' => $record->school_id,
-                            'user_id' => $studentUser->id,
+                            'user_id' => $studentUser?->id,
                             'application_id' => $record->id,
                             'admission_number' => $data['admission_number'],
                             'national_id' => $record->national_id,
@@ -383,6 +384,7 @@ class ApplicationResource extends Resource
                             'emergency_contact_name' => $record->parent_name,
                             'emergency_contact_phone' => $record->parent_phone,
                             'parent_email' => $record->email ?? $record->parent_email,
+                            'email' => $record->email ?? null,
                         ]);
 
                         Enrollment::create([
@@ -399,9 +401,17 @@ class ApplicationResource extends Resource
                         // Send the admission confirmation email to the registered address.
                         app(AdmissionNotificationService::class)->send($student, $record->parent_email, $record->school_id);
 
+                        // Provision the portal account (created above) and deliver the
+                        // activation email so the student can set their own password.
+                        $activatedUser = $studentUser
+                            ? app(RosterAccountProvisioningService::class)->provisionStudent($student)
+                            : null;
+
                         Notification::make()
                             ->title(__('Student Enrolled Successfully!'))
-                            ->body(__('Portal account created for')." {$studentUser->name}")
+                            ->body($activatedUser
+                                ? __('Portal account created for')." {$activatedUser->name} — ".__('activation email sent').'.'
+                                : __('No portal account created — add an email address to the application to send the activation link.'))
                             ->success()
                             ->send();
                     }),
@@ -436,23 +446,24 @@ class ApplicationResource extends Resource
 
                                 $studentUser = static::resolveOrCreateStudentUser($record);
 
-                                 $student = Student::create([
-                                     'school_id' => $record->school_id,
-                                     'user_id' => $studentUser->id,
-                                     'application_id' => $record->id,
-                                     'admission_number' => date('Y').'/'.rand(100, 999),
-                                     'national_id' => $record->national_id,
-                                     'first_name' => $record->first_name,
-                                     'last_name' => $record->last_name,
-                                     'gender' => $record->gender,
-                                     'date_of_birth' => $record->date_of_birth,
-                                     'admission_date' => now(),
-                                     'status' => 'active',
-                                     'photo_path' => $record->photo_path,
-                                     'emergency_contact_name' => $record->parent_name,
-                                     'emergency_contact_phone' => $record->parent_phone,
-                                     'parent_email' => $record->email ?? $record->parent_email,
-                                 ]);
+                                $student = Student::create([
+                                    'school_id' => $record->school_id,
+                                    'user_id' => $studentUser?->id,
+                                    'application_id' => $record->id,
+                                    'admission_number' => date('Y').'/'.rand(100, 999),
+                                    'national_id' => $record->national_id,
+                                    'first_name' => $record->first_name,
+                                    'last_name' => $record->last_name,
+                                    'gender' => $record->gender,
+                                    'date_of_birth' => $record->date_of_birth,
+                                    'admission_date' => now(),
+                                    'status' => 'active',
+                                    'photo_path' => $record->photo_path,
+                                    'emergency_contact_name' => $record->parent_name,
+                                    'emergency_contact_phone' => $record->parent_phone,
+                                    'parent_email' => $record->email ?? $record->parent_email,
+                                    'email' => $record->email ?? null,
+                                ]);
 
                                 Enrollment::create([
                                     'school_id' => $record->school_id,
@@ -464,6 +475,11 @@ class ApplicationResource extends Resource
 
                                 // Copy submitted application documents onto the student record.
                                 static::copyApplicationDocuments($record, $student);
+
+                                // Provision the portal account and deliver its activation email.
+                                if ($studentUser) {
+                                    app(RosterAccountProvisioningService::class)->provisionStudent($student);
+                                }
 
                                 // Send the admission confirmation email to the registered address.
                                 app(AdmissionNotificationService::class)->send($student, $record->parent_email, $record->school_id);
@@ -495,31 +511,43 @@ class ApplicationResource extends Resource
     }
 
     /**
-     * Finds an existing user by email or creates a new portal account for
-     * the student. The account starts locked — an activation email is sent
-     * so the student can set their own password securely.
+     * Finds an existing user by email or creates a new locked portal account
+     * for the student using the email registered on the application (no more
+     * generated placeholder addresses). When the application carries no email,
+     * no account is created until an email address is on file.
      */
-    protected static function resolveOrCreateStudentUser(Application $record): User
+    protected static function resolveOrCreateStudentUser(Application $record): ?User
     {
-        $school = app('current_tenant');
+        $email = mb_strtolower(trim((string) ($record->email ?: $record->parent_email)));
 
-        $base = strtolower($record->first_name.'.'.$record->last_name.'@'.($school->subdomain ?? 'school').'.schoolcore.test');
-
-        $email = $base;
-        $suffix = 1;
-        while (User::withoutTenantScope()->where('email', $email)->exists()) {
-            $email = preg_replace('/@/', ($suffix++).'@', $base, 1);
+        if ($email === '') {
+            return null;
         }
 
-        $user = User::create([
-            'school_id' => $record->school_id,
-            'name' => "{$record->first_name} {$record->last_name}",
-            'email' => $email,
-            'password' => Hash::make(Str::random(32)),
-            'account_status' => User::STATUS_PENDING,
-        ]);
+        $user = User::withTrashed()
+            ->where('school_id', $record->school_id)
+            ->where('email', $email)
+            ->first();
 
-        return $user;
+        if ($user) {
+            if ($user->trashed()) {
+                $user->restore();
+            }
+
+            return $user;
+        }
+
+        $name = trim("{$record->first_name} {$record->last_name}");
+
+        return User::create([
+            'school_id' => $record->school_id,
+            'name' => $name,
+            'email' => $email,
+            'username' => $name,
+            'password' => Hash::make(Str::random(64)),
+            'account_status' => User::STATUS_PENDING,
+            'requested_role' => 'student',
+        ]);
     }
 
     /**

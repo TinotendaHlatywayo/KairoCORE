@@ -19,7 +19,7 @@
                     <div class="flex flex-wrap items-center gap-3">
                         <div>
                             <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">{{ __('Term') }}</label>
-                            <select wire:model.live="selectedTermId" class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                            <select wire:model.change="selectedTermId" class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
                                 <option value="">{{ __('All Terms & History') }}</option>
                                 @foreach($terms as $term)
                                     <option value="{{ $term->id }}">
@@ -30,7 +30,7 @@
                         </div>
                         <div>
                             <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">{{ __('Subject') }}</label>
-                            <select wire:model.live="selectedSubjectId" class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                            <select wire:model.change="selectedSubjectId" class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
                                 <option value="">{{ __('All Subjects') }}</option>
                                 @foreach($subjects as $subject)
                                     <option value="{{ $subject->id }}">{{ $subject->name }}</option>

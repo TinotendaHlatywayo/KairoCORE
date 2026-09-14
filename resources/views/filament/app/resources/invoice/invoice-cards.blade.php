@@ -37,6 +37,10 @@
                 @endphp
                 <div class="sc-card" style="--sc-card-color: {{ $statusColor }};">
                     <span class="sc-card-status">{{ $statusLabel }}</span>
+                    <a href="{{ \App\Filament\App\Pages\Finance\StudentFinancialHistoryPage::getUrl(['student' => $invoice->student_id]) }}" class="sc-card-history" title="{{ __('Payment History of this student') }}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="11" height="11"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg>
+                        {{ __('Payment History') }}
+                    </a>
 
                     <div class="sc-card-avatar" style="background: conic-gradient(from 180deg, {{ $statusColor }}, #2dd4bf, {{ $statusColor }});">
                         @if($studentPhoto)
@@ -81,7 +85,6 @@
                     <div class="sc-card-actions">
                         <button type="button" class="sc-btn-enroll" wire:click="mountTableAction('recordPayment', '{{ $recordKey }}')">{{ __('Pay') }}</button>
                         <a href="{{ \App\Filament\App\Resources\InvoiceResource::getUrl('edit', ['record' => $invoice]) }}" class="sc-btn-edit">{{ __('Edit') }}</a>
-                        <a href="{{ \App\Filament\App\Pages\Finance\StudentFinancialHistoryPage::getUrl(['student' => $invoice->student_id]) }}" class="sc-btn-edit" title="{{ __('Financial History of this student') }}">{{ __('History') }}</a>
                         <a href="{{ route('invoice.pdf', ['record' => $invoice->id], false) }}" target="_blank" class="sc-btn-view">{{ __('Invoice') }}</a>
                         @if($invoice->paid_amount > 0)
                             <a href="{{ route('receipt.pdf', ['record' => $invoice->id], false) }}" target="_blank" class="sc-btn-view">{{ __('Receipt') }}</a>

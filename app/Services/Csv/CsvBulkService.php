@@ -87,7 +87,7 @@ abstract class CsvBulkService
             return [];
         }
 
-        fgets($handle); // skip header row
+        static::skipHeaderBlock($handle); // skip header block
 
         $values = [];
         while (($row = fgetcsv($handle, 0, ',', escape: '\\')) !== false) {
@@ -116,7 +116,7 @@ abstract class CsvBulkService
         fputcsv($out, static::templateHeaders());
 
         $sample = array_map(fn (array $column): string => $column['example'] ?? '', static::columns());
-        
+
         // Generate at least 5 rows of data. Identifier/code columns are varied
         // so each row is unique and the template can be imported end-to-end
         // without tripping unique constraints (e.g. asset numbers, SKUs).
@@ -184,10 +184,10 @@ abstract class CsvBulkService
             return Storage::disk($disk)->path($file);
         }
 
-        return storage_path('app/public/' . $file);
+        return storage_path('app/public/'.$file);
     }
 
-    /** Read the header row of an uploaded CSV (BOM-safe). */
+    /** Read the header row of an uploaded CSV (BOM-safe, skips leading blank rows). */
     public static function readCsvHeaders(string $filePath): array
     {
         if (! is_readable($filePath)) {
@@ -200,15 +200,22 @@ abstract class CsvBulkService
             return [];
         }
 
-        $line = fgets($handle);
-        fclose($handle);
+        $headers = [];
+        while (($line = fgets($handle)) !== false) {
+            $line = trim($line);
 
-        if ($line === false) {
-            return [];
+            if ($line === '') {
+                continue;
+            }
+
+            // Strip any leading UTF-8 BOM bytes from the first non-blank line.
+            $line = preg_replace('/^(?:\xEF\xBB\xBF)+/', '', $line);
+            $headers = str_getcsv($line, escape: '\\');
+
+            break;
         }
 
-        $line = preg_replace('/^\xEF\xBB\xBF/', '', $line);
-        $headers = str_getcsv(trim($line), escape: '\\');
+        fclose($handle);
 
         return array_map('trim', array_map('strval', $headers ?: []));
     }
@@ -329,7 +336,7 @@ abstract class CsvBulkService
             throw new \RuntimeException('Could not open the CSV file.');
         }
 
-        fgets($handle); // skip header row
+        static::skipHeaderBlock($handle); // skip header block (leading blank rows included)
 
         $total = 0;
         while (fgetcsv($handle, 0, ',', escape: '\\') !== false) {
@@ -337,7 +344,7 @@ abstract class CsvBulkService
         }
 
         rewind($handle);
-        fgets($handle); // skip header row again
+        static::skipHeaderBlock($handle); // skip header block again
 
         $columns = static::columns();
         $success = 0;
@@ -391,6 +398,19 @@ abstract class CsvBulkService
         fclose($handle);
 
         return compact('success', 'total', 'failures');
+    }
+
+    /**
+     * Advance an open CSV handle past any leading blank/whitespace-only rows
+     * and the header row, leaving the pointer at the first data row.
+     */
+    protected static function skipHeaderBlock($handle): void
+    {
+        while (($line = fgets($handle)) !== false) {
+            if (trim($line) !== '') {
+                return; // consumed the header row
+            }
+        }
     }
 
     /** Normalise a boolean-ish CSV cell to a Laravel-ready boolean. */

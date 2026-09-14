@@ -866,7 +866,7 @@
                         <h4 class="text-[10px] font-black uppercase tracking-wider text-[color:var(--sc-primary)]">{{ __('Fonts') }}</h4>
                         <div class="space-y-1">
                             <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Body Font') }}</label>
-                            <select wire:model.live="font_primary" class="studio-select-field w-full text-xs">
+                            <select wire:model.change="font_primary" class="studio-select-field w-full text-xs">
                                 @foreach(\Modules\CMS\Services\CmsTemplateService::availableFontsByCategory() as $category => $fonts)
                                     <optgroup label="{{ $category }}">
                                         @foreach($fonts as $f)
@@ -878,7 +878,7 @@
                         </div>
                         <div class="space-y-1">
                             <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Display / Brand Font') }}</label>
-                            <select wire:model.live="font_secondary" class="studio-select-field w-full text-xs">
+                            <select wire:model.change="font_secondary" class="studio-select-field w-full text-xs">
                                 @foreach(\Modules\CMS\Services\CmsTemplateService::availableFontsByCategory() as $category => $fonts)
                                     <optgroup label="{{ $category }}">
                                         @foreach($fonts as $f)
@@ -890,7 +890,7 @@
                         </div>
                         <div class="space-y-1">
                             <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Title Heading Font (all section titles)') }}</label>
-                            <select wire:model.live="font_heading" class="studio-select-field w-full text-xs">
+                            <select wire:model.change="font_heading" class="studio-select-field w-full text-xs">
                                 <option value="">{{ __('Same as Display Font') }}</option>
                                 @foreach(\Modules\CMS\Services\CmsTemplateService::availableFontsByCategory() as $category => $fonts)
                                     <optgroup label="{{ $category }}">
@@ -910,7 +910,7 @@
                         <div class="grid grid-cols-2 gap-3">
                             <div class="space-y-1">
                                 <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Corner Radius') }}</label>
-                                <select wire:model.live="design_radius" class="studio-select-field w-full text-xs">
+                                <select wire:model.change="design_radius" class="studio-select-field w-full text-xs">
                                     @foreach(\Modules\CMS\Services\CmsTemplateService::RADIUS_SCALE as $k => $v)
                                         <option value="{{ $k }}">{{ ucfirst($k) }} ({{ $v }})</option>
                                     @endforeach
@@ -918,7 +918,7 @@
                             </div>
                             <div class="space-y-1">
                                 <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Shadow') }}</label>
-                                <select wire:model.live="design_shadow" class="studio-select-field w-full text-xs">
+                                <select wire:model.change="design_shadow" class="studio-select-field w-full text-xs">
                                     @foreach(\Modules\CMS\Services\CmsTemplateService::SHADOW_SCALE as $k => $v)
                                         <option value="{{ $k }}">{{ ucfirst($k) }}</option>
                                     @endforeach
@@ -926,7 +926,7 @@
                             </div>
                             <div class="space-y-1">
                                 <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Container') }}</label>
-                                <select wire:model.live="design_container" class="studio-select-field w-full text-xs">
+                                <select wire:model.change="design_container" class="studio-select-field w-full text-xs">
                                     @foreach(\Modules\CMS\Services\CmsTemplateService::CONTAINER_SCALE as $k => $v)
                                         <option value="{{ $k }}">{{ ucfirst($k) }}</option>
                                     @endforeach
@@ -934,7 +934,7 @@
                             </div>
                             <div class="space-y-1">
                                 <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Button Style') }}</label>
-                                <select wire:model.live="design_button_style" class="studio-select-field w-full text-xs">
+                                <select wire:model.change="design_button_style" class="studio-select-field w-full text-xs">
                                     @foreach(\Modules\CMS\Services\CmsTemplateService::BUTTON_STYLES as $k => $v)
                                         <option value="{{ $k }}">{{ ucfirst($k) }}</option>
                                     @endforeach
@@ -1295,7 +1295,7 @@
 
                                     <div class="space-y-1">
                                         <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Heading Font') }}</label>
-                                        <select wire:model.live="selectedBlockData.styles.title_font" class="studio-select-field w-full text-xs">
+                                        <select wire:model.change="selectedBlockData.styles.title_font" class="studio-select-field w-full text-xs">
                                             <option value="">{{ __('Use site default') }}</option>
                                             @foreach(\Modules\CMS\Services\CmsTemplateService::availableFontsByCategory() as $category => $fonts)
                                                 <optgroup label="{{ $category }}">
@@ -1309,7 +1309,7 @@
 
                                     <div class="space-y-1">
                                         <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Body Font') }}</label>
-                                        <select wire:model.live="selectedBlockData.styles.font_family" class="studio-select-field w-full text-xs">
+                                        <select wire:model.change="selectedBlockData.styles.font_family" class="studio-select-field w-full text-xs">
                                             <option value="">{{ __('Use site default') }}</option>
                                             @foreach(\Modules\CMS\Services\CmsTemplateService::availableFontsByCategory() as $category => $fonts)
                                                 <optgroup label="{{ $category }}">
@@ -1349,7 +1349,7 @@
                                     <div class="grid grid-cols-2 gap-3">
                                         <div class="space-y-1">
                                             <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Text Alignment') }}</label>
-                                            <select wire:model.live="selectedBlockData.styles.text_align" class="studio-select-field w-full text-xs">
+                                            <select wire:model.change="selectedBlockData.styles.text_align" class="studio-select-field w-full text-xs">
                                                 <option value="text-left">{{ __('Left') }}</option>
                                                 <option value="text-center">{{ __('Center') }}</option>
                                                 <option value="text-right">{{ __('Right') }}</option>
@@ -1358,7 +1358,7 @@
                                         </div>
                                         <div class="space-y-1">
                                             <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Line Height') }}</label>
-                                            <select wire:model.live="selectedBlockData.styles.line_height" class="studio-select-field w-full text-xs">
+                                            <select wire:model.change="selectedBlockData.styles.line_height" class="studio-select-field w-full text-xs">
                                                 <option value="">{{ __('Auto') }}</option>
                                                 @foreach([1.2, 1.4, 1.6, 1.8, 2.0] as $lh)
                                                     <option value="{{ $lh }}">{{ $lh }}</option>
@@ -1392,7 +1392,7 @@
                                     <div class="grid grid-cols-2 gap-3">
                                         <div class="space-y-1">
                                             <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Background') }}</label>
-                                            <select wire:model.live="selectedBlockData.styles.bg_style"
+                                            <select wire:model.change="selectedBlockData.styles.bg_style"
                                                     class="studio-select-field w-full text-xs">
                                                 <option value="solid">{{ __('Solid Color') }}</option>
                                                 <option value="gradient">{{ __('Gradient') }}</option>
@@ -1400,7 +1400,7 @@
                                         </div>
                                         <div class="space-y-1">
                                             <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Animation') }}</label>
-                                            <select wire:model.live="selectedBlockData.styles.animate"
+                                            <select wire:model.change="selectedBlockData.styles.animate"
                                                     class="studio-select-field w-full text-xs">
                                                 @foreach(\Modules\CMS\Services\CmsTemplateService::ANIMATIONS as $anim)
                                                     <option value="{{ $anim }}">{{ ucfirst(str_replace('-', ' ', $anim)) }}</option>
@@ -1450,7 +1450,7 @@
                                     <div class="grid grid-cols-2 gap-3">
                                         <div class="space-y-1">
                                             <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Vertical Spacing') }}</label>
-                                            <select wire:model.live="selectedBlockData.styles.padding_top"
+                                            <select wire:model.change="selectedBlockData.styles.padding_top"
                                                     class="studio-select-field w-full text-xs">
                                                 <option value="py-8">Compact (32px)</option>
                                                 <option value="py-16">Standard (64px)</option>
@@ -1459,7 +1459,7 @@
                                         </div>
                                         <div class="space-y-1">
                                             <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Container') }}</label>
-                                            <select wire:model.live="selectedBlockData.styles.container"
+                                            <select wire:model.change="selectedBlockData.styles.container"
                                                     class="studio-select-field w-full text-xs">
                                                 <option value="default">{{ __('Site Default') }}</option>
                                                 <option value="boxed">{{ __('Boxed') }}</option>
@@ -1508,7 +1508,7 @@
                                         <div class="grid grid-cols-2 gap-3">
                                             <div class="space-y-1">
                                                 <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Object Fit') }}</label>
-                                                <select wire:model.live="selectedBlockData.styles.image_fit"
+                                                <select wire:model.change="selectedBlockData.styles.image_fit"
                                                         class="studio-select-field w-full text-xs">
                                                     <option value="">{{ __('Default') }}</option>
                                                     <option value="cover">{{ __('Cover (crop to fill)') }}</option>
@@ -1517,7 +1517,7 @@
                                             </div>
                                             <div class="space-y-1">
                                                 <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Focus Position') }}</label>
-                                                <select wire:model.live="selectedBlockData.styles.image_position"
+                                                <select wire:model.change="selectedBlockData.styles.image_position"
                                                         class="studio-select-field w-full text-xs">
                                                     <option value="">{{ __('Default') }}</option>
                                                     <option value="center">{{ __('Center') }}</option>
@@ -1532,7 +1532,7 @@
                                         <div class="grid grid-cols-2 gap-3">
                                             <div class="space-y-1">
                                                 <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Aspect Ratio') }}</label>
-                                                <select wire:model.live="selectedBlockData.styles.image_ratio"
+                                                <select wire:model.change="selectedBlockData.styles.image_ratio"
                                                         class="studio-select-field w-full text-xs">
                                                     <option value="">{{ __('Default') }}</option>
                                                     <option value="auto">{{ __('Original') }}</option>
@@ -1544,7 +1544,7 @@
                                             </div>
                                             <div class="space-y-1">
                                                 <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Photo Width') }}</label>
-                                                <select wire:model.live="selectedBlockData.styles.image_width"
+                                                <select wire:model.change="selectedBlockData.styles.image_width"
                                                         class="studio-select-field w-full text-xs">
                                                     <option value="">{{ __('Template default') }}</option>
                                                     <option value="none">{{ __('Full column') }}</option>
@@ -1560,7 +1560,7 @@
 
                                         <div class="space-y-1">
                                             <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Corner Radius') }}</label>
-                                            <select wire:model.live="selectedBlockData.styles.image_radius"
+                                            <select wire:model.change="selectedBlockData.styles.image_radius"
                                                     class="studio-select-field w-full text-xs">
                                                 <option value="">{{ __('Template default') }}</option>
                                                 <option value="0px">{{ __('Sharp') }}</option>
@@ -1585,7 +1585,7 @@
                                         <div class="grid grid-cols-2 gap-3">
                                             <div class="space-y-1">
                                                 <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Object Fit') }}</label>
-                                                <select wire:model.live="selectedBlockData.styles.gallery_fit"
+                                                <select wire:model.change="selectedBlockData.styles.gallery_fit"
                                                         class="studio-select-field w-full text-xs">
                                                     <option value="">{{ __('Default') }}</option>
                                                     <option value="cover">{{ __('Cover (crop to fill)') }}</option>
@@ -1594,7 +1594,7 @@
                                             </div>
                                             <div class="space-y-1">
                                                 <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Focus Position') }}</label>
-                                                <select wire:model.live="selectedBlockData.styles.gallery_position"
+                                                <select wire:model.change="selectedBlockData.styles.gallery_position"
                                                         class="studio-select-field w-full text-xs">
                                                     <option value="">{{ __('Default') }}</option>
                                                     <option value="center">{{ __('Center') }}</option>
@@ -1609,7 +1609,7 @@
                                         <div class="grid grid-cols-2 gap-3">
                                             <div class="space-y-1">
                                                 <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Tile Ratio') }}</label>
-                                                <select wire:model.live="selectedBlockData.styles.gallery_ratio"
+                                                <select wire:model.change="selectedBlockData.styles.gallery_ratio"
                                                         class="studio-select-field w-full text-xs">
                                                     <option value="">{{ __('Default') }}</option>
                                                     <option value="auto">{{ __('Original') }}</option>
@@ -1621,7 +1621,7 @@
                                             </div>
                                             <div class="space-y-1">
                                                 <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Corner Radius') }}</label>
-                                                <select wire:model.live="selectedBlockData.styles.gallery_radius"
+                                                <select wire:model.change="selectedBlockData.styles.gallery_radius"
                                                         class="studio-select-field w-full text-xs">
                                                     <option value="">{{ __('Template default') }}</option>
                                                     <option value="0px">{{ __('Sharp') }}</option>
@@ -1721,7 +1721,7 @@
                                         <div class="grid grid-cols-2 gap-3">
                                             <div class="space-y-1">
                                                 <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Auto Play') }}</label>
-                                                <select wire:model.live="selectedBlockData.autoplay"
+                                                <select wire:model.change="selectedBlockData.autoplay"
                                                         class="studio-select-field w-full text-xs">
                                                     <option value="0">{{ __('Off') }}</option>
                                                     <option value="1">{{ __('On') }}</option>
@@ -1729,7 +1729,7 @@
                                             </div>
                                             <div class="space-y-1">
                                                 <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Title Position') }}</label>
-                                                <select wire:model.live="selectedBlockData.title_position"
+                                                <select wire:model.change="selectedBlockData.title_position"
                                                         class="studio-select-field w-full text-xs">
                                                     <option value="bottomLeft">{{ __('Bottom Left') }}</option>
                                                     <option value="bottomRight">{{ __('Bottom Right') }}</option>
@@ -1822,7 +1822,7 @@
                                         <div class="grid grid-cols-2 gap-3">
                                             <div class="space-y-1">
                                                 <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Direction') }}</label>
-                                                <select wire:model.live="selectedBlockData.direction"
+                                                <select wire:model.change="selectedBlockData.direction"
                                                         class="studio-select-field w-full text-xs">
                                                     <option value="clockwise">{{ __('Clockwise') }}</option>
                                                     <option value="counter_clockwise">{{ __('Counter-clockwise') }}</option>
@@ -1830,7 +1830,7 @@
                                             </div>
                                             <div class="space-y-1">
                                                 <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Orbit Shape') }}</label>
-                                                <select wire:model.live="selectedBlockData.variant"
+                                                <select wire:model.change="selectedBlockData.variant"
                                                         class="studio-select-field w-full text-xs">
                                                     <option value="ellipse">{{ __('Elliptical') }}</option>
                                                     <option value="circle">{{ __('Circle') }}</option>
@@ -1853,7 +1853,7 @@
                                         <div class="grid grid-cols-2 gap-3">
                                             <div class="space-y-1">
                                                 <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Object Fit') }}</label>
-                                                <select wire:model.live="selectedBlockData.styles.card_image_fit"
+                                                <select wire:model.change="selectedBlockData.styles.card_image_fit"
                                                         class="studio-select-field w-full text-xs">
                                                     <option value="">{{ __('Default') }}</option>
                                                     <option value="cover">{{ __('Cover (crop to fill)') }}</option>
@@ -1862,7 +1862,7 @@
                                             </div>
                                             <div class="space-y-1">
                                                 <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Focus Position') }}</label>
-                                                <select wire:model.live="selectedBlockData.styles.card_image_position"
+                                                <select wire:model.change="selectedBlockData.styles.card_image_position"
                                                         class="studio-select-field w-full text-xs">
                                                     <option value="">{{ __('Default') }}</option>
                                                     <option value="center">{{ __('Center') }}</option>
@@ -1877,7 +1877,7 @@
                                         <div class="grid grid-cols-2 gap-3">
                                             <div class="space-y-1">
                                                 <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Photo Ratio') }}</label>
-                                                <select wire:model.live="selectedBlockData.styles.card_image_ratio"
+                                                <select wire:model.change="selectedBlockData.styles.card_image_ratio"
                                                         class="studio-select-field w-full text-xs">
                                                     <option value="">{{ __('Default') }}</option>
                                                     <option value="16 / 9">{{ __('Wide 16:9') }}</option>
@@ -1888,7 +1888,7 @@
                                             </div>
                                             <div class="space-y-1">
                                                 <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Corner Radius') }}</label>
-                                                <select wire:model.live="selectedBlockData.styles.card_image_radius"
+                                                <select wire:model.change="selectedBlockData.styles.card_image_radius"
                                                         class="studio-select-field w-full text-xs">
                                                     <option value="">{{ __('Template default') }}</option>
                                                     <option value="0px">{{ __('Sharp') }}</option>

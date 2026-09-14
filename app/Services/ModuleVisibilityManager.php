@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Auth;
+use Modules\Admin\Models\CustomRole;
 use Modules\Admin\Models\SystemSetting;
 
 class ModuleVisibilityManager
@@ -16,22 +18,45 @@ class ModuleVisibilityManager
     }
 
     /**
+     * Whether the current user holds the school Administrator role and is
+     * therefore entitled to see every module / page regardless of the
+     * System Settings toggle configuration.
+     */
+    public static function isSchoolAdmin(): bool
+    {
+        if (! Auth::check()) {
+            return false;
+        }
+
+        $user = Auth::user();
+        if (! $user) {
+            return false;
+        }
+
+        // Platform super-admins bypass everything.
+        if (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin()) {
+            return true;
+        }
+
+        // School-level Administrator role holders bypass all visibility checks.
+        $roleId = $user->custom_role_id;
+        if (! $roleId) {
+            return false;
+        }
+
+        $role = CustomRole::find($roleId);
+
+        return $role && $role->name === 'Administrator';
+    }
+
+    /**
      * Checks if a specific module is active for the current school tenant.
-     *
-     * Storage-normalised: the System Settings form persists module toggles as
-     * boolean values which may end up in the database as "1"/"0" strings,
-     * as integers, or as native booleans. A strict `=== '1'` comparison
-     * silently fails for every representation except the exact string "1"
-     * (json_decode("1") returns the integer 1, which broke visibility).
-     *
-     * We therefore normalise through filter_var so that "1", 1, true, "true"
-     * all resolve to enabled, and "0", 0, "false", "" resolve to disabled.
      */
     public static function isVisible(string $moduleName): bool
     {
         $schoolId = self::schoolId();
-        if (! $schoolId) {
-            return true; // Default visible during super-admin platform context
+        if (! $schoolId || self::isSchoolAdmin()) {
+            return true;
         }
 
         $raw = SystemSetting::get('modules', $moduleName, '1');
@@ -41,16 +66,13 @@ class ModuleVisibilityManager
 
     /**
      * Checks whether a module is visible given its navigation slug.
-     *
-     * Module slugs match the System Settings master toggle key
-     * (e.g. "finance" -> modules_finance). Two slugs differ:
-     *  - "health" maps to the "clinic" master toggle
-     *  - "admissions" additionally requires the "applications" sub-page toggle
-     * Every module has a master toggle (lms, knowledge, reports,
-     * administration and saas included), so unknown slugs never occur.
      */
     public static function isModuleVisible(string $moduleSlug): bool
     {
+        if (self::isSchoolAdmin()) {
+            return true;
+        }
+
         return match ($moduleSlug) {
             'admissions' => true,
             'health' => self::isVisible('clinic'),
@@ -65,8 +87,8 @@ class ModuleVisibilityManager
     public static function isPageVisible(string $moduleKey, string $pageKey): bool
     {
         $schoolId = self::schoolId();
-        if (! $schoolId) {
-            return true; // Default visible during super-admin platform context
+        if (! $schoolId || self::isSchoolAdmin()) {
+            return true;
         }
 
         if ($moduleKey === 'admissions') {
