@@ -36,6 +36,7 @@ class StudentFeePaymentService
                 'payment_method' => $submission->gateway === 'paynow' ? 'Ecocash' : 'bank_transfer',
                 'payment_date' => $submission->payment_date ?? now(),
                 'currency' => $submission->currency ?: 'USD',
+                'received_by_id' => auth()->id(),
             ],
             PaymentSettlementService::MODE_CREDIT,
             null,

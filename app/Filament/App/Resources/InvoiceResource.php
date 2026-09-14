@@ -569,6 +569,7 @@ class InvoiceResource extends Resource
                                 'payment_method' => $data['payment_method'],
                                 'payment_date' => now(),
                                 'currency' => 'USD',
+                                'received_by_id' => auth()->id(),
                             ],
                             $data['excess_handling'] ?? PaymentSettlementService::MODE_CREDIT,
                             $data['bank_account_id'] ?? null,

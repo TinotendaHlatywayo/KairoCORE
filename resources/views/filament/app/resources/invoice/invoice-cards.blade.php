@@ -81,6 +81,7 @@
                     <div class="sc-card-actions">
                         <button type="button" class="sc-btn-enroll" wire:click="mountTableAction('recordPayment', '{{ $recordKey }}')">{{ __('Pay') }}</button>
                         <a href="{{ \App\Filament\App\Resources\InvoiceResource::getUrl('edit', ['record' => $invoice]) }}" class="sc-btn-edit">{{ __('Edit') }}</a>
+                        <a href="{{ \App\Filament\App\Pages\Finance\StudentFinancialHistoryPage::getUrl(['student' => $invoice->student_id]) }}" class="sc-btn-edit" title="{{ __('Financial History of this student') }}">{{ __('History') }}</a>
                         <a href="{{ route('invoice.pdf', ['record' => $invoice->id], false) }}" target="_blank" class="sc-btn-view">{{ __('Invoice') }}</a>
                         @if($invoice->paid_amount > 0)
                             <a href="{{ route('receipt.pdf', ['record' => $invoice->id], false) }}" target="_blank" class="sc-btn-view">{{ __('Receipt') }}</a>

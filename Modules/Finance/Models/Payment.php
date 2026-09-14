@@ -12,6 +12,7 @@ class Payment extends Model
     protected $fillable = [
         'school_id',
         'bank_account_id',
+        'received_by_id',
         'invoice_id',
         'receipt_number',
         'reference_number',
@@ -37,5 +38,10 @@ class Payment extends Model
     public function bankAccount()
     {
         return $this->belongsTo(SchoolBankAccount::class, 'bank_account_id');
+    }
+
+    public function receivedBy()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'received_by_id');
     }
 }
