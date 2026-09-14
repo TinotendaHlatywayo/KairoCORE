@@ -22,6 +22,7 @@ use App\Filament\App\Resources\AssessmentWorkflowResource;
 use App\Filament\App\Resources\CampusResourceResource;
 use App\Filament\App\Resources\CardTemplateResource;
 use App\Filament\App\Resources\ChatThreadResource;
+use App\Filament\App\Resources\DigitalAssessmentResource;
 use App\Filament\App\Resources\DisciplinaryCaseResource;
 use App\Filament\App\Resources\EmployeeAssetResource;
 use App\Filament\App\Resources\EmployeeResource;
@@ -50,6 +51,7 @@ use App\Filament\App\Resources\JournalEntryResource;
 use App\Filament\App\Resources\LeaveRequestResource;
 use App\Filament\App\Resources\PayrollPeriodResource;
 use App\Filament\App\Resources\PollResource;
+use App\Filament\App\Resources\QuestionBankResource;
 use App\Filament\App\Resources\ReportingWorkflowResource;
 use App\Filament\App\Resources\RevenueCategoryResource;
 use App\Filament\App\Resources\RevenueStreamResource;
@@ -155,8 +157,8 @@ trait ModulePermissionAccess
         HomeworkResource::class => ['lms', 'lms.manage_content'],
 
         // ---- Digital Assessment ----
-        \App\Filament\App\Resources\DigitalAssessmentResource::class => ['digital_assessment', 'digital_assessment.create_assessments'],
-        \App\Filament\App\Resources\QuestionBankResource::class => ['digital_assessment', 'digital_assessment.manage_questions'],
+        DigitalAssessmentResource::class => ['digital_assessment', 'digital_assessment.create_assessments'],
+        QuestionBankResource::class => ['digital_assessment', 'digital_assessment.manage_questions'],
 
         // ---- Reports ----
         EnterpriseReportTemplateResource::class => ['reports', 'reports.manage_templates'],
@@ -180,6 +182,12 @@ trait ModulePermissionAccess
 
     public static function canAccess(): bool
     {
+        // School Administrator role (and platform super-admins) bypass all
+        // module visibility and granular permission checks.
+        if (ModuleVisibilityManager::isSchoolAdmin()) {
+            return true;
+        }
+
         $mapping = static::$moduleAccessMap[static::class] ?? null;
 
         if ($mapping === null) {

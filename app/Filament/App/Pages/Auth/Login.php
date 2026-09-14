@@ -5,6 +5,7 @@ namespace App\Filament\App\Pages\Auth;
 use App\Models\User;
 use App\Services\AccountActivationService;
 use App\Services\LoginSecurityService;
+use App\Services\UserRegistrationService;
 use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
 use Filament\Facades\Filament;
 use Filament\Http\Responses\Auth\Contracts\LoginResponse;
@@ -164,10 +165,11 @@ class Login extends BaseLogin
     /**
      * Create a PENDING user account for the current school.
      *
-     * Accounts are never created active: an administrator with the
-     * "users.approve" permission must review and activate the account before
-     * it can sign in. New registrations are invalidated after a throttled
-     * number of attempts per IP address.
+     * A student or staff member may only register when BOTH their identifier
+     * (student registration number / staff ID) AND their email address match
+     * the details already on file in the school roster. The person's full name
+     * on file is used automatically as their account name and username.
+     * Accounts are created locked and activated through the emailed link.
      */
     public function registerAccount(): void
     {
@@ -193,8 +195,8 @@ class Login extends BaseLogin
         }
 
         $this->validate([
-            'regName' => ['required', 'string', 'min:2', 'max:100'],
-            'regIdentifier' => ['required_if:regRole,student,teaching_staff,non_teaching_staff', 'nullable', 'string', 'max:100'],
+            'regName' => ['required_if:regRole,administrator', 'nullable', 'string', 'min:2', 'max:100'],
+            'regIdentifier' => ['required_unless:regRole,administrator', 'nullable', 'string', 'max:100'],
             'regEmail' => ['required', 'email:rfc', 'max:255'],
             'regPhone' => ['nullable', 'string', 'max:60'],
             'regRole' => ['required', Rule::in(array_keys(User::REGISTRATION_ROLES))],
@@ -203,7 +205,7 @@ class Login extends BaseLogin
             'regName.required' => __('Please enter your full name.'),
             'regName.min' => __('Full name must be at least 2 characters.'),
             'regName.max' => __('Full name must not exceed 100 characters.'),
-            'regIdentifier.required_if' => __('Please enter your student registration number or staff ID.'),
+            'regIdentifier.required' => __('Please enter your student registration number or staff ID.'),
             'regEmail.required' => __('Please enter your email address.'),
             'regEmail.email' => __('The email address is not valid. It should be in the form name@gmail.com.'),
             'regEmail.max' => __('Email address must not exceed 255 characters.'),
@@ -213,49 +215,73 @@ class Login extends BaseLogin
         $email = mb_strtolower(trim($this->regEmail));
         $identifier = trim($this->regIdentifier);
 
-        // Duplicate detection: block when an active account already uses this
-        // email or username for the current school. Administrators register
-        // without a school identifier, so the username match is skipped for them.
-        $existingUser = User::withoutTrashed()
-            ->where('school_id', $school->id)
-            ->where(function ($q) use ($email, $identifier) {
-                $q->where('email', $email);
-                if ($identifier !== '') {
-                    $q->orWhere('username', $identifier);
-                }
-            })
-            ->first();
-
-        if ($existingUser) {
-            throw ValidationException::withMessages([
-                'regEmail' => __('User already has an account. Please sign in below.'),
-            ]);
-        }
-
-        // Verify identifier against student or employee records
+        // ─── Roster lookup: identifier AND email must both match the record ───
         $matchedStudent = null;
+        $matchedEmployee = null;
 
         if ($this->regRole === 'student') {
-            $matchedStudent = Student::where('school_id', $school->id)
+            $matchedStudent = Student::withoutTenantScope()
+                ->where('school_id', $school->id)
                 ->where(fn ($q) => $q->where('student_id_number', $identifier)->orWhere('admission_number', $identifier))
                 ->first();
 
             if (! $matchedStudent) {
                 throw ValidationException::withMessages([
-                    'regIdentifier' => __('Student record not found with this registration number. Please check and try again.'),
+                    'regIdentifier' => __('No student was found with the registration number you entered. Check it against your school ID card and try again.'),
                 ]);
             }
+
+            $this->assertRosterEmailMatches($matchedStudent->email, $email);
         } elseif (in_array($this->regRole, ['teaching_staff', 'non_teaching_staff'])) {
-            $employee = Employee::where('school_id', $school->id)
-                ->where(fn ($q) => $q->where('employee_number', $identifier)->orWhere('email', $email))
+            $matchedEmployee = Employee::withoutTenantScope()
+                ->where('school_id', $school->id)
+                ->where('employee_number', $identifier)
                 ->first();
 
-            if (! $employee) {
+            if (! $matchedEmployee) {
                 throw ValidationException::withMessages([
-                    'regIdentifier' => __('Staff member record not found with this staff identifier or email. Please check and try again.'),
+                    'regIdentifier' => __('No staff member was found with the staff ID you entered. Check it against your staff card and try again.'),
                 ]);
             }
+
+            $this->assertRosterEmailMatches($matchedEmployee->email, $email);
         }
+
+        // ─── Duplicate detection ───────────────────────────────────────────────
+        // Once the roster record is identified, its linked account is the
+        // authoritative signal. A floating user row with the same email (but a
+        // different roster record) also prevents a second account on one email.
+        $roster = $matchedStudent ?? $matchedEmployee;
+
+        $existingUser = null;
+
+        if ($roster && $roster->user_id) {
+            $existingUser = User::withTrashed()->find($roster->user_id);
+        }
+
+        if (! $existingUser) {
+            $existingUser = User::withoutTrashed()
+                ->where('school_id', $school->id)
+                ->where('email', $email)
+                ->first();
+        }
+
+        if ($existingUser && ! $existingUser->trashed()) {
+            throw ValidationException::withMessages([
+                'regEmail' => __('You already have an account. Please sign in below.'),
+            ]);
+        }
+
+        // Name and username come from the roster record when it exists. Full
+        // names may repeat across students — the unique identity is the
+        // auto-assigned student / staff ID, not the username.
+        $fullName = $matchedStudent
+            ? $matchedStudent->full_name
+            : ($matchedEmployee
+                ? trim("{$matchedEmployee->first_name} {$matchedEmployee->last_name}")
+                : trim($this->regName));
+
+        $username = $roster ? $fullName : ($this->regRole === 'administrator' ? $email : $identifier);
 
         // A soft-deleted (removed) account still occupies the unique
         // (school_id, email) index, so creating a fresh row would fail with an
@@ -271,8 +297,8 @@ class Login extends BaseLogin
         if ($removedUser) {
             $removedUser->restore();
             $removedUser->update([
-                'name' => $this->regName,
-                'username' => $identifier,
+                'name' => $fullName,
+                'username' => $username,
                 'phone' => $this->regPhone,
                 'requested_role' => $this->regRole,
                 'account_status' => User::STATUS_PENDING,
@@ -282,9 +308,9 @@ class Login extends BaseLogin
             // Create pending user account with random temporary password
             $user = User::create([
                 'school_id' => $school->id,
-                'name' => $this->regName,
+                'name' => $fullName,
                 'email' => $email,
-                'username' => $identifier,
+                'username' => $username,
                 'phone' => $this->regPhone,
                 'password' => Hash::make(Str::random(64)),
                 'account_status' => User::STATUS_PENDING,
@@ -292,10 +318,10 @@ class Login extends BaseLogin
             ]);
         }
 
-        // Link the matched student record to the newly created user account
-        // so that the student portal can resolve the profile on first login.
-        if ($matchedStudent && ! $matchedStudent->user_id) {
-            $matchedStudent->update(['user_id' => $user->id]);
+        // Link the matched roster record to the newly created user account
+        // so that the student / staff portal can resolve the profile.
+        if ($roster && ! $roster->user_id) {
+            $roster->update(['user_id' => $user->id]);
         }
 
         // Automatically trigger activation email
@@ -309,14 +335,35 @@ class Login extends BaseLogin
         // Whether they also receive an EMAIL is the school's choice in
         // System Settings -> Notifications (email_on_user_registration).
         try {
-            app(\App\Services\UserRegistrationService::class)->notifyApprovers($school, $user);
+            app(UserRegistrationService::class)->notifyApprovers($school, $user);
         } catch (\Throwable $e) {
             report($e);
         }
 
-        $this->regSubmittedName = $this->regName;
+        $this->regSubmittedName = $fullName;
         $this->reset('regName', 'regIdentifier', 'regEmail', 'regPhone');
         $this->regRole = 'student';
         $this->regSubmitted = true;
+    }
+
+    /**
+     * The typed email must exactly match the email on the school roster for
+     * the identified student / staff member.
+     */
+    protected function assertRosterEmailMatches(?string $rosterEmail, string $submittedEmail): void
+    {
+        $rosterEmail = mb_strtolower(trim((string) $rosterEmail));
+
+        if ($rosterEmail === '') {
+            throw ValidationException::withMessages([
+                'regEmail' => __('No email address is on file for you. Contact the school office to add one before registering.'),
+            ]);
+        }
+
+        if ($rosterEmail !== $submittedEmail) {
+            throw ValidationException::withMessages([
+                'regEmail' => __('The email you entered does not match the email on file for your account. Check and try again.'),
+            ]);
+        }
     }
 }

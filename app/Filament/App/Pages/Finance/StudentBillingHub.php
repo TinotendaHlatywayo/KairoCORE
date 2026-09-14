@@ -6,6 +6,7 @@ use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Navigation\ModuleNavigationService;
 use App\Services\ModuleVisibilityManager;
 use Filament\Pages\Page;
+use Modules\Students\Models\Student;
 
 class StudentBillingHub extends Page
 {
@@ -42,9 +43,16 @@ class StudentBillingHub extends Page
 
     public function mount(): void
     {
-        $last = session("nav.last.finance.".$this->getCategoryLabel());
+        $last = session('nav.last.finance.'.$this->getCategoryLabel());
         $pages = $this->getCategoryPages();
-        $target = $last ?: ($pages[0]['url'] ?? null);
+
+        if (empty($pages)) {
+            return;
+        }
+
+        $validUrls = collect($pages)->pluck('url')->all();
+        $target = in_array($last, $validUrls, true) ? $last : ($pages[0]['url'] ?? null);
+
         if ($target && $target !== request()->url()) {
             redirect($target);
         }
@@ -72,14 +80,14 @@ class StudentBillingHub extends Page
         $schoolId = current_tenant()?->id ?? 1;
 
         // Students holding a carried-forward credit from a previous term.
-        $creditStudents = \Modules\Students\Models\Student::where('school_id', $schoolId)
+        $creditStudents = Student::where('school_id', $schoolId)
             ->where('credit_balance', '>', 0)
             ->with(['currentEnrollment.course', 'currentEnrollment.section'])
             ->orderByDesc('credit_balance')
             ->limit(15)
             ->get();
 
-        $totalCredits = (float) \Modules\Students\Models\Student::where('school_id', $schoolId)
+        $totalCredits = (float) Student::where('school_id', $schoolId)
             ->sum('credit_balance');
 
         return [

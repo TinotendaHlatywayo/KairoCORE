@@ -22,7 +22,7 @@
             <div>
                 <p class="text-sm font-semibold text-warning-700">{{ __('Column mismatch detected') }}</p>
                 <p class="mt-0.5 text-xs text-warning-600">
-                    {{ __('One or more of your file columns could not be matched automatically. Continue to the "Match Columns" step to map them, or replace your file with the template.') }}
+                    {{ __('One or more required columns could not be matched automatically. Download the template and use its exact column names, then re-upload your file.') }}
                 </p>
             </div>
         @endif

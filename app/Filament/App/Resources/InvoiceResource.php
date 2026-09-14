@@ -19,7 +19,6 @@ use Modules\Academics\Models\Term;
 use Modules\Finance\Models\FeeStructure;
 use Modules\Finance\Models\FeeWaiver;
 use Modules\Finance\Models\Invoice;
-use Modules\Finance\Models\Payment;
 use Modules\Finance\Models\SchoolBankAccount;
 use Modules\Finance\Services\ExchangeRateService;
 use Modules\Finance\Services\FinancialSecurityService;
@@ -543,7 +542,7 @@ class InvoiceResource extends Resource
                             ->options(SchoolBankAccount::where('school_id', $record->school_id)->where('is_active', true)->pluck('bank_name', 'id'))
                             ->searchable()
                             ->placeholder(__('Default active account')),
-                        Forms\Components\TextInput::make('reference_number')->required()->label(__('TXN Reference Number')),
+                        Forms\Components\TextInput::make('reference_number')->label(__('TXN Reference Number')),
                     ])
                     ->action(function (Invoice $record, array $data, ExchangeRateService $rateService, FinancialSecurityService $securityService) {
                         if ($securityService->detectDuplicatePaymentReference($record->school_id, $data['reference_number'])) {
@@ -751,6 +750,29 @@ class InvoiceResource extends Resource
                                 'ids' => $records->pluck('id')->join(','),
                                 'mode' => $data['print_mode'],
                                 'type' => 'statements',
+                            ], false);
+                        }),
+
+                    Tables\Actions\BulkAction::make('downloadPaymentHistory')
+                        ->label(__('Download Payment History'))
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->color('info')
+                        ->action(function (Collection $records) {
+                            $studentIds = $records->pluck('student_id')->unique()->values()->all();
+
+                            if (empty($studentIds)) {
+                                Notification::make()
+                                    ->title(__('No Records Found'))
+                                    ->warning()
+                                    ->send();
+
+                                return;
+                            }
+
+                            return redirect()->route('finance.students.history.bulk', [
+                                'ids' => implode(',', $studentIds),
+                                'scope' => 'full',
+                                'format' => 'csv',
                             ], false);
                         }),
 

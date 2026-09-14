@@ -4,6 +4,7 @@ namespace App\Filament\App\Resources\UserAccountResource\Pages;
 
 use App\Filament\App\Resources\UserAccountResource;
 use App\Models\User;
+use App\Services\AccountActivationService;
 use App\Services\UserRegistrationService;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
@@ -25,9 +26,39 @@ class EditUserAccount extends EditRecord
         return [
             $this->getApproveAction(),
             $this->getRejectAction(),
+            $this->getResendActivationAction(),
             DeleteAction::make()
                 ->visible(fn () => PermissionRegistry::checkPermission('administration.manage_users')),
         ];
+    }
+
+    protected function getResendActivationAction(): Action
+    {
+        return Action::make('resendActivation')
+            ->label(__('Resend activation link'))
+            ->icon('heroicon-o-envelope')
+            ->color('info')
+            ->visible(fn () => $this->record->account_status === User::STATUS_PENDING)
+            ->requiresConfirmation()
+            ->modalHeading(__('Resend activation link'))
+            ->modalDescription(fn () => 'A fresh, single-use activation link will be emailed to '.$this->record->email.'.')
+            ->action(function () {
+                $sent = app(AccountActivationService::class)->issueAndSend($this->record);
+
+                if ($sent) {
+                    Notification::make()
+                        ->success()
+                        ->title(__('Activation link sent'))
+                        ->body('A fresh activation link was emailed to '.$this->record->email.'.')
+                        ->send();
+                } else {
+                    Notification::make()
+                        ->danger()
+                        ->title(__('Could not send the email'))
+                        ->body(__('The activation email could not be delivered. Check the mail settings and try again.'))
+                        ->send();
+                }
+            });
     }
 
     protected function getApproveAction(): Action

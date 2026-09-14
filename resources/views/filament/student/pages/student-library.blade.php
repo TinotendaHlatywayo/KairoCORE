@@ -16,7 +16,7 @@
                 <div class="flex gap-3">
                     <div>
                         <label class="mb-1 block text-xs font-bold text-slate-500 dark:text-slate-400">{{ __('Category') }}</label>
-                        <select wire:model.live="categoryFilter"
+                        <select wire:model.change="categoryFilter"
                                 class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white">
                             <option value="">{{ __('All Categories') }}</option>
                             @foreach($categories as $cat)
@@ -26,7 +26,7 @@
                     </div>
                     <div>
                         <label class="mb-1 block text-xs font-bold text-slate-500 dark:text-slate-400">{{ __('Classification') }}</label>
-                        <select wire:model.live="mediaFilter"
+                        <select wire:model.change="mediaFilter"
                                 class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white">
                             <option value="">{{ __('All Types') }}</option>
                             <option value="physical">{{ __('Physical') }}</option>
@@ -35,7 +35,7 @@
                     </div>
                     <div>
                         <label class="mb-1 block text-xs font-bold text-slate-500 dark:text-slate-400">{{ __('Per page') }}</label>
-                        <select wire:model.live="perPage"
+                        <select wire:model.change="perPage"
                                 class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white">
                             <option value="12">12</option>
                             <option value="24">24</option>

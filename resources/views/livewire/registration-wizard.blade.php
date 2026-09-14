@@ -91,7 +91,7 @@
 
                 <div class="col-md-6 mb-3">
                     <label class="form-label fw-semibold text-secondary">{{ __('Type of Institution') }} <span class="text-danger">*</span></label>
-                    <select wire:model.live="institutionType" class="form-select @error('institutionType') is-invalid @enderror">
+                    <select wire:model.change="institutionType" class="form-select @error('institutionType') is-invalid @enderror">
                         <option value="primary">{{ __('Primary') }}</option>
                         <option value="secondary">{{ __('Secondary') }}</option>
                         <option value="tertiary">{{ __('Tertiary') }}</option>

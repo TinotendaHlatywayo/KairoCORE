@@ -263,7 +263,7 @@
                         </div>
 
                         <div class="sc-reg-grid">
-                            <div class="sc-field sc-field-full">
+                            <div class="sc-field sc-field-full" x-show="regRole === 'administrator'" x-transition.opacity>
                                 <label for="sc-reg-name">{{ __('Full Name') }}</label>
                                  <input id="sc-reg-name" type="text" autocomplete="name" placeholder="e.g. Tendai Moyo" wire:model.live="regName"
                                        x-on:blur="validateField('name', $el.value)"
@@ -275,7 +275,7 @@
 
                             <div class="sc-field">
                                 <label for="sc-reg-role">{{ __('Role') }}</label>
-                                <select id="sc-reg-role" wire:model.defer="regRole" x-model="regRole">
+                                <select id="sc-reg-role" wire:model.change="regRole" x-model="regRole">
                                     @foreach ($roleOptions as $value => $label)
                                         <option value="{{ $value }}">{{ $label }}</option>
                                     @endforeach
@@ -296,10 +296,16 @@
                                     id="sc-reg-identifier"
                                     type="text"
                                     :placeholder="regRole === 'student' ? 'e.g. REG-2026-001' : (regRole === 'teaching_staff' || regRole === 'non_teaching_staff' ? 'e.g. STF-012' : 'e.g. REG-2026-001 or STF-012')"
-                                    wire:model.defer="regIdentifier"
+                                    wire:model.live="regIdentifier"
                                     maxlength="100"
                                 />
                                 @error('regIdentifier') <span class="sc-field-err">{{ $message }}</span> @enderror
+                            </div>
+
+                            <div class="sc-field sc-field-full" x-show="regRole !== 'administrator'" x-transition.opacity>
+                                <p style="margin:0;font-size:0.72rem;line-height:1.5;color:#94a3b8;" class="sc-reg-auto-name">
+                                    {{ __('Your full name on file will be used automatically as your username.') }}
+                                </p>
                             </div>
 
                             <div class="sc-field">
@@ -332,7 +338,7 @@
                             </div>
                         </div>
 
-                        <button type="submit" class="sc-l2-submit" wire:loading.attr="disabled" wire:target="registerAccount" @if(! $regAgreeTerms || empty($regName) || empty($regEmail)) disabled style="opacity: 0.6; cursor: not-allowed; background-color: #94a3b8; border-color: #94a3b8;" @endif>
+                        <button type="submit" class="sc-l2-submit" wire:loading.attr="disabled" wire:target="registerAccount" @if(! $regAgreeTerms || empty($regEmail) || ($regRole === 'administrator' ? empty($regName) : empty($regIdentifier))) disabled style="opacity: 0.6; cursor: not-allowed; background-color: #94a3b8; border-color: #94a3b8;" @endif>
                             <span wire:loading.remove wire:target="registerAccount">{{ __('Submit Request') }}</span>
                             <span wire:loading wire:target="registerAccount">{{ __('Processing...') }}</span>
                         </button>

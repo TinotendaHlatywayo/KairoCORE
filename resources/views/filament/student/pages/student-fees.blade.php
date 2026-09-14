@@ -32,7 +32,7 @@
             <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
                     <label class="text-xs font-bold text-slate-700 dark:text-slate-300">{{ __('Viewing fees for:') }}</label>
-                    <select wire:model.live="selectedTermId" class="flex-1 text-xs rounded-lg border-slate-300 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white focus:ring-indigo-500 focus:border-indigo-500">
+                    <select wire:model.change="selectedTermId" class="flex-1 text-xs rounded-lg border-slate-300 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white focus:ring-indigo-500 focus:border-indigo-500">
                         <option value="">{{ __('All Terms (Full Year)') }}</option>
                         @foreach($terms as $term)
                             <option value="{{ $term->id }}">

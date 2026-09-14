@@ -8,7 +8,7 @@
                 <div class="flex items-center gap-3 border-r border-gray-100 dark:border-gray-800 pr-4">
                     <label class="text-sm font-bold text-gray-700 dark:text-gray-300">{{ __('Active School Schedule:') }}</label>
                     @if(\Modules\Timetables\Models\TimetableTemplate::exists())
-                        <select wire:model.live="activeSchoolTemplateId" wire:change="switchActiveTemplate" class="rounded-lg border-gray-200 dark:bg-gray-800 dark:border-gray-700 text-sm focus:border-green-500 focus:ring-green-500">
+                        <select wire:model.change="activeSchoolTemplateId" wire:change="switchActiveTemplate" class="rounded-lg border-gray-200 dark:bg-gray-800 dark:border-gray-700 text-sm focus:border-green-500 focus:ring-green-500">
                             <option value="">{{ __('-- Select Active Schedule --') }}</option>
                             @foreach(\Modules\Timetables\Models\TimetableTemplate::all() as $tmpl)
                                 <option value="{{ $tmpl->id }}">{{ $tmpl->name }}</option>

@@ -100,7 +100,7 @@ trait HasCsvBulkActions
             ->icon('heroicon-o-arrow-up-tray')
             ->color('warning')
             ->modalHeading(__("Import {$title} from CSV"))
-            ->modalDescription(__('Upload your file and the system matches the columns automatically. Review the suggested mapping on the "Match Columns" step and override anything that looks wrong before importing.'))
+            ->modalDescription(__('Upload your file and the system matches every column automatically — no manual column mapping needed.'))
             ->modalWidth(MaxWidth::ExtraLarge)
             ->modalSubmitActionLabel(__("Import {$title}"))
             ->steps($this->csvImportSteps($service, $streamName, $title))
@@ -110,19 +110,19 @@ trait HasCsvBulkActions
     }
 
     /**
-     * Build the import wizard steps. Step 2 (Match Columns) is always shown:
-     * the system suggests a mapping from the uploaded headers, and the user
-     * can accept it as-is or override any column manually before importing.
+     * Build the import wizard steps. The wizard is single-step: columns are
+     * auto-matched from the uploaded file's headers, so no manual mapping
+     * screen is shown anywhere in the system.
      */
     protected function csvImportSteps(string $service, string $streamName, string $title): array
     {
         return [
             Forms\Components\Wizard\Step::make(__('Upload'))
-                ->description(__('Download the template and fill it in'))
-                ->schema(fn (Get $get): array => $this->uploadStepSchema($get, $service, $streamName, $title)),
-            Forms\Components\Wizard\Step::make(__('Match Columns'))
-                ->description(__('Review the auto-matched columns and override if needed'))
-                ->schema(fn (Get $get): array => $this->columnMatchingSchema($get, $service, $streamName)),
+                ->description(__('Download the template, fill it in and upload — columns are matched automatically'))
+                ->schema(fn (Get $get): array => [
+                    ...$this->uploadStepSchema($get, $service, $streamName, $title),
+                    ...$this->missingReferenceSchema($get, $service),
+                ]),
         ];
     }
 
@@ -192,7 +192,7 @@ trait HasCsvBulkActions
         $schema[] = Forms\Components\View::make('filament.app.components.csv-import.progress-panel')
             ->viewData([
                 'streamName' => $streamName,
-                'message' => __('Click "Import" on the Match Columns step to begin — progress appears here.'),
+                'message' => __('Click "Import" to begin — progress appears here.'),
             ]);
 
         return $schema;
@@ -343,7 +343,10 @@ trait HasCsvBulkActions
             return [];
         }
 
-        $columnMap = $get('columnMap') ?? [];
+        // The create-or-skip prompt is column-mapping agnostic: with the
+        // single-step importer there is no manual map, so fall back to the
+        // auto-guessed mapping of the uploaded headers.
+        $columnMap = $get('columnMap') ?? $service::guessMapping($headers);
         $schoolId = app('current_tenant')->id;
 
         $fieldsets = [];
@@ -517,17 +520,29 @@ trait HasCsvBulkActions
         }
 
         $columns = $service::columns();
+        $headers = $service::readCsvHeaders($service::resolveTempFilePath($file));
 
         $requiredMissing = collect($columns)
             ->filter(fn (array $column): bool => $column['required'])
             ->filter(fn (array $column, string $key): bool => blank($columnMap[$key] ?? null));
 
+        if (empty($headers)) {
+            Notification::make()
+                ->title(__('Import not started — no column headings detected'))
+                ->body(__('The first row of your file must contain the column headings (e.g. "First Name", "Last Name", "Gender"). Download the template again, fill it in, and re-upload your file as a CSV.'))
+                ->danger()
+                ->duration(8)
+                ->send();
+
+            return;
+        }
+
         if ($requiredMissing->isNotEmpty()) {
             Notification::make()
-                ->title(__('Import not started — required columns are not mapped'))
-                ->body(__('Match these columns before importing: ').$requiredMissing->keys()->map(fn (string $key): string => $columns[$key]['label'])->implode(', ').'.')
+                ->title(__('Import not started — some required columns could not be matched'))
+                ->body(__('These columns were not found in your file: ').$requiredMissing->keys()->map(fn (string $key): string => $columns[$key]['label'])->implode(', ').'.'.__(' Use the exact column names from the downloadable template, then re-upload your file.'))
                 ->danger()
-                ->persistent()
+                ->duration(8)
                 ->send();
 
             return;
@@ -634,7 +649,7 @@ trait HasCsvBulkActions
             $lastPercent = $percent;
 
             $status = $rowFailed
-                ? '<span class="text-red-600">'.count($errors).' '. __('row(s) rejected so far').'</span>'
+                ? '<span class="text-red-600">'.count($errors).' '.__('row(s) rejected so far').'</span>'
                 : '<span class="text-gray-400">'.__('No errors yet').'</span>';
 
             if ($percent >= 100) {

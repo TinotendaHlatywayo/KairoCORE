@@ -2,10 +2,13 @@
 
 namespace App\Services;
 
+use App\Models\School;
 use App\Models\User;
 use App\Models\UserTask;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Modules\Academics\Models\AcademicReport;
 use Modules\Academics\Models\AcademicYear;
 use Modules\Academics\Models\Assessment;
@@ -22,10 +25,10 @@ use Modules\Academics\Models\Section;
 use Modules\Academics\Models\StudentCompetency;
 use Modules\Academics\Models\Subject;
 use Modules\Academics\Models\Term;
-use Modules\Admissions\Models\Application;
-use Modules\Admissions\Models\ApplicationDocument;
 use Modules\Admin\Models\Department;
 use Modules\Admin\Models\SystemSetting;
+use Modules\Admissions\Models\Application;
+use Modules\Admissions\Models\ApplicationDocument;
 use Modules\Attendance\Models\StaffAttendance;
 use Modules\Attendance\Models\StudentAttendance;
 use Modules\Clinic\Models\ClinicVisit;
@@ -85,6 +88,9 @@ use Modules\Library\Models\LibraryFormat;
 use Modules\Library\Models\LibraryIssue;
 use Modules\Lms\Models\Homework;
 use Modules\Lms\Models\HomeworkSubmission;
+use Modules\Reports\Models\EnterpriseReportTemplate;
+use Modules\Reports\Models\GeneratedReport;
+use Modules\Reports\Models\ReportSchedule;
 use Modules\Students\Models\Enrollment;
 use Modules\Students\Models\Student;
 use Modules\Timetables\Models\TimetableLesson;
@@ -256,12 +262,12 @@ class DummyDataSeeder
     protected function runSeed(int $schoolId, callable $log, array &$manifest): void
     {
         $track = function (string $table, $ids) use (&$manifest): void {
-            foreach ((array) ($ids instanceof \Illuminate\Support\Collection ? $ids->all() : $ids) as $id) {
+            foreach ((array) ($ids instanceof Collection ? $ids->all() : $ids) as $id) {
                 $manifest[$table][] = (int) $id;
             }
         };
 
-        $created = function ($model) use ($track, &$manifest): mixed {
+        $created = function ($model) use (&$manifest): mixed {
             if ($model->wasRecentlyCreated) {
                 $table = $model->getTable();
                 $manifest[$table][] = (int) $model->id;
@@ -270,10 +276,10 @@ class DummyDataSeeder
             return $model;
         };
 
-        $school = \App\Models\School::find($schoolId);
+        $school = School::find($schoolId);
         $schoolType = strtolower((string) ($school->institution_type ?? 'secondary'));
         $isPrimary = in_array($schoolType, ['primary', 'both'], true);
-        $isSecondary = in_array($schoolType, ['secondary', 'both'], true) && !$isPrimary;
+        $isSecondary = in_array($schoolType, ['secondary', 'both'], true) && ! $isPrimary;
 
         // An acting user for "recorded_by"-style columns (admin if present).
         $actorId = optional(User::where('school_id', $schoolId)->where('requested_role', 'administrator')->orderBy('id')->first())->id
@@ -287,7 +293,7 @@ class DummyDataSeeder
         if (! $year) {
             $year = $created(AcademicYear::create([
                 'school_id' => $schoolId,
-                'name' => now()->format('Y').' Academic Year',
+                'name' => now()->format('Y'),
                 'is_active' => true,
                 'start_date' => now()->startOfYear()->toDateString(),
                 'end_date' => now()->endOfYear()->toDateString(),
@@ -1162,6 +1168,7 @@ class DummyDataSeeder
                 ->where('school_id', $schoolId)->where('email', $demoEmail)->first();
             if ($existingEmp) {
                 $idsByRole[$role][] = $existingEmp->user_id;
+
                 continue;
             }
 
@@ -1726,7 +1733,7 @@ class DummyDataSeeder
                     'school_id' => $schoolId,
                     'inventory_item_id' => $item->id,
                     'asset_number' => 'TEST-AST-'.$schoolId.'-'.str_pad((string) ($n + 1), 3, '0', STR_PAD_LEFT),
-                    'serial_number' => 'SN-DEMO-'.strtoupper(\Illuminate\Support\Str::random(8)),
+                    'serial_number' => 'SN-DEMO-'.strtoupper(Str::random(8)),
                     'acquisition_date' => now()->subYears(rand(1, 4))->toDateString(),
                     'purchase_cost' => $item->average_unit_cost,
                     'salvage_value' => round($item->average_unit_cost * 0.1, 2),
@@ -1984,7 +1991,7 @@ class DummyDataSeeder
                 'publication_year' => (string) $pubYear,
                 'language' => 'English',
                 'media_type' => $mediaType,
-                'file_path' => $mediaType === 'digital' ? 'knowledge/demo/'.$schoolId.'/'.\Illuminate\Support\Str::slug($title).'.pdf' : null,
+                'file_path' => $mediaType === 'digital' ? 'knowledge/demo/'.$schoolId.'/'.Str::slug($title).'.pdf' : null,
             ]);
             $track('knowledge_assets', [$asset->id]);
 
@@ -2194,7 +2201,7 @@ class DummyDataSeeder
         // Generate Lessons uses app('current_tenant'), so bind it when running
         // from the CLI/artisan or other non-HTTP context.
         if (! app()->bound('current_tenant')) {
-            app()->instance('current_tenant', \App\Models\School::find($schoolId));
+            app()->instance('current_tenant', School::find($schoolId));
         }
 
         // One homeroom per stream plus the two purpose-built labs. The labs
@@ -2756,7 +2763,7 @@ class DummyDataSeeder
             ['Attendance Register', 'attendance', 'tabular', 'operations'],
         ];
         foreach ($reportTemplateSpecs as $n => [$name, $module, $type, $category]) {
-            $existsTpl = \Modules\Reports\Models\EnterpriseReportTemplate::withoutGlobalScopes()
+            $existsTpl = EnterpriseReportTemplate::withoutGlobalScopes()
                 ->where('school_id', $schoolId)
                 ->where('name', 'LIKE', "TEST-%{$name}")
                 ->exists();
@@ -2764,7 +2771,7 @@ class DummyDataSeeder
                 continue;
             }
 
-            $template = \Modules\Reports\Models\EnterpriseReportTemplate::create([
+            $template = EnterpriseReportTemplate::create([
                 'school_id' => $schoolId,
                 'name' => 'TEST-Demo '.$name,
                 'module' => $module,
@@ -2785,12 +2792,12 @@ class DummyDataSeeder
             $track('enterprise_report_templates', [$template->id]);
 
             for ($g = 1; $g <= 2; $g++) {
-                $generated = \Modules\Reports\Models\GeneratedReport::create([
+                $generated = GeneratedReport::create([
                     'school_id' => $schoolId,
                     'enterprise_report_template_id' => $template->id,
                     'name' => 'TEST-Demo '.$name.' — Run '.$g,
                     'format' => collect(['pdf', 'xlsx', 'csv'])->random(),
-                    'file_path' => 'reports/demo/'.$schoolId.'/'.\Illuminate\Support\Str::uuid().'.pdf',
+                    'file_path' => 'reports/demo/'.$schoolId.'/'.Str::uuid().'.pdf',
                     'status' => 'completed',
                     'record_count' => rand(15, 400),
                     'execution_ms' => rand(120, 2400),
@@ -2805,19 +2812,19 @@ class DummyDataSeeder
             }
         }
 
-        $scheduleExists = \Modules\Reports\Models\ReportSchedule::withoutGlobalScopes()
+        $scheduleExists = ReportSchedule::withoutGlobalScopes()
             ->where('school_id', $schoolId)
             ->where('name', 'LIKE', 'TEST-%')
             ->exists();
         if (! $scheduleExists) {
-            $firstTemplate = \Modules\Reports\Models\EnterpriseReportTemplate::withoutGlobalScopes()
+            $firstTemplate = EnterpriseReportTemplate::withoutGlobalScopes()
                 ->where('school_id', $schoolId)
                 ->where('name', 'LIKE', 'TEST-%')
                 ->orderBy('id')
                 ->first();
 
             if ($firstTemplate) {
-                $schedule = \Modules\Reports\Models\ReportSchedule::create([
+                $schedule = ReportSchedule::create([
                     'school_id' => $schoolId,
                     'enterprise_report_template_id' => $firstTemplate->id,
                     'name' => 'TEST-Weekly Student Directory Mail-out',
@@ -2857,7 +2864,7 @@ class DummyDataSeeder
      */
     protected function schoolContactEmail(int $schoolId): string
     {
-        return optional(\App\Models\School::find($schoolId))->email_address
+        return optional(School::find($schoolId))->email_address
             ?? 'admin@demo.schoolcore.test';
     }
 
@@ -3050,7 +3057,7 @@ class DummyDataSeeder
 
     protected function findOrCreateDemoStudentUser(int $schoolId, Student $student): ?User
     {
-        $school = \App\Models\School::find($schoolId);
+        $school = School::find($schoolId);
         $slug = $school ? strtolower(preg_replace('/[^a-z0-9]+/', '', (string) $school->subdomain)) : 'school';
         $email = 'student.'.$student->id.'@'.$slug.'.demo';
 
@@ -3084,7 +3091,7 @@ class DummyDataSeeder
 
     public function enforceInstitutionTypeScope(int $schoolId): void
     {
-        $school = \App\Models\School::find($schoolId);
+        $school = School::find($schoolId);
         if (! $school) {
             return;
         }
@@ -3116,7 +3123,7 @@ class DummyDataSeeder
             $invalidCourseIds = Course::where('school_id', $schoolId)
                 ->where(function ($q) {
                     $q->where('name', 'LIKE', '%ECD%')
-                      ->orWhere('name', 'LIKE', '%Grade%');
+                        ->orWhere('name', 'LIKE', '%Grade%');
                 })
                 ->pluck('id');
 
