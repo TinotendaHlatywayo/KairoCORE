@@ -43,7 +43,7 @@ class FinancialStatementPage extends Page
                 'account_name' => 'School Operating Account',
                 'account_number' => '9140001234567',
                 'branch_code' => '02',
-                'balance' => 5000.00,
+                'balance' => 0.00,
                 'is_active' => true,
                 'is_default' => true,
             ]);
