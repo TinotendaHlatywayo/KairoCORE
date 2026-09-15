@@ -159,6 +159,7 @@ class Employee extends Model
                             'name' => "{$employee->first_name} {$employee->last_name}",
                             'email' => $employee->email,
                             'password' => Hash::make($passwordRaw),
+                            'account_status' => User::STATUS_PENDING,
                         ]);
                     }
 
