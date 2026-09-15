@@ -28,6 +28,7 @@ class DepartmentPermissionPresets
                 'permissions' => [
                     'finance.view_module', 'finance.manage_fees', 'finance.bill_cohorts',
                     'finance.receive_payments', 'finance.reverse_payments', 'finance.view_reports',
+                    'finance.manage_student_financial_history',
                     'reports.view_module', 'reports.generate', 'administration.view_module',
                 ],
             ],
