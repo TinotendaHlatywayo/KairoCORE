@@ -155,6 +155,25 @@ abstract class CsvBulkService
     }
 
     /**
+     * Resolve the tenant school's institution type for template generation.
+     *
+     * @return string 'primary' when the school is a primary (or combined) school,
+     *                'secondary' otherwise (secondary, tertiary, other, fallback).
+     */
+    protected static function schoolType(): string
+    {
+        $school = current_tenant();
+
+        if (! $school) {
+            return 'secondary';
+        }
+
+        $type = strtolower((string) ($school->institution_type ?? 'secondary'));
+
+        return in_array($type, ['primary', 'both'], true) ? 'primary' : 'secondary';
+    }
+
+    /**
      * Generate the downloadable import template as an .xlsx workbook. Headers
      * of the required columns are written in bold so users can tell at a glance
      * which columns are mandatory. Falls back to the CSV template if Excel

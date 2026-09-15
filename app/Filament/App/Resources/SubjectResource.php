@@ -12,6 +12,7 @@ use Filament\Resources\Resource;
 use Filament\Support\Exceptions\Halt;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\DB;
 use Modules\Academics\Models\Subject;
 use Modules\Admin\Services\PermissionRegistry;
 
@@ -53,26 +54,34 @@ class SubjectResource extends Resource
         if ($school) {
             $type = strtolower((string) ($school->institution_type ?? 'secondary'));
             if ($type === 'primary') {
-                $query->whereIn('name', [
-                    'Mathematics',
-                    'English Language',
-                    'Shona Language',
-                    'Science & Technology',
-                    'Social Studies',
-                    'Physical Education',
-                ]);
+                $query->whereIn(DB::raw('BINARY `name`'), static::primarySubjectNames());
             } elseif ($type === 'secondary') {
-                $query->whereNotIn('name', [
-                    'Mathematics',
-                    'English Language',
-                    'Shona Language',
-                    'Science & Technology',
-                    'Social Studies',
-                    'Physical Education',
-                ]);
+                $query->whereNotIn(DB::raw('BINARY `name`'), static::primarySubjectNames());
             }
         }
         return $query;
+    }
+
+    /**
+     * Names considered "primary school" subjects. Includes both the current
+     * seed names and the new presets so imported data is never hidden.
+     *
+     * @return string[]
+     */
+    protected static function primarySubjectNames(): array
+    {
+        return [
+            'Mathematics',
+            'English Language',
+            'Shona Language',
+            'Science & Technology',
+            'Social Studies',
+            'Physical Education',
+            'Agriculture',
+            'Science and Technology and ICT',
+            'Social Sciences',
+            'Physical Education and Arts',
+        ];
     }
 
     public static function form(Form $form): Form

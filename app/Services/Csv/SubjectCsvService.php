@@ -59,6 +59,61 @@ class SubjectCsvService extends CsvBulkService
         return ['Subject Name', 'Subject Code', 'Type', 'Credit Weight', 'Is Elective', 'Status'];
     }
 
+    /**
+     * Example rows written under the template header. Primary schools get the
+     * six core subjects; secondary/high schools get the full sixteen-subject
+     * curriculum.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    protected static function templateRows(): array
+    {
+        $isPrimary = static::schoolType() === 'primary';
+
+        $subjects = $isPrimary
+            ? [
+                ['Mathematics', 'PR-MATH', 'theory'],
+                ['English Language', 'PR-ENG', 'theory'],
+                ['Shona Language', 'PR-SHO', 'theory'],
+                ['Agriculture', 'PR-AGR', 'practical'],
+                ['Science and Technology and ICT', 'PR-STI', 'practical'],
+                ['Social Sciences', 'PR-SOC', 'theory'],
+                ['Physical Education and Arts', 'PR-PEA', 'practical'],
+            ]
+            : [
+                ['MATHEMATICS', 'SEC-MATH', 'theory'],
+                ['ENGLISH LANGUAGE', 'SEC-ENG', 'theory'],
+                ['SHONA LANGUAGE', 'SEC-SHO', 'theory'],
+                ['COMBINED SCIENCE', 'SEC-CSC', 'practical'],
+                ['GEOGRAPHY', 'SEC-GEO', 'theory'],
+                ['PHYSICS', 'SEC-PHY', 'practical'],
+                ['CHEMISTRY', 'SEC-CHE', 'practical'],
+                ['BIOLOGY', 'SEC-BIO', 'practical'],
+                ['HISTORY', 'SEC-HIS', 'theory'],
+                ['PE SPORTS AND MASS DISPLAYS', 'SEC-PE', 'practical'],
+                ['BUILDING TECHNOLOGY AND DESIGN', 'SEC-BTD', 'practical'],
+                ['AGRICULTURE', 'SEC-AGR', 'practical'],
+                ['HERITAGE', 'SEC-HER', 'theory'],
+                ['COMPUTER SCIENCE', 'SEC-CS', 'practical'],
+                ['FASHION AND FABRICS', 'SEC-FAF', 'practical'],
+                ['FOOD AND NUTRITION', 'SEC-FAN', 'practical'],
+                ['METALWORK', 'SEC-MTL', 'practical'],
+                ['WOODWORK', 'SEC-WDW', 'practical'],
+            ];
+
+        return array_map(
+            fn (array $subject): array => [
+                'name' => $subject[0],
+                'code' => $subject[1],
+                'type' => $subject[2],
+                'credit_weight' => '1.00',
+                'is_elective' => 'no',
+                'workflow_status' => 'pending',
+            ],
+            $subjects,
+        );
+    }
+
     public static function exportRows(int $schoolId): iterable
     {
         $query = Subject::withoutTenantScope()->where('school_id', $schoolId)->orderBy('id');
