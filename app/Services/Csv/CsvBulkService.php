@@ -7,6 +7,11 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
+use PhpOffice\PhpSpreadsheet\Reader\Xlsx as XlsxReader;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx as XlsxWriter;
 
 /**
  * Single source of truth for a resource's CSV bulk features.
@@ -113,21 +118,10 @@ abstract class CsvBulkService
     {
         $out = fopen('php://temp', 'r+');
         fwrite($out, "\xEF\xBB\xBF"); // UTF-8 BOM so Excel opens it cleanly
-        fputcsv($out, static::templateHeaders());
+        fputcsv($out, static::templateHeaders(), escape: '\\');
 
-        $sample = array_map(fn (array $column): string => $column['example'] ?? '', static::columns());
-
-        // Generate at least 5 rows of data. Identifier/code columns are varied
-        // so each row is unique and the template can be imported end-to-end
-        // without tripping unique constraints (e.g. asset numbers, SKUs).
-        for ($i = 1; $i <= 5; $i++) {
-            $row = $sample;
-            if ($i > 1) {
-                foreach ($row as $colKey => $val) {
-                    $row[$colKey] = static::varySample((string) $val, $i);
-                }
-            }
-            fputcsv($out, $row);
+        foreach (static::templateRows() as $row) {
+            fputcsv($out, $row, escape: '\\');
         }
 
         rewind($out);
@@ -135,6 +129,74 @@ abstract class CsvBulkService
         fclose($out);
 
         return $csv;
+    }
+
+    /**
+     * The example rows written under the template's header row. Every column
+     * that needs a placeholder value (identifier/code columns) is varied so
+     * the template can be imported end-to-end without unique constraints.
+     */
+    protected static function templateRows(): array
+    {
+        $sample = array_map(fn (array $column): string => $column['example'] ?? '', static::columns());
+
+        $rows = [];
+        for ($i = 1; $i <= 5; $i++) {
+            $row = $sample;
+            if ($i > 1) {
+                foreach ($row as $colKey => $val) {
+                    $row[$colKey] = static::varySample((string) $val, $i);
+                }
+            }
+            $rows[] = $row;
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Generate the downloadable import template as an .xlsx workbook. Headers
+     * of the required columns are written in bold so users can tell at a glance
+     * which columns are mandatory. Falls back to the CSV template if Excel
+     * generation is unavailable.
+     */
+    public static function templateXlsx(): string
+    {
+        $spreadsheet = new Spreadsheet;
+        $sheet = $spreadsheet->getActiveSheet();
+
+        $columns = array_values(static::columns());
+        $headers = static::templateHeaders();
+
+        foreach ($headers as $i => $header) {
+            $column = Coordinate::stringFromColumnIndex($i + 1);
+            $sheet->setCellValue($column.'1', $header);
+
+            // Bold the header cell whenever the column is required (or
+            // explicitly flagged for emphasis even when optional).
+            if (! empty($columns[$i]['required']) || ! empty($columns[$i]['bold'])) {
+                $sheet->getStyle($column.'1')->getFont()->setBold(true);
+            }
+        }
+
+        foreach (static::templateRows() as $r => $row) {
+            foreach ($row as $c => $value) {
+                $sheet->setCellValueExplicit(
+                    Coordinate::stringFromColumnIndex($c + 1).($r + 2),
+                    (string) $value,
+                    DataType::TYPE_STRING,
+                );
+            }
+        }
+
+        $sheet->getColumnDimension('A')->setAutoSize(true);
+        $sheet->freezePane('A2');
+
+        $writer = new XlsxWriter($spreadsheet);
+        ob_start();
+        $writer->save('php://output');
+
+        return (string) ob_get_clean();
     }
 
     /**
@@ -176,15 +238,94 @@ abstract class CsvBulkService
         }
 
         if ($file instanceof TemporaryUploadedFile) {
-            return $file->getRealPath();
+            $path = $file->getRealPath();
+        } elseif (Storage::disk(config('filesystems.default'))->exists($file)) {
+            $path = Storage::disk(config('filesystems.default'))->path($file);
+        } else {
+            $path = storage_path('app/public/'.$file);
         }
 
-        $disk = config('filesystems.default');
-        if (Storage::disk($disk)->exists($file)) {
-            return Storage::disk($disk)->path($file);
+        // Excel workbooks are transcoded to CSV once so every existing reader
+        // (header preview, mapping, row iteration, reference values) keeps
+        // working unchanged.
+        if (static::fileFormat($path) === 'xlsx') {
+            return static::transcodeXlsxToCsv($path);
         }
 
-        return storage_path('app/public/'.$file);
+        return $path;
+    }
+
+    /** Detect whether a file is an .xlsx workbook (by magic bytes, with an extension fallback). */
+    protected static function fileFormat(string $filePath): string
+    {
+        if (! is_readable($filePath)) {
+            return 'csv';
+        }
+
+        if (! str_ends_with(strtolower($filePath), '.xlsx')) {
+            $handle = fopen($filePath, 'rb');
+
+            if ($handle !== false) {
+                $magic = (string) fread($handle, 4);
+                fclose($handle);
+
+                if (! str_starts_with($magic, "PK\x03\x04")) {
+                    return 'csv';
+                }
+            }
+        }
+
+        return 'xlsx';
+    }
+
+    /** Cache of transcoded Excel workbooks keyed by the original path. */
+    protected static array $transcodedXlsx = [];
+
+    /** Convert an .xlsx workbook to a temporary CSV file (BOM + rows). */
+    protected static function transcodeXlsxToCsv(string $filePath): string
+    {
+        if (isset(static::$transcodedXlsx[$filePath])) {
+            return static::$transcodedXlsx[$filePath];
+        }
+
+        try {
+            $reader = new XlsxReader;
+            $reader->setReadDataOnly(true);
+            $sheet = $reader->load($filePath)->getActiveSheet();
+
+            $out = fopen('php://temp', 'r+');
+            fwrite($out, "\xEF\xBB\xBF"); // UTF-8 BOM so Excel opens it cleanly
+
+            $sawHeader = false;
+            foreach ($sheet->toArray() as $row) {
+                $row = array_map(fn ($value): string => trim((string) $value), $row);
+
+                // Drop trailing empty cells so short rows stay short.
+                while ($row !== [] && end($row) === '') {
+                    array_pop($row);
+                }
+
+                if (! $sawHeader) {
+                    if ($row === [] || implode('', $row) === '') {
+                        continue; // leading blank rows
+                    }
+                    $sawHeader = true;
+                }
+
+                fputcsv($out, $row, escape: '\\');
+            }
+
+            rewind($out);
+            $csv = stream_get_contents($out);
+            fclose($out);
+
+            $tmp = tempnam(sys_get_temp_dir(), 'import-xlsx');
+            file_put_contents($tmp, $csv);
+        } catch (\Throwable) {
+            return $filePath; // not a readable workbook — let the CSV parser report it
+        }
+
+        return static::$transcodedXlsx[$filePath] = $tmp;
     }
 
     /** Read the header row of an uploaded CSV (BOM-safe, skips leading blank rows). */
@@ -312,7 +453,7 @@ abstract class CsvBulkService
         $csvHeaders = static::readCsvHeaders($filePath);
 
         if (empty($csvHeaders)) {
-            throw new \RuntimeException('The CSV file has no readable header row. Download the template and use its exact column names.');
+            throw new \RuntimeException('The uploaded file has no readable header row. Download the template and use its exact column names.');
         }
 
         $headerIndex = [];
@@ -333,7 +474,7 @@ abstract class CsvBulkService
         $handle = fopen($filePath, 'r');
 
         if ($handle === false) {
-            throw new \RuntimeException('Could not open the CSV file.');
+            throw new \RuntimeException('Could not open the uploaded file.');
         }
 
         static::skipHeaderBlock($handle); // skip header block (leading blank rows included)

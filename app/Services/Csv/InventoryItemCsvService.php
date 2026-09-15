@@ -102,7 +102,7 @@ class InventoryItemCsvService extends CsvBulkService
      * Export rows for an already-selected set of records (used by the table's
      * "Export Selected (CSV)" bulk action).
      *
-     * @param  \Illuminate\Support\Collection<int, InventoryItem>  $records
+     * @param  Collection<int, InventoryItem>  $records
      * @return iterable<int, array<int, mixed>>
      */
     public static function rowsForRecords($records): iterable
@@ -165,7 +165,7 @@ class InventoryItemCsvService extends CsvBulkService
         $csvHeaders = static::readCsvHeaders($filePath);
 
         if (empty($csvHeaders)) {
-            throw new \RuntimeException('The CSV file has no readable header row. Download the template and use its exact column names.');
+            throw new \RuntimeException('The uploaded file has no readable header row. Download the template and use its exact column names.');
         }
 
         $headerIndex = [];
@@ -186,7 +186,7 @@ class InventoryItemCsvService extends CsvBulkService
         $handle = fopen($filePath, 'r');
 
         if ($handle === false) {
-            throw new \RuntimeException('Could not open the CSV file.');
+            throw new \RuntimeException('Could not open the uploaded file.');
         }
 
         fgets($handle);

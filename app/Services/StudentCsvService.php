@@ -60,6 +60,7 @@ class StudentCsvService extends CsvBulkService
             'admission_date' => [
                 'label' => __('Admission Date'),
                 'required' => false,
+                'bold' => true,
                 'guesses' => ['Admission Date'],
                 'example' => '2026-01-12',
                 'date' => true,
@@ -93,6 +94,7 @@ class StudentCsvService extends CsvBulkService
             'academic_year' => [
                 'label' => __('Academic Year'),
                 'required' => false,
+                'bold' => true,
                 'guesses' => ['Academic Year', 'Year'],
                 'example' => '2026',
             ],
@@ -205,21 +207,12 @@ class StudentCsvService extends CsvBulkService
         return strtolower((string) (School::find($schoolId)->institution_type ?? 'secondary'));
     }
 
-    public static function templateCsv(): string
+    protected static function templateRows(): array
     {
         $schoolType = self::currentSchoolType();
         $isPrimary = in_array($schoolType, ['primary', 'both'], true);
-        $out = fopen('php://temp', 'r+');
-        fwrite($out, "\xEF\xBB\xBF");
-        fputcsv($out, static::templateHeaders(), escape: '\\');
 
-        $example = static::templateExampleRow($isPrimary);
-        fputcsv($out, $example, escape: '\\');
-        rewind($out);
-        $csv = stream_get_contents($out);
-        fclose($out);
-
-        return $csv;
+        return [static::templateExampleRow($isPrimary)];
     }
 
     protected static function templateExampleRow(bool $isPrimary): array
@@ -373,7 +366,7 @@ class StudentCsvService extends CsvBulkService
         $csvHeaders = static::readCsvHeaders($filePath);
 
         if (empty($csvHeaders)) {
-            throw new \RuntimeException('The CSV file has no readable header row. Download the template and use its exact column names.');
+            throw new \RuntimeException('The uploaded file has no readable header row. Download the template and use its exact column names.');
         }
 
         $headerIndex = [];
@@ -394,7 +387,7 @@ class StudentCsvService extends CsvBulkService
         $handle = fopen($filePath, 'r');
 
         if ($handle === false) {
-            throw new \RuntimeException('Could not open the CSV file.');
+            throw new \RuntimeException('Could not open the uploaded file.');
         }
 
         static::skipHeaderBlock($handle); // skip header row
