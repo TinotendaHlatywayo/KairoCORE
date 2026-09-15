@@ -156,7 +156,7 @@ class EmployeeCsvService extends CsvBulkService
         $csvHeaders = static::readCsvHeaders($filePath);
 
         if (empty($csvHeaders)) {
-            throw new \RuntimeException('The CSV file has no readable header row. Download the template and use its exact column names.');
+            throw new \RuntimeException('The uploaded file has no readable header row. Download the template and use its exact column names.');
         }
 
         $headerIndex = [];
@@ -177,7 +177,7 @@ class EmployeeCsvService extends CsvBulkService
         $handle = fopen($filePath, 'r');
 
         if ($handle === false) {
-            throw new \RuntimeException('Could not open the CSV file.');
+            throw new \RuntimeException('Could not open the uploaded file.');
         }
 
         fgets($handle); // skip header row
