@@ -81,6 +81,7 @@ class PermissionRegistry
                     'bill_cohorts' => 'Run Bulk Auto-Invoicing',
                     'receive_payments' => 'Record Cash & Bank Payments',
                     'reverse_payments' => 'Authorize Financial Reversals',
+                    'manage_student_financial_history' => 'Record / Edit / Import Student Financial History',
                     'view_reports' => 'View Balance Sheets & Defaulters Ledger',
                 ],
             ],

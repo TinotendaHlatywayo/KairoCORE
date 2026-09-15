@@ -22,12 +22,16 @@ class Payment extends Model
         'payment_date',
         'is_refund',
         'excess_handling',
+        'is_reversed',
+        'reversal_reason',
+        'reversed_by_id',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
         'payment_date' => 'date',
         'is_refund' => 'boolean',
+        'is_reversed' => 'boolean',
     ];
 
     public function invoice()

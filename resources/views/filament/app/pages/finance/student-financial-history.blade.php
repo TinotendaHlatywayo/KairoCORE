@@ -16,10 +16,18 @@
                 <div class="flex items-center justify-between flex-wrap gap-2">
                     <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">{{ __('Filters') }}</h3>
                     <div class="flex items-center gap-2">
+                        @if($can_edit)
+                            <x-filament::button wire:click="mountAction('import_csv')" color="warning" size="sm" icon="heroicon-o-arrow-up-tray">
+                                {{ __('Import Financial History') }}
+                            </x-filament::button>
+@endif
                         <x-filament::button wire:click="restoreDefaults" color="gray" size="sm">
                             {{ __('Reset') }}
                         </x-filament::button>
-                        <x-filament::button wire:click="downloadBulkCsv" color="success" size="sm" icon="heroicon-o-arrow-down-tray">
+                        <x-filament::button wire:click="downloadBulkExcel" color="success" size="sm" icon="heroicon-o-arrow-down-tray">
+                            {{ __('Download Excel') }}
+                        </x-filament::button>
+                        <x-filament::button wire:click="downloadBulkCsv" color="gray" size="sm" icon="heroicon-o-arrow-down-tray">
                             {{ __('Download CSV') }}
                         </x-filament::button>
                     </div>
@@ -202,7 +210,42 @@
                     </p>
                 </div>
                 <div class="flex items-center gap-2 flex-wrap">
-                    <x-filament::button wire:click="downloadCsv" color="success" size="sm" icon="heroicon-o-arrow-down-tray">
+                    @if($can_edit)
+                        <x-filament::dropdown>
+                            <x-slot name="trigger">
+                                <x-filament::button color="primary" size="sm" icon="heroicon-o-plus">
+                                    {{ __('Record Entry') }}
+                                </x-filament::button>
+                            </x-slot>
+                            <x-filament::dropdown.list>
+                                <x-filament::dropdown.list.item icon="heroicon-o-document-plus" wire:click="mountAction('record_charge')">
+                                    {{ __('Record Charge') }}
+                                </x-filament::dropdown.list.item>
+                                <x-filament::dropdown.list.item icon="heroicon-o-check-circle" wire:click="mountAction('record_payment')">
+                                    {{ __('Record Payment') }}
+                                </x-filament::dropdown.list.item>
+                                <x-filament::dropdown.list.item icon="heroicon-o-banknotes" wire:click="mountAction('record_refund')">
+                                    {{ __('Record Refund') }}
+                                </x-filament::dropdown.list.item>
+                                <x-filament::dropdown.list.item icon="heroicon-o-adjustments-horizontal" wire:click="mountAction('record_waiver')">
+                                    {{ __('Record Waiver') }}
+                                </x-filament::dropdown.list.item>
+                                <x-filament::dropdown.list.item icon="heroicon-o-arrow-up-circle" wire:click="mountAction('record_debit_carry_forward')">
+                                    {{ __('Record Debit Carry Forward') }}
+                                </x-filament::dropdown.list.item>
+                                <x-filament::dropdown.list.item icon="heroicon-o-arrow-down-circle" wire:click="mountAction('record_credit_carry_forward')">
+                                    {{ __('Record Credit Carry Forward') }}
+                                </x-filament::dropdown.list.item>
+                            </x-filament::dropdown.list>
+                        </x-filament::dropdown>
+                        <x-filament::button wire:click="mountAction('import_csv')" color="warning" size="sm" icon="heroicon-o-arrow-up-tray">
+                            {{ __('Import Financial History') }}
+                        </x-filament::button>
+@endif
+                    <x-filament::button wire:click="downloadExcel" color="success" size="sm" icon="heroicon-o-arrow-down-tray">
+                        {{ __('Download Excel') }}
+                    </x-filament::button>
+                    <x-filament::button wire:click="downloadCsv" color="gray" size="sm" icon="heroicon-o-arrow-down-tray">
                         {{ __('Download CSV') }}
                     </x-filament::button>
                     <a href="{{ route('finance.student.history.pdf', ['student' => $student->id]).'?'.http_build_query(array_filter([
@@ -292,6 +335,39 @@
                 </div>
             </div>
 
+            @if(($billing_frequency ?? 'termly') === 'monthly' && ! empty($ledger['monthly_summary'] ?? []))
+                <div class="p-6 mt-4 bg-white dark:bg-gray-900 rounded-xl shadow border border-gray-200 dark:border-gray-800">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white border-b pb-2 mb-3">
+                        {{ __('Monthly Summary') }}
+                        <span class="text-sm font-normal text-gray-500">({{ __('Billing is split by calendar month') }})</span>
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="text-left text-xs uppercase text-gray-500 border-b border-gray-100 dark:border-gray-800">
+                                    <th class="py-2 pr-3">{{ __('Month') }}</th>
+                                    <th class="py-2 pr-3 text-right">{{ __('Billed') }}</th>
+                                    <th class="py-2 pr-3 text-right">{{ __('Paid') }}</th>
+                                    <th class="py-2 pr-3 text-right">{{ __('Refunded') }}</th>
+                                    <th class="py-2 pr-3 text-right">{{ __('Month Balance') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($ledger['monthly_summary'] as $month)
+                                    <tr class="border-b border-gray-100 dark:border-gray-800 last:border-0">
+                                        <td class="py-2 pr-3 font-medium">{{ $month['label'] }}</td>
+                                        <td class="py-2 pr-3 text-right text-danger-600 dark:text-danger-400">${{ number_format($month['billed'], 2) }}</td>
+                                        <td class="py-2 pr-3 text-right text-success-600 dark:text-success-400">${{ number_format($month['paid'], 2) }}</td>
+                                        <td class="py-2 pr-3 text-right text-warning-600 dark:text-warning-400">${{ number_format($month['refunded'], 2) }}</td>
+                                        <td class="py-2 pr-3 text-right font-semibold">${{ number_format($month['balance'], 2) }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @endif
+
             <!-- Ledger table -->
             <div class="p-6 bg-white dark:bg-gray-900 rounded-xl shadow border border-gray-200 dark:border-gray-800">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white border-b pb-2 mb-3">
@@ -312,6 +388,9 @@
                                     <th class="py-2 pr-3 text-right">{{ __('Credit (-)') }}</th>
                                     <th class="py-2 pr-3 text-right">{{ __('Balance ($)') }}</th>
                                     <th class="py-2 pr-3">{{ __('Received By') }}</th>
+                                    @if($can_edit)
+                                        <th class="py-2 pr-3 text-right">{{ __('Actions') }}</th>
+                                    @endif
                                 </tr>
                             </thead>
                             <tbody>
@@ -352,6 +431,42 @@
                                                 <span class="text-gray-400">—</span>
                                             @endif
                                         </td>
+                                        @if($can_edit)
+                                            <td class="py-2 pr-3">
+                                                <div class="flex items-center justify-end gap-1">
+                                                    @if(!empty($row['entity_type']) && $row['entity_type'] === 'invoice')
+                                                        @php $invId = $row['entity_id']; @endphp
+                                                        <button wire:click="mountAction('edit_invoice', { invoice_id: {{ $invId }} })"
+                                                                class="inline-flex items-center gap-0.5 p-1 text-xs font-medium text-info-600 hover:text-info-500 dark:text-info-400"
+                                                                title="{{ __('Edit invoice') }}">
+                                                            <x-filament::icon icon="heroicon-o-pencil" class="w-3.5 h-3.5" />
+                                                        </button>
+                                                        @if((float)($row['invoice_discount'] ?? 0) > 0)
+                                                            <button wire:click="mountAction('remove_waiver', { invoice_id: {{ $invId }} })"
+                                                                    class="inline-flex items-center gap-0.5 p-1 text-xs font-medium text-danger-600 hover:text-danger-500 dark:text-danger-400"
+                                                                    title="{{ __('Remove waiver') }}">
+                                                                <x-filament::icon icon="heroicon-o-no-symbol" class="w-3.5 h-3.5" />
+                                                            </button>
+                                                        @endif
+                                                        @if((float)($row['invoice_paid'] ?? 0) <= 0.001 && (float)($row['invoice_discount'] ?? 0) <= 0.001)
+                                                            <button wire:click="mountAction('delete_invoice', { invoice_id: {{ $invId }} })"
+                                                                    class="inline-flex items-center gap-0.5 p-1 text-xs font-medium text-danger-600 hover:text-danger-500 dark:text-danger-400"
+                                                                    title="{{ __('Delete invoice') }}">
+                                                                <x-filament::icon icon="heroicon-o-trash" class="w-3.5 h-3.5" />
+                                                            </button>
+                                                        @endif
+                                                    @elseif(!empty($row['entity_type']) && $row['entity_type'] === 'payment' && $row['type'] !== 'opening')
+                                                        <button wire:click="mountAction('reverse_payment', { payment_id: {{ $row['entity_id'] }} })"
+                                                                class="inline-flex items-center gap-0.5 p-1 text-xs font-medium text-danger-600 hover:text-danger-500 dark:text-danger-400"
+                                                                title="{{ __('Reverse entry') }}">
+                                                            <x-filament::icon icon="heroicon-o-arrow-uturn-left" class="w-3.5 h-3.5" />
+                                                        </button>
+                                                    @else
+                                                        <span class="text-gray-300 dark:text-gray-600">—</span>
+                                                    @endif
+                                                </div>
+                                            </td>
+                                        @endif
                                     </tr>
                                 @endforeach
                             </tbody>

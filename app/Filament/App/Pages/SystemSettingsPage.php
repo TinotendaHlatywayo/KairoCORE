@@ -962,6 +962,19 @@ class SystemSettingsPage extends Page implements HasForms
                                             ->placeholder(__('e.g. *153*1*55326*AMOUNT#'))
                                             ->helperText(__('Use the {AMOUNT} placeholder to let parents pay any amount.')),
                                     ]),
+
+                                Section::make(__('Invoicing & Billing'))
+                                    ->description(__('Controls how the Invoicing Engine generates invoices from fee structures.'))
+                                    ->schema([
+                                        Select::make('finance_billing_frequency')
+                                            ->label(__('Billing Frequency'))
+                                            ->options([
+                                                'termly' => __('Termly — one invoice per term (default)'),
+                                                'monthly' => __('Monthly — one invoice per calendar month, splitting the termly fee'),
+                                            ])
+                                            ->default('termly')
+                                            ->helperText(__('When set to Monthly, the invoicing engine splits each term fee structure across the calendar months of the term, generating one invoice per month. Invoices are numbered with a month suffix (e.g. INV-2026-00001-M03).')),
+                                    ]),
                             ]),
 
                         Tab::make(__('Authentication & Security'))
