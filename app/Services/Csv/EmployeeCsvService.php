@@ -3,6 +3,7 @@
 namespace App\Services\Csv;
 
 use App\Models\User;
+use App\Services\RosterAccountProvisioningService;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -260,6 +261,11 @@ class EmployeeCsvService extends CsvBulkService
                     if (filled($employee->national_id)) {
                         $existingNationalIds[strtolower(trim($employee->national_id))] = true;
                     }
+
+                    // New staff created from an import get the same treatment as
+                    // staff added via the Create page: a locked PENDING portal
+                    // account plus a branded activation email on first creation.
+                    app(RosterAccountProvisioningService::class)->provisionEmployee($employee);
                 });
 
                 $success++;

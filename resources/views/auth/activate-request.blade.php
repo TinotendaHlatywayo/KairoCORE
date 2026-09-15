@@ -14,7 +14,7 @@
                 <div class="card shadow-sm border-0 p-4">
                     <div class="text-center mb-4">
                         <h3 class="fw-bold text-dark">{{ __('Request a New Activation Link') }}</h3>
-                        <p class="text-muted small">{{ __('Enter the email address you used when registering your school. If your registration was approved, a fresh activation link will be emailed to you.') }}</p>
+                        <p class="text-muted small">{{ __('Enter the email address on your account. If a matching account is found and is waiting to be activated, a fresh activation link will be emailed to you.') }}</p>
                     </div>
 
                     @if (session('status'))

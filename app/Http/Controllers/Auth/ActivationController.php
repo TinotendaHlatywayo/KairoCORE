@@ -139,15 +139,17 @@ class ActivationController extends Controller
 
         // Never reveal whether an account exists: always show the generic message
         // for unknown users, suspended schools, or applications that have not yet
-        // been approved by a platform administrator (approved_at is only stamped
-        // when the "Approve & Send Activation" action runs).
+        // been approved by a platform administrator. Approval applies only to the
+        // school-registration flow — roster accounts (students/staff created by an
+        // active school) never carry a `approved_at`, so their expired activation
+        // links can always be resent.
         if (! $user
             || ! $user->school
             || $user->school->status === 'suspended'
             || $user->account_status !== User::STATUS_PENDING
-            || $user->approved_at === null) {
+            || ($user->approved_at === null && $user->school->status !== 'active')) {
             return redirect()->route('account.activate.request')
-                ->with('status', __('If a matching approved registration was found, a new activation link has been sent.'));
+                ->with('status', __('If a matching account awaiting activation was found, a new activation link has been sent.'));
         }
 
         app(AccountActivationService::class)->issueAndSend($user);
