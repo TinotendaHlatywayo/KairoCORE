@@ -172,6 +172,10 @@ abstract class CsvBulkService
             $column = Coordinate::stringFromColumnIndex($i + 1);
             $sheet->setCellValue($column.'1', $header);
 
+            // Auto-fit the column to the length of its header (longest cell in
+            // the column) so names are never cut off in the downloaded file.
+            $sheet->getColumnDimension($column)->setAutoSize(true);
+
             // Bold the header cell whenever the column is required (or
             // explicitly flagged for emphasis even when optional).
             if (! empty($columns[$i]['required']) || ! empty($columns[$i]['bold'])) {
@@ -180,7 +184,9 @@ abstract class CsvBulkService
         }
 
         foreach (static::templateRows() as $r => $row) {
-            foreach ($row as $c => $value) {
+            // Re-index positionally: templateRows() may return rows keyed by
+            // column name, so ignoring the keys keeps cells in header order.
+            foreach (array_values($row) as $c => $value) {
                 $sheet->setCellValueExplicit(
                     Coordinate::stringFromColumnIndex($c + 1).($r + 2),
                     (string) $value,
@@ -189,7 +195,6 @@ abstract class CsvBulkService
             }
         }
 
-        $sheet->getColumnDimension('A')->setAutoSize(true);
         $sheet->freezePane('A2');
 
         $writer = new XlsxWriter($spreadsheet);
