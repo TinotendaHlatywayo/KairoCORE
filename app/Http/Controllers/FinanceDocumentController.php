@@ -482,6 +482,14 @@ class FinanceDocumentController extends Controller
             }, $filename, ['Content-Type' => 'text/csv']);
         }
 
+        if ($format === 'xlsx') {
+            return \Modules\Finance\Services\FinancialHistoryExcelService::downloadBulkLedgers(
+                $students,
+                ['start' => $start, 'end' => $end],
+                $scopeLabel,
+            );
+        }
+
         $histories = [];
         foreach ($students as $student) {
             $ledger = \Modules\Finance\Services\StudentFinancialHistoryService::buildLedger($student, $start, $end);
@@ -502,8 +510,11 @@ class FinanceDocumentController extends Controller
             if ($zip->open($zipFileName, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
                 foreach ($histories as $history) {
                     $pdf = Pdf::loadView('modules.finance.student-financial-history-pdf', $history)->setPaper('a4', 'portrait');
-                    $safeName = str_replace(['/', '\\'], '_', $history['student']->admission_number);
-                    $zip->addFromString('Financial_History_'.$safeName.'.pdf', $pdf->output());
+                    $student = $history['student'];
+                    $safeName = trim($student->full_name);
+                    $safeName = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $safeName);
+                    $safeId = preg_replace('/[^A-Za-z0-9_-]/', '', (string) $student->student_id_number);
+                    $zip->addFromString($safeName.' ('.$safeId.').pdf', $pdf->output());
                 }
                 $zip->close();
 

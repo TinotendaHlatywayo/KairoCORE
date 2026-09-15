@@ -85,22 +85,32 @@ class StudentFinancialHistoryService
         $raw = [];
 
         foreach ($invoices as $inv) {
+            $isCarryForward = str_starts_with((string) $inv->invoice_number, 'CF-');
             $raw[] = [
                 'date' => $inv->created_at,
                 'type' => self::TYPE_BILLED,
-                'description' => 'Gross Fees Billed ('.$inv->invoice_number.')',
+                'entity_type' => 'invoice',
+                'entity_id' => $inv->id,
+                'description' => $isCarryForward
+                    ? 'Balance Brought Forward - Debit Carry Forward ('.$inv->invoice_number.')'
+                    : 'Gross Fees Billed ('.$inv->invoice_number.')',
                 'debit' => (float) $inv->subtotal_amount,
                 'credit' => 0.00,
                 'receipt' => null,
                 'reference' => $inv->invoice_number,
                 'method' => null,
                 'received_by' => null,
+                'invoice_number' => $inv->invoice_number,
+                'invoice_paid' => (float) $inv->paid_amount,
+                'invoice_discount' => (float) $inv->discount_amount,
             ];
 
             if ((float) $inv->discount_amount > 0) {
                 $raw[] = [
                     'date' => $inv->created_at,
                     'type' => self::TYPE_WAIVER,
+                    'entity_type' => 'invoice',
+                    'entity_id' => $inv->id,
                     'description' => 'Waiver Applied: '.($inv->waiver_details ?? 'Scholarship / Discount'),
                     'debit' => 0.00,
                     'credit' => (float) $inv->discount_amount,
@@ -108,6 +118,9 @@ class StudentFinancialHistoryService
                     'reference' => $inv->invoice_number,
                     'method' => null,
                     'received_by' => null,
+                    'invoice_number' => $inv->invoice_number,
+                    'invoice_paid' => (float) $inv->paid_amount,
+                    'invoice_discount' => (float) $inv->discount_amount,
                 ];
             }
         }
@@ -120,6 +133,8 @@ class StudentFinancialHistoryService
                 'type' => $isRefund
                     ? self::TYPE_REFUND
                     : ($isCredit ? self::TYPE_CREDIT : self::TYPE_PAYMENT),
+                'entity_type' => 'payment',
+                'entity_id' => $pay->id,
                 'description' => $isRefund
                     ? 'Refund Issued (Receipt: '.$pay->receipt_number.')'
                     : ($isCredit
@@ -198,10 +213,65 @@ class StudentFinancialHistoryService
             'total_billed' => round($totalBilled, 2),
             'total_paid' => round($totalPaid, 2),
             'total_refunded' => round($totalRefunded, 2),
+            'monthly_summary' => self::monthlySummary($rows),
             'start' => $start,
             'end' => $end,
             'is_filtered' => $isFiltered,
         ];
+    }
+
+    /**
+     * Group ledger rows by calendar month (invoice billing date / payment date)
+     * so the statement can summarise performance per month when the school
+     * bills monthly.
+     *
+     * @return array<int, array{period: string, label: string, billed: float, paid: float, refunded: float, balance: float}>
+     */
+    public static function monthlySummary(array $rows): array
+    {
+        $grouped = [];
+        foreach ($rows as $row) {
+            if ($row['is_opening'] ?? false) {
+                continue;
+            }
+
+            $date = $row['date'];
+            if (! $date) {
+                continue;
+            }
+
+            $month = $date instanceof Carbon ? $date->copy()->startOfMonth() : Carbon::parse($date)->startOfMonth();
+            $period = $month->format('Y-m');
+            $grouped[$period] ??= [
+                'period' => $period,
+                'label' => $month->translatedFormat('F Y'),
+                'billed' => 0.0,
+                'paid' => 0.0,
+                'refunded' => 0.0,
+            ];
+
+            if ($row['type'] === self::TYPE_BILLED) {
+                $grouped[$period]['billed'] += (float) $row['debit'];
+            } elseif (in_array($row['type'], [self::TYPE_PAYMENT, self::TYPE_CREDIT], true)) {
+                $grouped[$period]['paid'] += max(0, (float) $row['credit']);
+            } elseif ($row['type'] === self::TYPE_REFUND) {
+                $grouped[$period]['refunded'] += abs((float) $row['credit']);
+            }
+        }
+
+        ksort($grouped);
+
+        $balance = 0.00;
+        foreach ($grouped as &$g) {
+            $balance += $g['billed'] - $g['paid'] - $g['refunded'];
+            $g['balance'] = round($balance, 2);
+            $g['billed'] = round($g['billed'], 2);
+            $g['paid'] = round($g['paid'], 2);
+            $g['refunded'] = round($g['refunded'], 2);
+        }
+        unset($g);
+
+        return array_values($grouped);
     }
 
     /**

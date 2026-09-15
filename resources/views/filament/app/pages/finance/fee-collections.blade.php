@@ -26,7 +26,10 @@
                 <x-filament::button wire:click="$set('range', 'custom')" color="{{ ($range ?? 'today') === 'custom' ? 'primary' : 'gray' }}" size="sm">
                     {{ __('Custom Range') }}
                 </x-filament::button>
-                <x-filament::button wire:click="downloadCsv" color="success" size="sm" icon="heroicon-o-arrow-down-tray">
+                <x-filament::button wire:click="downloadExcel" color="success" size="sm" icon="heroicon-o-arrow-down-tray">
+                    {{ __('Download Excel') }}
+                </x-filament::button>
+                <x-filament::button wire:click="downloadCsv" color="gray" size="sm" icon="heroicon-o-arrow-down-tray">
                     {{ __('Download CSV') }}
                 </x-filament::button>
             </div>

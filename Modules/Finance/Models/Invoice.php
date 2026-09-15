@@ -19,6 +19,7 @@ class Invoice extends Model
         'term_id',
         'fee_waiver_id',
         'invoice_number',
+        'billing_period',
         'currency',
         'subtotal_amount',
         'discount_amount',

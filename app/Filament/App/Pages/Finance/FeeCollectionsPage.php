@@ -135,4 +135,18 @@ class FeeCollectionsPage extends Page
             fclose($out);
         }, $filename, ['Content-Type' => 'text/csv']);
     }
+
+    public function downloadExcel(): StreamedResponse
+    {
+        $schoolId = current_tenant()?->id ?? auth()->user()?->school_id;
+        $range = $this->resolveRange();
+        $data = StudentFinancialHistoryService::collectionsForRange($schoolId, $range['start'], $range['end']);
+
+        return \Modules\Finance\Services\FinancialHistoryExcelService::downloadCollections(
+            $data,
+            $range['label'],
+            $range['start'],
+            $range['end'],
+        );
+    }
 }
