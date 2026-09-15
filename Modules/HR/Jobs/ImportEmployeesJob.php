@@ -3,6 +3,7 @@
 namespace Modules\HR\Jobs;
 
 use App\Models\User;
+use App\Services\RosterAccountProvisioningService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -88,9 +89,10 @@ class ImportEmployeesJob implements ShouldQueue
                     'name' => "{$rowValues['first_name']} {$rowValues['last_name']}",
                     'email' => $rowValues['email'],
                     'password' => Hash::make($passwordRaw),
+                    'account_status' => User::STATUS_PENDING,
                 ]);
 
-                Employee::create([
+                $employee = Employee::create([
                     'school_id' => $this->schoolId,
                     'user_id' => $user->id,
                     'first_name' => $rowValues['first_name'],
@@ -111,6 +113,10 @@ class ImportEmployeesJob implements ShouldQueue
                     'role' => 'Teacher',
                     'marital_status' => 'single',
                 ]);
+
+                // First-time provisioning sends the branded activation email and
+                // keeps the account locked (PENDING) until it is activated.
+                app(RosterAccountProvisioningService::class)->provisionEmployee($employee);
 
                 $importedCount++;
             }
