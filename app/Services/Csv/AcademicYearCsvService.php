@@ -45,6 +45,29 @@ class AcademicYearCsvService extends CsvBulkService
         return ['Year Name', 'Start Date', 'End Date', 'Is Active'];
     }
 
+    /**
+     * Example rows written under the template header: the next ten academic
+     * years with their correct term dates, only the current year (2026) marked
+     * as the active year.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    protected static function templateRows(): array
+    {
+        $rows = [];
+
+        for ($year = 2026; $year <= 2035; $year++) {
+            $rows[] = [
+                'name' => (string) $year,
+                'start_date' => $year.'-01-05',
+                'end_date' => $year.'-12-11',
+                'is_active' => $year === 2026 ? 'yes' : 'no',
+            ];
+        }
+
+        return $rows;
+    }
+
     public static function exportRows(int $schoolId): iterable
     {
         $query = AcademicYear::withoutTenantScope()->where('school_id', $schoolId)->orderBy('id');

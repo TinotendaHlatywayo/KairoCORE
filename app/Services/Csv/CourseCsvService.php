@@ -4,6 +4,7 @@ namespace App\Services\Csv;
 
 use App\Models\User;
 use Modules\Academics\Models\Course;
+use Modules\Academics\Models\Section;
 
 class CourseCsvService extends CsvBulkService
 {
@@ -21,6 +22,12 @@ class CourseCsvService extends CsvBulkService
                 'required' => true,
                 'guesses' => ['Code', 'Course Code'],
                 'example' => 'F1',
+            ],
+            'section' => [
+                'label' => __('Class / Stream'),
+                'required' => false,
+                'guesses' => ['Class', 'Class / Stream', 'Section', 'Stream', 'Class Name', 'Stream / Class'],
+                'example' => 'North',
             ],
             'teacher' => [
                 'label' => __('Teacher Name'),
@@ -40,14 +47,14 @@ class CourseCsvService extends CsvBulkService
 
     public static function exportHeaders(): array
     {
-        return ['Course Name', 'Course Code', 'Teacher', 'Status'];
+        return ['Course Name', 'Course Code', 'Class / Stream', 'Teacher', 'Status'];
     }
 
     public static function exportRows(int $schoolId): iterable
     {
         $query = Course::withoutTenantScope()
             ->where('school_id', $schoolId)
-            ->with('teacher')
+            ->with(['teacher', 'sections'])
             ->orderBy('id');
 
         $lastId = 0;
@@ -60,25 +67,101 @@ class CourseCsvService extends CsvBulkService
             }
 
             foreach ($courses as $course) {
-                yield [
-                    $course->name,
-                    $course->code,
-                    $course->teacher?->name,
-                    $course->workflow_status,
-                ];
+                if ($course->sections->isEmpty()) {
+                    yield [
+                        $course->name,
+                        $course->code,
+                        '',
+                        $course->teacher?->name,
+                        $course->workflow_status,
+                    ];
+
+                    continue;
+                }
+
+                foreach ($course->sections as $section) {
+                    yield [
+                        $course->name,
+                        $course->code,
+                        $section->name,
+                        $course->teacher?->name,
+                        $course->workflow_status,
+                    ];
+                }
             }
 
             $lastId = $courses->last()->id;
         } while (true);
     }
 
+    /**
+     * Example rows written under the template header when the school has no
+     * course data yet. For primary schools the whole school is pre-filled as
+     * ECD A/B (Blue, Red) and Grade 1-7 (North, South); for secondary/high it
+     * is Form 1-4 (North, South) and Form 5 & 6 (Arts, Commercials, Sciences).
+     */
+    protected static function templateRows(): array
+    {
+        $isPrimary = static::schoolType() === 'primary';
+        $combos = [];
+
+        if ($isPrimary) {
+            foreach (['ECD A', 'ECD B'] as $index => $level) {
+                $code = 'PR-ECD-'.chr(65 + $index);
+
+                foreach (['Blue', 'Red'] as $class) {
+                    $combos[] = [$level, 'ECD'.chr(65 + $index), $class, 'pending'];
+                }
+            }
+
+            for ($grade = 1; $grade <= 7; $grade++) {
+                foreach (['North', 'South'] as $class) {
+                    $combos[] = ['Grade '.$grade, 'G'.$grade, $class, 'pending'];
+                }
+            }
+        } else {
+            for ($form = 1; $form <= 4; $form++) {
+                foreach (['North', 'South'] as $class) {
+                    $combos[] = ['Form '.$form, 'F'.$form, $class, 'pending'];
+                }
+            }
+
+            foreach ([5, 6] as $form) {
+                foreach (['Arts', 'Commercials', 'Sciences'] as $class) {
+                    $combos[] = ['Form '.$form, 'F'.$form, $class, 'pending'];
+                }
+            }
+        }
+
+        return array_map(
+            fn (array $combo): array => [
+                'name' => $combo[0],
+                'code' => $combo[1],
+                'section' => $combo[2],
+                'teacher' => '',
+                'workflow_status' => $combo[3],
+            ],
+            $combos,
+        );
+    }
+
     public static function import(string $filePath, int $schoolId, array $columnMap, ?callable $onProgress = null): array
     {
+        $courses = Course::withoutTenantScope()->where('school_id', $schoolId)->get();
+        $sections = Course::withoutTenantScope()->where('school_id', $schoolId)->with('sections')->get();
+
+        $existingSections = [];
+        foreach ($sections as $course) {
+            foreach ($course->sections as $section) {
+                $existingSections[strtolower(trim($course->name)).'|'.strtolower(trim($section->name))] = true;
+            }
+        }
+
         $lookups = [
             'users' => User::withoutTenantScope()->where('school_id', $schoolId)->get()
                 ->keyBy(fn ($u): string => strtolower(trim($u->name))),
-            'existingNames' => Course::withoutTenantScope()->where('school_id', $schoolId)->pluck('name')
-                ->map(fn ($v): string => strtolower(trim((string) $v)))->flip(),
+            'courses' => $courses->keyBy(fn (Course $c): string => strtolower(trim((string) $c->name))),
+            'existingSections' => $existingSections,
         ];
 
         return static::runImport(
@@ -104,9 +187,17 @@ class CourseCsvService extends CsvBulkService
             }
         }
 
-        $name = strtolower(trim($data['name'] ?? ''));
-        if ($name !== '' && isset($lookups['existingNames'][$name])) {
-            $errors[] = 'Course ['.$data['name'].'] already exists in this school.';
+        $data['section'] = trim($data['section'] ?? '');
+        $nameKey = strtolower($data['name'] ?? '');
+
+        if ($nameKey !== '') {
+            if ($data['section'] === '') {
+                if (isset($lookups['courses'][$nameKey])) {
+                    $errors[] = 'Course ['.$data['name'].'] already exists in this school.';
+                }
+            } elseif (isset($lookups['existingSections'][$nameKey.'|'.strtolower($data['section'])])) {
+                $errors[] = 'Class ['.$data['section'].'] already exists under course ['.$data['name'].'].';
+            }
         }
 
         $data['workflow_status'] = strtolower(trim($data['workflow_status'] ?? ''));
@@ -136,14 +227,34 @@ class CourseCsvService extends CsvBulkService
 
     protected static function createRow(array $data, int $schoolId, array &$lookups): void
     {
-        Course::create([
-            'school_id' => $schoolId,
-            'name' => $data['name'],
-            'code' => $data['code'],
-            'teacher_id' => $data['_teacher']?->id,
-            'workflow_status' => $data['workflow_status'],
-        ]);
+        $nameKey = strtolower(trim($data['name']));
+        $section = trim($data['section'] ?? '');
+        $course = $lookups['courses'][$nameKey] ?? null;
 
-        $lookups['existingNames'][strtolower(trim($data['name']))] = true;
+        if (! $course) {
+            $course = Course::withoutTenantScope()->create([
+                'school_id' => $schoolId,
+                'name' => $data['name'],
+                'code' => $data['code'],
+                'teacher_id' => $data['_teacher']?->id,
+                'workflow_status' => $data['workflow_status'],
+            ]);
+
+            $lookups['courses'][$nameKey] = $course;
+        }
+
+        if ($section !== '') {
+            $sectionKey = $nameKey.'|'.strtolower($section);
+
+            if (! isset($lookups['existingSections'][$sectionKey])) {
+                Section::withoutTenantScope()->create([
+                    'school_id' => $schoolId,
+                    'course_id' => $course->id,
+                    'name' => $section,
+                ]);
+
+                $lookups['existingSections'][$sectionKey] = true;
+            }
+        }
     }
 }
