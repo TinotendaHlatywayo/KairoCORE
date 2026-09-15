@@ -96,11 +96,11 @@ trait HasCsvBulkActions
         $title = $this->getExportTitle();
 
         return Action::make('import_csv')
-            ->label(__("Import {$title} (CSV)"))
+            ->label(__("Import {$title} (Excel/CSV)"))
             ->icon('heroicon-o-arrow-up-tray')
             ->color('warning')
-            ->modalHeading(__("Import {$title} from CSV"))
-            ->modalDescription(__('Upload your file and the system matches every column automatically — no manual column mapping needed.'))
+            ->modalHeading(__("Import {$title} from Excel or CSV"))
+            ->modalDescription(__('Upload your file and the system matches every column automatically.'))
             ->modalWidth(MaxWidth::ExtraLarge)
             ->modalSubmitActionLabel(__("Import {$title}"))
             ->steps($this->csvImportSteps($service, $streamName, $title))
@@ -118,7 +118,7 @@ trait HasCsvBulkActions
     {
         return [
             Forms\Components\Wizard\Step::make(__('Upload'))
-                ->description(__('Download the template, fill it in and upload — columns are matched automatically'))
+                ->description(__('Download the template, fill it in and upload the file with your records'))
                 ->schema(fn (Get $get): array => [
                     ...$this->uploadStepSchema($get, $service, $streamName, $title),
                     ...$this->missingReferenceSchema($get, $service),
@@ -165,15 +165,22 @@ trait HasCsvBulkActions
         $schema = [
             Forms\Components\Actions::make([
                 Forms\Components\Actions\Action::make('download_csv_template')
-                    ->label(__('Download CSV Template'))
+                    ->label(__('Download Excel Template'))
                     ->icon('heroicon-o-arrow-down-tray')
                     ->color('primary')
                     ->action(fn (): StreamedResponse => $this->downloadCsvTemplate($service)),
             ]),
             Forms\Components\FileUpload::make('csv_file')
-                ->label(__('CSV File'))
-                ->helperText($this->csvUploadHelperText() ?? __("The template above contains the exact system columns. Replace the example row with your {$title} records."))
-                ->acceptedFileTypes(['text/csv', 'text/plain', 'text/x-csv', 'application/csv', 'application/vnd.ms-excel'])
+                ->label(__('Excel / CSV File'))
+                ->helperText($this->csvUploadHelperText() ?? __("The template above contains the exact system columns. Replace the example rows with your {$title} records."))
+                ->acceptedFileTypes([
+                    'text/csv',
+                    'text/plain',
+                    'text/x-csv',
+                    'application/csv',
+                    'application/vnd.ms-excel',
+                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                ])
                 ->maxSize(4096)
                 ->required()
                 ->live()
@@ -192,7 +199,7 @@ trait HasCsvBulkActions
         $schema[] = Forms\Components\View::make('filament.app.components.csv-import.progress-panel')
             ->viewData([
                 'streamName' => $streamName,
-                'message' => __('Click "Import" to begin — progress appears here.'),
+                'message' => __('Progress appears here.'),
             ]);
 
         return $schema;
@@ -242,9 +249,9 @@ trait HasCsvBulkActions
     protected function downloadCsvTemplate(string $service): StreamedResponse
     {
         return response()->streamDownload(
-            fn () => print ($service::templateCsv()),
-            'import-template.csv',
-            ['Content-Type' => 'text/csv']
+            fn () => print ($service::templateXlsx()),
+            'import-template.xlsx',
+            ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
         );
     }
 
@@ -272,7 +279,7 @@ trait HasCsvBulkActions
         if (empty($headers)) {
             return [
                 Forms\Components\Placeholder::make('unreadable_file')
-                    ->label(__('Could not read the CSV header row'))
+                    ->label(__('Could not read the file header row'))
                     ->content(__('Make sure the first row of your file contains the column names, then re-upload it.')),
             ];
         }
@@ -529,7 +536,7 @@ trait HasCsvBulkActions
         if (empty($headers)) {
             Notification::make()
                 ->title(__('Import not started — no column headings detected'))
-                ->body(__('The first row of your file must contain the column headings (e.g. "First Name", "Last Name", "Gender"). Download the template again, fill it in, and re-upload your file as a CSV.'))
+                ->body(__('The first row of your file must contain the column headings (e.g. "First Name", "Last Name", "Gender"). Download the template again, fill it in, and re-upload your file as an Excel (XLSX) or CSV file.'))
                 ->danger()
                 ->duration(8)
                 ->send();

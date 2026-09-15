@@ -11,9 +11,9 @@
                 <p class="text-sm font-semibold text-success-700">{{ __('Columns matched automatically') }}</p>
                 <p class="mt-0.5 text-xs text-success-600">
                     @if (filled($fileHeaders))
-                        {{ __('No column matching needed — your file columns were mapped automatically. Click "Import" to begin.') }}
+                        {{ __('Your file columns were mapped automatically. Click "Import" to begin.') }}
                     @else
-                        {{ __('Upload your CSV file to begin the import.') }}
+                        {{ __('Upload your Excel or CSV file to begin the import.') }}
                     @endif
                 </p>
             </div>

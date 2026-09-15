@@ -60,11 +60,11 @@ class ListStudents extends ListRecords
             Actions\CreateAction::make(),
             ...$this->makeExportActions(),
             Action::make('importStudentsCsv')
-                ->label(__('Import Students (CSV)'))
+                ->label(__('Import Students (Excel/CSV)'))
                 ->icon('heroicon-o-arrow-up-tray')
                 ->color('warning')
-                ->modalHeading(__('Import Students from CSV'))
-                ->modalDescription('Upload your file and the system matches every column automatically — no manual column mapping needed.')
+                ->modalHeading(__('Import Students from Excel or CSV'))
+                ->modalDescription('Upload your file and the system matches every column automatically.')
                 ->modalWidth(MaxWidth::ExtraLarge)
                 ->modalSubmitActionLabel(__('Import Students'))
                 ->steps($this->csvImportSteps($service, $streamName, 'Students'))
@@ -85,7 +85,7 @@ class ListStudents extends ListRecords
         if (! $file) {
             return [
                 Forms\Components\Placeholder::make('no_file_yet')
-                    ->label(__('Upload your CSV first'))
+                    ->label(__('Upload your Excel/CSV file first'))
                     ->content('Go back to the "Upload" step, upload your file, then come here to match its columns.'),
             ];
         }
@@ -96,7 +96,7 @@ class ListStudents extends ListRecords
         if (empty($headers)) {
             return [
                 Forms\Components\Placeholder::make('unreadable_file')
-                    ->label(__('Could not read the CSV header row'))
+                    ->label(__('Could not read the file header row'))
                     ->content('Make sure the first row of your file contains the column names, then re-upload it.'),
             ];
         }
@@ -129,7 +129,7 @@ class ListStudents extends ListRecords
         $selects[] = Forms\Components\View::make('filament.app.components.csv-import.progress-panel')
             ->viewData([
                 'streamName' => $streamName,
-                'message' => __('Click "Import" to begin — progress appears here.'),
+                'message' => __('Click "Import" to begin.'),
             ]);
 
         return [
@@ -217,7 +217,7 @@ class ListStudents extends ListRecords
         if (! $file) {
             Notification::make()
                 ->title(__('No file uploaded'))
-                ->body('Upload a CSV file in the first step before importing.')
+                ->body('Upload an Excel (XLSX) or CSV file in the first step before importing.')
                 ->danger()
                 ->send();
 

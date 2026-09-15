@@ -53,7 +53,7 @@ class PromotionServiceTest extends TestCase
 
             $psvStudentIds = DB::connection('mysql')->table('students')
                 ->where('school_id', $this->school->id)
-                ->where('first_name', 'like', $tag . '%')
+                ->where('first_name', 'like', $tag.'%')
                 ->pluck('id');
 
             DB::connection('mysql')->table('enrollments')
@@ -62,12 +62,12 @@ class PromotionServiceTest extends TestCase
 
             DB::connection('mysql')->table('students')
                 ->where('school_id', $this->school->id)
-                ->where('first_name', 'like', $tag . '%')
+                ->where('first_name', 'like', $tag.'%')
                 ->delete();
 
             $testCourseIds = DB::connection('mysql')->table('courses')
                 ->where('school_id', $this->school->id)
-                ->where('name', 'like', $tag . '%')
+                ->where('name', 'like', $tag.'%')
                 ->pluck('id');
 
             DB::connection('mysql')->table('sections')
@@ -76,12 +76,12 @@ class PromotionServiceTest extends TestCase
 
             DB::connection('mysql')->table('courses')
                 ->where('school_id', $this->school->id)
-                ->where('name', 'like', $tag . '%')
+                ->where('name', 'like', $tag.'%')
                 ->delete();
 
             DB::connection('mysql')->table('academic_years')
                 ->where('school_id', $this->school->id)
-                ->where('name', 'like', $tag . '%')
+                ->where('name', 'like', $tag.'%')
                 ->delete();
         }
 
@@ -92,7 +92,7 @@ class PromotionServiceTest extends TestCase
     {
         return AcademicYear::withoutGlobalScopes()->create([
             'school_id' => $this->school->id,
-            'name' => 'PSV_' . $suffix,
+            'name' => 'PSV_'.$suffix,
             'start_date' => '2026-09-01',
             'end_date' => '2027-08-31',
             'is_current' => false,
@@ -103,8 +103,8 @@ class PromotionServiceTest extends TestCase
     {
         return Course::withoutGlobalScopes()->create([
             'school_id' => $this->school->id,
-            'name' => $name . '_' . uniqid('', true),
-            'code' => strtoupper(substr(md5($name . uniqid('', true)), 0, 6)),
+            'name' => $name.'_'.uniqid('', true),
+            'code' => strtoupper(substr(md5($name.uniqid('', true)), 0, 6)),
             'next_level_id' => $nextLevelId,
             'is_terminal' => $isTerminal,
         ]);
@@ -125,7 +125,7 @@ class PromotionServiceTest extends TestCase
     {
         return Student::withoutGlobalScopes()->create([
             'school_id' => $this->school->id,
-            'first_name' => 'PSV_' . $suffix,
+            'first_name' => 'PSV_'.$suffix,
             'last_name' => 'Student',
             'gender' => 'Male',
             'date_of_birth' => '2015-01-01',
@@ -147,6 +147,50 @@ class PromotionServiceTest extends TestCase
         ]);
     }
 
+    public function test_commit_marks_student_graduated_when_promoted_from_terminal_level(): void
+    {
+        $sourceYear = $this->makeYear('SrcG');
+        $targetYear = $this->makeYear('TgtG');
+        $terminalCourse = $this->makeCourse('PSV_Form6', null, true);
+        $secA = $this->makeSection($terminalCourse->id, 'A');
+        $student = $this->makeStudent('Grad1');
+        $this->makeEnrollment($student, $terminalCourse->id, $secA->id, $sourceYear->id);
+
+        $service = new PromotionService;
+        $run = $service->preview($this->school->id, $sourceYear->id, $targetYear->id);
+        $service->commit($run->id);
+
+        $student->refresh();
+        $this->assertSame('graduated', $student->status);
+
+        $newEnrollment = Enrollment::withoutGlobalScopes()
+            ->where('student_id', $student->id)
+            ->where('academic_year_id', $targetYear->id)
+            ->first();
+
+        $this->assertNull($newEnrollment, 'graduated students get no target enrollment');
+    }
+
+    public function test_undo_restores_student_to_active_after_graduation(): void
+    {
+        $sourceYear = $this->makeYear('SrcU');
+        $targetYear = $this->makeYear('TgtU');
+        $terminalCourse = $this->makeCourse('PSV_Form6', null, true);
+        $secA = $this->makeSection($terminalCourse->id, 'A');
+        $student = $this->makeStudent('Undo1');
+        $this->makeEnrollment($student, $terminalCourse->id, $secA->id, $sourceYear->id);
+
+        $service = new PromotionService;
+        $run = $service->preview($this->school->id, $sourceYear->id, $targetYear->id);
+        $service->commit($run->id);
+
+        $this->assertSame('graduated', $student->refresh()->status);
+
+        $service->undo($run->id);
+
+        $this->assertSame('active', $student->refresh()->status);
+    }
+
     public function test_preview_creates_run_with_draft_status(): void
     {
         $sourceYear = $this->makeYear('SrcY');
@@ -159,7 +203,7 @@ class PromotionServiceTest extends TestCase
         $student = $this->makeStudent('Prev1');
         $this->makeEnrollment($student, $courseA->id, $secA->id, $sourceYear->id);
 
-        $service = new PromotionService();
+        $service = new PromotionService;
         $run = $service->preview($this->school->id, $sourceYear->id, $targetYear->id);
 
         $this->assertInstanceOf(PromotionRun::class, $run);
@@ -179,7 +223,7 @@ class PromotionServiceTest extends TestCase
         $student = $this->makeStudent('Prev2');
         $this->makeEnrollment($student, $courseA->id, $secA->id, $sourceYear->id);
 
-        $service = new PromotionService();
+        $service = new PromotionService;
         $run = $service->preview($this->school->id, $sourceYear->id, $targetYear->id);
 
         $item = $run->items->first();
@@ -197,7 +241,7 @@ class PromotionServiceTest extends TestCase
         $student = $this->makeStudent('Prev3');
         $this->makeEnrollment($student, $terminalCourse->id, $secA->id, $sourceYear->id);
 
-        $service = new PromotionService();
+        $service = new PromotionService;
         $run = $service->preview($this->school->id, $sourceYear->id, $targetYear->id);
 
         $item = $run->items->first();
@@ -223,7 +267,7 @@ class PromotionServiceTest extends TestCase
         $this->makeEnrollment($s2, $courseA->id, $secA->id, $sourceYear->id);
         $this->makeEnrollment($s3, $courseTerm->id, $secT->id, $sourceYear->id);
 
-        $service = new PromotionService();
+        $service = new PromotionService;
         $run = $service->preview($this->school->id, $sourceYear->id, $targetYear->id);
 
         $summary = $run->previewSummary();
@@ -244,7 +288,7 @@ class PromotionServiceTest extends TestCase
         $student = $this->makeStudent('Cmt1');
         $this->makeEnrollment($student, $courseA->id, $secA->id, $sourceYear->id);
 
-        $service = new PromotionService();
+        $service = new PromotionService;
         $run = $service->preview($this->school->id, $sourceYear->id, $targetYear->id);
         $service->commit($run->id);
 
@@ -278,7 +322,7 @@ class PromotionServiceTest extends TestCase
         $student = $this->makeStudent('Cmt2');
         $this->makeEnrollment($student, $courseA->id, $secA->id, $sourceYear->id);
 
-        $service = new PromotionService();
+        $service = new PromotionService;
         $run = $service->preview($this->school->id, $sourceYear->id, $targetYear->id);
         $service->commit($run->id);
 
@@ -296,7 +340,7 @@ class PromotionServiceTest extends TestCase
         $student = $this->makeStudent('Cmt3');
         $this->makeEnrollment($student, $terminalCourse->id, $secA->id, $sourceYear->id);
 
-        $service = new PromotionService();
+        $service = new PromotionService;
         $run = $service->preview($this->school->id, $sourceYear->id, $targetYear->id);
         $service->commit($run->id);
 
@@ -317,7 +361,7 @@ class PromotionServiceTest extends TestCase
         $student = $this->makeStudent('Cmt4');
         $this->makeEnrollment($student, $courseA->id, $secA->id, $sourceYear->id);
 
-        $service = new PromotionService();
+        $service = new PromotionService;
         $run = $service->preview($this->school->id, $sourceYear->id, $targetYear->id);
         $service->commit($run->id);
 
@@ -338,7 +382,7 @@ class PromotionServiceTest extends TestCase
         $student = $this->makeStudent('Fall1');
         $this->makeEnrollment($student, $courseA->id, $secA->id, $sourceYear->id);
 
-        $service = new PromotionService();
+        $service = new PromotionService;
         $run = $service->preview($this->school->id, $sourceYear->id, $targetYear->id);
 
         $item = $run->items->first();
@@ -351,7 +395,7 @@ class PromotionServiceTest extends TestCase
         $sourceYear = $this->makeYear('Src10');
         $targetYear = $this->makeYear('Tgt10');
 
-        $service = new PromotionService();
+        $service = new PromotionService;
         $run = $service->preview($this->school->id, $sourceYear->id, $targetYear->id);
 
         $this->assertCount(0, $run->items);

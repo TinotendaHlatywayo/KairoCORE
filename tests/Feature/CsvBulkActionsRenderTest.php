@@ -69,7 +69,7 @@ class CsvBulkActionsRenderTest extends TestCase
 
         $component = Livewire::test(ListInventoryItems::class);
         $component->assertOk();
-        $component->assertSee('Import Inventory Items (CSV)', false);
+        $component->assertSee('Import Inventory Items (Excel/CSV)', false);
         $component->assertSee('Export All', false);
     }
 
@@ -80,7 +80,7 @@ class CsvBulkActionsRenderTest extends TestCase
 
         $component = Livewire::test(ListFixedAssets::class);
         $component->assertOk();
-        $component->assertSee('Import Fixed Assets (CSV)', false);
+        $component->assertSee('Import Fixed Assets (Excel/CSV)', false);
         $component->assertSee('Export All', false);
     }
 
@@ -91,7 +91,7 @@ class CsvBulkActionsRenderTest extends TestCase
 
         $component = Livewire::test(ListSuppliers::class);
         $component->assertOk();
-        $component->assertSee('Import Suppliers (CSV)', false);
+        $component->assertSee('Import Suppliers (Excel/CSV)', false);
         $component->assertSee('Export All', false);
     }
 

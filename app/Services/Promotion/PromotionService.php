@@ -2,7 +2,6 @@
 
 namespace App\Services\Promotion;
 
-use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Modules\Academics\Models\Course;
@@ -90,8 +89,8 @@ class PromotionService
                 }
 
                 $decisionReason = $isTerminal
-                    ? 'Terminal level (' . $sourceCourse->name . ') — graduated'
-                    : 'Auto-promoted via level progression (' . $sourceCourse->name . ' → ' . ($nextCourse?->name ?? '') . ')';
+                    ? 'Terminal level ('.$sourceCourse->name.') — graduated'
+                    : 'Auto-promoted via level progression ('.$sourceCourse->name.' → '.($nextCourse?->name ?? '').')';
 
                 PromotionItem::create([
                     'school_id' => $schoolId,
@@ -133,9 +132,15 @@ class PromotionService
                     $oldEnrollment->update([
                         'status' => Enrollment::STATUS_PROMOTED,
                         'effective_date' => $now,
-                        'reason' => $item->reason ?? 'Promoted in run #' . $runId,
+                        'reason' => $item->reason ?? 'Promoted in run #'.$runId,
                         'performed_by_id' => $performedBy,
                     ]);
+                }
+
+                if (! $item->target_course_id) {
+                    Student::withoutGlobalScopes()
+                        ->whereKey($item->student_id)
+                        ->update(['status' => 'graduated']);
                 }
 
                 if ($item->target_course_id) {
@@ -155,7 +160,7 @@ class PromotionService
                         'term_id' => $oldEnrollment?->term_id,
                         'status' => Enrollment::STATUS_ACTIVE,
                         'effective_date' => $now,
-                        'reason' => $item->reason ?? 'Promoted via run #' . $runId,
+                        'reason' => $item->reason ?? 'Promoted via run #'.$runId,
                         'performed_by_id' => $performedBy,
                     ]);
                 }
@@ -184,10 +189,12 @@ class PromotionService
 
                     if ($existingLowestCount === 0) {
                         for ($i = 1; $i <= 10; $i++) {
+                            $intakeIdNumber = static::uniqueIntakeStudentIdNumber($run->school_id);
+
                             $student = Student::create([
                                 'school_id' => $run->school_id,
-                                'student_id_number' => 'INTAKE-' . now()->year . '-' . sprintf('%03d', rand(100, 999)),
-                                'admission_number' => 'ADM-NEW-' . rand(1000, 9999),
+                                'student_id_number' => $intakeIdNumber,
+                                'admission_number' => 'ADM-NEW-'.substr($intakeIdNumber, strrpos($intakeIdNumber, '-') + 1),
                                 'first_name' => collect(['Kuda', 'Tariro', 'Tanaka', 'Farai', 'Ruvimbo', 'Chipo', 'Nyasha'])->random(),
                                 'last_name' => collect(['Moyo', 'Sibanda', 'Ndlovu', 'Dube', 'Mutasa', 'Gumbo', 'Zhou'])->random(),
                                 'gender' => collect(['male', 'female'])->random(),
@@ -241,6 +248,10 @@ class PromotionService
                         ->where('academic_year_id', $run->target_academic_year_id)
                         ->where('course_id', $item->target_course_id)
                         ->delete();
+                } else {
+                    Student::withoutGlobalScopes()
+                        ->whereKey($item->student_id)
+                        ->update(['status' => 'active']);
                 }
 
                 $oldEnrollment = $item->sourceEnrollment;
@@ -248,7 +259,7 @@ class PromotionService
                     $oldEnrollment->update([
                         'status' => Enrollment::STATUS_ACTIVE,
                         'effective_date' => $now,
-                        'reason' => 'Promotion run #' . $runId . ' undone',
+                        'reason' => 'Promotion run #'.$runId.' undone',
                         'performed_by_id' => $performedBy,
                     ]);
                 }
@@ -293,6 +304,18 @@ class PromotionService
             'name' => $course?->name ?? "Course #{$courseId}",
             'rank_order' => 1,
         ])->id;
+    }
+
+    protected function uniqueIntakeStudentIdNumber(int $schoolId): string
+    {
+        do {
+            $candidate = 'INTAKE-'.now()->year.'-'.sprintf('%03d', rand(100, 999));
+        } while (Student::withoutGlobalScopes()
+            ->where('school_id', $schoolId)
+            ->where('student_id_number', $candidate)
+            ->exists());
+
+        return $candidate;
     }
 
     protected function resolveParallelSection(

@@ -144,7 +144,7 @@ class StudentCsvActionsTest extends TestCase
         $component = Livewire::test(ListStudents::class);
 
         $component->assertOk();
-        $component->assertSee('Import Students (CSV)', false);
+        $component->assertSee('Import Students (Excel/CSV)', false);
         $component->assertSee('Export All', false);
 
         $this->assertTrue(true);
@@ -173,10 +173,10 @@ class StudentCsvActionsTest extends TestCase
 
         $component->assertOk();
 
-        $component->assertSee('Download CSV Template', false);
+        $component->assertSee('Download Excel Template', false);
         // The wizard opens on the Upload step (the Match Columns step is hidden
         // until a file is uploaded), so assert the upload field renders.
-        $component->assertSee('CSV File', false);
+        $component->assertSee('Excel / CSV File', false);
 
         $this->assertTrue(true);
     }
