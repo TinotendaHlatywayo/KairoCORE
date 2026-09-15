@@ -181,7 +181,7 @@ class ModuleNavigation
                     ['label' => __('Setup & Structure'), 'page' => SetupStructureHub::class, 'group' => __('Setup & Structure'), 'hub' => true],
                     ['label' => __('Level'), 'resource' => CourseResource::class, 'group' => __('Setup & Structure')],
                     ['label' => __('Subjects'), 'resource' => SubjectResource::class, 'group' => __('Setup & Structure')],
-                    ['label' => __('Classes'), 'resource' => ClassroomResource::class, 'group' => __('Setup & Structure')],
+                    ['label' => __('Classrooms'), 'resource' => ClassroomResource::class, 'group' => __('Setup & Structure')],
                     ['label' => __('Academic Years'), 'resource' => AcademicYearResource::class, 'group' => __('Setup & Structure')],
                     ['label' => __('Timetables & Teaching'), 'page' => TimetablesTeachingHub::class, 'group' => __('Timetables & Teaching'), 'hub' => true],
                     ['label' => __('Timetables'), 'page' => VisualTimetableBuilder::class, 'group' => __('Timetables & Teaching')],

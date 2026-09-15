@@ -47,6 +47,59 @@ class ClassroomCsvService extends CsvBulkService
         return ['Classroom Name', 'Capacity', 'Location', 'Description', 'Features'];
     }
 
+    /**
+     * Example classroom rows written under the template header, one per level
+     * and class across the whole school:
+     *
+     * - Primary: ECD A (Blue, Red), ECD B (Blue, Red), Grade 1-7 (North, South)
+     * - Secondary: Form 1-4 (North, South), Form 5 & 6 (Arts, Commercials, Sciences)
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    protected static function templateRows(): array
+    {
+        $isPrimary = static::schoolType() === 'primary';
+
+        $names = [];
+
+        if ($isPrimary) {
+            foreach (['ECD A', 'ECD B'] as $level) {
+                foreach (['Blue', 'Red'] as $class) {
+                    $names[] = $level.' '.$class;
+                }
+            }
+
+            for ($grade = 1; $grade <= 7; $grade++) {
+                foreach (['North', 'South'] as $class) {
+                    $names[] = 'Grade '.$grade.' '.$class;
+                }
+            }
+        } else {
+            for ($form = 1; $form <= 4; $form++) {
+                foreach (['North', 'South'] as $class) {
+                    $names[] = 'Form '.$form.' '.$class;
+                }
+            }
+
+            foreach ([5, 6] as $form) {
+                foreach (['Arts', 'Commercials', 'Sciences'] as $class) {
+                    $names[] = 'Form '.$form.' '.$class;
+                }
+            }
+        }
+
+        return array_map(
+            fn (string $name): array => [
+                'name' => $name,
+                'capacity' => '40',
+                'location' => 'Main Block',
+                'description' => '',
+                'features' => '',
+            ],
+            $names,
+        );
+    }
+
     public static function exportRows(int $schoolId): iterable
     {
         $query = Classroom::withoutTenantScope()->where('school_id', $schoolId)->orderBy('id');
