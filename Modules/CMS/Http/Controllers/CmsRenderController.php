@@ -237,9 +237,11 @@ class CmsRenderController extends Controller
             'physical_address' => ['required', 'string', 'min:5', 'max:500'],
             'gender' => 'required|in:male,female,other',
             'date_of_birth' => 'required|date',
-            'parent_name' => ['required', 'string', 'max:255'],
-            'parent_email' => ['required', 'email', 'max:255'],
-            'parent_phone' => ['required', 'string', 'max:30'],
+            'boarding_status' => ['required', 'in:day_scholar,boarder'],
+            'medical_notes' => ['nullable', 'string', 'max:1000'],
+            'parent_name' => ['nullable', 'string', 'max:255'],
+            'parent_email' => ['nullable', 'email', 'max:255'],
+            'parent_phone' => ['nullable', 'string', 'max:30'],
             // A public form must never be able to attach an application to a
             // course belonging to another school.
             'course_id' => ['required', Rule::exists('courses', 'id')->where('school_id', $school->id)],
@@ -272,6 +274,8 @@ class CmsRenderController extends Controller
                 'physical_address' => $validated['physical_address'],
                 'gender' => $validated['gender'],
                 'date_of_birth' => $validated['date_of_birth'],
+                'boarding_status' => $validated['boarding_status'] ?? 'day_scholar',
+                'medical_notes' => $validated['medical_notes'] ?? null,
                 'parent_name' => $validated['parent_name'],
                 'parent_email' => $validated['parent_email'],
                 'parent_phone' => $validated['parent_phone'],

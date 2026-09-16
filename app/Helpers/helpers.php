@@ -2,12 +2,19 @@
 
 use App\Models\School;
 use App\Services\TerminologyService;
+use chillerlan\QRCode\Common\EccLevel;
+use chillerlan\QRCode\Common\Mode;
+use chillerlan\QRCode\Output\QRGdImagePNG;
+use chillerlan\QRCode\QRCode;
+use chillerlan\QRCode\QROptions;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Modules\Admin\Models\SystemSetting;
 use Modules\Finance\Models\FinanceDocumentTemplate;
+use Modules\Inventory\Models\InventoryItem;
 use Modules\SaaS\Models\PlatformSetting;
 
 if (! function_exists('term')) {
@@ -422,6 +429,34 @@ if (! function_exists('id_card_hex_to_rgba')) {
     }
 }
 
+if (! function_exists('id_card_short_address')) {
+    /**
+     * Truncate a card address on a whole-word boundary so DomPDF never chops
+     * mid-word into an ugly fragment like "Harare" -> "Hara..". Long addresses
+     * are cut after the last whole word that still fits inside $max characters
+     * and any truncation is marked with a single clean ellipsis.
+     */
+    function id_card_short_address(?string $address, int $max = 44): string
+    {
+        $text = trim((string) ($address ?: 'Borrowdale, Harare'));
+        $width = max(16, (int) $max);
+
+        if (mb_strlen($text) <= $width) {
+            return $text;
+        }
+
+        $cut = mb_substr($text, 0, $width);
+
+        if (preg_match('/\s/m', (string) $cut)) {
+            $cut = mb_substr($cut, 0, mb_strrpos($cut, ' '));
+        }
+
+        $cut = rtrim($cut, " \t\n\r\0\x0B,.");
+
+        return $cut.'…';
+    }
+}
+
 if (! function_exists('id_card_gradient_data_uri')) {
     /**
      * Rasterise a 135° linear gradient between two colors into a base64 PNG
@@ -525,7 +560,7 @@ if (! function_exists('id_card_file_data_uri')) {
         if (is_array($path)) {
             $path = reset($path) ?: null;
         }
-        if (empty($path) || !is_string($path)) {
+        if (empty($path) || ! is_string($path)) {
             return null;
         }
 
@@ -539,10 +574,10 @@ if (! function_exists('id_card_file_data_uri')) {
         $cleanPath = str_replace('storage/', '', $trimmed);
 
         $candidates = [
-            storage_path('app/public/' . $cleanPath),
-            public_path('storage/' . $cleanPath),
+            storage_path('app/public/'.$cleanPath),
+            public_path('storage/'.$cleanPath),
             public_path($trimmed),
-            storage_path('app/public/' . $trimmed),
+            storage_path('app/public/'.$trimmed),
         ];
 
         foreach ($candidates as $candidate) {
@@ -574,16 +609,16 @@ if (! function_exists('id_card_file_data_uri')) {
     function id_card_generate_qr(string $data, int $size = 600): string
     {
         try {
-            if (class_exists(\chillerlan\QRCode\QRCode::class)) {
-                $probe = new \chillerlan\QRCode\QROptions([
-                    'outputInterface' => \chillerlan\QRCode\Output\QRGdImagePNG::class,
-                    'eccLevel'        => \chillerlan\QRCode\Common\EccLevel::H,
-                    'scale'           => 1,
-                    'addQuietzone'    => true,
-                    'quietzoneSize'   => 4,
+            if (class_exists(QRCode::class)) {
+                $probe = new QROptions([
+                    'outputInterface' => QRGdImagePNG::class,
+                    'eccLevel' => EccLevel::H,
+                    'scale' => 1,
+                    'addQuietzone' => true,
+                    'quietzoneSize' => 4,
                 ]);
-                $probeCode = new \chillerlan\QRCode\QRCode($probe);
-                foreach (\chillerlan\QRCode\Common\Mode::INTERFACES as $interface) {
+                $probeCode = new QRCode($probe);
+                foreach (Mode::INTERFACES as $interface) {
                     if ($interface::validateString($data)) {
                         $probeCode->addSegment(new $interface($data));
                         break;
@@ -592,29 +627,31 @@ if (! function_exists('id_card_file_data_uri')) {
                 $matrix = $probeCode->getQRMatrix();
 
                 $moduleCount = max(1, $matrix->moduleCount);
-                $scale       = max(2, (int) ceil(max(1, (int) $size) / $moduleCount));
+                $scale = max(2, (int) ceil(max(1, (int) $size) / $moduleCount));
 
-                $options = new \chillerlan\QRCode\QROptions([
-                    'outputInterface'  => \chillerlan\QRCode\Output\QRGdImagePNG::class,
-                    'eccLevel'         => \chillerlan\QRCode\Common\EccLevel::H,
-                    'scale'            => $scale,
-                    'addQuietzone'     => true,
-                    'quietzoneSize'    => 4,
-                    'outputBase64'     => false,
+                $options = new QROptions([
+                    'outputInterface' => QRGdImagePNG::class,
+                    'eccLevel' => EccLevel::H,
+                    'scale' => $scale,
+                    'addQuietzone' => true,
+                    'quietzoneSize' => 4,
+                    'outputBase64' => false,
                     'imageTransparent' => false,
                     'drawLightModules' => true,
-                    'backgroundColor'  => 'FFFFFF',
+                    'backgroundColor' => 'FFFFFF',
                     'gdImageUseUpscale' => false,
                 ]);
-                $pngData = (new \chillerlan\QRCode\QRCode($options))->render($data);
+                $pngData = (new QRCode($options))->render($data);
+
                 return 'data:image/png;base64,'.base64_encode((string) $pngData);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             // Fall through to external API
         }
 
         $url = 'https://api.qrserver.com/v1/create-qr-code/?size='.$size.'x'.$size.'&ecc=H&format=png&data='.urlencode($data);
         $raw = @file_get_contents($url);
+
         return $raw ? 'data:image/png;base64,'.base64_encode($raw) : $url;
     }
 }
@@ -914,7 +951,7 @@ if (! function_exists('fuzzy_search_where')) {
     /**
      * Apply an ordered character subsequence match against one or more columns.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  Builder  $query
      */
     function fuzzy_search_where($query, array $columns, ?string $term): void
     {
@@ -946,7 +983,7 @@ if (! function_exists('inventory_item_search_options')) {
      */
     function inventory_item_search_options(?string $search, int $limit = 50): array
     {
-        $query = \Modules\Inventory\Models\InventoryItem::query()
+        $query = InventoryItem::query()
             ->with('category');
 
         fuzzy_search_where($query, ['name', 'sku', 'item_type'], $search);

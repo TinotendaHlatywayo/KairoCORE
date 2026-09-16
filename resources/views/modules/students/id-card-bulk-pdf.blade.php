@@ -6,7 +6,7 @@
     <style>
         @page {
             margin: 0;
-            size: auto;
+            size: 480px 300px;
         }
         body {
             margin: 0;
@@ -20,29 +20,39 @@
         .a4-row { width: 100%; }
         .a4-cell { vertical-align: top; box-sizing: border-box; text-align: center; }
 
-        /* PVC output: one CR80 card fills the whole page. */
+        /* PVC output: one CR80 card fills the whole page at exact CR80 dimensions. */
         .pvc-page {
             position: relative;
-            width: 100%;
-            height: 100%;
+            width: 480px;
+            height: 300px;
+            max-height: 300px;
             box-sizing: border-box;
             margin: 0;
             padding: 0;
             overflow: hidden;
+            page-break-inside: avoid;
+            page-break-after: auto;
         }
-
-        @if(($layout ?? 'pvc') === 'pvc')
+        .pvc-page + .pvc-page {
+            page-break-after: auto;
+        }
+        @if(($layout ?? 'pvc') !== 'a4')
+            /* Anchor the card to the page canvas so DomPDF lays it out as exactly one page — out-of-flow, no extra page height from overflowing inner content. */
             .id-card {
                 position: absolute !important;
                 top: 0 !important;
                 left: 0 !important;
                 right: 0 !important;
                 bottom: 0 !important;
-                border-radius: 0 !important;
                 width: 100% !important;
                 height: 100% !important;
+                margin: 0 !important;
             }
-        @else
+        @endif
+        @if(($layout ?? 'pvc') === 'a4')
+            @page {
+                size: A4;
+            }
             .a4-cell {
                 padding: 10px;
             }
@@ -52,9 +62,7 @@
     </style>
     @include('components.id-card-styles')
 </head>
-<body>
-
-    @php
+<body style="margin: 0; padding: 0;">@php
         $a4GridConfig = $a4_grid ?? '2x4';
         $cardsPerPage = match ($a4GridConfig) {
             '2x5' => 10,
@@ -96,7 +104,7 @@
         @php $chunks = $students->chunk(1); @endphp
 
         @foreach($chunks as $chunkIndex => $pageChunk)
-            <div class="pvc-page" style="page-break-after: {{ $chunkIndex < count($chunks) - 1 ? 'always' : 'avoid' }};">
+            <div class="pvc-page {{ $chunkIndex < count($chunks) - 1 ? 'page-break' : '' }}">
                 @include('components.id-card-render', [
                     'student' => $pageChunk->first(),
                     'template' => $selectedTemplate ?? null,
