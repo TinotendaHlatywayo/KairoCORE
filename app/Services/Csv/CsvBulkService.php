@@ -174,6 +174,14 @@ abstract class CsvBulkService
     }
 
     /**
+     * Hook for bulk services to append extra workbook sheets (e.g. change
+     * logs or reconciled summaries) AFTER the single import data sheet. The
+     * data sheet must remain the first and active sheet so the importer reads
+     * it. No-op for every service by default.
+     */
+    protected static function appendTemplateSheets(Spreadsheet $spreadsheet): void {}
+
+    /**
      * Generate the downloadable import template as an .xlsx workbook. Headers
      * of the required columns are written in bold so users can tell at a glance
      * which columns are mandatory. Falls back to the CSV template if Excel
@@ -215,6 +223,8 @@ abstract class CsvBulkService
         }
 
         $sheet->freezePane('A2');
+
+        static::appendTemplateSheets($spreadsheet);
 
         $writer = new XlsxWriter($spreadsheet);
         ob_start();

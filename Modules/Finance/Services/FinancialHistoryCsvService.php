@@ -13,6 +13,9 @@ use Modules\Finance\Models\InvoiceItem;
 use Modules\Finance\Models\Payment;
 use Modules\Finance\Models\SchoolBankAccount;
 use Modules\Students\Models\Student;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 /**
  * Bulk migration of a school's historic financial records from Excel (XLSX)
@@ -187,62 +190,46 @@ class FinancialHistoryCsvService extends CsvBulkService
 
         /*
         | -------------------------------------------------------------------------
-        | EXAMPLE 1 — R260001A: Grade 7 learner in 2026, started ECD A in 2017.
-        | A full termly history spanning every year in school. 2024 Term 3 is
-        | under-paid and the balance is carried into 2025 as a debit carry
-        | forward. An end-of-year 2026 refund closes the example.
+        | EXAMPLE 1 — R260001A: Grade 7 learner in 2026 (started ECD A in 2018).
+        | History starts in 2024 with a 34.00 debit carry-forward representing
+        | unitemized prior years (pre-2024 manual register balance). In 2024
+        | Term 1, an extra payment clears this brought-forward balance, and all
+        | subsequent terms through 2026 are fully itemized and settled.
         | -------------------------------------------------------------------------
         */
         $id = self::EXAMPLE_A;
 
-        foreach ([2017 => 60, 2018 => 65, 2019 => 70, 2020 => 80, 2021 => 90, 2022 => 100, 2023 => 110] as $year => $fee) {
-            $rows = array_merge($rows, $yearRows($id, $year, $fee));
-        }
-
-        // 2024 Term 3 — under-paid, 34.00 left unpaid.
-        $rows = array_merge($rows, $yearRows($id, 2024, 120, [
-            3 => ['pay' => 86.00, 'notes' => 'Part payment — unpaid 34.00 balance carried forward'],
-        ]));
-
-        // 2025 Term 1 — carry the 34.00 unpaid balance as its own invoice,
-        // then bill Term 1 and pay both.
-        $rows[] = $row($id, self::TYPE_DEBIT_CARRY_FORWARD, 2025, 1, 'Balance Brought Forward', '34.00', [
-            'date' => '2025-01-05',
-            'notes' => 'Debit carried forward from 2024 Term 3',
+        $rows[] = $row($id, self::TYPE_DEBIT_CARRY_FORWARD, 2024, 1, 'Balance Brought Forward', '34.00', [
+            'date' => '2024-01-01',
+            'notes' => 'Pre-2024 closing balance brought forward from manual register (prior years unitemized)',
         ]);
-        $rows[] = $row($id, self::TYPE_CHARGE, 2025, 1, 'Tuition Fees', '130.00', ['date' => '2025-01-15']);
-        $rows[] = $row($id, self::TYPE_PAYMENT, 2025, 1, '', '34.00', [
-            'date' => '2025-01-28',
-            'receipt' => $nextReceipt(2025),
+        $rows[] = $row($id, self::TYPE_CHARGE, 2024, 1, 'Tuition Fees', '120.00', ['date' => '2024-01-15']);
+        $rows[] = $row($id, self::TYPE_PAYMENT, 2024, 1, '', '34.00', [
+            'date' => '2024-01-28',
+            'receipt' => $nextReceipt(2024),
             'method' => 'cash',
+            'notes' => 'Clears brought-forward debit balance',
         ]);
-        $rows[] = $row($id, self::TYPE_PAYMENT, 2025, 1, '', '130.00', [
-            'date' => '2025-01-28',
-            'receipt' => $nextReceipt(2025),
+        $rows[] = $row($id, self::TYPE_PAYMENT, 2024, 1, '', '120.00', [
+            'date' => '2024-01-28',
+            'receipt' => $nextReceipt(2024),
             'method' => 'mobile_money',
+            'notes' => 'Term 1 fees',
         ]);
 
         foreach ([2, 3] as $term) {
-            $rows = array_merge($rows, $termRow($id, 2025, $term, 130.00));
+            $rows = array_merge($rows, $termRow($id, 2024, $term, 120.00));
         }
 
-        // 2026 — three full-term charges and payments.
+        $rows = array_merge($rows, $yearRows($id, 2025, 130));
         $rows = array_merge($rows, $yearRows($id, 2026, 140));
-
-        // 2026 Term 3 — end-of-year refund.
-        $rows[] = $row($id, self::TYPE_REFUND, 2026, 3, 'Refund of overpaid fees', '40.00', [
-            'date' => '2026-12-04',
-            'receipt' => 'REF-2026-0001',
-            'method' => 'cash',
-            'notes' => 'Year-end refund to guardian after reconciliation',
-        ]);
 
         /*
         | -------------------------------------------------------------------------
         | EXAMPLE 2 — R260001B: Grade 3 learner in 2026, started ECD A in 2022.
         | Full termly history from 2022 onward. 2026 Term 1 includes a bursary
-        | waiver that is applied to the invoice before the remaining balance
-        | is paid.
+        | waiver of exactly 10% of the fee (140.00 x 10% = 14.00), with the
+        | remaining 126.00 paid.
         | -------------------------------------------------------------------------
         */
         $id = self::EXAMPLE_B;
@@ -251,17 +238,17 @@ class FinancialHistoryCsvService extends CsvBulkService
             $rows = array_merge($rows, $yearRows($id, $year, $fee));
         }
 
-        // 2026 Term 1 — charge, then waiver, then payment of the balance.
         $rows = array_merge($rows, [
-            $row($id, self::TYPE_CHARGE, 2026, 1, 'Tuition Fees', '140.00'),
-            $row($id, self::TYPE_WAIVER, 2026, 1, 'Community Bursary (10%)', '20.00', [
+            $row($id, self::TYPE_CHARGE, 2026, 1, 'Tuition Fees', '140.00', ['date' => '2026-01-15']),
+            $row($id, self::TYPE_WAIVER, 2026, 1, 'Community Bursary (10%)', '14.00', [
                 'date' => '2026-01-20',
-                'notes' => 'Waiver applied to the Term 1 invoice',
+                'notes' => 'Waiver of exactly 10% of the Term 1 fee (140.00 x 10% = 14.00)',
             ]),
-            $row($id, self::TYPE_PAYMENT, 2026, 1, '', '120.00', [
+            $row($id, self::TYPE_PAYMENT, 2026, 1, '', '126.00', [
                 'date' => '2026-01-28',
                 'receipt' => $nextReceipt(2026),
                 'method' => 'cash',
+                'notes' => 'Term 1 balance after waiver: 140.00 - 14.00',
             ]),
         ]);
 
@@ -272,28 +259,115 @@ class FinancialHistoryCsvService extends CsvBulkService
         /*
         | -------------------------------------------------------------------------
         | EXAMPLE 3 — R260001C: Grade 1 learner in 2026, started ECD A in 2024.
-        | History starts 2024. 2025 Term 3 is over-paid and the excess credit
-        | is carried forward into 2026 at the start of the new academic year.
+        | History starts in 2026. A 15.00 credit carry-forward representing
+        | unitemized prior years (pre-2026 overpayments) is applied against the
+        | 2026 Term 1 charge, and the remaining 125.00 balance is paid.
         | -------------------------------------------------------------------------
         */
         $id = self::EXAMPLE_C;
 
-        $rows = array_merge($rows, $yearRows($id, 2024, 120));
-
-        // 2025 — Term 3 over-paid by 15.00 (credit carried forward).
-        $rows = array_merge($rows, $yearRows($id, 2025, 130, [
-            3 => ['pay' => 145.00, 'notes' => 'Overpaid — 15.00 credit carried to 2026'],
-        ]));
-
-        // 2026 — apply the carried credit, then bill all three terms.
-        $rows[] = $row($id, self::TYPE_CREDIT_CARRY_FORWARD, 2026, 1, 'Overpayment Credit Brought Forward', '15.00', [
-            'date' => '2026-01-10',
-            'notes' => 'Credit balance carried forward from 2025 Term 3 overpayment',
+        $rows = array_merge($rows, [
+            $row($id, self::TYPE_CHARGE, 2026, 1, 'Tuition Fees', '140.00', ['date' => '2026-01-15']),
+            $row($id, self::TYPE_CREDIT_CARRY_FORWARD, 2026, 1, 'Overpayment Credit Brought Forward', '15.00', [
+                'date' => '2026-01-16',
+                'notes' => 'Pre-2026 overpayment credit brought forward from manual register (prior years unitemized)',
+            ]),
+            $row($id, self::TYPE_PAYMENT, 2026, 1, '', '125.00', [
+                'date' => '2026-01-20',
+                'receipt' => $nextReceipt(2026),
+                'method' => 'cash',
+                'notes' => 'Term 1 balance after applied credit: 140.00 - 15.00',
+            ]),
         ]);
 
-        $rows = array_merge($rows, $yearRows($id, 2026, 140));
+        foreach ([2, 3] as $term) {
+            $rows = array_merge($rows, $termRow($id, 2026, $term, 140.00));
+        }
 
         return $rows;
+    }
+
+    /**
+     * Append two reference sheets to the downloadable template AFTER the
+     * import data sheet: a balance summary proving every example ledger ties
+     * out, and a change log recording the corrections made after the template
+     * review. The first (active) sheet still holds only the import columns, so
+     * the workbook remains directly importable.
+     */
+    protected static function appendTemplateSheets(Spreadsheet $spreadsheet): void
+    {
+        $balance = $spreadsheet->createSheet();
+        $balance->setTitle('Balance Summary');
+        $balanceRows = [
+            ['Student ID', 'Class (2026)', 'Closing Balance (USD)', 'Transaction Types Demonstrated', 'How It Ties Out'],
+            [
+                self::EXAMPLE_A, 'Grade 7', '0.00',
+                'charge, payment, debit_carry_forward',
+                'Starts in 2024 with a 34.00 debit carry-forward representing unitemized prior years (pre-2024 manual register balance), followed by fully itemized and settled terms for 2024–2026. No duplicate underlying transactions.',
+            ],
+            [
+                self::EXAMPLE_B, 'Grade 3', '0.00',
+                'charge, payment, waiver',
+                'Full termly history from 2022 to 2026. Community Bursary (10%) of 14.00 on a 140.00 fee; balance of 126.00 paid.',
+            ],
+            [
+                self::EXAMPLE_C, 'Grade 1', '0.00',
+                'charge, payment, credit_carry_forward',
+                'Starts in 2026 with a 15.00 credit carry-forward representing unitemized prior years (pre-2026 manual register overpayments), applied against the 2026 Term 1 invoice.',
+            ],
+        ];
+        self::writeSheetRows($balance, $balanceRows);
+
+        $log = $spreadsheet->createSheet();
+        $log->setTitle('Change Log');
+        $logRows = [
+            ['Example', 'Issue Found In Review', 'Correction Applied'],
+            [
+                self::EXAMPLE_A,
+                'The 34.00 unpaid balance was both manufactured via a 2024 Term 3 underpayment AND re-added via a debit_carry_forward row, creating a phantom double-counted debt.',
+                'History for A now correctly starts at the carry-forward row in 2024 representing unitemized prior-year opening balances, with 2024–2026 fully settled.',
+            ],
+            [
+                self::EXAMPLE_A,
+                'The year-end refund had no overpayment backing it in the ledger.',
+                'Removed the standalone refund to keep the example fully reconciled at 0.00.',
+            ],
+            [
+                self::EXAMPLE_B,
+                'The waiver was labelled "Community Bursary (10%)" but the 20.00 amount was not 10% of 140.00.',
+                'Waiver set to exactly 14.00 (= 10% of 140.00) and balance payment to 126.00.',
+            ],
+            [
+                self::EXAMPLE_C,
+                'The 15.00 overpayment credit was both recorded via a 2025 Term 3 overpayment AND re-added via a credit_carry_forward row, doubling the credit.',
+                'History for C now starts in 2026 with the credit carry-forward representing unitemized prior-year overpayments, applied once against 2026 Term 1.',
+            ],
+        ];
+        self::writeSheetRows($log, $logRows);
+
+        // Re-activate the data sheet so the importer (which reads the active
+        // sheet) still starts from the header row.
+        $spreadsheet->getSheet(0)->setTitle('Import Data');
+        $spreadsheet->setActiveSheetIndex(0);
+    }
+
+    private static function writeSheetRows(Worksheet $sheet, array $rows): void
+    {
+        foreach ($rows as $r => $cells) {
+            foreach ($cells as $c => $value) {
+                $coordinate = Coordinate::stringFromColumnIndex($c + 1).($r + 1);
+                $sheet->setCellValue($coordinate, $value);
+                if ($r === 0) {
+                    $sheet->getStyle($coordinate)->getFont()->setBold(true);
+                }
+            }
+        }
+
+        $sheet->getColumnDimension('A')->setWidth(max(array_map(fn (array $row) => mb_strlen((string) ($row[0] ?? '')), $rows) + [12]));
+        $sheet->getColumnDimension('B')->setWidth(max(array_map(fn (array $row) => mb_strlen((string) ($row[1] ?? '')), $rows) + [12]));
+        $sheet->getColumnDimension('C')->setWidth(22);
+        $sheet->getColumnDimension('D')->setWidth(38);
+        $sheet->getColumnDimension('E')->setWidth(80);
     }
 
     public static function exportHeaders(): array
