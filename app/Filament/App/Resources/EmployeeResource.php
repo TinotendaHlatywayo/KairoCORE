@@ -699,8 +699,6 @@ class CreateEmployee extends CreateRecord
 
     protected function afterCreate(): void
     {
-        parent::afterCreate();
-
         $user = app(RosterAccountProvisioningService::class)->provisionEmployee($this->record);
 
         if ($user) {
