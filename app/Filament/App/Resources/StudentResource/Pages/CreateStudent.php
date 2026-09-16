@@ -49,8 +49,6 @@ class CreateStudent extends CreateRecord
 
     protected function afterCreate(): void
     {
-        parent::afterCreate();
-
         $user = app(RosterAccountProvisioningService::class)->provisionStudent($this->record);
 
         if ($user) {
