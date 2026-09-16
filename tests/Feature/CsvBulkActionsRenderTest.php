@@ -133,6 +133,7 @@ class CsvBulkActionsRenderTest extends TestCase
 
         $component = Livewire::test(ListEmployees::class);
         $component->assertOk();
+        $component->assertSee('Import Employees (Excel/CSV)', false);
         $component->assertSee('Export All', false);
         $component->assertSee('Card Employee', false);
         $component->assertSee('Maths Teacher', false);

@@ -32,11 +32,23 @@ use Modules\Students\Models\Student;
 class FinancialHistoryCsvService extends CsvBulkService
 {
     public const TYPE_CHARGE = 'charge';
+
     public const TYPE_PAYMENT = 'payment';
+
     public const TYPE_REFUND = 'refund';
+
     public const TYPE_WAIVER = 'waiver';
+
     public const TYPE_DEBIT_CARRY_FORWARD = 'debit_carry_forward';
+
     public const TYPE_CREDIT_CARRY_FORWARD = 'credit_carry_forward';
+
+    /** Example student identifiers used by the downloadable template guide. */
+    public const EXAMPLE_A = 'R260001A'; // Grade 7 learner (2026) — started ECD A in 2017
+
+    public const EXAMPLE_B = 'R260001B'; // Grade 3 learner (2026) — started ECD A in 2022
+
+    public const EXAMPLE_C = 'R260001C'; // Grade 1 learner (2026) — started ECD A in 2024
 
     public static function columns(): array
     {
@@ -126,20 +138,162 @@ class FinancialHistoryCsvService extends CsvBulkService
 
     protected static function templateRows(): array
     {
-        return [[
-            'R260001A',
-            'charge',
-            date('Y').'-01-15',
-            'Tuition Fees',
-            '250.00',
-            '',
-            '',
-            'bank_transfer',
-            '',
-            date('Y'),
-            'Term 1',
-            'Historic termly tuition billed in '.date('Y'),
-        ]];
+        $rows = [];
+        $sampleReceipt = 0;
+        $nextReceipt = function (int $year) use (&$sampleReceipt): string {
+            return 'RCP-'.$year.'-'.str_pad((string) (++$sampleReceipt + ($year - 2017) * 30), 4, '0', STR_PAD_LEFT);
+        };
+
+        $method = fn (int $term): string => [1 => 'cash', 2 => 'mobile_money', 3 => 'bank_transfer'][$term] ?? 'cash';
+
+        $date = fn (int $year, int $term, bool $payment = false): string => $payment
+            ? match ($term) {
+                1 => $year.'-01-28', 2 => $year.'-06-01', 3 => $year.'-10-05', default => $year.'-01-28'
+            }
+        : match ($term) {
+            1 => $year.'-01-15', 2 => $year.'-05-15', 3 => $year.'-09-15', default => $year.'-01-15'
+        };
+
+        $row = fn (string $id, string $type, int $year, int $term, string $description, string $amount, array $opts = []): array => [
+            $id, $type, $opts['date'] ?? $date($year, $term, in_array($type, [self::TYPE_PAYMENT, self::TYPE_REFUND], true)),
+            $description, $amount,
+            $opts['receipt'] ?? '', $opts['reference'] ?? '', $opts['method'] ?? '', $opts['invoice'] ?? '',
+            (string) $year, 'Term '.$term, $opts['notes'] ?? '',
+        ];
+
+        // Charge + payment rows for a single term.
+        $termRow = function (string $id, int $year, int $term, float $fee, array $override = []) use ($row, $nextReceipt, $method): array {
+            $payment = $override['pay'] ?? $fee;
+
+            return [
+                $row($id, self::TYPE_CHARGE, $year, $term, 'Tuition Fees', number_format($fee, 2, '.', '')),
+                $row($id, self::TYPE_PAYMENT, $year, $term, '', number_format($payment, 2, '.', ''), [
+                    'receipt' => $nextReceipt($year),
+                    'method' => $method($term),
+                    'notes' => $override['notes'] ?? '',
+                ]),
+            ];
+        };
+
+        // All three terms for a given year.
+        $yearRows = function (string $id, int $year, float $fee, array $termOverrides = []) use ($termRow): array {
+            $rows = [];
+            foreach ([1, 2, 3] as $term) {
+                $rows = array_merge($rows, $termRow($id, $year, $term, $fee, $termOverrides[$term] ?? []));
+            }
+
+            return $rows;
+        };
+
+        /*
+        | -------------------------------------------------------------------------
+        | EXAMPLE 1 — R260001A: Grade 7 learner in 2026, started ECD A in 2017.
+        | A full termly history spanning every year in school. 2024 Term 3 is
+        | under-paid and the balance is carried into 2025 as a debit carry
+        | forward. An end-of-year 2026 refund closes the example.
+        | -------------------------------------------------------------------------
+        */
+        $id = self::EXAMPLE_A;
+
+        foreach ([2017 => 60, 2018 => 65, 2019 => 70, 2020 => 80, 2021 => 90, 2022 => 100, 2023 => 110] as $year => $fee) {
+            $rows = array_merge($rows, $yearRows($id, $year, $fee));
+        }
+
+        // 2024 Term 3 — under-paid, 34.00 left unpaid.
+        $rows = array_merge($rows, $yearRows($id, 2024, 120, [
+            3 => ['pay' => 86.00, 'notes' => 'Part payment — unpaid 34.00 balance carried forward'],
+        ]));
+
+        // 2025 Term 1 — carry the 34.00 unpaid balance as its own invoice,
+        // then bill Term 1 and pay both.
+        $rows[] = $row($id, self::TYPE_DEBIT_CARRY_FORWARD, 2025, 1, 'Balance Brought Forward', '34.00', [
+            'date' => '2025-01-05',
+            'notes' => 'Debit carried forward from 2024 Term 3',
+        ]);
+        $rows[] = $row($id, self::TYPE_CHARGE, 2025, 1, 'Tuition Fees', '130.00', ['date' => '2025-01-15']);
+        $rows[] = $row($id, self::TYPE_PAYMENT, 2025, 1, '', '34.00', [
+            'date' => '2025-01-28',
+            'receipt' => $nextReceipt(2025),
+            'method' => 'cash',
+        ]);
+        $rows[] = $row($id, self::TYPE_PAYMENT, 2025, 1, '', '130.00', [
+            'date' => '2025-01-28',
+            'receipt' => $nextReceipt(2025),
+            'method' => 'mobile_money',
+        ]);
+
+        foreach ([2, 3] as $term) {
+            $rows = array_merge($rows, $termRow($id, 2025, $term, 130.00));
+        }
+
+        // 2026 — three full-term charges and payments.
+        $rows = array_merge($rows, $yearRows($id, 2026, 140));
+
+        // 2026 Term 3 — end-of-year refund.
+        $rows[] = $row($id, self::TYPE_REFUND, 2026, 3, 'Refund of overpaid fees', '40.00', [
+            'date' => '2026-12-04',
+            'receipt' => 'REF-2026-0001',
+            'method' => 'cash',
+            'notes' => 'Year-end refund to guardian after reconciliation',
+        ]);
+
+        /*
+        | -------------------------------------------------------------------------
+        | EXAMPLE 2 — R260001B: Grade 3 learner in 2026, started ECD A in 2022.
+        | Full termly history from 2022 onward. 2026 Term 1 includes a bursary
+        | waiver that is applied to the invoice before the remaining balance
+        | is paid.
+        | -------------------------------------------------------------------------
+        */
+        $id = self::EXAMPLE_B;
+
+        foreach ([2022 => 100, 2023 => 110, 2024 => 120, 2025 => 130] as $year => $fee) {
+            $rows = array_merge($rows, $yearRows($id, $year, $fee));
+        }
+
+        // 2026 Term 1 — charge, then waiver, then payment of the balance.
+        $rows = array_merge($rows, [
+            $row($id, self::TYPE_CHARGE, 2026, 1, 'Tuition Fees', '140.00'),
+            $row($id, self::TYPE_WAIVER, 2026, 1, 'Community Bursary (10%)', '20.00', [
+                'date' => '2026-01-20',
+                'notes' => 'Waiver applied to the Term 1 invoice',
+            ]),
+            $row($id, self::TYPE_PAYMENT, 2026, 1, '', '120.00', [
+                'date' => '2026-01-28',
+                'receipt' => $nextReceipt(2026),
+                'method' => 'cash',
+            ]),
+        ]);
+
+        foreach ([2, 3] as $term) {
+            $rows = array_merge($rows, $termRow($id, 2026, $term, 140.00));
+        }
+
+        /*
+        | -------------------------------------------------------------------------
+        | EXAMPLE 3 — R260001C: Grade 1 learner in 2026, started ECD A in 2024.
+        | History starts 2024. 2025 Term 3 is over-paid and the excess credit
+        | is carried forward into 2026 at the start of the new academic year.
+        | -------------------------------------------------------------------------
+        */
+        $id = self::EXAMPLE_C;
+
+        $rows = array_merge($rows, $yearRows($id, 2024, 120));
+
+        // 2025 — Term 3 over-paid by 15.00 (credit carried forward).
+        $rows = array_merge($rows, $yearRows($id, 2025, 130, [
+            3 => ['pay' => 145.00, 'notes' => 'Overpaid — 15.00 credit carried to 2026'],
+        ]));
+
+        // 2026 — apply the carried credit, then bill all three terms.
+        $rows[] = $row($id, self::TYPE_CREDIT_CARRY_FORWARD, 2026, 1, 'Overpayment Credit Brought Forward', '15.00', [
+            'date' => '2026-01-10',
+            'notes' => 'Credit balance carried forward from 2025 Term 3 overpayment',
+        ]);
+
+        $rows = array_merge($rows, $yearRows($id, 2026, 140));
+
+        return $rows;
     }
 
     public static function exportHeaders(): array
@@ -162,6 +316,7 @@ class FinancialHistoryCsvService extends CsvBulkService
         foreach ($invoices as $invoice) {
             if ($invoice->items->isEmpty()) {
                 yield self::exportRow($invoice->student, static::TYPE_CHARGE, $invoice->created_at, $invoice->invoice_number, $invoice->subtotal_amount, null);
+
                 continue;
             }
 
@@ -200,7 +355,6 @@ class FinancialHistoryCsvService extends CsvBulkService
 
     /**
      * @param  array<string, string|null>  $columnMap
-     * @param  callable|null  $onProgress
      * @param  array{requester_id?: int|null}  $options
      * @return array{success: int, total: int, failures: array}
      */

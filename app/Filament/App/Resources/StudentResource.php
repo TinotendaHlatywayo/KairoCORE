@@ -7,11 +7,14 @@ use App\Filament\App\Resources\StudentResource\Pages;
 use App\Filament\Student\Pages\StudentProfile;
 use App\Models\User;
 use App\Notifications\ProfilePhotoRejectedNotification;
+use App\Services\AccountActivationService;
 use App\Services\ModuleVisibilityManager;
 use App\Services\ProfilePhotoService;
+use App\Services\RosterAccountProvisioningService;
 use Filament\Forms;
 use Filament\Forms\Components\Tabs\Tab;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -420,6 +423,37 @@ class StudentResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\BulkAction::make('sendActivationEmails')
+                        ->label(__('Send Activation Email'))
+                        ->icon('heroicon-o-envelope')
+                        ->color('info')
+                        ->requiresConfirmation()
+                        ->modalHeading(__('Send activation email'))
+                        ->modalDescription(__('Each selected student will receive an individual activation e-mail so they can create their student-portal login. Accounts that are already activated are skipped.'))
+                        ->action(function (Collection $records) {
+                            $sent = 0;
+                            $skipped = 0;
+
+                            foreach ($records as $student) {
+                                $user = app(RosterAccountProvisioningService::class)->provisionStudent($student);
+
+                                if (! $user || $user->activated_at) {
+                                    $skipped++;
+
+                                    continue;
+                                }
+
+                                app(AccountActivationService::class)->issueAndSend($user);
+                                $sent++;
+                            }
+
+                            Notification::make()
+                                ->title(__('Activation e-mails sent'))
+                                ->body(trans_choice('{1} :sent activation e-mail sent|[2,*] :sent activation e-mails sent', $sent, ['sent' => $sent, 'skipped' => $skipped]))
+                                ->success()
+                                ->send();
+                        }),
+
                     Tables\Actions\BulkAction::make('printSelected')
                         ->label(__('Print Selected ID Cards'))
                         ->icon('heroicon-o-printer')

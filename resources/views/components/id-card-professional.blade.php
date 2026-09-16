@@ -52,7 +52,7 @@
     $id = $student->student_id_number ?: $student->admission_number ?: 'N/A';
     $expiry = $student->resolved_card_expiry?->format('d M Y') ?? 'N/A';
     $dob = $student->date_of_birth ? \Carbon\Carbon::parse($student->date_of_birth)->format('d M Y') : 'N/A';
-    $studentAddress = \Illuminate\Support\Str::limit($student->physical_address ?: 'Borrowdale, Harare', 42);
+    $studentAddress = id_card_short_address($student->physical_address);
     $studentPhone = $student->phone ?: 'N/A';
     $nationalId = $student->national_id ?: 'N/A';
     
@@ -83,7 +83,6 @@
     }
     $mainH = $canvasH - $headerH - $footerH;
     $photoW = $orientation === 'portrait' ? 28 : 20;
-    $infoW = 100 - $photoW;
     $logoAreaW = $orientation === 'portrait' ? 22 : 26;
     
     // Build contact lines for footer
@@ -163,29 +162,40 @@
     </div>
 
     {{-- MAIN CONTENT --}}
-    <div style="position: absolute; top: {{ $headerH }}px; left: 0; width: {{ $canvasW }}px; height: {{ $mainH }}px; z-index: 1; background: #ffffff; padding: 6px 10px; box-sizing: border-box;">
-
-        {{-- PHOTO --}}
-        @if($val('show_photo', true) && $photoData)
-            <div style="float: left; width: {{ $photoW }}%; text-align: center; padding-top: 2px;">
-                <img src="{{ $photoData }}" style="width: {{ $orientation === 'portrait' ? 80 : 72 }}px; height: {{ $orientation === 'portrait' ? 104 : 96 }}px; border-radius: {{ $px('photo_rounded_corners', 8) }}px; border: {{ $px('photo_border_width', 2) }}px solid {{ e($val('photo_border_color', '#fbbf24')) }}; box-sizing: border-box;">
-                @if($val('show_photo_caption', true))
-                    <div style="{{ $font('photo_caption', 7, $textMuted) }} text-transform: uppercase; letter-spacing: 0.5px; margin-top: 3px;">
-                        {{ $val('photo_caption_text', 'STUDENT') }}
-                    </div>
+    <div style="position: absolute; top: {{ $headerH }}px; left: 0; width: {{ $canvasW }}px; height: {{ $mainH }}px; z-index: 1; background: #ffffff;">
+        @php
+            $showQr = $val('show_qr', true);
+            $qrCellW = $showQr ? ($orientation === 'portrait' ? 30 : 32) : 0;
+        @endphp
+        <table style="width: 100%; height: 100%; border-collapse: collapse; border-spacing: 0; table-layout: fixed;">
+            <tr>
+                {{-- PHOTO --}}
+                @if($val('show_photo', true) && $photoData)
+                    <td style="width: {{ $photoW }}%; vertical-align: top; text-align: center; padding: 10px 0 0 10px;">
+                        <img src="{{ $photoData }}" style="width: {{ $orientation === 'portrait' ? 80 : 72 }}px; height: {{ $orientation === 'portrait' ? 104 : 96 }}px; border-radius: {{ $px('photo_rounded_corners', 8) }}px; border: {{ $px('photo_border_width', 2) }}px solid {{ e($val('photo_border_color', '#fbbf24')) }}; box-sizing: border-box;">
+                        @if($val('show_photo_caption', true))
+                            <div style="{{ $font('photo_caption', 7, $textMuted) }} text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px;">
+                                {{ $val('photo_caption_text', 'STUDENT') }}
+                            </div>
+                        @endif
+                    </td>
                 @endif
-            </div>
-        @endif
 
-        {{-- INFO --}}
-        <div style="position: relative; float: right; width: {{ $infoW - 2 }}%;">
-            @if($val('show_name', true))
-                <div style="{{ $font('name', $orientation === 'portrait' ? 14 : 16, $textPrimary) }} text-transform: uppercase; letter-spacing: 0.3px; line-height: 1.1; margin-bottom: 3px; padding-bottom: 3px; border-bottom: 1px solid #e2e8f0;">
-                    {{ $student->full_name }}
-                </div>
-            @endif
-
-            <table style="width: 100%; border-collapse: collapse; border-spacing: 0; font-size: {{ $orientation === 'portrait' ? 9 : 10 }}px; line-height: 1.45;">
+                {{-- INFO + QR (tables instead of floats so DomPDF anchors the QR reliably) --}}
+                <td style="vertical-align: top; padding: 8px 10px 8px 6px;">
+                    <table style="width: 100%; height: 100%; border-collapse: collapse; border-spacing: 0;">
+                        <tr>
+                            <td style="vertical-align: middle; height: {{ $orientation === 'portrait' ? 18 : 22 }}px;">
+                                @if($val('show_name', true))
+                                    <div style="{{ $font('name', $orientation === 'portrait' ? 14 : 15, $textPrimary) }} text-transform: uppercase; letter-spacing: 0.3px; line-height: 1.1; padding-bottom: 3px; border-bottom: 1px solid #e2e8f0;">
+                                        {{ $student->full_name }}
+                                    </div>
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="vertical-align: top; width: {{ $qrCellW ? (100 - $qrCellW) : 100 }}%; padding-top: 3px;">
+                                <table style="width: 100%; border-collapse: collapse; border-spacing: 0; font-size: {{ $orientation === 'portrait' ? 9 : 10 }}px; line-height: 1.45;">
                 @if($val('show_student_id', true))
                     <tr>
                         <td style="width: 28%; {{ $font('label', $orientation === 'portrait' ? 8 : 9, $textSecondary) }} font-weight: 600; padding: 1px 3px 1px 0; vertical-align: top;">{{ __('Student ID') }}</td>
@@ -250,29 +260,26 @@
                     </tr>
                 @endif
             </table>
-
-            {{-- QR --}}
-            @if($val('show_qr', true))
-                <div style="position: absolute; bottom: 0; right: 0; text-align: center;">
-                    <img src="{{ $qr }}" style="width: {{ $px('qr_size', 58) }}px; height: {{ $px('qr_size', 58) }}px; border: 1px solid #cbd5e1; border-radius: 3px; padding: 2px; background: #fff; box-sizing: border-box;">
-                    <div style="{{ $font('qr_caption', 5, $textMuted) }} font-weight: 700; letter-spacing: 0.5px; line-height: 1.1; margin-top: 1px;">
-                        <strong>{{ $id }}</strong>
-                    </div>
-                </div>
-            @endif
-
-            {{-- Barcode --}}
-            @if($barcode)
-                <div style="position: absolute; bottom: 0; left: 0; right: {{ $px('qr_size', 58) + 12 }}px; text-align: center;">
-                    <img src="{{ $barcode }}" style="max-width: 100%; height: auto;">
-                    <div style="font-family: 'Courier New', monospace; font-size: 5px; letter-spacing: 1px; margin-top: 1px; font-weight: 700; color: {{ $textMuted }};">{{ $id }}</div>
-                </div>
-            @endif
-
-            <div style="clear: both;"></div>
-        </div>
-        <div style="clear: both;"></div>
-    </div>
+                </td>
+                @if($showQr)
+                    <td style="vertical-align: bottom; text-align: center; width: {{ $qrCellW }}%; padding-left: 4px;">
+                        <img src="{{ $qr }}" style="width: {{ $px('qr_size', 58) }}px; height: {{ $px('qr_size', 58) }}px; border: 1px solid #cbd5e1; border-radius: 3px; padding: 2px; background: #fff; box-sizing: border-box;">
+                        <div style="{{ $font('qr_caption', 5, $textMuted) }} font-weight: 700; letter-spacing: 0.5px; line-height: 1.1; margin-top: 1px;">
+                            <strong>{{ $id }}</strong>
+                        </div>
+                    </td>
+                @elseif($barcode)
+                    <td style="vertical-align: middle; text-align: center; width: {{ $qrCellW }}%; padding-left: 4px;">
+                        <img src="{{ $barcode }}" style="width: 100%;">
+                        <div style="font-family: 'Courier New', monospace; font-size: 5px; letter-spacing: 1px; margin-top: 1px; font-weight: 700; color: {{ $textMuted }};">{{ $id }}</div>
+                    </td>
+                @endif
+            </tr>
+        </table>
+    </td>
+    </tr>
+    </table>
+</div>
 
     {{-- FOOTER — contact details only here (not duplicated at top) --}}
     <div style="position: absolute; bottom: 0; left: 0; width: {{ $canvasW }}px; height: {{ $footerH }}px; z-index: 1; background: {{ $footerBg }}; color: {{ $footerText }}; text-align: center; padding: 0 10px; box-sizing: border-box; display: table; table-layout: fixed; line-height: 1.15;">

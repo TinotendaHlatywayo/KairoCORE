@@ -6,6 +6,7 @@ use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Filament\App\Resources\ApplicationResource\Pages;
 use App\Models\User;
 use App\Services\AdmissionNotificationService;
+use App\Services\EnrollmentClassBalancer;
 use App\Services\RosterAccountProvisioningService;
 use Carbon\Carbon;
 use Filament\Forms;
@@ -122,14 +123,11 @@ class ApplicationResource extends Resource
                                 Forms\Components\Section::make(__('Guardian Details'))
                                     ->schema([
                                         Forms\Components\TextInput::make('parent_name')
-                                            ->required()
                                             ->label(__('Parent/Guardian Name')),
                                         Forms\Components\TextInput::make('parent_email')
                                             ->email()
-                                            ->required()
                                             ->label(__('Parent/Guardian Email')),
                                         Forms\Components\TextInput::make('parent_phone')
-                                            ->required()
                                             ->label(__('Parent/Guardian Phone')),
                                         Forms\Components\TextInput::make('parent_relationship')
                                             ->placeholder(__('e.g., Mother, Father, Guardian'))
@@ -231,8 +229,9 @@ class ApplicationResource extends Resource
 
                                         Forms\Components\Select::make('enrollment.section_id')
                                             ->label(__('Class'))
-                                            ->options(fn (Forms\Get $get) => Section::where('course_id', $get('course_id'))->pluck('name', 'id'))
-                                            ->required(),
+                                            ->helperText(__('Leave blank to auto-assign the least populated class for this level.'))
+                                            ->placeholder(__('Auto-assign to least populated class'))
+                                            ->options(fn (Forms\Get $get) => Section::where('course_id', $get('course_id'))->pluck('name', 'id')),
 
                                         Forms\Components\TextInput::make('enrollment.admission_number')
                                             ->label(__('Assign Admission Number')),
@@ -353,14 +352,28 @@ class ApplicationResource extends Resource
                             ->live(),
                         Forms\Components\Select::make('section_id')
                             ->label(__('Class'))
-                            ->options(fn (Forms\Get $get) => Section::where('course_id', $get('course_id'))->pluck('name', 'id'))
-                            ->required(),
+                            ->helperText(__('Leave blank to auto-assign the least populated class for this level.'))
+                            ->placeholder(__('Auto-assign to least populated class'))
+                            ->options(fn (Forms\Get $get) => Section::where('course_id', $get('course_id'))->pluck('name', 'id')),
                         Forms\Components\TextInput::make('admission_number')
                             ->label(__('Assign Admission Number'))
                             ->required()
                             ->default(fn () => date('Y').'/'.rand(100, 999)),
                     ])
                     ->action(function (Application $record, array $data) {
+                        $sectionId = $data['section_id']
+                            ?? EnrollmentClassBalancer::leastPopulatedSection($record->school_id, $data['academic_year_id'], $data['course_id']);
+
+                        if (! $sectionId) {
+                            Notification::make()
+                                ->title(__('Enrollment failed'))
+                                ->body(__('No class exists for this level. Create a class under Academics before enrolling students.'))
+                                ->danger()
+                                ->send();
+
+                            return;
+                        }
+
                         $record->update([
                             'status' => 'enrolled',
                             'course_id' => $data['course_id'],
@@ -378,13 +391,15 @@ class ApplicationResource extends Resource
                             'last_name' => $record->last_name,
                             'gender' => $record->gender,
                             'date_of_birth' => $record->date_of_birth,
+                            'boarding_status' => $record->boarding_status ?? 'day_scholar',
+                            'medical_notes' => $record->medical_notes,
                             'admission_date' => now(),
                             'status' => 'active',
                             'photo_path' => $record->photo_path,
                             'emergency_contact_name' => $record->parent_name,
                             'emergency_contact_phone' => $record->parent_phone,
-                            'parent_email' => $record->email ?? $record->parent_email,
-                            'email' => $record->email ?? null,
+                            'parent_email' => $record->parent_email,
+                            'email' => $record->email,
                         ]);
 
                         Enrollment::create([
@@ -392,14 +407,15 @@ class ApplicationResource extends Resource
                             'student_id' => $student->id,
                             'academic_year_id' => $data['academic_year_id'],
                             'course_id' => $data['course_id'],
-                            'section_id' => $data['section_id'],
+                            'section_id' => $sectionId,
                         ]);
 
                         // Copy submitted application documents onto the student record.
                         static::copyApplicationDocuments($record, $student);
 
-                        // Send the admission confirmation email to the registered address.
-                        app(AdmissionNotificationService::class)->send($student, $record->parent_email, $record->school_id);
+                        // Send the admission confirmation email to the parent (or
+                        // the student email when no parent email was supplied).
+                        app(AdmissionNotificationService::class)->send($student, $record->email ?: $record->parent_email, $record->school_id);
 
                         // Provision the portal account (created above) and deliver the
                         // activation email so the student can set their own password.
@@ -435,12 +451,24 @@ class ApplicationResource extends Resource
                                 ->live(),
                             Forms\Components\Select::make('section_id')
                                 ->label(__('Default Class'))
-                                ->options(fn (Forms\Get $get) => Section::where('course_id', $get('course_id'))->pluck('name', 'id'))
-                                ->required(),
+                                ->helperText(__('Leave blank to auto-assign each student to the least populated class for their level.'))
+                                ->placeholder(__('Auto-assign to least populated class'))
+                                ->options(fn (Forms\Get $get) => Section::where('course_id', $get('course_id'))->pluck('name', 'id')),
                         ])
                         ->action(function ($records, $data) {
+                            $enrolled = 0;
+
                             foreach ($records as $record) {
                                 if ($record->status === 'enrolled') {
+                                    continue;
+                                }
+
+                                $courseId = $data['course_id'] ?? $record->course_id;
+
+                                $sectionId = ($data['section_id'] ?? null)
+                                    ?: EnrollmentClassBalancer::leastPopulatedSection($record->school_id, $data['academic_year_id'], $courseId);
+
+                                if (! $sectionId) {
                                     continue;
                                 }
 
@@ -461,16 +489,16 @@ class ApplicationResource extends Resource
                                     'photo_path' => $record->photo_path,
                                     'emergency_contact_name' => $record->parent_name,
                                     'emergency_contact_phone' => $record->parent_phone,
-                                    'parent_email' => $record->email ?? $record->parent_email,
-                                    'email' => $record->email ?? null,
+                                    'parent_email' => $record->parent_email,
+                                    'email' => $record->email,
                                 ]);
 
                                 Enrollment::create([
                                     'school_id' => $record->school_id,
                                     'student_id' => $student->id,
                                     'academic_year_id' => $data['academic_year_id'],
-                                    'course_id' => $data['course_id'] ?? $record->course_id,
-                                    'section_id' => $data['section_id'],
+                                    'course_id' => $courseId,
+                                    'section_id' => $sectionId,
                                 ]);
 
                                 // Copy submitted application documents onto the student record.
@@ -481,18 +509,21 @@ class ApplicationResource extends Resource
                                     app(RosterAccountProvisioningService::class)->provisionStudent($student);
                                 }
 
-                                // Send the admission confirmation email to the registered address.
-                                app(AdmissionNotificationService::class)->send($student, $record->parent_email, $record->school_id);
+                                // Send the admission confirmation email to the parent (or
+                                // the student email when no parent email was supplied).
+                                app(AdmissionNotificationService::class)->send($student, $record->email ?: $record->parent_email, $record->school_id);
 
                                 $record->update([
                                     'status' => 'enrolled',
-                                    'course_id' => $data['course_id'] ?? $record->course_id,
+                                    'course_id' => $courseId,
                                 ]);
+
+                                $enrolled++;
                             }
 
                             Notification::make()
                                 ->title(__('Bulk Enrollment Complete'))
-                                ->body(count($records).' '.__('students enrolled successfully.'))
+                                ->body($enrolled.' '.__('students enrolled successfully.'))
                                 ->success()
                                 ->send();
                         }),
@@ -512,13 +543,14 @@ class ApplicationResource extends Resource
 
     /**
      * Finds an existing user by email or creates a new locked portal account
-     * for the student using the email registered on the application (no more
-     * generated placeholder addresses). When the application carries no email,
-     * no account is created until an email address is on file.
+     * for the student using the student email registered on the application
+     * (the parent email is never used to create the student portal). When the
+     * application carries no student email, no account is created until an
+     * email address is on file.
      */
     protected static function resolveOrCreateStudentUser(Application $record): ?User
     {
-        $email = mb_strtolower(trim((string) ($record->email ?: $record->parent_email)));
+        $email = mb_strtolower(trim((string) $record->email));
 
         if ($email === '') {
             return null;

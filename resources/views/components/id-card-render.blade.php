@@ -9,6 +9,8 @@
 
 @if($designTheme === 'professional')
     @include('components.id-card-professional', ['student' => $student, 'template' => $tpl, 'school' => $school, 'cropMarks' => $cropMarks ?? false])
+@elseif($designTheme === 'classic')
+    @include('components.id-card-classic', ['student' => $student, 'template' => $tpl, 'school' => $school, 'cropMarks' => $cropMarks ?? false])
 @else
     {{-- Legacy absolute-positioning template (premium, classic, modern, etc.) --}}
     @php
@@ -54,7 +56,7 @@
         $expiry = $student->resolved_card_expiry?->format('d M Y') ?? 'N/A';
         $dob = $student->date_of_birth ? \Carbon\Carbon::parse($student->date_of_birth)->format('d M Y') : 'N/A';
         $boarding = ucwords(str_replace('_', ' ', $student->boarding_status ?? 'day_scholar'));
-        $studentAddress = \Illuminate\Support\Str::limit($student->physical_address ?: 'Borrowdale, Harare', 42);
+        $studentAddress = id_card_short_address($student->physical_address);
         $studentPhone = $student->phone ?: 'N/A';
         $photoW = $canvasW * $pct('photo_width', 26) / 100;
         $photoH = $canvasH * $pct('photo_height', 34) / 100;

@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\School;
-use App\Models\User;
 use App\Services\Academic\ClassAssignmentService;
 use Illuminate\Foundation\Testing\Concerns\InteractsWithDatabase;
 use Illuminate\Support\Facades\Config;
@@ -20,9 +19,13 @@ class ClassAssignmentServiceTest extends TestCase
     use InteractsWithDatabase;
 
     private School $school;
+
     private AcademicYear $year;
+
     private Course $course;
+
     private Section $sectionA;
+
     private Section $sectionB;
 
     protected function setUp(): void
@@ -43,7 +46,7 @@ class ClassAssignmentServiceTest extends TestCase
 
         $this->year = AcademicYear::withoutGlobalScopes()->create([
             'school_id' => $this->school->id,
-            'name' => $tag . ' Year',
+            'name' => $tag.' Year',
             'start_date' => '2026-09-01',
             'end_date' => '2027-08-31',
             'is_current' => false,
@@ -51,7 +54,7 @@ class ClassAssignmentServiceTest extends TestCase
 
         $this->course = Course::withoutGlobalScopes()->create([
             'school_id' => $this->school->id,
-            'name' => $tag . ' Level',
+            'name' => $tag.' Level',
             'code' => strtoupper(substr($tag, 0, 6)),
         ]);
 
@@ -108,7 +111,7 @@ class ClassAssignmentServiceTest extends TestCase
     {
         return Student::withoutGlobalScopes()->create([
             'school_id' => $this->school->id,
-            'first_name' => 'CASTest_' . $suffix,
+            'first_name' => 'CASTest_'.$suffix,
             'last_name' => 'Student',
             'gender' => 'Male',
             'date_of_birth' => '2015-01-01',
@@ -135,7 +138,7 @@ class ClassAssignmentServiceTest extends TestCase
         $student = $this->createStudent('MoveA');
         $originalEnrollment = $this->createEnrollment($student, $this->sectionA);
 
-        $service = new ClassAssignmentService();
+        $service = new ClassAssignmentService;
         $newEnrollment = $service->reassign(
             $student->id,
             $this->sectionA->id,
@@ -160,7 +163,7 @@ class ClassAssignmentServiceTest extends TestCase
         $student = $this->createStudent('HistA');
         $this->createEnrollment($student, $this->sectionA);
 
-        $service = new ClassAssignmentService();
+        $service = new ClassAssignmentService;
         $service->reassign(
             $student->id,
             $this->sectionA->id,
@@ -185,7 +188,7 @@ class ClassAssignmentServiceTest extends TestCase
         $student = $this->createStudent('FailA');
         $this->createEnrollment($student, $this->sectionA);
 
-        $service = new ClassAssignmentService();
+        $service = new ClassAssignmentService;
 
         $this->expectException(\RuntimeException::class);
         $service->reassign(
@@ -211,7 +214,7 @@ class ClassAssignmentServiceTest extends TestCase
         $this->createEnrollment($s1, $this->sectionA);
         $this->createEnrollment($s2, $tinySection);
 
-        $service = new ClassAssignmentService();
+        $service = new ClassAssignmentService;
 
         $this->expectException(\OverflowException::class);
         $service->reassign(
@@ -229,7 +232,7 @@ class ClassAssignmentServiceTest extends TestCase
         $student = $this->createStudent('SameSec');
         $this->createEnrollment($student, $this->sectionA);
 
-        $service = new ClassAssignmentService();
+        $service = new ClassAssignmentService;
 
         $this->expectException(\InvalidArgumentException::class);
         $service->reassign(
@@ -244,8 +247,8 @@ class ClassAssignmentServiceTest extends TestCase
     {
         $otherCourse = Course::withoutGlobalScopes()->create([
             'school_id' => $this->school->id,
-            'name' => 'CAS_Other_' . uniqid(),
-            'code' => strtoupper('OT' . uniqid('', true)),
+            'name' => 'CAS_Other_'.uniqid(),
+            'code' => strtoupper('OT'.uniqid('', true)),
         ]);
         $otherSection = Section::withoutGlobalScopes()->create([
             'school_id' => $this->school->id,
@@ -258,18 +261,24 @@ class ClassAssignmentServiceTest extends TestCase
         $student = $this->createStudent('CrossLevel');
         $this->createEnrollment($student, $this->sectionA);
 
-        $service = new ClassAssignmentService();
+        $service = new ClassAssignmentService;
 
         $this->expectException(\InvalidArgumentException::class);
-        $service->reassign(
-            $student->id,
-            $this->sectionA->id,
-            $otherSection->id,
-            $this->year->id,
-        );
 
-        DB::connection('mysql')->table('sections')->where('id', $otherSection->id)->delete();
-        DB::connection('mysql')->table('courses')->where('id', $otherCourse->id)->delete();
+        // The finally block guarantees the throwaway course/section are removed
+        // even after the expected exception, otherwise every test run leaks a
+        // junk "CAS_Other_<unique-id>" course into the demo school's roster.
+        try {
+            $service->reassign(
+                $student->id,
+                $this->sectionA->id,
+                $otherSection->id,
+                $this->year->id,
+            );
+        } finally {
+            DB::connection('mysql')->table('sections')->where('id', $otherSection->id)->delete();
+            DB::connection('mysql')->table('courses')->where('id', $otherCourse->id)->delete();
+        }
     }
 
     public function test_reassign_bulk_moves_multiple_students(): void
@@ -281,7 +290,7 @@ class ClassAssignmentServiceTest extends TestCase
         $this->createEnrollment($s2, $this->sectionA);
         $this->createEnrollment($s3, $this->sectionA);
 
-        $service = new ClassAssignmentService();
+        $service = new ClassAssignmentService;
         $results = $service->reassignBulk(
             [$s1->id, $s2->id, $s3->id],
             $this->sectionA->id,
@@ -312,7 +321,7 @@ class ClassAssignmentServiceTest extends TestCase
         $s1 = $this->createStudent('BulkMissing1');
         $this->createEnrollment($s1, $this->sectionA);
 
-        $service = new ClassAssignmentService();
+        $service = new ClassAssignmentService;
 
         $this->expectException(\RuntimeException::class);
         $service->reassignBulk(
@@ -340,7 +349,7 @@ class ClassAssignmentServiceTest extends TestCase
         $this->createEnrollment($s2, $this->sectionA);
         $this->createEnrollment($s3, $this->sectionA);
 
-        $service = new ClassAssignmentService();
+        $service = new ClassAssignmentService;
 
         $this->expectException(\OverflowException::class);
         $service->reassignBulk(
@@ -358,7 +367,7 @@ class ClassAssignmentServiceTest extends TestCase
         $s1 = $this->createStudent('Dedup1');
         $this->createEnrollment($s1, $this->sectionA);
 
-        $service = new ClassAssignmentService();
+        $service = new ClassAssignmentService;
         $results = $service->reassignBulk(
             [$s1->id, $s1->id],
             $this->sectionA->id,

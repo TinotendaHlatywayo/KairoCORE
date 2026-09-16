@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Filament\App\Resources\CardTemplateResource;
+use App\Models\School;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -44,42 +46,20 @@ class StudentCardPrintController extends Controller
             $query->where('card_status', 'pending_issuance');
         }
 
-        $students = $query->with('currentEnrollment.section.course')->get();
+        $students = $query->with(['currentEnrollment.section.course', 'user', 'application'])->get();
 
         if ($students->isEmpty()) {
             return redirect()->back()->with('error', 'No student records matched the printing filters.');
         }
 
-        // Validate that an active template exists before writing logs
+        // Resolve template — returns NULL when no admin-created template exists
         $arbitraryTemplate = $selectedTemplate ?? self::resolveTemplateForStudent($students->first(), $schoolId);
 
         if (! $arbitraryTemplate) {
-            // When the user explicitly chose the built-in default template,
-            // fall back to the ship-with Premium Royal Gold (landscape) layout
-            // instead of blocking the print.
             if ($request->query('use_default') === '1') {
-                $defaultObj = self::defaultTemplate();
-                $selectedTemplate = CardTemplate::firstOrCreate([
-                    'school_id' => $schoolId,
-                    'name' => 'Premium Royal Gold (Default)',
-                ], [
-                    'orientation' => $defaultObj->orientation,
-                    'barcode_format' => $defaultObj->barcode_format,
-                    'background_path' => $defaultObj->background_path,
-                    'layout_config' => $defaultObj->layout_config,
-                    'is_active' => true,
-                ]);
-                // Reusing a previously-created default must also make it the
-                // active template, otherwise later print jobs would keep using
-                // an unrelated stale template.
-                if (! $selectedTemplate->is_active) {
-                    $selectedTemplate->update(['is_active' => true]);
-                }
+                $selectedTemplate = self::persistedDefaultTemplate($schoolId);
                 $arbitraryTemplate = $selectedTemplate;
             } else {
-                // No active template found: present a friendly choice card so the
-                // user can either open the ID Card Designer or print with the
-                // built-in default template.
                 return view('modules.students.id-card-no-template', [
                     'students' => $students,
                     'school' => app('current_tenant'),
@@ -88,22 +68,31 @@ class StudentCardPrintController extends Controller
             }
         }
 
+        // For rendering, use the built-in default template object if no admin template exists
+        // This ensures the correct Classic Academic layout is used instead of falling back to legacy premium
+        $renderTemplate = $arbitraryTemplate ?? self::defaultTemplate($school?->name);
+
         // Log Print Audit Trails
         foreach ($students as $student) {
             $serial = null;
-            $nextCount = CardPrintHistory::where('school_id', $schoolId)->count() + 1;
+            // Serial numbers are unique across the whole platform (the DB index
+            // is global, not per-school), so count/existence checks must ignore
+            // the tenant scope to avoid colliding with another school's cards.
+            $nextCount = CardPrintHistory::withoutTenantScope()->count() + 1;
 
             do {
                 $serial = 'SR-'.str_pad($nextCount, 6, '0', STR_PAD_LEFT);
                 $nextCount++;
-            } while (CardPrintHistory::where('school_id', $schoolId)->where('serial_number', $serial)->exists());
+            } while (CardPrintHistory::withoutTenantScope()->where('serial_number', $serial)->exists());
 
             $resolvedTemplate = $selectedTemplate ?? self::resolveTemplateForStudent($student, $schoolId);
+            $templateId = $resolvedTemplate->id ?? $selectedTemplate->id
+                ?? self::persistedDefaultTemplate($schoolId)->id;
 
             CardPrintHistory::create([
                 'school_id' => $schoolId,
                 'student_id' => $student->id,
-                'card_template_id' => $resolvedTemplate?->id ?? 0,
+                'card_template_id' => $templateId,
                 'serial_number' => $serial,
                 'verification_code' => hash_hmac('sha256', $student->student_id_number, config('app.key')),
                 'printed_by_id' => Auth::id(),
@@ -119,7 +108,7 @@ class StudentCardPrintController extends Controller
         if ($layout === 'a4') {
             $pdf = Pdf::loadView('modules.students.id-card-bulk-pdf', [
                 'students' => $students,
-                'selectedTemplate' => $selectedTemplate,
+                'selectedTemplate' => $renderTemplate,
                 'school' => app('current_tenant'),
                 'crop_marks' => $cropMarks,
                 'layout' => $layout,
@@ -128,7 +117,7 @@ class StudentCardPrintController extends Controller
             return $pdf->stream('Bulk_ID_Cards_A4.pdf');
         }
 
-        if ($arbitraryTemplate && $arbitraryTemplate->orientation === 'landscape') {
+        if ($renderTemplate && $renderTemplate->orientation === 'landscape') {
             $paperSize = [0, 0, 480, 300];
         } else {
             $paperSize = [0, 0, 300, 480];
@@ -136,11 +125,11 @@ class StudentCardPrintController extends Controller
 
         $pdf = Pdf::loadView('modules.students.id-card-bulk-pdf', [
             'students' => $students,
-            'selectedTemplate' => $selectedTemplate,
+            'selectedTemplate' => $renderTemplate,
             'school' => app('current_tenant'),
             'crop_marks' => $cropMarks,
             'layout' => $layout,
-        ])->setPaper($paperSize, 'portrait');
+        ])->setPaper($paperSize, $paperOrientation);
 
         return $pdf->stream('Bulk_ID_Cards_PVC.pdf');
     }
@@ -163,6 +152,7 @@ class StudentCardPrintController extends Controller
 
         $template = CardTemplate::where('school_id', $schoolId)
             ->where('is_active', true)
+            ->where('is_system_default', false)
             ->get()
             ->first(function ($t) use ($studentGroup) {
                 return ($t->layout_config['target_group'] ?? 'all') === $studentGroup;
@@ -171,6 +161,7 @@ class StudentCardPrintController extends Controller
         if (! $template) {
             $template = CardTemplate::where('school_id', $schoolId)
                 ->where('is_active', true)
+                ->where('is_system_default', false)
                 ->get()
                 ->first(function ($t) {
                     return ($t->layout_config['target_group'] ?? 'all') === 'all';
@@ -180,64 +171,48 @@ class StudentCardPrintController extends Controller
         if (! $template) {
             $template = CardTemplate::where('school_id', $schoolId)
                 ->where('is_active', true)
+                ->where('is_system_default', false)
                 ->latest('updated_at')
                 ->first();
         }
 
         if (! $template) {
-            $school = \Modules\Admin\Models\School::find($schoolId);
-            return self::defaultTemplate($school?->name);
+            return null;
         }
 
         return $template;
     }
 
     /**
-     * Built-in Professional School ID (landscape) default template used when a
-     * school has no active template and the user chooses "Use Default Template".
-     * Returned as a plain in-memory object so it never requires a DB row.
+     * Built-in Classic Academic (Double Border) — landscape default template
+     * used when a school has no active template and the user chooses
+     * "Use Default Template". Returned as a plain in-memory object so it never
+     * requires a DB row.
      *
-     * Design language: Professional school ID card — diagonal header with logo
-     * on left, school name on right, academic year strip, photo on left, info
-     * grid on right, branded footer.
+     * Design language: serif academic card — strong outer border with an inner
+     * frame line, crest header with school name/motto/card-type label, photo +
+     * identity grid, QR anchored bottom-right and a full-width contact footer.
+     * The layout_config is derived from the same theme defaults the designer
+     * uses, so the built-in default always matches the Classic Academic theme.
      *
      * @param  string|null  $schoolName  display name overridden on the card, if any
      */
     public static function defaultTemplate(?string $schoolName = null): object
     {
+        $classicDefaults = [];
+        foreach (CardTemplateResource::getThemeDefaults('classic') as $key => $value) {
+            if (str_starts_with($key, 'layout_config.')) {
+                $classicDefaults[substr($key, strlen('layout_config.'))] = $value;
+            }
+        }
+
         return (object) [
             'orientation' => 'landscape',
             'barcode_format' => 'Code128',
             'background_path' => null,
-            'layout_config' => [
-                'design_theme' => 'professional',
-                'show_school_header' => true,
+            'layout_config' => array_merge($classicDefaults, [
+                'design_theme' => 'classic',
                 'show_card_type_label' => true,
-                'show_school_motto' => true,
-                'show_school_logo' => true,
-                'show_contact_details' => true,
-                'show_photo' => true,
-                'show_name' => true,
-                'show_class' => true,
-                'show_student_id' => true,
-                'show_admission_no' => false,
-                'show_dob' => true,
-                'show_address' => true,
-                'show_student_phone' => true,
-                'show_national_id' => true,
-                'show_expiry' => true,
-                'show_qr' => true,
-                'show_barcode' => false,
-                'show_photo_caption' => true,
-                'photo_caption_text' => 'STUDENT',
-                'primary_color' => '#1e3a8a',
-                'primary_dark' => '#0f172a',
-                'accent_color' => '#fbbf24',
-                'text_primary' => '#0f172a',
-                'text_secondary' => '#334155',
-                'text_muted' => '#64748b',
-                'footer_bg' => '#0f172a',
-                'footer_text' => '#fbbf24',
                 'custom_school_name' => $schoolName ?? '',
                 'custom_school_motto' => '',
                 'contact_address' => '',
@@ -245,40 +220,49 @@ class StudentCardPrintController extends Controller
                 'contact_email' => '',
                 'contact_website' => '',
                 'logo_path' => '',
-                'card_border_width' => 3,
-                'card_border_color' => '#1e3a8a',
-                'canvas_bg_color' => '#ffffff',
-                'canvas_bg_watermark_opacity' => 100,
-                'bg_mode' => 'solid',
-                'school_name_font_family' => 'sans-serif',
-                'school_name_font_size' => 18,
-                'school_name_color' => '#fbbf24',
-                'school_name_is_bold' => true,
-                'motto_font_family' => 'sans-serif',
-                'motto_font_size' => 10,
-                'motto_color' => '#cbd5e1',
-                'motto_is_italic' => true,
-                'name_font_family' => 'sans-serif',
-                'name_font_size' => 22,
-                'name_color' => '#0f172a',
-                'name_is_bold' => true,
-                'label_font_family' => 'sans-serif',
-                'label_font_size' => 11,
-                'label_color' => '#64748b',
-                'value_font_family' => 'sans-serif',
-                'value_font_size' => 12,
-                'value_color' => '#0f172a',
-                'value_color_accent' => '#1e3a8a',
-                'photo_border_color' => '#fbbf24',
-                'photo_rounded_corners' => 8,
-                'photo_border_width' => 2,
-                'contact_font_size' => 8,
-                'contact_color' => '#fbbf24',
-                'contact_line_mode' => 'single',
-                'qr_size' => 58,
-                'strip_font_size' => 9,
-            ],
+            ]),
         ];
+    }
+
+    /**
+     * Persist (or reuse) a card_templates row for the built-in default layout
+     * so print jobs can reference a real template id in the audit trail and so
+     * the default becomes the active template going forward.
+     */
+    protected static function persistedDefaultTemplate(int $schoolId): CardTemplate
+    {
+        $default = self::defaultTemplate();
+
+        $template = CardTemplate::firstOrCreate([
+            'school_id' => $schoolId,
+            'name' => 'Classic Academic (Default)',
+        ], [
+            'orientation' => $default->orientation,
+            'barcode_format' => $default->barcode_format,
+            'background_path' => $default->background_path,
+            'layout_config' => $default->layout_config,
+            'is_active' => true,
+            'is_system_default' => true,
+        ]);
+
+        // A previously-created built-in default row is kept in sync with the
+        // ship-with Classic Academic theme and re-activated, so later print
+        // jobs (and the audit trail) always resolve to the current default.
+        if (($template->layout_config['design_theme'] ?? null) !== $default->layout_config['design_theme']) {
+            $template->update(['layout_config' => $default->layout_config]);
+        }
+        if (! $template->is_active) {
+            $template->update(['is_active' => true]);
+        }
+        // Ensure the built-in default is always marked as system default
+        if (! $template->is_system_default) {
+            $template->update(['is_system_default' => true]);
+        }
+        // Force set is_system_default to true regardless (handles edge cases)
+        $template->is_system_default = true;
+        $template->save();
+
+        return $template;
     }
 
     public function downloadPngs(Request $request)
@@ -291,7 +275,7 @@ class StudentCardPrintController extends Controller
 
         $students = Student::where('school_id', $schoolId)
             ->whereIn('id', explode(',', $idsString))
-            ->with('currentEnrollment.section.course')
+            ->with(['currentEnrollment.section.course', 'user', 'application'])
             ->get();
 
         if ($students->isEmpty()) {
@@ -318,20 +302,7 @@ class StudentCardPrintController extends Controller
                 ]);
             }
 
-            $default = self::defaultTemplate();
-            $template = CardTemplate::firstOrCreate([
-                'school_id' => $schoolId,
-                'name' => 'Premium Royal Gold (Default)',
-            ], [
-                'orientation' => $default->orientation,
-                'barcode_format' => $default->barcode_format,
-                'background_path' => $default->background_path,
-                'layout_config' => $default->layout_config,
-                'is_active' => true,
-            ]);
-            if (! $template->is_active) {
-                $template->update(['is_active' => true]);
-            }
+            $template = self::persistedDefaultTemplate($schoolId);
             $arbitrary = $template;
         }
 
@@ -382,7 +353,7 @@ class StudentCardPrintController extends Controller
 
         $zipName = 'ID_Cards_'.$stamp.'.zip';
         $zipPath = storage_path('app/public/'.$zipName);
-        $zip = new \ZipArchive();
+        $zip = new \ZipArchive;
 
         if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
             $index = 1;
