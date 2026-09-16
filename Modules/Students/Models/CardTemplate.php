@@ -17,11 +17,13 @@ class CardTemplate extends Model
         'background_path',
         'layout_config',
         'is_active',
+        'is_system_default',
     ];
 
     protected $casts = [
         'layout_config' => 'array',
         'is_active' => 'boolean',
+        'is_system_default' => 'boolean',
     ];
 
     protected static function booted()

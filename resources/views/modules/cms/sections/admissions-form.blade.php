@@ -15,10 +15,10 @@
             return is_array($value) ? $default : (string) $value;
         };
 
-        $schoolId = $school->id ?? app('current_tenant')?->id;
+        $schoolId = $school->id ?? app('current_tenant')?->id ?? \App\Models\School::first()?->id;
 
         $levels = \Modules\Academics\Models\Course::withoutTenantScope()
-            ->where('school_id', $schoolId)->pluck('name', 'id');
+            ->where('school_id', $schoolId)->orderBy('id')->pluck('name', 'id');
 
         $years = \Modules\Academics\Models\AcademicYear::withoutTenantScope()
             ->where('school_id', $schoolId)->orderBy('id', 'desc')->pluck('name', 'name');
@@ -129,16 +129,28 @@
                         </select>
                     </div>
                     <div>
-                        <label class="sc-label">{{ __('National ID / Birth Cert No.') }}</label>
-                        <input type="text" name="national_id" value="{{ $oldInput('national_id') }}" maxlength="50"
-                               placeholder="e.g. 63-284928X42"
+                        <label class="sc-label">{{ __('Date of Birth') }} <span class="sc-required">*</span></label>
+                        <input type="date" name="date_of_birth" value="{{ $oldInput('date_of_birth') }}" required max="{{ date('Y-m-d') }}"
                                class="sc-input">
                     </div>
                     <div>
-                        <label class="sc-label">{{ __('Student Email (Optional)') }}</label>
+                        <label class="sc-label">{{ __('Boarding Status') }} <span class="sc-required">*</span></label>
+                        <select name="boarding_status" required class="sc-select">
+                            <option value="day_scholar" @selected(old('boarding_status', 'day_scholar') === 'day_scholar')>{{ __('Day Scholar') }}</option>
+                            <option value="boarder" @selected(old('boarding_status') === 'boarder')>{{ __('Boarder') }}</option>
+                        </select>
+                    </div>
+                    <div style="grid-column: 1 / -1;">
+                        <label class="sc-label">{{ __('Medical Notes / Allergies') }}</label>
+                        <textarea name="medical_notes" maxlength="1000" rows="2" class="sc-input"
+                                  placeholder="e.g. Asthmatic, allergic to penicillin, or none">{{ $oldInput('medical_notes') }}</textarea>
+                    </div>
+                    <div>
+                        <label class="sc-label">{{ __('Student Email') }}</label>
                         <input type="email" name="email" value="{{ $oldInput('email') }}" maxlength="255"
                                placeholder="student@domain.com"
                                class="sc-input">
+                        <p class="sc-form-hint">{{ __('This email address is used to create the student portal account.') }}</p>
                     </div>
                     <div style="grid-column: 1 / -1;">
                         <label class="sc-label">{{ __('Physical Address') }} <span class="sc-required">*</span></label>
@@ -181,25 +193,25 @@
 
             <!-- STEP 2: Parent / Guardian -->
             <div x-show="step === 2" x-transition x-cloak data-step="2">
-                <h3 class="sc-step-heading">{{ __('2. Parent / Guardian Contact Details') }}</h3>
+                <h3 class="sc-step-heading">{{ __('2. Parent / Guardian Contact Details (Optional)') }}</h3>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1rem;">
                     <div style="grid-column: 1 / -1;">
-                        <label class="sc-label">{{ __('Full Parent/Guardian Name') }} <span class="sc-required">*</span></label>
-                        <input type="text" name="parent_name" value="{{ $oldInput('parent_name') }}" required maxlength="70" data-type="name"
+                        <label class="sc-label">{{ __('Full Parent/Guardian Name') }}</label>
+                        <input type="text" name="parent_name" value="{{ $oldInput('parent_name') }}" maxlength="70" data-type="name"
                                placeholder="e.g. Jane Doe"
                                class="sc-input">
                     </div>
                     <div>
-                        <label class="sc-label">{{ __('Primary Email Address') }} <span class="sc-required">*</span></label>
-                        <input type="email" name="parent_email" x-model="parentEmail" @input="validateRealTimeEmail()" required maxlength="255"
+                        <label class="sc-label">{{ __('Primary Email Address') }}</label>
+                        <input type="email" name="parent_email" x-model="parentEmail" @input="validateRealTimeEmail()" maxlength="255"
                                placeholder="e.g. name@domain.com"
                                class="sc-input"
                                :class="emailFormatError ? 'is-error' : ''">
                         <p x-show="emailFormatError" x-cloak class="sc-form-hint is-error">{{ __('Please enter a valid email address.') }}</p>
                     </div>
                     <div>
-                        <label class="sc-label">{{ __('Primary Phone Number') }} <span class="sc-required">*</span></label>
-                        <input type="tel" name="parent_phone" x-model="parentPhone" @input="validateRealTimePhone()" required maxlength="30"
+                        <label class="sc-label">{{ __('Primary Phone Number') }}</label>
+                        <input type="tel" name="parent_phone" x-model="parentPhone" @input="validateRealTimePhone()" maxlength="30"
                                placeholder="e.g. 0786366855 or +263771234567"
                                class="sc-input"
                                :class="phoneFormatError ? 'is-error' : ''">

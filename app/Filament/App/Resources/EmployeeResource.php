@@ -5,12 +5,11 @@ namespace App\Filament\App\Resources;
 use App\Filament\App\Concerns\HasCsvBulkActions;
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Filament\App\Concerns\ModulePermissionAccess;
-use App\Filament\Imports\EmployeeImporter;
+use App\Services\AccountActivationService;
 use App\Services\Csv\EmployeeCsvService;
 use App\Services\ProfilePhotoService;
 use App\Services\RosterAccountProvisioningService;
 use Filament\Actions;
-use Filament\Actions\ImportAction;
 use Filament\Forms;
 use Filament\Forms\Components\Wizard as FormWizard;
 use Filament\Forms\Form;
@@ -517,6 +516,37 @@ class EmployeeResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
 
+                    BulkAction::make('sendActivationEmails')
+                        ->label(__('Send Activation Email'))
+                        ->icon('heroicon-o-envelope')
+                        ->color('info')
+                        ->requiresConfirmation()
+                        ->modalHeading(__('Send activation email'))
+                        ->modalDescription(__('Each selected employee receives an individual activation e-mail so they can create their staff-portal login. Already-activated accounts are skipped.'))
+                        ->action(function (Collection $records) {
+                            $sent = 0;
+                            $skipped = 0;
+
+                            foreach ($records as $employee) {
+                                $user = app(RosterAccountProvisioningService::class)->provisionEmployee($employee);
+
+                                if (! $user || $user->activated_at) {
+                                    $skipped++;
+
+                                    continue;
+                                }
+
+                                app(AccountActivationService::class)->issueAndSend($user);
+                                $sent++;
+                            }
+
+                            Notification::make()
+                                ->title(__('Activation e-mails sent'))
+                                ->body(trans_choice('{1} :sent activation e-mail sent|[2,*] :sent activation e-mails sent', $sent, ['sent' => $sent, 'skipped' => $skipped]))
+                                ->success()
+                                ->send();
+                        }),
+
                     BulkAction::make('bulk_export_selected_csv')
                         ->label(__('Export Selected to CSV'))
                         ->icon('heroicon-o-arrow-down-tray')
@@ -628,68 +658,11 @@ class ListEmployees extends ListRecords
 
     protected function getHeaderActions(): array
     {
-        $schoolId = Auth::user()->school_id;
-
         return [
             Actions\CreateAction::make()->label(__('New Employee'))->color('primary'),
 
-            Actions\Action::make('download_import_template')
-                ->label(__('Download CSV Template'))
-                ->icon('heroicon-o-document-arrow-down')
-                ->color('warning')
-                ->action(function () {
-                    $filename = 'employee-import-template.csv';
-                    $headers = [
-                        'Content-type' => 'text/csv',
-                        'Content-Disposition' => "attachment; filename={$filename}",
-                        'Pragma' => 'no-cache',
-                        'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
-                        'Expires' => '0',
-                    ];
-
-                    $callback = function () {
-                        $file = fopen('php://output', 'w');
-
-                        fputcsv($file, [
-                            'First Name',
-                            'Last Name',
-                            'Email',
-                            'Phone Number',
-                            'National ID',
-                            'Department',
-                            'Designation',
-                            'Salary Grade Name',
-                        ]);
-
-                        fputcsv($file, [
-                            'Tinotenda',
-                            'Hlatywayo',
-                            'twaynehlatywayo09@gmail.com',
-                            '+263786366855',
-                            '42-987654-Y-18',
-                            'Academics',
-                            'Biology Teacher',
-                            'Educator Scale B',
-                        ]);
-
-                        fclose($file);
-                    };
-
-                    return response()->stream($callback, 200, $headers);
-                }),
-
-            // SINGLE-STEP ULTRA BULLETPROOF CSV IMPORTER
-            ImportAction::make('import_employees_csv')
-                ->label(__('Import Employees (CSV)'))
-                ->icon('heroicon-o-arrow-up-tray')
-                ->color('info')
-                ->importer(EmployeeImporter::class)
-                ->options([
-                    'school_id' => $schoolId,
-                ]),
-
-            // EXPORT ALL — CSV / PDF
-            ...$this->makeExportActions(),
+            // IMPORT (Excel/CSV wizard with downloadable template) + EXPORT ALL
+            ...$this->csvBulkActions(),
         ];
     }
 }
