@@ -74,11 +74,7 @@ class SubjectResource extends Resource
             'Mathematics',
             'English Language',
             'Shona Language',
-            'Science & Technology',
-            'Social Studies',
-            'Physical Education',
-            'Agriculture',
-            'Science and Technology and ICT',
+            'Agriculture, Science and Technology and ICT',
             'Social Sciences',
             'Physical Education and Arts',
         ];
