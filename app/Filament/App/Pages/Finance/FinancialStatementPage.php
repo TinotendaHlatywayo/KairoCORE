@@ -3,10 +3,10 @@
 namespace App\Filament\App\Pages\Finance;
 
 use Filament\Pages\Page;
-use Modules\Finance\Models\SchoolBankAccount;
-use Modules\Finance\Models\Payment;
+use Modules\Academics\Models\Term;
 use Modules\Finance\Models\Expense;
-use Carbon\Carbon;
+use Modules\Finance\Models\Payment;
+use Modules\Finance\Models\SchoolBankAccount;
 
 class FinancialStatementPage extends Page
 {
@@ -33,7 +33,7 @@ class FinancialStatementPage extends Page
     protected function getViewData(): array
     {
         $schoolId = current_tenant()?->id ?? auth()->user()?->school_id ?? 1;
-        $defaultBank = SchoolBankAccount::where('school_id', $schoolId)->where('is_default', true)->first() 
+        $defaultBank = SchoolBankAccount::where('school_id', $schoolId)->where('is_default', true)->first()
             ?? SchoolBankAccount::where('school_id', $schoolId)->first();
 
         if (! $defaultBank) {
@@ -62,16 +62,18 @@ class FinancialStatementPage extends Page
             ->where('created_at', '>=', $startDate)
             ->sum('amount');
 
-        $totalRefunds = Payment::where('school_id', $schoolId)
+        // Refund rows are stored as negative amounts, so normalise to a positive
+        // "amount refunded" figure. Callers render this as a deduction (-$X).
+        $totalRefunds = abs((float) Payment::where('school_id', $schoolId)
             ->where('is_refund', true)
             ->where('created_at', '>=', $startDate)
-            ->sum('amount');
+            ->sum('amount'));
 
         $totalExpenses = Expense::where('school_id', $schoolId)
             ->where('expense_date', '>=', $startDate->toDateString())
             ->sum('amount');
 
-        $netCashFlow = ($totalRevenue - $totalRefunds) - $totalExpenses;
+        $netCashFlow = $totalRevenue - $totalRefunds - $totalExpenses;
 
         $school = current_tenant();
         $season = $this->currentSeasonLabel();
@@ -101,7 +103,7 @@ class FinancialStatementPage extends Page
     {
         $schoolId = current_tenant()?->id ?? 1;
 
-        $term = \Modules\Academics\Models\Term::where('school_id', $schoolId)
+        $term = Term::where('school_id', $schoolId)
             ->where('is_active', true)
             ->with('academicYear')
             ->orderByDesc('id')

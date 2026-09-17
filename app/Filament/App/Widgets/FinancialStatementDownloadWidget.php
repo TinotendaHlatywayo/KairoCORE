@@ -3,26 +3,26 @@
 namespace App\Filament\App\Widgets;
 
 use Filament\Widgets\Widget;
-use Modules\Finance\Services\FinancialReportService;
-use Modules\Finance\Models\Payment;
 use Modules\Finance\Models\Expense;
-use Carbon\Carbon;
+use Modules\Finance\Models\Payment;
+use Modules\Finance\Services\FinancialReportService;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class FinancialStatementDownloadWidget extends Widget
 {
     protected static string $view = 'filament.app.widgets.financial-statement-download';
 
-    public function downloadPdf(): \Symfony\Component\HttpFoundation\StreamedResponse
+    public function downloadPdf(): StreamedResponse
     {
         return $this->streamReport('pdf');
     }
 
-    public function downloadCsv(): \Symfony\Component\HttpFoundation\StreamedResponse
+    public function downloadCsv(): StreamedResponse
     {
         return $this->streamReport('csv');
     }
 
-    public function downloadTxt(): \Symfony\Component\HttpFoundation\StreamedResponse
+    public function downloadTxt(): StreamedResponse
     {
         return $this->streamReport('txt');
     }
@@ -37,7 +37,7 @@ class FinancialStatementDownloadWidget extends Widget
         return $parent?->range ?? 'month';
     }
 
-    protected function streamReport(string $format): \Symfony\Component\HttpFoundation\StreamedResponse
+    protected function streamReport(string $format): StreamedResponse
     {
         $schoolId = current_tenant()?->id ?? auth()->user()?->school_id ?? 5;
         $range = $this->currentRange();
@@ -54,10 +54,12 @@ class FinancialStatementDownloadWidget extends Widget
             ->where('school_id', $schoolId)
             ->where(fn ($q) => $q->where('is_refund', false)->orWhereNull('is_refund'))
             ->sum('amount');
-        $totalRefunds = (float) Payment::withoutGlobalScopes()
+        // Refund rows are stored as negative amounts; normalise to a positive
+        // "amount refunded" figure for the statement line items.
+        $totalRefunds = abs((float) Payment::withoutGlobalScopes()
             ->where('school_id', $schoolId)
             ->where('is_refund', true)
-            ->sum('amount');
+            ->sum('amount'));
         $totalExpenses = (float) Expense::withoutGlobalScopes()
             ->where('school_id', $schoolId)
             ->sum('amount');
@@ -74,7 +76,7 @@ class FinancialStatementDownloadWidget extends Widget
             'totalRevenue' => $totalRevenue,
             'totalRefunds' => $totalRefunds,
             'totalExpenses' => $totalExpenses,
-            'netCashFlow' => ($totalRevenue - $totalRefunds) - $totalExpenses,
+            'netCashFlow' => $totalRevenue - $totalRefunds - $totalExpenses,
             'generatedAt' => $endDate->format('Y-m-d H:i'),
         ];
 
