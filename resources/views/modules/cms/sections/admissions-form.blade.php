@@ -193,25 +193,25 @@
 
             <!-- STEP 2: Parent / Guardian -->
             <div x-show="step === 2" x-transition x-cloak data-step="2">
-                <h3 class="sc-step-heading">{{ __('2. Parent / Guardian Contact Details (Optional)') }}</h3>
+                <h3 class="sc-step-heading">{{ __('2. Parent / Guardian Contact Details') }}</h3>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1rem;">
                     <div style="grid-column: 1 / -1;">
-                        <label class="sc-label">{{ __('Full Parent/Guardian Name') }}</label>
-                        <input type="text" name="parent_name" value="{{ $oldInput('parent_name') }}" maxlength="70" data-type="name"
+                        <label class="sc-label">{{ __('Full Parent/Guardian Name') }} <span class="sc-required">*</span></label>
+                        <input type="text" name="parent_name" value="{{ $oldInput('parent_name') }}" required maxlength="70" data-type="name"
                                placeholder="e.g. Jane Doe"
                                class="sc-input">
                     </div>
                     <div>
-                        <label class="sc-label">{{ __('Primary Email Address') }}</label>
-                        <input type="email" name="parent_email" x-model="parentEmail" @input="validateRealTimeEmail()" maxlength="255"
+                        <label class="sc-label">{{ __('Primary Email Address') }} <span class="sc-required">*</span></label>
+                        <input type="email" name="parent_email" value="{{ $oldInput('parent_email') }}" required x-model="parentEmail" @input="validateRealTimeEmail()" maxlength="255"
                                placeholder="e.g. name@domain.com"
                                class="sc-input"
                                :class="emailFormatError ? 'is-error' : ''">
                         <p x-show="emailFormatError" x-cloak class="sc-form-hint is-error">{{ __('Please enter a valid email address.') }}</p>
                     </div>
                     <div>
-                        <label class="sc-label">{{ __('Primary Phone Number') }}</label>
-                        <input type="tel" name="parent_phone" x-model="parentPhone" @input="validateRealTimePhone()" maxlength="30"
+                        <label class="sc-label">{{ __('Primary Phone Number') }} <span class="sc-required">*</span></label>
+                        <input type="tel" name="parent_phone" value="{{ $oldInput('parent_phone') }}" required x-model="parentPhone" @input="validateRealTimePhone()" maxlength="30"
                                placeholder="e.g. 0786366855 or +263771234567"
                                class="sc-input"
                                :class="phoneFormatError ? 'is-error' : ''">
