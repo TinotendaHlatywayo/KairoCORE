@@ -75,23 +75,21 @@ class FeeStructureResource extends Resource
                             ->visible(fn (Forms\Get $get) => $get('scope_type') === 'single')
                             ->placeholder(__('Select Class Level...')),
 
-                        // Automatically defaults to active year
                         Forms\Components\Select::make('academic_year_id')
                             ->label(__('Academic Year'))
                             ->options(function () {
-                                return AcademicYear::where('is_active', true)->pluck('name', 'id');
+                                return AcademicYear::pluck('name', 'id');
                             })
-                            ->default(fn () => AcademicYear::where('is_active', true)->first()?->id)
-                            ->required()
+                            ->nullable()
+                            ->placeholder(__('All Years (Global / All following years)'))
                             ->live(),
 
-                        // FIX: Limits terms strictly to the active academic year to prevent duplicates
                         Forms\Components\Select::make('term_id')
                             ->label(__('Term'))
                             ->options(function (Forms\Get $get) {
-                                $yearId = $get('academic_year_id') ?? AcademicYear::where('is_active', true)->first()?->id;
+                                $yearId = $get('academic_year_id');
                                 if (! $yearId) {
-                                    return [];
+                                    return Term::all()->mapWithKeys(fn ($term) => [$term->id => ucwords(strtolower($term->name))]);
                                 }
 
                                 return Term::where('academic_year_id', $yearId)
@@ -100,9 +98,9 @@ class FeeStructureResource extends Resource
                                         return [$term->id => ucwords(strtolower($term->name))];
                                     });
                             })
-                            ->required()
-                            ->preload()
-                            ->placeholder(__('Select Term...')),
+                            ->nullable()
+                            ->placeholder(__('All Terms (Global / All terms)'))
+                            ->preload(),
 
                         Forms\Components\Select::make('currency')
                             ->options(['USD' => __('USD'), 'ZiG' => __('ZiG')])

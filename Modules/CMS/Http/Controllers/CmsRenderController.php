@@ -17,6 +17,7 @@ use Illuminate\Validation\Rule;
 use Modules\Academics\Models\Course;
 use Modules\Admin\Enums\EmailCategory;
 use Modules\Admin\Models\SystemSetting;
+use Modules\Admin\Services\PermissionRegistry;
 use Modules\Admin\Services\TenantEmailConfigurationService;
 use Modules\Admissions\Models\Application;
 use Modules\Admissions\Models\ApplicationDocument;
@@ -379,7 +380,8 @@ class CmsRenderController extends Controller
         try {
             $staff = User::withoutTenantScope()
                 ->where('school_id', $schoolId)
-                ->get();
+                ->get()
+                ->filter(fn ($user) => PermissionRegistry::userCan($user, 'admissions.receive_notifications'));
 
             if ($staff->isNotEmpty()) {
                 Notification::send($staff, new NewApplicationNotification($application));

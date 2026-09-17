@@ -141,6 +141,7 @@ class PermissionRegistry
                     'manage_applications' => 'Process Applications & Interviews',
                     'approve_applications' => 'Approve & Admit Applicants',
                     'export' => 'Export Application Pipeline',
+                    'receive_notifications' => 'Receive New Application & Enrolment Notifications',
                 ],
             ],
             'lms' => [

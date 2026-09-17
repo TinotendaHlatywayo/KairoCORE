@@ -2,12 +2,15 @@
 
 namespace App\Livewire;
 
+use App\Filament\Admin\Resources\PlatformMessageResource;
 use App\Filament\App\Pages\MyDay;
 use App\Filament\App\Pages\Schedule;
 use App\Models\User;
 use App\Models\UserTask;
 use App\Notifications\EventReminderNotification;
 use App\Notifications\NewApplicationNotification;
+use App\Notifications\NewEnrollmentNotification;
+use App\Notifications\PlatformMessageNotification;
 use App\Notifications\ProfilePhotoRejectedNotification;
 use App\Notifications\TaskAssignedNotification;
 use App\Notifications\TaskOverdueNotification;
@@ -608,13 +611,14 @@ class TopbarCommandCenter extends Component
     {
         return [
             NewApplicationNotification::class,
+            NewEnrollmentNotification::class,
             UserRegistrationApprovalNotification::class,
             TaskAssignedNotification::class,
             TaskReminderNotification::class,
             TaskOverdueNotification::class,
             EventReminderNotification::class,
             ProfilePhotoRejectedNotification::class,
-            \App\Notifications\PlatformMessageNotification::class,
+            PlatformMessageNotification::class,
         ];
     }
 
@@ -627,8 +631,9 @@ class TopbarCommandCenter extends Component
     public static function notificationCategory(string $type): string
     {
         return match ($type) {
-            \App\Notifications\PlatformMessageNotification::class => 'chat',
+            PlatformMessageNotification::class => 'chat',
             NewApplicationNotification::class,
+            NewEnrollmentNotification::class,
             UserRegistrationApprovalNotification::class => 'registration',
             default => 'system',
         };
@@ -748,7 +753,7 @@ class TopbarCommandCenter extends Component
         }
 
         $isChat = ($notification->data['category'] ?? null) === 'chat'
-            || $notification->type === \App\Notifications\PlatformMessageNotification::class;
+            || $notification->type === PlatformMessageNotification::class;
 
         if (! $isChat) {
             return null;
@@ -758,14 +763,14 @@ class TopbarCommandCenter extends Component
 
         try {
             if ($user && $user->school_id === null) {
-                return \App\Filament\Admin\Resources\PlatformMessageResource::getUrl(panel: 'admin')
+                return PlatformMessageResource::getUrl(panel: 'admin')
                     .'?tableAction=view_thread&tableActionRecord='.data_get($notification->data, 'message_id');
             }
 
             if (
                 $user
                 && filled($user->school_id)
-                && \Modules\Admin\Services\PermissionRegistry::checkPermission('communication.contact_platform')
+                && PermissionRegistry::checkPermission('communication.contact_platform')
             ) {
                 // Tenants go to THEIR workspace inbox on THEIR OWN subdomain —
                 // never the platform panel, never the central host (where their

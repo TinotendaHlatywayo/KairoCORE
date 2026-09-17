@@ -177,11 +177,15 @@ class InvoiceResource extends Resource
             $applicableScopes[] = 'grade_1_7';
         }
 
-        $feeStructures = FeeStructure::where([
-            'school_id' => $schoolId,
-            'academic_year_id' => $yearId,
-            'term_id' => $termId,
-        ])
+        $feeStructures = FeeStructure::where('school_id', $schoolId)
+            ->where(function ($q) use ($yearId) {
+                $q->where('academic_year_id', $yearId)
+                    ->orWhereNull('academic_year_id');
+            })
+            ->where(function ($q) use ($termId) {
+                $q->where('term_id', $termId)
+                    ->orWhereNull('term_id');
+            })
             ->where(function ($q) use ($applicableScopes, $course) {
                 $q->whereIn('scope_type', $applicableScopes)
                     ->where(function ($sub) use ($course) {

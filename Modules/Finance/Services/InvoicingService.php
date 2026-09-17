@@ -3,6 +3,7 @@
 namespace Modules\Finance\Services;
 
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Modules\Academics\Models\Term;
 use Modules\Finance\Models\FeeStructure;
@@ -366,7 +367,7 @@ class InvoicingService
     //  Shared helpers
     // ------------------------------------------------------------------
 
-    protected function resolveFeeStructures(int $schoolId, int $yearId, int $termId, $course): \Illuminate\Support\Collection
+    protected function resolveFeeStructures(int $schoolId, int $yearId, int $termId, $course): Collection
     {
         $courseName = strtolower($course->name);
         $applicableScopes = ['all', 'single'];
@@ -382,11 +383,15 @@ class InvoicingService
         }
 
         return FeeStructure::with('feeCategory')
-            ->where([
-                'school_id' => $schoolId,
-                'academic_year_id' => $yearId,
-                'term_id' => $termId,
-            ])
+            ->where('school_id', $schoolId)
+            ->where(function ($q) use ($yearId) {
+                $q->where('academic_year_id', $yearId)
+                    ->orWhereNull('academic_year_id');
+            })
+            ->where(function ($q) use ($termId) {
+                $q->where('term_id', $termId)
+                    ->orWhereNull('term_id');
+            })
             ->where(function ($q) use ($applicableScopes, $course) {
                 $q->whereIn('scope_type', $applicableScopes)
                     ->where(function ($sub) use ($course) {
