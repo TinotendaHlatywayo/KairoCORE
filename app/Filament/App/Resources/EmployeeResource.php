@@ -38,6 +38,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Modules\Admin\Models\Department;
 use Modules\HR\Models\Employee;
 use Modules\HR\Models\EmployeeAsset;
 use Modules\HR\Models\SalaryGrade;
@@ -91,7 +92,13 @@ class EmployeeResource extends Resource
 
                     FormWizard\Step::make('Employment Details')
                         ->schema([
-                            Forms\Components\TextInput::make('department')->placeholder(__('e.g. Academics'))->required(),
+                            Forms\Components\Select::make('department')
+                                ->label(__('Department'))
+                                ->options(fn () => Department::pluck('name', 'name')->toArray())
+                                ->searchable()
+                                ->preload()
+                                ->nullable()
+                                ->placeholder(__('Select or search Department')),
                             Forms\Components\TextInput::make('designation')->placeholder(__('e.g. English Teacher'))->required(),
                             Forms\Components\Select::make('role')
                                 ->options([
@@ -99,7 +106,6 @@ class EmployeeResource extends Resource
                                     'Support Staff' => __('Support Staff'),
                                     'Accountant' => __('Accountant'),
                                     'Administrator' => __('Administrator'),
-                                    'Driver' => __('Driver'),
                                 ])
                                 ->placeholder(__('Select System Role'))
                                 ->required(),
@@ -127,12 +133,12 @@ class EmployeeResource extends Resource
                                 ->label(__('Salary Grade Scale'))
                                 ->options(SalaryGrade::all()->pluck('name', 'id'))
                                 ->placeholder(__('Select Assigned Salary Grade'))
-                                ->required(),
+                                ->nullable(),
                             Forms\Components\Repeater::make('individual_allowances')
                                 ->label(__('Specific Individual Allowances (For this employee only)'))
                                 ->schema([
-                                    Forms\Components\TextInput::make('name')->required()->label(__('Allowance Name')),
-                                    Forms\Components\TextInput::make('amount')->numeric()->prefix('$')->required()->label(__('Amount')),
+                                    Forms\Components\TextInput::make('name')->label(__('Allowance Name')),
+                                    Forms\Components\TextInput::make('amount')->numeric()->prefix('$')->label(__('Amount')),
                                 ])->columns(2),
                         ]),
 
