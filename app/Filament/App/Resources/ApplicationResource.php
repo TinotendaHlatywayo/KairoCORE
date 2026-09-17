@@ -4,7 +4,7 @@ namespace App\Filament\App\Resources;
 
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Filament\App\Resources\ApplicationResource\Pages;
-use App\Models\User;
+use App\Notifications\NewEnrollmentNotification;
 use App\Services\AdmissionNotificationService;
 use App\Services\EnrollmentClassBalancer;
 use App\Services\RosterAccountProvisioningService;
@@ -18,11 +18,13 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification as FacadesNotification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Modules\Academics\Models\AcademicYear;
 use Modules\Academics\Models\Course;
 use Modules\Academics\Models\Section;
+use Modules\Admin\Services\PermissionRegistry;
 use Modules\Admissions\Models\Application;
 use Modules\Admissions\Models\ApplicationDocument;
 use Modules\Students\Models\Enrollment;
@@ -417,6 +419,14 @@ class ApplicationResource extends Resource
                         // the student email when no parent email was supplied).
                         app(AdmissionNotificationService::class)->send($student, $record->email ?: $record->parent_email, $record->school_id);
 
+                        $staff = User::withoutTenantScope()
+                            ->where('school_id', $record->school_id)
+                            ->get()
+                            ->filter(fn ($u) => PermissionRegistry::userCan($u, 'admissions.receive_notifications'));
+                        if ($staff->isNotEmpty()) {
+                            FacadesNotification::send($staff, new NewEnrollmentNotification($student));
+                        }
+
                         // Provision the portal account (created above) and deliver the
                         // activation email so the student can set their own password.
                         $activatedUser = $studentUser
@@ -512,6 +522,14 @@ class ApplicationResource extends Resource
                                 // Send the admission confirmation email to the parent (or
                                 // the student email when no parent email was supplied).
                                 app(AdmissionNotificationService::class)->send($student, $record->email ?: $record->parent_email, $record->school_id);
+
+                                $staff = User::withoutTenantScope()
+                                    ->where('school_id', $record->school_id)
+                                    ->get()
+                                    ->filter(fn ($u) => PermissionRegistry::userCan($u, 'admissions.receive_notifications'));
+                                if ($staff->isNotEmpty()) {
+                                    FacadesNotification::send($staff, new NewEnrollmentNotification($student));
+                                }
 
                                 $record->update([
                                     'status' => 'enrolled',

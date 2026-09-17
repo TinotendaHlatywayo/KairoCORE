@@ -302,6 +302,10 @@
                                 $nTitle = 'New admission application';
                                 $nSub = $notification->data['applicant_name'] ?? '';
                                 $nClass = 'sc-cc-notif-info';
+                            } elseif ($nType === \App\Notifications\NewEnrollmentNotification::class) {
+                                $nTitle = 'New student enrollment';
+                                $nSub = $notification->data['student_name'] ?? '';
+                                $nClass = 'sc-cc-notif-success';
                             } elseif ($nType === \App\Notifications\TaskAssignedNotification::class) {
                                 $nTitle = 'New task assigned to you';
                                 $nSub = $notification->data['task_title'] ?? '';
