@@ -239,9 +239,9 @@ class CmsRenderController extends Controller
             'date_of_birth' => 'required|date',
             'boarding_status' => ['required', 'in:day_scholar,boarder'],
             'medical_notes' => ['nullable', 'string', 'max:1000'],
-            'parent_name' => ['nullable', 'string', 'max:255'],
-            'parent_email' => ['nullable', 'email', 'max:255'],
-            'parent_phone' => ['nullable', 'string', 'max:30'],
+            'parent_name' => ['required', 'string', 'max:255'],
+            'parent_email' => ['required', 'email', 'max:255'],
+            'parent_phone' => ['required', 'string', 'max:30'],
             // A public form must never be able to attach an application to a
             // course belonging to another school.
             'course_id' => ['required', Rule::exists('courses', 'id')->where('school_id', $school->id)],
@@ -299,7 +299,7 @@ class CmsRenderController extends Controller
             DB::rollBack();
             report($e);
 
-            return back()->with('error', 'Unable to complete application submission. Error: '.$e->getMessage());
+            return back()->with('error', __('Unable to complete your application submission. Please review your details, fill out all required fields, and try again.'))->withInput();
         }
     }
 
