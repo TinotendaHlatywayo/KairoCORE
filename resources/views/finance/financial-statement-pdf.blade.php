@@ -1,66 +1,100 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="utf-8">
-    <style>
-        body { font-family: 'DejaVu Sans', Arial, sans-serif; color: #111827; margin: 24px; font-size: 12px; }
-        .letterhead { text-align: center; border-bottom: 2px solid #4f46e5; padding-bottom: 12px; margin-bottom: 16px; }
-        .letterhead h1 { font-size: 20px; margin: 0 0 2px; color: #1e1b4b; }
-        .letterhead p { margin: 2px 0; color: #6b7280; font-size: 10px; }
-        .title { font-size: 15px; font-weight: bold; text-align: center; margin: 14px 0 4px; }
-        .period { text-align: center; font-size: 11px; color: #374151; margin-bottom: 16px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-        th, td { border: 1px solid #e5e7eb; padding: 7px 10px; text-align: left; font-size: 11px; }
-        th { background: #eef2ff; color: #312e81; font-weight: 600; }
-        .amount { text-align: right; font-variant-numeric: tabular-nums; }
-        .positive { color: #047857; font-weight: 600; }
-        .negative { color: #b91c1c; font-weight: 600; }
-        .total td { background: #f5f3ff; font-weight: 700; }
-        .footer { margin-top: 18px; font-size: 9px; color: #9ca3af; text-align: center; border-top: 1px solid #e5e7eb; padding-top: 8px; }
-    </style>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>{{ __('Official Financial Statement') }}</title>
+    @php
+        $financeTheme = finance_document_theme($data['template'] ?? null, 'statement', $data['schoolModel'] ?? null);
+        $h = $financeTheme['sections']['header'];
+        $t = $financeTheme['sections']['title'];
+        $m = $financeTheme['sections']['metadata'];
+        $tb = $financeTheme['sections']['table'];
+        $f = $financeTheme['sections']['footer'];
+        $structure = $financeTheme['structure'] ?? 'classic';
+        $logoSize = (int) $h['logo_size'];
+        $profile = document_school_profile($data['schoolModel'] ?? null, $data['config'] ?? []);
+        $logoPath = finance_document_logo_path($h, $data['config'] ?? []);
+        $positive = $financeTheme['success_color'];
+        $negative = $financeTheme['danger_color'];
+        $net = (float) $data['netCashFlow'];
+    @endphp
+    @include('modules.finance.partials.document-styles', [
+        'financeTheme' => $financeTheme,
+        'h' => $h,
+        't' => $t,
+        'm' => $m,
+        'tb' => $tb,
+        'f' => $f,
+        'bodyFontSize' => 12,
+    ])
 </head>
-<body>
-    <div class="letterhead">
-        <h1>{{ $data['school'] }}</h1>
-        @if(!empty($data['companyTagline']))<p>{{ $data['companyTagline'] }}</p>@endif
-        @php($infos = array_filter([$data['companyAddress'] ?? '', $data['companyPhone'] ?? '', $data['companyEmail'] ?? '']))
-        @if($infos)
-            <p>{{ implode(' | ', $infos) }}</p>
-        @endif
-    </div>
+<body class="style-{{ $structure }}">
+<div class="doc-page">
 
-    <div class="title">Official Financial Statement & Cash Flow</div>
-    <div class="period">Period: {{ $data['startDate'] }} to {{ $data['endDate'] }}</div>
+    @include('modules.finance.partials.document-header', [
+        'financeTheme' => $financeTheme,
+        'h' => $h,
+        't' => $t,
+        'profile' => $profile,
+        'logoPath' => $logoPath,
+        'logoSize' => $logoSize,
+        'title' => __('OFFICIAL FINANCIAL STATEMENT'),
+        'refs' => [],
+    ])
 
-    <table>
+    <!-- Report period metadata -->
+    <table style="width:100%; border-collapse:collapse; margin-bottom:12px;">
+        <tr>
+            <td style="font-size:{{ $m['font_size'] }}px; color:{{ $m['color'] }}; line-height:1.5;">
+                <strong>{{ __('Reporting Period:') }}</strong> {{ $data['startDate'] }} {{ __('to') }} {{ $data['endDate'] }}<br/>
+                <strong>{{ __('Generated On:') }}</strong> {{ $data['generatedAt'] }}
+            </td>
+            <td style="text-align:right; font-size:{{ $m['font_size'] }}px; color:{{ $m['color'] }}; line-height:1.5;">
+                <strong>{{ __('Currency:') }}</strong> {{ __('USD') }}<br/>
+                <strong>{{ __('Ledger Standard:') }}</strong> {{ __('Base USD Currency') }}
+            </td>
+        </tr>
+    </table>
+
+    <!-- Cash flow summary -->
+    <table class="results-table">
         <thead>
             <tr>
-                <th>Description</th>
-                <th class="amount">Amount (USD)</th>
+                <th style="text-align:left;">{{ __('Description') }}</th>
+                <th style="width:22%; text-align:right;">{{ __('Amount (USD)') }}</th>
             </tr>
         </thead>
         <tbody>
             <tr>
-                <td>Total Revenue / Inflows</td>
-                <td class="amount positive">${{ number_format($data['totalRevenue'], 2) }}</td>
+                <td style="text-align:left;">{{ __('Total Revenue / Inflows') }}</td>
+                <td style="text-align:right; color:{{ $positive }}; font-weight:bold;">${{ number_format((float) $data['totalRevenue'], 2) }}</td>
             </tr>
             <tr>
-                <td>Total Refunds</td>
-                <td class="amount negative">-${{ number_format($data['totalRefunds'], 2) }}</td>
+                <td style="text-align:left;">{{ __('Total Refunds') }}</td>
+                <td style="text-align:right; color:{{ $negative }}; font-weight:bold;">-${{ number_format((float) $data['totalRefunds'], 2) }}</td>
             </tr>
             <tr>
-                <td>Total Expenses & Outflows</td>
-                <td class="amount negative">-${{ number_format($data['totalExpenses'], 2) }}</td>
+                <td style="text-align:left;">{{ __('Total Expenses & Outflows') }}</td>
+                <td style="text-align:right; color:{{ $negative }}; font-weight:bold;">-${{ number_format((float) $data['totalExpenses'], 2) }}</td>
             </tr>
-            <tr class="total">
-                <td>Net Cash Flow Balance</td>
-                <td class="amount">${{ number_format($data['netCashFlow'], 2) }}</td>
+            <tr style="background: {{ $financeTheme['green_tint'] }};">
+                <td style="text-align:left; font-weight:bold;">{{ __('Net Cash Flow Balance') }}</td>
+                <td style="text-align:right; font-weight:bold; color:{{ $net < 0 ? $negative : $positive }};">${{ number_format($net, 2) }}</td>
             </tr>
         </tbody>
     </table>
 
-    <div class="footer">
-        Generated: {{ $data['generatedAt'] }} &middot; This statement reflects cash movements recorded in the school accounting system.
-    </div>
+    @include('modules.finance.partials.document-footer', [
+        'f' => $f,
+        'financeTheme' => $financeTheme,
+        'signatureLeft' => '',
+        'signatureRight' => '',
+        'qrUrl' => null,
+        'fallbackFooter' => $data['config']['statement_footer'] ?? '',
+    ])
+
+</div>
+
+<div class="powered-by">Powered by Kairo CORE</div>
 </body>
 </html>

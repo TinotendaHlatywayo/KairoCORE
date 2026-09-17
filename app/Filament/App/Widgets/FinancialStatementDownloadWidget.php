@@ -4,7 +4,9 @@ namespace App\Filament\App\Widgets;
 
 use Filament\Widgets\Widget;
 use Modules\Finance\Models\Expense;
+use Modules\Finance\Models\FinanceDocumentTemplate;
 use Modules\Finance\Models\Payment;
+use Modules\Finance\Services\BillingDocumentSettingsService;
 use Modules\Finance\Services\FinancialReportService;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -67,10 +69,10 @@ class FinancialStatementDownloadWidget extends Widget
         $school = current_tenant();
         $data = [
             'school' => $school?->name ?? config('app.name'),
-            'companyTagline' => $school?->tagline,
-            'companyAddress' => $school?->physical_address ?? $school?->address ?? '',
-            'companyPhone' => $school?->phone,
-            'companyEmail' => $school?->email,
+            'companyTagline' => $school?->motto,
+            'companyAddress' => $school?->physical_address ?? '',
+            'companyPhone' => $school?->phone_number ?? $school?->phone,
+            'companyEmail' => $school?->email_address,
             'startDate' => $startDate->toDateString(),
             'endDate' => $endDate->toDateString(),
             'totalRevenue' => $totalRevenue,
@@ -78,6 +80,11 @@ class FinancialStatementDownloadWidget extends Widget
             'totalExpenses' => $totalExpenses,
             'netCashFlow' => $totalRevenue - $totalRefunds - $totalExpenses,
             'generatedAt' => $endDate->format('Y-m-d H:i'),
+            // Pass the school + billing-document layout so the PDF renders with
+            // the same branded theme as receipts, invoices and statements.
+            'schoolModel' => $school,
+            'config' => BillingDocumentSettingsService::get(),
+            'template' => FinanceDocumentTemplate::resolveFor((int) $school->id, 'statement'),
         ];
 
         return FinancialReportService::download($format, $data, $startDate, $endDate);
