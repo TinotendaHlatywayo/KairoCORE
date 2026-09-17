@@ -38,23 +38,39 @@ class SchoolBankAccountResource extends Resource
             ->schema([
                 Forms\Components\Section::make('Bank Account Details')
                     ->schema([
-                        Forms\Components\TextInput::make('bank_name')
+                        Forms\Components\Select::make('bank_name')
+                            ->label(__('Bank name'))
+                            ->options(function () {
+                                $banks = array_merge(
+                                    config('banks', []),
+                                    SchoolBankAccount::query()
+                                        ->whereNotNull('bank_name')
+                                        ->distinct()
+                                        ->pluck('bank_name')
+                                        ->all(),
+                                );
+
+                                return collect($banks)
+                                    ->filter()
+                                    ->unique()
+                                    ->sort()
+                                    ->mapWithKeys(fn (string $name) => [$name => $name])
+                                    ->all();
+                            })
+                            ->searchable()
                             ->required()
-                            ->placeholder(__('e.g. Steward Bank'))
-                            ->datalist([
-                                'Steward Bank',
-                                'CBZ Bank',
-                                'CABS',
-                                'FBC Bank',
-                                'NMB Bank',
-                                'Stanbic Bank',
-                                'Standard Chartered Bank',
-                                'Ecobank',
-                                'First Capital Bank',
-                                'Fidelity Bank',
-                                'ZB Bank',
-                                'BancABC',
-                            ]),
+                            ->placeholder(__('Search or select a bank...'))
+                            ->createOptionAction(fn (Forms\Components\Actions\Action $action) => $action
+                                ->modalHeading(__('Add Bank'))
+                                ->modalSubmitActionLabel(__('Add Bank')))
+                            ->createOptionForm([
+                                Forms\Components\TextInput::make('name')
+                                    ->label(__('Bank name'))
+                                    ->required()
+                                    ->maxLength(255)
+                                    ->placeholder(__('e.g. Steward Bank')),
+                            ])
+                            ->createOptionUsing(fn (array $data) => $data['name']),
                         Forms\Components\TextInput::make('account_name')
                             ->required()
                             ->placeholder(__('e.g. Kairo CORE Technologies Pvt Ltd')),
