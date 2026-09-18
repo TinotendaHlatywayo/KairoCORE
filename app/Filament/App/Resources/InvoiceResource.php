@@ -532,7 +532,7 @@ class InvoiceResource extends Resource
                                 'refund' => __('Refund the excess'),
                             ])
                             ->default(PaymentSettlementService::MODE_CREDIT)
-                            ->helperText(fn (Forms\Get $get) => $this->excessHelper($record, $get))
+                            ->helperText(fn (Forms\Get $get) => self::excessHelper($record, $get))
                             ->visible(fn (Forms\Get $get): bool => (float) max(0, $get('amount') ?? 0) > (float) $record->balance_amount),
                         Forms\Components\Select::make('currency')->options(['USD' => 'USD', 'ZiG' => 'ZiG'])->default('USD')->required(),
                         Forms\Components\Select::make('payment_method')->options([
