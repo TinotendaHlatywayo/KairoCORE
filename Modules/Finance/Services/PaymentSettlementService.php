@@ -15,6 +15,7 @@ use Modules\Finance\Models\SchoolBankAccount;
 class PaymentSettlementService
 {
     public const MODE_REFUND = 'refund';
+
     public const MODE_CREDIT = 'credit';
 
     /**
@@ -46,7 +47,11 @@ class PaymentSettlementService
                     'invoice_id' => $invoice->id,
                     'receipt_number' => $attributes['receipt_number'] ?? 'RCP-'.mt_rand(10000, 99999),
                     'reference_number' => $attributes['reference_number'] ?? null,
-                    'amount' => $applied,
+                    // A refund receives the gross amount and then returns the
+                    // excess, so the receipt and the refund below offset cleanly.
+                    // A credit only recognises the applied portion; the excess is
+                    // tracked as a student credit liability instead.
+                    'amount' => $handling === self::MODE_REFUND ? $amount : $applied,
                     'currency' => $attributes['currency'] ?? 'USD',
                     'payment_method' => $attributes['payment_method'] ?? 'cash',
                     'payment_date' => $attributes['payment_date'] ?? now(),
@@ -64,12 +69,12 @@ class PaymentSettlementService
                 : self::defaultBankAccount($invoice->school_id);
 
             if ($bankAccount) {
-                // Refund: the school only keeps what it can absorb.
-                // Credit: the school keeps the full amount and the student owes less next term.
-                $bankIncrease = $handling === self::MODE_CREDIT ? $amount : $applied;
-
-                if ($bankIncrease > 0) {
-                    $bankAccount->increment('balance', $bankIncrease);
+                // The full amount received lands in the bank. For a refund the
+                // excess is taken back out below, so the net retained is the
+                // applied portion. For a credit the school keeps the whole amount
+                // and carries the excess as a student credit.
+                if ($amount > 0) {
+                    $bankAccount->increment('balance', $amount);
                 }
             }
 
@@ -129,7 +134,7 @@ class PaymentSettlementService
      * made, so no bank movement happens here — we simply reduce the receivable
      * and the student's remaining credit.
      *
-     * @return float  the amount actually applied
+     * @return float the amount actually applied
      */
     public static function applyCredit(Invoice $invoice, float $credit): float
     {
