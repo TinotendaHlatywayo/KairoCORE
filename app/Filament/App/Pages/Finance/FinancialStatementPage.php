@@ -76,7 +76,7 @@ class FinancialStatementPage extends Page
         };
 
         $totalRevenue = Payment::where('school_id', $schoolId)
-            ->when($this->bankAccountId, fn ($q) => $q->where('bank_account_id', (int) $this->bankAccountId))
+            ->when($this->bankAccountId, SchoolBankAccount::filterClosure((int) $this->bankAccountId, $schoolId))
             ->where('is_refund', false)
             ->where('created_at', '>=', $startDate)
             ->sum('amount');
@@ -84,13 +84,13 @@ class FinancialStatementPage extends Page
         // Refund rows are stored as negative amounts, so normalise to a positive
         // "amount refunded" figure. Callers render this as a deduction (-$X).
         $totalRefunds = abs((float) Payment::where('school_id', $schoolId)
-            ->when($this->bankAccountId, fn ($q) => $q->where('bank_account_id', (int) $this->bankAccountId))
+            ->when($this->bankAccountId, SchoolBankAccount::filterClosure((int) $this->bankAccountId, $schoolId))
             ->where('is_refund', true)
             ->where('created_at', '>=', $startDate)
             ->sum('amount'));
 
         $totalExpenses = Expense::where('school_id', $schoolId)
-            ->when($this->bankAccountId, fn ($q) => $q->where('bank_account_id', (int) $this->bankAccountId))
+            ->when($this->bankAccountId, SchoolBankAccount::filterClosure((int) $this->bankAccountId, $schoolId))
             ->where('expense_date', '>=', $startDate->toDateString())
             ->sum('amount');
 

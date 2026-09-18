@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Modules\Finance\Models\Expense;
 use Modules\Finance\Models\Invoice;
 use Modules\Finance\Models\Payment;
+use Modules\Finance\Models\SchoolBankAccount;
 use Modules\HR\Services\PayrollCalculationService;
 
 class FinancialAnalyticsEngine
@@ -18,11 +19,11 @@ class FinancialAnalyticsEngine
     {
         $totalRevenue = Payment::where('school_id', $schoolId)
             ->where('is_reversed', 0)
-            ->when($bankAccountId, fn ($q) => $q->where('bank_account_id', $bankAccountId))
+            ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId))
             ->sum('amount');
         $totalExpenses = Expense::where('school_id', $schoolId)
             ->whereIn('status', ['approved', 'paid'])
-            ->when($bankAccountId, fn ($q) => $q->where('bank_account_id', $bankAccountId))
+            ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId))
             ->sum('amount');
         $netSurplus = $totalRevenue - $totalExpenses;
 
@@ -33,7 +34,7 @@ class FinancialAnalyticsEngine
         // Payables = approved but not yet paid expenses (real obligations).
         $accountsPayable = Expense::where('school_id', $schoolId)
             ->where('status', 'approved')
-            ->when($bankAccountId, fn ($q) => $q->where('bank_account_id', $bankAccountId))
+            ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId))
             ->sum('amount');
 
         // Cash position aligned with the revenue/expense figures already shown,
@@ -74,7 +75,7 @@ class FinancialAnalyticsEngine
             ->joinSub($invoiceCategories, 'inv_cat', 'invoices.id', '=', 'inv_cat.invoice_id')
             ->where('payments.school_id', $schoolId)
             ->where('payments.is_reversed', 0)
-            ->when($bankAccountId, fn ($q) => $q->where('payments.bank_account_id', $bankAccountId))
+            ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId, 'payments.bank_account_id'))
             ->select('inv_cat.category as category', DB::raw('SUM(payments.amount) as total'))
             ->groupBy('inv_cat.category')
             ->pluck('total', 'category')
@@ -132,7 +133,7 @@ class FinancialAnalyticsEngine
             )
             ->where('school_id', $schoolId)
             ->where('is_reversed', 0)
-            ->when($bankAccountId, fn ($q) => $q->where('bank_account_id', $bankAccountId))
+            ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId))
             ->whereBetween('created_at', [$startDate, $endDate])
             ->groupBy('period')
             ->pluck('total', 'period')
@@ -145,7 +146,7 @@ class FinancialAnalyticsEngine
             )
             ->where('school_id', $schoolId)
             ->whereIn('status', ['approved', 'paid'])
-            ->when($bankAccountId, fn ($q) => $q->where('bank_account_id', $bankAccountId))
+            ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId))
             ->whereBetween('created_at', [$startDate, $endDate])
             ->groupBy('period')
             ->pluck('total', 'period')
@@ -196,7 +197,7 @@ class FinancialAnalyticsEngine
             )
             ->where('school_id', $schoolId)
             ->where('is_reversed', 0)
-            ->when($bankAccountId, fn ($q) => $q->where('bank_account_id', $bankAccountId))
+            ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId))
             ->whereBetween('created_at', [$startDate, $endDate])
             ->groupBy('period')
             ->pluck('total', 'period')
@@ -209,7 +210,7 @@ class FinancialAnalyticsEngine
             )
             ->where('school_id', $schoolId)
             ->whereIn('status', ['approved', 'paid'])
-            ->when($bankAccountId, fn ($q) => $q->where('bank_account_id', $bankAccountId))
+            ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId))
             ->whereBetween('created_at', [$startDate, $endDate])
             ->groupBy('period')
             ->pluck('total', 'period')
@@ -279,7 +280,7 @@ class FinancialAnalyticsEngine
             )
             ->where('payments.school_id', $schoolId)
             ->where('payments.is_reversed', 0)
-            ->when($bankAccountId, fn ($q) => $q->where('payments.bank_account_id', $bankAccountId))
+            ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId, 'payments.bank_account_id'))
             ->whereBetween('payments.created_at', [$startDate, $endDate])
             ->groupBy('period')
             ->pluck('total', 'period')
@@ -325,7 +326,7 @@ class FinancialAnalyticsEngine
             ->join('expense_categories', 'expense_types.expense_category_id', '=', 'expense_categories.id', 'left')
             ->where('expenses.school_id', $schoolId)
             ->whereIn('expenses.status', ['approved', 'paid'])
-            ->when($bankAccountId, fn ($q) => $q->where('expenses.bank_account_id', $bankAccountId))
+            ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId, 'expenses.bank_account_id'))
             ->select('expense_categories.name as category', DB::raw('SUM(expenses.amount) as total'))
             ->groupBy('expense_categories.name')
             ->pluck('total', 'category')
@@ -340,7 +341,7 @@ class FinancialAnalyticsEngine
         return DB::table('payments')
             ->where('school_id', $schoolId)
             ->where('is_reversed', 0)
-            ->when($bankAccountId, fn ($q) => $q->where('bank_account_id', $bankAccountId))
+            ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId))
             ->select('payment_method', DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as count'))
             ->groupBy('payment_method')
             ->get()
@@ -362,7 +363,7 @@ class FinancialAnalyticsEngine
             ->leftJoin('suppliers', 'expenses.supplier_id', '=', 'suppliers.id')
             ->leftJoin('users', 'expenses.user_id', '=', 'users.id')
             ->where('expenses.school_id', $schoolId)
-            ->when($bankAccountId, fn ($q) => $q->where('expenses.bank_account_id', $bankAccountId))
+            ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId, 'expenses.bank_account_id'))
             ->select(
                 'expenses.reference_number',
                 'expense_categories.name as category',
@@ -537,13 +538,13 @@ class FinancialAnalyticsEngine
         $currentRevenue = Payment::where('school_id', $schoolId)
             ->where('is_reversed', 0)
             ->whereYear('created_at', $currentYear)
-            ->when($bankAccountId, fn ($q) => $q->where('bank_account_id', $bankAccountId))
+            ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId))
             ->sum('amount');
 
         $lastYearRevenue = Payment::where('school_id', $schoolId)
             ->where('is_reversed', 0)
             ->whereYear('created_at', $lastYear)
-            ->when($bankAccountId, fn ($q) => $q->where('bank_account_id', $bankAccountId))
+            ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId))
             ->sum('amount');
 
         $growth = $lastYearRevenue > 0
