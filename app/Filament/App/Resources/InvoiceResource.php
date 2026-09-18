@@ -524,7 +524,10 @@ class InvoiceResource extends Resource
                     ->icon('heroicon-o-credit-card')
                     ->color('success')
                     ->form(fn (Invoice $record): array => [
-                        Forms\Components\TextInput::make('amount')->numeric()->required()->live(),
+                        // Update the overpayment UI on blur rather than on every
+                        // keystroke: a live re-render while the modal is open
+                        // closes the Payment Method dropdown before it can be used.
+                        Forms\Components\TextInput::make('amount')->numeric()->required()->live(onBlur: true),
                         Forms\Components\Radio::make('excess_handling')
                             ->label(__('Overpayment'))
                             ->options([
