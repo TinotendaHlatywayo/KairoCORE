@@ -38,6 +38,9 @@ class BankAccountSwitcherWidget extends Widget
     {
         session(['finance_bank_account' => $this->bankAccountId ?: null]);
 
-        $this->dispatch('bank-account-changed', bankAccountId: (int) $this->bankAccountId ?: null);
+        // Always send an int (0 = All Accounts). Sending null made Livewire
+        // coerce a TypeError inside the int-typed listeners, which Livewire
+        // converts into a 419 "page expired" in production.
+        $this->dispatch('bank-account-changed', bankAccountId: (int) $this->bankAccountId);
     }
 }
