@@ -105,7 +105,7 @@
             </div>
             <div class="flex justify-between py-3 text-base font-bold">
                 <span class="text-gray-900 dark:text-white">{{ __('Closing Balance') }}</span>
-                <span class="text-primary-600 dark:text-primary-400">${{ number_format($netCashFlow, 2) }}</span>
+                <span class="text-primary-600 dark:text-primary-400">${{ number_format(($openingBalance ?? 0) + ($netCashFlow ?? 0), 2) }}</span>
             </div>
         </div>
     </div>
