@@ -4,10 +4,24 @@ namespace App\Filament\App\Widgets;
 
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Livewire\Attributes\On;
 use Modules\Finance\Models\Expense;
 
 class ExpenseAnalyticsWidget extends BaseWidget
 {
+    public ?int $bankAccountId = null;
+
+    public function mount(): void
+    {
+        $this->bankAccountId = (int) (session('finance_bank_account')) ?: null;
+    }
+
+    #[On('bank-account-changed')]
+    public function setBankAccount(int $bankAccountId = 0): void
+    {
+        $this->bankAccountId = $bankAccountId ?: null;
+    }
+
     protected function getStats(): array
     {
         $schoolId = current_tenant()?->id;
@@ -16,11 +30,14 @@ class ExpenseAnalyticsWidget extends BaseWidget
             return [];
         }
 
-        $totalExpenses = (float) Expense::where('school_id', $schoolId)->sum('amount');
+        $query = Expense::where('school_id', $schoolId)
+            ->when($this->bankAccountId, fn ($q) => $q->where('bank_account_id', $this->bankAccountId));
+
+        $totalExpenses = (float) (clone $query)->sum('amount');
 
         // Highest single expense
-        $highestExpense = Expense::where('school_id', $schoolId)->orderByDesc('amount')->first();
-        $highestText = $highestExpense ? "{$highestExpense->expense_name} ($" . number_format($highestExpense->amount, 2) . ")" : __('None');
+        $highestExpense = (clone $query)->orderByDesc('amount')->first();
+        $highestText = $highestExpense ? "{$highestExpense->expense_name} ($".number_format($highestExpense->amount, 2).')' : __('None');
 
         return [
             Stat::make(__('Total Expenses Disbursed'), '$'.number_format($totalExpenses, 2))

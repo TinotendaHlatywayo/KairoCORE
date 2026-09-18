@@ -7,17 +7,22 @@ use Illuminate\Support\Facades\DB;
 use Modules\Finance\Models\Expense;
 use Modules\Finance\Models\Invoice;
 use Modules\Finance\Models\Payment;
+use Modules\HR\Services\PayrollCalculationService;
 
 class FinancialAnalyticsEngine
 {
     /**
      * Compute Executive Financial Summary for a given school tenant.
      */
-    public function getSummary(int $schoolId): array
+    public function getSummary(int $schoolId, ?int $bankAccountId = null): array
     {
-        $totalRevenue = Payment::where('school_id', $schoolId)->where('is_reversed', 0)->sum('amount');
+        $totalRevenue = Payment::where('school_id', $schoolId)
+            ->where('is_reversed', 0)
+            ->when($bankAccountId, fn ($q) => $q->where('bank_account_id', $bankAccountId))
+            ->sum('amount');
         $totalExpenses = Expense::where('school_id', $schoolId)
             ->whereIn('status', ['approved', 'paid'])
+            ->when($bankAccountId, fn ($q) => $q->where('bank_account_id', $bankAccountId))
             ->sum('amount');
         $netSurplus = $totalRevenue - $totalExpenses;
 
@@ -28,15 +33,20 @@ class FinancialAnalyticsEngine
         // Payables = approved but not yet paid expenses (real obligations).
         $accountsPayable = Expense::where('school_id', $schoolId)
             ->where('status', 'approved')
+            ->when($bankAccountId, fn ($q) => $q->where('bank_account_id', $bankAccountId))
             ->sum('amount');
 
         // Cash position aligned with the revenue/expense figures already shown,
         // rather than an inconsistent proxy of invoice credits.
         $cashPosition = max(0, $netSurplus);
 
+        $totalSalaries = app(PayrollCalculationService::class)
+            ->payrollExpenseTotal($schoolId, null, null, $bankAccountId);
+
         return [
             'total_revenue' => $totalRevenue,
             'total_expenses' => $totalExpenses,
+            'total_salaries' => $totalSalaries,
             'net_surplus' => $netSurplus,
             'outstanding_student_fees' => $outstandingFees,
             'accounts_receivable' => $outstandingFees,
@@ -49,7 +59,7 @@ class FinancialAnalyticsEngine
     /**
      * Get Revenue Breakdown for interactive charts.
      */
-    public function getRevenueBreakdown(int $schoolId): array
+    public function getRevenueBreakdown(int $schoolId, ?int $bankAccountId = null): array
     {
         // Derive each invoice's fee category via a subquery so a payment is never
         // multiplied by the number of invoice items on its invoice.
@@ -64,6 +74,7 @@ class FinancialAnalyticsEngine
             ->joinSub($invoiceCategories, 'inv_cat', 'invoices.id', '=', 'inv_cat.invoice_id')
             ->where('payments.school_id', $schoolId)
             ->where('payments.is_reversed', 0)
+            ->when($bankAccountId, fn ($q) => $q->where('payments.bank_account_id', $bankAccountId))
             ->select('inv_cat.category as category', DB::raw('SUM(payments.amount) as total'))
             ->groupBy('inv_cat.category')
             ->pluck('total', 'category')
@@ -109,7 +120,7 @@ class FinancialAnalyticsEngine
     /**
      * Get Monthly Revenue vs Expense Trend for time-series chart.
      */
-    public function getRevenueExpenseTrend(int $schoolId, int $months = 12): array
+    public function getRevenueExpenseTrend(int $schoolId, int $months = 12, ?int $bankAccountId = null): array
     {
         $startDate = Carbon::now()->subMonths($months - 1)->startOfMonth();
         $endDate = Carbon::now()->endOfMonth();
@@ -121,6 +132,7 @@ class FinancialAnalyticsEngine
             )
             ->where('school_id', $schoolId)
             ->where('is_reversed', 0)
+            ->when($bankAccountId, fn ($q) => $q->where('bank_account_id', $bankAccountId))
             ->whereBetween('created_at', [$startDate, $endDate])
             ->groupBy('period')
             ->pluck('total', 'period')
@@ -133,6 +145,7 @@ class FinancialAnalyticsEngine
             )
             ->where('school_id', $schoolId)
             ->whereIn('status', ['approved', 'paid'])
+            ->when($bankAccountId, fn ($q) => $q->where('bank_account_id', $bankAccountId))
             ->whereBetween('created_at', [$startDate, $endDate])
             ->groupBy('period')
             ->pluck('total', 'period')
@@ -171,7 +184,7 @@ class FinancialAnalyticsEngine
     /**
      * Get Cash Flow Timeline (monthly net cash position).
      */
-    public function getCashFlowTimeline(int $schoolId, int $months = 12): array
+    public function getCashFlowTimeline(int $schoolId, int $months = 12, ?int $bankAccountId = null): array
     {
         $startDate = Carbon::now()->subMonths($months - 1)->startOfMonth();
         $endDate = Carbon::now()->endOfMonth();
@@ -183,6 +196,7 @@ class FinancialAnalyticsEngine
             )
             ->where('school_id', $schoolId)
             ->where('is_reversed', 0)
+            ->when($bankAccountId, fn ($q) => $q->where('bank_account_id', $bankAccountId))
             ->whereBetween('created_at', [$startDate, $endDate])
             ->groupBy('period')
             ->pluck('total', 'period')
@@ -195,6 +209,7 @@ class FinancialAnalyticsEngine
             )
             ->where('school_id', $schoolId)
             ->whereIn('status', ['approved', 'paid'])
+            ->when($bankAccountId, fn ($q) => $q->where('bank_account_id', $bankAccountId))
             ->whereBetween('created_at', [$startDate, $endDate])
             ->groupBy('period')
             ->pluck('total', 'period')
@@ -240,7 +255,7 @@ class FinancialAnalyticsEngine
     /**
      * Get Monthly Collection Rate (invoiced vs collected).
      */
-    public function getCollectionRateTrend(int $schoolId, int $months = 12): array
+    public function getCollectionRateTrend(int $schoolId, int $months = 12, ?int $bankAccountId = null): array
     {
         $startDate = Carbon::now()->subMonths($months - 1)->startOfMonth();
         $endDate = Carbon::now()->endOfMonth();
@@ -264,6 +279,7 @@ class FinancialAnalyticsEngine
             )
             ->where('payments.school_id', $schoolId)
             ->where('payments.is_reversed', 0)
+            ->when($bankAccountId, fn ($q) => $q->where('payments.bank_account_id', $bankAccountId))
             ->whereBetween('payments.created_at', [$startDate, $endDate])
             ->groupBy('period')
             ->pluck('total', 'period')
@@ -302,13 +318,14 @@ class FinancialAnalyticsEngine
     /**
      * Get Expense Breakdown by Category.
      */
-    public function getExpenseBreakdown(int $schoolId): array
+    public function getExpenseBreakdown(int $schoolId, ?int $bankAccountId = null): array
     {
         return DB::table('expenses')
             ->join('expense_types', 'expenses.expense_type_id', '=', 'expense_types.id')
             ->join('expense_categories', 'expense_types.expense_category_id', '=', 'expense_categories.id', 'left')
             ->where('expenses.school_id', $schoolId)
             ->whereIn('expenses.status', ['approved', 'paid'])
+            ->when($bankAccountId, fn ($q) => $q->where('expenses.bank_account_id', $bankAccountId))
             ->select('expense_categories.name as category', DB::raw('SUM(expenses.amount) as total'))
             ->groupBy('expense_categories.name')
             ->pluck('total', 'category')
@@ -318,11 +335,12 @@ class FinancialAnalyticsEngine
     /**
      * Get Payment Method Breakdown.
      */
-    public function getPaymentMethodBreakdown(int $schoolId): array
+    public function getPaymentMethodBreakdown(int $schoolId, ?int $bankAccountId = null): array
     {
         return DB::table('payments')
             ->where('school_id', $schoolId)
             ->where('is_reversed', 0)
+            ->when($bankAccountId, fn ($q) => $q->where('bank_account_id', $bankAccountId))
             ->select('payment_method', DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as count'))
             ->groupBy('payment_method')
             ->get()
@@ -336,7 +354,7 @@ class FinancialAnalyticsEngine
     /**
      * Get Expense Register (detailed expense list).
      */
-    public function getExpenseRegister(int $schoolId): array
+    public function getExpenseRegister(int $schoolId, ?int $bankAccountId = null): array
     {
         return DB::table('expenses')
             ->leftJoin('expense_types', 'expenses.expense_type_id', '=', 'expense_types.id')
@@ -344,6 +362,7 @@ class FinancialAnalyticsEngine
             ->leftJoin('suppliers', 'expenses.supplier_id', '=', 'suppliers.id')
             ->leftJoin('users', 'expenses.user_id', '=', 'users.id')
             ->where('expenses.school_id', $schoolId)
+            ->when($bankAccountId, fn ($q) => $q->where('expenses.bank_account_id', $bankAccountId))
             ->select(
                 'expenses.reference_number',
                 'expense_categories.name as category',
@@ -444,9 +463,9 @@ class FinancialAnalyticsEngine
      * growth assumptions). Falls back to the average of recent periods when
      * there is insufficient history to fit a line.
      */
-    public function getRevenueForecast(int $schoolId, int $months = 6): array
+    public function getRevenueForecast(int $schoolId, int $months = 6, ?int $bankAccountId = null): array
     {
-        $trend = $this->getRevenueExpenseTrend($schoolId, 12);
+        $trend = $this->getRevenueExpenseTrend($schoolId, 12, $bankAccountId);
         $revenues = array_values(array_filter($trend['revenue'] ?? [], fn ($v) => $v > 0));
 
         $forecastLabels = [];
@@ -510,7 +529,7 @@ class FinancialAnalyticsEngine
     /**
      * Get Year-over-Year comparison.
      */
-    public function getYoYComparison(int $schoolId): array
+    public function getYoYComparison(int $schoolId, ?int $bankAccountId = null): array
     {
         $currentYear = Carbon::now()->year;
         $lastYear = $currentYear - 1;
@@ -518,11 +537,13 @@ class FinancialAnalyticsEngine
         $currentRevenue = Payment::where('school_id', $schoolId)
             ->where('is_reversed', 0)
             ->whereYear('created_at', $currentYear)
+            ->when($bankAccountId, fn ($q) => $q->where('bank_account_id', $bankAccountId))
             ->sum('amount');
 
         $lastYearRevenue = Payment::where('school_id', $schoolId)
             ->where('is_reversed', 0)
             ->whereYear('created_at', $lastYear)
+            ->when($bankAccountId, fn ($q) => $q->where('bank_account_id', $bankAccountId))
             ->sum('amount');
 
         $growth = $lastYearRevenue > 0

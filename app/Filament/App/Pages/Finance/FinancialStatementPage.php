@@ -7,6 +7,7 @@ use Modules\Academics\Models\Term;
 use Modules\Finance\Models\Expense;
 use Modules\Finance\Models\Payment;
 use Modules\Finance\Models\SchoolBankAccount;
+use Modules\HR\Services\PayrollCalculationService;
 
 class FinancialStatementPage extends Page
 {
@@ -24,6 +25,18 @@ class FinancialStatementPage extends Page
     }
 
     public string $range = 'month'; // day, week, month, year
+
+    public string $bankAccountId = ''; // '' => all accounts combined
+
+    public function mount(): void
+    {
+        $this->bankAccountId = (string) (request()->query('bank_account') ?? session('finance_bank_account', ''));
+    }
+
+    public function updatedBankAccountId(): void
+    {
+        session(['finance_bank_account' => $this->bankAccountId ?: null]);
+    }
 
     public function getTitle(): string
     {
@@ -49,6 +62,11 @@ class FinancialStatementPage extends Page
             ]);
         }
 
+        $bankAccounts = SchoolBankAccount::where('school_id', $schoolId)->orderByDesc('is_default')->get();
+        $selectedBank = $this->bankAccountId
+            ? $bankAccounts->firstWhere('id', (int) $this->bankAccountId)
+            : null;
+
         $startDate = match ($this->range) {
             'day' => now()->subDay(),
             'week' => now()->subWeek(),
@@ -58,6 +76,7 @@ class FinancialStatementPage extends Page
         };
 
         $totalRevenue = Payment::where('school_id', $schoolId)
+            ->when($this->bankAccountId, fn ($q) => $q->where('bank_account_id', (int) $this->bankAccountId))
             ->where('is_refund', false)
             ->where('created_at', '>=', $startDate)
             ->sum('amount');
@@ -65,13 +84,23 @@ class FinancialStatementPage extends Page
         // Refund rows are stored as negative amounts, so normalise to a positive
         // "amount refunded" figure. Callers render this as a deduction (-$X).
         $totalRefunds = abs((float) Payment::where('school_id', $schoolId)
+            ->when($this->bankAccountId, fn ($q) => $q->where('bank_account_id', (int) $this->bankAccountId))
             ->where('is_refund', true)
             ->where('created_at', '>=', $startDate)
             ->sum('amount'));
 
         $totalExpenses = Expense::where('school_id', $schoolId)
+            ->when($this->bankAccountId, fn ($q) => $q->where('bank_account_id', (int) $this->bankAccountId))
             ->where('expense_date', '>=', $startDate->toDateString())
             ->sum('amount');
+
+        $salariesExpense = app(PayrollCalculationService::class)
+            ->payrollExpenseTotal(
+                $schoolId,
+                $startDate->toDateString(),
+                now()->toDateString(),
+                $this->bankAccountId ? (int) $this->bankAccountId : null
+            );
 
         $netCashFlow = $totalRevenue - $totalRefunds - $totalExpenses;
 
@@ -79,18 +108,25 @@ class FinancialStatementPage extends Page
         $season = $this->currentSeasonLabel();
 
         return [
-            'defaultBank' => $defaultBank,
+            'defaultBank' => $selectedBank ?? $defaultBank,
+            'bankAccounts' => $bankAccounts,
+            'bankAccountId' => $this->bankAccountId,
+            'allAccounts' => $this->bankAccountId === '',
+            'openingBalance' => $selectedBank
+                ? (float) $selectedBank->balance
+                : (float) $bankAccounts->sum('balance'),
             'totalRevenue' => $totalRevenue,
             'totalRefunds' => $totalRefunds,
             'totalExpenses' => $totalExpenses,
+            'salariesExpense' => $salariesExpense,
             'netCashFlow' => $netCashFlow,
             'startDate' => $startDate->toDateString(),
             'endDate' => now()->toDateString(),
             'company' => $school?->name ?? config('app.name'),
-            'companyTagline' => $school?->tagline ?? null,
-            'companyAddress' => $school?->physical_address ?? $school?->address ?? '',
-            'companyPhone' => $school?->phone ?? null,
-            'companyEmail' => $school?->email ?? null,
+            'companyTagline' => $school?->motto ?? null,
+            'companyAddress' => $school?->physical_address ?? '',
+            'companyPhone' => $school?->phone_number ?? $school?->phone ?? null,
+            'companyEmail' => $school?->email_address ?? null,
             'season' => $season,
         ];
     }
