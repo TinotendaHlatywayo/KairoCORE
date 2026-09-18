@@ -69,19 +69,19 @@ class FinancialStatementDownloadWidget extends Widget
 
         $totalRevenue = (float) Payment::withoutGlobalScopes()
             ->where('school_id', $schoolId)
-            ->when($bankAccountId, fn ($q) => $q->where('bank_account_id', $bankAccountId))
+            ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId))
             ->where(fn ($q) => $q->where('is_refund', false)->orWhereNull('is_refund'))
             ->sum('amount');
         // Refund rows are stored as negative amounts; normalise to a positive
         // "amount refunded" figure for the statement line items.
         $totalRefunds = abs((float) Payment::withoutGlobalScopes()
             ->where('school_id', $schoolId)
-            ->when($bankAccountId, fn ($q) => $q->where('bank_account_id', $bankAccountId))
+            ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId))
             ->where('is_refund', true)
             ->sum('amount'));
         $totalExpenses = (float) Expense::withoutGlobalScopes()
             ->where('school_id', $schoolId)
-            ->when($bankAccountId, fn ($q) => $q->where('bank_account_id', $bankAccountId))
+            ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId))
             ->sum('amount');
         $totalSalaries = (float) app(PayrollCalculationService::class)
             ->payrollExpenseTotal($schoolId, $startDate->toDateString(), $endDate->toDateString(), $bankAccountId);
