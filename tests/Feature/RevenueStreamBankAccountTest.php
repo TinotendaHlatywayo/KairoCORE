@@ -206,4 +206,37 @@ class RevenueStreamBankAccountTest extends TestCase
             SchoolBankAccount::withoutTenantScope()->whereIn('id', [$bankDefault->id, $bankOther->id])->forceDelete();
         }
     }
+
+    public function test_opening_bank_balance_is_zero_for_accounts_created_within_the_period(): void
+    {
+        $user = User::where('school_id', $this->schoolId)->where('requested_role', 'administrator')->firstOrFail();
+        $this->actingAs($user)->withServerVariables(['HTTP_HOST' => $this->tenantHost()]);
+        Filament::setCurrentPanel(Filament::getPanel('app'));
+
+        $bank = SchoolBankAccount::create([
+            'school_id' => $this->schoolId,
+            'bank_name' => 'Temp Fresh Bank',
+            'account_name' => 'Brand New Account',
+            'account_number' => 'NEW-'.uniqid(),
+            'balance' => 200.00,
+            'is_active' => true,
+            'is_default' => true,
+        ]);
+
+        try {
+            $html = Livewire::test(FinancialStatementPage::class)
+                ->set('bankAccountId', (string) $bank->id)
+                ->assertOk()
+                ->html();
+
+            // A brand-new account (created within the 'past month' period) must
+            // open at $0.00 - its recorded balance is NOT the opening balance.
+            $this->assertMatchesRegularExpression('/Opening Bank Balance.+?\$0\.00/s', $html);
+            // Closing = Opening + net flow, so it must not silently inherit the
+            // account's current balance ($200.00) either.
+            $this->assertDoesNotMatchRegularExpression('/Closing Balance.+?\$200\.00/s', $html);
+        } finally {
+            SchoolBankAccount::withoutTenantScope()->where('id', $bank->id)->forceDelete();
+        }
+    }
 }

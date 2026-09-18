@@ -104,6 +104,21 @@ class FinancialStatementPage extends Page
 
         $netCashFlow = $totalRevenue - $totalRefunds - $totalExpenses;
 
+        // Opening Bank Balance must reflect what the account(s) held at the
+        // START of the reporting period - NOT the live balance. An account
+        // created during the period (e.g. a brand-new school) did not exist
+        // at period start, so it opened with $0 by definition. For accounts
+        // that predate the period we fall back to the recorded balance, since
+        // no historical ledger is kept.
+        $targetAccounts = $selectedBank ? collect([$selectedBank]) : $bankAccounts;
+        $openingBalance = $targetAccounts->sum(function (SchoolBankAccount $account) use ($startDate): float {
+            if ($account->created_at && $account->created_at->greaterThanOrEqualTo($startDate)) {
+                return 0.0;
+            }
+
+            return (float) $account->balance;
+        });
+
         $school = current_tenant();
         $season = $this->currentSeasonLabel();
 
@@ -112,9 +127,7 @@ class FinancialStatementPage extends Page
             'bankAccounts' => $bankAccounts,
             'bankAccountId' => $this->bankAccountId,
             'allAccounts' => $this->bankAccountId === '',
-            'openingBalance' => $selectedBank
-                ? (float) $selectedBank->balance
-                : (float) $bankAccounts->sum('balance'),
+            'openingBalance' => $openingBalance,
             'totalRevenue' => $totalRevenue,
             'totalRefunds' => $totalRefunds,
             'totalExpenses' => $totalExpenses,
