@@ -10,6 +10,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Modules\Finance\Models\RevenueStream;
+use Modules\Finance\Models\SchoolBankAccount;
 
 class RevenueStreamResource extends Resource
 {
@@ -78,11 +79,24 @@ class RevenueStreamResource extends Resource
                             ->default(now())
                             ->required(),
                         Forms\Components\Select::make('account_id')
-                            ->label(__('Ledger Account Override'))
-                            ->relationship('account', 'bank_name')
+                            ->label(__('Bank Account'))
+                            ->options(fn () => SchoolBankAccount::query()
+                                ->where('school_id', current_tenant()?->id ?? auth()->user()?->school_id)
+                                ->orderByDesc('is_default')
+                                ->get()
+                                ->mapWithKeys(fn ($account) => [$account->id => trim(implode(' — ', array_filter([
+                                    $account->bank_name,
+                                    $account->account_name,
+                                    $account->account_number,
+                                ])))])
+                                ->all())
+                            ->default(fn () => SchoolBankAccount::query()
+                                ->where('school_id', current_tenant()?->id ?? auth()->user()?->school_id)
+                                ->where('is_default', true)
+                                ->value('id'))
                             ->searchable()
                             ->preload()
-                            ->placeholder(__('Optional — defaults to the school bank account')),
+                            ->helperText(__('Defaults to the school bank account; the default amount is credited to its balance.')),
                         Forms\Components\Textarea::make('notes')
                             ->label(__('Notes'))
                             ->placeholder(__('Payment instructions, credentials, or accounting rules for this revenue stream...')),

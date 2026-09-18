@@ -29,7 +29,7 @@ class FinancialReportService
             ->setPaper('a4', 'landscape');
 
         return response()->streamDownload(
-            fn () => print($pdf->output()),
+            fn () => print ($pdf->output()),
             'financial-statement-'.$startDate->toDateString().'-to-'.$endDate->toDateString().'.pdf',
             ['Content-Type' => 'application/pdf']
         );
@@ -43,12 +43,14 @@ class FinancialReportService
             [''],
             ['Official Financial Statement & Cash Flow'],
             ['Period: '.$data['startDate'].' to '.$data['endDate']],
+            ['Bank Account: '.($data['bankAccountName'] ?? 'All Accounts (Combined)')],
             ['Generated: '.$data['generatedAt']],
             [''],
             ['Description', 'Amount (USD)'],
             ['Total Revenue / Inflows', number_format($data['totalRevenue'], 2)],
             ['Total Refunds', '-'.number_format($data['totalRefunds'], 2)],
             ['Total Expenses & Outflows', '-'.number_format($data['totalExpenses'], 2)],
+            ['Staff Salaries', '-'.number_format($data['totalSalaries'] ?? 0, 2)],
             ['Net Cash Flow Balance', number_format($data['netCashFlow'], 2)],
         ];
 
@@ -69,17 +71,19 @@ class FinancialReportService
             '',
             'Official Financial Statement & Cash Flow',
             'Period: '.$data['startDate'].' to '.$data['endDate'],
+            'Bank Account: '.($data['bankAccountName'] ?? 'All Accounts (Combined)'),
             'Generated: '.$data['generatedAt'],
             '',
             'Description                      Amount (USD)',
             'Total Revenue / Inflows          '.number_format($data['totalRevenue'], 2),
             'Total Refunds                    -'.number_format($data['totalRefunds'], 2),
             'Total Expenses & Outflows        -'.number_format($data['totalExpenses'], 2),
+            'Staff Salaries                  -'.number_format($data['totalSalaries'] ?? 0, 2),
             'Net Cash Flow Balance            '.number_format($data['netCashFlow'], 2),
         ]);
 
         return response()->streamDownload(
-            fn () => print($lines),
+            fn () => print ($lines),
             'financial-statement-'.$startDate->toDateString().'-to-'.$endDate->toDateString().'.txt',
             ['Content-Type' => 'text/plain']
         );

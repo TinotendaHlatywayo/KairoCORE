@@ -65,3 +65,5 @@ memory.md
 .env (Copy)
 *.afm.json
 *.ufm.json
+/.opencode/
+/import-template-corrected.xlsx

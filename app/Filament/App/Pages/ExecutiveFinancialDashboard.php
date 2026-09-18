@@ -6,8 +6,10 @@ use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Filament\App\Concerns\ModulePermissionAccess;
 use App\Models\School;
 use Filament\Pages\Page;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\On;
+use Modules\Finance\Models\SchoolBankAccount;
 use Modules\Finance\Services\FinancialAnalyticsEngine;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -45,6 +47,8 @@ class ExecutiveFinancialDashboard extends Page
 
     public string $dateRange = '12_months';
 
+    public string $bankAccountId = ''; // '' => all accounts combined
+
     public string $activeDetailTab = 'debtors';
 
     public array $summary = [];
@@ -77,11 +81,18 @@ class ExecutiveFinancialDashboard extends Page
 
     public function mount(): void
     {
+        $this->bankAccountId = (string) (request()->query('bank_account') ?? session('finance_bank_account', ''));
         $this->loadData();
     }
 
     public function updatedDateRange(): void
     {
+        $this->loadData();
+    }
+
+    public function updatedBankAccountId(): void
+    {
+        session(['finance_bank_account' => $this->bankAccountId ?: null]);
         $this->loadData();
     }
 
@@ -115,18 +126,20 @@ class ExecutiveFinancialDashboard extends Page
             default => 12,
         };
 
+        $bankAccountId = $this->bankAccountId !== '' ? (int) $this->bankAccountId : null;
+
         $engine = app(FinancialAnalyticsEngine::class);
-        $this->summary = $engine->getSummary($schoolId);
-        $this->revenueBreakdown = $engine->getRevenueBreakdown($schoolId);
+        $this->summary = $engine->getSummary($schoolId, $bankAccountId);
+        $this->revenueBreakdown = $engine->getRevenueBreakdown($schoolId, $bankAccountId);
         $this->feeAgeing = $engine->getFeeAgeing($schoolId);
-        $this->revenueExpenseTrend = $engine->getRevenueExpenseTrend($schoolId, $months);
-        $this->cashFlowTimeline = $engine->getCashFlowTimeline($schoolId, $months);
-        $this->collectionRateTrend = $engine->getCollectionRateTrend($schoolId, $months);
-        $this->expenseBreakdown = $engine->getExpenseBreakdown($schoolId);
-        $this->paymentMethodBreakdown = $engine->getPaymentMethodBreakdown($schoolId);
+        $this->revenueExpenseTrend = $engine->getRevenueExpenseTrend($schoolId, $months, $bankAccountId);
+        $this->cashFlowTimeline = $engine->getCashFlowTimeline($schoolId, $months, $bankAccountId);
+        $this->collectionRateTrend = $engine->getCollectionRateTrend($schoolId, $months, $bankAccountId);
+        $this->expenseBreakdown = $engine->getExpenseBreakdown($schoolId, $bankAccountId);
+        $this->paymentMethodBreakdown = $engine->getPaymentMethodBreakdown($schoolId, $bankAccountId);
         $this->topDebtors = $engine->getTopDebtors($schoolId, 10);
-        $this->yoyComparison = $engine->getYoYComparison($schoolId);
-        $this->revenueForecast = $engine->getRevenueForecast($schoolId, 6);
+        $this->yoyComparison = $engine->getYoYComparison($schoolId, $bankAccountId);
+        $this->revenueForecast = $engine->getRevenueForecast($schoolId, 6, $bankAccountId);
         $this->budgetVariance = $engine->getBudgetVariance($schoolId);
 
         $this->loadDetailData();
@@ -144,12 +157,22 @@ class ExecutiveFinancialDashboard extends Page
         }
 
         $engine = app(FinancialAnalyticsEngine::class);
+        $bankAccountId = $this->bankAccountId !== '' ? (int) $this->bankAccountId : null;
 
         if ($this->activeDetailTab === 'receivables') {
             $this->agedReceivablesDetail = $engine->getAgedReceivablesDetail($schoolId);
         } elseif ($this->activeDetailTab === 'expenses') {
-            $this->expenseRegister = $engine->getExpenseRegister($schoolId);
+            $this->expenseRegister = $engine->getExpenseRegister($schoolId, $bankAccountId);
         }
+    }
+
+    public function bankAccounts(): Collection
+    {
+        $schoolId = session('current_tenant')->id ?? (Auth::user()?->school_id ?? 1);
+
+        return SchoolBankAccount::where('school_id', $schoolId)
+            ->orderByDesc('is_default')
+            ->get();
     }
 
     public function getDateRangeOptions(): array
@@ -179,7 +202,8 @@ class ExecutiveFinancialDashboard extends Page
         $schoolId = session('current_tenant')->id ?? (Auth::user()?->school_id ?? 1);
 
         $engine = app(FinancialAnalyticsEngine::class);
-        $summary = $engine->getSummary($schoolId);
+        $bankAccountId = $this->bankAccountId !== '' ? (int) $this->bankAccountId : null;
+        $summary = $engine->getSummary($schoolId, $bankAccountId);
         $receivables = $engine->getAgedReceivablesDetail($schoolId);
 
         $filename = 'executive-financial-summary-'.now()->format('Y-m-d').'.csv';
@@ -190,6 +214,7 @@ class ExecutiveFinancialDashboard extends Page
             fputcsv($out, ['Metric', 'Value']);
             fputcsv($out, ['Total Revenue', number_format($summary['total_revenue'] ?? 0, 2)]);
             fputcsv($out, ['Total Expenses', number_format($summary['total_expenses'] ?? 0, 2)]);
+            fputcsv($out, ['Staff Salaries', number_format($summary['total_salaries'] ?? 0, 2)]);
             fputcsv($out, ['Net Surplus', number_format($summary['net_surplus'] ?? 0, 2)]);
             fputcsv($out, ['Outstanding Fees (AR)', number_format($summary['outstanding_student_fees'] ?? 0, 2)]);
 
