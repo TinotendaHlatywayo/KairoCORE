@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Modules\Finance\Models\Expense;
 use Modules\Finance\Models\Invoice;
 use Modules\Finance\Models\Payment;
+use Modules\Finance\Models\RevenueStream;
 use Modules\Finance\Models\SchoolBankAccount;
 use Modules\HR\Services\PayrollCalculationService;
 
@@ -20,7 +21,8 @@ class FinancialAnalyticsEngine
         $totalRevenue = Payment::where('school_id', $schoolId)
             ->where('is_reversed', 0)
             ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId))
-            ->sum('amount');
+            ->sum('amount')
+            + $this->getRevenueStreamTotal($schoolId, $bankAccountId);
         $totalExpenses = Expense::where('school_id', $schoolId)
             ->whereIn('status', ['approved', 'paid'])
             ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId))
@@ -59,6 +61,10 @@ class FinancialAnalyticsEngine
 
     /**
      * Get Revenue Breakdown for interactive charts.
+     *
+     * Payment refunds are excluded here (they are a reduction, not a revenue
+     * source, and negative slices would break the donut chart); non-fee income
+     * is added as an "Other Income" slice from the revenue streams.
      */
     public function getRevenueBreakdown(int $schoolId, ?int $bankAccountId = null): array
     {
@@ -70,15 +76,127 @@ class FinancialAnalyticsEngine
             ->leftJoin('fee_categories', 'fee_structures.fee_category_id', '=', 'fee_categories.id')
             ->groupBy('invoice_items.invoice_id');
 
-        return DB::table('payments')
+        $breakdown = DB::table('payments')
             ->join('invoices', 'payments.invoice_id', '=', 'invoices.id')
             ->joinSub($invoiceCategories, 'inv_cat', 'invoices.id', '=', 'inv_cat.invoice_id')
             ->where('payments.school_id', $schoolId)
             ->where('payments.is_reversed', 0)
+            ->where('payments.is_refund', false)
             ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId, 'payments.bank_account_id'))
             ->select('inv_cat.category as category', DB::raw('SUM(payments.amount) as total'))
             ->groupBy('inv_cat.category')
             ->pluck('total', 'category')
+            ->toArray();
+
+        $streamTotal = $this->getRevenueStreamTotal($schoolId, $bankAccountId);
+        if ($streamTotal > 0) {
+            $breakdown['Other Income'] = $streamTotal;
+        }
+
+        return $breakdown;
+    }
+
+    /**
+     * Total expected income from revenue streams (non-fee income: bus hire,
+     * uniform sales, rentals, ...). Active streams only, bank-account scoped.
+     */
+    public function getRevenueStreamTotal(int $schoolId, ?int $bankAccountId = null): float
+    {
+        return (float) RevenueStream::where('school_id', $schoolId)
+            ->where('is_active', true)
+            ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId, 'account_id'))
+            ->sum('default_amount');
+    }
+
+    /**
+     * Individual revenue streams recorded within a date range, for the audited
+     * Financial Statement line items (name, amount, category, bank account).
+     */
+    public function getRevenueStreamsForPeriod(int $schoolId, ?string $startDate, ?string $endDate, ?int $bankAccountId = null): array
+    {
+        return DB::table('revenue_streams')
+            ->leftJoin('revenue_categories', 'revenue_streams.revenue_category_id', '=', 'revenue_categories.id')
+            ->leftJoin('school_bank_accounts', 'revenue_streams.account_id', '=', 'school_bank_accounts.id')
+            ->where('revenue_streams.school_id', $schoolId)
+            ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId, 'revenue_streams.account_id'))
+            ->when($startDate, fn ($q) => $q->where('revenue_streams.created_at', '>=', $startDate.' 00:00:00'))
+            ->when($endDate, fn ($q) => $q->where('revenue_streams.created_at', '<=', $endDate.' 23:59:59'))
+            ->select(
+                'revenue_streams.id',
+                'revenue_streams.name',
+                'revenue_streams.default_amount',
+                'revenue_streams.created_at',
+                'revenue_categories.name as category',
+                'school_bank_accounts.bank_name as bank'
+            )
+            ->orderByDesc('revenue_streams.created_at')
+            ->get()
+            ->map(fn ($row) => [
+                'id' => (int) $row->id,
+                'name' => $row->name,
+                'amount' => (float) $row->default_amount,
+                'category' => $row->category ?? __('Other Income'),
+                'bank' => $row->bank,
+                'date' => $row->created_at ? Carbon::parse($row->created_at)->format('Y-m-d') : null,
+            ])
+            ->toArray();
+    }
+
+    /**
+     * Individual refunds issued within a date range (name/reference, amount,
+     * date) for the audited Financial Statement line items.
+     */
+    public function getRefundsForPeriod(int $schoolId, ?string $startDate, ?string $endDate, ?int $bankAccountId = null): array
+    {
+        return Payment::where('school_id', $schoolId)
+            ->where('is_refund', true)
+            ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId))
+            ->when($startDate, fn ($q) => $q->where('created_at', '>=', $startDate.' 00:00:00'))
+            ->when($endDate, fn ($q) => $q->where('created_at', '<=', $endDate.' 23:59:59'))
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(fn (Payment $payment) => [
+                'reference' => $payment->reference_number ?: $payment->receipt_number,
+                'amount' => abs((float) $payment->amount),
+                'date' => $payment->created_at->format('Y-m-d'),
+                'account' => $payment->bankAccount?->bank_name,
+            ])
+            ->toArray();
+    }
+
+    /**
+     * Individual expenses (name, category, date, amount) within a date range,
+     * for the audited Financial Statement line items.
+     */
+    public function getExpensesForPeriod(int $schoolId, ?string $startDate, ?string $endDate, ?int $bankAccountId = null): array
+    {
+        return DB::table('expenses')
+            ->leftJoin('expense_types', 'expenses.expense_type_id', '=', 'expense_types.id')
+            ->leftJoin('expense_categories', 'expenses.expense_category_id', '=', 'expense_categories.id')
+            ->leftJoin('expense_categories as type_categories', 'expense_types.expense_category_id', '=', 'type_categories.id')
+            ->where('expenses.school_id', $schoolId)
+            ->whereIn('expenses.status', ['approved', 'paid'])
+            ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId, 'expenses.bank_account_id'))
+            ->when($startDate, fn ($q) => $q->where('expenses.expense_date', '>=', $startDate))
+            ->when($endDate, fn ($q) => $q->where('expenses.expense_date', '<=', $endDate))
+            ->select(
+                'expenses.reference_number',
+                'expenses.expense_name',
+                'expenses.amount',
+                'expenses.expense_date',
+                'expenses.status',
+                DB::raw('COALESCE(expense_categories.name, type_categories.name) as category')
+            )
+            ->orderByDesc('expenses.expense_date')
+            ->get()
+            ->map(fn ($row) => [
+                'reference' => $row->reference_number,
+                'name' => $row->expense_name ?: ($row->reference_number ?? __('Expense')),
+                'amount' => (float) $row->amount,
+                'category' => $row->category ?? __('Uncategorised'),
+                'date' => $row->expense_date,
+                'status' => $row->status,
+            ])
             ->toArray();
     }
 
@@ -141,16 +259,18 @@ class FinancialAnalyticsEngine
 
         $expenseData = DB::table('expenses')
             ->select(
-                DB::raw('DATE_FORMAT(created_at, "%Y-%m") as period'),
-                DB::raw('SUM(amount) as total')
+                DB::raw('DATE_FORMAT(expenses.expense_date, "%Y-%m") as period'),
+                DB::raw('SUM(expenses.amount) as total')
             )
-            ->where('school_id', $schoolId)
-            ->whereIn('status', ['approved', 'paid'])
-            ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId))
-            ->whereBetween('created_at', [$startDate, $endDate])
+            ->where('expenses.school_id', $schoolId)
+            ->whereIn('expenses.status', ['approved', 'paid'])
+            ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId, 'expenses.bank_account_id'))
+            ->whereBetween('expenses.expense_date', [$startDate->toDateString(), $endDate->toDateString()])
             ->groupBy('period')
             ->pluck('total', 'period')
             ->toArray();
+
+        $streamData = $this->revenueStreamsMonthly($schoolId, $startDate, $endDate, $bankAccountId);
 
         $periods = [];
         $current = $startDate->copy();
@@ -166,7 +286,7 @@ class FinancialAnalyticsEngine
         $net = [];
 
         foreach ($periods as $key => $label) {
-            $rev = $revenueData[$key] ?? 0;
+            $rev = ($revenueData[$key] ?? 0) + ($streamData[$key] ?? 0);
             $exp = $expenseData[$key] ?? 0;
             $revenue[] = (float) $rev;
             $expenses[] = (float) $exp;
@@ -205,16 +325,18 @@ class FinancialAnalyticsEngine
 
         $cashOut = DB::table('expenses')
             ->select(
-                DB::raw('DATE_FORMAT(created_at, "%Y-%m") as period'),
-                DB::raw('SUM(amount) as total')
+                DB::raw('DATE_FORMAT(expenses.expense_date, "%Y-%m") as period'),
+                DB::raw('SUM(expenses.amount) as total')
             )
-            ->where('school_id', $schoolId)
-            ->whereIn('status', ['approved', 'paid'])
-            ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId))
-            ->whereBetween('created_at', [$startDate, $endDate])
+            ->where('expenses.school_id', $schoolId)
+            ->whereIn('expenses.status', ['approved', 'paid'])
+            ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId, 'expenses.bank_account_id'))
+            ->whereBetween('expenses.expense_date', [$startDate->toDateString(), $endDate->toDateString()])
             ->groupBy('period')
             ->pluck('total', 'period')
             ->toArray();
+
+        $streamData = $this->revenueStreamsMonthly($schoolId, $startDate, $endDate, $bankAccountId);
 
         $periods = [];
         $current = $startDate->copy();
@@ -232,7 +354,7 @@ class FinancialAnalyticsEngine
         $cumulativeFlow = [];
 
         foreach ($periods as $key => $label) {
-            $in = (float) ($cashIn[$key] ?? 0);
+            $in = (float) ($cashIn[$key] ?? 0) + (float) ($streamData[$key] ?? 0);
             $out = (float) ($cashOut[$key] ?? 0);
             $net = $in - $out;
             $cumulative += $net;
@@ -318,17 +440,25 @@ class FinancialAnalyticsEngine
 
     /**
      * Get Expense Breakdown by Category.
+     *
+     * Categories are read from the expense's direct category first, falling back
+     * to the category of its expense type, so both form-recorded expenses
+     * (direct category) and legacy type-classified expenses are included.
      */
     public function getExpenseBreakdown(int $schoolId, ?int $bankAccountId = null): array
     {
         return DB::table('expenses')
-            ->join('expense_types', 'expenses.expense_type_id', '=', 'expense_types.id')
-            ->join('expense_categories', 'expense_types.expense_category_id', '=', 'expense_categories.id', 'left')
+            ->leftJoin('expense_types', 'expenses.expense_type_id', '=', 'expense_types.id')
+            ->leftJoin('expense_categories', 'expenses.expense_category_id', '=', 'expense_categories.id')
+            ->leftJoin('expense_categories as type_categories', 'expense_types.expense_category_id', '=', 'type_categories.id')
             ->where('expenses.school_id', $schoolId)
             ->whereIn('expenses.status', ['approved', 'paid'])
             ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId, 'expenses.bank_account_id'))
-            ->select('expense_categories.name as category', DB::raw('SUM(expenses.amount) as total'))
-            ->groupBy('expense_categories.name')
+            ->select(
+                DB::raw('COALESCE(expense_categories.name, type_categories.name) as category'),
+                DB::raw('SUM(expenses.amount) as total')
+            )
+            ->groupBy('category')
             ->pluck('total', 'category')
             ->toArray();
     }
@@ -359,14 +489,15 @@ class FinancialAnalyticsEngine
     {
         return DB::table('expenses')
             ->leftJoin('expense_types', 'expenses.expense_type_id', '=', 'expense_types.id')
-            ->leftJoin('expense_categories', 'expense_types.expense_category_id', '=', 'expense_categories.id')
+            ->leftJoin('expense_categories', 'expenses.expense_category_id', '=', 'expense_categories.id')
+            ->leftJoin('expense_categories as type_categories', 'expense_types.expense_category_id', '=', 'type_categories.id')
             ->leftJoin('suppliers', 'expenses.supplier_id', '=', 'suppliers.id')
             ->leftJoin('users', 'expenses.user_id', '=', 'users.id')
             ->where('expenses.school_id', $schoolId)
             ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId, 'expenses.bank_account_id'))
             ->select(
                 'expenses.reference_number',
-                'expense_categories.name as category',
+                DB::raw('COALESCE(expense_categories.name, type_categories.name) as category'),
                 'expense_types.name as type',
                 'suppliers.name as supplier',
                 'expenses.amount',
@@ -539,13 +670,15 @@ class FinancialAnalyticsEngine
             ->where('is_reversed', 0)
             ->whereYear('created_at', $currentYear)
             ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId))
-            ->sum('amount');
+            ->sum('amount')
+            + $this->revenueStreamsYearly($schoolId, $currentYear, $bankAccountId);
 
         $lastYearRevenue = Payment::where('school_id', $schoolId)
             ->where('is_reversed', 0)
             ->whereYear('created_at', $lastYear)
             ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId))
-            ->sum('amount');
+            ->sum('amount')
+            + $this->revenueStreamsYearly($schoolId, $lastYear, $bankAccountId);
 
         $growth = $lastYearRevenue > 0
             ? round((($currentRevenue - $lastYearRevenue) / $lastYearRevenue) * 100, 1)
@@ -558,5 +691,37 @@ class FinancialAnalyticsEngine
             'last_year_revenue' => (float) $lastYearRevenue,
             'yoy_growth_percent' => $growth,
         ];
+    }
+
+    /**
+     * Monthly revenue stream income (grouped by the month each stream was
+     * created) within a range, bank-account scoped when requested.
+     */
+    private function revenueStreamsMonthly(int $schoolId, Carbon $startDate, Carbon $endDate, ?int $bankAccountId = null): array
+    {
+        return DB::table('revenue_streams')
+            ->select(
+                DB::raw('DATE_FORMAT(created_at, "%Y-%m") as period'),
+                DB::raw('SUM(default_amount) as total')
+            )
+            ->where('school_id', $schoolId)
+            ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId, 'account_id'))
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->groupBy('period')
+            ->pluck('total', 'period')
+            ->toArray();
+    }
+
+    /**
+     * Total revenue stream income recorded within a calendar year, bank-account
+     * scoped when requested.
+     */
+    private function revenueStreamsYearly(int $schoolId, int $year, ?int $bankAccountId = null): float
+    {
+        return (float) DB::table('revenue_streams')
+            ->where('school_id', $schoolId)
+            ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId, 'account_id'))
+            ->whereYear('created_at', $year)
+            ->sum('default_amount');
     }
 }

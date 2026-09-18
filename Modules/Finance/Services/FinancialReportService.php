@@ -47,12 +47,30 @@ class FinancialReportService
             ['Generated: '.$data['generatedAt']],
             [''],
             ['Description', 'Amount (USD)'],
-            ['Total Revenue / Inflows', number_format($data['totalRevenue'], 2)],
-            ['Total Refunds', '-'.number_format($data['totalRefunds'], 2)],
-            ['Total Expenses & Outflows', '-'.number_format($data['totalExpenses'], 2)],
-            ['Staff Salaries', '-'.number_format($data['totalSalaries'] ?? 0, 2)],
-            ['Net Cash Flow Balance', number_format($data['netCashFlow'], 2)],
+            ['Opening Bank Balance', number_format($data['openingBalance'] ?? 0, 2)],
+            ['Total Fees Collected (school fees in period)', '+'.number_format($data['feeRevenue'] ?? 0, 2)],
         ];
+
+        foreach ($data['revenueStreams'] ?? [] as $stream) {
+            $rows[] = ['  - '.$stream['name'].' ('.$stream['category'].')'.($stream['date'] ? ' — '.$stream['date'] : ''), '+'.number_format($stream['amount'], 2)];
+        }
+
+        $rows[] = ['Total Revenue / Inflows (Fees + Other Income)', '+'.number_format($data['totalRevenue'], 2)];
+        $rows[] = ['Less Refunds Issued', '-'.number_format($data['totalRefunds'], 2)];
+
+        foreach ($data['refundItems'] ?? [] as $refund) {
+            $rows[] = ['  - '.($refund['reference'] ?? 'Refund').($refund['date'] ? ' — '.$refund['date'] : ''), '-'.number_format($refund['amount'], 2)];
+        }
+
+        $rows[] = ['Total Expenses & Outflows', '-'.number_format($data['totalExpenses'], 2)];
+
+        foreach ($data['expenseItems'] ?? [] as $expense) {
+            $rows[] = ['  - '.$expense['name'].' ('.$expense['category'].')'.($expense['date'] ? ' — '.$expense['date'] : ''), '-'.number_format($expense['amount'], 2)];
+        }
+
+        $rows[] = ['  Of which: Staff Salaries', '-'.number_format($data['totalSalaries'] ?? 0, 2)];
+        $rows[] = ['Net Cash Flow Balance', number_format($data['netCashFlow'], 2)];
+        $rows[] = ['Closing Balance', number_format($data['closingBalance'] ?? (($data['openingBalance'] ?? 0) + $data['netCashFlow']), 2)];
 
         return response()->streamDownload(function () use ($rows) {
             $out = fopen('php://output', 'w');
@@ -65,7 +83,7 @@ class FinancialReportService
 
     protected static function downloadTxt(array $data, $startDate, $endDate): StreamedResponse
     {
-        $lines = implode(PHP_EOL, [
+        $lines = [
             $data['school'],
             trim($data['companyTagline'] ?? ''),
             '',
@@ -74,16 +92,34 @@ class FinancialReportService
             'Bank Account: '.($data['bankAccountName'] ?? 'All Accounts (Combined)'),
             'Generated: '.$data['generatedAt'],
             '',
-            'Description                      Amount (USD)',
-            'Total Revenue / Inflows          '.number_format($data['totalRevenue'], 2),
-            'Total Refunds                    -'.number_format($data['totalRefunds'], 2),
-            'Total Expenses & Outflows        -'.number_format($data['totalExpenses'], 2),
-            'Staff Salaries                  -'.number_format($data['totalSalaries'] ?? 0, 2),
-            'Net Cash Flow Balance            '.number_format($data['netCashFlow'], 2),
-        ]);
+            'Description                                    Amount (USD)',
+            'Opening Bank Balance                           '.number_format($data['openingBalance'] ?? 0, 2),
+            'Total Fees Collected (school fees in period)  +'.number_format($data['feeRevenue'] ?? 0, 2),
+        ];
+
+        foreach ($data['revenueStreams'] ?? [] as $stream) {
+            $lines[] = '  - '.$stream['name'].' ('.$stream['category'].')'.($stream['date'] ? ' — '.$stream['date'] : '').'  +'.number_format($stream['amount'], 2);
+        }
+
+        $lines[] = 'Total Revenue / Inflows (Fees + Other Income)  +'.number_format($data['totalRevenue'], 2);
+        $lines[] = 'Less Refunds Issued                            -'.number_format($data['totalRefunds'], 2);
+
+        foreach ($data['refundItems'] ?? [] as $refund) {
+            $lines[] = '  - '.($refund['reference'] ?? 'Refund').($refund['date'] ? ' — '.$refund['date'] : '').'  -'.number_format($refund['amount'], 2);
+        }
+
+        $lines[] = 'Total Expenses & Outflows                      -'.number_format($data['totalExpenses'], 2);
+
+        foreach ($data['expenseItems'] ?? [] as $expense) {
+            $lines[] = '  - '.$expense['name'].' ('.$expense['category'].')'.($expense['date'] ? ' — '.$expense['date'] : '').'  -'.number_format($expense['amount'], 2);
+        }
+
+        $lines[] = '  Of which: Staff Salaries                    -'.number_format($data['totalSalaries'] ?? 0, 2);
+        $lines[] = 'Net Cash Flow Balance                           '.number_format($data['netCashFlow'], 2);
+        $lines[] = 'Closing Balance                                 '.number_format($data['closingBalance'] ?? (($data['openingBalance'] ?? 0) + $data['netCashFlow']), 2);
 
         return response()->streamDownload(
-            fn () => print ($lines),
+            fn () => print (implode(PHP_EOL, $lines)),
             'financial-statement-'.$startDate->toDateString().'-to-'.$endDate->toDateString().'.txt',
             ['Content-Type' => 'text/plain']
         );

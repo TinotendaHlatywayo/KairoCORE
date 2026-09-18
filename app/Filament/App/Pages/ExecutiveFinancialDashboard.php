@@ -51,9 +51,13 @@ class ExecutiveFinancialDashboard extends Page
 
     public string $activeDetailTab = 'debtors';
 
+    public int $forecastMonths = 6;
+
     public array $summary = [];
 
     public array $revenueBreakdown = [];
+
+    public array $revenueStreams = [];
 
     public array $feeAgeing = [];
 
@@ -101,6 +105,11 @@ class ExecutiveFinancialDashboard extends Page
         $this->loadDetailData();
     }
 
+    public function updatedForecastMonths(): void
+    {
+        $this->loadData();
+    }
+
     #[On('refresh-dashboard')]
     public function refreshDashboard(): void
     {
@@ -131,6 +140,7 @@ class ExecutiveFinancialDashboard extends Page
         $engine = app(FinancialAnalyticsEngine::class);
         $this->summary = $engine->getSummary($schoolId, $bankAccountId);
         $this->revenueBreakdown = $engine->getRevenueBreakdown($schoolId, $bankAccountId);
+        $this->revenueStreams = $engine->getRevenueStreamsForPeriod($schoolId, null, null, $bankAccountId);
         $this->feeAgeing = $engine->getFeeAgeing($schoolId);
         $this->revenueExpenseTrend = $engine->getRevenueExpenseTrend($schoolId, $months, $bankAccountId);
         $this->cashFlowTimeline = $engine->getCashFlowTimeline($schoolId, $months, $bankAccountId);
@@ -139,7 +149,7 @@ class ExecutiveFinancialDashboard extends Page
         $this->paymentMethodBreakdown = $engine->getPaymentMethodBreakdown($schoolId, $bankAccountId);
         $this->topDebtors = $engine->getTopDebtors($schoolId, 10);
         $this->yoyComparison = $engine->getYoYComparison($schoolId, $bankAccountId);
-        $this->revenueForecast = $engine->getRevenueForecast($schoolId, 6, $bankAccountId);
+        $this->revenueForecast = $engine->getRevenueForecast($schoolId, $this->forecastMonths, $bankAccountId);
         $this->budgetVariance = $engine->getBudgetVariance($schoolId);
 
         $this->loadDetailData();
@@ -184,6 +194,18 @@ class ExecutiveFinancialDashboard extends Page
             '6_months' => __('Last 6 Months'),
             '12_months' => __('Last 12 Months'),
             '24_months' => __('Last 24 Months'),
+        ];
+    }
+
+    public function getForecastMonthOptions(): array
+    {
+        return [
+            3 => __('3 Months'),
+            6 => __('6 Months'),
+            9 => __('9 Months'),
+            12 => __('12 Months'),
+            18 => __('18 Months'),
+            24 => __('24 Months'),
         ];
     }
 

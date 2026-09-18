@@ -2,11 +2,13 @@
 
 namespace App\Filament\App\Pages\Finance;
 
+use Carbon\Carbon;
 use Filament\Pages\Page;
 use Modules\Academics\Models\Term;
 use Modules\Finance\Models\Expense;
 use Modules\Finance\Models\Payment;
 use Modules\Finance\Models\SchoolBankAccount;
+use Modules\Finance\Services\FinancialAnalyticsEngine;
 use Modules\HR\Services\PayrollCalculationService;
 
 class FinancialStatementPage extends Page
@@ -24,13 +26,23 @@ class FinancialStatementPage extends Page
         return __('Financial Statements');
     }
 
-    public string $range = 'month'; // day, week, month, year
+    public string $range = 'month'; // day, week, month, year, custom
 
     public string $bankAccountId = ''; // '' => all accounts combined
+
+    public string $startDate = ''; // yyyy-mm-dd (custom range)
+
+    public string $endDate = '';   // yyyy-mm-dd (custom range)
 
     public function mount(): void
     {
         $this->bankAccountId = (string) (request()->query('bank_account') ?? session('finance_bank_account', ''));
+        $this->startDate = (string) request()->query('start_date', '');
+        $this->endDate = (string) request()->query('end_date', '');
+
+        if ($this->startDate && $this->endDate) {
+            $this->range = 'custom';
+        }
     }
 
     public function updatedBankAccountId(): void
@@ -38,9 +50,65 @@ class FinancialStatementPage extends Page
         session(['finance_bank_account' => $this->bankAccountId ?: null]);
     }
 
+    public function updatedRange(): void
+    {
+        if ($this->range === 'custom') {
+            return;
+        }
+
+        [$start, $end] = $this->effectiveDateRange();
+        $this->startDate = $start->toDateString();
+        $this->endDate = $end->toDateString();
+    }
+
+    public function updatedStartDate(): void
+    {
+        if ($this->startDate && ! $this->endDate) {
+            $this->endDate = now()->toDateString();
+        }
+
+        if ($this->startDate) {
+            $this->range = 'custom';
+        }
+    }
+
+    public function updatedEndDate(): void
+    {
+        if ($this->endDate) {
+            $this->range = 'custom';
+        }
+    }
+
     public function getTitle(): string
     {
         return __('School Financial Statement & Cash Flow');
+    }
+
+    /**
+     * Resolve the reporting window. Explicit custom dates win; otherwise the
+     * preset range (day/week/month/year) is used.
+     *
+     * @return array{Carbon, Carbon}
+     */
+    protected function effectiveDateRange(): array
+    {
+        if ($this->startDate && $this->endDate) {
+            return [
+                Carbon::parse($this->startDate)->startOfDay(),
+                Carbon::parse($this->endDate)->endOfDay(),
+            ];
+        }
+
+        $end = now();
+        $start = match ($this->range) {
+            'day' => $end->copy()->subDay(),
+            'week' => $end->copy()->subWeek(),
+            'month' => $end->copy()->subMonth(),
+            'year' => $end->copy()->subYear(),
+            default => $end->copy()->subMonth(),
+        };
+
+        return [$start, $end];
     }
 
     protected function getViewData(): array
@@ -67,41 +135,62 @@ class FinancialStatementPage extends Page
             ? $bankAccounts->firstWhere('id', (int) $this->bankAccountId)
             : null;
 
-        $startDate = match ($this->range) {
-            'day' => now()->subDay(),
-            'week' => now()->subWeek(),
-            'month' => now()->subMonth(),
-            'year' => now()->subYear(),
-            default => now()->subMonth(),
-        };
+        [$startDate, $endDate] = $this->effectiveDateRange();
+        $bankAccountId = $this->bankAccountId ? (int) $this->bankAccountId : null;
 
-        $totalRevenue = Payment::where('school_id', $schoolId)
-            ->when($this->bankAccountId, SchoolBankAccount::filterClosure((int) $this->bankAccountId, $schoolId))
+        // School fees collected within the reporting window.
+        $feeRevenue = Payment::where('school_id', $schoolId)
+            ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId))
             ->where('is_refund', false)
             ->where('created_at', '>=', $startDate)
+            ->where('created_at', '<=', $endDate)
             ->sum('amount');
 
         // Refund rows are stored as negative amounts, so normalise to a positive
         // "amount refunded" figure. Callers render this as a deduction (-$X).
         $totalRefunds = abs((float) Payment::where('school_id', $schoolId)
-            ->when($this->bankAccountId, SchoolBankAccount::filterClosure((int) $this->bankAccountId, $schoolId))
+            ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId))
             ->where('is_refund', true)
             ->where('created_at', '>=', $startDate)
+            ->where('created_at', '<=', $endDate)
             ->sum('amount'));
 
         $totalExpenses = Expense::where('school_id', $schoolId)
-            ->when($this->bankAccountId, SchoolBankAccount::filterClosure((int) $this->bankAccountId, $schoolId))
+            ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId))
             ->where('expense_date', '>=', $startDate->toDateString())
+            ->where('expense_date', '<=', $endDate->toDateString())
             ->sum('amount');
 
         $salariesExpense = app(PayrollCalculationService::class)
             ->payrollExpenseTotal(
                 $schoolId,
                 $startDate->toDateString(),
-                now()->toDateString(),
-                $this->bankAccountId ? (int) $this->bankAccountId : null
+                $endDate->toDateString(),
+                $bankAccountId
             );
 
+        $engine = app(FinancialAnalyticsEngine::class);
+        $revenueStreams = $engine->getRevenueStreamsForPeriod(
+            $schoolId,
+            $startDate->toDateString(),
+            $endDate->toDateString(),
+            $bankAccountId
+        );
+        $revenueStreamTotal = array_sum(array_column($revenueStreams, 'amount'));
+        $refundItems = $engine->getRefundsForPeriod(
+            $schoolId,
+            $startDate->toDateString(),
+            $endDate->toDateString(),
+            $bankAccountId
+        );
+        $expenseItems = $engine->getExpensesForPeriod(
+            $schoolId,
+            $startDate->toDateString(),
+            $endDate->toDateString(),
+            $bankAccountId
+        );
+
+        $totalRevenue = $feeRevenue + $revenueStreamTotal;
         $netCashFlow = $totalRevenue - $totalRefunds - $totalExpenses;
 
         // Opening Bank Balance must reflect what the account(s) held at the
@@ -128,13 +217,18 @@ class FinancialStatementPage extends Page
             'bankAccountId' => $this->bankAccountId,
             'allAccounts' => $this->bankAccountId === '',
             'openingBalance' => $openingBalance,
-            'totalRevenue' => $totalRevenue,
-            'totalRefunds' => $totalRefunds,
-            'totalExpenses' => $totalExpenses,
+            'feeRevenue' => (float) $feeRevenue,
+            'revenueStreams' => $revenueStreams,
+            'revenueStreamTotal' => (float) $revenueStreamTotal,
+            'totalRevenue' => (float) $totalRevenue,
+            'totalRefunds' => (float) $totalRefunds,
+            'refundItems' => $refundItems,
+            'totalExpenses' => (float) $totalExpenses,
+            'expenseItems' => $expenseItems,
             'salariesExpense' => $salariesExpense,
-            'netCashFlow' => $netCashFlow,
-            'startDate' => $startDate->toDateString(),
-            'endDate' => now()->toDateString(),
+            'netCashFlow' => (float) $netCashFlow,
+            'startDateDisp' => $startDate->toDateString(),
+            'endDateDisp' => $endDate->toDateString(),
             'company' => $school?->name ?? config('app.name'),
             'companyTagline' => $school?->motto ?? null,
             'companyAddress' => $school?->physical_address ?? '',
