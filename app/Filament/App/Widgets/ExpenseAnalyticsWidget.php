@@ -6,6 +6,7 @@ use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Livewire\Attributes\On;
 use Modules\Finance\Models\Expense;
+use Modules\Finance\Models\SchoolBankAccount;
 
 class ExpenseAnalyticsWidget extends BaseWidget
 {
@@ -31,7 +32,7 @@ class ExpenseAnalyticsWidget extends BaseWidget
         }
 
         $query = Expense::where('school_id', $schoolId)
-            ->when($this->bankAccountId, fn ($q) => $q->where('bank_account_id', $this->bankAccountId));
+            ->when($this->bankAccountId, SchoolBankAccount::filterClosure($this->bankAccountId, $schoolId));
 
         $totalExpenses = (float) (clone $query)->sum('amount');
 

@@ -15,9 +15,13 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 use Livewire\Livewire;
+use Modules\Finance\Models\Expense;
+use Modules\Finance\Models\Invoice;
+use Modules\Finance\Models\Payment;
 use Modules\Finance\Models\RevenueCategory;
 use Modules\Finance\Models\RevenueStream;
 use Modules\Finance\Models\SchoolBankAccount;
+use Modules\Finance\Services\FinancialAnalyticsEngine;
 
 class RevenueStreamBankAccountTest extends TestCase
 {
@@ -26,6 +30,12 @@ class RevenueStreamBankAccountTest extends TestCase
     private array $preExistingStreamIds = [];
 
     private array $preExistingAccountIds = [];
+
+    private array $preExistingPaymentIds = [];
+
+    private array $preExistingExpenseIds = [];
+
+    private array $preExistingInvoiceIds = [];
 
     protected function setUp(): void
     {
@@ -45,11 +55,17 @@ class RevenueStreamBankAccountTest extends TestCase
 
         $this->preExistingStreamIds = RevenueStream::withoutGlobalScopes()->pluck('id')->all();
         $this->preExistingAccountIds = SchoolBankAccount::withoutTenantScope()->pluck('id')->all();
+        $this->preExistingPaymentIds = Payment::withoutGlobalScopes()->pluck('id')->all();
+        $this->preExistingExpenseIds = Expense::withoutGlobalScopes()->pluck('id')->all();
+        $this->preExistingInvoiceIds = Invoice::withoutGlobalScopes()->pluck('id')->all();
     }
 
     protected function tearDown(): void
     {
         RevenueStream::withoutGlobalScopes()->whereNotIn('id', $this->preExistingStreamIds)->forceDelete();
+        Payment::withoutGlobalScopes()->whereNotIn('id', $this->preExistingPaymentIds)->forceDelete();
+        Expense::withoutGlobalScopes()->whereNotIn('id', $this->preExistingExpenseIds)->forceDelete();
+        Invoice::withoutGlobalScopes()->whereNotIn('id', $this->preExistingInvoiceIds)->forceDelete();
         SchoolBankAccount::withoutTenantScope()->whereNotIn('id', $this->preExistingAccountIds)->forceDelete();
         parent::tearDown();
     }
@@ -109,5 +125,85 @@ class RevenueStreamBankAccountTest extends TestCase
         Livewire::test(ExecutiveFinancialDashboard::class)->assertOk();
         Livewire::test(ListExpenses::class)->assertOk();
         Livewire::test(BankAccountSwitcherWidget::class)->assertOk();
+    }
+
+    public function test_unassigned_transactions_count_toward_default_bank_account(): void
+    {
+        $bankDefault = SchoolBankAccount::create([
+            'school_id' => $this->schoolId,
+            'bank_name' => 'Temp Default Bank',
+            'account_name' => 'Default Account',
+            'account_number' => 'DFT-'.uniqid(),
+            'balance' => 0.00,
+            'is_active' => true,
+            'is_default' => true,
+        ]);
+        $bankOther = SchoolBankAccount::create([
+            'school_id' => $this->schoolId,
+            'bank_name' => 'Temp Other Bank',
+            'account_name' => 'Other Account',
+            'account_number' => 'OTH-'.uniqid(),
+            'balance' => 0.00,
+            'is_active' => true,
+            'is_default' => false,
+        ]);
+
+        $invoice = Invoice::create([
+            'school_id' => $this->schoolId,
+            'invoice_number' => 'INV-'.uniqid(),
+        ]);
+
+        try {
+            $engine = app(FinancialAnalyticsEngine::class);
+
+            $beforeDefault = $engine->getSummary($this->schoolId, (int) $bankDefault->id);
+            $beforeOther = $engine->getSummary($this->schoolId, (int) $bankOther->id);
+
+            Payment::create([
+                'school_id' => $this->schoolId,
+                'invoice_id' => $invoice->id,
+                'amount' => 50,
+                'bank_account_id' => null,
+                'is_reversed' => false,
+                'payment_date' => now(),
+            ]);
+            Expense::create([
+                'school_id' => $this->schoolId,
+                'expense_name' => 'Unassigned expense',
+                'amount' => 50,
+                'expense_date' => now()->toDateString(),
+                'status' => 'paid',
+                'bank_account_id' => null,
+            ]);
+
+            $afterDefault = $engine->getSummary($this->schoolId, (int) $bankDefault->id);
+            $afterOther = $engine->getSummary($this->schoolId, (int) $bankOther->id);
+
+            $this->assertSame(
+                50.0,
+                (float) ($afterDefault['total_revenue'] - $beforeDefault['total_revenue']),
+                'Default bank must gain revenue from the unassigned payment.'
+            );
+            $this->assertSame(
+                50.0,
+                (float) ($afterDefault['total_expenses'] - $beforeDefault['total_expenses']),
+                'Default bank must gain the unassigned expense.'
+            );
+            $this->assertSame(
+                0.0,
+                (float) ($afterOther['total_revenue'] - $beforeOther['total_revenue']),
+                'Unassigned transactions must NOT count toward a non-default bank.'
+            );
+            $this->assertSame(
+                0.0,
+                (float) ($afterOther['total_expenses'] - $beforeOther['total_expenses']),
+                'Unassigned transactions must NOT count toward a non-default bank.'
+            );
+        } finally {
+            Payment::withoutGlobalScopes()->where('invoice_id', $invoice->id)->forceDelete();
+            Expense::withoutGlobalScopes()->where('expense_name', 'Unassigned expense')->forceDelete();
+            Invoice::withoutGlobalScopes()->where('id', $invoice->id)->forceDelete();
+            SchoolBankAccount::withoutTenantScope()->whereIn('id', [$bankDefault->id, $bankOther->id])->forceDelete();
+        }
     }
 }

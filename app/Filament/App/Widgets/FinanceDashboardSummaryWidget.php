@@ -39,17 +39,17 @@ class FinanceDashboardSummaryWidget extends BaseWidget
         $schoolId = current_tenant()?->id ?? auth()->user()?->school_id ?? 5;
 
         $totalRevenue = (float) Payment::where('school_id', $schoolId)
-            ->when($this->bankAccountId, fn ($q) => $q->where('bank_account_id', $this->bankAccountId))
+            ->when($this->bankAccountId, SchoolBankAccount::filterClosure($this->bankAccountId, $schoolId))
             ->where(fn ($q) => $q->where('is_refund', false)->orWhereNull('is_refund'))
             ->sum('amount');
         // Refund rows are stored as negative amounts; normalise to a positive
         // "amount refunded" figure so it is subtracted, not added.
         $totalRefunds = abs((float) Payment::where('school_id', $schoolId)
-            ->when($this->bankAccountId, fn ($q) => $q->where('bank_account_id', $this->bankAccountId))
+            ->when($this->bankAccountId, SchoolBankAccount::filterClosure($this->bankAccountId, $schoolId))
             ->where('is_refund', true)
             ->sum('amount'));
         $totalExpenses = (float) Expense::where('school_id', $schoolId)
-            ->when($this->bankAccountId, fn ($q) => $q->where('bank_account_id', $this->bankAccountId))
+            ->when($this->bankAccountId, SchoolBankAccount::filterClosure($this->bankAccountId, $schoolId))
             ->sum('amount');
 
         $net = $totalRevenue - $totalRefunds - $totalExpenses;

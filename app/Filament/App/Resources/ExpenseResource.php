@@ -212,7 +212,19 @@ class ExpenseResource extends Resource
                     ->relationship('expenseCategory', 'name'),
                 Tables\Filters\SelectFilter::make('bank_account_id')
                     ->label(__('Bank Account'))
-                    ->relationship('bankAccount', 'bank_name'),
+                    ->relationship('bankAccount', 'bank_name')
+                    ->query(function ($query, array $state) {
+                        if (! ($state['value'] ?? null)) {
+                            return $query;
+                        }
+
+                        $schoolId = current_tenant()?->id ?? auth()->user()?->school_id ?? 1;
+
+                        $query->when(
+                            (int) $state['value'],
+                            SchoolBankAccount::filterClosure((int) $state['value'], $schoolId, 'expenses.bank_account_id')
+                        );
+                    }),
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
                         'pending' => __('Pending'),
