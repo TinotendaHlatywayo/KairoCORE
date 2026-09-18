@@ -161,26 +161,14 @@ class PayrollPeriodResource extends Resource
                             return;
                         }
 
-                        Notification::make()
-                            ->title(__('Payroll Period Locked & Approved'))
-                            ->body(__('Deducted $').number_format($result['outflow'], 2).__(' from ').($result['bank_account'] ?? ''))
-                            ->success()
-                            ->send();
-                    }),
-
-                // UPGRADED STAGE 3 ACTION: RELEASE & PAY
-                Action::make('release')
-                    ->label(__('Release & Pay'))
-                    ->icon('heroicon-o-paper-airplane')
-                    ->color('success')
-                    ->requiresConfirmation()
-                    ->visible(fn ($record) => $record->status === 'approved')
-                    ->action(function ($record) {
-                        // Call the corrected release run method
+                        // Approval is the final stage: releasing payslips and
+                        // amortizing recovered loans used to be a separate
+                        // "Release & Pay" step, which has been folded in here.
                         app(PayrollCalculationService::class)->releaseRun($record);
 
                         Notification::make()
-                            ->title(__('Payslips Released & Loan Amortizations Processed'))
+                            ->title(__('Payroll Approved, Deducted & Released'))
+                            ->body(__('Deducted $').number_format($result['outflow'], 2).__(' from ').($result['bank_account'] ?? '').__('. Payslips have been released.'))
                             ->success()
                             ->send();
                     }),
