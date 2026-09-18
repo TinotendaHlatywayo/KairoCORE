@@ -26,7 +26,7 @@ class FinancialReportService
 
         $pdf = Pdf::setOptions(['isRemoteEnabled' => true, 'defaultFont' => 'sans-serif'])
             ->loadHtml($html)
-            ->setPaper('a4', 'landscape');
+            ->setPaper('a4', 'portrait');
 
         return response()->streamDownload(
             fn () => print ($pdf->output()),
