@@ -7,6 +7,8 @@ use App\Filament\App\Pages\Finance\FinancialStatementPage;
 use App\Filament\App\Resources\ExpenseResource\Pages\ListExpenses;
 use App\Filament\App\Resources\RevenueStreamResource\Pages\CreateRevenueStream;
 use App\Filament\App\Widgets\BankAccountSwitcherWidget;
+use App\Filament\App\Widgets\ExpenseAnalyticsWidget;
+use App\Filament\App\Widgets\FinanceDashboardSummaryWidget;
 use App\Models\School;
 use App\Models\User;
 use Filament\Facades\Filament;
@@ -126,6 +128,32 @@ class RevenueStreamBankAccountTest extends TestCase
         Livewire::test(ExecutiveFinancialDashboard::class)->assertOk();
         Livewire::test(ListExpenses::class)->assertOk();
         Livewire::test(BankAccountSwitcherWidget::class)->assertOk();
+    }
+
+    public function test_switching_bank_account_view_to_all_accounts_does_not_error(): void
+    {
+        $user = User::where('school_id', $this->schoolId)->where('requested_role', 'administrator')->firstOrFail();
+        $this->actingAs($user)->withServerVariables(['HTTP_HOST' => $this->tenantHost()]);
+        Filament::setCurrentPanel(Filament::getPanel('app'));
+
+        // The switcher must broadcast an int (0 = All Accounts). It used to
+        // broadcast null, which threw a TypeError in the int-typed listeners
+        // and surfaced as a 419 "page expired" in production.
+        Livewire::test(BankAccountSwitcherWidget::class)
+            ->set('bankAccountId', '')
+            ->assertOk();
+
+        Livewire::test(ExpenseAnalyticsWidget::class)
+            ->dispatch('bank-account-changed', bankAccountId: null)
+            ->assertOk()
+            ->dispatch('bank-account-changed', bankAccountId: 0)
+            ->assertOk();
+
+        Livewire::test(FinanceDashboardSummaryWidget::class)
+            ->dispatch('bank-account-changed', bankAccountId: null)
+            ->assertOk()
+            ->dispatch('bank-account-changed', bankAccountId: 0)
+            ->assertOk();
     }
 
     public function test_dashboard_revenue_forecast_months_is_configurable(): void
