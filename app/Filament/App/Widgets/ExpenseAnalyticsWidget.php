@@ -18,7 +18,7 @@ class ExpenseAnalyticsWidget extends BaseWidget
     }
 
     #[On('bank-account-changed')]
-    public function setBankAccount(int $bankAccountId = 0): void
+    public function setBankAccount(?int $bankAccountId = null): void
     {
         $this->bankAccountId = $bankAccountId ?: null;
     }
