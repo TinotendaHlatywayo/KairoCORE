@@ -83,10 +83,6 @@
                 </tr>
             @endforeach
             <tr>
-                <td style="text-align:left; font-weight:bold;">{{ __('Total Revenue / Inflows (Fees + Other Income)') }}</td>
-                <td style="text-align:right; color:{{ $positive }}; font-weight:bold;">+${{ number_format((float) $data['totalRevenue'], 2) }}</td>
-            </tr>
-            <tr>
                 <td style="text-align:left; font-weight:bold;">{{ __('Less Refunds Issued') }}</td>
                 <td style="text-align:right; color:{{ $negative }}; font-weight:bold;">-${{ number_format((float) $data['totalRefunds'], 2) }}</td>
             </tr>
@@ -98,6 +94,10 @@
                     <td style="text-align:right; color:{{ $negative }}; font-weight:bold;">-${{ number_format($refund['amount'], 2) }}</td>
                 </tr>
             @endforeach
+            <tr>
+                <td style="text-align:left; font-weight:bold;">{{ __('Total Revenue / Inflows (Net of Refunds)') }}</td>
+                <td style="text-align:right; color:{{ $positive }}; font-weight:bold;">+${{ number_format((float) $data['totalRevenue'], 2) }}</td>
+            </tr>
             <tr>
                 <td style="text-align:left; font-weight:bold;">{{ __('Total Expenses & Outflows') }}</td>
                 <td style="text-align:right; color:{{ $negative }}; font-weight:bold;">-${{ number_format((float) $data['totalExpenses'], 2) }}</td>

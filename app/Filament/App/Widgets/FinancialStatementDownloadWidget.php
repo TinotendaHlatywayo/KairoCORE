@@ -119,8 +119,10 @@ class FinancialStatementDownloadWidget extends Widget
         $refundItems = $engine->getRefundsForPeriod($schoolId, $startStr, $endStr, $bankAccountId);
         $expenseItems = $engine->getExpensesForPeriod($schoolId, $startStr, $endStr, $bankAccountId);
 
-        $totalRevenueInclStreams = $totalRevenue + $revenueStreamTotal;
-        $netCashFlow = $totalRevenueInclStreams - $totalRefunds - $totalExpenses;
+        // Total Revenue is net of refunds, mirroring FinancialStatementPage and
+        // the Executive Dashboard summary.
+        $totalRevenueInclStreams = $totalRevenue + $revenueStreamTotal - $totalRefunds;
+        $netCashFlow = $totalRevenueInclStreams - $totalExpenses;
 
         $bankAccount = $bankAccountId
             ? SchoolBankAccount::where('school_id', $schoolId)->where('id', $bankAccountId)->first()
