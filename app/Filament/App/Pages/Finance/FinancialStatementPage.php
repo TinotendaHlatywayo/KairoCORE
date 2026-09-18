@@ -190,8 +190,10 @@ class FinancialStatementPage extends Page
             $bankAccountId
         );
 
-        $totalRevenue = $feeRevenue + $revenueStreamTotal;
-        $netCashFlow = $totalRevenue - $totalRefunds - $totalExpenses;
+        // Total Revenue is net of refunds, matching the Executive Dashboard's
+        // getSummary() (where refunds are stored as negative payment amounts).
+        $totalRevenue = $feeRevenue + $revenueStreamTotal - $totalRefunds;
+        $netCashFlow = $totalRevenue - $totalExpenses;
 
         // Opening Bank Balance must reflect what the account(s) held at the
         // START of the reporting period - NOT the live balance. An account

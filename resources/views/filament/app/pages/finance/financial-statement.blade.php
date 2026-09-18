@@ -75,7 +75,7 @@
             <div class="p-5 bg-white dark:bg-gray-900 rounded-xl shadow border border-gray-200 dark:border-gray-800">
                 <p class="text-xs text-gray-500 uppercase font-medium">{{ __('Total Revenue / Inflows') }}</p>
                 <p class="text-2xl font-bold text-success-600 dark:text-success-400 mt-1">${{ number_format($totalRevenue ?? 0, 2) }}</p>
-                <p class="text-[11px] text-gray-400 mt-0.5">{{ __('Fees + other income') }}</p>
+                <p class="text-[11px] text-gray-400 mt-0.5">{{ __('Fees + other income − refunds') }}</p>
             </div>
             <div class="p-5 bg-white dark:bg-gray-900 rounded-xl shadow border border-gray-200 dark:border-gray-800">
                 <p class="text-xs text-gray-500 uppercase font-medium">{{ __('Total Refunds') }}</p>
@@ -144,12 +144,7 @@
                 </div>
             @endif
 
-            <div class="flex justify-between py-2 text-sm font-bold">
-                <span class="text-gray-800 dark:text-gray-200">{{ __('Total Revenue / Inflows') }}</span>
-                <span class="text-success-600 dark:text-success-400">+${{ number_format($totalRevenue ?? 0, 2) }}</span>
-            </div>
-
-            <!-- Refunds -->
+            <!-- Refunds (deducted from revenue) -->
             <div class="pt-2">
                 <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800 text-sm">
                     <span class="text-gray-600 dark:text-gray-400 font-medium">{{ __('Less Refunds Issued') }}</span>
@@ -167,6 +162,11 @@
                         </div>
                     @endforeach
                 @endif
+            </div>
+
+            <div class="flex justify-between py-2 text-sm font-bold">
+                <span class="text-gray-800 dark:text-gray-200">{{ __('Total Revenue / Inflows (Net of Refunds)') }}</span>
+                <span class="text-success-600 dark:text-success-400">+${{ number_format($totalRevenue ?? 0, 2) }}</span>
             </div>
 
             <!-- Expenses -->

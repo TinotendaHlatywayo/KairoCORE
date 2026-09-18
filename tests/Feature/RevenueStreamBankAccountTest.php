@@ -273,6 +273,68 @@ class RevenueStreamBankAccountTest extends TestCase
         }
     }
 
+    public function test_refunds_are_deducted_from_statement_total_revenue(): void
+    {
+        $bank = SchoolBankAccount::create([
+            'school_id' => $this->schoolId,
+            'bank_name' => 'Temp Refund Bank',
+            'account_name' => 'Refund Account',
+            'account_number' => 'RFD-'.uniqid(),
+            'balance' => 0.00,
+            'is_active' => true,
+            'is_default' => true,
+        ]);
+
+        $invoice = Invoice::create([
+            'school_id' => $this->schoolId,
+            'invoice_number' => 'INV-RFD-'.uniqid(),
+        ]);
+
+        $user = User::where('school_id', $this->schoolId)->where('requested_role', 'administrator')->firstOrFail();
+        $this->actingAs($user)->withServerVariables(['HTTP_HOST' => $this->tenantHost()]);
+        Filament::setCurrentPanel(Filament::getPanel('app'));
+
+        try {
+            $before = Livewire::test(FinancialStatementPage::class)
+                ->set('bankAccountId', (string) $bank->id)
+                ->viewData('totalRevenue');
+
+            Payment::create([
+                'school_id' => $this->schoolId,
+                'invoice_id' => $invoice->id,
+                'amount' => 100,
+                'bank_account_id' => $bank->id,
+                'is_reversed' => false,
+                'is_refund' => false,
+                'payment_date' => now(),
+            ]);
+            // Refunds are stored as negative amounts flagged with is_refund.
+            Payment::create([
+                'school_id' => $this->schoolId,
+                'invoice_id' => $invoice->id,
+                'amount' => -40,
+                'bank_account_id' => $bank->id,
+                'is_reversed' => false,
+                'is_refund' => true,
+                'payment_date' => now(),
+            ]);
+
+            $after = Livewire::test(FinancialStatementPage::class)
+                ->set('bankAccountId', (string) $bank->id)
+                ->viewData('totalRevenue');
+
+            $this->assertSame(
+                60.0,
+                round((float) $after - (float) $before, 2),
+                'The statement Total Revenue must be net of refunds ($100 collected - $40 refunded = $60).'
+            );
+        } finally {
+            Payment::withoutGlobalScopes()->where('invoice_id', $invoice->id)->forceDelete();
+            Invoice::withoutGlobalScopes()->where('id', $invoice->id)->forceDelete();
+            SchoolBankAccount::withoutTenantScope()->where('id', $bank->id)->forceDelete();
+        }
+    }
+
     public function test_expense_register_shows_the_category_chosen_at_creation(): void
     {
         $categoryName = 'Audit Category '.uniqid();

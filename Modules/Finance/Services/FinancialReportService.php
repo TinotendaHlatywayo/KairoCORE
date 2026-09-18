@@ -55,12 +55,13 @@ class FinancialReportService
             $rows[] = ['  - '.$stream['name'].' ('.$stream['category'].')'.($stream['date'] ? ' — '.$stream['date'] : ''), '+'.number_format($stream['amount'], 2)];
         }
 
-        $rows[] = ['Total Revenue / Inflows (Fees + Other Income)', '+'.number_format($data['totalRevenue'], 2)];
         $rows[] = ['Less Refunds Issued', '-'.number_format($data['totalRefunds'], 2)];
 
         foreach ($data['refundItems'] ?? [] as $refund) {
             $rows[] = ['  - '.($refund['reference'] ?? 'Refund').($refund['date'] ? ' — '.$refund['date'] : ''), '-'.number_format($refund['amount'], 2)];
         }
+
+        $rows[] = ['Total Revenue / Inflows (Net of Refunds)', '+'.number_format($data['totalRevenue'], 2)];
 
         $rows[] = ['Total Expenses & Outflows', '-'.number_format($data['totalExpenses'], 2)];
 
@@ -101,12 +102,13 @@ class FinancialReportService
             $lines[] = '  - '.$stream['name'].' ('.$stream['category'].')'.($stream['date'] ? ' — '.$stream['date'] : '').'  +'.number_format($stream['amount'], 2);
         }
 
-        $lines[] = 'Total Revenue / Inflows (Fees + Other Income)  +'.number_format($data['totalRevenue'], 2);
         $lines[] = 'Less Refunds Issued                            -'.number_format($data['totalRefunds'], 2);
 
         foreach ($data['refundItems'] ?? [] as $refund) {
             $lines[] = '  - '.($refund['reference'] ?? 'Refund').($refund['date'] ? ' — '.$refund['date'] : '').'  -'.number_format($refund['amount'], 2);
         }
+
+        $lines[] = 'Total Revenue / Inflows (Net of Refunds)        +'.number_format($data['totalRevenue'], 2);
 
         $lines[] = 'Total Expenses & Outflows                      -'.number_format($data['totalExpenses'], 2);
 
