@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 use Livewire\Livewire;
 use Modules\Finance\Models\Expense;
+use Modules\Finance\Models\ExpenseCategory;
 use Modules\Finance\Models\Invoice;
 use Modules\Finance\Models\Payment;
 use Modules\Finance\Models\RevenueCategory;
@@ -127,6 +128,19 @@ class RevenueStreamBankAccountTest extends TestCase
         Livewire::test(BankAccountSwitcherWidget::class)->assertOk();
     }
 
+    public function test_dashboard_revenue_forecast_months_is_configurable(): void
+    {
+        $user = User::where('school_id', $this->schoolId)->where('requested_role', 'administrator')->firstOrFail();
+        $this->actingAs($user)->withServerVariables(['HTTP_HOST' => $this->tenantHost()]);
+        Filament::setCurrentPanel(Filament::getPanel('app'));
+
+        Livewire::test(ExecutiveFinancialDashboard::class)
+            ->assertOk()
+            ->set('forecastMonths', 3)
+            ->assertSet('forecastMonths', 3)
+            ->assertCount('revenueForecast.labels', 3);
+    }
+
     public function test_unassigned_transactions_count_toward_default_bank_account(): void
     {
         $bankDefault = SchoolBankAccount::create([
@@ -204,6 +218,106 @@ class RevenueStreamBankAccountTest extends TestCase
             Expense::withoutGlobalScopes()->where('expense_name', 'Unassigned expense')->forceDelete();
             Invoice::withoutGlobalScopes()->where('id', $invoice->id)->forceDelete();
             SchoolBankAccount::withoutTenantScope()->whereIn('id', [$bankDefault->id, $bankOther->id])->forceDelete();
+        }
+    }
+
+    public function test_revenue_streams_count_toward_statement_and_summary_revenue(): void
+    {
+        $bank = SchoolBankAccount::create([
+            'school_id' => $this->schoolId,
+            'bank_name' => 'Temp Stream Bank',
+            'account_name' => 'Stream Account',
+            'account_number' => 'STR-'.uniqid(),
+            'balance' => 0.00,
+            'is_active' => true,
+            'is_default' => true,
+        ]);
+
+        $category = RevenueCategory::withoutGlobalScopes()->first()
+            ?? RevenueCategory::create(['school_id' => $this->schoolId, 'name' => 'Temp Stream Category']);
+
+        try {
+            $engine = app(FinancialAnalyticsEngine::class);
+            $before = $engine->getSummary($this->schoolId, (int) $bank->id)['total_revenue'];
+
+            $stream = RevenueStream::withoutGlobalScopes()->create([
+                'school_id' => $this->schoolId,
+                'revenue_category_id' => $category->id,
+                'name' => 'Bus Hire Stream Test '.uniqid(),
+                'default_amount' => 120.00,
+                'account_id' => $bank->id,
+                'is_active' => true,
+            ]);
+
+            $after = $engine->getSummary($this->schoolId, (int) $bank->id)['total_revenue'];
+            $this->assertSame(
+                120.0,
+                (float) ($after - $before),
+                'A revenue stream must add its amount to the school summary revenue.'
+            );
+
+            $user = User::where('school_id', $this->schoolId)->where('requested_role', 'administrator')->firstOrFail();
+            $this->actingAs($user)->withServerVariables(['HTTP_HOST' => $this->tenantHost()]);
+            Filament::setCurrentPanel(Filament::getPanel('app'));
+
+            $html = Livewire::test(FinancialStatementPage::class)
+                ->set('bankAccountId', (string) $bank->id)
+                ->assertOk()
+                ->html();
+
+            $this->assertStringContainsString($stream->name, $html, 'The revenue stream must appear on the statement.');
+            $this->assertStringContainsString('+$120.00', $html, 'The revenue stream amount must appear as a statement line item.');
+        } finally {
+            RevenueStream::withoutGlobalScopes()->where('id', $stream->id ?? 0)->forceDelete();
+            SchoolBankAccount::withoutTenantScope()->where('id', $bank->id)->forceDelete();
+        }
+    }
+
+    public function test_expense_register_shows_the_category_chosen_at_creation(): void
+    {
+        $categoryName = 'Audit Category '.uniqid();
+        $category = ExpenseCategory::create([
+            'school_id' => $this->schoolId,
+            'name' => $categoryName,
+        ]);
+
+        $reference = 'EXP-REG-'.uniqid();
+
+        try {
+            Expense::create([
+                'school_id' => $this->schoolId,
+                'expense_category_id' => $category->id,
+                'expense_type_id' => null,
+                'expense_name' => 'Chalks',
+                'amount' => 50,
+                'expense_date' => now()->toDateString(),
+                'reference_number' => $reference,
+                'status' => 'paid',
+                'bank_account_id' => null,
+            ]);
+
+            $engine = app(FinancialAnalyticsEngine::class);
+
+            $row = collect($engine->getExpenseRegister($this->schoolId))
+                ->firstWhere('reference_number', $reference);
+
+            $this->assertNotNull($row, 'The recorded expense must appear in the Expense Register.');
+            $this->assertSame(
+                $categoryName,
+                $row->category,
+                'The Expense Register must show the category chosen when the expense was created, not "Uncategorized".'
+            );
+
+            $breakdown = $engine->getExpenseBreakdown($this->schoolId);
+            $this->assertArrayHasKey(
+                $categoryName,
+                $breakdown,
+                'The Expense Breakdown must include expenses categorised directly (no expense type).'
+            );
+            $this->assertGreaterThanOrEqual(50.0, (float) $breakdown[$categoryName]);
+        } finally {
+            Expense::withoutGlobalScopes()->where('reference_number', $reference)->forceDelete();
+            ExpenseCategory::withoutGlobalScopes()->where('id', $category->id)->forceDelete();
         }
     }
 

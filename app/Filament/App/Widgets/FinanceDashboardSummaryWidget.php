@@ -9,6 +9,7 @@ use Modules\Finance\Models\Expense;
 use Modules\Finance\Models\Invoice;
 use Modules\Finance\Models\Payment;
 use Modules\Finance\Models\SchoolBankAccount;
+use Modules\Finance\Services\FinancialAnalyticsEngine;
 use Modules\Students\Models\Student;
 
 /**
@@ -41,7 +42,8 @@ class FinanceDashboardSummaryWidget extends BaseWidget
         $totalRevenue = (float) Payment::where('school_id', $schoolId)
             ->when($this->bankAccountId, SchoolBankAccount::filterClosure($this->bankAccountId, $schoolId))
             ->where(fn ($q) => $q->where('is_refund', false)->orWhereNull('is_refund'))
-            ->sum('amount');
+            ->sum('amount')
+            + (float) app(FinancialAnalyticsEngine::class)->getRevenueStreamTotal($schoolId, $this->bankAccountId);
         // Refund rows are stored as negative amounts; normalise to a positive
         // "amount refunded" figure so it is subtracted, not added.
         $totalRefunds = abs((float) Payment::where('school_id', $schoolId)
