@@ -7,8 +7,8 @@
         <x-filament::button color="primary" size="sm" icon="heroicon-o-document-text" wire:click="downloadPdf">
             {{ __('PDF') }}
         </x-filament::button>
-        <x-filament::button color="gray" size="sm" icon="heroicon-o-table-cells" wire:click="downloadCsv">
-            {{ __('CSV') }}
+        <x-filament::button color="gray" size="sm" icon="heroicon-o-table-cells" wire:click="downloadExcel">
+            {{ __('Excel') }}
         </x-filament::button>
         <x-filament::button color="gray" size="sm" icon="heroicon-o-document" wire:click="downloadTxt">
             {{ __('TXT') }}
