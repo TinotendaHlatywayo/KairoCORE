@@ -67,17 +67,49 @@
         </thead>
         <tbody>
             <tr>
-                <td style="text-align:left;">{{ __('Total Revenue / Inflows') }}</td>
-                <td style="text-align:right; color:{{ $positive }}; font-weight:bold;">${{ number_format((float) $data['totalRevenue'], 2) }}</td>
+                <td style="text-align:left; font-weight:bold;">{{ __('Opening Bank Balance') }}</td>
+                <td style="text-align:right; font-weight:bold;">${{ number_format((float) ($data['openingBalance'] ?? 0), 2) }}</td>
             </tr>
             <tr>
-                <td style="text-align:left;">{{ __('Total Refunds') }}</td>
+                <td style="text-align:left; font-weight:bold;">{{ __('Total Fees Collected (school fees in period)') }}</td>
+                <td style="text-align:right; color:{{ $positive }}; font-weight:bold;">+${{ number_format((float) ($data['feeRevenue'] ?? 0), 2) }}</td>
+            </tr>
+            @foreach($data['revenueStreams'] ?? [] as $stream)
+                <tr>
+                    <td style="text-align:left; padding-left:18px; color:{{ $financeTheme['muted_color'] ?? '#6b7280' }};">
+                        {{ $stream['name'] }} ({{ $stream['category'] }}){{ $stream['date'] ? ' — '.$stream['date'] : '' }}
+                    </td>
+                    <td style="text-align:right; color:{{ $positive }}; font-weight:bold;">+${{ number_format($stream['amount'], 2) }}</td>
+                </tr>
+            @endforeach
+            <tr>
+                <td style="text-align:left; font-weight:bold;">{{ __('Total Revenue / Inflows (Fees + Other Income)') }}</td>
+                <td style="text-align:right; color:{{ $positive }}; font-weight:bold;">+${{ number_format((float) $data['totalRevenue'], 2) }}</td>
+            </tr>
+            <tr>
+                <td style="text-align:left; font-weight:bold;">{{ __('Less Refunds Issued') }}</td>
                 <td style="text-align:right; color:{{ $negative }}; font-weight:bold;">-${{ number_format((float) $data['totalRefunds'], 2) }}</td>
             </tr>
+            @foreach($data['refundItems'] ?? [] as $refund)
+                <tr>
+                    <td style="text-align:left; padding-left:18px; color:{{ $financeTheme['muted_color'] ?? '#6b7280' }};">
+                        {{ $refund['reference'] ?? __('Refund') }}{{ $refund['date'] ? ' — '.$refund['date'] : '' }}
+                    </td>
+                    <td style="text-align:right; color:{{ $negative }}; font-weight:bold;">-${{ number_format($refund['amount'], 2) }}</td>
+                </tr>
+            @endforeach
             <tr>
-                <td style="text-align:left;">{{ __('Total Expenses & Outflows') }}</td>
+                <td style="text-align:left; font-weight:bold;">{{ __('Total Expenses & Outflows') }}</td>
                 <td style="text-align:right; color:{{ $negative }}; font-weight:bold;">-${{ number_format((float) $data['totalExpenses'], 2) }}</td>
             </tr>
+            @foreach($data['expenseItems'] ?? [] as $expense)
+                <tr>
+                    <td style="text-align:left; padding-left:18px; color:{{ $financeTheme['muted_color'] ?? '#6b7280' }};">
+                        {{ $expense['name'] }} ({{ $expense['category'] }}){{ $expense['date'] ? ' — '.$expense['date'] : '' }}
+                    </td>
+                    <td style="text-align:right; color:{{ $negative }}; font-weight:bold;">-${{ number_format($expense['amount'], 2) }}</td>
+                </tr>
+            @endforeach
             <tr>
                 <td style="text-align:left; padding-left:18px; color:{{ $financeTheme['muted_color'] ?? '#6b7280' }};">{{ __('Of which — Staff Salaries') }}</td>
                 <td style="text-align:right; color:{{ $negative }}; font-weight:bold;">-${{ number_format((float) ($data['totalSalaries'] ?? 0), 2) }}</td>
@@ -85,6 +117,10 @@
             <tr style="background: {{ $financeTheme['green_tint'] }};">
                 <td style="text-align:left; font-weight:bold;">{{ __('Net Cash Flow Balance') }}</td>
                 <td style="text-align:right; font-weight:bold; color:{{ $net < 0 ? $negative : $positive }};">${{ number_format($net, 2) }}</td>
+            </tr>
+            <tr style="background: {{ $financeTheme['green_tint'] }};">
+                <td style="text-align:left; font-weight:bold;">{{ __('Closing Balance') }}</td>
+                <td style="text-align:right; font-weight:bold; color:{{ $net < 0 ? $negative : $positive }};">${{ number_format((float) ($data['closingBalance'] ?? 0), 2) }}</td>
             </tr>
         </tbody>
     </table>

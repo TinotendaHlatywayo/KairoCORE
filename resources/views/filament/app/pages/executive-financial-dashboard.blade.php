@@ -160,6 +160,48 @@
             </div>
         </div>
 
+        <!-- Other Income / Revenue Streams -->
+        @if(count($revenueStreams ?? []))
+            <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+                <div class="mb-3 flex items-center justify-between">
+                    <h2 class="text-sm font-bold text-gray-900 dark:text-white">
+                        <x-heroicon-o-banknotes class="mr-1 inline h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                        {{ __('Other Income / Revenue Streams') }}
+                    </h2>
+                    <span class="text-sm font-black text-emerald-600 dark:text-emerald-400">
+                        ${{ number_format(array_sum(array_column($revenueStreams, 'amount')), 2) }}
+                    </span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead>
+                            <tr class="border-b border-gray-200 text-[10px] uppercase tracking-wider text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                                <th class="px-2 py-2 font-bold">{{ __('Revenue Stream') }}</th>
+                                <th class="px-2 py-2 font-bold">{{ __('Category') }}</th>
+                                <th class="px-2 py-2 font-bold">{{ __('Bank Account') }}</th>
+                                <th class="px-2 py-2 font-bold text-right">{{ __('Amount (USD)') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($revenueStreams as $stream)
+                                <tr class="border-b border-gray-100 dark:border-gray-800">
+                                    <td class="px-2 py-2 font-medium text-gray-800 dark:text-gray-200">
+                                        {{ $stream['name'] }}
+                                        @if($stream['date'])
+                                            <span class="ml-1 text-xs text-gray-400">{{ $stream['date'] }}</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-2 py-2 text-gray-600 dark:text-gray-400">{{ $stream['category'] }}</td>
+                                    <td class="px-2 py-2 text-gray-600 dark:text-gray-400">{{ $stream['bank'] ?? __('—') }}</td>
+                                    <td class="px-2 py-2 text-right font-bold text-emerald-600 dark:text-emerald-400">${{ number_format($stream['amount'], 2) }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        @endif
+
         <!-- Analytics View Switcher -->
         <div x-data="{ activeAnalyticsTab: 'trends', switchAnalyticsTab(tab) { this.activeAnalyticsTab = tab; this.$nextTick(() => window.dispatchEvent(new Event('resize'))); } }">
             <!-- Tab Buttons -->
@@ -308,14 +350,23 @@
 
                     <!-- Revenue Forecast -->
                     <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-                        <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center justify-between mb-2 gap-3">
                             <div>
                                 <h3 class="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
                                     <x-heroicon-o-calendar-days class="h-4 w-4 text-blue-600" />
-                                    {{ __('Revenue Forecast (6 Months)') }}
+                                    {{ __('Revenue Forecast') }} ({{ $forecastMonths }} {{ __('Months') }})
                                 </h3>
                                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ __('Projected revenue based on historical trend') }}</p>
                             </div>
+                            <select
+                                id="forecast-months"
+                                wire:model.live="forecastMonths"
+                                class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-1.5 text-xs text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            >
+                                @foreach($this->getForecastMonthOptions() as $value => $label)
+                                    <option value="{{ $value }}">{{ $label }}</option>
+                                @endforeach
+                            </select>
                         </div>
                         <div id="forecast-chart" class="h-64 w-full"></div>
                     </div>
