@@ -2,10 +2,14 @@
 
 namespace App\Filament\App\Pages;
 
+use App\Filament\App\Widgets\BankAccountSwitcherWidget;
+use App\Filament\App\Widgets\FinanceDashboardSummaryWidget;
+use App\Filament\App\Widgets\UserRoleStatisticsWidget;
 use App\Models\School;
 use App\Services\DummyDataSeeder;
 use Filament\Notifications\Notification;
 use Filament\Pages\Dashboard as BaseDashboard;
+use Illuminate\Support\Facades\Cache;
 use Modules\Academics\Models\AcademicReport;
 use Modules\Students\Models\Student;
 
@@ -64,7 +68,7 @@ class Dashboard extends BaseDashboard
             return;
         }
 
-        $data = \Illuminate\Support\Facades\Cache::get("seed_progress_{$schoolId}");
+        $data = Cache::get("seed_progress_{$schoolId}");
 
         if ($data) {
             $this->seedProgress = $data['percent'] ?? 0;
@@ -88,17 +92,17 @@ class Dashboard extends BaseDashboard
         $this->isSeeding = true;
         $this->seedProgress = 5;
         $this->seedStage = __('Initializing Academic Structure & Terms');
-        \Illuminate\Support\Facades\Cache::put("seed_progress_{$schoolId}", ['message' => $this->seedStage, 'percent' => 5], 600);
+        Cache::put("seed_progress_{$schoolId}", ['message' => $this->seedStage, 'percent' => 5], 600);
         $this->dispatch('seed-started');
 
         try {
             $result = app(DummyDataSeeder::class)->seed($schoolId, function ($message, $percent = null) use ($schoolId) {
                 if ($percent !== null) {
-                    \Illuminate\Support\Facades\Cache::put("seed_progress_{$schoolId}", ['message' => $message, 'percent' => $percent], 600);
+                    Cache::put("seed_progress_{$schoolId}", ['message' => $message, 'percent' => $percent], 600);
                 }
             });
 
-            \Illuminate\Support\Facades\Cache::put("seed_progress_{$schoolId}", ['message' => __('Demonstration data seeded successfully!'), 'percent' => 100], 600);
+            Cache::put("seed_progress_{$schoolId}", ['message' => __('Demonstration data seeded successfully!'), 'percent' => 100], 600);
             $this->seedProgress = 100;
             $this->seedStage = __('Demonstration data seeded successfully!');
             $this->dispatch('seed-finished');
@@ -166,8 +170,9 @@ class Dashboard extends BaseDashboard
     protected function getFooterWidgets(): array
     {
         return [
-            \App\Filament\App\Widgets\FinanceDashboardSummaryWidget::class,
-            \App\Filament\App\Widgets\UserRoleStatisticsWidget::class,
+            BankAccountSwitcherWidget::class,
+            FinanceDashboardSummaryWidget::class,
+            UserRoleStatisticsWidget::class,
         ];
     }
 }

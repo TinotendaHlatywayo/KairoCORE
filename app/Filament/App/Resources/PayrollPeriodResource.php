@@ -3,6 +3,7 @@
 namespace App\Filament\App\Resources;
 
 use App\Filament\App\Concerns\ModulePermissionAccess;
+use App\Filament\App\Resources\PayrollPeriodResource\Pages;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -12,9 +13,12 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Auth;
+use Modules\Finance\Models\SchoolBankAccount;
+use Modules\HR\Models\Employee;
 use Modules\HR\Models\PayrollPeriod;
+use Modules\HR\Models\SalaryGrade;
 use Modules\HR\Services\PayrollCalculationService;
-use App\Filament\App\Resources\PayrollPeriodResource\Pages;
 
 class PayrollPeriodResource extends Resource
 {
@@ -58,6 +62,10 @@ class PayrollPeriodResource extends Resource
                 Tables\Columns\TextColumn::make('name')->searchable(),
                 Tables\Columns\TextColumn::make('start_date')->date(),
                 Tables\Columns\TextColumn::make('end_date')->date(),
+                Tables\Columns\TextColumn::make('salary_expense')
+                    ->label(__('Salary Expense'))
+                    ->money('USD')
+                    ->state(fn (PayrollPeriod $record) => app(PayrollCalculationService::class)->periodSalaryExpense($record)),
                 Tables\Columns\BadgeColumn::make('status')
                     ->colors([
                         'secondary' => 'draft',
@@ -76,14 +84,14 @@ class PayrollPeriodResource extends Resource
                     ->form([
                         Forms\Components\Select::make('current_grade_id')
                             ->label(__('Salary Grade'))
-                            ->options(\Modules\HR\Models\SalaryGrade::all()->pluck('name', 'id'))
+                            ->options(SalaryGrade::all()->pluck('name', 'id'))
                             ->searchable()
                             ->preload()
                             ->nullable()
                             ->placeholder(__('— All Salary Grades —')),
                         Forms\Components\Select::make('department')
                             ->label(__('Department'))
-                            ->options(\Modules\HR\Models\Employee::whereNotNull('department')->distinct()->pluck('department', 'department'))
+                            ->options(Employee::whereNotNull('department')->distinct()->pluck('department', 'department'))
                             ->searchable()
                             ->preload()
                             ->nullable()
@@ -99,7 +107,7 @@ class PayrollPeriodResource extends Resource
                             ->placeholder(__('— All Employment Types —')),
                         Forms\Components\Select::make('designation')
                             ->label(__('Designation / Job Title'))
-                            ->options(\Modules\HR\Models\Employee::whereNotNull('designation')->distinct()->pluck('designation', 'designation'))
+                            ->options(Employee::whereNotNull('designation')->distinct()->pluck('designation', 'designation'))
                             ->searchable()
                             ->preload()
                             ->nullable()
@@ -123,17 +131,39 @@ class PayrollPeriodResource extends Resource
                     }),
 
                 Action::make('approve')
-                    ->label(__('Approve'))
+                    ->label(__('Approve & Deduct Salaries'))
                     ->icon('heroicon-o-check-circle')
                     ->color('primary')
                     ->requiresConfirmation()
                     ->visible(fn ($record) => $record->status === 'calculated')
-                    ->action(function ($record) {
-                        $record->update(['status' => 'approved']);
-                        $record->runs()->update(['status' => 'approved']);
+                    ->form([
+                        Forms\Components\Select::make('bank_account_id')
+                            ->label(__('Bank Account to Deduct Salaries From'))
+                            ->helperText(__('Default account is preselected. Net pay plus tax-type deductions leave this account.'))
+                            ->options(fn () => SchoolBankAccount::where('school_id', Auth::user()->school_id)->pluck('bank_name', 'id'))
+                            ->searchable()
+                            ->preload()
+                            ->default(fn () => SchoolBankAccount::where('school_id', Auth::user()->school_id)->where('is_default', true)->value('id'))
+                            ->required(),
+                    ])
+                    ->modalHeading(__('Approve Payroll Period'))
+                    ->modalDescription(fn (PayrollPeriod $record) => __('Net pay $').number_format((float) app(PayrollCalculationService::class)->periodSalaryExpense($record), 2).__(' will be deducted from the selected bank account and recorded as a salary expense.'))
+                    ->action(function ($record, array $data) {
+                        $result = app(PayrollCalculationService::class)->approvePeriod($record, $data['bank_account_id']);
+
+                        if (! empty($result['skipped'])) {
+                            Notification::make()
+                                ->title(__('No Bank Account Available'))
+                                ->body(__('Salaries were not deducted — add a bank account first.'))
+                                ->warning()
+                                ->send();
+
+                            return;
+                        }
 
                         Notification::make()
                             ->title(__('Payroll Period Locked & Approved'))
+                            ->body(__('Deducted $').number_format($result['outflow'], 2).__(' from ').($result['bank_account'] ?? ''))
                             ->success()
                             ->send();
                     }),

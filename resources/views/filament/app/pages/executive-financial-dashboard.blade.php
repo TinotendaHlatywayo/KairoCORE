@@ -35,6 +35,17 @@
                         <option value="{{ $value }}">{{ $label }}</option>
                     @endforeach
                 </select>
+                <label for="bank-account" class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ __('Account:') }}</label>
+                <select
+                    id="bank-account"
+                    wire:model.live="bankAccountId"
+                    class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-2.5 py-1.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                >
+                    <option value="">{{ __('All Accounts (Combined)') }}</option>
+                    @foreach($this->bankAccounts() as $account)
+                        <option value="{{ $account->id }}">{{ $account->bank_name }} — {{ $account->account_name ?: $account->account_number }}</option>
+                    @endforeach
+                </select>
                 <button
                     wire:click="exportDashboardCSV"
                     class="flex items-center gap-1.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2.5 py-1.5 text-sm font-semibold text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition"
@@ -53,7 +64,7 @@
         </div>
 
         <!-- KPI Cards Row -->
-        <div class="grid grid-cols-2 gap-3 md:grid-cols-5">
+        <div class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
             <!-- Total Revenue -->
             <div class="rounded-xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-800 dark:bg-gray-900">
                 <div class="flex items-center justify-between">
@@ -130,6 +141,22 @@
                     <div class="text-lg font-black tracking-tight text-indigo-600 dark:text-indigo-400" id="collection-rate-value"></div>
                 </div>
                 <div class="mt-1.5 h-8" id="collection-sparkline"></div>
+            </div>
+
+            <!-- Staff Salaries -->
+            <div class="rounded-xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500">{{ __('Staff Salaries') }}</span>
+                    <span class="rounded-lg bg-fuchsia-50 p-1 text-fuchsia-600 dark:bg-fuchsia-500/10 dark:text-fuchsia-400">
+                        <x-heroicon-o-users class="h-3.5 w-3.5" />
+                    </span>
+                </div>
+                <div class="mt-1.5">
+                    <div class="text-lg font-black tracking-tight text-fuchsia-600 dark:text-fuchsia-400">
+                        ${{ number_format($summary['total_salaries'] ?? 0, 2) }}
+                    </div>
+                </div>
+                <div class="mt-1.5 h-8"></div>
             </div>
         </div>
 

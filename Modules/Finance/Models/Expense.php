@@ -19,6 +19,7 @@ class Expense extends Model
         'expense_name',
         'supplier_id',
         'account_id',
+        'bank_account_id',
         'amount',
         'expense_date',
         'reference_number',
@@ -50,6 +51,11 @@ class Expense extends Model
     public function account()
     {
         return $this->belongsTo(Account::class);
+    }
+
+    public function bankAccount()
+    {
+        return $this->belongsTo(SchoolBankAccount::class, 'bank_account_id');
     }
 
     public function user()

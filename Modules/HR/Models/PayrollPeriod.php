@@ -4,7 +4,9 @@ namespace Modules\HR\Models;
 
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Modules\Finance\Models\SchoolBankAccount;
 
 class PayrollPeriod extends Model
 {
@@ -16,6 +18,7 @@ class PayrollPeriod extends Model
         'start_date',
         'end_date',
         'status',
+        'bank_account_id',
     ];
 
     protected $casts = [
@@ -26,5 +29,10 @@ class PayrollPeriod extends Model
     public function runs(): HasMany
     {
         return $this->hasMany(PayrollRun::class);
+    }
+
+    public function bankAccount(): BelongsTo
+    {
+        return $this->belongsTo(SchoolBankAccount::class, 'bank_account_id');
     }
 }

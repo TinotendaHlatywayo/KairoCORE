@@ -47,6 +47,7 @@
         <tr>
             <td style="font-size:{{ $m['font_size'] }}px; color:{{ $m['color'] }}; line-height:1.5;">
                 <strong>{{ __('Reporting Period:') }}</strong> {{ $data['startDate'] }} {{ __('to') }} {{ $data['endDate'] }}<br/>
+                <strong>{{ __('Bank Account:') }}</strong> {{ $data['bankAccountName'] ?? __('All Accounts (Combined)') }}<br/>
                 <strong>{{ __('Generated On:') }}</strong> {{ $data['generatedAt'] }}
             </td>
             <td style="text-align:right; font-size:{{ $m['font_size'] }}px; color:{{ $m['color'] }}; line-height:1.5;">
@@ -76,6 +77,10 @@
             <tr>
                 <td style="text-align:left;">{{ __('Total Expenses & Outflows') }}</td>
                 <td style="text-align:right; color:{{ $negative }}; font-weight:bold;">-${{ number_format((float) $data['totalExpenses'], 2) }}</td>
+            </tr>
+            <tr>
+                <td style="text-align:left; padding-left:18px; color:{{ $financeTheme['muted_color'] ?? '#6b7280' }};">{{ __('Of which — Staff Salaries') }}</td>
+                <td style="text-align:right; color:{{ $negative }}; font-weight:bold;">-${{ number_format((float) ($data['totalSalaries'] ?? 0), 2) }}</td>
             </tr>
             <tr style="background: {{ $financeTheme['green_tint'] }};">
                 <td style="text-align:left; font-weight:bold;">{{ __('Net Cash Flow Balance') }}</td>

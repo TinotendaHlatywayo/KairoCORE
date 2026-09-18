@@ -10,6 +10,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Modules\Finance\Models\Expense;
+use Modules\Finance\Models\SchoolBankAccount;
 
 class ExpenseResource extends Resource
 {
@@ -76,6 +77,26 @@ class ExpenseResource extends Resource
                             ->preload()
                             ->nullable()
                             ->helperText(__('Optional legacy type for extra classification.')),
+                        Forms\Components\Select::make('bank_account_id')
+                            ->label(__('Bank Account'))
+                            ->options(fn () => SchoolBankAccount::query()
+                                ->where('school_id', current_tenant()?->id ?? auth()->user()?->school_id)
+                                ->orderByDesc('is_default')
+                                ->get()
+                                ->mapWithKeys(fn ($account) => [$account->id => trim(implode(' — ', array_filter([
+                                    $account->bank_name,
+                                    $account->account_name,
+                                    $account->account_number,
+                                ])))])
+                                ->all())
+                            ->default(fn () => SchoolBankAccount::query()
+                                ->where('school_id', current_tenant()?->id ?? auth()->user()?->school_id)
+                                ->where('is_default', true)
+                                ->value('id'))
+                            ->searchable()
+                            ->preload()
+                            ->placeholder(__('Defaults to the school bank account'))
+                            ->helperText(__('The account this expense is paid out of; used for per-account financial views.')),
                         Forms\Components\Select::make('supplier_id')
                             ->label(__('Supplier / Vendor'))
                             ->relationship('supplier', 'name')
@@ -145,6 +166,11 @@ class ExpenseResource extends Resource
                 Tables\Columns\TextColumn::make('expense_date')->date()->sortable(),
                 Tables\Columns\TextColumn::make('expense_name')->label(__('Expense'))->searchable()->sortable()->weight('bold'),
                 Tables\Columns\TextColumn::make('expenseCategory.name')->label(__('Category'))->searchable()->badge(),
+                Tables\Columns\TextColumn::make('bankAccount.bank_name')
+                    ->label(__('Bank Account'))
+                    ->searchable()
+                    ->toggleable()
+                    ->formatStateUsing(fn ($state) => $state ?? __('—')),
                 Tables\Columns\TextColumn::make('supplier.name')
                     ->label(__('Supplier / Company'))
                     ->searchable()
@@ -184,6 +210,9 @@ class ExpenseResource extends Resource
                 Tables\Filters\SelectFilter::make('expense_category_id')
                     ->label(__('Category'))
                     ->relationship('expenseCategory', 'name'),
+                Tables\Filters\SelectFilter::make('bank_account_id')
+                    ->label(__('Bank Account'))
+                    ->relationship('bankAccount', 'bank_name'),
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
                         'pending' => __('Pending'),

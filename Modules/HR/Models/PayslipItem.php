@@ -16,6 +16,7 @@ class PayslipItem extends Model
         'code',
         'name',
         'type',
+        'deduction_type',
         'amount',
         'is_taxable',
         'is_recurring',
