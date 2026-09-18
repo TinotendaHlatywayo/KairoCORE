@@ -28,6 +28,11 @@ class FinancialStatementDownloadWidget extends Widget
         return $this->streamReport('csv');
     }
 
+    public function downloadExcel(): StreamedResponse
+    {
+        return $this->streamReport('xlsx');
+    }
+
     public function downloadTxt(): StreamedResponse
     {
         return $this->streamReport('txt');
@@ -124,6 +129,26 @@ class FinancialStatementDownloadWidget extends Widget
         $totalRevenueInclStreams = $totalRevenue + $revenueStreamTotal - $totalRefunds;
         $netCashFlow = $totalRevenueInclStreams - $totalExpenses;
 
+        // Split totals for the two movement columns. Only real period movements
+        // are summed: inflows = fees + other income, outflows = refunds + expenses.
+        $totalInflows = $totalRevenue + $revenueStreamTotal;
+        $totalOutflows = $totalRefunds + $totalExpenses;
+
+        // Date(s) of the payroll expense(s) behind the "Of which — Staff
+        // Salaries" memo line, mirroring the on-screen statement.
+        $salaryDates = collect($expenseItems)
+            ->where('category', 'Payroll & Compensation')
+            ->pluck('date')
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
+        $salariesDate = $salaryDates->isEmpty()
+            ? null
+            : ($salaryDates->count() === 1
+                ? $salaryDates->first()
+                : $salaryDates->first().' – '.$salaryDates->last());
+
         $bankAccount = $bankAccountId
             ? SchoolBankAccount::where('school_id', $schoolId)->where('id', $bankAccountId)->first()
             : null;
@@ -164,6 +189,9 @@ class FinancialStatementDownloadWidget extends Widget
             'totalExpenses' => $totalExpenses,
             'expenseItems' => $expenseItems,
             'totalSalaries' => $totalSalaries,
+            'salariesDate' => $salariesDate,
+            'totalInflows' => $totalInflows,
+            'totalOutflows' => $totalOutflows,
             'netCashFlow' => $netCashFlow,
             'closingBalance' => $openingBalance + $netCashFlow,
             'generatedAt' => $endDate->format('Y-m-d H:i'),

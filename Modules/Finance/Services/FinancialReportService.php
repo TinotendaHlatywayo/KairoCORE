@@ -16,6 +16,7 @@ class FinancialReportService
         return match ($format) {
             'csv' => self::downloadCsv($data, $startDate, $endDate),
             'txt' => self::downloadTxt($data, $startDate, $endDate),
+            'xlsx' => FinancialStatementExcelService::download($data, $startDate, $endDate),
             default => self::downloadPdf($data, $startDate, $endDate),
         };
     }

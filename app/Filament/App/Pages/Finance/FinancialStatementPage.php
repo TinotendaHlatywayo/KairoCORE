@@ -195,6 +195,26 @@ class FinancialStatementPage extends Page
         $totalRevenue = $feeRevenue + $revenueStreamTotal - $totalRefunds;
         $netCashFlow = $totalRevenue - $totalExpenses;
 
+        // Split totals for the two movement columns. Only real period movements
+        // are summed: inflows = fees + other income, outflows = refunds + expenses.
+        $totalInflows = (float) $feeRevenue + (float) $revenueStreamTotal;
+        $totalOutflows = (float) $totalRefunds + (float) $totalExpenses;
+
+        // Date(s) of the payroll expense(s) behind the "Of which: Staff Salaries"
+        // memo line, so it carries a date like the other statement rows.
+        $salaryDates = collect($expenseItems)
+            ->where('category', 'Payroll & Compensation')
+            ->pluck('date')
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
+        $salariesDate = $salaryDates->isEmpty()
+            ? null
+            : ($salaryDates->count() === 1
+                ? $salaryDates->first()
+                : $salaryDates->first().' – '.$salaryDates->last());
+
         // Opening Bank Balance must reflect what the account(s) held at the
         // START of the reporting period - NOT the live balance. An account
         // created during the period (e.g. a brand-new school) did not exist
@@ -228,7 +248,11 @@ class FinancialStatementPage extends Page
             'totalExpenses' => (float) $totalExpenses,
             'expenseItems' => $expenseItems,
             'salariesExpense' => $salariesExpense,
+            'salariesDate' => $salariesDate,
+            'totalInflows' => $totalInflows,
+            'totalOutflows' => $totalOutflows,
             'netCashFlow' => (float) $netCashFlow,
+            'closingBalance' => (float) ($openingBalance + $netCashFlow),
             'startDateDisp' => $startDate->toDateString(),
             'endDateDisp' => $endDate->toDateString(),
             'company' => $school?->name ?? config('app.name'),
