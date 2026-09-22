@@ -745,12 +745,32 @@ class VisualTimetableBuilder extends Page implements Forms\Contracts\HasForms
 
             DB::commit();
 
-            $msg = "Successfully placed {$result['placed']} lesson(s) automatically with zero clashes!";
-            if (! empty($result['unplaced'])) {
-                $msg .= ' ('.count($result['unplaced']).' could not be placed due to tight constraints).';
+            $placed = (int) $result['placed'];
+            $unplacedCount = count($result['unplaced']);
+            $skippedCount = count($result['skipped']);
+
+            if ($placed > 0) {
+                $msg = "Successfully placed {$placed} lesson(s) automatically with zero clashes!";
+                if ($unplacedCount > 0) {
+                    $msg .= " ({$unplacedCount} could not be placed due to tight constraints).";
+                } elseif ($skippedCount > 0) {
+                    $msg .= " ({$skippedCount} assignment(s) were skipped).";
+                }
+
+                Notification::make()->title(__('Timetable Auto-Generated Successfully!'))->body($msg)->success()->send();
+                $this->loadTimetableMatrix();
+
+                return;
             }
 
-            Notification::make()->title(__('Timetable Auto-Generated Successfully!'))->body($msg)->success()->send();
+            $reasons = array_values($result['skipped'] ?: ['No lesson requirements could be derived from the current setup.']);
+            if (! empty($result['unplaced'])) {
+                $reasons = array_merge($reasons, array_map(fn ($u) => "{$u['label']}: {$u['reason']}", array_slice($result['unplaced'], 0, 6)));
+            }
+
+            $body = '0 lessons placed. '.implode(' ', array_map(fn ($r) => '• '.$r, array_slice($reasons, 0, 6)));
+
+            Notification::make()->title(__('No Lessons Could Be Placed'))->body($body)->warning()->send();
             $this->loadTimetableMatrix();
 
         } catch (\Exception $e) {
