@@ -347,6 +347,10 @@ class TimetableGeneratorService
         $requirements = [];
         $skipped = [];
 
+        if ($assignments->isEmpty()) {
+            $skipped[] = 'No teacher assignments found for this school. Create subject → level/stream → teacher assignments (Teacher Assignments) before auto-generating lessons.';
+        }
+
         foreach ($assignments as $assignment) {
             if (! $assignment->teacher_id) {
                 $skipped[] = sprintf(
