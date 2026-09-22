@@ -401,4 +401,69 @@ class PromotionServiceTest extends TestCase
         $this->assertCount(0, $run->items);
         $this->assertSame(0, $run->previewSummary()['total']);
     }
+
+    public function test_preview_excludes_students_with_blank_or_deleted_names(): void
+    {
+        $sourceYear = $this->makeYear('SrcBl');
+        $targetYear = $this->makeYear('TgtBl');
+        $courseA = $this->makeCourse('PSV_Form1');
+        $courseB = $this->makeCourse('PSV_Form2');
+        $courseA->update(['next_level_id' => $courseB->id]);
+        $secA = $this->makeSection($courseA->id, 'A');
+        $secB = $this->makeSection($courseB->id, 'A');
+
+        $named = $this->makeStudent('Bln1');
+        $this->makeEnrollment($named, $courseA->id, $secA->id, $sourceYear->id);
+
+        $blankLastName = Student::withoutGlobalScopes()->create([
+            'school_id' => $this->school->id,
+            'first_name' => 'PSV_Bland',
+            'last_name' => '',
+            'gender' => 'Male',
+            'date_of_birth' => '2015-01-01',
+            'admission_date' => '2026-09-01',
+            'status' => 'active',
+        ]);
+        $this->makeEnrollment($blankLastName, $courseA->id, $secA->id, $sourceYear->id);
+
+        $deleted = $this->makeStudent('Bln2');
+        $deleted->delete();
+        $this->makeEnrollment($deleted, $courseA->id, $secA->id, $sourceYear->id);
+
+        $service = new PromotionService;
+        $run = $service->preview($this->school->id, $sourceYear->id, $targetYear->id);
+
+        $this->assertCount(1, $run->items);
+        $item = $run->items->first();
+        $this->assertSame($named->id, $item->student_id);
+        $this->assertSame($courseB->id, $item->target_course_id);
+        $this->assertSame($secB->id, $item->target_section_id);
+    }
+
+    public function test_commit_does_not_create_intake_students(): void
+    {
+        $sourceYear = $this->makeYear('SrcIc');
+        $targetYear = $this->makeYear('TgtIc');
+        $courseA = $this->makeCourse('PSV_Form1');
+        $courseB = $this->makeCourse('PSV_Form2');
+        $courseA->update(['next_level_id' => $courseB->id]);
+        $secA = $this->makeSection($courseA->id, 'A');
+        $secB = $this->makeSection($courseB->id, 'A');
+        $student = $this->makeStudent('Intk1');
+        $this->makeEnrollment($student, $courseA->id, $secA->id, $sourceYear->id);
+
+        $countBefore = Student::withoutGlobalScopes()
+            ->where('school_id', $this->school->id)
+            ->count();
+
+        $service = new PromotionService;
+        $run = $service->preview($this->school->id, $sourceYear->id, $targetYear->id);
+        $service->commit($run->id);
+
+        $countAfter = Student::withoutGlobalScopes()
+            ->where('school_id', $this->school->id)
+            ->count();
+
+        $this->assertSame($countBefore, $countAfter);
+    }
 }
