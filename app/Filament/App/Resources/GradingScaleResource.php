@@ -167,10 +167,30 @@ class GradingScaleResource extends Resource
                                         $columns = ['Scale Name', 'Grade Symbol', 'Minimum Score (%)', 'Maximum Score (%)', 'Remark'];
 
                                         fputcsv($handle, $columns);
-                                        fputcsv($handle, ['School Assessment Scale', 'A', '90', '100', 'Distinction']);
-                                        fputcsv($handle, ['School Assessment Scale', 'B', '70', '89', 'Merit']);
-                                        fputcsv($handle, ['School Assessment Scale', 'C', '50', '69', 'Pass']);
-                                        fputcsv($handle, ['School Assessment Scale', 'U', '0', '49', 'Fail']);
+
+                                        // Primary schools pre-fill the ZIMSEC Grade 7 (1-9 units) scale so the
+                                        // import template matches the create-form prefill; other schools get
+                                        // a generic letter-grade sample.
+                                        $type = strtolower((string) (current_tenant()?->institution_type ?? 'secondary'));
+                                        $primary = in_array($type, ['primary', 'both'], true);
+
+                                        if ($primary) {
+                                            $template = ZimsecGradingTemplates::template('zimsec_grade7');
+                                            foreach ($template['points'] as $point) {
+                                                fputcsv($handle, [
+                                                    $template['name'],
+                                                    $point['symbol'],
+                                                    $point['min_score'],
+                                                    $point['max_score'],
+                                                    $point['remark'],
+                                                ]);
+                                            }
+                                        } else {
+                                            fputcsv($handle, ['School Assessment Scale', 'A', '90', '100', 'Distinction']);
+                                            fputcsv($handle, ['School Assessment Scale', 'B', '70', '89', 'Merit']);
+                                            fputcsv($handle, ['School Assessment Scale', 'C', '50', '69', 'Pass']);
+                                            fputcsv($handle, ['School Assessment Scale', 'U', '0', '49', 'Fail']);
+                                        }
 
                                         fclose($handle);
                                     }, 200, [

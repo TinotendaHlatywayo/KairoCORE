@@ -162,6 +162,42 @@ class AssessmentAllTermsAndZimsecImportTest extends TestCase
         }
     }
 
+    public function test_zimsec_primary_template_uses_unit_scale_without_letter_grades(): void
+    {
+        $template = ZimsecGradingTemplates::template('zimsec_grade7');
+        $this->assertNotNull($template);
+
+        $points = $template['points'];
+        $this->assertCount(9, $points);
+
+        $expected = [
+            ['symbol' => '1', 'min' => 90, 'max' => 100, 'remark' => 'Excellent / Distinction'],
+            ['symbol' => '2', 'min' => 80, 'max' => 89, 'remark' => 'Superior'],
+            ['symbol' => '3', 'min' => 70, 'max' => 79, 'remark' => 'Very Good'],
+            ['symbol' => '4', 'min' => 60, 'max' => 69, 'remark' => 'Good'],
+            ['symbol' => '5', 'min' => 50, 'max' => 59, 'remark' => 'Credit / Competent'],
+            ['symbol' => '6', 'min' => 40, 'max' => 49, 'remark' => 'Satisfactory Pass'],
+            ['symbol' => '7', 'min' => 30, 'max' => 39, 'remark' => 'Low Pass'],
+            ['symbol' => '8', 'min' => 20, 'max' => 29, 'remark' => 'Marginal Pass'],
+            ['symbol' => '9', 'min' => 0, 'max' => 19, 'remark' => 'Unsatisfactory / Fail'],
+        ];
+
+        foreach ($expected as $i => $band) {
+            $this->assertSame($band['symbol'], $points[$i]['symbol'], "Band {$i} symbol");
+            $this->assertSame($band['min'], (int) $points[$i]['min_score'], "Band {$i} min score");
+            $this->assertSame($band['max'], (int) $points[$i]['max_score'], "Band {$i} max score");
+            $this->assertSame($band['remark'], $points[$i]['remark'], "Band {$i} remark");
+        }
+
+        // Primary reporting uses the 1-9 unit scale, never letter grades.
+        $symbols = array_column($points, 'symbol');
+        $this->assertSame(range('1', '9'), $symbols, 'Primary template must use unit numbers only');
+        $this->assertTrue(
+            collect($symbols)->every(fn (string $symbol): bool => is_numeric($symbol)),
+            'Primary template must not introduce letter grade symbols'
+        );
+    }
+
     public function test_calculate_subject_final_includes_all_terms_assessment(): void
     {
         $fixtures = $this->makeFixtures();

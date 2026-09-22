@@ -17,12 +17,15 @@ class ZimsecGradingTemplates
         'zimsec_grade7' => [
             'name' => 'ZIMSEC Grade 7 (Primary)',
             'points' => [
-                ['symbol' => 'A', 'min_score' => 75, 'max_score' => 100, 'remark' => 'Excellent'],
-                ['symbol' => 'B', 'min_score' => 65, 'max_score' => 74, 'remark' => 'Very Good'],
-                ['symbol' => 'C', 'min_score' => 55, 'max_score' => 64, 'remark' => 'Good'],
-                ['symbol' => 'D', 'min_score' => 45, 'max_score' => 54, 'remark' => 'Satisfactory'],
-                ['symbol' => 'E', 'min_score' => 30, 'max_score' => 44, 'remark' => 'Borderline'],
-                ['symbol' => 'U', 'min_score' => 0, 'max_score' => 29, 'remark' => 'Ungraded'],
+                ['symbol' => '1', 'min_score' => 90, 'max_score' => 100, 'remark' => 'Excellent / Distinction'],
+                ['symbol' => '2', 'min_score' => 80, 'max_score' => 89, 'remark' => 'Superior'],
+                ['symbol' => '3', 'min_score' => 70, 'max_score' => 79, 'remark' => 'Very Good'],
+                ['symbol' => '4', 'min_score' => 60, 'max_score' => 69, 'remark' => 'Good'],
+                ['symbol' => '5', 'min_score' => 50, 'max_score' => 59, 'remark' => 'Credit / Competent'],
+                ['symbol' => '6', 'min_score' => 40, 'max_score' => 49, 'remark' => 'Satisfactory Pass'],
+                ['symbol' => '7', 'min_score' => 30, 'max_score' => 39, 'remark' => 'Low Pass'],
+                ['symbol' => '8', 'min_score' => 20, 'max_score' => 29, 'remark' => 'Marginal Pass'],
+                ['symbol' => '9', 'min_score' => 0, 'max_score' => 19, 'remark' => 'Unsatisfactory / Fail'],
             ],
         ],
         'zimsec_olevel' => [
