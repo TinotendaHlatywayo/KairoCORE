@@ -164,12 +164,49 @@ class AssessmentAllTermsAndZimsecImportTest extends TestCase
 
     public function test_calculate_subject_final_includes_all_terms_assessment(): void
     {
+        $fixtures = $this->makeFixtures();
+
+        $termScoped = $this->makeType('AllTermsMix_TermScoped', $fixtures->term->id, 50, 60, $fixtures);
+        $allTerms = $this->makeType('AllTermsMix_AllTerms', null, 50, 100, $fixtures);
+
+        $final = (new AssessmentResultCalculator)->calculateSubjectFinal(
+            $fixtures->enrollment->id,
+            $fixtures->subject->id,
+            $fixtures->term->id
+        );
+
+        $this->assertSame(80.0, $final);
+        $this->assertNotNull($termScoped->id);
+        $this->assertNotNull($allTerms->id);
+    }
+
+    public function test_final_grade_comes_from_exam_only_when_tests_have_zero_weight(): void
+    {
+        $fixtures = $this->makeFixtures();
+
+        // Convention from the import template: Test 1 and Test 2 carry 0% weight,
+        // so the Exam alone (100%) determines the final grade.
+        $this->makeType('ZeroWeight_Test1', null, 0, 40, $fixtures);
+        $this->makeType('ZeroWeight_Test2', null, 0, 50, $fixtures);
+        $this->makeType('ZeroWeight_Exam', null, 100, 90, $fixtures);
+
+        $final = (new AssessmentResultCalculator)->calculateSubjectFinal(
+            $fixtures->enrollment->id,
+            $fixtures->subject->id,
+            $fixtures->term->id
+        );
+
+        $this->assertSame(90.0, $final);
+    }
+
+    private function makeFixtures(): object
+    {
         $user = User::withoutGlobalScopes()->where('school_id', $this->school->id)->first();
         $this->assertNotNull($user, 'School chiwariraprimary must have a user');
 
         $year = AcademicYear::withoutGlobalScopes()->create([
             'school_id' => $this->school->id,
-            'name' => self::TAG.'Year',
+            'name' => self::TAG.'Year_'.uniqid('', true),
             'start_date' => '2026-09-01',
             'end_date' => '2027-08-31',
             'is_current' => true,
@@ -178,7 +215,7 @@ class AssessmentAllTermsAndZimsecImportTest extends TestCase
         $term = Term::withoutGlobalScopes()->create([
             'school_id' => $this->school->id,
             'academic_year_id' => $year->id,
-            'name' => self::TAG.'Term1',
+            'name' => self::TAG.'Term_'.uniqid('', true),
             'start_date' => '2026-09-01',
             'end_date' => '2026-12-20',
             'is_active' => true,
@@ -186,27 +223,27 @@ class AssessmentAllTermsAndZimsecImportTest extends TestCase
 
         $course = Course::withoutGlobalScopes()->create([
             'school_id' => $this->school->id,
-            'name' => self::TAG.'Course',
-            'code' => 'ZIMC',
+            'name' => self::TAG.'Course_'.uniqid('', true),
+            'code' => 'ZIMC'.substr(uniqid('', true), -4),
         ]);
 
         $section = Section::withoutGlobalScopes()->create([
             'school_id' => $this->school->id,
             'course_id' => $course->id,
-            'name' => self::TAG.'Section',
+            'name' => self::TAG.'Section_'.uniqid('', true),
             'capacity' => 40,
             'target_size' => 40,
         ]);
 
         $subject = Subject::withoutGlobalScopes()->create([
             'school_id' => $this->school->id,
-            'name' => self::TAG.'Subject',
-            'code' => 'ZIMS',
+            'name' => self::TAG.'Subject_'.uniqid('', true),
+            'code' => 'ZIMS'.substr(uniqid('', true), -4),
         ]);
 
         $student = Student::withoutGlobalScopes()->create([
             'school_id' => $this->school->id,
-            'first_name' => self::TAG.'Student',
+            'first_name' => self::TAG.'Student_'.uniqid('', true),
             'last_name' => 'One',
             'gender' => 'Male',
             'date_of_birth' => '2015-01-01',
@@ -224,44 +261,29 @@ class AssessmentAllTermsAndZimsecImportTest extends TestCase
             'effective_date' => '2026-09-01',
         ]);
 
-        $termScoped = AssessmentType::withoutGlobalScopes()->create([
-            'school_id' => $this->school->id,
-            'term_id' => $term->id,
-            'name' => self::TAG.'TermScoped',
-            'max_mark' => 100,
-            'weight_percentage' => 50,
-            'created_by_id' => $user->id,
-            'status' => 'marking',
-        ]);
+        return (object) compact('user', 'year', 'term', 'course', 'section', 'subject', 'student', 'enrollment');
+    }
 
-        $allTerms = AssessmentType::withoutGlobalScopes()->create([
+    private function makeType(string $name, ?int $termId, float $weight, float $mark, object $fixtures): AssessmentType
+    {
+        $type = AssessmentType::withoutGlobalScopes()->create([
             'school_id' => $this->school->id,
-            'term_id' => null,
-            'name' => self::TAG.'AllTerms',
+            'term_id' => $termId,
+            'name' => self::TAG.$name,
             'max_mark' => 100,
-            'weight_percentage' => 50,
-            'created_by_id' => $user->id,
+            'weight_percentage' => $weight,
+            'created_by_id' => $fixtures->user->id,
             'status' => 'marking',
         ]);
 
         AssessmentMark::create([
             'school_id' => $this->school->id,
-            'enrollment_id' => $enrollment->id,
-            'assessment_type_id' => $termScoped->id,
-            'subject_id' => $subject->id,
-            'marks_obtained' => 60,
+            'enrollment_id' => $fixtures->enrollment->id,
+            'assessment_type_id' => $type->id,
+            'subject_id' => $fixtures->subject->id,
+            'marks_obtained' => $mark,
         ]);
 
-        AssessmentMark::create([
-            'school_id' => $this->school->id,
-            'enrollment_id' => $enrollment->id,
-            'assessment_type_id' => $allTerms->id,
-            'subject_id' => $subject->id,
-            'marks_obtained' => 100,
-        ]);
-
-        $final = (new AssessmentResultCalculator)->calculateSubjectFinal($enrollment->id, $subject->id, $term->id);
-
-        $this->assertSame(80.0, $final);
+        return $type;
     }
 }
