@@ -82,9 +82,9 @@ class AssessmentWorkflowResource extends Resource
                                                 return Term::where('academic_year_id', $activeYear->id)
                                                     ->pluck('name', 'id');
                                             })
-                                            ->required()
+                                            ->helperText(__('Leave empty to apply this assessment to all terms.'))
                                             ->preload()
-                                            ->placeholder(__('Select Term...')),
+                                            ->placeholder(__('All Terms')),
                                     ])->columns(2),
 
                                 Forms\Components\Section::make('Grading & Weighting')

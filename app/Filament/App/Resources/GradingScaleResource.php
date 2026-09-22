@@ -10,6 +10,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Modules\Academics\Models\GradingScale;
+use Modules\Academics\Services\ZimsecGradingTemplates;
 use Modules\Admin\Services\PermissionRegistry;
 
 class GradingScaleResource extends Resource
@@ -56,6 +57,29 @@ class GradingScaleResource extends Resource
             ->schema([
                 Forms\Components\Section::make('Grading Scale Profile')
                     ->schema([
+                        Forms\Components\Select::make('import_template')
+                            ->label(__('Import Grading Scale'))
+                            ->helperText(__('Pick a ZIMSEC template to pre-fill the scale name and grade bands below. Ranges stay fully editable before you save.'))
+                            ->options(fn () => ZimsecGradingTemplates::optionsFor(current_tenant()))
+                            ->placeholder(__('I\'ll define the scale manually...'))
+                            ->searchable()
+                            ->preload()
+                            ->live()
+                            ->afterStateUpdated(function (Forms\Set $set, $state) {
+                                $template = $state ? ZimsecGradingTemplates::template($state) : null;
+                                if (! $template) {
+                                    $set('name', null);
+                                    $set('points', []);
+
+                                    return;
+                                }
+
+                                $set('name', $template['name']);
+                                $set('points', $template['points']);
+                            })
+                            ->dehydrated(false)
+                            ->hiddenOn('edit'),
+
                         Forms\Components\TextInput::make('name')
                             ->required()
                             ->maxLength(255)
