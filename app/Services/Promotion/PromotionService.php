@@ -28,6 +28,11 @@ class PromotionService
                 ->where('school_id', $schoolId)
                 ->where('academic_year_id', $sourceYearId)
                 ->where('status', Enrollment::STATUS_ACTIVE)
+                ->whereHas('student', fn ($q) => $q
+                    ->whereNotNull('first_name')
+                    ->whereNotNull('last_name')
+                    ->where('first_name', '!=', '')
+                    ->where('last_name', '!=', ''))
                 ->with('course', 'section')
                 ->get();
 
@@ -43,6 +48,11 @@ class PromotionService
                         ->where('school_id', $schoolId)
                         ->where('academic_year_id', $fallbackYearId)
                         ->where('status', Enrollment::STATUS_ACTIVE)
+                        ->whereHas('student', fn ($q) => $q
+                            ->whereNotNull('first_name')
+                            ->whereNotNull('last_name')
+                            ->where('first_name', '!=', '')
+                            ->where('last_name', '!=', ''))
                         ->with('course', 'section')
                         ->get();
                 }
@@ -166,59 +176,6 @@ class PromotionService
                 }
             }
 
-            // Automatically populate entry-level (lowest course, e.g. ECD A or Form 1) with new intake admissions for target year
-            $lowestCourse = Course::withoutGlobalScopes()
-                ->where('school_id', $run->school_id)
-                ->orderBy('sequence_order')
-                ->orderBy('id')
-                ->first();
-
-            if ($lowestCourse) {
-                $lowestSection = Section::withoutGlobalScopes()
-                    ->where('school_id', $run->school_id)
-                    ->where('course_id', $lowestCourse->id)
-                    ->orderBy('rank_order')
-                    ->first();
-
-                if ($lowestSection) {
-                    $existingLowestCount = Enrollment::withoutGlobalScopes()
-                        ->where('school_id', $run->school_id)
-                        ->where('academic_year_id', $run->target_academic_year_id)
-                        ->where('course_id', $lowestCourse->id)
-                        ->count();
-
-                    if ($existingLowestCount === 0) {
-                        for ($i = 1; $i <= 10; $i++) {
-                            $intakeIdNumber = static::uniqueIntakeStudentIdNumber($run->school_id);
-
-                            $student = Student::create([
-                                'school_id' => $run->school_id,
-                                'student_id_number' => $intakeIdNumber,
-                                'admission_number' => 'ADM-NEW-'.substr($intakeIdNumber, strrpos($intakeIdNumber, '-') + 1),
-                                'first_name' => collect(['Kuda', 'Tariro', 'Tanaka', 'Farai', 'Ruvimbo', 'Chipo', 'Nyasha'])->random(),
-                                'last_name' => collect(['Moyo', 'Sibanda', 'Ndlovu', 'Dube', 'Mutasa', 'Gumbo', 'Zhou'])->random(),
-                                'gender' => collect(['male', 'female'])->random(),
-                                'date_of_birth' => now()->subYears(5)->toDateString(),
-                                'admission_date' => $now->toDateString(),
-                                'status' => 'active',
-                            ]);
-
-                            Enrollment::create([
-                                'school_id' => $run->school_id,
-                                'student_id' => $student->id,
-                                'academic_year_id' => $run->target_academic_year_id,
-                                'course_id' => $lowestCourse->id,
-                                'section_id' => $lowestSection->id,
-                                'status' => Enrollment::STATUS_ACTIVE,
-                                'effective_date' => $now,
-                                'reason' => 'New entry-level admission intake',
-                                'performed_by_id' => $performedBy,
-                            ]);
-                        }
-                    }
-                }
-            }
-
             $run->update([
                 'status' => PromotionRun::STATUS_COMMITTED,
                 'committed_at' => $now,
@@ -304,18 +261,6 @@ class PromotionService
             'name' => $course?->name ?? "Course #{$courseId}",
             'rank_order' => 1,
         ])->id;
-    }
-
-    protected function uniqueIntakeStudentIdNumber(int $schoolId): string
-    {
-        do {
-            $candidate = 'INTAKE-'.now()->year.'-'.sprintf('%03d', rand(100, 999));
-        } while (Student::withoutGlobalScopes()
-            ->where('school_id', $schoolId)
-            ->where('student_id_number', $candidate)
-            ->exists());
-
-        return $candidate;
     }
 
     protected function resolveParallelSection(
