@@ -10,8 +10,8 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Support\HtmlString;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\HtmlString;
 use Modules\Academics\Models\AcademicYear;
 use Modules\Academics\Models\AssessmentMark;
 use Modules\Academics\Models\AssessmentType;
@@ -25,7 +25,7 @@ use Modules\Students\Models\Student;
 
 class AssessmentMarkResource extends Resource
 {
-    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    public static function getEloquentQuery(): Builder
     {
         // Student column renders enrollment→student; eager load to avoid N+1.
         return parent::getEloquentQuery()->with(['enrollment.student']);
@@ -513,7 +513,7 @@ class AssessmentMarkResource extends Resource
                         $value = $data['value'] ?? null;
 
                         return $query->when($value, function (Builder $q, $termId) {
-                            return $q->whereHas('assessmentType', fn ($at) => $at->where('term_id', $termId));
+                            return $q->whereHas('assessmentType', fn ($at) => $at->where(fn ($t) => $t->where('term_id', $termId)->orWhereNull('term_id')));
                         });
                     })
                     ->default(function () {
