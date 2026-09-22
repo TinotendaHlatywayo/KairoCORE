@@ -8,6 +8,7 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
+use Filament\Support\Enums\MaxWidth;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Auth;
@@ -183,47 +184,53 @@ class AssessmentTypeResource extends Resource
             ])
             ->headerActions([
                 // =====================================================================
-                // DOWNLOAD ASSESSMENT TYPES IMPORT TEMPLATE (CSV)
-                // Follows the standard convention: Test 1 & Test 2 do not weigh toward
-                // the final grade (0%), so the Exam carries the full 100%.
-                // =====================================================================
-                Tables\Actions\Action::make('downloadAssessmentTypeTemplate')
-                    ->label(__('Download Import Template'))
-                    ->icon('heroicon-o-arrow-down-tray')
-                    ->color('warning')
-                    ->action(function () {
-                        $filename = 'Assessment_Types_Import_Template.csv';
-
-                        return response()->stream(function () {
-                            $handle = fopen('php://output', 'w');
-
-                            $columns = ['Name', 'Term', 'Max_Mark', 'Weight_Percentage', 'Subject', 'Course', 'Section', 'Status'];
-
-                            fputcsv($handle, $columns);
-                            // Term, Subject, Course and Section left blank => all terms, all subjects,
-                            // all forms and all streams. Blank Status defaults to 'marking' on import.
-                            fputcsv($handle, ['Test 1', '', '100', '0', '', '', '', 'marking']);
-                            fputcsv($handle, ['Test 2', '', '100', '0', '', '', '', 'marking']);
-                            fputcsv($handle, ['Exam', '', '100', '100', '', '', '', 'marking']);
-
-                            fclose($handle);
-                        }, 200, [
-                            'Content-Type' => 'text/csv',
-                            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
-                        ]);
-                    }),
-
-                // =====================================================================
-                // SECURE VALIDATED CSV ASSESSMENT TYPES IMPORTER
+                // IMPORT ASSESSMENT TYPES (EXCEL/CSV)
+                // The download-template button lives INSIDE the import modal (top),
+                // matching the standard "Import X from Excel or CSV" wizard used by
+                // Subjects, Courses and every other CSV import.
+                // Standard convention: Test 1 & Test 2 do not weigh toward the final
+                // grade (0%), so the Exam carries the full 100%.
                 // =====================================================================
                 Tables\Actions\Action::make('importAssessmentTypes')
-                    ->label(__('Import Assessment Types (CSV)'))
+                    ->label(__('Import Assessment Types (Excel/CSV)'))
                     ->icon('heroicon-o-arrow-up-tray')
-                    ->color('info')
+                    ->color('warning')
+                    ->modalHeading(__('Import Assessment Types from Excel or CSV'))
+                    ->modalDescription(__('Download the template, fill it in and upload the file with your assessment types. The system matches every column automatically.'))
+                    ->modalWidth(MaxWidth::ExtraLarge)
+                    ->modalSubmitActionLabel(__('Import Assessment Types'))
                     ->form([
+                        Forms\Components\Actions::make([
+                            Forms\Components\Actions\Action::make('downloadAssessmentTypeTemplate')
+                                ->label(__('Download Excel Template'))
+                                ->icon('heroicon-o-arrow-down-tray')
+                                ->color('primary')
+                                ->action(function () {
+                                    $filename = 'Assessment_Types_Import_Template.csv';
+
+                                    return response()->stream(function () {
+                                        $handle = fopen('php://output', 'w');
+
+                                        $columns = ['Name', 'Term', 'Max_Mark', 'Weight_Percentage', 'Subject', 'Course', 'Section', 'Status'];
+
+                                        fputcsv($handle, $columns);
+                                        // Term, Subject, Course and Section left blank => all terms, all subjects,
+                                        // all forms and all streams. Blank Status defaults to 'marking' on import.
+                                        fputcsv($handle, ['Test 1', '', '100', '0', '', '', '', 'marking']);
+                                        fputcsv($handle, ['Test 2', '', '100', '0', '', '', '', 'marking']);
+                                        fputcsv($handle, ['Exam', '', '100', '100', '', '', '', 'marking']);
+
+                                        fclose($handle);
+                                    }, 200, [
+                                        'Content-Type' => 'text/csv',
+                                        'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+                                    ]);
+                                }),
+                        ]),
                         Forms\Components\FileUpload::make('csv_file')
-                            ->label(__('Upload Completed CSV Template'))
-                            ->acceptedFileTypes(['text/csv', 'text/plain', 'application/vnd.ms-excel'])
+                            ->label(__('Excel / CSV File'))
+                            ->helperText(__('The template above contains the exact system columns. Replace the example rows with your assessment types.'))
+                            ->acceptedFileTypes(['text/csv', 'text/plain', 'text/x-csv', 'application/csv', 'application/vnd.ms-excel'])
                             ->required(),
                     ])
                     ->action(function (array $data) {
