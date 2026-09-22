@@ -6,10 +6,12 @@ use App\Filament\App\Resources\AssessmentTypeResource\Pages;
 use App\Services\ModuleVisibilityManager;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\HtmlString;
 use Modules\Academics\Models\AcademicYear;
 use Modules\Academics\Models\AssessmentType;
 use Modules\Academics\Models\Course;
@@ -178,7 +180,253 @@ class AssessmentTypeResource extends Resource
                     ->label(__('Stream Scope'))
                     ->default('Global (All Streams)')
                     ->color('gray'),
+            ])
+            ->headerActions([
+                // =====================================================================
+                // DOWNLOAD ASSESSMENT TYPES IMPORT TEMPLATE (CSV)
+                // Follows the standard convention: Test 1 & Test 2 do not weigh toward
+                // the final grade (0%), so the Exam carries the full 100%.
+                // =====================================================================
+                Tables\Actions\Action::make('downloadAssessmentTypeTemplate')
+                    ->label(__('Download Import Template'))
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->color('warning')
+                    ->action(function () {
+                        $filename = 'Assessment_Types_Import_Template.csv';
 
+                        return response()->stream(function () {
+                            $handle = fopen('php://output', 'w');
+
+                            $columns = ['Name', 'Term', 'Max_Mark', 'Weight_Percentage', 'Subject', 'Course', 'Section', 'Status'];
+
+                            fputcsv($handle, $columns);
+                            // Term, Subject, Course and Section left blank => all terms, all subjects,
+                            // all forms and all streams. Blank Status defaults to 'marking' on import.
+                            fputcsv($handle, ['Test 1', '', '100', '0', '', '', '', 'marking']);
+                            fputcsv($handle, ['Test 2', '', '100', '0', '', '', '', 'marking']);
+                            fputcsv($handle, ['Exam', '', '100', '100', '', '', '', 'marking']);
+
+                            fclose($handle);
+                        }, 200, [
+                            'Content-Type' => 'text/csv',
+                            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+                        ]);
+                    }),
+
+                // =====================================================================
+                // SECURE VALIDATED CSV ASSESSMENT TYPES IMPORTER
+                // =====================================================================
+                Tables\Actions\Action::make('importAssessmentTypes')
+                    ->label(__('Import Assessment Types (CSV)'))
+                    ->icon('heroicon-o-arrow-up-tray')
+                    ->color('info')
+                    ->form([
+                        Forms\Components\FileUpload::make('csv_file')
+                            ->label(__('Upload Completed CSV Template'))
+                            ->acceptedFileTypes(['text/csv', 'text/plain', 'application/vnd.ms-excel'])
+                            ->required(),
+                    ])
+                    ->action(function (array $data) {
+                        $schoolId = app('current_tenant')->id;
+                        $filePath = public_path('storage/'.$data['csv_file']);
+
+                        if (! file_exists($filePath)) {
+                            Notification::make()
+                                ->title(__('File Error'))
+                                ->body('The uploaded spreadsheet could not be loaded. Please try again.')
+                                ->danger()
+                                ->send();
+
+                            return;
+                        }
+
+                        $handle = fopen($filePath, 'r');
+                        $headers = fgetcsv($handle, 1000, ',');
+
+                        // Validate minimum header structure (tolerate a UTF-8 BOM)
+                        if (! $headers || count($headers) < 8 || trim($headers[0], "\xEF\xBB\xBF") !== 'Name') {
+                            fclose($handle);
+                            Notification::make()
+                                ->title(__('Invalid Template Format'))
+                                ->body('The uploaded CSV file does not match the official Schoolcore assessment types template structure.')
+                                ->danger()
+                                ->send();
+
+                            return;
+                        }
+
+                        $rowNum = 1;
+                        $errors = [];
+                        $recordsToSave = [];
+
+                        while (($row = fgetcsv($handle, 1000, ',')) !== false) {
+                            $rowNum++;
+
+                            if (empty($row) || count($row) < 8) {
+                                continue;
+                            }
+
+                            $name = trim($row[0]);
+                            $termName = trim($row[1]);
+                            $maxMark = trim($row[2]);
+                            $weight = trim($row[3]);
+                            $subjectName = trim($row[4]);
+                            $courseName = trim($row[5]);
+                            $sectionName = trim($row[6]);
+                            $status = trim($row[7]);
+
+                            // Skip completely empty spacer lines
+                            if ($name === '') {
+                                continue;
+                            }
+
+                            // Resolve Term by name; blank means "All Terms"
+                            $termId = null;
+                            if ($termName !== '') {
+                                $term = Term::where('school_id', $schoolId)
+                                    ->where('name', $termName)
+                                    ->first();
+                                if (! $term) {
+                                    $errors[] = "Row {$rowNum}: Term '{$termName}' not found in the system.";
+
+                                    continue;
+                                }
+                                $termId = $term->id;
+                            }
+
+                            // Resolve optional Subject by name
+                            $subjectId = null;
+                            if ($subjectName !== '') {
+                                $subject = Subject::where('school_id', $schoolId)
+                                    ->where('name', $subjectName)
+                                    ->first();
+                                if (! $subject) {
+                                    $errors[] = "Row {$rowNum}: Subject '{$subjectName}' not found in the system.";
+
+                                    continue;
+                                }
+                                $subjectId = $subject->id;
+                            }
+
+                            // Resolve optional Course by name
+                            $courseId = null;
+                            if ($courseName !== '') {
+                                $course = Course::where('school_id', $schoolId)
+                                    ->where('name', $courseName)
+                                    ->first();
+                                if (! $course) {
+                                    $errors[] = "Row {$rowNum}: Form / Grade '{$courseName}' not found in the system.";
+
+                                    continue;
+                                }
+                                $courseId = $course->id;
+                            }
+
+                            // Resolve optional Section by name
+                            $sectionId = null;
+                            if ($sectionName !== '') {
+                                $section = Section::where('school_id', $schoolId)
+                                    ->where('name', $sectionName)
+                                    ->first();
+                                if (! $section) {
+                                    $errors[] = "Row {$rowNum}: Class Stream '{$sectionName}' not found in the system.";
+
+                                    continue;
+                                }
+                                $sectionId = $section->id;
+                            }
+
+                            // Validator: Max Mark numeric and positive
+                            $maxMarkValue = $maxMark === '' ? 100 : (float) $maxMark;
+                            if (! is_numeric($maxMark) && $maxMark !== '') {
+                                $errors[] = "Row {$rowNum}: Max Mark '{$maxMarkValue}' must be a valid number.";
+
+                                continue;
+                            }
+                            if ($maxMarkValue <= 0) {
+                                $errors[] = "Row {$rowNum}: Max Mark must be greater than 0.";
+
+                                continue;
+                            }
+
+                            // Validator: Weight 0-100 (0 = does not count toward the final grade)
+                            $weightValue = $weight === '' ? 100 : (float) $weight;
+                            if (! is_numeric($weight) && $weight !== '') {
+                                $errors[] = "Row {$rowNum}: Weight Percentage '{$weightValue}' must be a valid number.";
+
+                                continue;
+                            }
+                            if ($weightValue < 0 || $weightValue > 100) {
+                                $errors[] = "Row {$rowNum}: Weight Percentage must be between 0 and 100.";
+
+                                continue;
+                            }
+
+                            // Validator: Status must be a known workflow state
+                            $allowedStatuses = ['draft', 'scheduled', 'open', 'marking', 'review', 'reviewed', 'submitted', 'locked', 'published'];
+                            $statusValue = $status === '' ? 'marking' : strtolower($status);
+                            if (! in_array($statusValue, $allowedStatuses, true)) {
+                                $errors[] = "Row {$rowNum}: Status '{$status}' is not a recognised workflow state.";
+
+                                continue;
+                            }
+
+                            $recordsToSave[] = [
+                                'name' => $name,
+                                'term_id' => $termId,
+                                'max_mark' => $maxMarkValue,
+                                'weight_percentage' => $weightValue,
+                                'subject_id' => $subjectId,
+                                'course_id' => $courseId,
+                                'section_id' => $sectionId,
+                                'status' => $statusValue,
+                            ];
+                        }
+
+                        fclose($handle);
+
+                        // Dispatch red-alert notification lists (bypasses hard SQL crashes)
+                        if (! empty($errors)) {
+                            $errorList = implode('<br>', array_slice($errors, 0, 10));
+                            if (count($errors) > 10) {
+                                $errorList .= '<br>...and '.(count($errors) - 10).' more mismatch errors found.';
+                            }
+
+                            Notification::make()
+                                ->title(__('Assessment Types Template Mismatches Found'))
+                                ->body(new HtmlString('<div style="font-size: 11px; text-align: left; max-height: 250px; overflow-y: auto; color: #b91c1c;">'.$errorList.'</div>'))
+                                ->danger()
+                                ->persistent()
+                                ->send();
+
+                            return;
+                        }
+
+                        // Secure batch upsert saving (same name + scope updates, never duplicates)
+                        $savedCount = 0;
+                        foreach ($recordsToSave as $recordData) {
+                            AssessmentType::updateOrCreate([
+                                'school_id' => $schoolId,
+                                'name' => $recordData['name'],
+                                'term_id' => $recordData['term_id'],
+                                'subject_id' => $recordData['subject_id'],
+                                'course_id' => $recordData['course_id'],
+                                'section_id' => $recordData['section_id'],
+                            ], [
+                                'max_mark' => $recordData['max_mark'],
+                                'weight_percentage' => $recordData['weight_percentage'],
+                                'status' => $recordData['status'],
+                                'created_by_id' => auth()->id(),
+                            ]);
+                            $savedCount++;
+                        }
+
+                        Notification::make()
+                            ->title(__('Assessment Types Uploaded Successfully'))
+                            ->body("Imported and saved {$savedCount} assessment type(s).")
+                            ->success()
+                            ->send();
+                    }),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
