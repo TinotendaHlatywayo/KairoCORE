@@ -21,10 +21,14 @@ class AssessmentResultCalculator
 
         $schoolId = $enrollment->school_id;
 
-        // Find all active assessment types configured for this subject/course/section in this term
+        // Find all active assessment types configured for this subject/course/section in this term.
+        // Types without a term (term_id IS NULL) apply to all terms.
         // FIXED: Allows marking, submitted, reviewed, and locked states to calculate dynamically for previews
         $assessments = AssessmentType::where('school_id', $schoolId)
-            ->where('term_id', $termId)
+            ->where(function ($q) use ($termId) {
+                $q->where('term_id', $termId)
+                    ->orWhereNull('term_id');
+            })
             ->whereIn('status', ['marking', 'submitted', 'reviewed', 'locked', 'published'])
             ->where(function ($q) use ($enrollment) {
                 $q->whereNull('course_id')->orWhere('course_id', $enrollment->section?->course_id);

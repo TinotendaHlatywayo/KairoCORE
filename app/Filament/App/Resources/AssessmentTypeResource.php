@@ -77,9 +77,9 @@ class AssessmentTypeResource extends Resource
                                 return Term::where('academic_year_id', $activeYear->id)
                                     ->pluck('name', 'id');
                             })
-                            ->required()
+                            ->helperText(__('Leave empty to apply this assessment to all terms.'))
                             ->preload()
-                            ->placeholder(__('Select Term...')),
+                            ->placeholder(__('All Terms')),
 
                         Forms\Components\TextInput::make('max_mark')
                             ->label(__('Max Attainable Mark'))
@@ -161,6 +161,13 @@ class AssessmentTypeResource extends Resource
                     ->label(__('Subject Scope'))
                     ->default('Global (All Subjects)')
                     ->color('gray'),
+
+                Tables\Columns\TextColumn::make('term.name')
+                    ->label(__('Term'))
+                    ->default('All Terms')
+                    ->placeholder('All Terms')
+                    ->color('gray')
+                    ->sortable(),
 
                 Tables\Columns\TextColumn::make('course.name')
                     ->label(__('Form Scope'))
