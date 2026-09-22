@@ -8,6 +8,7 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
+use Filament\Support\Enums\MaxWidth;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -204,130 +205,136 @@ class AssessmentMarkResource extends Resource
                     }),
 
                 // =====================================================================
-                // FEATURE 1: EXPORT CUSTOM SIZED MARKS SHEET TEMPLATE (CSV)
-                // =====================================================================
-                Tables\Actions\Action::make('exportTemplate')
-                    ->label(__('Download Marks Template'))
-                    ->icon('heroicon-o-arrow-down-tray')
-                    ->color('warning')
-                    ->form([
-                        Forms\Components\Select::make('scope_type')
-                            ->label(__('Template Scope'))
-                            ->options([
-                                'class_one_subject' => __('One Class Stream (One Subject)'),
-                                'class_all_subjects' => __('One Class Stream (All Subjects)'),
-                                'stream_one_subject' => __('One Grade / Form Level (One Subject)'),
-                                'stream_all_subjects' => __('One Grade / Form Level (All Subjects)'),
-                                'school_one_subject' => __('Whole School (One Subject)'),
-                                'school_all_subjects' => __('Whole School (All Subjects)'),
-                            ])
-                            ->default('class_one_subject')
-                            ->required()
-                            ->live(),
-
-                        Forms\Components\Select::make('section_id')
-                            ->label(__('Class Stream'))
-                            ->options(Section::with('course')->get()->pluck('full_name', 'id'))
-                            ->visible(fn (Forms\Get $get) => in_array($get('scope_type'), ['class_one_subject', 'class_all_subjects']))
-                            ->required(fn (Forms\Get $get) => in_array($get('scope_type'), ['class_one_subject', 'class_all_subjects'])),
-
-                        Forms\Components\Select::make('course_id')
-                            ->label(__('Grade / Form Level'))
-                            ->options(Course::all()->pluck('name', 'id'))
-                            ->visible(fn (Forms\Get $get) => in_array($get('scope_type'), ['stream_one_subject', 'stream_all_subjects']))
-                            ->required(fn (Forms\Get $get) => in_array($get('scope_type'), ['stream_one_subject', 'stream_all_subjects'])),
-
-                        Forms\Components\Select::make('subject_id')
-                            ->label(__('Subject'))
-                            ->options(Subject::all()->pluck('name', 'id'))
-                            ->visible(fn (Forms\Get $get) => in_array($get('scope_type'), ['class_one_subject', 'stream_one_subject', 'school_one_subject']))
-                            ->required(fn (Forms\Get $get) => in_array($get('scope_type'), ['class_one_subject', 'stream_one_subject', 'school_one_subject'])),
-
-                        Forms\Components\Select::make('assessment_type_id')
-                            ->label(__('Assessment / Test Type'))
-                            ->options(fn () => AssessmentType::where('school_id', app('current_tenant')->id)->pluck('name', 'id'))
-                            ->required(),
-                    ])
-                    ->action(function (array $data) {
-                        $schoolId = app('current_tenant')->id;
-                        $scope = $data['scope_type'];
-
-                        // 1. Gather targeted enrollments
-                        $enrollmentQuery = Enrollment::where('school_id', $schoolId)->with('student');
-                        if (str_contains($scope, 'class_')) {
-                            $enrollmentQuery->where('section_id', $data['section_id']);
-                        } elseif (str_contains($scope, 'stream_')) {
-                            $enrollmentQuery->whereHas('section', fn ($q) => $q->where('course_id', $data['course_id']));
-                        }
-                        $enrollments = $enrollmentQuery->get();
-
-                        // 2. Gather targeted subjects
-                        $subjectQuery = Subject::where('school_id', $schoolId);
-                        if (str_contains($scope, '_one_subject')) {
-                            $subjectQuery->where('id', $data['subject_id']);
-                        }
-                        $subjects = $subjectQuery->get();
-
-                        $assessment = AssessmentType::find($data['assessment_type_id']);
-                        $assessmentName = $assessment ? $assessment->name : 'N/A';
-
-                        // 3. Build streamed CSV array rows
-                        $csvRows = [];
-                        $csvRows[] = ['Student_ID', 'Student_Name', 'Subject_Code', 'Subject_Name', 'Assessment_ID', 'Assessment_Name', 'Marks_Obtained', 'Initials'];
-
-                        foreach ($enrollments as $enrollment) {
-                            $student = $enrollment->student;
-                            if (! $student) {
-                                continue;
-                            }
-
-                            foreach ($subjects as $subject) {
-                                // Fetch existing mark if already recorded
-                                $existingMark = AssessmentMark::where([
-                                    'enrollment_id' => $enrollment->id,
-                                    'assessment_type_id' => $data['assessment_type_id'],
-                                    'subject_id' => $subject->id,
-                                ])->first();
-
-                                $csvRows[] = [
-                                    $student->student_id_number,
-                                    $student->full_name,
-                                    $subject->code,
-                                    $subject->name,
-                                    $data['assessment_type_id'],
-                                    $assessmentName,
-                                    $existingMark ? $existingMark->marks_obtained : '',
-                                    $existingMark ? $existingMark->teacher_initials : '',
-                                ];
-                            }
-                        }
-
-                        // 4. Download file stream
-                        $filename = 'Marks_Template_'.date('Ymd_His').'.csv';
-
-                        return response()->stream(function () use ($csvRows) {
-                            $handle = fopen('php://output', 'w');
-                            foreach ($csvRows as $row) {
-                                fputcsv($handle, $row);
-                            }
-                            fclose($handle);
-                        }, 200, [
-                            'Content-Type' => 'text/csv',
-                            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
-                        ]);
-                    }),
-
-                // =====================================================================
-                // FEATURE 2: SECURE VALIDATED CSV MARKS IMPORTER
+                // IMPORT MARKS (EXCEL/CSV)
+                // The download-template button lives INSIDE the import modal (top),
+                // matching the standard "Import X from Excel or CSV" wizard used by
+                // Subjects, Courses and every other CSV import.
                 // =====================================================================
                 Tables\Actions\Action::make('importMarks')
-                    ->label(__('Import Marks (CSV)'))
+                    ->label(__('Import Marks (Excel/CSV)'))
                     ->icon('heroicon-o-arrow-up-tray')
-                    ->color('info')
+                    ->color('warning')
+                    ->modalHeading(__('Import Marks from Excel or CSV'))
+                    ->modalDescription(__('Download the template, fill it in and upload the file with your marks. The system matches every column automatically.'))
+                    ->modalWidth(MaxWidth::ExtraLarge)
+                    ->modalSubmitActionLabel(__('Import Marks'))
                     ->form([
+                        Forms\Components\Actions::make([
+                            Forms\Components\Actions\Action::make('exportMarksTemplate')
+                                ->label(__('Download Excel Template'))
+                                ->icon('heroicon-o-arrow-down-tray')
+                                ->color('primary')
+                                ->form([
+                                    Forms\Components\Select::make('scope_type')
+                                        ->label(__('Template Scope'))
+                                        ->options([
+                                            'class_one_subject' => __('One Class Stream (One Subject)'),
+                                            'class_all_subjects' => __('One Class Stream (All Subjects)'),
+                                            'stream_one_subject' => __('One Grade / Form Level (One Subject)'),
+                                            'stream_all_subjects' => __('One Grade / Form Level (All Subjects)'),
+                                            'school_one_subject' => __('Whole School (One Subject)'),
+                                            'school_all_subjects' => __('Whole School (All Subjects)'),
+                                        ])
+                                        ->default('class_one_subject')
+                                        ->required()
+                                        ->live(),
+
+                                    Forms\Components\Select::make('section_id')
+                                        ->label(__('Class Stream'))
+                                        ->options(Section::with('course')->get()->pluck('full_name', 'id'))
+                                        ->visible(fn (Forms\Get $get) => in_array($get('scope_type'), ['class_one_subject', 'class_all_subjects']))
+                                        ->required(fn (Forms\Get $get) => in_array($get('scope_type'), ['class_one_subject', 'class_all_subjects'])),
+
+                                    Forms\Components\Select::make('course_id')
+                                        ->label(__('Grade / Form Level'))
+                                        ->options(Course::all()->pluck('name', 'id'))
+                                        ->visible(fn (Forms\Get $get) => in_array($get('scope_type'), ['stream_one_subject', 'stream_all_subjects']))
+                                        ->required(fn (Forms\Get $get) => in_array($get('scope_type'), ['stream_one_subject', 'stream_all_subjects'])),
+
+                                    Forms\Components\Select::make('subject_id')
+                                        ->label(__('Subject'))
+                                        ->options(Subject::all()->pluck('name', 'id'))
+                                        ->visible(fn (Forms\Get $get) => in_array($get('scope_type'), ['class_one_subject', 'stream_one_subject', 'school_one_subject']))
+                                        ->required(fn (Forms\Get $get) => in_array($get('scope_type'), ['class_one_subject', 'stream_one_subject', 'school_one_subject'])),
+
+                                    Forms\Components\Select::make('assessment_type_id')
+                                        ->label(__('Assessment / Test Type'))
+                                        ->options(fn () => AssessmentType::where('school_id', app('current_tenant')->id)->pluck('name', 'id'))
+                                        ->required(),
+                                ])
+                                ->action(function (array $data) {
+                                    $schoolId = app('current_tenant')->id;
+                                    $scope = $data['scope_type'];
+
+                                    // 1. Gather targeted enrollments
+                                    $enrollmentQuery = Enrollment::where('school_id', $schoolId)->with('student');
+                                    if (str_contains($scope, 'class_')) {
+                                        $enrollmentQuery->where('section_id', $data['section_id']);
+                                    } elseif (str_contains($scope, 'stream_')) {
+                                        $enrollmentQuery->whereHas('section', fn ($q) => $q->where('course_id', $data['course_id']));
+                                    }
+                                    $enrollments = $enrollmentQuery->get();
+
+                                    // 2. Gather targeted subjects
+                                    $subjectQuery = Subject::where('school_id', $schoolId);
+                                    if (str_contains($scope, '_one_subject')) {
+                                        $subjectQuery->where('id', $data['subject_id']);
+                                    }
+                                    $subjects = $subjectQuery->get();
+
+                                    $assessment = AssessmentType::find($data['assessment_type_id']);
+                                    $assessmentName = $assessment ? $assessment->name : 'N/A';
+
+                                    // 3. Build streamed CSV array rows
+                                    $csvRows = [];
+                                    $csvRows[] = ['Student_ID', 'Student_Name', 'Subject_Code', 'Subject_Name', 'Assessment_ID', 'Assessment_Name', 'Marks_Obtained', 'Initials'];
+
+                                    foreach ($enrollments as $enrollment) {
+                                        $student = $enrollment->student;
+                                        if (! $student) {
+                                            continue;
+                                        }
+
+                                        foreach ($subjects as $subject) {
+                                            // Fetch existing mark if already recorded
+                                            $existingMark = AssessmentMark::where([
+                                                'enrollment_id' => $enrollment->id,
+                                                'assessment_type_id' => $data['assessment_type_id'],
+                                                'subject_id' => $subject->id,
+                                            ])->first();
+
+                                            $csvRows[] = [
+                                                $student->student_id_number,
+                                                $student->full_name,
+                                                $subject->code,
+                                                $subject->name,
+                                                $data['assessment_type_id'],
+                                                $assessmentName,
+                                                $existingMark ? $existingMark->marks_obtained : '',
+                                                $existingMark ? $existingMark->teacher_initials : '',
+                                            ];
+                                        }
+                                    }
+
+                                    // 4. Download file stream
+                                    $filename = 'Marks_Template_'.date('Ymd_His').'.csv';
+
+                                    return response()->stream(function () use ($csvRows) {
+                                        $handle = fopen('php://output', 'w');
+                                        foreach ($csvRows as $row) {
+                                            fputcsv($handle, $row);
+                                        }
+                                        fclose($handle);
+                                    }, 200, [
+                                        'Content-Type' => 'text/csv',
+                                        'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+                                    ]);
+                                }),
+                        ]),
                         Forms\Components\FileUpload::make('csv_file')
-                            ->label(__('Upload Completed CSV Template'))
-                            ->acceptedFileTypes(['text/csv', 'text/plain', 'application/vnd.ms-excel'])
+                            ->label(__('Excel / CSV File'))
+                            ->helperText(__('The template above contains the exact system columns. Replace the example rows with your marks.'))
+                            ->acceptedFileTypes(['text/csv', 'text/plain', 'text/x-csv', 'application/csv', 'application/vnd.ms-excel'])
                             ->required(),
                     ])
                     ->action(function (array $data) {
