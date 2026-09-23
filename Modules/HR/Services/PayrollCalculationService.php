@@ -295,7 +295,8 @@ class PayrollCalculationService
 
             $account = $bankAccountId
                 ? SchoolBankAccount::where('school_id', $schoolId)->where('id', $bankAccountId)->first()
-                : SchoolBankAccount::where('school_id', $schoolId)->where('is_default', true)->first();
+                : (SchoolBankAccount::where('school_id', $schoolId)->where('id', $period->bank_account_id)->first()
+                    ?: SchoolBankAccount::where('school_id', $schoolId)->where('is_default', true)->first());
 
             if (! $account) {
                 $account = SchoolBankAccount::where('school_id', $schoolId)->first();
@@ -437,6 +438,151 @@ class PayrollCalculationService
 
         if ($accountId && $amount > 0) {
             SchoolBankAccount::where('school_id', $schoolId)->where('id', $accountId)->increment('balance', $amount);
+        }
+    }
+
+    /**
+     * STAGE 4: Undo. Reverts an approved/released payroll period back to the
+     * calculated state, reversing every side effect of Approval + Release:
+     * - restores the bank balance the salaries were deducted from,
+     * - deletes the recorded salary Expense,
+     * - reverses loan amortization (repayments return to the loan's account,
+     *   interest accrual and settled status are rolled back),
+     * - unlocks runs/payslips for recalculation.
+     * Returns the summary for the UI.
+     */
+    public function revertRun(PayrollPeriod $period): array
+    {
+        if (! in_array($period->status, ['approved', 'released'], true)) {
+            return ['reverted' => false, 'reason' => 'not-approved-or-released'];
+        }
+
+        return DB::transaction(function () use ($period) {
+            $schoolId = $period->school_id;
+
+            $expense = Expense::where('school_id', $schoolId)
+                ->where('reference_number', 'EXP-PAYROLL-'.$period->id)
+                ->first();
+
+            $restoredToBank = 0.00;
+
+            if ($expense) {
+                $account = SchoolBankAccount::where('school_id', $schoolId)
+                    ->where('id', $expense->bank_account_id)
+                    ->first();
+
+                if ($account) {
+                    $account->increment('balance', (float) $expense->amount);
+                    $restoredToBank = (float) $expense->amount;
+                }
+
+                $expense->forceDelete();
+            }
+
+            $runs = PayrollRun::where('school_id', $schoolId)
+                ->where('payroll_period_id', $period->id)
+                ->get();
+
+            $loanTotals = [];
+
+            foreach ($runs as $run) {
+                $payslips = Payslip::where('school_id', $schoolId)
+                    ->where('payroll_run_id', $run->id)
+                    ->get();
+
+                foreach ($payslips as $payslip) {
+                    $loanItem = PayslipItem::where('school_id', $schoolId)
+                        ->where('payslip_id', $payslip->id)
+                        ->where('code', 'LOAN_REC')
+                        ->first();
+
+                    if (! $loanItem || (float) $loanItem->amount <= 0) {
+                        continue;
+                    }
+
+                    $loanTotals[$payslip->employee_id] = round(
+                        (float) ($loanTotals[$payslip->employee_id] ?? 0) + (float) $loanItem->amount,
+                        4
+                    );
+                }
+            }
+
+            $loansReverted = 0;
+
+            foreach ($loanTotals as $employeeId => $amount) {
+                $activeLoan = StaffLoan::where('school_id', $schoolId)
+                    ->where('employee_id', $employeeId)
+                    ->where('status', 'active')
+                    ->first();
+
+                if (! $activeLoan) {
+                    continue;
+                }
+
+                $this->reverseLoanPayment($activeLoan, $amount, $period);
+                $loansReverted++;
+            }
+
+            $period->runs()->update(['status' => 'calculated', 'released_at' => null]);
+
+            Payslip::where('school_id', $schoolId)
+                ->whereIn('payroll_run_id', $runs->pluck('id'))
+                ->update(['status' => 'calculated', 'payment_date' => null]);
+
+            $period->update(['status' => 'calculated']);
+
+            return [
+                'reverted' => true,
+                'restored_to_bank' => $restoredToBank,
+                'loans_reverted' => $loansReverted,
+            ];
+        });
+    }
+
+    /**
+     * Reverse one period's loan amortization: repayment money returns to the
+     * loan's bank account, the balance and interest accrual are rolled back,
+     * and a loan settled by this very period is re-activated.
+     */
+    protected function reverseLoanPayment(StaffLoan $loan, float $amount, PayrollPeriod $period): void
+    {
+        if ($loan->isReducingBalance() && (int) $loan->last_interest_payroll_period_id === (int) $period->id) {
+            // Reverse the accrued interest. The balance set by the amortization
+            // was: bal_before + round(bal_before * rate) - amount. Invert the
+            // fixed point iteratively so the interest matches what was applied.
+            $rate = ((float) $loan->interest_rate) / 100;
+            $s = round((float) $loan->balance_remaining + $amount, 4);
+            $restored = $s;
+
+            for ($i = 0; $i < 10; $i++) {
+                $restored = round($s - round($restored * $rate, 4), 4);
+            }
+
+            $settledHere = ($loan->status === 'settled' && (float) $loan->balance_remaining <= 0);
+            $loan->balance_remaining = max(0, round($restored, 4));
+
+            if ($settledHere && $restored > 0) {
+                $loan->status = 'active';
+            }
+
+            $loan->last_interest_payroll_period_id = null;
+            $loan->save();
+        } elseif (! $loan->isReducingBalance()) {
+            $restored = round((float) $loan->balance_remaining + $amount, 4);
+            $loan->balance_remaining = max(0, $restored);
+
+            if ($loan->status === 'settled' && $restored > 0) {
+                $loan->status = 'active';
+            }
+
+            $loan->save();
+        }
+
+        $schoolId = $loan->school_id;
+        $accountId = $loan->bank_account_id ?? SchoolBankAccount::where('school_id', $schoolId)->where('is_default', true)->value('id');
+
+        if ($accountId && $amount > 0) {
+            SchoolBankAccount::where('school_id', $schoolId)->where('id', $accountId)->decrement('balance', $amount);
         }
     }
 
