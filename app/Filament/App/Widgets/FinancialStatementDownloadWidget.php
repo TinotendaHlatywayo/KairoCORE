@@ -149,6 +149,13 @@ class FinancialStatementDownloadWidget extends Widget
                 ? $salaryDates->first()
                 : $salaryDates->first().' – '.$salaryDates->last());
 
+        // Number of Payroll & Compensation rows printed in the expenses list,
+        // so the "Of which — Staff Salaries" note can sit under the last
+        // payroll line instead of adding a second outflow value.
+        $payrollExpenseCount = collect($expenseItems)
+            ->where('category', 'Payroll & Compensation')
+            ->count();
+
         $bankAccount = $bankAccountId
             ? SchoolBankAccount::where('school_id', $schoolId)->where('id', $bankAccountId)->first()
             : null;
@@ -190,6 +197,7 @@ class FinancialStatementDownloadWidget extends Widget
             'expenseItems' => $expenseItems,
             'totalSalaries' => $totalSalaries,
             'salariesDate' => $salariesDate,
+            'payrollExpenseCount' => $payrollExpenseCount,
             'totalInflows' => $totalInflows,
             'totalOutflows' => $totalOutflows,
             'netCashFlow' => $netCashFlow,
