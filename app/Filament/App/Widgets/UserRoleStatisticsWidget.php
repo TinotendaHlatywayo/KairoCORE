@@ -28,13 +28,19 @@ class UserRoleStatisticsWidget extends BaseWidget
             ->where('status', 'active')
             ->count();
 
+        // Employee directory role values are human labels ('Teacher',
+        // 'Support Staff', ...); the demo seeder stores the legacy
+        // 'teaching_staff' / 'non_teaching_staff' codes. Count both spellings
+        // so every real teaching employee shows up on the dashboard.
+        $teachingRoles = ['Teacher', 'teacher', 'teaching_staff'];
+
         $teachingCount = Employee::where('school_id', $schoolId)
-            ->where('role', 'teaching_staff')
+            ->whereIn('role', $teachingRoles)
             ->whereNull('deleted_at')
             ->count();
 
         $nonTeachingCount = Employee::where('school_id', $schoolId)
-            ->where('role', 'non_teaching_staff')
+            ->whereNotIn('role', $teachingRoles)
             ->whereNull('deleted_at')
             ->count();
 
@@ -42,8 +48,8 @@ class UserRoleStatisticsWidget extends BaseWidget
             ->where('account_status', 'active')
             ->where(function ($q) {
                 $q->where('requested_role', 'administrator')
-                  ->orWhere('requested_role', 'admin')
-                  ->orWhereHas('customRole', fn ($role) => $role->where('name', UserRegistrationService::roleNameForCategory('administrator')));
+                    ->orWhere('requested_role', 'admin')
+                    ->orWhereHas('customRole', fn ($role) => $role->where('name', UserRegistrationService::roleNameForCategory('administrator')));
             })
             ->count();
         if ($adminCount < 1 && auth()->check() && auth()->user()->school_id == $schoolId) {

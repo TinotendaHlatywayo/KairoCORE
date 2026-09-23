@@ -203,7 +203,7 @@ class InvoicingService
             'student_id' => $studentId,
             'academic_year_id' => $yearId,
             'term_id' => $termId,
-        ])->whereNull('billing_period')->exists();
+        ])->where('invoice_number', 'not like', 'CF-%')->whereNull('billing_period')->exists();
     }
 
     protected function alreadyBilledMonthly(int $schoolId, int $studentId, int $yearId, int $termId): bool
@@ -213,7 +213,7 @@ class InvoicingService
             'student_id' => $studentId,
             'academic_year_id' => $yearId,
             'term_id' => $termId,
-        ])->whereNotNull('billing_period')->exists();
+        ])->where('invoice_number', 'not like', 'CF-%')->whereNotNull('billing_period')->exists();
     }
 
     /**
