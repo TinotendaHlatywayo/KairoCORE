@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Widgets;
 
+use App\Filament\App\Pages\Finance\StudentBillingHub;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Livewire\Attributes\On;
@@ -88,10 +89,12 @@ class FinanceDashboardSummaryWidget extends BaseWidget
             Stat::make(__('Outstanding Fees'), '$'.number_format($outstanding, 2))
                 ->description(__('Unpaid invoice balances'))
                 ->descriptionIcon('heroicon-m-clock')
+                ->url(StudentBillingHub::getUrl(['hub' => 'outstanding']))
                 ->color('warning'),
             Stat::make(__('Student Credits'), '$'.number_format($studentCredits, 2))
                 ->description(__('Carried forward for next term fees'))
                 ->descriptionIcon('heroicon-m-sparkles')
+                ->url(StudentBillingHub::getUrl(['hub' => 'credits']))
                 ->color('info'),
             Stat::make(__('Bank Balance'), '$'.number_format($bankBalance, 2))
                 ->description($bankLabel)

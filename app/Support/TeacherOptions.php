@@ -3,7 +3,6 @@
 namespace App\Support;
 
 use App\Models\User;
-use Illuminate\Support\Collection;
 
 /**
  * Reusable fuzzy teacher lookup used by every "assign a teacher" selector.
@@ -42,11 +41,13 @@ class TeacherOptions
 
                 // 4. HR employee directory "teaching_staff" records (the canonical
                 //    source: every teaching employee has a linked user account).
+                //    Real employees store the human label 'Teacher'; seeded demo
+                //    records use the legacy 'teaching_staff' code.
                 $q->orWhereIn('id', function ($sub) use ($schoolId) {
                     $sub->select('user_id')
                         ->from('employees')
                         ->where('school_id', $schoolId)
-                        ->where('role', 'teaching_staff')
+                        ->whereIn('role', ['teaching_staff', 'Teacher', 'teacher'])
                         ->whereNotNull('user_id');
                 });
             });
