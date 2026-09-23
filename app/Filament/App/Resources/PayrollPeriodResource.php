@@ -52,7 +52,32 @@ class PayrollPeriodResource extends Resource
                 Forms\Components\TextInput::make('name')->required(),
                 Forms\Components\DatePicker::make('start_date')->required(),
                 Forms\Components\DatePicker::make('end_date')->required(),
+                Forms\Components\Select::make('bank_account_id')
+                    ->label(__('Bank Account for Salaries Deduction'))
+                    ->helperText(__('Salaries are deducted from this account for the period. Defaults to the school\'s main active bank account.'))
+                    ->options(fn () => SchoolBankAccount::where('school_id', Auth::user()->school_id)->pluck('bank_name', 'id'))
+                    ->searchable()
+                    ->preload()
+                    ->default(fn () => static::defaultBankAccountId()),
             ]);
+    }
+
+    public static function defaultBankAccountId(): ?int
+    {
+        $schoolId = Auth::user()?->school_id;
+
+        if (! $schoolId) {
+            return null;
+        }
+
+        return (int) (SchoolBankAccount::where('school_id', $schoolId)
+            ->where('is_default', true)
+            ->where('is_active', true)
+            ->value('id')
+            ?: SchoolBankAccount::where('school_id', $schoolId)
+                ->where('is_active', true)
+                ->orderBy('is_default', 'desc')
+                ->value('id'));
     }
 
     public static function table(Table $table): Table
@@ -143,7 +168,7 @@ class PayrollPeriodResource extends Resource
                             ->options(fn () => SchoolBankAccount::where('school_id', Auth::user()->school_id)->pluck('bank_name', 'id'))
                             ->searchable()
                             ->preload()
-                            ->default(fn () => SchoolBankAccount::where('school_id', Auth::user()->school_id)->where('is_default', true)->value('id'))
+                            ->default(fn (PayrollPeriod $record) => $record->bank_account_id ?? static::defaultBankAccountId())
                             ->required(),
                     ])
                     ->modalHeading(__('Approve Payroll Period'))
@@ -178,6 +203,34 @@ class PayrollPeriodResource extends Resource
                     ->icon('heroicon-o-table-cells')
                     ->color('info')
                     ->url(fn (PayrollPeriod $record): string => static::getUrl('breakdown', ['record' => $record])),
+
+                Action::make('undo')
+                    ->label(__('Undo'))
+                    ->icon('heroicon-o-arrow-uturn-left')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->visible(fn (PayrollPeriod $record) => in_array($record->status, ['approved', 'released'], true))
+                    ->modalHeading(__('Undo Payroll Period'))
+                    ->modalDescription(__('Revert this period back to a calculated state? Salaries paid will be returned to the bank account, the salary expense removed, and any loan repayments reversed.'))
+                    ->action(function ($record) {
+                        $result = app(PayrollCalculationService::class)->revertRun($record);
+
+                        if (empty($result['reverted'])) {
+                            Notification::make()
+                                ->title(__('Nothing to Undo'))
+                                ->body(__('Only approved or released periods can be reverted.'))
+                                ->warning()
+                                ->send();
+
+                            return;
+                        }
+
+                        Notification::make()
+                            ->title(__('Payroll Period Reverted'))
+                            ->body(__('Bank balance restored ($').number_format($result['restored_to_bank'], 2).__('), salary expense removed and loan repayments reversed.'))
+                            ->success()
+                            ->send();
+                    }),
             ]);
     }
 
@@ -185,6 +238,8 @@ class PayrollPeriodResource extends Resource
     {
         return [
             'index' => ListPayrollPeriods::route('/'),
+            'create' => Pages\CreatePayrollPeriod::route('/create'),
+            'edit' => Pages\EditPayrollPeriod::route('/{record}/edit'),
             'breakdown' => Pages\PayrollPeriodBreakdownPage::route('/{record}/breakdown'),
         ];
     }

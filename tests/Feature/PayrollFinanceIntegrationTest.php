@@ -301,4 +301,77 @@ class PayrollFinanceIntegrationTest extends TestCase
         $this->assertSame($period->id, (int) $fresh->last_interest_payroll_period_id);
         $this->assertSame(1200.0, (float) $bank->fresh()->balance, 'Approval debits 900 net; repayment returns 100 into the loan account.');
     }
+
+    public function test_undo_restores_bank_balance_and_removes_salary_expense(): void
+    {
+        $bank = $this->makeBank(5000);
+        $grade = $this->makeGrade();
+        $this->makeEmployee($grade);
+        $period = $this->makePeriod();
+        app(PayrollCalculationService::class)->executeRun($period);
+
+        app(PayrollCalculationService::class)->approvePeriod($period, $bank->id);
+
+        $expense = Expense::withoutGlobalScopes()->where('reference_number', 'EXP-PAYROLL-'.$period->id)->first();
+        $this->tracked['expenses'][] = $expense->id;
+
+        $result = app(PayrollCalculationService::class)->revertRun($period);
+
+        $this->assertTrue($result['reverted']);
+        $this->assertSame(1000.0, (float) $result['restored_to_bank']);
+        $this->assertSame(5000.0, (float) $bank->fresh()->balance, 'Bank balance must be restored after undo.');
+        $this->assertSame($bank->id, (int) $period->fresh()->bank_account_id, 'Chosen deduction account persists so re-approval reuses it.');
+        $this->assertSame('calculated', $period->fresh()->status);
+        $this->assertFalse(Expense::withoutGlobalScopes()->where('reference_number', 'EXP-PAYROLL-'.$period->id)->exists(), 'Salary expense must be removed after undo.');
+    }
+
+    public function test_undo_on_calculated_period_is_noop(): void
+    {
+        $grade = $this->makeGrade();
+        $this->makeEmployee($grade);
+        $period = $this->makePeriod();
+        app(PayrollCalculationService::class)->executeRun($period);
+
+        $result = app(PayrollCalculationService::class)->revertRun($period);
+
+        $this->assertFalse($result['reverted']);
+    }
+
+    public function test_undo_reverses_loan_repayment_and_interest_accrual(): void
+    {
+        $bank = $this->makeBank(2000);
+        $grade = $this->makeGrade();
+        $employee = $this->makeEmployee($grade);
+
+        $loan = StaffLoan::create([
+            'school_id' => $this->schoolId,
+            'employee_id' => $employee->id,
+            'loan_type' => 'salary_advance',
+            'principal_amount' => 500,
+            'interest_rate' => 10,
+            'interest_type' => 'percentage',
+            'repayment_method' => 'reducing_balance',
+            'total_repayable' => 500,
+            'balance_remaining' => 500,
+            'monthly_deduction' => 100,
+            'monthly_deduction_type' => 'fixed',
+            'bank_account_id' => $bank->id,
+            'status' => 'active',
+        ]);
+        $this->tracked['loans'][] = $loan->id;
+
+        $period = $this->makePeriod();
+        app(PayrollCalculationService::class)->executeRun($period);
+        app(PayrollCalculationService::class)->approvePeriod($period, $bank->id);
+        app(PayrollCalculationService::class)->releaseRun($period);
+
+        $result = app(PayrollCalculationService::class)->revertRun($period);
+
+        $fresh = $loan->fresh();
+        $this->assertTrue($result['reverted']);
+        $this->assertSame(500.0, (float) $fresh->balance_remaining, 'Loan balance must return to 500 after undo.');
+        $this->assertSame('active', $fresh->status);
+        $this->assertNull($fresh->last_interest_payroll_period_id, 'Interest accrual marker must be cleared.');
+        $this->assertSame(2000.0, (float) $bank->fresh()->balance, 'Borrowed repayment must return to its bank account after undo.');
+    }
 }
