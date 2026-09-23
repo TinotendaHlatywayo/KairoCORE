@@ -204,15 +204,35 @@
                                 <td class="py-1.5"></td>
                                 <td class="py-1.5"></td>
                             </tr>
+                            @if(($expense['category'] ?? null) === 'Payroll & Compensation' && (float) ($salariesExpense ?? 0) > 0)
+                                @php $payrollRowsShown = ($payrollRowsShown ?? 0) + 1; @endphp
+                                @if($payrollRowsShown === (int) ($payrollExpenseCount ?? 0))
+                                    <tr class="border-b border-gray-50 dark:border-gray-800/50">
+                                        <td class="py-1.5 pl-10 text-[12px] italic text-gray-500 dark:text-gray-400">
+                                            {{ __('Of which: Staff Salaries') }}
+                                            @if($salariesDate)<span class="text-xs text-gray-400"> — {{ $salariesDate }}</span>@endif
+                                            <span class="text-xs text-gray-400"> — {{ __('included in the Payroll line above') }}</span>
+                                            <span class="text-xs font-medium text-gray-500 dark:text-gray-400">(${{ number_format($salariesExpense ?? 0, 2) }})</span>
+                                        </td>
+                                        <td class="py-1.5"></td>
+                                        <td class="py-1.5"></td>
+                                        <td class="py-1.5"></td>
+                                    </tr>
+                                @endif
+                            @endif
                         @endforeach
-                        <tr class="border-b border-gray-100 dark:border-gray-800">
-                            <td class="py-1.5 pl-6 text-[13px] text-gray-500 dark:text-gray-500">
-                                {{ __('Of which: Staff Salaries') }}@if($salariesDate)<span class="text-gray-400 text-xs"> — {{ $salariesDate }}</span>@endif
-                            </td>
-                            <td class="py-1.5 text-right text-[13px] font-medium text-warning-600 dark:text-warning-400">-${{ number_format($salariesExpense ?? 0, 2) }}</td>
-                            <td class="py-1.5"></td>
-                            <td class="py-1.5"></td>
-                        </tr>
+                        @if((float) ($salariesExpense ?? 0) > 0 && ($payrollRowsShown ?? 0) === 0)
+                            <tr class="border-b border-gray-100 dark:border-gray-800">
+                                <td class="py-1.5 pl-10 text-[12px] italic text-gray-500 dark:text-gray-400">
+                                    {{ __('Of which: Staff Salaries') }}
+                                    @if($salariesDate)<span class="text-xs text-gray-400"> — {{ $salariesDate }}</span>@endif
+                                    <span class="text-xs font-medium text-gray-500 dark:text-gray-400">(${{ number_format($salariesExpense ?? 0, 2) }})</span>
+                                </td>
+                                <td class="py-1.5"></td>
+                                <td class="py-1.5"></td>
+                                <td class="py-1.5"></td>
+                            </tr>
+                        @endif
 
                         <!-- Column totals (real period movements only) -->
                         <tr class="border-y-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
