@@ -113,7 +113,15 @@
                                     <td class="py-1 pr-2 whitespace-nowrap">{{ \Carbon\Carbon::parse($row['date'])->format('d-M-y') }}</td>
                                     <td class="py-1 pr-2">{{ $row['type'] }}</td>
                                     <td class="py-1 pr-2 text-right">{{ $row['debit'] > 0 ? '$'.number_format($row['debit'], 2) : '-' }}</td>
-                                    <td class="py-1 pr-2 text-right">{{ $row['credit'] > 0 ? '$'.number_format($row['credit'], 2) : '-' }}</td>
+                                    <td class="py-1 pr-2 text-right">
+                                        @if(($row['credit'] ?? 0) > 0)
+                                            ${{ number_format($row['credit'], 2) }}
+                                        @elseif(! empty($row['is_refund']))
+                                            ${{ number_format(abs((float) $row['credit']), 2) }} ({{ __('refunded') }})
+                                        @else
+                                            -
+                                        @endif
+                                    </td>
                                     <td class="py-1 text-right font-semibold">${{ number_format($row['running_balance'], 2) }}</td>
                                 </tr>
                             @endforeach
