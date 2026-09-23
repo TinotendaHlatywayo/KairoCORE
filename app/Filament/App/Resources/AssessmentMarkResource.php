@@ -159,6 +159,8 @@ class AssessmentMarkResource extends Resource
                         Forms\Components\Select::make('section_id')
                             ->label(__('Class Stream'))
                             ->options(Section::with('course')->get()->pluck('full_name', 'id'))
+                            ->searchable()
+                            ->preload()
                             ->required()
                             ->live(),
 
