@@ -29,6 +29,8 @@ class Invoice extends Model
         'balance_amount',
         'status',
         'is_locked',
+        'carried_forward_at',
+        'carried_forward_to_invoice_id',
         'due_date',
     ];
 

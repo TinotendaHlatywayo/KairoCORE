@@ -27,7 +27,7 @@
         </div>
 
         @if(($creditStudents ?? collect())->isNotEmpty())
-            <div class="sc-hub-hero mt-6">
+            <div id="credits" class="sc-hub-hero mt-6">
                 <div class="flex items-center justify-between gap-4">
                     <div>
                         <div class="sc-hub-hero-title">{{ __('Carried Forward Student Credits') }}</div>
@@ -61,7 +61,62 @@
                 </div>
             </div>
         @endif
+
+        @if(($outstandingStudents ?? []) !== [])
+            <div id="outstanding" class="sc-hub-hero mt-6">
+                <div class="flex items-center justify-between gap-4">
+                    <div>
+                        <div class="sc-hub-hero-title">{{ __('Outstanding Fee Balances') }}</div>
+                        <div class="sc-hub-hero-desc">
+                            {{ __('Unpaid invoice balances, including balances brought forward into the current term. Total: $') }}{{ number_format($totalOutstanding ?? 0, 2) }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead>
+                            <tr class="border-b border-gray-200 text-xs uppercase text-gray-500 dark:border-gray-800">
+                                <th class="py-2 pr-4 font-semibold">{{ __('Student') }}</th>
+                                <th class="py-2 pr-4 font-semibold">{{ __('Class') }}</th>
+                                <th class="py-2 pr-4 font-semibold">{{ __('Stream') }}</th>
+                                <th class="py-2 pr-4 font-semibold">{{ __('Current Term') }}</th>
+                                <th class="py-2 font-semibold text-right">{{ __('Outstanding Balance') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($outstandingStudents as $row)
+                                @php($s = $row['student'])
+                                <tr class="border-b border-gray-100 dark:border-gray-800/60">
+                                    <td class="py-2 pr-4 font-medium text-gray-900 dark:text-white">{{ $s->full_name ?? ($s->first_name.' '.$s->last_name) }}</td>
+                                    <td class="py-2 pr-4 text-gray-600 dark:text-gray-400">{{ $s->currentEnrollment?->course?->name ?? '—' }}</td>
+                                    <td class="py-2 pr-4 text-gray-600 dark:text-gray-400">{{ $s->currentEnrollment?->section?->name ?? '—' }}</td>
+                                    <td class="py-2 pr-4 text-gray-600 dark:text-gray-400">{{ $row['term'] ?? '—' }}</td>
+                                    <td class="py-2 text-right font-semibold text-amber-600 dark:text-amber-400">${{ number_format((float) $row['total'], 2) }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        @endif
     </div>
+
+    @if(in_array(request()->query('hub'), ['credits', 'outstanding'], true))
+        <style>
+            .sc-hub-hero { scroll-margin-top: 1.5rem; }
+        </style>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var target = document.getElementById('{{ request()->query('hub') }}');
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    target.style.outline = '2px solid rgba(99, 102, 241, 0.35)';
+                    target.style.outlineOffset = '4px';
+                }
+            });
+        </script>
+    @endif
 
     <style>
         .sc-hub-hero {
