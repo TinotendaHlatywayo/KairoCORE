@@ -2,8 +2,6 @@
 
 namespace App\Filament\App\Pages;
 
-use App\Filament\App\Widgets\BankAccountSwitcherWidget;
-use App\Filament\App\Widgets\FinanceDashboardSummaryWidget;
 use App\Filament\App\Widgets\UserRoleStatisticsWidget;
 use App\Models\School;
 use App\Services\DummyDataSeeder;
@@ -170,8 +168,6 @@ class Dashboard extends BaseDashboard
     protected function getFooterWidgets(): array
     {
         return [
-            BankAccountSwitcherWidget::class,
-            FinanceDashboardSummaryWidget::class,
             UserRoleStatisticsWidget::class,
         ];
     }
