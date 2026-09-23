@@ -11,6 +11,7 @@ use Modules\Finance\Models\FinanceDocumentTemplate;
 use Modules\Finance\Models\Invoice;
 use Modules\Finance\Models\Payment;
 use Modules\Finance\Services\BillingDocumentSettingsService;
+use Modules\Finance\Services\StudentFinancialHistoryService;
 use Modules\Students\Models\Student; // FIX 1: Explicitly imports PHP's native ZipArchive utility
 use ZipArchive; // Added for storage file cleanups
 
@@ -172,55 +173,13 @@ class FinanceDocumentController extends Controller
             }
 
             $allInvoices = Invoice::where('student_id', $student->id)->orderBy('created_at', 'asc')->get();
-            $payments = Payment::where('school_id', $school->id)
-                ->whereIn('invoice_id', $allInvoices->pluck('id'))
-                ->where('is_reversed', false)
-                ->orderBy('created_at', 'asc')
-                ->get();
-
-            $ledger = [];
-            $balance = 0;
-
-            foreach ($allInvoices as $inv) {
-                $balance += $inv->subtotal_amount;
-                $ledger[] = [
-                    'date' => $inv->created_at,
-                    'type' => "Gross Fees Billed ({$inv->invoice_number})",
-                    'debit' => $inv->subtotal_amount,
-                    'credit' => 0.00,
-                    'running_balance' => $balance,
-                ];
-
-                if ($inv->discount_amount > 0) {
-                    $balance -= $inv->discount_amount;
-                    $ledger[] = [
-                        'date' => $inv->created_at,
-                        'type' => 'Waiver Applied: '.($inv->waiver_details ?? 'Scholarship / Discount'),
-                        'debit' => 0.00,
-                        'credit' => $inv->discount_amount,
-                        'running_balance' => $balance,
-                    ];
-                }
-            }
-
-            foreach ($payments as $pay) {
-                $balance -= $pay->amount;
-                $ledger[] = [
-                    'date' => $pay->payment_date,
-                    'type' => "Payment Received (Receipt: {$pay->receipt_number})",
-                    'debit' => 0.00,
-                    'credit' => $pay->amount,
-                    'running_balance' => $balance,
-                ];
-            }
-
-            usort($ledger, fn ($a, $b) => $a['date'] <=> $b['date']);
+            $ledger = StudentFinancialHistoryService::buildStatementLedger($student, (int) $school->id);
 
             $statements[] = [
                 'student' => $student,
                 'school' => $school,
-                'ledger' => $ledger,
-                'current_balance' => $balance,
+                'ledger' => $ledger['ledger'],
+                'current_balance' => $ledger['current_balance'],
                 'config' => BillingDocumentSettingsService::get(),
                 'template' => FinanceDocumentTemplate::resolveFor($school->id, 'statement'),
                 'verify_hash' => $allInvoices->last()?->integrity_hash,
@@ -293,55 +252,13 @@ class FinanceDocumentController extends Controller
         $school = app('current_tenant');
 
         $invoices = Invoice::where('student_id', $student->id)->orderBy('created_at', 'asc')->get();
-        $payments = Payment::where('school_id', $school->id)
-            ->whereIn('invoice_id', $invoices->pluck('id'))
-            ->where('is_reversed', false)
-            ->orderBy('created_at', 'asc')
-            ->get();
-
-        $ledger = [];
-        $balance = 0;
-
-        foreach ($invoices as $inv) {
-            $balance += $inv->subtotal_amount;
-            $ledger[] = [
-                'date' => $inv->created_at,
-                'type' => "Gross Fees Billed ({$inv->invoice_number})",
-                'debit' => $inv->subtotal_amount,
-                'credit' => 0.00,
-                'running_balance' => $balance,
-            ];
-
-            if ($inv->discount_amount > 0) {
-                $balance -= $inv->discount_amount;
-                $ledger[] = [
-                    'date' => $inv->created_at,
-                    'type' => 'Waiver Applied: '.($inv->waiver_details ?? 'Scholarship / Discount'),
-                    'debit' => 0.00,
-                    'credit' => $inv->discount_amount,
-                    'running_balance' => $balance,
-                ];
-            }
-        }
-
-        foreach ($payments as $pay) {
-            $balance -= $pay->amount;
-            $ledger[] = [
-                'date' => $pay->payment_date,
-                'type' => "Payment Received (Receipt: {$pay->receipt_number})",
-                'debit' => 0.00,
-                'credit' => $pay->amount,
-                'running_balance' => $balance,
-            ];
-        }
-
-        usort($ledger, fn ($a, $b) => $a['date'] <=> $b['date']);
+        $ledger = StudentFinancialHistoryService::buildStatementLedger($student, (int) $school->id);
 
         $pdf = Pdf::loadView('modules.finance.statement-pdf', [
             'student' => $student,
             'school' => $school,
-            'ledger' => $ledger,
-            'current_balance' => $balance,
+            'ledger' => $ledger['ledger'],
+            'current_balance' => $ledger['current_balance'],
             'config' => BillingDocumentSettingsService::get(),
             'template' => FinanceDocumentTemplate::resolveFor($school->id, 'statement'),
             'verify_hash' => $invoices->last()?->integrity_hash,
