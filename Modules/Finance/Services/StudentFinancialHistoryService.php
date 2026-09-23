@@ -221,6 +221,96 @@ class StudentFinancialHistoryService
     }
 
     /**
+     * Build the chronological debit/credit ledger used by the "Official
+     * Statement of Account" (single print, bulk print, template preview and QR
+     * verification page).
+     *
+     * Rows are sorted by date FIRST and the running balance is computed AFTER
+     * sorting, so same-day transactions keep mathematically correct balances
+     * (unlike the legacy builders that summed before sorting). Refunds are
+     * labelled "Refund Issued" and flagged so renderers can display their
+     * amount even though the stored payment amount is negative.
+     *
+     * @return array{ledger: array, current_balance: float}
+     */
+    public static function buildStatementLedger(Student $student, int $schoolId): array
+    {
+        $invoices = Invoice::withoutTenantScope()
+            ->where('student_id', $student->id)
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        $payments = Payment::withoutTenantScope()
+            ->where('school_id', $schoolId)
+            ->whereIn('invoice_id', $invoices->pluck('id'))
+            ->where('is_reversed', false)
+            ->orderBy('payment_date', 'asc')
+            ->get();
+
+        $raw = [];
+
+        foreach ($invoices as $inv) {
+            $isCarryForward = str_starts_with((string) $inv->invoice_number, 'CF-');
+            $raw[] = [
+                'date' => $inv->created_at,
+                'priority' => 0,
+                'is_refund' => false,
+                'type' => $isCarryForward
+                    ? 'Balance Brought Forward - Debit Carry Forward ('.$inv->invoice_number.')'
+                    : 'Gross Fees Billed ('.$inv->invoice_number.')',
+                'debit' => (float) $inv->subtotal_amount,
+                'credit' => 0.00,
+            ];
+
+            if ((float) $inv->discount_amount > 0) {
+                $raw[] = [
+                    'date' => $inv->created_at,
+                    'priority' => 1,
+                    'is_refund' => false,
+                    'type' => 'Waiver Applied: '.($inv->waiver_details ?? 'Scholarship / Discount'),
+                    'debit' => 0.00,
+                    'credit' => (float) $inv->discount_amount,
+                ];
+            }
+        }
+
+        foreach ($payments as $pay) {
+            $isRefund = (bool) $pay->is_refund;
+            $isCredit = (! $isRefund) && $pay->payment_method === 'credit';
+            $raw[] = [
+                'date' => $pay->payment_date,
+                'priority' => $isRefund ? 4 : ($isCredit ? 2 : 3),
+                'is_refund' => $isRefund,
+                'type' => $isRefund
+                    ? 'Refund Issued (Receipt: '.$pay->receipt_number.')'
+                    : ($isCredit
+                        ? 'Credit Applied (Carry Forward)'
+                        : 'Payment Received (Receipt: '.$pay->receipt_number.')'),
+                'debit' => 0.00,
+                'credit' => (float) $pay->amount,
+            ];
+        }
+
+        // Sort by calendar day FIRST, then by priority, so a billing and a
+        // payment recorded on the same day always print billed-then-paid
+        // regardless of the stored time-of-day (payment_date is a date cast
+        // and hydrates at midnight, while invoice created_at keeps its time).
+        $day = fn ($r) => $r['date']->copy()->startOfDay()->timestamp;
+        usort($raw, fn ($a, $b) => $day($a) <=> $day($b)
+            ?: ($a['priority'] <=> $b['priority']));
+
+        $balance = 0.00;
+        foreach ($raw as &$row) {
+            $balance += (float) $row['debit'] - (float) $row['credit'];
+            $row['running_balance'] = round($balance, 2);
+            unset($row['priority']);
+        }
+        unset($row);
+
+        return ['ledger' => $raw, 'current_balance' => round($balance, 2)];
+    }
+
+    /**
      * Group ledger rows by calendar month (invoice billing date / payment date)
      * so the statement can summarise performance per month when the school
      * bills monthly.

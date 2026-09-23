@@ -79,7 +79,15 @@
                         {{ $row['type'] }}
                     </td>
                     <td>{{ $row['debit'] > 0 ? '$' . number_format($row['debit'], 2) : '-' }}</td>
-                    <td>{{ $row['credit'] > 0 ? '$' . number_format($row['credit'], 2) : '-' }}</td>
+                    <td>
+                        @if(($row['credit'] ?? 0) > 0)
+                            ${{ number_format($row['credit'], 2) }}
+                        @elseif(! empty($row['is_refund']))
+                            ${{ number_format(abs((float) $row['credit']), 2) }} ({{ __('refunded') }})
+                        @else
+                            -
+                        @endif
+                    </td>
                     <td style="font-weight: bold;">${{ number_format($row['running_balance'], 2) }}</td>
                 </tr>
             @endforeach
