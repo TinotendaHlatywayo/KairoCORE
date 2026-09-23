@@ -40,11 +40,26 @@ class FinanceDashboardSummaryWidget extends BaseWidget
     {
         $schoolId = current_tenant()?->id ?? auth()->user()?->school_id ?? 5;
 
-        $totalRevenue = (float) Payment::where('school_id', $schoolId)
+        // Internal carry-forward settlements (created by BalanceCarryForwardService
+        // when a term is activated) move an unpaid balance onto a CF- invoice with
+        // a zero-cash "credit" Payment row. They must never count as collected
+        // revenue: exclude payments attached to an invoice that was carried forward.
+        $collectedPayments = (float) Payment::where('school_id', $schoolId)
             ->when($this->bankAccountId, SchoolBankAccount::filterClosure($this->bankAccountId, $schoolId))
             ->where(fn ($q) => $q->where('is_refund', false)->orWhereNull('is_refund'))
-            ->sum('amount')
-            + (float) app(FinancialAnalyticsEngine::class)->getRevenueStreamTotal($schoolId, $this->bankAccountId);
+            ->whereDoesntHave('invoice', fn ($q) => $q->whereNotNull('carried_forward_at'))
+            ->sum('amount');
+
+        $studentCredits = (float) Student::where('school_id', $schoolId)->sum('credit_balance');
+
+        // A credited overpayment (e.g. paid $200 on a $100 invoice) deposited the
+        // whole $200 into the bank; only the applied $100 became a Payment row and
+        // the $100 excess is carried on credit_balance. That money is already
+        // collected, so count it as revenue too. On a single bank account view the
+        // credit has no bank tag, so it only joins the combined school wide view.
+        $totalRevenue = $collectedPayments
+            + (float) app(FinancialAnalyticsEngine::class)->getRevenueStreamTotal($schoolId, $this->bankAccountId)
+            + ($this->bankAccountId ? 0.0 : $studentCredits);
         // Refund rows are stored as negative amounts; normalise to a positive
         // "amount refunded" figure so it is subtracted, not added.
         $totalRefunds = abs((float) Payment::where('school_id', $schoolId)
@@ -60,8 +75,6 @@ class FinanceDashboardSummaryWidget extends BaseWidget
         $outstanding = (float) Invoice::where('school_id', $schoolId)
             ->where('status', '!=', 'paid')
             ->sum('balance_amount');
-
-        $studentCredits = (float) Student::where('school_id', $schoolId)->sum('credit_balance');
 
         $bankBalance = max(0, $net);
 
