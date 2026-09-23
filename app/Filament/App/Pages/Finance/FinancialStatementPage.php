@@ -215,6 +215,14 @@ class FinancialStatementPage extends Page
                 ? $salaryDates->first()
                 : $salaryDates->first().' – '.$salaryDates->last());
 
+        // How many Payroll & Compensation expense rows are printed in the
+        // expenses list, so the "Of which: Staff Salaries" informational note
+        // can sit directly under the last payroll line instead of adding a
+        // second negative value to the outflow column.
+        $payrollExpenseCount = collect($expenseItems)
+            ->where('category', 'Payroll & Compensation')
+            ->count();
+
         // Opening Bank Balance must reflect what the account(s) held at the
         // START of the reporting period - NOT the live balance. An account
         // created during the period (e.g. a brand-new school) did not exist
@@ -249,6 +257,7 @@ class FinancialStatementPage extends Page
             'expenseItems' => $expenseItems,
             'salariesExpense' => $salariesExpense,
             'salariesDate' => $salariesDate,
+            'payrollExpenseCount' => $payrollExpenseCount,
             'totalInflows' => $totalInflows,
             'totalOutflows' => $totalOutflows,
             'netCashFlow' => (float) $netCashFlow,

@@ -139,15 +139,30 @@
                     <td style="text-align:right;"></td>
                     <td style="text-align:right;"></td>
                 </tr>
+                @if(($expense['category'] ?? null) === 'Payroll & Compensation' && (float) ($data['totalSalaries'] ?? 0) > 0)
+                    @php $payrollRowsShown = ($payrollRowsShown ?? 0) + 1; @endphp
+                    @if($payrollRowsShown === (int) ($data['payrollExpenseCount'] ?? 0))
+                        <tr>
+                            <td style="text-align:left; padding-left:36px; font-style:italic; color:{{ $muted }};">
+                                {{ __('Of which — Staff Salaries') }}{{ ! empty($data['salariesDate']) ? ' — '.$data['salariesDate'] : '' }} — {{ __('included in the Payroll line above') }} (USD {{ number_format((float) ($data['totalSalaries'] ?? 0), 2) }})
+                            </td>
+                            <td style="text-align:right;"></td>
+                            <td style="text-align:right;"></td>
+                            <td style="text-align:right;"></td>
+                        </tr>
+                    @endif
+                @endif
             @endforeach
-            <tr>
-                <td style="text-align:left; padding-left:18px; color:{{ $muted }};">
-                    {{ __('Of which — Staff Salaries') }}{{ !empty($data['salariesDate']) ? ' — '.$data['salariesDate'] : '' }}
-                </td>
-                <td style="text-align:right; color:{{ $negative }}; font-weight:bold;">-${{ number_format((float) ($data['totalSalaries'] ?? 0), 2) }}</td>
-                <td style="text-align:right;"></td>
-                <td style="text-align:right;"></td>
-            </tr>
+            @if((float) ($data['totalSalaries'] ?? 0) > 0 && ($payrollRowsShown ?? 0) === 0)
+                <tr>
+                    <td style="text-align:left; padding-left:18px; font-style:italic; color:{{ $muted }};">
+                        {{ __('Of which — Staff Salaries') }}{{ ! empty($data['salariesDate']) ? ' — '.$data['salariesDate'] : '' }} — {{ __('included in the Payroll line above') }} (USD {{ number_format((float) ($data['totalSalaries'] ?? 0), 2) }})
+                    </td>
+                    <td style="text-align:right;"></td>
+                    <td style="text-align:right;"></td>
+                    <td style="text-align:right;"></td>
+                </tr>
+            @endif
             <tr>
                 <td style="text-align:left; font-weight:bold;">{{ __('Total Outflows (−) / Total Inflows (+)') }}</td>
                 <td style="text-align:right; color:{{ $negative }}; font-weight:bold;">-${{ number_format((float) ($data['totalOutflows'] ?? 0), 2) }}</td>

@@ -45,6 +45,7 @@ class FinancialStatementExportTest extends TestCase
             ],
             'totalSalaries' => 200.0,
             'salariesDate' => '2026-09-25',
+            'payrollExpenseCount' => 1,
             'totalInflows' => 420.0,
             'totalOutflows' => 270.0,
             'netCashFlow' => 150.0,
@@ -93,8 +94,12 @@ class FinancialStatementExportTest extends TestCase
             $this->assertSame(-270.0, (float) $statement->getCell('C'.$totals)->getValue());
             $this->assertSame(420.0, (float) $statement->getCell('D'.$totals)->getValue());
 
-            // Salaries memo line carries a date.
-            $this->assertNotNull($this->rowOf($statement, 'Of which — Staff Salaries — 2026-09-25'));
+            // Salaries memo line is informational only: it sits under the
+            // payroll expense row and carries NO negative outflow value.
+            $memo = $this->rowOf($statement, 'Of which — Staff Salaries — 2026-09-25 — included in the Payroll line above (USD 200.00)');
+            $this->assertNotNull($memo);
+            $this->assertSame('', (string) $statement->getCell('C'.$memo)->getValue());
+            $this->assertSame('', (string) $statement->getCell('D'.$memo)->getValue());
 
             $closing = $this->rowOf($statement, 'Closing Balance');
             $this->assertNotNull($closing);
@@ -130,7 +135,7 @@ class FinancialStatementExportTest extends TestCase
 
         $this->assertStringContainsString('Outflows (−)', $html);
         $this->assertStringContainsString('Inflows (+)', $html);
-        $this->assertStringContainsString('Of which — Staff Salaries — 2026-09-25', $html);
+        $this->assertStringContainsString('Of which — Staff Salaries — 2026-09-25 — included in the Payroll line above (USD 200.00)', $html);
         $this->assertStringNotContainsString('Total Revenue / Inflows (Net of Refunds)', $html);
     }
 }
