@@ -127,7 +127,7 @@
                 <td colspan="2" style="text-align: right; color: {{ $financeTheme['light_green'] }};">{{ __('Amount Paid to Date:') }}</td>
                 <td style="color: {{ $financeTheme['light_green'] }};">${{ number_format($invoice->paid_amount, 2) }}</td>
             </tr>
-            <tr style="font-weight: bold; background: {{ $financeTheme['red_tint'] }}; font-size: 16px;">
+            <tr style="font-weight: bold; background: {{ $financeTheme['red_tint'] }}; font-size: 19px;">
                 <td colspan="2" style="text-align: right; color: {{ $financeTheme['light_red'] }};">{{ __('Outstanding Balance:') }}</td>
                 <td style="color: {{ $financeTheme['light_red'] }};">${{ number_format($invoice->balance_amount, 2) }}</td>
             </tr>
@@ -136,7 +136,8 @@
 
     <!-- 4. Payment instructions -->
     @if($in['show'])
-    @php($referenceNotice = \Modules\Finance\Services\BillingDocumentSettingsService::fillTemplate($config['reference_notice'], ['ADMISSION_NUMBER' => $student->admission_number, 'REGISTRATION_NUMBER' => $config['registration_number'] ?? '']))
+    @php($templateNotice = $template?->layout_config['reference_notice'] ?? '')
+    @php($referenceNotice = \Modules\Finance\Services\BillingDocumentSettingsService::fillTemplate($templateNotice !== '' && $templateNotice !== null ? $templateNotice : $config['reference_notice'], ['ADMISSION_NUMBER' => $student->admission_number, 'REGISTRATION_NUMBER' => $config['registration_number'] ?? '', 'STUDENT_ID_NUMBER' => $student->student_id_number ?? '']))
     <div class="instructions">
         <strong style="color: {{ $financeTheme['accent_color'] }};">{{ __('PAYMENT CHANNELS & REF INSTRUCTIONS') }}</strong>
         <table style="width: 100%; border-collapse: collapse; margin-top: 6px; font-size: {{ $in['font_size'] }}px; line-height: 1.5; color: {{ $in['color'] }};">

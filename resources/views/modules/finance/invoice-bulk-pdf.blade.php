@@ -105,7 +105,7 @@
                         <td colspan="2" style="text-align: right; font-size: 11px; color: {{ $financeTheme['accent_color'] }};">Total Due (Base USD):</td>
                         <td style="font-size: 11px; color: {{ $financeTheme['accent_color'] }};">${{ number_format($data['invoice']->total_amount, 2) }}</td>
                     </tr>
-                    <tr style="font-weight: bold; background: {{ $financeTheme['red_tint'] }}; font-size: 15px;">
+                    <tr style="font-weight: bold; background: {{ $financeTheme['red_tint'] }}; font-size: 19px;">
                         <td colspan="2" style="text-align: right; color: {{ $financeTheme['light_red'] }};">{{ __('Outstanding Balance:') }}</td>
                         <td style="color: {{ $financeTheme['light_red'] }};">${{ number_format($data['invoice']->balance_amount, 2) }}</td>
                     </tr>
@@ -113,7 +113,8 @@
             </table>
 
             @if($in['show'])
-            @php($referenceNotice = \Modules\Finance\Services\BillingDocumentSettingsService::fillTemplate($data['config']['reference_notice'], ['ADMISSION_NUMBER' => $data['student']->admission_number, 'REGISTRATION_NUMBER' => $data['config']['registration_number'] ?? '']))
+            @php($templateNotice = $data['template']?->layout_config['reference_notice'] ?? '')
+            @php($referenceNotice = \Modules\Finance\Services\BillingDocumentSettingsService::fillTemplate($templateNotice !== '' && $templateNotice !== null ? $templateNotice : $data['config']['reference_notice'], ['ADMISSION_NUMBER' => $data['student']->admission_number, 'REGISTRATION_NUMBER' => $data['config']['registration_number'] ?? '', 'STUDENT_ID_NUMBER' => $data['student']->student_id_number ?? '']))
             <div class="instructions">
                 <strong style="color: {{ $financeTheme['accent_color'] }};">PAYMENT INSTRUCTIONS (ECOCASH / ZIPIT / SWIPE / CASH)</strong>
                 <table style="width: 100%; border-collapse: collapse; margin-top: 6px; font-size: {{ $in['font_size'] }}px; line-height: 1.5; color: {{ $in['color'] }};">
