@@ -130,7 +130,8 @@ class StatementOfAccountLedgerTest extends TestCase
             ])->render();
 
             $this->assertStringContainsString('Refund Issued (Receipt: REF-PAY-87143)', $html);
-            $this->assertStringContainsString('$50.00 (refunded)', $html);
+            $this->assertStringContainsString('-$50.00', $html);
+            $this->assertStringNotContainsString('$50.00 (refunded)', $html);
         } finally {
             Payment::where('invoice_id', $invoice->id)->delete();
             $invoice->delete();
