@@ -31,6 +31,13 @@ class FinanceDocumentTemplateResource extends Resource
 {
     use ModulePermissionAccess;
 
+    /**
+     * Default Reference Notice text for invoice templates. Receipt and
+     * statement templates start blank: they only render a notice once the
+     * school writes one for that document type.
+     */
+    public const REFERENCE_NOTICE_DEFAULT = 'You MUST quote the Student Registration number ({STUDENT_ID_NUMBER}) as the transaction reference. Payments without proper reference numbers may experience delay in reconciliation.';
+
     public static function getNavigationGroup(): ?string
     {
         return __('Finance');
@@ -64,7 +71,13 @@ class FinanceDocumentTemplateResource extends Resource
                             ->label(__('Document Type'))
                             ->options(FinanceDocumentTemplate::$documentTypes)
                             ->required()
-                            ->live(),
+                            ->default('invoice')
+                            ->live()
+                            ->afterStateUpdated(function (Set $set, Get $get, $state) {
+                                if ($get('layout_config.reference_notice') === self::REFERENCE_NOTICE_DEFAULT) {
+                                    $set('layout_config.reference_notice', $state === 'invoice' ? self::REFERENCE_NOTICE_DEFAULT : '');
+                                }
+                            }),
 
                         Forms\Components\TextInput::make('name')
                             ->label(__('Template Name'))
@@ -264,6 +277,18 @@ class FinanceDocumentTemplateResource extends Resource
                                     Forms\Components\ColorPicker::make('layout_config.instructions.color')
                                         ->label(__('Text Colour'))
                                         ->live(),
+                                ])->columns(2)->collapsible()->collapsed(),
+
+                            Forms\Components\Section::make('Reference Notice')
+                                ->description(__('The payment-reference reminder printed on the document. Leave blank to show none.'))
+                                ->schema([
+                                    Forms\Components\Textarea::make('layout_config.reference_notice')
+                                        ->label(__('Reference Notice'))
+                                        ->placeholder(self::REFERENCE_NOTICE_DEFAULT)
+                                        ->default(fn (Get $get): string => $get('document_type') === 'invoice' ? self::REFERENCE_NOTICE_DEFAULT : '')
+                                        ->helperText(__('Supports the {ADMISSION_NUMBER}, {REGISTRATION_NUMBER} and {STUDENT_ID_NUMBER} placeholders. By default only invoices show this notice.'))
+                                        ->rows(3)
+                                        ->live(debounce: 300),
                                 ])->columns(2)->collapsible()->collapsed(),
 
                             Forms\Components\Section::make('Footer, Signatures & QR')
