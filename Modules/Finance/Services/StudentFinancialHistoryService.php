@@ -182,8 +182,15 @@ class StudentFinancialHistoryService
                 }
             }
 
+            // The student did not have an account before they were enrolled, so
+            // the opening row must not be dated earlier than their admission.
+            $openingDate = $start->copy()->startOfDay();
+            if ($student->admission_date && $student->admission_date->startOfDay()->gt($openingDate)) {
+                $openingDate = $student->admission_date->copy()->startOfDay();
+            }
+
             array_unshift($rows, [
-                'date' => $start->copy()->subDay(),
+                'date' => $openingDate,
                 'type' => 'opening',
                 'description' => $opening >= 0
                     ? 'Opening Balance (carried forward)'
