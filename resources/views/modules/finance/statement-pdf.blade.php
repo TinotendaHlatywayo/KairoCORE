@@ -83,7 +83,7 @@
                         @if(($row['credit'] ?? 0) > 0)
                             ${{ number_format($row['credit'], 2) }}
                         @elseif(! empty($row['is_refund']))
-                            ${{ number_format(abs((float) $row['credit']), 2) }} ({{ __('refunded') }})
+                            -${{ number_format(abs((float) $row['credit']), 2) }}
                         @else
                             -
                         @endif
@@ -91,14 +91,23 @@
                     <td style="font-weight: bold;">${{ number_format($row['running_balance'], 2) }}</td>
                 </tr>
             @endforeach
-            <tr style="font-weight: bold; background: {{ $financeTheme['blue_tint'] }}; font-size: 15px;">
+            <tr style="font-weight: bold; background: {{ $financeTheme['blue_tint'] }}; font-size: 19px;">
                 <td colspan="4" style="text-align: right; color: {{ $financeTheme['light_blue'] }}; padding: 8px;">{{ __('Net Outstanding Balance Due:') }}</td>
                 <td style="color: {{ $financeTheme['light_blue'] }}; padding: 8px;">${{ number_format($current_balance, 2) }}</td>
             </tr>
         </tbody>
     </table>
 
-    <!-- 4. Signatures, QR & footer -->
+    <!-- 4. Reference notice (only when the active statement template defines one) -->
+    @php($templateNotice = $template?->layout_config['reference_notice'] ?? '')
+    @if($templateNotice !== '' && $templateNotice !== null)
+        @php($referenceNotice = \Modules\Finance\Services\BillingDocumentSettingsService::fillTemplate($templateNotice, ['ADMISSION_NUMBER' => $student->admission_number, 'REGISTRATION_NUMBER' => $config['registration_number'] ?? '', 'STUDENT_ID_NUMBER' => $student->student_id_number ?? '']))
+        <div style="border: 1px solid {{ $financeTheme['soft_border'] }}; border-radius: 4px; padding: 8px 10px; margin-top: 12px; font-size: 10px; line-height: 1.5; color: {{ $financeTheme['success_color'] }};">
+            <strong style="color: {{ $financeTheme['accent_color'] }};">{{ __('Reference Notice:') }}</strong> {!! $referenceNotice !!}
+        </div>
+    @endif
+
+    <!-- 5. Signatures, QR & footer -->
     @include('modules.finance.partials.document-footer', [
         'f' => $f,
         'financeTheme' => $financeTheme,

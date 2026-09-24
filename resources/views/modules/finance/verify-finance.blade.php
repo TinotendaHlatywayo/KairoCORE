@@ -117,7 +117,7 @@
                                         @if(($row['credit'] ?? 0) > 0)
                                             ${{ number_format($row['credit'], 2) }}
                                         @elseif(! empty($row['is_refund']))
-                                            ${{ number_format(abs((float) $row['credit']), 2) }} ({{ __('refunded') }})
+                                            -${{ number_format(abs((float) $row['credit']), 2) }}
                                         @else
                                             -
                                         @endif
