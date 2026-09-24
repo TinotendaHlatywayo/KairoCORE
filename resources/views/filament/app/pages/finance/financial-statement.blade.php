@@ -120,19 +120,30 @@
                             <td class="py-2 text-right font-semibold text-gray-900 dark:text-white">${{ number_format($openingBalance ?? 0, 2) }}</td>
                         </tr>
 
-                        <!-- Fee revenue -->
+                        <!-- Fee revenue + per-account breakdown -->
                         <tr class="border-b border-gray-100 dark:border-gray-800">
                             <td class="py-2 font-medium text-gray-600 dark:text-gray-400">{{ __('Total Fees Collected') }}</td>
                             <td class="py-2"></td>
                             <td class="py-2 text-right font-medium text-success-600 dark:text-success-400">+${{ number_format($feeRevenue ?? 0, 2) }}</td>
                             <td class="py-2"></td>
                         </tr>
-                        <tr class="border-b border-gray-50 dark:border-gray-800/50">
-                            <td class="py-1.5 pl-6 text-[13px] text-gray-500 dark:text-gray-500">{{ __('School fees recorded within the period') }}</td>
-                            <td class="py-1.5"></td>
-                            <td class="py-1.5 text-right text-[13px] font-medium text-success-600/80 dark:text-success-400/80">+${{ number_format($feeRevenue ?? 0, 2) }}</td>
-                            <td class="py-1.5"></td>
-                        </tr>
+                        @if($allAccounts && !empty($accountBreakdown['feeBreakdown']))
+                            @foreach($accountBreakdown['feeBreakdown'] as $feeRow)
+                                <tr class="border-b border-gray-50 dark:border-gray-800/50">
+                                    <td class="py-1.5 pl-6 text-[13px] text-gray-500 dark:text-gray-500">{{ $feeRow['account'] }} <span class="text-gray-400 text-xs">{{ __('(School fees)') }}</span></td>
+                                    <td class="py-1.5"></td>
+                                    <td class="py-1.5 text-right text-[13px] font-medium text-success-600/80 dark:text-success-400/80">+${{ number_format($feeRow['amount'], 2) }}</td>
+                                    <td class="py-1.5"></td>
+                                </tr>
+                            @endforeach
+                        @else
+                            <tr class="border-b border-gray-50 dark:border-gray-800/50">
+                                <td class="py-1.5 pl-6 text-[13px] text-gray-500 dark:text-gray-500">{{ __('School fees recorded within the period') }}</td>
+                                <td class="py-1.5"></td>
+                                <td class="py-1.5 text-right text-[13px] font-medium text-success-600/80 dark:text-success-400/80">+${{ number_format($feeRevenue ?? 0, 2) }}</td>
+                                <td class="py-1.5"></td>
+                            </tr>
+                        @endif
 
                         <!-- Revenue streams -->
                         @if(count($revenueStreams ?? []))
@@ -159,6 +170,22 @@
                                     <td class="py-1.5"></td>
                                 </tr>
                             @endforeach
+                            @if($allAccounts && !empty($accountBreakdown['incomeBreakdown']) && count($accountBreakdown['incomeBreakdown']) > 1)
+                                <tr class="border-b border-gray-100 dark:border-gray-800">
+                                    <td class="py-1.5 pl-6 text-[13px] font-semibold text-gray-600 dark:text-gray-400">{{ __('By Account') }}</td>
+                                    <td class="py-1.5"></td>
+                                    <td class="py-1.5"></td>
+                                    <td class="py-1.5"></td>
+                                </tr>
+                                @foreach($accountBreakdown['incomeBreakdown'] as $incomeRow)
+                                    <tr class="border-b border-gray-50 dark:border-gray-800/50">
+                                        <td class="py-1.5 pl-8 text-[13px] text-gray-500 dark:text-gray-500">{{ $incomeRow['account'] }}</td>
+                                        <td class="py-1.5"></td>
+                                        <td class="py-1.5 text-right text-[13px] font-medium text-success-600/80 dark:text-success-400/80">+${{ number_format($incomeRow['amount'], 2) }}</td>
+                                        <td class="py-1.5"></td>
+                                    </tr>
+                                @endforeach
+                            @endif
                         @endif
 
                         <!-- Refunds (outflow) -->
@@ -180,6 +207,22 @@
                                 <td class="py-1.5"></td>
                             </tr>
                         @endforeach
+                        @if($allAccounts && !empty($accountBreakdown['refundBreakdown']))
+                            <tr class="border-b border-gray-100 dark:border-gray-800">
+                                <td class="py-1.5 pl-6 text-[13px] font-semibold text-gray-600 dark:text-gray-400">{{ __('By Account') }}</td>
+                                <td class="py-1.5"></td>
+                                <td class="py-1.5"></td>
+                                <td class="py-1.5"></td>
+                            </tr>
+                            @foreach($accountBreakdown['refundBreakdown'] as $refundRow)
+                                <tr class="border-b border-gray-50 dark:border-gray-800/50">
+                                    <td class="py-1.5 pl-8 text-[13px] text-gray-500 dark:text-gray-500">{{ $refundRow['account'] }}</td>
+                                    <td class="py-1.5 text-right text-[13px] font-medium text-danger-600/80 dark:text-danger-400/80">-${{ number_format($refundRow['amount'], 2) }}</td>
+                                    <td class="py-1.5"></td>
+                                    <td class="py-1.5"></td>
+                                </tr>
+                            @endforeach
+                        @endif
 
                         <!-- Expenses (outflow) -->
                         <tr class="border-b border-gray-100 dark:border-gray-800">
@@ -199,12 +242,31 @@
                                     @if($expense['reference'])
                                         <span class="text-gray-400 text-xs"> — {{ $expense['reference'] }}</span>
                                     @endif
+                                    @if($expense['account'])
+                                        <span class="text-gray-400 text-xs"> — {{ $expense['account'] }}</span>
+                                    @endif
                                 </td>
                                 <td class="py-1.5 text-right text-[13px] font-medium text-danger-600/80 dark:text-danger-400/80">-${{ number_format($expense['amount'], 2) }}</td>
                                 <td class="py-1.5"></td>
                                 <td class="py-1.5"></td>
                             </tr>
                         @endforeach
+                        @if($allAccounts && !empty($accountBreakdown['expenseBreakdown']))
+                            <tr class="border-b border-gray-100 dark:border-gray-800">
+                                <td class="py-1.5 pl-6 text-[13px] font-semibold text-gray-600 dark:text-gray-400">{{ __('By Account') }}</td>
+                                <td class="py-1.5"></td>
+                                <td class="py-1.5"></td>
+                                <td class="py-1.5"></td>
+                            </tr>
+                            @foreach($accountBreakdown['expenseBreakdown'] as $expenseRow)
+                                <tr class="border-b border-gray-50 dark:border-gray-800/50">
+                                    <td class="py-1.5 pl-8 text-[13px] text-gray-500 dark:text-gray-500">{{ $expenseRow['account'] }}</td>
+                                    <td class="py-1.5 text-right text-[13px] font-medium text-danger-600/80 dark:text-danger-400/80">-${{ number_format($expenseRow['amount'], 2) }}</td>
+                                    <td class="py-1.5"></td>
+                                    <td class="py-1.5"></td>
+                                </tr>
+                            @endforeach
+                        @endif
 
                         <!-- Column totals (real period movements only) -->
                         <tr class="border-y-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
@@ -227,6 +289,37 @@
                             <td class="py-2"></td>
                             <td class="py-2 text-right font-bold text-primary-600 dark:text-primary-400">${{ number_format($closingBalance ?? 0, 2) }}</td>
                         </tr>
+
+                        <!-- Per-account balances (combined view only) -->
+                        @if($allAccounts && !empty($accountBreakdown['openingByAccount']) && !empty($accountBreakdown['closingByAccount']))
+                            <tr class="border-b border-gray-100 dark:border-gray-800">
+                                <td class="py-2 pt-3 font-semibold text-gray-700 dark:text-gray-300">{{ __('Balances by Bank Account') }}</td>
+                                <td class="py-2"></td>
+                                <td class="py-2"></td>
+                                <td class="py-2"></td>
+                            </tr>
+                            @foreach($accountBreakdown['openingByAccount'] as $i => $openingRow)
+                                @php $closingRow = $accountBreakdown['closingByAccount'][$i] ?? $openingRow; @endphp
+                                <tr class="border-b border-gray-50 dark:border-gray-800/50">
+                                    <td class="py-1.5 pl-8 text-[13px] font-medium text-gray-700 dark:text-gray-300">
+                                        {{ $openingRow['account'] }}
+                                        <span class="text-gray-400 text-xs">{{ __('Opening') }}</span>
+                                    </td>
+                                    <td class="py-1.5"></td>
+                                    <td class="py-1.5"></td>
+                                    <td class="py-1.5 text-right text-[13px] font-medium text-gray-700 dark:text-gray-300">${{ number_format($openingRow['amount'], 2) }}</td>
+                                </tr>
+                                <tr class="border-b border-gray-50 dark:border-gray-800/50">
+                                    <td class="py-1.5 pl-8 text-[13px] font-medium text-gray-700 dark:text-gray-300">
+                                        {{ $closingRow['account'] }}
+                                        <span class="text-gray-400 text-xs">{{ __('Closing') }}</span>
+                                    </td>
+                                    <td class="py-1.5"></td>
+                                    <td class="py-1.5"></td>
+                                    <td class="py-1.5 text-right text-[13px] font-medium text-gray-700 dark:text-gray-300">${{ number_format($closingRow['amount'], 2) }}</td>
+                                </tr>
+                            @endforeach
+                        @endif
                     </tbody>
                 </table>
             </div>

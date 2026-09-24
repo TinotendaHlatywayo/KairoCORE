@@ -123,6 +123,23 @@ class FinancialStatementDownloadWidget extends Widget
         $revenueStreamTotal = array_sum(array_column($revenueStreams, 'amount'));
         $refundItems = $engine->getRefundsForPeriod($schoolId, $startStr, $endStr, $bankAccountId);
         $expenseItems = $engine->getExpensesForPeriod($schoolId, $startStr, $endStr, $bankAccountId);
+        $feeItems = $engine->getFeeCollectionsForPeriod($schoolId, $startStr, $endStr, $bankAccountId);
+
+        // Per-account breakdown for the "All Accounts (Combined)" export; null
+        // when a single bank account is selected (its own figures are shown).
+        $allBankAccounts = SchoolBankAccount::where('school_id', $schoolId)->orderByDesc('is_default')->get();
+        $defaultAccount = $allBankAccounts->firstWhere('is_default', true) ?? $allBankAccounts->first();
+        $accountBreakdown = $bankAccountId === null
+            ? $engine->buildStatementAccountBreakdown(
+                $feeItems,
+                $revenueStreams,
+                $refundItems,
+                $expenseItems,
+                $allBankAccounts->all(),
+                (int) $defaultAccount->id,
+                $startStr,
+            )
+            : null;
 
         // Total Revenue is net of refunds, mirroring FinancialStatementPage and
         // the Executive Dashboard summary.
@@ -195,6 +212,7 @@ class FinancialStatementDownloadWidget extends Widget
             'refundItems' => $refundItems,
             'totalExpenses' => $totalExpenses,
             'expenseItems' => $expenseItems,
+            'accountBreakdown' => $accountBreakdown,
             'totalSalaries' => $totalSalaries,
             'salariesDate' => $salariesDate,
             'payrollExpenseCount' => $payrollExpenseCount,
