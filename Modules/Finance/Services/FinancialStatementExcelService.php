@@ -112,20 +112,6 @@ class FinancialStatementExcelService
             $description = $expense['name'].' ('.($expense['category'] ?? 'Uncategorised').')'
                 .(! empty($expense['reference']) ? ' — '.$expense['reference'] : '');
             self::statementRow($sheet, $row++, $expense['date'] ?? null, $description, (float) $expense['amount'], null, null);
-
-            // The "Of which — Staff Salaries" line is informational only: it
-            // must not add a second negative value to the outflow column, so
-            // it renders as a sub-label under the last payroll expense row.
-            if (($expense['category'] ?? null) === 'Payroll & Compensation') {
-                $payrollRowsShown++;
-                if ((float) ($data['totalSalaries'] ?? 0) > 0 && $payrollRowsShown === (int) ($data['payrollExpenseCount'] ?? 0)) {
-                    self::statementRow($sheet, $row++, null, self::salariesMemo($data), null, null, null);
-                }
-            }
-        }
-
-        if ((float) ($data['totalSalaries'] ?? 0) > 0 && $payrollRowsShown === 0) {
-            self::statementRow($sheet, $row++, null, self::salariesMemo($data), null, null, null);
         }
 
         self::statementRow($sheet, $row++, null, 'Total Outflows (−) / Total Inflows (+)', (float) ($data['totalOutflows'] ?? 0), (float) ($data['totalInflows'] ?? 0), null, true, true);
@@ -191,17 +177,6 @@ class FinancialStatementExcelService
         $sheet->getPageSetup()->setOrientation(PageSetup::ORIENTATION_LANDSCAPE);
         $sheet->getPageSetup()->setFitToWidth(1);
         $sheet->getPageSetup()->setFitToHeight(0);
-    }
-
-    private static function salariesMemo(array $data): string
-    {
-        $memo = 'Of which — Staff Salaries';
-        if (! empty($data['salariesDate'])) {
-            $memo .= ' — '.$data['salariesDate'];
-        }
-        $memo .= ' — included in the Payroll line above (USD '.number_format((float) ($data['totalSalaries'] ?? 0), 2).')';
-
-        return $memo;
     }
 
     private static function statementRow(

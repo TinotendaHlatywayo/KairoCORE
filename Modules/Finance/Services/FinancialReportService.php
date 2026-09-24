@@ -70,7 +70,6 @@ class FinancialReportService
             $rows[] = ['  - '.$expense['name'].' ('.$expense['category'].')'.($expense['date'] ? ' — '.$expense['date'] : ''), '-'.number_format($expense['amount'], 2)];
         }
 
-        $rows[] = ['  Of which: Staff Salaries'.(! empty($data['salariesDate']) ? ' — '.$data['salariesDate'] : '').' (included in Payroll above — USD '.number_format($data['totalSalaries'] ?? 0, 2).')', ''];
         $rows[] = ['Net Cash Flow Balance', number_format($data['netCashFlow'], 2)];
         $rows[] = ['Closing Balance', number_format($data['closingBalance'] ?? (($data['openingBalance'] ?? 0) + $data['netCashFlow']), 2)];
 
@@ -117,7 +116,6 @@ class FinancialReportService
             $lines[] = '  - '.$expense['name'].' ('.$expense['category'].')'.($expense['date'] ? ' — '.$expense['date'] : '').'  -'.number_format($expense['amount'], 2);
         }
 
-        $lines[] = '  Of which: Staff Salaries'.(! empty($data['salariesDate']) ? ' — '.$data['salariesDate'] : '').' (included in Payroll above — USD '.number_format($data['totalSalaries'] ?? 0, 2).')';
         $lines[] = 'Net Cash Flow Balance                           '.number_format($data['netCashFlow'], 2);
         $lines[] = 'Closing Balance                                 '.number_format($data['closingBalance'] ?? (($data['openingBalance'] ?? 0) + $data['netCashFlow']), 2);
 
