@@ -43,9 +43,6 @@ class FinancialStatementExportTest extends TestCase
                 ['name' => 'Salaries September', 'category' => 'Payroll & Compensation', 'amount' => 200.0, 'date' => '2026-09-25', 'reference' => 'PAY-1'],
                 ['name' => 'Utilities', 'category' => 'Utilities', 'amount' => 50.0, 'date' => '2026-09-05', 'reference' => 'EXP-1'],
             ],
-            'totalSalaries' => 200.0,
-            'salariesDate' => '2026-09-25',
-            'payrollExpenseCount' => 1,
             'totalInflows' => 420.0,
             'totalOutflows' => 270.0,
             'netCashFlow' => 150.0,
@@ -94,12 +91,10 @@ class FinancialStatementExportTest extends TestCase
             $this->assertSame(-270.0, (float) $statement->getCell('C'.$totals)->getValue());
             $this->assertSame(420.0, (float) $statement->getCell('D'.$totals)->getValue());
 
-            // Salaries memo line is informational only: it sits under the
-            // payroll expense row and carries NO negative outflow value.
+            // The salaries memo line has been removed entirely from the statement.
             $memo = $this->rowOf($statement, 'Of which — Staff Salaries — 2026-09-25 — included in the Payroll line above (USD 200.00)');
-            $this->assertNotNull($memo);
-            $this->assertSame('', (string) $statement->getCell('C'.$memo)->getValue());
-            $this->assertSame('', (string) $statement->getCell('D'.$memo)->getValue());
+            $this->assertNull($memo);
+            $this->assertNull($this->rowOf($statement, 'Of which — Staff Salaries'));
 
             $closing = $this->rowOf($statement, 'Closing Balance');
             $this->assertNotNull($closing);
@@ -135,7 +130,7 @@ class FinancialStatementExportTest extends TestCase
 
         $this->assertStringContainsString('Outflows (−)', $html);
         $this->assertStringContainsString('Inflows (+)', $html);
-        $this->assertStringContainsString('Of which — Staff Salaries — 2026-09-25 — included in the Payroll line above (USD 200.00)', $html);
+        $this->assertStringNotContainsString('Of which — Staff Salaries', $html);
         $this->assertStringNotContainsString('Total Revenue / Inflows (Net of Refunds)', $html);
     }
 }
