@@ -106,7 +106,16 @@
         </tbody>
     </table>
 
-    <!-- 5. Signatures, QR & certification footer -->
+    <!-- 5. Reference notice (only when the active receipt template defines one) -->
+    @php($templateNotice = $template?->layout_config['reference_notice'] ?? '')
+    @if($templateNotice !== '' && $templateNotice !== null)
+        @php($referenceNotice = \Modules\Finance\Services\BillingDocumentSettingsService::fillTemplate($templateNotice, ['ADMISSION_NUMBER' => $invoice->student->admission_number, 'REGISTRATION_NUMBER' => $config['registration_number'] ?? '', 'STUDENT_ID_NUMBER' => $invoice->student->student_id_number ?? '']))
+        <div style="border: 1px solid {{ $financeTheme['soft_border'] }}; border-radius: 4px; padding: 8px 10px; margin-top: 12px; font-size: 10px; line-height: 1.5; color: {{ $financeTheme['success_color'] }};">
+            <strong style="color: {{ $financeTheme['accent_color'] }};">{{ __('Reference Notice:') }}</strong> {!! $referenceNotice !!}
+        </div>
+    @endif
+
+    <!-- 6. Signatures, QR & certification footer -->
     @include('modules.finance.partials.document-footer', [
         'f' => $f,
         'financeTheme' => $financeTheme,

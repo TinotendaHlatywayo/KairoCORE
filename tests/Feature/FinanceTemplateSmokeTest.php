@@ -253,6 +253,128 @@ class FinanceTemplateSmokeTest extends TestCase
         }
     }
 
+    public function test_reference_notice_is_per_document_type_from_template(): void
+    {
+        $user = $this->adminUser();
+        $this->actingAs($user);
+        $school = School::findOrFail($this->schoolId);
+
+        [$student, $invoice] = $this->makeFinanceFixture();
+        $config = BillingDocumentSettingsService::get();
+
+        $year = \Modules\Academics\Models\AcademicYear::firstOrCreate(
+            ['school_id' => $this->schoolId, 'is_active' => true],
+            ['name' => now()->format('Y').' Academic Year', 'start_date' => now()->startOfYear(), 'end_date' => now()->endOfYear()]
+        );
+        $term = \Modules\Academics\Models\Term::where('school_id', $this->schoolId)->where('academic_year_id', $year->id)->orderBy('id')->first()
+            ?? \Modules\Academics\Models\Term::create([
+                'school_id' => $this->schoolId, 'academic_year_id' => $year->id, 'name' => 'Term 1',
+                'start_date' => now()->startOfYear(), 'end_date' => now()->startOfYear()->addMonths(3),
+            ]);
+        $invoice->update(['term_id' => $term->id]);
+
+        $payment = \Modules\Finance\Models\Payment::create([
+            'school_id' => $this->schoolId,
+            'invoice_id' => $invoice->id,
+            'received_by_id' => null,
+            'receipt_number' => 'RAL-'.strtoupper(uniqid()),
+            'reference_number' => 'REF-'.strtoupper(uniqid()),
+            'amount' => 40,
+            'currency' => 'USD',
+            'payment_method' => 'cash',
+            'payment_date' => now(),
+            'is_refund' => false,
+            'is_reversed' => false,
+            'excess_handling' => 'allocate',
+        ]);
+
+        try {
+            // No active template for any type: invoices fall back to the global
+            // config notice, receipts and statements render none.
+            FinanceDocumentTemplate::where('school_id', $this->schoolId)->update(['is_active' => false]);
+
+            $none = FinanceDocumentTemplate::resolveFor($this->schoolId, 'statement');
+            $this->assertSame('Default', $none->name);
+
+            $statementHtml = view('modules.finance.statement-pdf', [
+                'student' => $student,
+                'school' => $school,
+                'ledger' => [],
+                'current_balance' => 0,
+                'config' => $config,
+                'template' => $none,
+                'verify_hash' => null,
+            ])->render();
+            $this->assertStringNotContainsString('Reference Notice:', $statementHtml);
+
+            // A receipt template with a custom notice renders exactly that text.
+            $receiptTemplate = FinanceDocumentTemplate::create([
+                'school_id' => $this->schoolId,
+                'document_type' => 'receipt',
+                'name' => 'Receipt with Notice',
+                'design_theme' => 'classic_line',
+                'is_active' => true,
+                'layout_config' => ['reference_notice' => 'Quote receipt ref ({ADMISSION_NUMBER}) on all correspondence.'],
+            ]);
+
+            $receiptHtml = view('modules.finance.receipt-pdf', [
+                'invoice' => $invoice,
+                'payment' => $payment,
+                'school' => $school,
+                'config' => $config,
+                'template' => $receiptTemplate,
+            ])->render();
+            $this->assertStringContainsString('Quote receipt ref ('.$student->admission_number.') on all correspondence.', $receiptHtml);
+
+            // A blank statement template still shows no notice.
+            $statementTemplate = FinanceDocumentTemplate::create([
+                'school_id' => $this->schoolId,
+                'document_type' => 'statement',
+                'name' => 'Statement Blank',
+                'design_theme' => 'classic_line',
+                'is_active' => true,
+                'layout_config' => [],
+            ]);
+
+            $statementHtml2 = view('modules.finance.statement-pdf', [
+                'student' => $student,
+                'school' => $school,
+                'ledger' => [],
+                'current_balance' => 0,
+                'config' => $config,
+                'template' => $statementTemplate,
+                'verify_hash' => null,
+            ])->render();
+            $this->assertStringNotContainsString('Reference Notice:', $statementHtml2);
+
+            // Invoice template notice wins over the global config text and the
+            // {STUDENT_ID_NUMBER} placeholder is substituted with the real id.
+            $invoiceTemplate = FinanceDocumentTemplate::create([
+                'school_id' => $this->schoolId,
+                'document_type' => 'invoice',
+                'name' => 'Invoice with Notice',
+                'design_theme' => 'classic_line',
+                'is_active' => true,
+                'layout_config' => ['reference_notice' => 'You MUST quote the Student Registration number ({STUDENT_ID_NUMBER}) as the transaction reference.'],
+            ]);
+
+            $invoiceHtml = view('modules.finance.invoice-pdf', [
+                'invoice' => $invoice,
+                'school' => $school,
+                'student' => $student,
+                'config' => $config,
+                'template' => $invoiceTemplate,
+            ])->render();
+            $this->assertStringContainsString('You MUST quote the Student Registration number ('.$student->student_id_number.') as the transaction reference.', $invoiceHtml);
+        } finally {
+            FinanceDocumentTemplate::where('school_id', $this->schoolId)->delete();
+            \Modules\Finance\Models\Payment::where('invoice_id', $invoice->id)->delete();
+            InvoiceItem::where('invoice_id', $invoice->id)->delete();
+            $invoice->delete();
+            $student->forceDelete();
+        }
+    }
+
     public function test_active_template_config_appears_in_actual_document(): void
     {
         $user = $this->adminUser();
