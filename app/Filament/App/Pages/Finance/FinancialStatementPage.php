@@ -189,6 +189,25 @@ class FinancialStatementPage extends Page
             $endDate->toDateString(),
             $bankAccountId
         );
+        $feeItems = $engine->getFeeCollectionsForPeriod(
+            $schoolId,
+            $startDate->toDateString(),
+            $endDate->toDateString(),
+            $bankAccountId
+        );
+
+        // Per-account breakdown for the "All Accounts (Combined)" view.
+        $accountBreakdown = $bankAccountId === null
+            ? $engine->buildStatementAccountBreakdown(
+                $feeItems,
+                $revenueStreams,
+                $refundItems,
+                $expenseItems,
+                $bankAccounts->all(),
+                (int) $defaultBank->id,
+                $startDate->toDateString(),
+            )
+            : null;
 
         // Total Revenue is net of refunds, matching the Executive Dashboard's
         // getSummary() (where refunds are stored as negative payment amounts).
@@ -255,6 +274,7 @@ class FinancialStatementPage extends Page
             'refundItems' => $refundItems,
             'totalExpenses' => (float) $totalExpenses,
             'expenseItems' => $expenseItems,
+            'accountBreakdown' => $accountBreakdown,
             'salariesExpense' => $salariesExpense,
             'salariesDate' => $salariesDate,
             'payrollExpenseCount' => $payrollExpenseCount,

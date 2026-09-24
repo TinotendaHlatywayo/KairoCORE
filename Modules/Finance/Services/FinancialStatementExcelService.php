@@ -95,14 +95,39 @@ class FinancialStatementExcelService
 
         self::statementRow($sheet, $row++, null, 'Total Fees Collected (school fees in period)', null, (float) ($data['feeRevenue'] ?? 0), null, true);
 
+        $isCombined = ($data['bankAccountName'] ?? '') === __('All Accounts (Combined)');
+        $breakdown = $data['accountBreakdown'] ?? null;
+
+        if ($isCombined && ! empty($breakdown['feeBreakdown'])) {
+            foreach ($breakdown['feeBreakdown'] as $feeRow) {
+                self::statementRow($sheet, $row++, null, $feeRow['account'], null, (float) $feeRow['amount'], null);
+            }
+        } else {
+            self::statementRow($sheet, $row++, null, 'School fees recorded within the period', null, (float) ($data['feeRevenue'] ?? 0), null);
+        }
+
         foreach ($data['revenueStreams'] ?? [] as $stream) {
             self::statementRow($sheet, $row++, $stream['date'] ?? null, $stream['name'].' ('.($stream['category'] ?? 'Other Income').')', null, (float) $stream['amount'], null);
+        }
+
+        if ($isCombined && ! empty($breakdown['incomeBreakdown']) && count($breakdown['incomeBreakdown']) > 1) {
+            self::statementRow($sheet, $row++, null, 'By Account', null, null, null);
+            foreach ($breakdown['incomeBreakdown'] as $incomeRow) {
+                self::statementRow($sheet, $row++, null, $incomeRow['account'], null, (float) $incomeRow['amount'], null);
+            }
         }
 
         self::statementRow($sheet, $row++, null, 'Less Refunds Issued', (float) ($data['totalRefunds'] ?? 0), null, null, true);
 
         foreach ($data['refundItems'] ?? [] as $refund) {
             self::statementRow($sheet, $row++, $refund['date'] ?? null, $refund['reference'] ?? 'Refund', (float) $refund['amount'], null, null);
+        }
+
+        if ($isCombined && ! empty($breakdown['refundBreakdown'])) {
+            self::statementRow($sheet, $row++, null, 'By Account', null, null, null);
+            foreach ($breakdown['refundBreakdown'] as $refundRow) {
+                self::statementRow($sheet, $row++, null, $refundRow['account'], (float) $refundRow['amount'], null, null);
+            }
         }
 
         self::statementRow($sheet, $row++, null, 'Total Expenses & Outflows', (float) ($data['totalExpenses'] ?? 0), null, null, true);
@@ -114,10 +139,26 @@ class FinancialStatementExcelService
             self::statementRow($sheet, $row++, $expense['date'] ?? null, $description, (float) $expense['amount'], null, null);
         }
 
+        if ($isCombined && ! empty($breakdown['expenseBreakdown'])) {
+            self::statementRow($sheet, $row++, null, 'By Account', null, null, null);
+            foreach ($breakdown['expenseBreakdown'] as $expenseRow) {
+                self::statementRow($sheet, $row++, null, $expenseRow['account'], (float) $expenseRow['amount'], null, null);
+            }
+        }
+
         self::statementRow($sheet, $row++, null, 'Total Outflows (−) / Total Inflows (+)', (float) ($data['totalOutflows'] ?? 0), (float) ($data['totalInflows'] ?? 0), null, true, true);
 
         self::statementRow($sheet, $row++, null, 'Net Cash Flow Balance', null, null, (float) ($data['netCashFlow'] ?? 0), true, true);
-        self::statementRow($sheet, $row, null, 'Closing Balance', null, null, (float) ($data['closingBalance'] ?? 0), true, true);
+        self::statementRow($sheet, $row++, null, 'Closing Balance', null, null, (float) ($data['closingBalance'] ?? 0), true, true);
+
+        if ($isCombined && ! empty($breakdown['openingByAccount']) && ! empty($breakdown['closingByAccount'])) {
+            self::statementRow($sheet, $row++, null, 'Balances by Bank Account', null, null, null, true);
+            foreach ($breakdown['openingByAccount'] as $i => $openingRow) {
+                $closingRow = $breakdown['closingByAccount'][$i] ?? $openingRow;
+                self::statementRow($sheet, $row++, null, $openingRow['account'].' (Opening)', null, null, (float) $openingRow['amount']);
+                self::statementRow($sheet, $row++, null, $closingRow['account'].' (Closing)', null, null, (float) $closingRow['amount']);
+            }
+        }
 
         $sheet->getColumnDimension('A')->setWidth(14);
         $sheet->getColumnDimension('B')->setWidth(54);

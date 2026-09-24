@@ -125,6 +125,7 @@ class FinancialAnalyticsEngine
                 'revenue_streams.id',
                 'revenue_streams.name',
                 'revenue_streams.default_amount',
+                'revenue_streams.account_id',
                 'revenue_streams.created_at',
                 'revenue_categories.name as category',
                 'school_bank_accounts.bank_name as bank'
@@ -137,6 +138,7 @@ class FinancialAnalyticsEngine
                 'amount' => (float) $row->default_amount,
                 'category' => $row->category ?? __('Other Income'),
                 'bank' => $row->bank,
+                'account_id' => $row->account_id ? (int) $row->account_id : null,
                 'date' => $row->created_at ? Carbon::parse($row->created_at)->format('Y-m-d') : null,
             ])
             ->toArray();
@@ -160,6 +162,8 @@ class FinancialAnalyticsEngine
                 'amount' => abs((float) $payment->amount),
                 'date' => $payment->created_at->format('Y-m-d'),
                 'account' => $payment->bankAccount?->bank_name,
+                'account_id' => $payment->bank_account_id,
+                'method' => $payment->payment_method,
             ])
             ->toArray();
     }
@@ -174,6 +178,7 @@ class FinancialAnalyticsEngine
             ->leftJoin('expense_types', 'expenses.expense_type_id', '=', 'expense_types.id')
             ->leftJoin('expense_categories', 'expenses.expense_category_id', '=', 'expense_categories.id')
             ->leftJoin('expense_categories as type_categories', 'expense_types.expense_category_id', '=', 'type_categories.id')
+            ->leftJoin('school_bank_accounts', 'expenses.bank_account_id', '=', 'school_bank_accounts.id')
             ->where('expenses.school_id', $schoolId)
             ->whereIn('expenses.status', ['approved', 'paid'])
             ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId, 'expenses.bank_account_id'))
@@ -185,6 +190,8 @@ class FinancialAnalyticsEngine
                 'expenses.amount',
                 'expenses.expense_date',
                 'expenses.status',
+                'expenses.bank_account_id',
+                'school_bank_accounts.bank_name as bank',
                 DB::raw('COALESCE(expense_categories.name, type_categories.name) as category')
             )
             ->orderByDesc('expenses.expense_date')
@@ -196,8 +203,146 @@ class FinancialAnalyticsEngine
                 'category' => $row->category ?? __('Uncategorised'),
                 'date' => $row->expense_date,
                 'status' => $row->status,
+                'account_id' => $row->bank_account_id,
+                'account' => $row->bank,
             ])
             ->toArray();
+    }
+
+    /**
+     * Individual school-fee payments (non-refund) within a date range, so the
+     * Official Financial Statement can tag each fee line by the bank account
+     * or payment method it was collected into.
+     */
+    public function getFeeCollectionsForPeriod(int $schoolId, ?string $startDate, ?string $endDate, ?int $bankAccountId = null): array
+    {
+        return Payment::where('school_id', $schoolId)
+            ->where('is_refund', false)
+            ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId))
+            ->when($startDate, fn ($q) => $q->where('created_at', '>=', $startDate.' 00:00:00'))
+            ->when($endDate, fn ($q) => $q->where('created_at', '<=', $endDate.' 23:59:59'))
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(fn (Payment $payment) => [
+                'reference' => $payment->reference_number ?: $payment->receipt_number,
+                'amount' => (float) $payment->amount,
+                'date' => $payment->created_at->format('Y-m-d'),
+                'account' => $payment->bankAccount?->bank_name,
+                'account_id' => $payment->bank_account_id,
+                'method' => $payment->payment_method,
+            ])
+            ->toArray();
+    }
+
+    /**
+     * Break the combined ("All Accounts") statement down by individual bank
+     * account. Each item is attributed to its bank account id, falling back to
+     * the payment method (e.g. "EcoCash", "Cash") when no bank account is
+     * assigned, matching how the school books unassigned receipts. Opening and
+     * closing balances are resolved per account so every row reconciles.
+     *
+     * @param  array<int, array<string, mixed>>  $feeItems
+     * @param  array<int, array<string, mixed>>  $incomeItems
+     * @param  array<int, array<string, mixed>>  $refundItems
+     * @param  array<int, array<string, mixed>>  $expenseItems
+     * @param  array<int, object|array<string, mixed>>  $bankAccounts
+     */
+    public function buildStatementAccountBreakdown(
+        array $feeItems,
+        array $incomeItems,
+        array $refundItems,
+        array $expenseItems,
+        array $bankAccounts,
+        int $defaultAccountId,
+        ?string $startDate,
+    ): array {
+        $accountById = [];
+        foreach ($bankAccounts as $account) {
+            $accountById[(int) (is_array($account) ? $account['id'] : $account->id)] =
+                trim(implode(' — ', array_filter([
+                    is_array($account) ? ($account['bank_name'] ?? '') : ($account->bank_name ?? ''),
+                    is_array($account) ? ($account['account_name'] ?? '') : ($account->account_name ?? ''),
+                ])));
+        }
+
+        $labelFor = function (array $item) use ($accountById, $defaultAccountId): string {
+            $accountId = isset($item['account_id']) ? (int) $item['account_id'] : null;
+
+            if ($accountId && isset($accountById[$accountId])) {
+                return $accountById[$accountId];
+            }
+
+            if ($accountId === null && isset($item['method']) && $item['method']) {
+                return (string) $item['method'];
+            }
+
+            if ($accountId === null && isset($item['account']) && $item['account']) {
+                return (string) $item['account'];
+            }
+
+            return $accountById[$defaultAccountId] ?? __('Unassigned');
+        };
+
+        $groupsFor = function (array $items) use ($labelFor): array {
+            $groups = [];
+            foreach ($items as $item) {
+                $label = $labelFor($item);
+                $groups[$label] = ($groups[$label] ?? 0.0) + (float) $item['amount'];
+            }
+
+            return collect($groups)
+                ->map(fn (float $amount, string $label) => [
+                    'account' => $label,
+                    'amount' => (float) round($amount, 2),
+                ])
+                ->sortByDesc('amount')
+                ->values()
+                ->all();
+        };
+
+        // Net movement per account so per-account closing balances reconcile.
+        $netByAccountId = [];
+        foreach ([$feeItems, $incomeItems] as $inflows) {
+            foreach ($inflows as $item) {
+                $id = isset($item['account_id']) ? (int) $item['account_id'] : $defaultAccountId;
+                $netByAccountId[$id] = ($netByAccountId[$id] ?? 0.0) + (float) $item['amount'];
+            }
+        }
+        foreach ([$refundItems, $expenseItems] as $outflows) {
+            foreach ($outflows as $item) {
+                $id = isset($item['account_id']) ? (int) $item['account_id'] : $defaultAccountId;
+                $netByAccountId[$id] = ($netByAccountId[$id] ?? 0.0) - (float) $item['amount'];
+            }
+        }
+
+        // Opening balance per account mirrors the statement rule: an account
+        // opened during the period started at $0, otherwise use live balance.
+        $openingByAccount = [];
+        $closingByAccount = [];
+        foreach ($bankAccounts as $account) {
+            $id = (int) (is_array($account) ? $account['id'] : $account->id);
+            $label = $accountById[$id] ?? __('Unassigned');
+            $createdAt = is_array($account) ? ($account['created_at'] ?? null) : ($account->created_at ?? null);
+            $balance = is_array($account) ? ($account['balance'] ?? 0) : ($account->balance ?? 0);
+
+            if ($startDate && $createdAt && Carbon::parse($createdAt)->greaterThanOrEqualTo(Carbon::parse($startDate))) {
+                $opening = 0.0;
+            } else {
+                $opening = (float) $balance;
+            }
+
+            $openingByAccount[] = ['account' => $label, 'amount' => round($opening, 2)];
+            $closingByAccount[] = ['account' => $label, 'amount' => round($opening + ($netByAccountId[$id] ?? 0.0), 2)];
+        }
+
+        return [
+            'feeBreakdown' => $groupsFor($feeItems),
+            'incomeBreakdown' => $groupsFor($incomeItems),
+            'refundBreakdown' => $groupsFor($refundItems),
+            'expenseBreakdown' => $groupsFor($expenseItems),
+            'openingByAccount' => $openingByAccount,
+            'closingByAccount' => $closingByAccount,
+        ];
     }
 
     /**

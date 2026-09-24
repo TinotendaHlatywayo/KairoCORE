@@ -53,6 +53,47 @@ class FinancialStatementExportTest extends TestCase
         ];
     }
 
+    private function statementDataWithBreakdown(): array
+    {
+        $data = $this->statementData();
+
+        $data['accountBreakdown'] = [
+            'feeBreakdown' => [
+                ['account' => 'Stanbic Bank Zimbabwe — School Operating Account', 'amount' => 195.0],
+                ['account' => 'EcoCash', 'amount' => 95.0],
+                ['account' => 'Cash', 'amount' => 55.0],
+            ],
+            'incomeBreakdown' => [
+                ['account' => 'Stanbic Bank Zimbabwe — School Operating Account', 'amount' => 120.0],
+            ],
+            'refundBreakdown' => [
+                ['account' => 'Stanbic Bank Zimbabwe — School Operating Account', 'amount' => 20.0],
+            ],
+            'expenseBreakdown' => [
+                ['account' => 'Stanbic Bank Zimbabwe — School Operating Account', 'amount' => 200.0],
+                ['account' => 'EcoCash', 'amount' => 50.0],
+            ],
+            'openingByAccount' => [
+                ['account' => 'Stanbic Bank Zimbabwe — School Operating Account', 'amount' => 500.0],
+                ['account' => 'EcoCash', 'amount' => 0.0],
+            ],
+            'closingByAccount' => [
+                ['account' => 'Stanbic Bank Zimbabwe — School Operating Account', 'amount' => 595.0],
+                ['account' => 'EcoCash', 'amount' => 0.0],
+            ],
+        ];
+
+        return $data;
+    }
+
+    private function singleAccountStatementData(): array
+    {
+        $data = $this->statementData();
+        $data['bankAccountName'] = 'Stanbic Bank Zimbabwe — School Operating Account';
+
+        return $data;
+    }
+
     private function rowOf(Worksheet $sheet, string $needle, string $column = 'B'): ?int
     {
         foreach ($sheet->getRowIterator() as $row) {
@@ -124,6 +165,57 @@ class FinancialStatementExportTest extends TestCase
         }
     }
 
+    public function test_excel_statement_renders_per_account_breakdown_when_combined(): void
+    {
+        $response = FinancialReportService::download('xlsx', $this->statementDataWithBreakdown(), now()->subMonth(), now());
+        $bytes = $this->captureStream($response);
+
+        $path = tempnam(sys_get_temp_dir(), 'stmt').'.xlsx';
+        file_put_contents($path, $bytes);
+
+        try {
+            $spreadsheet = IOFactory::load($path);
+            $statement = $spreadsheet->getSheetByName('Statement');
+
+            // Per-account fee lines replace the single "school fees" lump when
+            // the combined view is active.
+            $this->assertNotNull($this->rowOf($statement, 'EcoCash'));
+            $this->assertNull($this->rowOf($statement, 'School fees recorded within the period'));
+
+            $expenseBreakdownLabel = $this->rowOf($statement, 'By Account');
+            $this->assertNotNull($expenseBreakdownLabel);
+
+            // Per-account opening/closing balances appear under the combined
+            // closing balance.
+            $this->assertNotNull($this->rowOf($statement, 'Balances by Bank Account'));
+            $this->assertNotNull($this->rowOf($statement, 'Stanbic Bank Zimbabwe — School Operating Account (Closing)'));
+        } finally {
+            @unlink($path);
+        }
+    }
+
+    public function test_excel_statement_keeps_lumps_when_single_account_selected(): void
+    {
+        $response = FinancialReportService::download('xlsx', $this->singleAccountStatementData(), now()->subMonth(), now());
+        $bytes = $this->captureStream($response);
+
+        $path = tempnam(sys_get_temp_dir(), 'stmt').'.xlsx';
+        file_put_contents($path, $bytes);
+
+        try {
+            $spreadsheet = IOFactory::load($path);
+            $statement = $spreadsheet->getSheetByName('Statement');
+
+            // A single-account export keeps the classic "school fees" lump and
+            // no per-account breakdown blocks.
+            $this->assertNotNull($this->rowOf($statement, 'School fees recorded within the period'));
+            $this->assertNull($this->rowOf($statement, 'By Account'));
+            $this->assertNull($this->rowOf($statement, 'Balances by Bank Account'));
+        } finally {
+            @unlink($path);
+        }
+    }
+
     public function test_pdf_statement_renders_split_columns_and_salaries_date(): void
     {
         $html = view('finance.financial-statement-pdf', ['data' => $this->statementData()])->render();
@@ -132,5 +224,83 @@ class FinancialStatementExportTest extends TestCase
         $this->assertStringContainsString('Inflows (+)', $html);
         $this->assertStringNotContainsString('Of which — Staff Salaries', $html);
         $this->assertStringNotContainsString('Total Revenue / Inflows (Net of Refunds)', $html);
+    }
+
+    public function test_pdf_statement_renders_per_account_breakdown_when_combined(): void
+    {
+        $html = view('finance.financial-statement-pdf', ['data' => $this->statementDataWithBreakdown()])->render();
+
+        $this->assertStringContainsString('EcoCash', $html);
+        $this->assertStringContainsString('By Account', $html);
+        $this->assertStringContainsString('Balances by Bank Account', $html);
+        $this->assertStringContainsString('Stanbic Bank Zimbabwe — School Operating Account — Closing', $html);
+        $this->assertStringNotContainsString('School fees recorded within the period', $html);
+    }
+
+    public function test_pdf_statement_falls_back_to_lumps_for_single_account(): void
+    {
+        $html = view('finance.financial-statement-pdf', ['data' => $this->singleAccountStatementData()])->render();
+
+        $this->assertStringContainsString('School fees recorded within the period', $html);
+        $this->assertStringNotContainsString('By Account', $html);
+        $this->assertStringNotContainsString('Balances by Bank Account', $html);
+    }
+
+    public function test_csv_and_txt_statements_include_per_account_breakdown_when_combined(): void
+    {
+        $csv = $this->captureStream(FinancialReportService::download('csv', $this->statementDataWithBreakdown(), now()->subMonth(), now()));
+        $txt = $this->captureStream(FinancialReportService::download('txt', $this->statementDataWithBreakdown(), now()->subMonth(), now()));
+
+        $this->assertStringContainsString('Stanbic Bank Zimbabwe — School Operating Account', $csv);
+        $this->assertStringContainsString('EcoCash', $csv);
+        $this->assertStringContainsString('Balances by Bank Account', $csv);
+        $this->assertStringNotContainsString('School fees recorded within the period', $csv);
+
+        $this->assertStringContainsString('Stanbic Bank Zimbabwe — School Operating Account', $txt);
+        $this->assertStringContainsString('Balances by Bank Account', $txt);
+        $this->assertStringNotContainsString('School fees recorded within the period', $txt);
+    }
+
+    public function test_engine_groups_items_into_per_account_breakdown(): void
+    {
+        $engine = app(\Modules\Finance\Services\FinancialAnalyticsEngine::class);
+
+        $breakdown = $engine->buildStatementAccountBreakdown(
+            feeItems: [
+                ['account_id' => 1, 'account' => 'Stanbic', 'method' => 'Bank Transfer', 'amount' => 195.0],
+                ['account_id' => null, 'account' => null, 'method' => 'EcoCash', 'amount' => 95.0],
+                ['account_id' => null, 'account' => null, 'method' => null, 'amount' => 55.0],
+            ],
+            incomeItems: [
+                ['account_id' => 1, 'account' => 'Stanbic', 'method' => null, 'amount' => 120.0],
+            ],
+            refundItems: [
+                ['account_id' => 1, 'account' => 'Stanbic', 'method' => 'Bank Transfer', 'amount' => 20.0],
+            ],
+            expenseItems: [
+                ['account_id' => 1, 'account' => 'Stanbic', 'method' => null, 'amount' => 200.0],
+                ['account_id' => null, 'account' => null, 'method' => null, 'amount' => 50.0],
+            ],
+            bankAccounts: [
+                ['id' => 1, 'bank_name' => 'Stanbic Bank Zimbabwe', 'account_name' => 'School Operating Account', 'balance' => 500.0, 'created_at' => '2020-01-01'],
+            ],
+            defaultAccountId: 1,
+            startDate: '2026-09-01',
+        );
+
+        $labels = array_column($breakdown['feeBreakdown'], 'account');
+        $this->assertContains('Stanbic Bank Zimbabwe — School Operating Account', $labels);
+        $this->assertContains('EcoCash', $labels);
+
+        // The unassigned fee (no account, no method) is booked to the default
+        // account, mirroring SchoolBankAccount::filterClosure().
+        $defaultFee = collect($breakdown['feeBreakdown'])->firstWhere('account', 'Stanbic Bank Zimbabwe — School Operating Account');
+        $this->assertSame(250.0, $defaultFee['amount']);
+
+        // Fees + income − refunds − expenses reconciled per account. The
+        // EcoCash fee (95) is also booked to the default account id because it
+        // has no bank account: 500 + 345 + 120 − 20 − 250 = 695.
+        $this->assertSame(695.0, $breakdown['closingByAccount'][0]['amount']);
+        $this->assertSame(500.0, $breakdown['openingByAccount'][0]['amount']);
     }
 }
