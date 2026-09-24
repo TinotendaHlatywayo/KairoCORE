@@ -84,12 +84,24 @@
                 <td style="text-align:right; color:{{ $positive }}; font-weight:bold;">+${{ number_format((float) ($data['feeRevenue'] ?? 0), 2) }}</td>
                 <td style="text-align:right;"></td>
             </tr>
-            <tr>
-                <td style="text-align:left; padding-left:18px; color:{{ $muted }};">{{ __('School fees recorded within the period') }}</td>
-                <td style="text-align:right;"></td>
-                <td style="text-align:right; color:{{ $positive }};">+${{ number_format((float) ($data['feeRevenue'] ?? 0), 2) }}</td>
-                <td style="text-align:right;"></td>
-            </tr>
+            @php $isCombined = ($data['bankAccountName'] ?? '') === __('All Accounts (Combined)'); @endphp
+            @if($isCombined && !empty($data['accountBreakdown']['feeBreakdown']))
+                @foreach($data['accountBreakdown']['feeBreakdown'] as $feeRow)
+                    <tr>
+                        <td style="text-align:left; padding-left:18px; color:{{ $muted }};">{{ $feeRow['account'] }}</td>
+                        <td style="text-align:right;"></td>
+                        <td style="text-align:right; color:{{ $positive }};">+${{ number_format($feeRow['amount'], 2) }}</td>
+                        <td style="text-align:right;"></td>
+                    </tr>
+                @endforeach
+            @else
+                <tr>
+                    <td style="text-align:left; padding-left:18px; color:{{ $muted }};">{{ __('School fees recorded within the period') }}</td>
+                    <td style="text-align:right;"></td>
+                    <td style="text-align:right; color:{{ $positive }};">+${{ number_format((float) ($data['feeRevenue'] ?? 0), 2) }}</td>
+                    <td style="text-align:right;"></td>
+                </tr>
+            @endif
             @if(count($data['revenueStreams'] ?? []))
                 <tr>
                     <td style="text-align:left; font-weight:bold;">{{ __('Other Income (Revenue Streams)') }}</td>
@@ -107,6 +119,22 @@
                         <td style="text-align:right;"></td>
                     </tr>
                 @endforeach
+                @if($isCombined && !empty($data['accountBreakdown']['incomeBreakdown']) && count($data['accountBreakdown']['incomeBreakdown']) > 1)
+                    <tr>
+                        <td style="text-align:left; padding-left:18px; font-weight:bold; color:{{ $muted }};">{{ __('By Account') }}</td>
+                        <td style="text-align:right;"></td>
+                        <td style="text-align:right;"></td>
+                        <td style="text-align:right;"></td>
+                    </tr>
+                    @foreach($data['accountBreakdown']['incomeBreakdown'] as $incomeRow)
+                        <tr>
+                            <td style="text-align:left; padding-left:28px; color:{{ $muted }};">{{ $incomeRow['account'] }}</td>
+                            <td style="text-align:right;"></td>
+                            <td style="text-align:right; color:{{ $positive }};">+${{ number_format($incomeRow['amount'], 2) }}</td>
+                            <td style="text-align:right;"></td>
+                        </tr>
+                    @endforeach
+                @endif
             @endif
             <tr>
                 <td style="text-align:left; font-weight:bold;">{{ __('Less Refunds Issued') }}</td>
@@ -124,6 +152,22 @@
                     <td style="text-align:right;"></td>
                 </tr>
             @endforeach
+            @if($isCombined && !empty($data['accountBreakdown']['refundBreakdown']))
+                <tr>
+                    <td style="text-align:left; padding-left:18px; font-weight:bold; color:{{ $muted }};">{{ __('By Account') }}</td>
+                    <td style="text-align:right;"></td>
+                    <td style="text-align:right;"></td>
+                    <td style="text-align:right;"></td>
+                </tr>
+                @foreach($data['accountBreakdown']['refundBreakdown'] as $refundRow)
+                    <tr>
+                        <td style="text-align:left; padding-left:28px; color:{{ $muted }};">{{ $refundRow['account'] }}</td>
+                        <td style="text-align:right; color:{{ $negative }};">-${{ number_format($refundRow['amount'], 2) }}</td>
+                        <td style="text-align:right;"></td>
+                        <td style="text-align:right;"></td>
+                    </tr>
+                @endforeach
+            @endif
             <tr>
                 <td style="text-align:left; font-weight:bold;">{{ __('Total Expenses & Outflows') }}</td>
                 <td style="text-align:right; color:{{ $negative }}; font-weight:bold;">-${{ number_format((float) $data['totalExpenses'], 2) }}</td>
@@ -140,6 +184,22 @@
                     <td style="text-align:right;"></td>
                 </tr>
             @endforeach
+            @if($isCombined && !empty($data['accountBreakdown']['expenseBreakdown']))
+                <tr>
+                    <td style="text-align:left; padding-left:18px; font-weight:bold; color:{{ $muted }};">{{ __('By Account') }}</td>
+                    <td style="text-align:right;"></td>
+                    <td style="text-align:right;"></td>
+                    <td style="text-align:right;"></td>
+                </tr>
+                @foreach($data['accountBreakdown']['expenseBreakdown'] as $expenseRow)
+                    <tr>
+                        <td style="text-align:left; padding-left:28px; color:{{ $muted }};">{{ $expenseRow['account'] }}</td>
+                        <td style="text-align:right; color:{{ $negative }};">-${{ number_format($expenseRow['amount'], 2) }}</td>
+                        <td style="text-align:right;"></td>
+                        <td style="text-align:right;"></td>
+                    </tr>
+                @endforeach
+            @endif
             <tr>
                 <td style="text-align:left; font-weight:bold;">{{ __('Total Outflows (−) / Total Inflows (+)') }}</td>
                 <td style="text-align:right; color:{{ $negative }}; font-weight:bold;">-${{ number_format((float) ($data['totalOutflows'] ?? 0), 2) }}</td>
@@ -158,6 +218,29 @@
                 <td style="text-align:right;"></td>
                 <td style="text-align:right; font-weight:bold; color:{{ $net < 0 ? $negative : $positive }};">${{ number_format((float) ($data['closingBalance'] ?? 0), 2) }}</td>
             </tr>
+            @if($isCombined && !empty($data['accountBreakdown']['openingByAccount']) && !empty($data['accountBreakdown']['closingByAccount']))
+                <tr>
+                    <td style="text-align:left; font-weight:bold; padding-top:6px;">{{ __('Balances by Bank Account') }}</td>
+                    <td style="text-align:right;"></td>
+                    <td style="text-align:right;"></td>
+                    <td style="text-align:right;"></td>
+                </tr>
+                @foreach($data['accountBreakdown']['openingByAccount'] as $i => $openingRow)
+                    @php $closingRow = $data['accountBreakdown']['closingByAccount'][$i] ?? $openingRow; @endphp
+                    <tr>
+                        <td style="text-align:left; padding-left:18px; color:{{ $muted }};">{{ $openingRow['account'] }} — {{ __('Opening') }}</td>
+                        <td style="text-align:right;"></td>
+                        <td style="text-align:right;"></td>
+                        <td style="text-align:right; color:{{ $muted }};">${{ number_format($openingRow['amount'], 2) }}</td>
+                    </tr>
+                    <tr>
+                        <td style="text-align:left; padding-left:18px; color:{{ $muted }};">{{ $closingRow['account'] }} — {{ __('Closing') }}</td>
+                        <td style="text-align:right;"></td>
+                        <td style="text-align:right;"></td>
+                        <td style="text-align:right; color:{{ $muted }};">${{ number_format($closingRow['amount'], 2) }}</td>
+                    </tr>
+                @endforeach
+            @endif
         </tbody>
     </table>
 
