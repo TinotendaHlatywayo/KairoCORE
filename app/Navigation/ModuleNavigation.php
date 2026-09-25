@@ -11,7 +11,6 @@ use App\Filament\App\Pages\Administration\SystemSettingsHub;
 use App\Filament\App\Pages\Administration\UserManagementHub;
 use App\Filament\App\Pages\AdministrationDashboard;
 use App\Filament\App\Pages\AdmissionSettingsPage;
-use App\Filament\App\Pages\AssessmentWorkspace;
 use App\Filament\App\Pages\Boarding\AccommodationHub;
 use App\Filament\App\Pages\Boarding\WelfareHub;
 use App\Filament\App\Pages\Communication\CommunityHub;
@@ -21,6 +20,7 @@ use App\Filament\App\Pages\CommunicationCenter;
 use App\Filament\App\Pages\EmailConfigurationPage;
 use App\Filament\App\Pages\Exams\AssessmentCenterHub;
 use App\Filament\App\Pages\Exams\GradingMarksHub;
+use App\Filament\App\Pages\Exams\PerformanceAnalyticsPage;
 use App\Filament\App\Pages\Exams\PortalReportsPublisher;
 use App\Filament\App\Pages\Exams\ReportsPublishingHub;
 use App\Filament\App\Pages\ExecutiveFinancialDashboard;
@@ -201,7 +201,7 @@ class ModuleNavigation
                     ['label' => __('Digital Assessments'), 'resource' => DigitalAssessmentResource::class, 'group' => __('Assessment Center')],
                     ['label' => __('Question Bank'), 'resource' => QuestionBankResource::class, 'group' => __('Assessment Center')],
                     ['label' => __('Grading & Marks Management'), 'page' => GradingMarksHub::class, 'group' => __('Grading & Marks Management'), 'hub' => true],
-                    ['label' => __('Assessment Workspace'), 'page' => AssessmentWorkspace::class, 'group' => __('Grading & Marks Management')],
+                    ['label' => __('Performance Analytics'), 'page' => PerformanceAnalyticsPage::class, 'group' => __('Grading & Marks Management')],
                     ['label' => __('Marks Entry'), 'resource' => AssessmentMarkResource::class, 'group' => __('Grading & Marks Management')],
                     ['label' => __('Grading Scales'), 'resource' => GradingScaleResource::class, 'group' => __('Grading & Marks Management')],
                     ['label' => __('Assessment Types'), 'resource' => AssessmentTypeResource::class, 'group' => __('Grading & Marks Management')],

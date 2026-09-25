@@ -166,10 +166,10 @@
             $borderWmm = round($borderW * 0.264583, 4);
             $cardWidthMm = round($pageWidthMm - (2 * $marginH) - (2 * $borderWmm), 4);
 
-            $includedAssessmentIds = $cfg['included_assessments'] ?? [];
-            $assessmentTypes = \Modules\Academics\Models\AssessmentType::whereIn('id', $includedAssessmentIds)->get();
+            $assessmentTypes = collect($data['assessmentTypes'] ?? []);
+            $includedAssessmentIds = $assessmentTypes->pluck('id')->all();
 
-            $emptyColspan = 2 + count($assessmentTypes)
+            $emptyColspan = 2 + $assessmentTypes->count()
                 + (int) $showOverallMark + (int) $showGrade
                 + (int) $showClassAvg + (int) $showStreamAvg
                 + (int) $showSubjectRank + (int) $showSubjectRemarks + 1;

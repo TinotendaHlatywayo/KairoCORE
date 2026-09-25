@@ -21,6 +21,7 @@ use Modules\Academics\Models\Section;
 use Modules\Academics\Models\Subject;
 use Modules\Academics\Models\Term;
 use Modules\Finance\Models\Invoice;
+use Modules\Students\Models\Enrollment;
 use Modules\Students\Models\Student;
 
 class AcademicReportResource extends Resource
@@ -464,9 +465,9 @@ class AcademicReportResource extends Resource
                             return;
                         }
 
-                        $students = self::resolveScopeStudents($data, $schoolId);
+                        $enrollments = self::resolveScopeEnrollments($data, $schoolId);
 
-                        if ($students->isEmpty()) {
+                        if ($enrollments->isEmpty()) {
                             Notification::make()
                                 ->title(__('No matching students'))
                                 ->body(__('No students matched the selected scope criteria.'))
@@ -480,56 +481,40 @@ class AcademicReportResource extends Resource
                         $regenerated = 0;
                         $skipped = 0;
 
-                        $term = Term::find($data['term_id']);
+                        foreach ($enrollments as $enrollment) {
+                            $student = $enrollment->student;
 
-                        foreach ($students as $student) {
-                            $enrollments = $student->enrollments()
-                                ->where('academic_year_id', $term?->academic_year_id)
-                                ->get();
-
-                            if ($enrollments->isEmpty()) {
+                            if (! $student || ! $enrollment->section_id) {
                                 $skipped++;
 
                                 continue;
                             }
 
-                            foreach ($enrollments as $enrollment) {
-                                $sectionId = $enrollment->section_id
-                                    ?? ($data['sections'][0] ?? null)
-                                    ?? $student->enrollments()->first()?->section_id;
+                            $existing = AcademicReport::where('student_id', $student->id)
+                                ->where('term_id', $data['term_id'])
+                                ->where('section_id', $enrollment->section_id)
+                                ->first();
 
-                                if (! $sectionId) {
-                                    $skipped++;
-
-                                    continue;
-                                }
-
-                                $existing = AcademicReport::where('student_id', $student->id)
-                                    ->where('term_id', $data['term_id'])
-                                    ->where('section_id', $sectionId)
-                                    ->first();
-
-                                if ($existing) {
-                                    $existing->update([
-                                        'status' => 'draft',
-                                        'unhu_competencies' => [],
-                                    ]);
-                                    $regenerated++;
-
-                                    continue;
-                                }
-
-                                AcademicReport::create([
-                                    'school_id' => $schoolId,
-                                    'student_id' => $student->id,
-                                    'section_id' => $sectionId,
-                                    'term_id' => $data['term_id'],
+                            if ($existing) {
+                                $existing->update([
                                     'status' => 'draft',
                                     'unhu_competencies' => [],
                                 ]);
+                                $regenerated++;
 
-                                $created++;
+                                continue;
                             }
+
+                            AcademicReport::create([
+                                'school_id' => $schoolId,
+                                'student_id' => $student->id,
+                                'section_id' => $enrollment->section_id,
+                                'term_id' => $data['term_id'],
+                                'status' => 'draft',
+                                'unhu_competencies' => [],
+                            ]);
+
+                            $created++;
                         }
 
                         Notification::make()
@@ -652,26 +637,39 @@ class AcademicReportResource extends Resource
         ];
     }
 
-    protected static function resolveScopeStudents(array $data, $schoolId)
+    /**
+     * Enrollments that match the report-generation scope.
+     *
+     * The student, grade / form level, class stream(s) and fee-paid threshold
+     * are all evaluated against the SAME enrollment that will back the report
+     * card (i.e. the enrollment for the selected term's academic year). This
+     * stops a learner whose only matching grade is a future/promoted record
+     * from receiving a report against an unrelated current-year enrollment.
+     */
+    protected static function resolveScopeEnrollments(array $data, $schoolId)
     {
-        $sections = $data['sections'] ?? [];
+        $term = Term::find($data['term_id'] ?? null);
+        $yearId = $term?->academic_year_id;
 
-        $query = Student::where('school_id', $schoolId);
+        $query = Enrollment::query()
+            ->where('school_id', $schoolId)
+            ->with('student');
 
-        if (! empty($sections)) {
-            $query->whereHas('enrollments', fn (Builder $q) => $q->whereIn('section_id', $sections));
+        if ($yearId) {
+            $query->where('academic_year_id', $yearId);
         }
 
-        if (! empty($sections) && ! empty($data['section_id'])) {
-            $query->whereHas('enrollments', fn (Builder $q) => $q->where('section_id', $data['section_id']));
+        $sections = $data['sections'] ?? [];
+        if (! empty($sections)) {
+            $query->whereIn('section_id', $sections);
         }
 
         if (! empty($data['course_id'])) {
-            $query->whereHas('enrollments.section', fn (Builder $q) => $q->where('course_id', $data['course_id']));
+            $query->whereHas('section', fn (Builder $q) => $q->where('course_id', $data['course_id']));
         }
 
         if (! empty($data['min_paid_percentage'])) {
-            $query->whereIn('id', self::studentsPaidAtLeast((float) $data['min_paid_percentage']));
+            $query->whereHas('student', fn (Builder $q) => $q->whereIn('id', self::studentsPaidAtLeast((float) $data['min_paid_percentage'])));
         }
 
         return $query->get();

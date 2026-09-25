@@ -3,7 +3,7 @@
 namespace App\Filament\App\Concerns;
 
 use App\Filament\App\Pages\AnalyticsExplorer;
-use App\Filament\App\Pages\AssessmentWorkspace;
+use App\Filament\App\Pages\Exams\PerformanceAnalyticsPage;
 use App\Filament\App\Pages\CommunicationCenter;
 use App\Filament\App\Pages\ExecutiveFinancialDashboard;
 use App\Filament\App\Pages\IssueBook;
@@ -169,7 +169,7 @@ trait ModulePermissionAccess
         ReportGeneratorPage::class => ['reports', 'reports.generate'],
         ReportingDashboard::class => ['reports', 'reports.view_module'],
         TenantDataExportPage::class => ['reports', 'reports.export'],
-        AssessmentWorkspace::class => ['academics', 'academic_ops.manage_assessments'],
+        PerformanceAnalyticsPage::class => ['exams', 'exams.view_module'],
         CommunicationCenter::class => ['communication', 'communication.view_module'],
         ExecutiveFinancialDashboard::class => ['finance', 'finance.view_reports'],
         VisualCmsBuilder::class => ['website', 'website.manage_pages'],
