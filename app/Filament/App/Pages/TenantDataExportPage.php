@@ -19,6 +19,8 @@ class TenantDataExportPage extends Page implements HasForms
 
     protected static ?string $navigationGroup = 'System Administration';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     public static function getNavigationGroup(): ?string
     {
 
