@@ -97,8 +97,18 @@ class AcademicReportPdfController extends Controller
             $student = $report->student;
             $term = $report->term;
             $year = $term?->academicYear;
-            $course = $report->section?->course;
-            $section = $report->section;
+
+            // Resolve the enrollment that backs this term BEFORE picking the
+            // template: promotions/stream changes are append-only, so the old
+            // row is archived and a NEW row holds the student's current
+            // placement. Prefer the live (active) enrollment for the report's
+            // academic year so the class, template, ranking pool and marks all
+            // line up with the current placement rather than a stale
+            // section_id stored on the report row.
+            $enrollment = $report->resolveTermEnrollment();
+
+            $section = $enrollment?->section ?? $report->section;
+            $course = $section?->course ?? $report->section?->course;
             $level = $course?->level ?? 'primary';
 
             // =========================================================================
@@ -183,47 +193,6 @@ class AcademicReportPdfController extends Controller
 
             $activeOrientation = $templateForCard->layout_config['page_orientation'] ?? 'landscape';
 
-            // Resolve Student Enrollment
-            // Preference goes to the enrollment that actually backs this report
-            // (same academic year AND same class stream). Marks entered in the
-            // Marks Entry worksheet are stored against that exact enrollment, so
-            // a "first enrollment of the year" heuristic could look at an old
-            // stream and render an empty subject/marks table.
-            $enrollment = null;
-            if ($student) {
-                $reportYearId = $report->term?->academic_year_id;
-                if ($reportYearId) {
-                    $enrollment = Enrollment::withoutGlobalScopes()
-                        ->where('student_id', $student->id)
-                        ->where('academic_year_id', $reportYearId);
-                    if ($report->section_id) {
-                        $enrollment->where('section_id', $report->section_id);
-                    }
-                    $enrollment = $enrollment->first();
-                }
-                if (! $enrollment && $year) {
-                    $enrollment = Enrollment::withoutGlobalScopes()
-                        ->where('student_id', $student->id)
-                        ->where('academic_year_id', $year->id);
-                    if ($report->section_id) {
-                        $enrollment->where('section_id', $report->section_id);
-                    }
-                    $enrollment = $enrollment->first();
-                }
-                if (! $enrollment) {
-                    $enrollment = Enrollment::withoutGlobalScopes()
-                        ->where('student_id', $student->id)
-                        ->orderByDesc('id')
-                        ->first();
-                }
-            }
-
-            if (! $section && $enrollment) {
-                $section = $enrollment->section;
-            }
-            if (! $course && $section) {
-                $course = $section->course;
-            }
             if (! $year && $enrollment) {
                 $year = $enrollment->academicYear;
             }
@@ -514,6 +483,7 @@ $subjects = Subject::where('school_id', $schoolId)->get();
                 'term' => $term,
                 'year' => $year,
                 'course' => $course,
+                'section' => $section,
                 'level' => $level,
                 'compiledSubjects' => $compiledSubjects,
                 'competencies' => $competencies,
