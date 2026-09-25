@@ -18,9 +18,25 @@ class ModuleVisibilityManager
     }
 
     /**
-     * Whether the current user holds the school Administrator role and is
-     * therefore entitled to see every module / page regardless of the
-     * System Settings toggle configuration.
+     * Whether the current user is a platform super-admin (bypasses all visibility).
+     */
+    protected static function isSuperAdmin(): bool
+    {
+        if (! Auth::check()) {
+            return false;
+        }
+
+        $user = Auth::user();
+        if (! $user) {
+            return false;
+        }
+
+        return method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin();
+    }
+
+    /**
+     * Whether the current user holds the school Administrator role.
+     * Used for permission checks, NOT for module visibility bypass.
      */
     public static function isSchoolAdmin(): bool
     {
@@ -33,12 +49,12 @@ class ModuleVisibilityManager
             return false;
         }
 
-        // Platform super-admins bypass everything.
-        if (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin()) {
+        // Platform super-admins are also school admins.
+        if (self::isSuperAdmin()) {
             return true;
         }
 
-        // School-level Administrator role holders bypass all visibility checks.
+        // School-level Administrator role holders.
         $roleId = $user->custom_role_id;
         if (! $roleId) {
             return false;
@@ -55,7 +71,7 @@ class ModuleVisibilityManager
     public static function isVisible(string $moduleName): bool
     {
         $schoolId = self::schoolId();
-        if (! $schoolId || (self::isSchoolAdmin() && ! in_array($moduleName, ['boarding', 'clinic'], true))) {
+        if (! $schoolId || self::isSuperAdmin()) {
             return true;
         }
 
@@ -69,7 +85,7 @@ class ModuleVisibilityManager
      */
     public static function isModuleVisible(string $moduleSlug): bool
     {
-        if (self::isSchoolAdmin() && ! in_array($moduleSlug, ['boarding', 'health'], true)) {
+        if (self::isSuperAdmin()) {
             return true;
         }
 
@@ -87,7 +103,7 @@ class ModuleVisibilityManager
     public static function isPageVisible(string $moduleKey, string $pageKey): bool
     {
         $schoolId = self::schoolId();
-        if (! $schoolId || self::isSchoolAdmin()) {
+        if (! $schoolId || self::isSuperAdmin()) {
             return true;
         }
 
