@@ -49,7 +49,7 @@ class ModuleVisibilityTest extends TestCase
 
         // Preserve the tenant's real module toggle state so this test never
         // leaves the database modified.
-        foreach (array_merge(self::NEW_MODULES, ['students']) as $module) {
+        foreach (array_merge(self::NEW_MODULES, ['students', 'boarding', 'clinic']) as $module) {
             $this->savedModules[$module] = SystemSetting::get('modules', $module, '1');
         }
     }
@@ -162,6 +162,22 @@ class ModuleVisibilityTest extends TestCase
         $this->actingAs($user);
         $html = $this->get($this->workspaceUrl())->assertOk()->getContent();
         $this->assertStringContainsString('/workspace/lms-lms', $html, 'LMS item should reappear when re-enabled');
+    }
+
+    public function test_sidebar_hides_closed_boarding_and_clinic_modules(): void
+    {
+        [, $user] = $this->tenant();
+        PermissionRegistry::ensureAdminHasRole($user, $user->school_id);
+        $user->forceFill(['account_status' => 'active'])->save();
+        $this->actingAs($user);
+
+        SystemSetting::set('modules', 'boarding', '0');
+        SystemSetting::set('modules', 'clinic', '0');
+
+        $html = $this->get($this->workspaceUrl())->assertOk()->getContent();
+
+        $this->assertStringNotContainsString('boarding-accommodation', $html, 'Closed boarding module should hide accommodation link');
+        $this->assertStringNotContainsString('health-records', $html, 'Closed clinic module should hide health records link');
     }
 
     public function test_system_settings_page_renders_new_module_toggles(): void
