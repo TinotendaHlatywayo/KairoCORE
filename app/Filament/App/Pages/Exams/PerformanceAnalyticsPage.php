@@ -4,6 +4,10 @@ namespace App\Filament\App\Pages\Exams;
 
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Services\ModuleVisibilityManager;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Forms\Contracts\HasForms;
+use Filament\Forms\Form;
 use Filament\Pages\Page;
 use Illuminate\Support\Collection;
 use Modules\Academics\Models\AcademicYear;
@@ -13,14 +17,16 @@ use Modules\Academics\Models\Course;
 use Modules\Academics\Models\Section;
 use Modules\Academics\Models\Subject;
 use Modules\Academics\Models\Term;
+use Modules\Academics\Services\GradingScaleResolver;
 use Modules\Students\Models\Enrollment;
 
 /**
  * Student performance analytics for the whole school, a grade/form level or an
  * individual class stream. Replaces the old Assessment Workspace kanban page.
  */
-class PerformanceAnalyticsPage extends Page
+class PerformanceAnalyticsPage extends Page implements HasForms
 {
+    use InteractsWithForms;
     use ModuleAwareActiveNavigation;
 
     protected static string $view = 'filament.app.pages.exams.performance-analytics';
@@ -60,14 +66,92 @@ class PerformanceAnalyticsPage extends Page
         return __(static::$title ?? '');
     }
 
+    public function getSubheading(): ?string
+    {
+        $term = Term::find($this->termId);
+
+        $scope = [];
+        if ($term?->name) {
+            $scope[] = $term->name;
+        }
+        if ($term?->academicYear?->name) {
+            $scope[] = $term->academicYear->name;
+        }
+
+        $left = implode(' · ', $scope);
+        $right = $this->scopeLabel();
+
+        return trim($left ? "{$left} — {$right}" : $right) ?: null;
+    }
+
+    public function form(Form $form): Form
+    {
+        $schoolId = $this->schoolId();
+
+        return $form
+            ->columns([
+                'default' => 1,
+                'sm' => 2,
+                'xl' => 4,
+            ])
+            ->schema([
+                Select::make('termId')
+                    ->label(__('Academic Term'))
+                    ->placeholder(__('Select a term'))
+                    ->options(fn (): array => $this->termOptions($schoolId))
+                    ->searchable()
+                    ->preload()
+                    ->live(),
+                Select::make('courseId')
+                    ->label(__('Grade / Level'))
+                    ->placeholder(__('All Levels'))
+                    ->options(fn (): array => $this->courseOptions($schoolId))
+                    ->searchable()
+                    ->preload()
+                    ->live()
+                    ->afterStateUpdated(fn (callable $set) => $set('sectionId', null)),
+                Select::make('sectionId')
+                    ->label(__('Class Stream'))
+                    ->placeholder(__('All Class Streams'))
+                    ->options(fn (): array => $this->sectionOptions($schoolId))
+                    ->searchable()
+                    ->preload()
+                    ->live(),
+                Select::make('subjectId')
+                    ->label(__('Subject'))
+                    ->placeholder(__('All Subjects'))
+                    ->options(fn (): array => $this->subjectOptions($schoolId))
+                    ->searchable()
+                    ->preload()
+                    ->live(),
+            ]);
+    }
+
     public function mount(): void
     {
         $this->termId ??= $this->activeTermId();
     }
 
-    public function updatedCourseId(): void
+    protected function termOptions(?int $schoolId): array
     {
-        $this->sectionId = null;
+        return Term::with('academicYear')
+            ->where('school_id', $schoolId)
+            ->orderByDesc('id')
+            ->get()
+            ->mapWithKeys(fn (Term $term) => [
+                $term->id => trim($term->name.' · '.($term->academicYear?->name ?? '')),
+            ])
+            ->all();
+    }
+
+    protected function courseOptions(?int $schoolId): array
+    {
+        return Course::where('school_id', $schoolId)->orderBy('name')->pluck('name', 'id')->all();
+    }
+
+    protected function subjectOptions(?int $schoolId): array
+    {
+        return Subject::where('school_id', $schoolId)->orderBy('name')->pluck('name', 'id')->all();
     }
 
     protected function activeTermId(): ?int
@@ -137,11 +221,6 @@ class PerformanceAnalyticsPage extends Page
         $supportRate = $overalls->isEmpty() ? 0 : round($overalls->filter(fn ($v) => $v < 40)->count() / $overalls->count() * 100, 1);
 
         return [
-            'schoolId' => $schoolId,
-            'terms' => Term::with('academicYear')->where('school_id', $schoolId)->orderByDesc('id')->get(),
-            'courses' => Course::where('school_id', $schoolId)->orderBy('name')->pluck('name', 'id'),
-            'sections' => $this->sectionOptions($schoolId),
-            'subjects' => Subject::where('school_id', $schoolId)->orderBy('name')->pluck('name', 'id'),
             'kpis' => [
                 'students' => $metrics['total'],
                 'avg_overall' => $avgOverall === null ? null : round($avgOverall, 1),
@@ -158,11 +237,6 @@ class PerformanceAnalyticsPage extends Page
             'topLearners' => $metrics['topLearners'],
             'supportLearners' => $metrics['supportLearners'],
             'trend' => $trend,
-            'selected' => [
-                'term' => $term?->name,
-                'year' => $term?->academicYear?->name,
-                'scope' => $this->scopeLabel(),
-            ],
         ];
     }
 
@@ -254,6 +328,7 @@ class PerformanceAnalyticsPage extends Page
                 'subject_results' => $subjectResults,
                 'overall' => $overall,
                 'grade' => $this->letterGrade($overall),
+                'grade_tone' => GradingScaleResolver::tone((int) $schoolId, $this->letterGrade($overall)),
             ];
         }
 
@@ -342,34 +417,46 @@ class PerformanceAnalyticsPage extends Page
 
     protected function letterGrade(float $overall): string
     {
-        return match (true) {
-            $overall >= 80 => 'A',
-            $overall >= 70 => 'B',
-            $overall >= 60 => 'C',
-            $overall >= 50 => 'D',
-            $overall >= 40 => 'E',
-            default => 'U',
-        };
+        $schoolId = $this->schoolId();
+
+        return GradingScaleResolver::rating($overall, (int) ($schoolId ?? 0))['symbol'] ?? '-';
     }
 
     protected function gradeDistribution(array $results): array
     {
-        $grades = [
-            'A' => ['label' => 'A (80-100)', 'count' => 0, 'color' => '#16a34a'],
-            'B' => ['label' => 'B (70-79)', 'count' => 0, 'color' => '#22c55e'],
-            'C' => ['label' => 'C (60-69)', 'count' => 0, 'color' => '#0ea5e9'],
-            'D' => ['label' => 'D (50-59)', 'count' => 0, 'color' => '#eab308'],
-            'E' => ['label' => 'E (40-49)', 'count' => 0, 'color' => '#f97316'],
-            'U' => ['label' => 'U (<40)', 'count' => 0, 'color' => '#ef4444'],
-        ];
+        $schoolId = (int) ($this->schoolId() ?? 0);
+        $bands = GradingScaleResolver::bands($schoolId);
 
-        foreach ($results as $row) {
-            if (isset($grades[$row['grade']])) {
-                $grades[$row['grade']]['count']++;
-            }
+        if (empty($bands)) {
+            return [];
         }
 
-        return array_values($grades);
+        $palette = ['#16a34a', '#22c55e', '#0ea5e9', '#eab308', '#f97316', '#ef4444'];
+
+        $distribution = [];
+        // Show the best band first (as the original hard-coded table did), with
+        // green for the top grades fading to red for the lowest.
+        foreach (array_reverse(array_values($bands)) as $index => $band) {
+            $distribution[] = [
+                'symbol' => $band['symbol'],
+                'label' => $band['symbol'].' ('.GradingScaleResolver::formatRange($band['min'], $band['max']).')',
+                'count' => 0,
+                'color' => $palette[min($index, count($palette) - 1)],
+            ];
+        }
+
+        foreach ($results as $row) {
+            $symbol = $row['grade'] ?? '-';
+            foreach ($distribution as $index => &$entry) {
+                if ($entry['symbol'] === $symbol) {
+                    $entry['count']++;
+                    break;
+                }
+            }
+        }
+        unset($entry);
+
+        return $distribution;
     }
 
     protected function bandDistribution(array $results): array

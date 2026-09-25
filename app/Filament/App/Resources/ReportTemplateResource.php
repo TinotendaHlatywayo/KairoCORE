@@ -15,6 +15,7 @@ use Modules\Academics\Models\AssessmentType;
 use Modules\Academics\Models\Course;
 use Modules\Academics\Models\ReportTemplate;
 use Modules\Academics\Models\Section;
+use Modules\Academics\Services\GradingScaleResolver;
 use Modules\Admin\Services\PermissionRegistry;
 
 class ReportTemplateResource extends Resource
@@ -871,16 +872,6 @@ Forms\Components\Fieldset::make(__('Information Modules & Features'))
 
     protected static function resolveDefaultGradingScale($school): array
     {
-        if ($school && isset($school->gradingScale) && !empty($school->gradingScale)) {
-            return $school->gradingScale;
-        }
-        return [
-            'A+' => '90-100',
-            'A'  => '80-89',
-            'B'  => '70-79',
-            'C'  => '60-69',
-            'D'  => '50-59',
-            'F'  => '0-49',
-        ];
+        return GradingScaleResolver::key($school?->id ?? null);
     }
 }
