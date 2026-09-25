@@ -30,8 +30,8 @@ class AcademicReportResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        // Class column renders section→course; eager load to avoid N+1.
-        return parent::getEloquentQuery()->with(['section.course']);
+        // Class column resolves the term's enrollment; eager load to avoid N+1.
+        return parent::getEloquentQuery()->with(['section.course', 'term']);
     }
 
     public static function getNavigationGroup(): ?string
@@ -219,7 +219,11 @@ class AcademicReportResource extends Resource
 
                 Tables\Columns\TextColumn::make('section.name')
                     ->label(__('Class'))
-                    ->formatStateUsing(fn ($record) => ($record->section?->course?->name ?? '').' '.($record->section?->name ?? ''))
+                    ->formatStateUsing(function ($record) {
+                        $section = $record->resolveTermSection();
+
+                        return ($section?->course?->name ?? '').' '.($section?->name ?? '');
+                    })
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('term.academicYear.name')
@@ -492,13 +496,24 @@ class AcademicReportResource extends Resource
 
                             $existing = AcademicReport::where('student_id', $student->id)
                                 ->where('term_id', $data['term_id'])
-                                ->where('section_id', $enrollment->section_id)
                                 ->first();
 
                             if ($existing) {
+                                // Repair any draft duplicates for this learner
+                                // + term that were bound to a now-stale stream
+                                // (e.g. generated before a promotion moved them),
+                                // then rebind this card to the current placement.
+                                AcademicReport::where('student_id', $student->id)
+                                    ->where('term_id', $data['term_id'])
+                                    ->where('id', '!=', $existing->id)
+                                    ->where('section_id', '!=', $enrollment->section_id)
+                                    ->where('status', 'draft')
+                                    ->delete();
+
                                 $existing->update([
                                     'status' => 'draft',
                                     'unhu_competencies' => [],
+                                    'section_id' => $enrollment->section_id,
                                 ]);
                                 $regenerated++;
 
@@ -672,7 +687,14 @@ class AcademicReportResource extends Resource
             $query->whereHas('student', fn (Builder $q) => $q->whereIn('id', self::studentsPaidAtLeast((float) $data['min_paid_percentage'])));
         }
 
-        return $query->get();
+        // Prefer the live (active) enrollment for the year so a promoted /
+        // stream-moved learner resolves to their current placement, then keep
+        // one enrollment per student (the best one) so generation never creates
+        // duplicate report rows for the same term.
+        $query->orderByRaw("CASE WHEN status = 'active' THEN 0 WHEN status = 'repeated' THEN 1 ELSE 2 END")
+            ->orderByDesc('id');
+
+        return $query->get()->unique('student_id')->values();
     }
 
     protected static function studentsPaidAtLeast(float $percentage): array
