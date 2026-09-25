@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Pages\Finance;
 
+use App\Services\ModuleVisibilityManager;
 use Carbon\Carbon;
 use Filament\Pages\Page;
 use Modules\Finance\Services\StudentFinancialHistoryService;
@@ -22,6 +23,11 @@ class FeeCollectionsPage extends Page
     protected static bool $shouldRegisterNavigation = false;
 
     protected static ?string $slug = 'fee-collections';
+
+    public static function canAccess(): bool
+    {
+        return ModuleVisibilityManager::isModuleVisible('finance');
+    }
 
     public string $range = 'today';
 
