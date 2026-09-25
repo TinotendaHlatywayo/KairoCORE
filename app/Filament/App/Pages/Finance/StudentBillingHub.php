@@ -19,9 +19,9 @@ class StudentBillingHub extends Page
 
     protected static ?string $navigationGroup = 'Finance';
 
-    protected static ?string $navigationLabel = 'Student Billing & Revenue (Receivables)';
+    protected static ?string $navigationLabel = 'Student Billing & Revenue';
 
-    protected static ?string $title = 'Student Billing & Revenue (Receivables)';
+    protected static ?string $title = 'Student Billing & Revenue';
 
     protected static ?int $navigationSort = 2;
 
@@ -131,7 +131,7 @@ class StudentBillingHub extends Page
         $totalOutstanding = round((float) $openInvoices->sum('balance_amount'), 2);
 
         return [
-            'categoryLabel' => __('Student Billing & Revenue (Receivables)'),
+            'categoryLabel' => __('Student Billing & Revenue'),
             'categoryPages' => $this->getCategoryPages(),
             'creditStudents' => $creditStudents,
             'totalCredits' => $totalCredits,

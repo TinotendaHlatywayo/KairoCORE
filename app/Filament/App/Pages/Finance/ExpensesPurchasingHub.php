@@ -17,9 +17,9 @@ class ExpensesPurchasingHub extends Page
 
     protected static ?string $navigationGroup = 'Finance';
 
-    protected static ?string $navigationLabel = 'Expenses & Purchasing (Payables)';
+    protected static ?string $navigationLabel = 'Expenses & Purchasing';
 
-    protected static ?string $title = 'Expenses & Purchasing (Payables)';
+    protected static ?string $title = 'Expenses & Purchasing';
 
     protected static ?int $navigationSort = 3;
 
@@ -77,7 +77,7 @@ class ExpensesPurchasingHub extends Page
     protected function getViewData(): array
     {
         return [
-            'categoryLabel' => __('Expenses & Purchasing (Payables)'),
+            'categoryLabel' => __('Expenses & Purchasing'),
             'categoryPages' => $this->getCategoryPages(),
         ];
     }
