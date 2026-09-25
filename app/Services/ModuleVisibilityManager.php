@@ -55,7 +55,7 @@ class ModuleVisibilityManager
     public static function isVisible(string $moduleName): bool
     {
         $schoolId = self::schoolId();
-        if (! $schoolId || self::isSchoolAdmin()) {
+        if (! $schoolId || (self::isSchoolAdmin() && ! in_array($moduleName, ['boarding', 'clinic'], true))) {
             return true;
         }
 
@@ -69,7 +69,7 @@ class ModuleVisibilityManager
      */
     public static function isModuleVisible(string $moduleSlug): bool
     {
-        if (self::isSchoolAdmin()) {
+        if (self::isSchoolAdmin() && ! in_array($moduleSlug, ['boarding', 'health'], true)) {
             return true;
         }
 
