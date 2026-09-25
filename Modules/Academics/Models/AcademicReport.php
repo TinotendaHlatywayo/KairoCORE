@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
+use Modules\Students\Models\Enrollment;
 use Modules\Students\Models\Student;
 
 // ADDED: Fixes VS Code warnings
@@ -145,5 +146,54 @@ class AcademicReport extends Model
     public function teacher()
     {
         return $this->belongsTo(User::class, 'teacher_id');
+    }
+
+    /**
+     * The enrollment that actually backs this report's academic term.
+     *
+     * Promotion / stream changes are append-only: the old row is archived
+     * (status 'promoted', 'transferred_out', ...) and a NEW row is created for
+     * the student's current placement. Prefer the live (active) enrollment for
+     * the report's academic year so the class, template and marks line up with
+     * the student's real placement instead of a stale section_id stored on the
+     * report row. Falls back to the most recent enrollment row overall.
+     */
+    public function resolveTermEnrollment(): ?Enrollment
+    {
+        if (! $this->student_id) {
+            return null;
+        }
+
+        $yearId = $this->term?->academic_year_id;
+
+        if ($yearId) {
+            $enrollment = Enrollment::withoutGlobalScopes()
+                ->with(['section.course'])
+                ->where('student_id', $this->student_id)
+                ->where('academic_year_id', $yearId)
+                ->orderByRaw("CASE WHEN status = 'active' THEN 0 WHEN status = 'repeated' THEN 1 ELSE 2 END")
+                ->orderByDesc('id')
+                ->first();
+
+            if ($enrollment) {
+                return $enrollment;
+            }
+        }
+
+        return Enrollment::withoutGlobalScopes()
+            ->with(['section.course'])
+            ->where('student_id', $this->student_id)
+            ->orderByRaw("CASE WHEN status = 'active' THEN 0 WHEN status = 'repeated' THEN 1 ELSE 2 END")
+            ->orderByDesc('id')
+            ->first();
+    }
+
+    /**
+     * The class stream this report should display, resolved from the term's
+     * enrollment (live placement) with the stored section as a fallback.
+     */
+    public function resolveTermSection(): ?Section
+    {
+        return $this->resolveTermEnrollment()?->section ?? $this->section;
     }
 }

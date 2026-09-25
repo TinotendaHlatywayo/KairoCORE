@@ -94,6 +94,7 @@
             $term = $data['term'];
             $year = $data['year'];
             $course = $data['course'];
+            $section = $data['section'] ?? $report->section;
             $level = $data['level'];
             $compiledSubjects = $data['compiledSubjects'];
             $competencies = $data['competencies'];
@@ -248,7 +249,7 @@
                     <td class="label">{{ __('Admission No:') }}</td>
                     <td style="font-family: monospace;">{{ $student?->admission_number ?? 'N/A' }}</td>
                     <td class="label">{{ __('Class / Form:') }}</td>
-                    <td>{{ $report->section?->full_name ?? 'N/A' }}</td>
+                    <td>{{ $section?->full_name ?? 'N/A' }}</td>
                 </tr>
                 <tr>
                     <td class="label">{{ __('Date of Birth:') }}</td>
