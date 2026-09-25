@@ -295,6 +295,9 @@ class ModuleNavigation
                     ['label' => __('Circulation'), 'page' => CirculationHub::class, 'group' => __('Circulation'), 'hub' => true],
                     ['label' => __('Issue Book'), 'page' => IssueBook::class, 'group' => __('Circulation')],
                     ['label' => __('Issues'), 'resource' => LibraryIssueResource::class, 'group' => __('Circulation')],
+                    ['label' => __('Knowledge'), 'page' => KnowledgeHub::class, 'group' => __('Knowledge'), 'hub' => true],
+                    ['label' => __('Assets'), 'resource' => KnowledgeAssetResource::class, 'group' => __('Knowledge')],
+                    ['label' => __('Galleries'), 'resource' => KnowledgeGalleryResource::class, 'group' => __('Knowledge')],
                 ],
                 'more' => [],
             ],
@@ -363,19 +366,6 @@ class ModuleNavigation
                 'tabs' => [
                     ['label' => __('Homework'), 'resource' => HomeworkResource::class, 'group' => __('LMS')],
                     ['label' => __('Homework & Lessons'), 'page' => LmsHub::class, 'group' => __('LMS'), 'hub' => true],
-                ],
-                'more' => [],
-            ],
-
-            [
-                'slug' => 'knowledge',
-                'label' => __('Knowledge Hub'),
-                'icon' => 'heroicon-o-light-bulb',
-                'description' => __('Digital repository, documents and media galleries.'),
-                'tabs' => [
-                    ['label' => __('Knowledge'), 'page' => KnowledgeHub::class, 'group' => __('Knowledge'), 'hub' => true],
-                    ['label' => __('Assets'), 'resource' => KnowledgeAssetResource::class, 'group' => __('Knowledge')],
-                    ['label' => __('Galleries'), 'resource' => KnowledgeGalleryResource::class, 'group' => __('Knowledge')],
                 ],
                 'more' => [],
             ],
