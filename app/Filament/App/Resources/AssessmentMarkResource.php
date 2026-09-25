@@ -199,11 +199,7 @@ class AssessmentMarkResource extends Resource
                             ->success()
                             ->send();
 
-                        return redirect(static::getUrl('index', [
-                            'tableFilters[section_id][value]' => $data['section_id'],
-                            'tableFilters[subject_id][value]' => $data['subject_id'],
-                            'tableFilters[assessment_type_id][value]' => $data['assessment_type_id'],
-                        ]));
+                        return redirect(static::getUrl('index'));
                     }),
 
                 // =====================================================================
@@ -507,7 +503,10 @@ class AssessmentMarkResource extends Resource
                         $value = $data['value'] ?? null;
 
                         return $query->when($value, function (Builder $q, $yearId) {
-                            return $q->whereHas('assessmentType.term', fn ($t) => $t->where('academic_year_id', $yearId));
+                            return $q->whereHas('assessmentType', fn ($at) => $at->where(fn ($t) => $t
+                                ->whereHas('term', fn ($term) => $term->where('academic_year_id', $yearId))
+                                ->orWhereNull('term_id')
+                            ));
                         });
                     })
                     ->default(function () {
@@ -541,6 +540,7 @@ class AssessmentMarkResource extends Resource
                     }),
                 Tables\Filters\SelectFilter::make('section_id')
                     ->label(__('Class Stream'))
+                    ->placeholder(__('All'))
                     ->options(fn () => Section::with('course')->get()->pluck('full_name', 'id'))
                     ->query(function ($query, array $data) {
                         return $query->when($data['value'], function ($q, $sectionId) {
@@ -549,10 +549,18 @@ class AssessmentMarkResource extends Resource
                     }),
                 Tables\Filters\SelectFilter::make('subject_id')
                     ->label(__('Subject'))
-                    ->options(fn () => Subject::pluck('name', 'id')),
+                    ->placeholder(__('All'))
+                    ->options(fn () => Subject::pluck('name', 'id'))
+                    ->query(function (Builder $query, array $data) {
+                        return $query->when($data['value'], fn (Builder $q, $subjectId) => $q->where('subject_id', $subjectId));
+                    }),
                 Tables\Filters\SelectFilter::make('assessment_type_id')
                     ->label(__('Assessment Type'))
-                    ->options(fn () => AssessmentType::pluck('name', 'id')),
+                    ->placeholder(__('All'))
+                    ->options(fn () => AssessmentType::pluck('name', 'id'))
+                    ->query(function (Builder $query, array $data) {
+                        return $query->when($data['value'], fn (Builder $q, $assessmentTypeId) => $q->where('assessment_type_id', $assessmentTypeId));
+                    }),
             ])
             ->actions([
                 Tables\Actions\EditAction::make()->iconButton(),
