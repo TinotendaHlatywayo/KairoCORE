@@ -25,7 +25,7 @@ class KnowledgeAssetResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return __('Knowledge Hub');
+        return __('Library');
     }
 
     use ModuleAwareActiveNavigation;
@@ -41,7 +41,7 @@ class KnowledgeAssetResource extends Resource
         return __(static::$navigationLabel);
     }
 
-    protected static ?string $navigationGroup = 'Knowledge Hub';
+    protected static ?string $navigationGroup = 'Library';
 
     protected static bool $shouldRegisterNavigation = false;
 
