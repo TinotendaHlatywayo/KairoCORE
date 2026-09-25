@@ -203,6 +203,76 @@ class AssessmentMarkResource extends Resource
                     }),
 
                 // =====================================================================
+                // PUBLISH MARKS TO STUDENT PORTAL
+                // Sets the selected assessment type (and any level / stream / subject
+                // constraints) to "published" so parents and students can see those
+                // marks on their portal.
+                // =====================================================================
+                Tables\Actions\Action::make('publishMarksToPortal')
+                    ->label(__('Publish Marks to Portal'))
+                    ->icon('heroicon-o-paper-airplane')
+                    ->color('primary')
+                    ->modalHeading(__('Publish Marks to Student Portal'))
+                    ->modalDescription(__('Publishing makes the marks for the chosen assessment type visible to students and parents on their portal. Results already published stay published.'))
+                    ->modalSubmitActionLabel(__('Publish Marks'))
+                    ->form([
+                        Forms\Components\Select::make('course_id')
+                            ->label(__('Grade / Form Level'))
+                            ->options(Course::all()->pluck('name', 'id'))
+                            ->searchable()
+                            ->preload()
+                            ->placeholder(__('All Levels'))
+                            ->live()
+                            ->afterStateUpdated(fn (Forms\Set $set) => $set('section_id', null)),
+
+                        Forms\Components\Select::make('section_id')
+                            ->label(__('Class Stream'))
+                            ->options(fn (Forms\Get $get) => Section::with('course')
+                                ->when($get('course_id'), fn ($q, $courseId) => $q->where('course_id', $courseId))
+                                ->get()
+                                ->pluck('full_name', 'id'))
+                            ->searchable()
+                            ->preload()
+                            ->placeholder(__('All Class Streams')),
+
+                        Forms\Components\Select::make('subject_id')
+                            ->label(__('Subject'))
+                            ->options(Subject::all()->pluck('name', 'id'))
+                            ->searchable()
+                            ->preload()
+                            ->placeholder(__('All Subjects')),
+
+                        Forms\Components\Select::make('assessment_type_id')
+                            ->label(__('Assessment Type'))
+                            ->options(fn () => AssessmentType::where('school_id', app('current_tenant')->id)->pluck('name', 'id'))
+                            ->searchable()
+                            ->preload()
+                            ->required(),
+                    ])
+                    ->action(function (array $data) {
+                        $query = AssessmentType::query();
+
+                        foreach (['course_id', 'section_id', 'subject_id'] as $scope) {
+                            if (! empty($data[$scope])) {
+                                $query->where($scope, $data[$scope]);
+                            }
+                        }
+
+                        $published = $query->whereIn('id', (array) $data['assessment_type_id'])
+                            ->get()
+                            ->each(fn ($type) => $type->update(['status' => 'published']))
+                            ->count();
+
+                        Notification::make()
+                            ->title(__('Marks Published'))
+                            ->body($published > 0
+                                ? __($published.' assessment type(s) are now visible on the student portal.')
+                                : __('No assessment types matched the selected scope.'))
+                            ->success()
+                            ->send();
+                    }),
+
+                // =====================================================================
                 // IMPORT MARKS (EXCEL/CSV)
                 // The download-template button lives INSIDE the import modal (top),
                 // matching the standard "Import X from Excel or CSV" wizard used by
