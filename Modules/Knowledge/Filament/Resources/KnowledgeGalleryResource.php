@@ -21,7 +21,7 @@ class KnowledgeGalleryResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return __('Knowledge Hub');
+        return __('Library');
     }
 
     protected static ?string $model = KnowledgeAsset::class;
@@ -35,7 +35,7 @@ class KnowledgeGalleryResource extends Resource
         return __(static::$navigationLabel);
     }
 
-    protected static ?string $navigationGroup = 'Knowledge Hub';
+    protected static ?string $navigationGroup = 'Library';
 
     // Reached via the module contextual tabs, not the sidebar.
     protected static bool $shouldRegisterNavigation = false;

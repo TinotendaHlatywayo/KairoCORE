@@ -15,13 +15,13 @@ class KnowledgeHub extends Page
 
     protected static ?string $navigationIcon = 'heroicon-o-light-bulb';
 
-    protected static ?string $navigationGroup = 'Knowledge Hub';
+    protected static ?string $navigationGroup = 'Library';
 
     protected static ?string $navigationLabel = 'Knowledge';
 
     protected static ?string $title = 'Knowledge';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 3;
 
     protected static ?string $slug = 'knowledge-knowledge';
 
