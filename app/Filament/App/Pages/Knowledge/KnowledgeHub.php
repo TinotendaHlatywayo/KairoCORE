@@ -48,7 +48,7 @@ class KnowledgeHub extends Page
     public function getCategoryPages(): array
     {
         $service = app(ModuleNavigationService::class);
-        $module = $service->moduleBySlug('knowledge');
+        $module = $service->moduleForClass(static::class);
         $tabs = array_merge($service->moduleTabs($module), $service->moduleMoreTabs($module));
 
         return array_values(array_filter(
@@ -59,7 +59,9 @@ class KnowledgeHub extends Page
 
     public function mount(): void
     {
-        $last = session('nav.last.knowledge.'.$this->getCategoryLabel());
+        $service = app(ModuleNavigationService::class);
+        $module = $service->moduleForClass(static::class);
+        $last = session('nav.last.'.($module['slug'] ?? 'module').'.'.$this->getCategoryLabel());
         $pages = $this->getCategoryPages();
 
         if (empty($pages)) {
