@@ -396,9 +396,6 @@ class AppPanelProvider extends PanelProvider
                 NavigationGroup::make(fn () => __('LMS'))
                     ->collapsible(),
 
-                NavigationGroup::make(fn () => __('Knowledge Hub'))
-                    ->collapsible(),
-
                 NavigationGroup::make(fn () => __('Website'))
                     ->collapsible(),
 
