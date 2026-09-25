@@ -468,10 +468,7 @@
             <!-- Grading Scales Key in Footer -->
             @if($showGradingKeys)
                 @php
-                    $gradingScale = (isset($school->gradingScale) && !empty($school->gradingScale)) ? $school->gradingScale : [
-                        'A+' => '90-100', 'A' => '80-89', 'B' => '70-79',
-                        'C' => '60-69', 'D' => '50-59', 'F' => '0-49',
-                    ];
+                    $gradingScale = Modules\Academics\Services\GradingScaleResolver::key($school?->id ?? null);
                 @endphp
                 <div style="margin-top: 8px; padding-top: 4px; border-top: 1px dashed {{ $accentColor }}; font-size: 7px; color: {{ $cfg['body_text_color'] ?? '#1e293b' }};">
                     <strong style="color: {{ $accentColor }};">{{ __('Grading Scale Key') }}:</strong>
