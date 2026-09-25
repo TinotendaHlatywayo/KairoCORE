@@ -10,6 +10,7 @@ use Modules\Academics\Models\AssessmentType;
 use Modules\Academics\Models\ReportTemplate;
 use Modules\Academics\Models\StudentCompetency;
 use Modules\Academics\Models\Subject;
+use Modules\Academics\Services\GradingScaleResolver;
 use Modules\Admin\Models\SystemSetting;
 use Modules\Students\Models\Enrollment;
 
@@ -339,12 +340,7 @@ $subjects = Subject::where('school_id', $schoolId)->get();
 
                     $gradeLetter = '-';
                     if (! is_null($overallWeightedMark)) {
-                        if ($overallWeightedMark >= 80) { $gradeLetter = 'A'; }
-                        elseif ($overallWeightedMark >= 70) { $gradeLetter = 'B'; }
-                        elseif ($overallWeightedMark >= 60) { $gradeLetter = 'C'; }
-                        elseif ($overallWeightedMark >= 50) { $gradeLetter = 'D'; }
-                        elseif ($overallWeightedMark >= 40) { $gradeLetter = 'E'; }
-                        else { $gradeLetter = 'U'; }
+                        $gradeLetter = GradingScaleResolver::rating($overallWeightedMark, (int) $schoolId)['symbol'] ?? '-';
                     }
 
                     $compiledSubjects[] = [
