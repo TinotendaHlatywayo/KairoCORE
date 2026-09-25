@@ -184,20 +184,31 @@ class AcademicReportPdfController extends Controller
             $activeOrientation = $templateForCard->layout_config['page_orientation'] ?? 'landscape';
 
             // Resolve Student Enrollment
+            // Preference goes to the enrollment that actually backs this report
+            // (same academic year AND same class stream). Marks entered in the
+            // Marks Entry worksheet are stored against that exact enrollment, so
+            // a "first enrollment of the year" heuristic could look at an old
+            // stream and render an empty subject/marks table.
             $enrollment = null;
             if ($student) {
                 $reportYearId = $report->term?->academic_year_id;
                 if ($reportYearId) {
                     $enrollment = Enrollment::withoutGlobalScopes()
                         ->where('student_id', $student->id)
-                        ->where('academic_year_id', $reportYearId)
-                        ->first();
+                        ->where('academic_year_id', $reportYearId);
+                    if ($report->section_id) {
+                        $enrollment->where('section_id', $report->section_id);
+                    }
+                    $enrollment = $enrollment->first();
                 }
                 if (! $enrollment && $year) {
                     $enrollment = Enrollment::withoutGlobalScopes()
                         ->where('student_id', $student->id)
-                        ->where('academic_year_id', $year->id)
-                        ->first();
+                        ->where('academic_year_id', $year->id);
+                    if ($report->section_id) {
+                        $enrollment->where('section_id', $report->section_id);
+                    }
+                    $enrollment = $enrollment->first();
                 }
                 if (! $enrollment) {
                     $enrollment = Enrollment::withoutGlobalScopes()
@@ -219,6 +230,7 @@ class AcademicReportPdfController extends Controller
 
             $compiledSubjects = [];
             $competencies = [];
+            $assessmentTypes = collect();
 
 $classRank = null;
             $classTotal = 0;
@@ -249,11 +261,22 @@ $classRank = null;
                     $levelEnrollmentIds
                 )));
 
-                $subjects = Subject::where('school_id', $schoolId)->get();
-                $includedAssessmentIds = $templateForCard->layout_config['included_assessments'] ?? [];
-                if (empty($includedAssessmentIds)) {
-                    $includedAssessmentIds = AssessmentType::where('school_id', $schoolId)->pluck('id')->toArray();
-                }
+$subjects = Subject::where('school_id', $schoolId)->get();
+            // The assessments displayed on the card come from the (optional)
+            // template preference, always widened with the assessment types that
+            // belong to this report's term (including unbound custom types). This
+            // guarantees marks captured in the Marks Entry worksheet for the term
+            // show up on the report card even when a template lists other types.
+            $templateIncludedAssessmentIds = $templateForCard->layout_config['included_assessments'] ?? [];
+            $termAssessmentIds = AssessmentType::where('school_id', $schoolId)
+                ->where(fn ($q) => $q->where('term_id', $term?->id)->orWhereNull('term_id'))
+                ->pluck('id')
+                ->toArray();
+            $includedAssessmentIds = array_values(array_unique(array_merge($templateIncludedAssessmentIds, $termAssessmentIds)));
+            $assessmentTypes = AssessmentType::where('school_id', $schoolId)
+                ->whereIn('id', $includedAssessmentIds)
+                ->orderBy('id')
+                ->get();
 
                 $rankingScope = $templateForCard->layout_config['ranking_scope'] ?? 'class';
 
@@ -507,6 +530,7 @@ $classRank = null;
                 'photoBase64' => $photoBase64,
                 'qrCodeBase64' => $qrCodeBase64,
                 'template' => $templateForCard,
+                'assessmentTypes' => $assessmentTypes,
             ];
         }
 
