@@ -21,7 +21,6 @@ use Modules\Academics\Models\Section;
 use Modules\Academics\Models\Subject;
 use Modules\Academics\Models\Term;
 use Modules\Finance\Models\Invoice;
-use Modules\Students\Models\Enrollment;
 use Modules\Students\Models\Student;
 
 class AcademicReportResource extends Resource
@@ -655,46 +654,42 @@ class AcademicReportResource extends Resource
     /**
      * Enrollments that match the report-generation scope.
      *
-     * The student, grade / form level, class stream(s) and fee-paid threshold
-     * are all evaluated against the SAME enrollment that will back the report
-     * card (i.e. the enrollment for the selected term's academic year). This
-     * stops a learner whose only matching grade is a future/promoted record
-     * from receiving a report against an unrelated current-year enrollment.
+     * Students are matched on their CURRENT enrollment (the same rule the
+     * student directory uses) rather than the term's academic year, so a
+     * learner who has already been promoted into the next year's class gets
+     * their report against the placement shown in the directory instead of a
+     * stale pre-promotion stream.
      */
     protected static function resolveScopeEnrollments(array $data, $schoolId)
     {
-        $term = Term::find($data['term_id'] ?? null);
-        $yearId = $term?->academic_year_id;
-
-        $query = Enrollment::query()
-            ->where('school_id', $schoolId)
-            ->with('student');
-
-        if ($yearId) {
-            $query->where('academic_year_id', $yearId);
-        }
-
         $sections = $data['sections'] ?? [];
-        if (! empty($sections)) {
-            $query->whereIn('section_id', $sections);
+        $courseId = $data['course_id'] ?? null;
+        $minPaid = (float) ($data['min_paid_percentage'] ?? 0);
+
+        $students = Student::query()
+            ->where('school_id', $schoolId)
+            ->whereHas('currentEnrollment', function (Builder $q) use ($sections, $courseId) {
+                $q->whereNotNull('section_id');
+
+                if (! empty($sections)) {
+                    $q->whereIn('section_id', $sections);
+                }
+
+                if (! empty($courseId)) {
+                    $q->whereHas('section', fn (Builder $sq) => $sq->where('course_id', $courseId));
+                }
+            });
+
+        if ($minPaid > 0) {
+            $students->whereIn('id', self::studentsPaidAtLeast($minPaid));
         }
 
-        if (! empty($data['course_id'])) {
-            $query->whereHas('section', fn (Builder $q) => $q->where('course_id', $data['course_id']));
-        }
-
-        if (! empty($data['min_paid_percentage'])) {
-            $query->whereHas('student', fn (Builder $q) => $q->whereIn('id', self::studentsPaidAtLeast((float) $data['min_paid_percentage'])));
-        }
-
-        // Prefer the live (active) enrollment for the year so a promoted /
-        // stream-moved learner resolves to their current placement, then keep
-        // one enrollment per student (the best one) so generation never creates
-        // duplicate report rows for the same term.
-        $query->orderByRaw("CASE WHEN status = 'active' THEN 0 WHEN status = 'repeated' THEN 1 ELSE 2 END")
-            ->orderByDesc('id');
-
-        return $query->get()->unique('student_id')->values();
+        return $students
+            ->with(['currentEnrollment.section.course', 'currentEnrollment.student'])
+            ->get()
+            ->map(fn (Student $student) => $student->currentEnrollment)
+            ->filter()
+            ->values();
     }
 
     protected static function studentsPaidAtLeast(float $percentage): array
