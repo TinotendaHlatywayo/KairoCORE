@@ -197,6 +197,12 @@ class AcademicReportPdfController extends Controller
                 $year = $enrollment->academicYear;
             }
 
+            // Rankings / averages pool uses the year the resolved enrollment
+            // actually lives in (the student's current placement when they have
+            // already been promoted into a later academic year), while $year
+            // stays anchored to the report's term for the printed period line.
+            $scopeYear = $enrollment?->academicYear ?? $year;
+
             $compiledSubjects = [];
             $competencies = [];
             $assessmentTypes = collect();
@@ -208,19 +214,19 @@ $classRank = null;
             $levelRank = null;
             $levelTotal = 0;
 
-            if ($enrollment && $section && $course && $year) {
+            if ($enrollment && $section && $course && $scopeYear) {
                 $sectionEnrollmentIds = Enrollment::where('section_id', $section->id)
-                    ->where('academic_year_id', $year->id)
+                    ->where('academic_year_id', $scopeYear->id)
                     ->pluck('id')
                     ->toArray();
 
                 $streamEnrollmentIds = Enrollment::whereHas('section', fn ($q) => $q->where('course_id', $course->id))
-                    ->where('academic_year_id', $year->id)
+                    ->where('academic_year_id', $scopeYear->id)
                     ->pluck('id')
                     ->toArray();
 
                 $levelEnrollmentIds = Enrollment::whereHas('section.course', fn ($q) => $q->where('level', $level))
-                    ->where('academic_year_id', $year->id)
+                    ->where('academic_year_id', $scopeYear->id)
                     ->pluck('id')
                     ->toArray();
 

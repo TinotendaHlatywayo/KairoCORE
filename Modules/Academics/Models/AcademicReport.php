@@ -149,14 +149,19 @@ class AcademicReport extends Model
     }
 
     /**
-     * The enrollment that actually backs this report's academic term.
+     * The enrollment that backs this report's term.
      *
-     * Promotion / stream changes are append-only: the old row is archived
+     * Promotion / stream changes are append-only: the previous row is archived
      * (status 'promoted', 'transferred_out', ...) and a NEW row is created for
-     * the student's current placement. Prefer the live (active) enrollment for
-     * the report's academic year so the class, template and marks line up with
-     * the student's real placement instead of a stale section_id stored on the
-     * report row. Falls back to the most recent enrollment row overall.
+     * the student's current placement. When a promotion has already moved the
+     * learner into a later academic year, no active row exists for the report's
+     * own year any more - so fall back to the student's current placement (the
+     * same rule the student directory uses) to keep the class, template and
+     * marks aligned with where the learner actually is.
+     *
+     * Resolution order: active enrollment in the report's academic year, then
+     * the current (latest) enrollment across years, then any enrollment in the
+     * report's academic year.
      */
     public function resolveTermEnrollment(): ?Enrollment
     {
@@ -167,25 +172,39 @@ class AcademicReport extends Model
         $yearId = $this->term?->academic_year_id;
 
         if ($yearId) {
-            $enrollment = Enrollment::withoutGlobalScopes()
+            $active = Enrollment::withoutGlobalScopes()
                 ->with(['section.course'])
                 ->where('student_id', $this->student_id)
                 ->where('academic_year_id', $yearId)
-                ->orderByRaw("CASE WHEN status = 'active' THEN 0 WHEN status = 'repeated' THEN 1 ELSE 2 END")
+                ->where('status', Enrollment::STATUS_ACTIVE)
                 ->orderByDesc('id')
                 ->first();
 
-            if ($enrollment) {
-                return $enrollment;
+            if ($active) {
+                return $active;
             }
         }
 
-        return Enrollment::withoutGlobalScopes()
+        $latest = Enrollment::withoutGlobalScopes()
             ->with(['section.course'])
             ->where('student_id', $this->student_id)
-            ->orderByRaw("CASE WHEN status = 'active' THEN 0 WHEN status = 'repeated' THEN 1 ELSE 2 END")
             ->orderByDesc('id')
             ->first();
+
+        if ($latest) {
+            return $latest;
+        }
+
+        if ($yearId) {
+            return Enrollment::withoutGlobalScopes()
+                ->with(['section.course'])
+                ->where('student_id', $this->student_id)
+                ->where('academic_year_id', $yearId)
+                ->orderByDesc('id')
+                ->first();
+        }
+
+        return null;
     }
 
     /**
