@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Pages\Finance;
 
+use App\Services\ModuleVisibilityManager;
 use Carbon\Carbon;
 use Filament\Pages\Page;
 use Modules\Academics\Models\Term;
@@ -20,6 +21,15 @@ class FinancialStatementPage extends Page
     protected static ?string $navigationGroup = 'Finance';
 
     protected static ?string $navigationLabel = 'Financial Statements';
+
+    protected static ?int $navigationSort = 1;
+
+    protected static ?string $slug = 'financial-statements';
+
+    public static function canAccess(): bool
+    {
+        return ModuleVisibilityManager::isModuleVisible('finance');
+    }
 
     public static function getNavigationLabel(): string
     {
