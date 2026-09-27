@@ -60,8 +60,11 @@ class GoodsReceivedResource extends Resource
                             ->options(fn () => ProcurementOrder::query()
                                 ->latest('order_date')
                                 ->latest('id')
-                                ->limit(5)
                                 ->pluck('order_number', 'id'))
+                            ->default(fn () => ProcurementOrder::query()
+                                ->latest('order_date')
+                                ->latest('id')
+                                ->value('id'))
                             ->getOptionLabelUsing(fn ($value): ?string => optional(ProcurementOrder::find($value))->order_number)
                             ->getSearchResultsUsing(fn (string $search): array => ProcurementOrder::query()
                                 ->where('order_number', 'like', "%{$search}%")
@@ -103,6 +106,7 @@ class GoodsReceivedResource extends Resource
                             ->default(now())
                             ->required(),
                         Forms\Components\Select::make('received_by_id')
+                            ->label(__('Received By'))
                             ->relationship('receivedBy', 'name')
                             ->default(fn () => auth()->id())
                             ->required(),

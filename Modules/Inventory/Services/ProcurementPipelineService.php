@@ -8,10 +8,12 @@ use Illuminate\Support\Facades\DB;
 use Modules\Finance\Models\Expense;
 use Modules\Finance\Models\ExpenseCategory;
 use Modules\Finance\Models\ExpenseType;
+use Modules\Finance\Models\SchoolBankAccount;
 use Modules\Inventory\Models\FixedAsset;
 use Modules\Inventory\Models\GoodsReceivedNote;
 use Modules\Inventory\Models\InventoryBatch;
 use Modules\Inventory\Models\InventoryItem;
+use Modules\Inventory\Models\InventoryLocation;
 use Modules\Inventory\Models\InventoryStockMovement;
 use Modules\Inventory\Models\ProcurementOrder;
 use RuntimeException;
@@ -103,43 +105,6 @@ class ProcurementPipelineService
 
             // Update the state machine of the primary Purchase Order
             $this->evaluateOrderStatus($po);
-
-            // Automatically register expense in school's finance ledger for procurement / inventory acquisition
-            try {
-                $schoolId = $grn->school_id;
-                $totalGrnCost = 0.00;
-                foreach ($grn->items as $receivedItem) {
-                    $item = $receivedItem->inventoryItem;
-                    $poItem = $poItems->get($item->id);
-                    $unitCost = $poItem ? (float) $poItem->unit_cost : 0.00;
-                    $totalGrnCost += ($receivedItem->quantity_accepted * $unitCost);
-                }
-
-                if ($totalGrnCost > 0) {
-                    $category = ExpenseCategory::firstOrCreate(
-                        ['school_id' => $schoolId, 'name' => 'Procurement & Inventory'],
-                        ['description' => __('Automated expense tracking for received purchase orders and inventory acquisitions')]
-                    );
-
-                    $expenseType = ExpenseType::firstOrCreate(
-                        ['school_id' => $schoolId, 'expense_category_id' => $category->id, 'name' => 'Inventory & Asset Procurement']
-                    );
-
-                    Expense::create([
-                        'school_id' => $schoolId,
-                        'expense_category_id' => $category->id,
-                        'expense_type_id' => $expenseType->id,
-                        'expense_name' => 'Procurement (GRN '.$grn->grn_number.')',
-                        'amount' => $totalGrnCost,
-                        'expense_date' => now()->toDateString(),
-                        'reference_number' => 'EXP-GRN-'.$grn->grn_number,
-                        'notes' => 'Automated expense log for Goods Received Note (GRN): '.$grn->grn_number.' (PO: '.$po->order_number.')',
-                        'status' => 'paid',
-                    ]);
-                }
-            } catch (\Exception $e) {
-                // Fail silently if finance tables aren't present
-            }
         });
     }
 
@@ -190,7 +155,8 @@ class ProcurementPipelineService
     }
 
     /**
-     * Locate the general warehouse of the school.
+     * Locate the general warehouse of the school, auto-provisioning a default
+     * one so Goods Received creation never 500s on a school without locations.
      */
     protected function getDefaultWarehouse(int $schoolId): int
     {
@@ -200,10 +166,151 @@ class ProcurementPipelineService
             ->orderBy('id', 'ASC')
             ->value('id');
 
-        if (! $id) {
-            throw new RuntimeException('No active general warehouse location configured for this school.');
+        if ($id) {
+            return (int) $id;
         }
 
-        return (int) $id;
+        $location = InventoryLocation::create([
+            'school_id' => $schoolId,
+            'name' => 'General Warehouse',
+            'code' => 'GEN-'.$schoolId,
+            'type' => 'general',
+        ]);
+
+        return (int) $location->id;
+    }
+
+    /**
+     * Recompute the order's stored total_amount from its line items. Called
+     * after unit costs change on create/edit so the Purchase Orders list stays
+     * in sync with what the PDF renders from the item lines.
+     */
+    public function recomputeOrderTotal(ProcurementOrder $order): void
+    {
+        $total = 0.0;
+        foreach ($order->items as $item) {
+            $total += (float) $item->quantity_ordered * (float) $item->unit_cost;
+        }
+
+        $order->update(['total_amount' => round($total, 2)]);
+    }
+
+    /**
+     * Approve a purchase order: move the order to 'approved', record the paid
+     * expense against the chosen bank account and deduct the order total from
+     * that account's running balance.
+     */
+    public function approveOrder(ProcurementOrder $order, int $bankAccountId): void
+    {
+        if (in_array($order->status, ['approved', 'completed', 'cancelled'], true)) {
+            return;
+        }
+
+        $bankAccount = SchoolBankAccount::find($bankAccountId);
+
+        if (! $bankAccount) {
+            throw new RuntimeException('The selected bank account could not be found.');
+        }
+
+        $total = (float) $order->total_amount;
+
+        DB::transaction(function () use ($order, $bankAccount, $total) {
+            $order->fill([
+                'status' => 'approved',
+                'bank_account_id' => $bankAccount->id,
+                'approved_by_id' => auth()->id(),
+                'approved_at' => now(),
+            ])->save();
+
+            $category = ExpenseCategory::firstOrCreate(
+                ['school_id' => $order->school_id, 'name' => 'Procurement & Inventory'],
+                ['description' => __('Automated expense tracking for approved purchase orders')]
+            );
+
+            $expenseType = ExpenseType::firstOrCreate(
+                ['school_id' => $order->school_id, 'expense_category_id' => $category->id, 'name' => 'Inventory & Asset Procurement']
+            );
+
+            Expense::create([
+                'school_id' => $order->school_id,
+                'expense_category_id' => $category->id,
+                'expense_type_id' => $expenseType->id,
+                'expense_name' => 'Procurement (PO '.$order->order_number.')',
+                'amount' => $total,
+                'expense_date' => $order->order_date?->toDateString() ?? now()->toDateString(),
+                'reference_number' => 'EXP-PO-'.$order->order_number,
+                'notes' => 'Automated expense log for approved Purchase Order: '.$order->order_number,
+                'status' => 'paid',
+                'bank_account_id' => $bankAccount->id,
+            ]);
+
+            $bankAccount->decrement('balance', $total);
+        });
+    }
+
+    /**
+     * Compute the outstanding (ordered but not yet received) value of a
+     * purchase order, minus any amount already refunded to the supplier
+     * shortfall. This is the maximum the supplier still owes back.
+     */
+    public function outstandingRefundValue(ProcurementOrder $order): float
+    {
+        $outstanding = 0.0;
+        foreach ($order->items as $item) {
+            $remaining = max(0, (int) $item->quantity_ordered - (int) $item->quantity_received);
+            $outstanding += $remaining * (float) $item->unit_cost;
+        }
+
+        return round(max(0, $outstanding - (float) $order->refunded_amount), 2);
+    }
+
+    /**
+     * Record a supplier refund for missing / short-delivered PO items. The
+     * money comes back into the chosen bank account (balance increment) and an
+     * offsetting expense entry is logged so the ledger reflects the reduction.
+     */
+    public function refundOrder(ProcurementOrder $order, int $bankAccountId): float
+    {
+        $bankAccount = SchoolBankAccount::find($bankAccountId);
+
+        if (! $bankAccount) {
+            throw new RuntimeException('The selected bank account could not be found.');
+        }
+
+        $refund = $this->outstandingRefundValue($order);
+
+        if ($refund <= 0) {
+            return 0.0;
+        }
+
+        DB::transaction(function () use ($order, $bankAccount, $refund) {
+            $order->increment('refunded_amount', $refund);
+
+            $category = ExpenseCategory::firstOrCreate(
+                ['school_id' => $order->school_id, 'name' => 'Procurement & Inventory'],
+                ['description' => __('Automated expense tracking for purchase orders and supplier refunds')]
+            );
+
+            $expenseType = ExpenseType::firstOrCreate(
+                ['school_id' => $order->school_id, 'expense_category_id' => $category->id, 'name' => 'Inventory & Asset Procurement']
+            );
+
+            Expense::create([
+                'school_id' => $order->school_id,
+                'expense_category_id' => $category->id,
+                'expense_type_id' => $expenseType->id,
+                'expense_name' => 'Supplier Refund (PO '.$order->order_number.')',
+                'amount' => -$refund,
+                'expense_date' => now()->toDateString(),
+                'reference_number' => 'REF-PO-'.$order->order_number,
+                'notes' => 'Supplier refund for missing / short-delivered items on Purchase Order: '.$order->order_number,
+                'status' => 'paid',
+                'bank_account_id' => $bankAccount->id,
+            ]);
+
+            $bankAccount->increment('balance', $refund);
+        });
+
+        return $refund;
     }
 }

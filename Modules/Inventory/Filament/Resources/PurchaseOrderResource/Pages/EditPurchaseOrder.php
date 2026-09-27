@@ -7,6 +7,7 @@ namespace Modules\Inventory\Filament\Resources\PurchaseOrderResource\Pages;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 use Modules\Inventory\Filament\Resources\PurchaseOrderResource;
+use Modules\Inventory\Services\ProcurementPipelineService;
 
 class EditPurchaseOrder extends EditRecord
 {
@@ -17,5 +18,14 @@ class EditPurchaseOrder extends EditRecord
         return [
             Actions\DeleteAction::make(),
         ];
+    }
+
+    /**
+     * Unit costs on the item repeater may have been edited; recompute the
+     * stored order total so the Purchase Orders list and PDF agree.
+     */
+    protected function afterSave(): void
+    {
+        app(ProcurementPipelineService::class)->recomputeOrderTotal($this->record);
     }
 }
