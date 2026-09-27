@@ -197,7 +197,43 @@ class ProcurementRequestResource extends Resource
                             ->searchable()
                             ->preload()
                             ->options(fn () => InventorySupplier::query()->orderBy('name')->pluck('name', 'id'))
-                            ->placeholder(__('Select the supplier for the purchase order...')),
+                            ->placeholder(__('Select the supplier for the purchase order...'))
+                            ->createOptionForm([
+                                Forms\Components\TextInput::make('name')
+                                    ->label(__('Supplier / Company Name'))
+                                    ->required()
+                                    ->maxLength(255),
+                                Forms\Components\TextInput::make('contact_person')
+                                    ->label(__('Contact Person'))
+                                    ->placeholder(__('e.g., Accounts, Sales Manager'))
+                                    ->maxLength(255),
+                                Forms\Components\TextInput::make('phone')
+                                    ->label(__('Phone'))
+                                    ->tel()
+                                    ->maxLength(60),
+                                Forms\Components\TextInput::make('email')
+                                    ->label(__('Email'))
+                                    ->email()
+                                    ->maxLength(191),
+                                Forms\Components\Textarea::make('physical_address')
+                                    ->label(__('Physical Address')),
+                                Forms\Components\TextInput::make('tax_number')
+                                    ->label(__('VAT / Tax Registration'))
+                                    ->placeholder(__('e.g., ZIMRA BP-No / standard VAT')),
+                            ])
+                            ->createOptionModalHeading(__('New inventory supplier'))
+                            ->createOptionSubmitActionLabel(__('Save Supplier'))
+                            ->createOptionUsing(function (array $data): int {
+                                return InventorySupplier::create([
+                                    'school_id' => current_tenant()?->id ?? auth()->user()?->school_id,
+                                    'name' => $data['name'],
+                                    'contact_person' => $data['contact_person'] ?? null,
+                                    'phone' => $data['phone'] ?? null,
+                                    'email' => $data['email'] ?? null,
+                                    'physical_address' => $data['physical_address'] ?? null,
+                                    'tax_number' => $data['tax_number'] ?? null,
+                                ])->id;
+                            }),
                     ])
                     ->action(function (ProcurementRequest $record, array $data): void {
                         self::approveRequest($record, (int) ($data['supplier_id'] ?? 0));
