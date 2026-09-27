@@ -90,8 +90,8 @@ class ModuleVisibilityManager
         }
 
         return match ($moduleSlug) {
-            'admissions' => true,
             'health' => self::isVisible('clinic'),
+            'admissions' => self::isPageVisible('admissions', 'applications'),
             default => self::isVisible($moduleSlug),
         };
     }
@@ -107,8 +107,13 @@ class ModuleVisibilityManager
             return true;
         }
 
-        if ($moduleKey === 'admissions') {
-            return true;
+        // The 'health' navigation slug maps onto the clinic module's toggles.
+        if ($moduleKey === 'health') {
+            $moduleKey = 'clinic';
+        }
+
+        if (! self::isVisible($moduleKey)) {
+            return false;
         }
 
         $raw = SystemSetting::get('modules', $moduleKey.'_'.$pageKey, '1');

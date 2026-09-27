@@ -7,6 +7,7 @@ use App\Models\School;
 use App\Services\ModuleVisibilityManager;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -428,6 +429,28 @@ Forms\Components\Fieldset::make(__('Information Modules & Features'))
                 Tables\Columns\IconColumn::make('is_active')->boolean()->label(__('Active')),
             ])
             ->actions([
+                Tables\Actions\Action::make('clone')
+                    ->label(__('Clone Template'))
+                    ->tooltip(__('Duplicate this template to use as a base'))
+                    ->icon('heroicon-o-document-duplicate')
+                    ->color('info')
+                    ->iconButton()
+                    ->requiresConfirmation()
+                    ->modalHeading(fn (ReportTemplate $record): string => __('Clone Template: :name', ['name' => $record->name]))
+                    ->modalDescription(__('Creates an identical copy. The copy starts deactivated so it never replaces the active template. You can rename and edit it afterwards.'))
+                    ->modalSubmitActionLabel(__('Clone Template'))
+                    ->action(function (ReportTemplate $record): void {
+                        $copy = $record->replicate();
+                        $copy->name = __('Copy of :name', ['name' => $record->name]);
+                        $copy->is_active = false;
+                        $copy->save();
+
+                        Notification::make()
+                            ->title(__('Template cloned'))
+                            ->body(__(':name is ready to edit.', ['name' => $copy->name]))
+                            ->success()
+                            ->send();
+                    }),
                 Tables\Actions\EditAction::make()->iconButton(),
                 Tables\Actions\DeleteAction::make()->iconButton(),
             ]);

@@ -5,6 +5,7 @@ namespace App\Filament\App\Pages;
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Filament\App\Concerns\ModulePermissionAccess;
 use App\Models\User;
+use App\Services\ModuleVisibilityManager;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Collection;
@@ -46,6 +47,11 @@ class ReportingDashboard extends Page
     }
 
     protected static ?int $navigationSort = 0;
+
+    public static function canAccess(): bool
+    {
+        return ModuleVisibilityManager::isModuleVisible('reports');
+    }
 
     protected static string $view = 'filament.app.pages.reporting-dashboard';
 

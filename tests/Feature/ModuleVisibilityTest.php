@@ -49,7 +49,7 @@ class ModuleVisibilityTest extends TestCase
 
         // Preserve the tenant's real module toggle state so this test never
         // leaves the database modified.
-        foreach (array_merge(self::NEW_MODULES, ['students', 'boarding', 'clinic']) as $module) {
+        foreach (array_merge(self::NEW_MODULES, ['students', 'boarding', 'clinic', 'admissions', 'website']) as $module) {
             $this->savedModules[$module] = SystemSetting::get('modules', $module, '1');
         }
     }
@@ -178,6 +178,50 @@ class ModuleVisibilityTest extends TestCase
 
         $this->assertStringNotContainsString('boarding-accommodation', $html, 'Closed boarding module should hide accommodation link');
         $this->assertStringNotContainsString('health-records', $html, 'Closed clinic module should hide health records link');
+    }
+
+    public function test_sidebar_hides_closed_admissions_website_and_reports_modules(): void
+    {
+        [, $user] = $this->tenant();
+        PermissionRegistry::ensureAdminHasRole($user, $user->school_id);
+        $user->forceFill(['account_status' => 'active'])->save();
+        $this->actingAs($user);
+
+        SystemSetting::set('modules', 'courses', '1');
+        SystemSetting::set('modules', 'students', '1');
+        SystemSetting::set('modules', 'admissions', '1');
+        SystemSetting::set('modules', 'admissions_applications', '1');
+        SystemSetting::set('modules', 'admissions_kanban', '1');
+        SystemSetting::set('modules', 'admissions_settings', '1');
+
+        // With all master toggles ON the items must be present.
+        $html = $this->get($this->workspaceUrl())->assertOk()->getContent();
+        $this->assertStringContainsString('workspace/applications', $html, 'Applications link visible when admissions module is on');
+        $this->assertStringContainsString('cms/templates', $html, 'Website templates visible when website module is on');
+
+        // Turn the master toggles OFF, then boot a fresh application so the
+        // scoped navigation manager + module visibility cache re-read settings.
+        SystemSetting::set('modules', 'admissions', '0');
+        SystemSetting::set('modules', 'website', '0');
+        SystemSetting::set('modules', 'reports', '0');
+        $this->refreshApplication();
+        $this->useMysql();
+        [$school] = $this->tenant();
+        $user = User::where('school_id', $school->id)->first();
+        PermissionRegistry::ensureAdminHasRole($user, $user->school_id);
+        $user->forceFill(['account_status' => 'active'])->save();
+        $this->actingAs($user);
+
+        $html = $this->get($this->workspaceUrl())->assertOk()->getContent();
+
+        $this->assertStringNotContainsString('workspace/applications', $html, 'Closed admissions module should hide Online Admissions');
+        $this->assertStringNotContainsString('cms/templates', $html, 'Closed website module should hide Website Templates');
+        $this->assertStringNotContainsString('website-templates', $html, 'Closed website module should hide Templates & Design page');
+        $this->assertStringNotContainsString('cms-websites', $html, 'Closed website module should hide Websites resource');
+        $this->assertStringNotContainsString('cms-pages', $html, 'Closed website module should hide CMS Pages resource');
+        $this->assertStringNotContainsString('analytics-explorer', $html, 'Closed reports module should hide Analytics Explorer');
+        $this->assertStringNotContainsString('report-generator-page', $html, 'Closed reports module should hide Generate Report');
+        $this->assertStringNotContainsString('reporting-dashboard', $html, 'Closed reports module should hide Reporting Dashboard');
     }
 
     public function test_system_settings_page_renders_new_module_toggles(): void

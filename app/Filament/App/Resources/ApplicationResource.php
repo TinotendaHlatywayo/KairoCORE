@@ -7,6 +7,7 @@ use App\Filament\App\Resources\ApplicationResource\Pages;
 use App\Notifications\NewEnrollmentNotification;
 use App\Services\AdmissionNotificationService;
 use App\Services\EnrollmentClassBalancer;
+use App\Services\ModuleVisibilityManager;
 use App\Services\RosterAccountProvisioningService;
 use Carbon\Carbon;
 use Filament\Forms;
@@ -44,7 +45,7 @@ class ApplicationResource extends Resource
 
     public static function canAccess(): bool
     {
-        return true;
+        return ModuleVisibilityManager::isPageVisible('admissions', 'applications');
     }
 
     public static function shouldRegisterNavigation(): bool
