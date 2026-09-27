@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Navigation\ModuleNavigationService;
+use App\Services\ModuleVisibilityManager;
 use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Auth;
 
@@ -55,6 +56,10 @@ class WorkspaceSearchIndex
                     continue;
                 }
 
+                if (! self::urlVisibleInNavigation($url)) {
+                    continue;
+                }
+
                 $items[] = [
                     'label' => $resource::getNavigationLabel() ?? class_basename($resource),
                     'group' => $resource::getNavigationGroup() ?? __('General'),
@@ -77,6 +82,10 @@ class WorkspaceSearchIndex
                 $url = $page::getUrl();
 
                 if (blank($url)) {
+                    continue;
+                }
+
+                if (! self::urlVisibleInNavigation($url)) {
                     continue;
                 }
 
@@ -140,5 +149,38 @@ class WorkspaceSearchIndex
         }
 
         return $unique;
+    }
+
+    /**
+     * Whether a URL belongs to a module the current user may not see.
+     *
+     * Mirrors the sidebar rules: items are dropped when they map onto a closed
+     * module, even if the resource/page they come from has no canAccess check
+     * of its own (so shouldRegisterNavigation=false pages don't leak into the
+     * global search when their module is off).
+     */
+    protected static function urlVisibleInNavigation(string $url): bool
+    {
+        try {
+            if (! ModuleVisibilityManager::isUrlVisible($url)) {
+                return false;
+            }
+
+            $path = trim((string) parse_url($url, PHP_URL_PATH), '/');
+            if ($path === '') {
+                return true;
+            }
+
+            $service = app(ModuleNavigationService::class);
+            $moduleSlug = $service->moduleSlugForPath($path);
+
+            if ($moduleSlug === null) {
+                return true;
+            }
+
+            return ModuleVisibilityManager::isModuleVisible($moduleSlug);
+        } catch (\Throwable) {
+            return true;
+        }
     }
 }

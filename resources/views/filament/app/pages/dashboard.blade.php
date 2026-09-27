@@ -106,6 +106,7 @@
             <!-- Quick Launch Directory Grid (Each card stands on its own with explicit border and shadow) -->
             <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
                 <!-- Link 1: Student Directory -->
+                @if (\App\Services\ModuleVisibilityManager::isVisible('students'))
                 <a href="/workspace/students" class="group rounded-2xl border border-gray-200/80 bg-white p-6 shadow-sm transition-all hover:border-primary-400 hover:shadow-md hover:ring-2 hover:ring-primary-100 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-primary-500/60 dark:hover:ring-primary-500/20 flex flex-col justify-between">
                     <div>
                         <h4 class="font-bold text-lg text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">{{ __('Manage Students') }}</h4>
@@ -116,8 +117,10 @@
                         <svg class="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                     </div>
                 </a>
+                @endif
 
                 <!-- Link 2: Timetable Builder -->
+                @if (\App\Services\ModuleVisibilityManager::isVisible('academics'))
                 <a href="/workspace/timetable-lessons" class="group rounded-2xl border border-gray-200/80 bg-white p-6 shadow-sm transition-all hover:border-primary-400 hover:shadow-md hover:ring-2 hover:ring-primary-100 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-primary-500/60 dark:hover:ring-primary-500/20 flex flex-col justify-between">
                     <div>
                         <h4 class="font-bold text-lg text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">{{ __('School Timetable') }}</h4>
@@ -128,8 +131,10 @@
                         <svg class="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                     </div>
                 </a>
+                @endif
 
                 <!-- Link 3: Admissions Queue -->
+                @if (\App\Services\ModuleVisibilityManager::isPageVisible('admissions', 'applications'))
                 <a href="/workspace/applications" class="group rounded-2xl border border-gray-200/80 bg-white p-6 shadow-sm transition-all hover:border-primary-400 hover:shadow-md hover:ring-2 hover:ring-primary-100 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-primary-500/60 dark:hover:ring-primary-500/20 flex flex-col justify-between">
                     <div>
                         <h4 class="font-bold text-lg text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">{{ __('Online Admissions') }}</h4>
@@ -140,6 +145,7 @@
                         <svg class="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                     </div>
                 </a>
+                @endif
             </div>
         </div>
     </x-filament-panels::page>
