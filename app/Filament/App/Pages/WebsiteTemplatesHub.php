@@ -4,6 +4,7 @@ namespace App\Filament\App\Pages;
 
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Filament\App\Concerns\ModulePermissionAccess;
+use App\Services\ModuleVisibilityManager;
 use Filament\Pages\Page;
 use Modules\CMS\Models\CmsSiteTemplate;
 use Modules\CMS\Services\CmsSiteTemplateService;
@@ -46,6 +47,11 @@ class WebsiteTemplatesHub extends Page
     }
 
     protected static ?int $navigationSort = 1;
+
+    public static function canAccess(): bool
+    {
+        return ModuleVisibilityManager::isModuleVisible('website');
+    }
 
     public array $templates = [];
 
