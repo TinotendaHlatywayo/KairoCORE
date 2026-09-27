@@ -8,12 +8,15 @@ use App\Filament\App\Concerns\ModulePermissionAccess;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Modules\Finance\Models\SchoolBankAccount;
 use Modules\Inventory\Filament\Resources\PurchaseOrderResource\Pages;
 use Modules\Inventory\Models\InventorySupplier;
 use Modules\Inventory\Models\ProcurementOrder;
+use Modules\Inventory\Services\ProcurementPipelineService;
 
 class PurchaseOrderResource extends Resource
 {
@@ -111,7 +114,7 @@ class PurchaseOrderResource extends Resource
                     ->colors([
                         'warning' => 'draft',
                         'primary' => 'sent',
-                        'success' => 'completed',
+                        'success' => ['approved', 'completed'],
                         'danger' => 'cancelled',
                     ]),
                 Tables\Columns\TextColumn::make('total_amount')->money('USD'),
@@ -122,7 +125,70 @@ class PurchaseOrderResource extends Resource
                     ->icon('heroicon-o-truck')
                     ->color('success')
                     ->url(fn (ProcurementOrder $record): string => GoodsReceivedResource::getUrl('create', ['procurement_order_id' => $record->id]))
-                    ->visible(fn (ProcurementOrder $record): bool => in_array($record->status, ['sent', 'partially_received'])),
+                    ->visible(fn (ProcurementOrder $record): bool => in_array($record->status, ['approved', 'sent', 'partially_received'])),
+                Tables\Actions\Action::make('approve')
+                    ->label(__('Approve'))
+                    ->icon('heroicon-o-check-badge')
+                    ->color('success')
+                    ->visible(fn (ProcurementOrder $record): bool => in_array($record->status, ['draft', 'sent']))
+                    ->modalHeading(__('Approve Purchase Order?'))
+                    ->modalDescription(fn (ProcurementOrder $record): string => __('On approval the order total is deducted from the selected bank account and a paid expense is recorded.'))
+                    ->modalSubmitActionLabel(__('Approve & Deduct Funds'))
+                    ->fillForm(fn (ProcurementOrder $record): array => [
+                        'bank_account_id' => self::previousBankAccountId($record->school_id),
+                    ])
+                    ->form(fn (ProcurementOrder $record): array => [
+                        Forms\Components\Section::make(__('Order Summary'))
+                            ->schema([
+                                Forms\Components\TextInput::make('order_number')
+                                    ->default($record->order_number)
+                                    ->disabled()
+                                    ->dehydrated(false),
+                                Forms\Components\TextInput::make('supplier')
+                                    ->default($record->supplier?->name)
+                                    ->disabled()
+                                    ->dehydrated(false),
+                                Forms\Components\DatePicker::make('order_date')
+                                    ->default($record->order_date)
+                                    ->disabled()
+                                    ->dehydrated(false),
+                                Forms\Components\TextInput::make('total_amount')
+                                    ->default(number_format((float) $record->total_amount, 2))
+                                    ->prefix('$')
+                                    ->disabled()
+                                    ->dehydrated(false),
+                                Forms\Components\TextInput::make('item_count')
+                                    ->label(__('Number of Items'))
+                                    ->default($record->items()->count())
+                                    ->disabled()
+                                    ->dehydrated(false),
+                            ])->columns(2),
+                        Forms\Components\Select::make('bank_account_id')
+                            ->label(__('Deduct From Bank Account'))
+                            ->options(fn () => SchoolBankAccount::query()
+                                ->where('school_id', $record->school_id)
+                                ->where('is_active', true)
+                                ->orderByDesc('is_default')
+                                ->get()
+                                ->mapWithKeys(fn ($account) => [$account->id => trim(implode(' — ', array_filter([
+                                    $account->bank_name,
+                                    $account->account_name,
+                                    $account->account_number,
+                                ])))])
+                                ->all())
+                            ->searchable()
+                            ->preload()
+                            ->required(),
+                    ])
+                    ->action(function (ProcurementOrder $record, array $data): void {
+                        app(ProcurementPipelineService::class)->approveOrder($record, (int) $data['bank_account_id']);
+
+                        Notification::make()
+                            ->title(__('Purchase Order approved'))
+                            ->body(__(':total deducted from the selected bank account.', ['total' => '$'.number_format((float) $record->total_amount, 2)]))
+                            ->success()
+                            ->send();
+                    }),
                 Tables\Actions\Action::make('view')
                     ->label(__('Compare GRN'))
                     ->icon('heroicon-o-scale')
@@ -150,6 +216,28 @@ class PurchaseOrderResource extends Resource
             $order->order_number.'-Purchase-Order.pdf',
             ['Content-Type' => 'application/pdf']
         );
+    }
+
+    /**
+     * Resolve the bank account to pre-select when approving a purchase order:
+     * the account most recently used on an approved order for this school,
+     * falling back to the school's main (default) active account.
+     */
+    public static function previousBankAccountId(int $schoolId): ?int
+    {
+        $lastUsed = ProcurementOrder::query()
+            ->where('school_id', $schoolId)
+            ->whereNotNull('bank_account_id')
+            ->whereIn('status', ['approved', 'completed', 'partially_received'])
+            ->latest('approved_at')
+            ->value('bank_account_id');
+
+        return $lastUsed
+            ?? SchoolBankAccount::where('school_id', $schoolId)
+                ->where('is_active', true)
+                ->orderByDesc('is_default')
+                ->orderBy('id')
+                ->value('id');
     }
 
     public static function getPages(): array
