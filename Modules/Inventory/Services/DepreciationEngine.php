@@ -6,11 +6,22 @@ namespace Modules\Inventory\Services;
 
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
+use Modules\Inventory\Models\DepreciationMethod;
 use Modules\Inventory\Models\DepreciationSchedule;
 use Modules\Inventory\Models\FixedAsset;
 
 class DepreciationEngine
 {
+    /**
+     * Whether this engine can calculate a schedule for the given method.
+     * Schools may define their own method labels; those are recorded on the
+     * asset but have no formula, so they must never be posted silently.
+     */
+    public function supportsMethod(?string $method): bool
+    {
+        return in_array((string) $method, DepreciationMethod::supportedKeys(), true);
+    }
+
     /**
      * Compute potential depreciation schedule without writing to the database.
      * Useful for UI/preview simulations before locking/posting.
@@ -21,6 +32,14 @@ class DepreciationEngine
         $salvage = (float) $asset->salvage_value;
         $life = (int) $asset->useful_life_years;
         $method = $asset->depreciation_method;
+
+        if (! $this->supportsMethod($method)) {
+            throw new InvalidArgumentException(
+                __('The depreciation method ":method" is not calculated automatically. Choose Straight Line or Double Declining to post a schedule.', [
+                    'method' => (string) $method,
+                ])
+            );
+        }
 
         if ($life <= 0) {
             throw new InvalidArgumentException('Useful life must be a positive integer greater than zero.');
