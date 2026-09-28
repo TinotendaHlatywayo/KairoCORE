@@ -12,8 +12,10 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Modules\Finance\Models\SchoolBankAccount;
 use Modules\Inventory\Filament\Resources\PurchaseOrderResource\Pages;
+use Modules\Inventory\Models\InventoryItem;
 use Modules\Inventory\Models\InventorySupplier;
 use Modules\Inventory\Models\ProcurementOrder;
 use Modules\Inventory\Services\ProcurementPipelineService;
@@ -55,7 +57,7 @@ class PurchaseOrderResource extends Resource
                             ->dehydrated()
                             ->default(fn () => 'LPO-'.now()->year.'-'.str_pad((string) rand(100, 9999), 4, '0', STR_PAD_LEFT)),
                         Forms\Components\Select::make('supplier_id')
-                            ->options(fn (?string $search = '') => \Modules\Inventory\Models\InventorySupplier::query()
+                            ->options(fn (?string $search = '') => InventorySupplier::query()
                                 ->when($search, fn ($q) => fuzzy_search_where($q, ['name', 'contact_person', 'email'], $search))
                                 ->orderBy('name')
                                 ->limit(50)
@@ -75,10 +77,12 @@ class PurchaseOrderResource extends Resource
                     ->schema([
                         Forms\Components\Repeater::make('items')
                             ->relationship('items')
+                            ->minItems(1)
+                            ->addActionLabel(__('Add an item'))
                             ->schema([
                                 Forms\Components\Select::make('inventory_item_id')
                                     ->options(fn (?string $search = '') => inventory_item_search_options($search))
-                                    ->getOptionLabelUsing(fn ($value) => inventory_item_label(\Modules\Inventory\Models\InventoryItem::find($value)))
+                                    ->getOptionLabelUsing(fn ($value) => inventory_item_label(InventoryItem::find($value)))
                                     ->searchable()
                                     ->optionsLimit(50)
                                     ->required()
@@ -101,7 +105,7 @@ class PurchaseOrderResource extends Resource
                             ])->columns(10),
                         Forms\Components\Placeholder::make('order_total_summary')
                             ->label(__('Order Total'))
-                            ->content(fn (Forms\Get $get): string => '$'.number_format(self::totalForLines($get('items')), 2))
+                            ->content(fn (Forms\Get $get): string => '$'.number_format(self::totalForLines($get('items')), 2)),
                     ]),
             ]);
     }
@@ -257,7 +261,7 @@ class PurchaseOrderResource extends Resource
         ])->setPaper('a4');
 
         return response()->streamDownload(
-            fn () => print($pdf->output()),
+            fn () => print ($pdf->output()),
             $order->order_number.'-Purchase-Order.pdf',
             ['Content-Type' => 'application/pdf']
         );
@@ -295,7 +299,7 @@ class PurchaseOrderResource extends Resource
         ];
     }
 
-    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
             ->with(['supplier', 'items.inventoryItem', 'grns.items', 'request.requester']);

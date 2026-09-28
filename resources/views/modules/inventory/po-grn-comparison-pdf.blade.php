@@ -52,53 +52,18 @@
     </table>
 
     @php
-        $lines = [];
-        foreach ($po->items as $poItem) {
-            $received = 0;
-            $rejected = 0;
-            $grnCount = 0;
-
-            foreach ($po->grns as $grn) {
-                foreach ($grn->items as $grnItem) {
-                    if ((int) $grnItem->inventory_item_id === (int) $poItem->inventory_item_id) {
-                        $received += (int) $grnItem->quantity_accepted;
-                        $rejected += (int) $grnItem->quantity_rejected;
-                        $grnCount++;
-                    }
-                }
-            }
-
-            $ordered = (int) $poItem->quantity_ordered;
-            $outstanding = max(0, $ordered - $received);
-
-            if ($ordered === 0) {
-                $stateLabel = 'Pending';
-            } elseif ($received >= $ordered) {
-                $stateLabel = 'Complete';
-            } elseif ($received > 0) {
-                $stateLabel = 'Partial';
-            } else {
-                $stateLabel = 'Not Received';
-            }
-
-            $lines[] = [
-                'item' => $poItem->inventoryItem?->name ?? 'Unlinked item',
-                'ordered' => $ordered,
-                'received' => $received,
-                'rejected' => $rejected,
-                'outstanding' => $outstanding,
-                'grn_count' => $grnCount,
-                'state' => $stateLabel,
-            ];
-        }
+        $rows = $rows ?? $po->receivingComparison();
+        $sum = fn (string $key): int|float => array_sum(array_column($rows, $key));
     @endphp
 
     <table class="data-table">
         <thead>
             <tr>
-                <th class="left" style="width:30%;">Item</th>
-                <th>Ordered</th>
-                <th>Received</th>
+                <th class="left" style="width:24%;">Item</th>
+                <th>Unit Cost</th>
+                <th>Line Total</th>
+                <th style="border-left:2px solid #94a3b8;">Ordered</th>
+                <th style="border-left:2px solid #94a3b8;">Received</th>
                 <th>Rejected</th>
                 <th>Outstanding</th>
                 <th>GRN Records</th>
@@ -106,27 +71,31 @@
             </tr>
         </thead>
         <tbody>
-            @forelse ($lines as $line)
+            @forelse ($rows as $line)
                 <tr>
                     <td class="left">{{ $line['item'] }}</td>
-                    <td>{{ $line['ordered'] }}</td>
-                    <td>{{ $line['received'] }}</td>
+                    <td>${{ number_format((float) $line['unit_cost'], 2) }}</td>
+                    <td>${{ number_format((float) $line['line_total'], 2) }}</td>
+                    <td style="border-left:2px solid #cbd5e1;">{{ $line['ordered'] }}</td>
+                    <td style="border-left:2px solid #cbd5e1;">{{ $line['received'] }}</td>
                     <td>{{ $line['rejected'] }}</td>
                     <td>{{ $line['outstanding'] }}</td>
                     <td>{{ $line['grn_count'] }}</td>
-                    <td class="state-label" style="color:{{ $primaryColor }};">{{ $line['state'] }}</td>
+                    <td class="state-label" style="color:{{ $primaryColor }};">{{ $line['state_label'] }}</td>
                 </tr>
             @empty
-                <tr><td colspan="7" style="text-align:center; color:#94a3b8;">No ordered items.</td></tr>
+                <tr><td colspan="9" style="text-align:center; color:#94a3b8;">No ordered items.</td></tr>
             @endforelse
         </tbody>
         <tr class="total-row">
             <td class="left">Totals</td>
-            <td>{{ array_sum(array_column($lines, 'ordered')) }}</td>
-            <td>{{ array_sum(array_column($lines, 'received')) }}</td>
-            <td>{{ array_sum(array_column($lines, 'rejected')) }}</td>
-            <td>{{ array_sum(array_column($lines, 'outstanding')) }}</td>
-            <td>{{ array_sum(array_column($lines, 'grn_count')) }}</td>
+            <td></td>
+            <td>${{ number_format((float) $sum('line_total'), 2) }}</td>
+            <td style="border-left:2px solid #cbd5e1;">{{ $sum('ordered') }}</td>
+            <td style="border-left:2px solid #cbd5e1;">{{ $sum('received') }}</td>
+            <td>{{ $sum('rejected') }}</td>
+            <td>{{ $sum('outstanding') }}</td>
+            <td>{{ $sum('grn_count') }}</td>
             <td></td>
         </tr>
     </table>

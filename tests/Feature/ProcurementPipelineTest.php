@@ -10,10 +10,13 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;
 use Modules\Finance\Models\Expense;
+use Modules\Finance\Models\ExpenseCategory;
+use Modules\Finance\Models\ExpenseType;
 use Modules\Finance\Models\SchoolBankAccount;
 use Modules\Inventory\Filament\Resources\GoodsReceivedResource\Pages\CreateGoodsReceivedNote;
 use Modules\Inventory\Filament\Resources\GoodsReceivedResource\Pages\EditGoodsReceivedNote;
 use Modules\Inventory\Filament\Resources\PurchaseOrderResource;
+use Modules\Inventory\Filament\Resources\PurchaseOrderResource\Pages\CreatePurchaseOrder;
 use Modules\Inventory\Filament\Resources\PurchaseOrderResource\Pages\EditPurchaseOrder;
 use Modules\Inventory\Filament\Resources\PurchaseOrderResource\Pages\ViewPurchaseOrder;
 use Modules\Inventory\Models\GoodsReceivedItem;
@@ -22,6 +25,7 @@ use Modules\Inventory\Models\InventoryCategory;
 use Modules\Inventory\Models\InventoryItem;
 use Modules\Inventory\Models\ProcurementOrder;
 use Modules\Inventory\Models\ProcurementOrderItem;
+use Modules\Inventory\Models\ProcurementRequest;
 use Modules\Inventory\Services\ProcurementPipelineService;
 use Tests\TestCase;
 
@@ -901,5 +905,328 @@ class ProcurementPipelineTest extends TestCase
 
         $this->assertSame(4, (int) $item->refresh()->current_quantity, 'Editing must not post stock a second time.');
         $this->assertSame(4, (int) $order->refresh()->items()->first()->quantity_received);
+    }
+
+    public function test_order_view_lists_every_ordered_line_with_its_quantities(): void
+    {
+        [, $laptops] = $this->seedCategoryAndItem();
+
+        $category = InventoryCategory::create(['school_id' => $this->school->id, 'name' => 'View Cat '.uniqid()]);
+        $this->created[] = $category;
+        $monitors = InventoryItem::create([
+            'school_id' => $this->school->id, 'category_id' => $category->id, 'sku' => 'SKU-'.uniqid(),
+            'name' => 'View Test Monitor', 'item_type' => 'consumable', 'unit_of_measure' => 'pieces',
+            'reorder_level' => 1, 'current_quantity' => 0, 'average_unit_cost' => 0.0000,
+        ]);
+        $this->created[] = $monitors;
+
+        $order = $this->seedOrder([
+            ['item_id' => $laptops->id, 'qty' => 5, 'cost' => 100],
+            ['item_id' => $monitors->id, 'qty' => 2, 'cost' => 250],
+        ], 'approved');
+
+        $html = Livewire::test(ViewPurchaseOrder::class, ['record' => $order->getKey()])
+            ->assertSuccessful()
+            ->html();
+
+        $this->assertStringContainsString($laptops->name, $html, 'Every ordered item must be listed on the order.');
+        $this->assertStringContainsString($monitors->name, $html);
+        $this->assertStringContainsString('0/2', $html, 'Both lines are counted and neither is complete yet.');
+        $this->assertStringContainsString('Ordered Items and Goods Received', $html);
+        $this->assertStringContainsString('Unit Cost', $html);
+        $this->assertStringContainsString('$500.00', $html, 'The order shows the value of each line like the requisition does.');
+        $this->assertStringNotContainsString('no ordered items yet', $html);
+    }
+
+    public function test_receiving_comparison_is_the_single_source_for_the_order_screen_and_pdf(): void
+    {
+        [, $laptops] = $this->seedCategoryAndItem();
+
+        $order = $this->seedOrder([
+            ['item_id' => $laptops->id, 'qty' => 4, 'cost' => 125],
+        ], 'approved');
+
+        $rows = $order->receivingComparison();
+
+        $this->assertCount(1, $rows);
+        $this->assertSame($laptops->name, $rows[0]['item']);
+        $this->assertSame(4, $rows[0]['ordered']);
+        $this->assertSame(0, $rows[0]['received']);
+        $this->assertSame(4, $rows[0]['outstanding']);
+        $this->assertSame(125.0, $rows[0]['unit_cost']);
+        $this->assertSame(500.0, $rows[0]['line_total']);
+        $this->assertSame('pending', $rows[0]['state']);
+        $this->assertSame(0, $rows[0]['grn_count']);
+
+        $grn = GoodsReceivedNote::create([
+            'school_id' => $this->school->id,
+            'procurement_order_id' => $order->id,
+            'received_date' => now()->toDateString(),
+            'received_by_id' => $this->user->id,
+        ]);
+        $this->created[] = $grn;
+
+        $grnItem = $grn->items()->create([
+            'inventory_item_id' => $laptops->id,
+            'quantity_accepted' => 3,
+            'quantity_rejected' => 1,
+        ]);
+        $this->created[] = $grnItem;
+
+        app(ProcurementPipelineService::class)->receiveGoods($grn);
+
+        $rows = $order->refresh()->receivingComparison();
+
+        $this->assertSame(3, $rows[0]['received'], 'Received is summed from the notes.');
+        $this->assertSame(1, $rows[0]['rejected']);
+        $this->assertSame(1, $rows[0]['outstanding']);
+        $this->assertSame(1, $rows[0]['grn_count']);
+        $this->assertSame('partial', $rows[0]['state']);
+
+        // A stale loaded relation must not be able to blank the comparison.
+        $this->assertCount(1, $order->items()->get());
+        $this->assertCount(1, $order->receivingComparison());
+    }
+
+    public function test_the_printed_comparison_pdf_renders_the_same_lines(): void
+    {
+        [, $item] = $this->seedCategoryAndItem();
+        $order = $this->seedOrder([
+            ['item_id' => $item->id, 'qty' => 6, 'cost' => 20],
+        ], 'approved');
+
+        $response = Livewire::test(ViewPurchaseOrder::class, ['record' => $order->getKey()])
+            ->assertSuccessful()
+            ->callAction('print');
+
+        $response->assertFileDownloaded($order->order_number.'-GRN-Comparison.pdf');
+
+        // The same builder feeds the PDF, so the ordered quantity is in there.
+        $pdf = ViewPurchaseOrder::streamComparisonPdf($order);
+        ob_start();
+        $pdf->sendContent();
+        $body = (string) ob_get_clean();
+
+        $this->assertStringContainsString('%PDF', substr($body, 0, 5));
+        $this->assertGreaterThan(1000, strlen($body), 'The comparison PDF rendered a real document.');
+    }
+
+    public function test_an_order_with_no_ordered_items_cannot_be_approved(): void
+    {
+        [, $item] = $this->seedCategoryAndItem();
+        $account = $this->seedBankAccount(5000);
+        $order = $this->seedOrder([['item_id' => $item->id, 'qty' => 1, 'cost' => 500]], 'draft');
+
+        // Reproduce the state found on the server: a header total with the
+        // line rows gone, which used to move real money.
+        $order->items()->delete();
+        $order->forceFill(['total_amount' => 500])->save();
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('no ordered items');
+
+        try {
+            app(ProcurementPipelineService::class)->approveOrder($order, $account->id);
+        } finally {
+            $this->assertNotSame('approved', $order->refresh()->status, 'The order must not be approved.');
+            $this->assertSame(5000.0, (float) $account->refresh()->balance, 'No money may leave the bank.');
+            $this->assertSame(0, Expense::where('reference_number', 'EXP-PO-'.$order->order_number)->count());
+        }
+    }
+
+    public function test_approval_takes_the_money_from_the_lines_not_the_header_total(): void
+    {
+        [, $item] = $this->seedCategoryAndItem();
+        $account = $this->seedBankAccount(5000);
+        $order = $this->seedOrder([['item_id' => $item->id, 'qty' => 4, 'cost' => 100]], 'draft');
+
+        // A header that drifted from its lines must not move the wrong amount.
+        $order->forceFill(['total_amount' => 999])->save();
+
+        app(ProcurementPipelineService::class)->approveOrder($order, $account->id);
+
+        $this->assertSame(400.00, (float) $order->refresh()->total_amount, 'The approved total is the sum of the lines.');
+        $this->assertSame(4600.0, (float) $account->refresh()->balance, 'The deduction matches the lines.');
+        $this->assertSame(400.00, (float) Expense::where('reference_number', 'EXP-PO-'.$order->order_number)->value('amount'));
+    }
+
+    public function test_a_purchase_order_form_cannot_be_saved_without_any_items(): void
+    {
+        $this->seedCategoryAndItem();
+
+        $before = ProcurementOrder::withoutGlobalScopes()->count();
+
+        Livewire::test(CreatePurchaseOrder::class)
+            ->fillForm([
+                'supplier_id' => $this->seedSupplier(),
+                'order_date' => now()->toDateString(),
+                'items' => [],
+            ])
+            ->call('create')
+            ->assertHasFormErrors(['items']);
+
+        $this->assertSame($before, ProcurementOrder::withoutGlobalScopes()->count(), 'An empty order must not be created.');
+    }
+
+    public function test_the_repair_command_restores_missing_lines_without_touching_matching_money(): void
+    {
+        [, $laptop] = $this->seedCategoryAndItem();
+        $account = $this->seedBankAccount(5000);
+
+        $request = ProcurementRequest::create([
+            'school_id' => $this->school->id,
+            'request_number' => 'PR-'.uniqid(),
+            'requester_id' => $this->user->id,
+            'status' => 'approved',
+        ]);
+        $this->created[] = $request;
+        $this->created[] = $request->items()->create([
+            'item_name' => $laptop->name,
+            'inventory_item_id' => $laptop->id,
+            'quantity' => 1,
+            'estimated_unit_cost' => 500,
+            'is_fixed_asset' => false,
+        ]);
+
+        $order = $this->seedOrder([['item_id' => $laptop->id, 'qty' => 1, 'cost' => 500]], 'approved');
+        $order->forceFill(['procurement_request_id' => $request->id])->save();
+
+        // The exact server state: header total and money recorded, line rows gone.
+        $order->items()->delete();
+        $account->decrement('balance', 500);
+
+        $expenseCategory = ExpenseCategory::firstOrCreate(
+            ['school_id' => $this->school->id, 'name' => 'Procurement & Inventory'],
+            ['description' => 'test fixture']
+        );
+        $expenseType = ExpenseType::firstOrCreate([
+            'school_id' => $this->school->id,
+            'expense_category_id' => $expenseCategory->id,
+            'name' => 'Inventory & Asset Procurement',
+        ]);
+
+        Expense::create([
+            'school_id' => $this->school->id,
+            'expense_category_id' => $expenseCategory->id,
+            'expense_type_id' => $expenseType->id,
+            'expense_name' => 'Procurement (PO '.$order->order_number.')',
+            'amount' => 500,
+            'expense_date' => now()->toDateString(),
+            'reference_number' => 'EXP-PO-'.$order->order_number,
+            'status' => 'paid',
+            'bank_account_id' => $account->id,
+        ]);
+
+        $this->assertSame(0, $order->items()->count(), 'The order starts with no lines.');
+
+        // Dry run: reports, writes nothing.
+        $this->artisan('schoolcore:repair-purchase-order-lines', [
+            'school' => $this->school->id,
+            '--order' => $order->order_number,
+        ])->assertSuccessful();
+
+        $this->assertSame(0, $order->items()->count(), 'A dry run must not write.');
+
+        // Apply: the rebuilt lines match the recorded expense, so money stands.
+        $this->artisan('schoolcore:repair-purchase-order-lines', [
+            'school' => $this->school->id,
+            '--order' => $order->order_number,
+            '--apply' => true,
+        ])->assertSuccessful();
+
+        $this->assertSame(1, $order->items()->count());
+        $line = $order->items()->first();
+        $this->assertSame((int) $laptop->id, (int) $line->inventory_item_id);
+        $this->assertSame(1, (int) $line->quantity_ordered);
+        $this->assertSame(0, (int) $line->quantity_received);
+        $this->assertSame(500.00, (float) $order->refresh()->total_amount);
+        $this->assertSame(4500.0, (float) $account->refresh()->balance, 'Matching money is left alone as recorded.');
+        $this->assertSame(1, Expense::where('reference_number', 'EXP-PO-'.$order->order_number)->count());
+
+        // Idempotent: a second run must not add another line.
+        $this->artisan('schoolcore:repair-purchase-order-lines', [
+            'school' => $this->school->id,
+            '--order' => $order->order_number,
+            '--apply' => true,
+        ])->assertSuccessful();
+
+        $this->assertSame(1, $order->items()->count(), 'Running it twice must not duplicate the lines.');
+    }
+
+    public function test_the_repair_command_will_not_guess_an_unknown_item(): void
+    {
+        [, $laptop] = $this->seedCategoryAndItem();
+        $order = $this->seedOrder([['item_id' => $laptop->id, 'qty' => 1, 'cost' => 500]], 'approved');
+        $order->items()->delete();
+
+        $this->artisan('schoolcore:repair-purchase-order-lines', [
+            'school' => $this->school->id,
+            '--order' => $order->order_number,
+            '--item' => 'A Product That Does Not Exist|1|500',
+            '--apply' => true,
+        ])->assertFailed();
+
+        $this->assertSame(0, $order->items()->count(), 'Nothing may be written for an unresolvable item.');
+    }
+
+    public function test_the_repair_command_refuses_to_move_money_without_the_ledger_flag(): void
+    {
+        [, $laptop] = $this->seedCategoryAndItem();
+        $account = $this->seedBankAccount(5000);
+        $order = $this->seedOrder([['item_id' => $laptop->id, 'qty' => 1, 'cost' => 500]], 'approved');
+
+        $order->items()->delete();
+        $account->decrement('balance', 800);
+
+        $expenseCategory = ExpenseCategory::firstOrCreate(
+            ['school_id' => $this->school->id, 'name' => 'Procurement & Inventory'],
+            ['description' => 'test fixture']
+        );
+        $expenseType = ExpenseType::firstOrCreate([
+            'school_id' => $this->school->id,
+            'expense_category_id' => $expenseCategory->id,
+            'name' => 'Inventory & Asset Procurement',
+        ]);
+
+        Expense::create([
+            'school_id' => $this->school->id,
+            'expense_category_id' => $expenseCategory->id,
+            'expense_type_id' => $expenseType->id,
+            'expense_name' => 'Procurement (PO '.$order->order_number.')',
+            'amount' => 800,
+            'expense_date' => now()->toDateString(),
+            'reference_number' => 'EXP-PO-'.$order->order_number,
+            'status' => 'paid',
+            'bank_account_id' => $account->id,
+        ]);
+
+        // No --reverse-ledger, so the mismatch is reported and nothing changes.
+        $this->artisan('schoolcore:repair-purchase-order-lines', [
+            'school' => $this->school->id,
+            '--order' => $order->order_number,
+            '--item' => $laptop->name.'|1|500',
+            '--apply' => true,
+        ])->assertFailed();
+
+        $this->assertSame(0, $order->items()->count(), 'The lines wait until the money question is settled.');
+        $this->assertSame(4200.0, (float) $account->refresh()->balance, 'No money moves without the flag.');
+
+        // With the flag, the expense is re-issued at the real value and the
+        // over-deduction is put back.
+        $this->artisan('schoolcore:repair-purchase-order-lines', [
+            'school' => $this->school->id,
+            '--order' => $order->order_number,
+            '--item' => $laptop->name.'|1|500',
+            '--apply' => true,
+            '--reverse-ledger' => true,
+        ])->assertSuccessful();
+
+        $this->assertSame(1, $order->items()->count());
+        $this->assertSame(500.00, (float) $order->refresh()->total_amount);
+
+        $expense = Expense::where('reference_number', 'EXP-PO-'.$order->order_number)->first();
+        $this->assertNotNull($expense, 'The expense is re-issued rather than left stale.');
+        $this->assertSame(500.00, (float) $expense->amount);
+        $this->assertSame(4500.0, (float) $account->refresh()->balance, 'The 300 over-deduction is returned.');
     }
 }

@@ -239,9 +239,28 @@ class ProcurementPipelineService
             throw new RuntimeException('The selected bank account could not be found.');
         }
 
-        $total = (float) $order->total_amount;
+        // An order with no lines has nothing to buy, so refuse it before any
+        // money moves. A stored header total is not trusted here either: the
+        // amount approved always comes from the lines themselves.
+        $lines = $order->items()->withoutGlobalScopes();
+
+        if (! $lines->exists()) {
+            throw new RuntimeException(__('This purchase order has no ordered items, so there is nothing to approve. Add at least one item and save the order first.'));
+        }
+
+        $total = round((float) $order->items()
+            ->withoutGlobalScopes()
+            ->selectRaw('COALESCE(SUM(quantity_ordered * unit_cost), 0) AS line_total')
+            ->value('line_total'), 2);
+
+        if ($total <= 0) {
+            throw new RuntimeException(__('The items on this purchase order add up to nothing, so there is no amount to approve. Check the quantities and unit costs.'));
+        }
 
         DB::transaction(function () use ($order, $bankAccount, $total) {
+            // Keep the header honest about what is being paid for.
+            $order->forceFill(['total_amount' => $total])->save();
+
             $order->fill([
                 'status' => 'approved',
                 'bank_account_id' => $bankAccount->id,
