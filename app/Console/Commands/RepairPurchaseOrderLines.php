@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Modules\Finance\Models\Expense;
 use Modules\Finance\Models\SchoolBankAccount;
@@ -89,10 +90,26 @@ class RepairPurchaseOrderLines extends Command
             return self::SUCCESS;
         }
 
-        if (GoodsReceivedNote::withoutGlobalScopes()->where('procurement_order_id', $order->id)->exists()) {
-            $this->components->error('Goods have already been received against this order. Rebuilding the lines now would contradict the notes already posted. Repair this one by hand.');
+        $grns = GoodsReceivedNote::withoutGlobalScopes()
+            ->withCount('items')
+            ->where('procurement_order_id', $order->id)
+            ->get();
+
+        $postedGrns = $grns->filter(fn (GoodsReceivedNote $grn): bool => $grn->items_count > 0);
+
+        if ($postedGrns->isNotEmpty()) {
+            $this->components->error('Goods have already been received against this order ('.implode(', ', $postedGrns->pluck('grn_number')->all()).'). Rebuilding the lines now would contradict the stock and assets those notes posted. Repair this one by hand.');
 
             return self::FAILURE;
+        }
+
+        // A received-note header with no item rows carries no stock or asset
+        // movement; it is a leftover of a save that never posted anything and
+        // only stands in the way here, so it will be removed with the repair.
+        $emptyGrnHeaders = $grns->count();
+
+        if ($emptyGrnHeaders > 0) {
+            $this->components->warn("Found {$grns->count()} empty received-note header(s) on this order (no item rows, so nothing was posted). They will be removed with --apply.");
         }
 
         $lines = $this->resolveLines($order, $schoolId);
@@ -142,7 +159,7 @@ class RepairPurchaseOrderLines extends Command
             return self::SUCCESS;
         }
 
-        if (! $this->apply($order, $lines, $newTotal, $expense, $ledgerDelta)) {
+        if (! $this->apply($order, $lines, $newTotal, $expense, $ledgerDelta, $grns)) {
             return self::FAILURE;
         }
 
@@ -315,8 +332,9 @@ class RepairPurchaseOrderLines extends Command
      * movement when asked and when it no longer matches.
      *
      * @param  array<int, array<string, mixed>>  $lines
+     * @param  Collection<int, GoodsReceivedNote>  $grns
      */
-    private function apply(ProcurementOrder $order, array $lines, float $newTotal, ?Expense $expense, float $ledgerDelta): bool
+    private function apply(ProcurementOrder $order, array $lines, float $newTotal, ?Expense $expense, float $ledgerDelta, $grns): bool
     {
         $reverse = $expense && abs($ledgerDelta) >= 0.005;
 
@@ -328,7 +346,7 @@ class RepairPurchaseOrderLines extends Command
 
         $reversing = $reverse && $this->option('reverse-ledger');
 
-        DB::transaction(function () use ($order, $lines, $newTotal, $expense, $reversing): void {
+        DB::transaction(function () use ($order, $lines, $newTotal, $expense, $reversing, $grns): void {
             foreach ($lines as $line) {
                 ProcurementOrderItem::create([
                     'procurement_order_id' => $order->id,
@@ -338,6 +356,14 @@ class RepairPurchaseOrderLines extends Command
                     'unit_cost' => $line['unit_cost'],
                     'is_fixed_asset' => $line['is_fixed_asset'],
                 ]);
+            }
+
+            // Leftover received-note headers that never held a single item row
+            // are noise, not receiving history, so they go with the repair.
+            if ($grns->isNotEmpty()) {
+                GoodsReceivedNote::withoutGlobalScopes()
+                    ->whereIn('id', $grns->pluck('id')->all())
+                    ->delete();
             }
 
             $order->forceFill([
@@ -395,6 +421,10 @@ class RepairPurchaseOrderLines extends Command
 
         $this->newLine();
         $this->components->info('Restored '.count($lines).' line(s) on '.$order->order_number.'. Total is now $'.number_format((float) $order->refresh()->total_amount, 2).'.');
+
+        if ($grns->isNotEmpty()) {
+            $this->components->info('Removed '.count($grns).' empty received-note header(s) that never posted any goods.');
+        }
 
         if ($reversing) {
             $this->components->info('Reversed the old expense and moved the bank balance to match.');
