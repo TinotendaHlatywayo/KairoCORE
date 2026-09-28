@@ -6,20 +6,20 @@ namespace Modules\Inventory\Filament\Resources;
 
 use App\Filament\App\Concerns\ModulePermissionAccess;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Filament\Forms\Components\Actions\Action as FormAction;
 use Filament\Forms;
+use Filament\Forms\Components\Actions\Action as FormAction;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
-use Filament\Support\Enums\ActionSize;
-use Filament\Support\Enums\MaxWidth;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Modules\Admin\Models\Department;
 use Modules\Inventory\Filament\Resources\ProcurementRequestResource\Pages;
+use Modules\Inventory\Models\FixedAsset;
 use Modules\Inventory\Models\InventoryCategory;
 use Modules\Inventory\Models\InventoryItem;
 use Modules\Inventory\Models\InventorySupplier;
@@ -109,7 +109,7 @@ class ProcurementRequestResource extends Resource
                                     ->searchable()
                                     ->live()
                                     ->options(fn (?string $search = '') => inventory_item_search_options($search))
-                                    ->getOptionLabelUsing(fn ($value) => inventory_item_label(\Modules\Inventory\Models\InventoryItem::find($value)))
+                                    ->getOptionLabelUsing(fn ($value) => inventory_item_label(InventoryItem::find($value)))
                                     ->optionsLimit(50)
                                     ->placeholder(__('Link to catalog (optional)'))
                                     ->helperText(__('Picking a catalog item fills the name and estimated cost from the item record.'))
@@ -259,7 +259,33 @@ class ProcurementRequestResource extends Resource
                     ->color('gray')
                     ->action(fn (ProcurementRequest $record) => self::streamRequisitionPdf($record)),
             ])
-            ->bulkActions([]);
+            ->bulkActions([
+                Tables\Actions\DeleteBulkAction::make()
+                    ->action(function (Collection $records): void {
+                        $blocked = $records->filter(fn (ProcurementRequest $request) => $request->orders()
+                            ->whereIn('status', ['approved', 'completed', 'partially_received'])
+                            ->exists());
+
+                        $deletable = $records->diff($blocked);
+
+                        $deletable->each(fn (ProcurementRequest $request) => $request->delete());
+
+                        if ($deletable->isNotEmpty()) {
+                            Notification::make()
+                                ->title(__(':count request(s) deleted.', ['count' => $deletable->count()]))
+                                ->success()
+                                ->send();
+                        }
+
+                        if ($blocked->isNotEmpty()) {
+                            Notification::make()
+                                ->title(__('Some requests were kept'))
+                                ->body(__(':count request(s) already have approved purchase orders and were not deleted.', ['count' => $blocked->count()]))
+                                ->warning()
+                                ->send();
+                        }
+                    }),
+            ]);
     }
 
     /**
@@ -443,8 +469,8 @@ class ProcurementRequestResource extends Resource
             $fallbackCategoryId = self::resolveFallbackCategoryId($request->school_id);
         }
 
-        $slug = \Illuminate\Support\Str::slug($name);
-        $sku = strtoupper(substr($slug ?: 'ITEM', 0, 24)).'-'.strtoupper(\Illuminate\Support\Str::random(4));
+        $slug = Str::slug($name);
+        $sku = strtoupper(substr($slug ?: 'ITEM', 0, 24)).'-'.strtoupper(Str::random(4));
 
         $newItem = InventoryItem::create([
             'school_id' => $request->school_id,
@@ -467,7 +493,7 @@ class ProcurementRequestResource extends Resource
         // the quantity/stock ledger is fed later when the purchase order's
         // Goods Received Note is processed (see ProcurementPipelineService).
         if ($item->is_fixed_asset) {
-            \Modules\Inventory\Models\FixedAsset::create([
+            FixedAsset::create([
                 'school_id' => $request->school_id,
                 'inventory_item_id' => $newItem->id,
                 'asset_name' => $name,
@@ -550,7 +576,7 @@ class ProcurementRequestResource extends Resource
         ])->setPaper('a4');
 
         return response()->streamDownload(
-            fn () => print($pdf->output()),
+            fn () => print ($pdf->output()),
             $request->request_number.'-Requisition.pdf',
             ['Content-Type' => 'application/pdf']
         );

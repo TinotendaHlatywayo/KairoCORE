@@ -112,7 +112,7 @@ class ViewPurchaseOrder extends ViewRecord
                         ->preload()
                         ->required(),
                 ])
-                ->action(function (array $data): void {
+                ->action(function (array $data) use ($record): void {
                     try {
                         app(ProcurementPipelineService::class)->approveOrder($record, (int) $data['bank_account_id']);
                     } catch (\RuntimeException $e) {
@@ -164,7 +164,7 @@ class ViewPurchaseOrder extends ViewRecord
                         ->preload()
                         ->required(),
                 ])
-                ->action(function (array $data): void {
+                ->action(function (array $data) use ($record): void {
                     $amount = app(ProcurementPipelineService::class)->refundOrder($record, (int) $data['bank_account_id']);
 
                     if ($amount > 0) {
