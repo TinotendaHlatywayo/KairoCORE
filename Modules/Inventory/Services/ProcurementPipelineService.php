@@ -35,6 +35,14 @@ class ProcurementPipelineService
             $defaultLocation = $this->getDefaultWarehouse($grn->school_id);
 
             foreach ($grn->items as $receivedItem) {
+                $accepted = (int) $receivedItem->quantity_accepted;
+
+                // A line left at zero was not delivered, so it must not create
+                // a stock movement, a batch or an asset record.
+                if ($accepted <= 0) {
+                    continue;
+                }
+
                 $item = $receivedItem->inventoryItem;
 
                 // Fetch purchase order item guidelines
@@ -42,7 +50,21 @@ class ProcurementPipelineService
                 $unitCost = $poItem ? (float) $poItem->unit_cost : 0.0000;
 
                 if ($poItem) {
-                    $poItem->increment('quantity_received', $receivedItem->quantity_accepted);
+                    $outstanding = max(0, (int) $poItem->quantity_ordered - (int) $poItem->quantity_received);
+
+                    if ($accepted > $outstanding) {
+                        throw new RuntimeException(
+                            sprintf(
+                                'Cannot receive %d of "%s": only %d outstanding on %s.',
+                                $accepted,
+                                $item->name,
+                                $outstanding,
+                                $po->order_number
+                            )
+                        );
+                    }
+
+                    $poItem->increment('quantity_received', $accepted);
                 }
 
                 // Create a batch if the item includes tracking details (expiry/lot number)
@@ -133,7 +155,7 @@ class ProcurementPipelineService
      */
     protected function evaluateOrderStatus(ProcurementOrder $po): void
     {
-        $items = $po->items;
+        $items = $po->items()->get();
         $fullyReceived = true;
         $anyReceived = false;
 

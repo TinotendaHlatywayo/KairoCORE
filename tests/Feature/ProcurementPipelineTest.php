@@ -12,6 +12,7 @@ use Livewire\Livewire;
 use Modules\Finance\Models\Expense;
 use Modules\Finance\Models\SchoolBankAccount;
 use Modules\Inventory\Filament\Resources\GoodsReceivedResource\Pages\CreateGoodsReceivedNote;
+use Modules\Inventory\Filament\Resources\GoodsReceivedResource\Pages\EditGoodsReceivedNote;
 use Modules\Inventory\Filament\Resources\PurchaseOrderResource;
 use Modules\Inventory\Filament\Resources\PurchaseOrderResource\Pages\EditPurchaseOrder;
 use Modules\Inventory\Filament\Resources\PurchaseOrderResource\Pages\ViewPurchaseOrder;
@@ -62,6 +63,16 @@ class ProcurementPipelineTest extends TestCase
 
     protected function tearDown(): void
     {
+        // The receiving pipeline writes child rows that are not models we hold
+        // references to. They all belong to this test's own fixture school, so
+        // clearing them by school keeps the shared dev database clean.
+        foreach (['goods_received_items', 'inventory_stock_movements', 'inventory_batches', 'fixed_assets'] as $table) {
+            try {
+                DB::table($table)->where('school_id', $this->school->id)->delete();
+            } catch (\Throwable $e) {
+            }
+        }
+
         // Clean up data created for test purposes only.
         foreach ($this->created as $record) {
             try {
@@ -487,5 +498,408 @@ class ProcurementPipelineTest extends TestCase
             $page->html(),
             'The edit form must show the current order total so an edit is visible before saving.'
         );
+    }
+
+    public function test_grn_number_is_generated_by_the_system(): void
+    {
+        [, $item] = $this->seedCategoryAndItem();
+        $order = $this->seedOrder([['item_id' => $item->id, 'qty' => 2, 'cost' => 100]]);
+
+        $first = GoodsReceivedNote::create([
+            'school_id' => $this->school->id,
+            'procurement_order_id' => $order->id,
+            'received_date' => now()->toDateString(),
+            'received_by_id' => $this->user->id,
+        ]);
+        $this->created[] = $first;
+
+        $this->assertMatchesRegularExpression(
+            '/^GRN-'.now()->year.'-\d{5}$/',
+            $first->grn_number,
+            'The GRN number must be issued by the system, never left blank.'
+        );
+
+        $second = GoodsReceivedNote::create([
+            'school_id' => $this->school->id,
+            'procurement_order_id' => $order->id,
+            'received_date' => now()->toDateString(),
+            'received_by_id' => $this->user->id,
+        ]);
+        $this->created[] = $second;
+
+        $this->assertNotSame(
+            $first->grn_number,
+            $second->grn_number,
+            'Consecutive notes must not share a GRN number.'
+        );
+    }
+
+    public function test_receiving_against_an_order_loads_every_line_for_comparison(): void
+    {
+        [, $laptops] = $this->seedCategoryAndItem();
+
+        $category = InventoryCategory::create(['school_id' => $this->school->id, 'name' => 'Second Cat '.uniqid()]);
+        $this->created[] = $category;
+        $projector = InventoryItem::create([
+            'school_id' => $this->school->id,
+            'category_id' => $category->id,
+            'sku' => 'SKU-'.uniqid(),
+            'name' => 'Test Projector',
+            'item_type' => 'consumable',
+            'unit_of_measure' => 'pieces',
+            'reorder_level' => 1,
+            'current_quantity' => 0,
+            'average_unit_cost' => 0.0000,
+        ]);
+        $this->created[] = $projector;
+
+        $order = $this->seedOrder([
+            ['item_id' => $laptops->id, 'qty' => 5, 'cost' => 100],
+            ['item_id' => $projector->id, 'qty' => 2, 'cost' => 250],
+        ], 'sent');
+
+        // The whole order is loaded, with ordered vs already received vs
+        // outstanding so the user can compare without leaving the page.
+        $rows = GoodsReceivedNote::deliveryRows($order->load('items'));
+
+        $this->assertCount(2, $rows);
+        $this->assertSame([5, 0, 5, 5], [
+            $rows[0]['quantity_ordered'],
+            $rows[0]['quantity_received_before'],
+            $rows[0]['quantity_outstanding'],
+            $rows[0]['quantity_accepted'],
+        ]);
+        $this->assertSame([2, 0, 2, 2], [
+            $rows[1]['quantity_ordered'],
+            $rows[1]['quantity_received_before'],
+            $rows[1]['quantity_outstanding'],
+            $rows[1]['quantity_accepted'],
+        ]);
+    }
+
+    public function test_receiving_against_an_order_excludes_what_was_already_received(): void
+    {
+        [, $item] = $this->seedCategoryAndItem();
+        $order = $this->seedOrder([
+            ['item_id' => $item->id, 'qty' => 10, 'cost' => 100, 'received' => 4],
+        ], 'partially_received');
+
+        $rows = GoodsReceivedNote::deliveryRows($order->load('items'));
+
+        $this->assertSame(10, $rows[0]['quantity_ordered']);
+        $this->assertSame(4, $rows[0]['quantity_received_before']);
+        $this->assertSame(6, $rows[0]['quantity_outstanding'], 'Only what is still outstanding may be received.');
+        $this->assertSame(6, $rows[0]['quantity_accepted']);
+    }
+
+    public function test_create_grn_from_a_purchase_order_saves_without_validation_errors(): void
+    {
+        // The reported failure: opening Receive Goods raised
+        // "The grn number field is required" and "The inventory item field is
+        // required" because mount() filled only two keys and wiped the rest.
+        [, $item] = $this->seedCategoryAndItem();
+        $order = $this->seedOrder([['item_id' => $item->id, 'qty' => 5, 'cost' => 100]], 'sent');
+
+        $component = Livewire::withQueryParams(['procurement_order_id' => $order->id])
+            ->test(CreateGoodsReceivedNote::class)
+            ->assertSuccessful()
+            ->assertFormSet(function (array $state) use ($order, $item): array {
+                $this->assertSame($order->id, $state['procurement_order_id']);
+                $this->assertNotEmpty($state['grn_number'], 'The GRN number must be pre-filled for display.');
+                // Filament keys repeater state by generated UUID, not index.
+                $items = array_values($state['items']);
+                $this->assertCount(1, $items);
+                $this->assertSame($item->id, $items[0]['inventory_item_id']);
+                $this->assertSame(5, $items[0]['quantity_ordered']);
+                $this->assertSame(0, $items[0]['quantity_received_before']);
+                $this->assertSame(5, $items[0]['quantity_outstanding']);
+                $this->assertSame(5, $items[0]['quantity_accepted']);
+
+                return [];
+            });
+
+        $component->call('create')->assertHasNoFormErrors();
+
+        $grn = GoodsReceivedNote::where('procurement_order_id', $order->id)
+            ->orderByDesc('id')
+            ->first();
+        $this->created[] = $grn;
+        foreach ($grn->items as $line) {
+            $this->created[] = $line;
+        }
+
+        $this->assertNotEmpty($grn->grn_number);
+        $this->assertSame(5, (int) $item->refresh()->current_quantity);
+        $this->assertSame(5, (int) $order->refresh()->items()->first()->quantity_received);
+    }
+
+    public function test_partial_receipt_records_only_what_arrived_and_keeps_the_order_open(): void
+    {
+        [, $item] = $this->seedCategoryAndItem();
+        $order = $this->seedOrder([['item_id' => $item->id, 'qty' => 5, 'cost' => 100]], 'sent');
+
+        $grn = GoodsReceivedNote::create([
+            'school_id' => $this->school->id,
+            'procurement_order_id' => $order->id,
+            'received_date' => now()->toDateString(),
+            'received_by_id' => $this->user->id,
+        ]);
+        $this->created[] = $grn;
+
+        $grnItem = GoodsReceivedItem::create([
+            'goods_received_note_id' => $grn->id,
+            'inventory_item_id' => $item->id,
+            'quantity_accepted' => 2,
+            'quantity_rejected' => 0,
+        ]);
+        $this->created[] = $grnItem;
+
+        app(ProcurementPipelineService::class)->receiveGoods($grn);
+
+        $this->assertSame(2, (int) $item->refresh()->current_quantity, 'Only what arrived goes into stock.');
+        $this->assertSame(2, (int) $order->refresh()->items()->first()->quantity_received);
+        $this->assertSame('partially_received', $order->refresh()->status);
+
+        // Outstanding against the order as a whole, once this delivery is counted.
+        $rows = GoodsReceivedNote::deliveryRows($order->refresh()->load('items'));
+        $this->assertSame(2, $rows[0]['quantity_received_before']);
+        $this->assertSame(3, $rows[0]['quantity_outstanding'], 'The undelivered balance stays outstanding.');
+
+        // While editing that same note its own quantity is excluded, so the
+        // line still shows the full 5 as the maximum it can hold.
+        $editable = GoodsReceivedNote::deliveryRows($order->refresh()->load('items'), $grn->refresh());
+        $this->assertSame(0, $editable[0]['quantity_received_before']);
+        $this->assertSame(5, $editable[0]['quantity_outstanding']);
+        $this->assertSame(2, $editable[0]['quantity_accepted'], 'The existing quantity is preserved on edit.');
+    }
+
+    public function test_a_line_left_at_zero_records_nothing(): void
+    {
+        [, $item] = $this->seedCategoryAndItem();
+        $order = $this->seedOrder([['item_id' => $item->id, 'qty' => 4, 'cost' => 100]], 'sent');
+
+        $grn = GoodsReceivedNote::create([
+            'school_id' => $this->school->id,
+            'procurement_order_id' => $order->id,
+            'received_date' => now()->toDateString(),
+            'received_by_id' => $this->user->id,
+        ]);
+        $this->created[] = $grn;
+
+        $grnItem = GoodsReceivedItem::create([
+            'goods_received_note_id' => $grn->id,
+            'inventory_item_id' => $item->id,
+            'quantity_accepted' => 0,
+            'quantity_rejected' => 0,
+        ]);
+        $this->created[] = $grnItem;
+
+        app(ProcurementPipelineService::class)->receiveGoods($grn);
+
+        $this->assertSame(0, (int) $item->refresh()->current_quantity, 'A line not delivered must not touch stock.');
+        $this->assertSame(0, (int) $order->refresh()->items()->first()->quantity_received);
+        $this->assertDatabaseMissing('inventory_stock_movements', [
+            'inventory_item_id' => $item->id,
+            'quantity' => 0,
+        ]);
+    }
+
+    public function test_receiving_more_than_outstanding_is_rejected(): void
+    {
+        [, $item] = $this->seedCategoryAndItem();
+        $order = $this->seedOrder([
+            ['item_id' => $item->id, 'qty' => 3, 'cost' => 100, 'received' => 2],
+        ], 'partially_received');
+
+        $grn = GoodsReceivedNote::create([
+            'school_id' => $this->school->id,
+            'procurement_order_id' => $order->id,
+            'received_date' => now()->toDateString(),
+            'received_by_id' => $this->user->id,
+        ]);
+        $this->created[] = $grn;
+
+        $grnItem = GoodsReceivedItem::create([
+            'goods_received_note_id' => $grn->id,
+            'inventory_item_id' => $item->id,
+            'quantity_accepted' => 9,
+            'quantity_rejected' => 0,
+        ]);
+        $this->created[] = $grnItem;
+
+        $this->expectException(\RuntimeException::class);
+
+        try {
+            app(ProcurementPipelineService::class)->receiveGoods($grn);
+        } finally {
+            $this->assertSame(2, (int) $order->refresh()->items()->first()->quantity_received, 'Over-receipt must roll back.');
+            $this->assertSame(0, (int) $item->refresh()->current_quantity);
+        }
+    }
+
+    public function test_receiving_a_fixed_asset_line_registers_one_asset_per_unit(): void
+    {
+        // "The quantity received are the quantities recorded in the system in
+        // either inventory items or assets."
+        $category = InventoryCategory::create(['school_id' => $this->school->id, 'name' => 'Assets '.uniqid()]);
+        $this->created[] = $category;
+
+        $laptop = InventoryItem::create([
+            'school_id' => $this->school->id,
+            'category_id' => $category->id,
+            'sku' => 'SKU-'.uniqid(),
+            'name' => 'Test Asset Laptop',
+            'item_type' => 'fixed_asset',
+            'unit_of_measure' => 'pieces',
+            'reorder_level' => 0,
+            'current_quantity' => 0,
+            'average_unit_cost' => 0.0000,
+        ]);
+        $this->created[] = $laptop;
+
+        $order = $this->seedOrder([['item_id' => $laptop->id, 'qty' => 3, 'cost' => 800]], 'sent');
+
+        $grn = GoodsReceivedNote::create([
+            'school_id' => $this->school->id,
+            'procurement_order_id' => $order->id,
+            'received_date' => now()->toDateString(),
+            'received_by_id' => $this->user->id,
+        ]);
+        $this->created[] = $grn;
+
+        $grnItem = GoodsReceivedItem::create([
+            'goods_received_note_id' => $grn->id,
+            'inventory_item_id' => $laptop->id,
+            'quantity_accepted' => 3,
+            'quantity_rejected' => 0,
+        ]);
+        $this->created[] = $grnItem;
+
+        app(ProcurementPipelineService::class)->receiveGoods($grn);
+
+        $assets = DB::table('fixed_assets')
+            ->where('school_id', $this->school->id)
+            ->where('inventory_item_id', $laptop->id)
+            ->get();
+        $this->created[] = (object) ['delete' => fn () => DB::table('fixed_assets')->where('inventory_item_id', $laptop->id)->delete()];
+
+        $this->assertCount(3, $assets, 'Each accepted unit must become an asset record.');
+        $this->assertSame('800.00', number_format((float) $assets->first()->purchase_cost, 2));
+        $this->assertSame(3, (int) $order->refresh()->items()->first()->quantity_received);
+        $this->assertSame('completed', $order->refresh()->status);
+    }
+
+    public function test_a_mixed_order_records_stock_and_assets_independently(): void
+    {
+        $category = InventoryCategory::create(['school_id' => $this->school->id, 'name' => 'Mixed '.uniqid()]);
+        $this->created[] = $category;
+
+        $consumable = InventoryItem::create([
+            'school_id' => $this->school->id, 'category_id' => $category->id, 'sku' => 'SKU-'.uniqid(),
+            'name' => 'Test Toner', 'item_type' => 'consumable', 'unit_of_measure' => 'pieces',
+            'reorder_level' => 1, 'current_quantity' => 0, 'average_unit_cost' => 0.0000,
+        ]);
+        $this->created[] = $consumable;
+
+        $asset = InventoryItem::create([
+            'school_id' => $this->school->id, 'category_id' => $category->id, 'sku' => 'SKU-'.uniqid(),
+            'name' => 'Test Server', 'item_type' => 'fixed_asset', 'unit_of_measure' => 'pieces',
+            'reorder_level' => 0, 'current_quantity' => 0, 'average_unit_cost' => 0.0000,
+        ]);
+        $this->created[] = $asset;
+
+        // Ten ordered lines, as the user described, only some of which arrived.
+        $order = $this->seedOrder([
+            ['item_id' => $consumable->id, 'qty' => 5, 'cost' => 20],
+            ['item_id' => $asset->id, 'qty' => 2, 'cost' => 500],
+        ], 'sent');
+
+        $this->created[] = (object) ['delete' => fn () => DB::table('fixed_assets')->where('inventory_item_id', $asset->id)->delete()];
+
+        $rows = collect(GoodsReceivedNote::deliveryRows($order->load('items')))
+            ->keyBy('inventory_item_id');
+
+        // The user deletes the line that did not arrive and reduces another.
+        $received = [
+            ['inventory_item_id' => $consumable->id, 'quantity_accepted' => 5, 'quantity_rejected' => 0],
+            ['inventory_item_id' => $asset->id, 'quantity_accepted' => 1, 'quantity_rejected' => 1],
+        ];
+        $this->assertSame(5, $rows[$consumable->id]['quantity_outstanding']);
+        $this->assertSame(2, $rows[$asset->id]['quantity_outstanding']);
+
+        $grn = GoodsReceivedNote::create([
+            'school_id' => $this->school->id,
+            'procurement_order_id' => $order->id,
+            'received_date' => now()->toDateString(),
+            'received_by_id' => $this->user->id,
+        ]);
+        $this->created[] = $grn;
+
+        foreach ($received as $line) {
+            $created = $grn->items()->create($line);
+            $this->created[] = $created;
+        }
+
+        app(ProcurementPipelineService::class)->receiveGoods($grn);
+
+        $this->assertSame(5, (int) $consumable->refresh()->current_quantity, 'Consumables go into stock.');
+        $this->assertSame(
+            1,
+            DB::table('fixed_assets')->where('inventory_item_id', $asset->id)->count(),
+            'Only the accepted asset unit is registered; the rejected one is not.'
+        );
+        // receiveGoods runs updateMovingAverageCost() for every accepted line
+        // and additionally capitalises fixed assets, so an accepted asset is
+        // recorded in both the stock ledger and the asset register.
+        $this->assertSame(1, (int) $asset->refresh()->current_quantity);
+
+        $order->refresh();
+        $this->assertSame(5, (int) $order->items()->firstWhere('inventory_item_id', $consumable->id)->quantity_received);
+        $this->assertSame(1, (int) $order->items()->firstWhere('inventory_item_id', $asset->id)->quantity_received);
+        $this->assertSame('partially_received', $order->status, 'The order stays open until the rest arrives.');
+    }
+
+    public function test_editing_a_posted_note_does_not_double_count_stock(): void
+    {
+        [, $item] = $this->seedCategoryAndItem();
+        $order = $this->seedOrder([['item_id' => $item->id, 'qty' => 4, 'cost' => 100]], 'sent');
+
+        $grn = GoodsReceivedNote::create([
+            'school_id' => $this->school->id,
+            'procurement_order_id' => $order->id,
+            'received_date' => now()->toDateString(),
+            'received_by_id' => $this->user->id,
+        ]);
+        $this->created[] = $grn;
+
+        $grnItem = $grn->items()->create([
+            'inventory_item_id' => $item->id,
+            'quantity_accepted' => 4,
+            'quantity_rejected' => 0,
+        ]);
+        $this->created[] = $grnItem;
+
+        app(ProcurementPipelineService::class)->receiveGoods($grn);
+        $this->assertSame(4, (int) $item->refresh()->current_quantity);
+
+        $component = Livewire::test(EditGoodsReceivedNote::class, ['record' => $grn->getKey()])
+            ->assertSuccessful()
+            ->assertFormSet(function (array $state): array {
+                $items = array_values($state['items']);
+                $this->assertCount(1, $items);
+                $this->assertSame(4, $items[0]['quantity_ordered']);
+                $this->assertSame(4, $items[0]['quantity_accepted'], 'The posted quantity is shown as-is.');
+                // Outstanding is measured with this note's own quantity backed
+                // out, so it stays the ceiling this note may hold.
+                $this->assertSame(0, $items[0]['quantity_received_before']);
+                $this->assertSame(4, $items[0]['quantity_outstanding']);
+
+                return [];
+            });
+
+        $component->call('save')->assertHasNoFormErrors();
+
+        $this->assertSame(4, (int) $item->refresh()->current_quantity, 'Editing must not post stock a second time.');
+        $this->assertSame(4, (int) $order->refresh()->items()->first()->quantity_received);
     }
 }
