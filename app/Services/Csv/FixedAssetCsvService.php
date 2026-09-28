@@ -51,6 +51,12 @@ class FixedAssetCsvService extends CsvBulkService
                 'guesses' => ['Asset Name', 'Inventory Item', 'Item Name', 'Name'],
                 'example' => 'Dell OptiPlex Computer',
             ],
+            'description' => [
+                'label' => __('Description'),
+                'required' => false,
+                'guesses' => ['Description', 'Asset Description', 'Notes'],
+                'example' => 'Standard office desktop, black, includes keyboard and mouse.',
+            ],
             'serial_number' => [
                 'label' => __('Serial Number'),
                 'required' => false,
@@ -79,7 +85,7 @@ class FixedAssetCsvService extends CsvBulkService
             ],
             'useful_life_years' => [
                 'label' => __('Useful Life (Years)'),
-                'required' => true,
+                'required' => false,
                 'guesses' => ['Useful Life (Years)', 'Useful Life', 'Useful Life Years'],
                 'example' => '5',
             ],
@@ -89,7 +95,6 @@ class FixedAssetCsvService extends CsvBulkService
                 'guesses' => ['Depreciation Method', 'Method'],
                 'example' => 'straight_line',
                 'default' => 'straight_line',
-                'in' => ['straight_line', 'double_declining'],
             ],
             'current_value' => [
                 'label' => __('Current Value'),
@@ -109,7 +114,6 @@ class FixedAssetCsvService extends CsvBulkService
                 'required' => false,
                 'guesses' => ['Funding Source', 'Source of Funds'],
                 'example' => 'school_funds',
-                'in' => ['school_funds', 'government', 'donor', 'pta'],
             ],
             'insurance_policy_number' => [
                 'label' => __('Insurance Policy Number'),
@@ -143,7 +147,7 @@ class FixedAssetCsvService extends CsvBulkService
     public static function exportHeaders(): array
     {
         return [
-            'Asset Number', 'Asset Name', 'Serial Number', 'Acquisition Date',
+            'Asset Number', 'Asset Name', 'Description', 'Serial Number', 'Acquisition Date',
             'Purchase Cost', 'Salvage Value', 'Useful Life (Years)', 'Depreciation Method',
             'Current Value', 'Warranty Expiry', 'Funding Source', 'Insurance Policy Number',
             'Current Room / Location', 'Custodian', 'Status',
@@ -169,7 +173,8 @@ class FixedAssetCsvService extends CsvBulkService
             foreach ($assets as $asset) {
                 yield [
                     $asset->asset_number,
-                    $asset->inventoryItem?->name,
+                    $asset->displayName(),
+                    $asset->description,
                     $asset->serial_number,
                     optional($asset->acquisition_date)->format('Y-m-d'),
                     $asset->purchase_cost,
@@ -267,7 +272,7 @@ class FixedAssetCsvService extends CsvBulkService
     {
         $errors = [];
 
-        foreach (['asset_number', 'inventory_item', 'acquisition_date', 'purchase_cost', 'useful_life_years'] as $required) {
+        foreach (['asset_number', 'inventory_item', 'acquisition_date', 'purchase_cost'] as $required) {
             $data[$required] = trim($data[$required] ?? '');
 
             if ($data[$required] === '') {
@@ -307,13 +312,18 @@ class FixedAssetCsvService extends CsvBulkService
         }
 
         $data['depreciation_method'] = strtolower(trim($data['depreciation_method'] ?? ''));
-        if (! in_array($data['depreciation_method'], ['straight_line', 'double_declining'], true)) {
-            $errors[] = 'Depreciation Method must be one of: straight_line, double_declining.';
+        if ($data['depreciation_method'] === '') {
+            $data['depreciation_method'] = 'straight_line';
+        }
+
+        $data['useful_life_years'] = trim($data['useful_life_years'] ?? '');
+        if ($data['useful_life_years'] === '') {
+            $data['useful_life_years'] = '0';
         }
 
         $data['funding_source'] = strtolower(trim($data['funding_source'] ?? ''));
-        if ($data['funding_source'] !== '' && ! in_array($data['funding_source'], ['school_funds', 'government', 'donor', 'pta'], true)) {
-            $errors[] = 'Funding Source must be one of: school_funds, government, donor, pta.';
+        if ($data['funding_source'] === '') {
+            $data['funding_source'] = 'school_funds';
         }
 
         $data['status'] = strtolower(trim($data['status'] ?? ''));
@@ -356,7 +366,7 @@ class FixedAssetCsvService extends CsvBulkService
     {
         $item = $data['_item'];
 
-        if ((($data['_create_item'] ?? false)) && $item === null && ($data['inventory_item'] ?? '') !== '') {
+        if (($data['_create_item'] ?? false) && $item === null && ($data['inventory_item'] ?? '') !== '') {
             $item = static::createInventoryItem($data['inventory_item'], $schoolId, $lookups);
         }
 
@@ -366,13 +376,17 @@ class FixedAssetCsvService extends CsvBulkService
             $location = static::createLocation($data['location'], $schoolId, $lookups);
         }
 
-        if ($item === null) {
-            throw new \RuntimeException('Asset Name ['.($data['inventory_item'] ?? '').'] was not found and could not be created.');
+        $assetName = trim((string) ($data['inventory_item'] ?? ''));
+
+        if ($assetName === '') {
+            throw new \RuntimeException('Asset Name was not provided.');
         }
 
         FixedAsset::create([
             'school_id' => $schoolId,
-            'inventory_item_id' => $item->id,
+            'asset_name' => $assetName,
+            'description' => ($data['description'] ?? '') !== '' ? $data['description'] : null,
+            'inventory_item_id' => $item?->id,
             'asset_number' => $data['asset_number'],
             'serial_number' => $data['serial_number'] !== '' ? $data['serial_number'] : null,
             'acquisition_date' => $data['acquisition_date'],
@@ -382,7 +396,7 @@ class FixedAssetCsvService extends CsvBulkService
             'depreciation_method' => $data['depreciation_method'],
             'current_value' => $data['current_value'] !== '' ? (float) $data['current_value'] : (float) $data['purchase_cost'],
             'warranty_expiry' => $data['warranty_expiry'] !== '' ? $data['warranty_expiry'] : null,
-            'funding_source' => $data['funding_source'] !== '' ? $data['funding_source'] : null,
+            'funding_source' => $data['funding_source'] !== '' ? $data['funding_source'] : 'school_funds',
             'insurance_policy_number' => $data['insurance_policy_number'] !== '' ? $data['insurance_policy_number'] : null,
             'assigned_location_id' => $location?->id,
             'custodian_id' => $data['_custodian']?->id,

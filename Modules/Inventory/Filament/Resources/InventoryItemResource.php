@@ -97,6 +97,19 @@ class InventoryItemResource extends Resource
                                     ->minValue(0)
                                     ->default(0)
                                     ->helperText(__('Opening stock count for this item. Varies it can also be broken down per variant in the metadata section below.')),
+                                Forms\Components\TextInput::make('average_unit_cost')
+                                    ->label(__('Estimated Unit Cost'))
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->default(0)
+                                    ->prefix('$')
+                                    ->helperText(__('Your best estimate of what one unit costs. Purchase requisitions pre-fill their estimated cost from here, and the moving average replaces it once goods are received.')),
+                                Forms\Components\Textarea::make('description')
+                                    ->label(__('Description'))
+                                    ->placeholder(__('Specifications, condition, included accessories...'))
+                                    ->rows(2)
+                                    ->maxLength(2000)
+                                    ->columnSpanFull(),
                                 Forms\Components\TextInput::make('reorder_level')
                                     ->numeric()
                                     ->default(10)

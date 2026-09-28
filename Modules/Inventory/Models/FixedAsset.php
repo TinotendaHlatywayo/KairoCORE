@@ -15,6 +15,8 @@ class FixedAsset extends Model
     protected $fillable = [
         'school_id',
         'inventory_item_id',
+        'asset_name',
+        'description',
         'asset_number',
         'serial_number',
         'acquisition_date',
@@ -39,6 +41,15 @@ class FixedAsset extends Model
         'current_value' => 'decimal:2',
         'useful_life_years' => 'integer',
     ];
+
+    /**
+     * An asset carries its own name; the catalog item is only an optional link.
+     * Backfilled assets may still only have the linked item's name.
+     */
+    public function displayName(): string
+    {
+        return (string) ($this->asset_name ?: $this->inventoryItem?->name ?: __('Untitled Asset'));
+    }
 
     public function inventoryItem(): BelongsTo
     {

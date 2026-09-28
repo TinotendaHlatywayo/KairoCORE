@@ -240,6 +240,11 @@ class ProcurementPipelineTest extends TestCase
         $order->refresh();
         $this->assertSame(5, $order->items()->first()->quantity_received);
         $this->assertSame('completed', $order->status);
+
+        // The catalog item's quantity on hand must reflect what was received.
+        $item->refresh();
+        $this->assertSame(5, (int) $item->current_quantity);
+        $this->assertEquals(100.0, (float) $item->average_unit_cost);
     }
 
     public function test_approve_order_deducts_balance_and_records_paid_expense(): void
