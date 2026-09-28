@@ -1229,4 +1229,58 @@ class ProcurementPipelineTest extends TestCase
         $this->assertSame(500.00, (float) $expense->amount);
         $this->assertSame(4500.0, (float) $account->refresh()->balance, 'The 300 over-deduction is returned.');
     }
+
+    public function test_the_repair_command_only_removes_empty_received_note_headers(): void
+    {
+        [, $laptop] = $this->seedCategoryAndItem();
+        $order = $this->seedOrder([['item_id' => $laptop->id, 'qty' => 1, 'cost' => 500]], 'approved');
+        $order->items()->delete();
+
+        // A leftover GRN header with no item rows, exactly like the server one.
+        $emptyGrn = GoodsReceivedNote::create([
+            'school_id' => $this->school->id,
+            'procurement_order_id' => $order->id,
+            'received_date' => now()->toDateString(),
+            'received_by_id' => $this->user->id,
+        ]);
+        $this->created[] = $emptyGrn;
+
+        $this->artisan('schoolcore:repair-purchase-order-lines', [
+            'school' => $this->school->id,
+            '--order' => $order->order_number,
+            '--item' => $laptop->name.'|1|500',
+            '--apply' => true,
+        ])->assertSuccessful();
+
+        $this->assertSame(1, $order->items()->count(), 'The line is restored.');
+        $this->assertNull(GoodsReceivedNote::find($emptyGrn->id), 'The empty received-note header is removed.');
+
+        // A GRN that actually posted goods must still block the repair.
+        [, $monitor] = $this->seedCategoryAndItem();
+        $order2 = $this->seedOrder([['item_id' => $monitor->id, 'qty' => 2, 'cost' => 300]], 'approved');
+        $order2->items()->delete();
+
+        $postedGrn = GoodsReceivedNote::create([
+            'school_id' => $this->school->id,
+            'procurement_order_id' => $order2->id,
+            'received_date' => now()->toDateString(),
+            'received_by_id' => $this->user->id,
+        ]);
+        $this->created[] = $postedGrn;
+        $this->created[] = $postedGrn->items()->create([
+            'inventory_item_id' => $monitor->id,
+            'quantity_accepted' => 2,
+            'quantity_rejected' => 0,
+        ]);
+
+        $this->artisan('schoolcore:repair-purchase-order-lines', [
+            'school' => $this->school->id,
+            '--order' => $order2->order_number,
+            '--item' => $monitor->name.'|2|300',
+            '--apply' => true,
+        ])->assertFailed();
+
+        $this->assertSame(0, $order2->items()->count(), 'A posted note blocks the repair.');
+        $this->assertNotNull(GoodsReceivedNote::find($postedGrn->id), 'A posted note is never deleted.');
+    }
 }
