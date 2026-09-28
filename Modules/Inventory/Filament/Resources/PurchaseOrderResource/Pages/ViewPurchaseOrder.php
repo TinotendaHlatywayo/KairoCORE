@@ -24,6 +24,8 @@ class ViewPurchaseOrder extends ViewRecord
 
     public function infolist(Infolist $infolist): Infolist
     {
+        $record = $this->getRecord();
+
         return $infolist
             ->schema([
                 Section::make(__('Purchase Order (LPO)'))
@@ -37,12 +39,16 @@ class ViewPurchaseOrder extends ViewRecord
                         TextEntry::make('refunded_amount')->label(__('Refunded (missing items)'))->money('USD')->placeholder('-'),
                         TextEntry::make('expected_delivery_date')->label(__('Expected Delivery'))->date()->placeholder('-'),
                     ]),
-                Section::make(__('Goods Received vs Purchase Order'))
+                Section::make(__('Ordered Items and Goods Received'))
+                    ->description(__('Every item on this order is listed with the quantity ordered on the left and the quantity received on the right.'))
                     ->schema([
                         ViewEntry::make('grn_comparison')
                             ->label(__('Comparison'))
                             ->view('modules.inventory.po-grn-comparison')
-                            ->viewData(['po' => $this->getRecord()]),
+                            ->viewData([
+                                'po' => $record,
+                                'rows' => $record->receivingComparison(),
+                            ]),
                     ]),
             ]);
     }
@@ -107,7 +113,17 @@ class ViewPurchaseOrder extends ViewRecord
                         ->required(),
                 ])
                 ->action(function (array $data): void {
-                    app(ProcurementPipelineService::class)->approveOrder($record, (int) $data['bank_account_id']);
+                    try {
+                        app(ProcurementPipelineService::class)->approveOrder($record, (int) $data['bank_account_id']);
+                    } catch (\RuntimeException $e) {
+                        Notification::make()
+                            ->title(__('Purchase order cannot be approved'))
+                            ->body($e->getMessage())
+                            ->danger()
+                            ->send();
+
+                        return;
+                    }
 
                     Notification::make()
                         ->title(__('Purchase Order approved'))
@@ -174,7 +190,8 @@ class ViewPurchaseOrder extends ViewRecord
     {
         $pdf = Pdf::loadView('modules.inventory.po-grn-comparison-pdf', [
             'school' => current_tenant(),
-            'po' => $order->load(['supplier', 'items.inventoryItem', 'grns.items']),
+            'po' => $order->load('supplier'),
+            'rows' => $order->receivingComparison(),
             'primaryColor' => '#5b4fe9',
         ])->setPaper('a4', 'landscape');
 
