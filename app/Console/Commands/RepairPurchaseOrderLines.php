@@ -37,10 +37,11 @@ class RepairPurchaseOrderLines extends Command
         {school : School ID that owns the order}
         {--order= : Order number, e.g. PO-2026-00001}
         {--item= : "Name|quantity|unit_cost" when the order has no requisition to rebuild from; repeat for several lines}
+        {--delete-order : Reverse the approved payment and delete the order instead of rebuilding its lines}
         {--apply : Actually write. Without this the command only reports what it would do.}
         {--reverse-ledger : When the rebuilt total differs from the recorded expense, delete the expense and put the difference back on the bank account}';
 
-    protected $description = 'Rebuild the ordered-item lines of a purchase order that has a header total but no lines, and report the ledger movement it should have made. Dry run unless --apply.';
+    protected $description = 'Rebuild the ordered-item lines of a purchase order that has a header total but no lines, or delete the order and reverse its payment with --delete-order. Dry run unless --apply.';
 
     public function handle(): int
     {
@@ -84,12 +85,6 @@ class RepairPurchaseOrderLines extends Command
         $this->components->twoColumnDetail('<fg=gray>Line rows</>', (string) $existingLines);
         $this->newLine();
 
-        if ($existingLines > 0) {
-            $this->components->info('This order already has item lines, so there is nothing to repair. Nothing was changed.');
-
-            return self::SUCCESS;
-        }
-
         $grns = GoodsReceivedNote::withoutGlobalScopes()
             ->withCount('items')
             ->where('procurement_order_id', $order->id)
@@ -98,9 +93,19 @@ class RepairPurchaseOrderLines extends Command
         $postedGrns = $grns->filter(fn (GoodsReceivedNote $grn): bool => $grn->items_count > 0);
 
         if ($postedGrns->isNotEmpty()) {
-            $this->components->error('Goods have already been received against this order ('.implode(', ', $postedGrns->pluck('grn_number')->all()).'). Rebuilding the lines now would contradict the stock and assets those notes posted. Repair this one by hand.');
+            $this->components->error('Goods have already been received against this order ('.implode(', ', $postedGrns->pluck('grn_number')->all()).'). Neither rebuilding nor deleting is safe while those notes exist. Repair this one by hand.');
 
             return self::FAILURE;
+        }
+
+        if ($this->option('delete-order')) {
+            return $this->deleteOrder($order, $grns, $existingLines);
+        }
+
+        if ($existingLines > 0) {
+            $this->components->info('This order already has item lines, so there is nothing to repair. Nothing was changed.');
+
+            return self::SUCCESS;
         }
 
         // A received-note header with no item rows carries no stock or asset
@@ -325,6 +330,67 @@ class RepairPurchaseOrderLines extends Command
         }
 
         return $difference;
+    }
+
+    /**
+     * Remove the order and undo the payment approval recorded for it, returning
+     * the bank account to what it was before the procurement.
+     *
+     * @param  Collection<int, GoodsReceivedNote>  $grns
+     */
+    private function deleteOrder(ProcurementOrder $order, $grns, int $existingLines): int
+    {
+        if (! $this->option('apply')) {
+            $this->components->info('This would delete the order and reverse its payment. Re-run with --apply to do it.');
+
+            return self::SUCCESS;
+        }
+
+        if ((float) $order->refunded_amount > 0) {
+            $this->components->error('This order has a recorded refund of $'.number_format((float) $order->refunded_amount, 2).'. Reversing the payment on top of that needs care, so this is left for a manual review.');
+
+            return self::FAILURE;
+        }
+
+        $expense = Expense::where('school_id', $order->school_id)
+            ->where('reference_number', 'EXP-PO-'.$order->order_number)
+            ->orderBy('id')
+            ->first();
+
+        $reversed = $expense
+            ? round((float) $expense->amount, 2)
+            : 0.0;
+
+        DB::transaction(function () use ($order, $grns, $expense, $reversed, $existingLines): void {
+            if ($expense) {
+                if ($expense->bank_account_id) {
+                    $account = SchoolBankAccount::find($expense->bank_account_id);
+
+                    if ($account) {
+                        $account->increment('balance', $reversed);
+                    }
+                }
+
+                $expense->delete();
+            }
+
+            if ($grns->isNotEmpty()) {
+                GoodsReceivedNote::withoutGlobalScopes()
+                    ->whereIn('id', $grns->pluck('id')->all())
+                    ->delete();
+            }
+
+            if ($existingLines > 0) {
+                ProcurementOrderItem::where('procurement_order_id', $order->id)->delete();
+            }
+
+            $order->delete();
+        });
+
+        $this->newLine();
+        $this->components->info('Deleted '.$order->order_number.' and put $'.number_format($reversed, 2).' back on the bank account, so the finances are back to before this order.');
+
+        return self::SUCCESS;
     }
 
     /**

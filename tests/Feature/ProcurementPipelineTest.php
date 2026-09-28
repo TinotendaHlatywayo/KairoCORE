@@ -1283,4 +1283,59 @@ class ProcurementPipelineTest extends TestCase
         $this->assertSame(0, $order2->items()->count(), 'A posted note blocks the repair.');
         $this->assertNotNull(GoodsReceivedNote::find($postedGrn->id), 'A posted note is never deleted.');
     }
+
+    public function test_the_repair_command_can_delete_the_order_and_put_the_money_back(): void
+    {
+        [, $item] = $this->seedCategoryAndItem();
+        $account = $this->seedBankAccount(5000);
+        $order = $this->seedOrder([['item_id' => $item->id, 'qty' => 1, 'cost' => 500]], 'approved');
+        $order->items()->delete();
+
+        $expenseCategory = ExpenseCategory::firstOrCreate(
+            ['school_id' => $this->school->id, 'name' => 'Procurement & Inventory'],
+            ['description' => 'test fixture']
+        );
+        $expenseType = ExpenseType::firstOrCreate([
+            'school_id' => $this->school->id,
+            'expense_category_id' => $expenseCategory->id,
+            'name' => 'Inventory & Asset Procurement',
+        ]);
+
+        $account->decrement('balance', 500);
+        $expense = Expense::create([
+            'school_id' => $this->school->id,
+            'expense_category_id' => $expenseCategory->id,
+            'expense_type_id' => $expenseType->id,
+            'expense_name' => 'Procurement (PO '.$order->order_number.')',
+            'amount' => 500,
+            'expense_date' => now()->toDateString(),
+            'reference_number' => 'EXP-PO-'.$order->order_number,
+            'status' => 'paid',
+            'bank_account_id' => $account->id,
+        ]);
+
+        $this->assertSame(0, $order->items()->count());
+
+        // Dry run deletes nothing.
+        $this->artisan('schoolcore:repair-purchase-order-lines', [
+            'school' => $this->school->id,
+            '--order' => $order->order_number,
+            '--delete-order' => true,
+        ])->assertSuccessful();
+
+        $this->assertNotNull(ProcurementOrder::find($order->id), 'A dry run must not delete.');
+        $this->assertNotNull(Expense::find($expense->id));
+
+        // Apply deletes the order and puts the $500 back.
+        $this->artisan('schoolcore:repair-purchase-order-lines', [
+            'school' => $this->school->id,
+            '--order' => $order->order_number,
+            '--delete-order' => true,
+            '--apply' => true,
+        ])->assertSuccessful();
+
+        $this->assertNull(ProcurementOrder::find($order->id), 'The order is gone.');
+        $this->assertNull(Expense::find($expense->id), 'The expense is gone.');
+        $this->assertSame(5000.0, (float) $account->refresh()->balance, 'The bank balance is back to before the order.');
+    }
 }
