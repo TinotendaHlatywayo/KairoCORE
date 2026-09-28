@@ -6,6 +6,7 @@ namespace Modules\Inventory\Filament\Resources;
 
 use App\Filament\App\Concerns\ModulePermissionAccess;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Filament\Forms\Components\Actions\Action as FormAction;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -106,10 +107,15 @@ class ProcurementRequestResource extends Resource
                                 Forms\Components\Select::make('inventory_item_id')
                                     ->relationship('inventoryItem', 'name')
                                     ->searchable()
+                                    ->live()
                                     ->options(fn (?string $search = '') => inventory_item_search_options($search))
                                     ->getOptionLabelUsing(fn ($value) => inventory_item_label(\Modules\Inventory\Models\InventoryItem::find($value)))
                                     ->optionsLimit(50)
                                     ->placeholder(__('Link to catalog (optional)'))
+                                    ->helperText(__('Picking a catalog item fills the name and estimated cost from the item record.'))
+                                    ->afterStateUpdated(function ($state, Forms\Set $set): void {
+                                        self::applyCatalogItemToRequisitionLine($state, $set);
+                                    })
                                     ->columnSpan(3),
                                 Forms\Components\Toggle::make('is_fixed_asset')
                                     ->label(__('Fixed Asset?'))
@@ -125,8 +131,17 @@ class ProcurementRequestResource extends Resource
                                 Forms\Components\TextInput::make('estimated_unit_cost')
                                     ->numeric()
                                     ->prefix('$')
+                                    ->minValue(0)
                                     ->columnSpan(2),
-                            ])->columns(12),
+                                Forms\Components\Textarea::make('specifications')
+                                    ->label(__('Description'))
+                                    ->placeholder(__('Size, model, colour, condition, or anything the approver should know...'))
+                                    ->rows(2)
+                                    ->maxLength(2000)
+                                    ->helperText(__('Also saved on the inventory item when one is linked or created for this line.'))
+                                    ->columnSpanFull(),
+                            ])->columns(12)
+                            ->addActionLabel(__('Add requisitioned item')),
                     ]),
 
                 Forms\Components\Section::make(__('Signatories'))
@@ -222,7 +237,7 @@ class ProcurementRequestResource extends Resource
                                     ->placeholder(__('e.g., ZIMRA BP-No / standard VAT')),
                             ])
                             ->createOptionModalHeading(__('New inventory supplier'))
-                            ->createOptionSubmitActionLabel(__('Save Supplier'))
+                            ->createOptionAction(fn (FormAction $action) => $action->label(__('Save Supplier'))->modalSubmitActionLabel(__('Save Supplier')))
                             ->createOptionUsing(function (array $data): int {
                                 return InventorySupplier::create([
                                     'school_id' => current_tenant()?->id ?? auth()->user()?->school_id,
@@ -245,6 +260,46 @@ class ProcurementRequestResource extends Resource
                     ->action(fn (ProcurementRequest $record) => self::streamRequisitionPdf($record)),
             ])
             ->bulkActions([]);
+    }
+
+    /**
+     * The values a requisition line should take on when the user picks a
+     * catalog item: the item's own name, plus its estimated unit cost. An item
+     * with no estimate leaves the cost alone so a typed value is never lost.
+     *
+     * @return array<string, mixed>
+     */
+    public static function requisitionLineValuesForCatalogItem($state): array
+    {
+        if (! $state) {
+            return [];
+        }
+
+        $item = InventoryItem::find($state);
+
+        if (! $item) {
+            return [];
+        }
+
+        $values = ['item_name' => $item->name];
+
+        $cost = (float) $item->average_unit_cost;
+
+        if ($cost > 0) {
+            $values['estimated_unit_cost'] = $cost;
+        }
+
+        return $values;
+    }
+
+    /**
+     * Pre-fill a requisition line from the catalog item the user just picked.
+     */
+    public static function applyCatalogItemToRequisitionLine($state, Forms\Set $set): void
+    {
+        foreach (self::requisitionLineValuesForCatalogItem($state) as $key => $value) {
+            $set($key, $value);
+        }
     }
 
     /**
@@ -353,6 +408,12 @@ class ProcurementRequestResource extends Resource
     protected static function ensureItemLinked(ProcurementRequest $request, ProcurementRequestItem $item, ?int &$fallbackCategoryId): bool
     {
         if ($item->inventory_item_id) {
+            $linked = InventoryItem::withoutTenantScope()->find($item->inventory_item_id);
+
+            if ($linked) {
+                self::carryDescriptionToItem($item, $linked);
+            }
+
             return false;
         }
 
@@ -372,6 +433,8 @@ class ProcurementRequestResource extends Resource
         if ($existing) {
             $item->inventory_item_id = $existing->id;
             $item->save();
+
+            self::carryDescriptionToItem($item, $existing);
 
             return false;
         }
@@ -407,6 +470,8 @@ class ProcurementRequestResource extends Resource
             \Modules\Inventory\Models\FixedAsset::create([
                 'school_id' => $request->school_id,
                 'inventory_item_id' => $newItem->id,
+                'asset_name' => $name,
+                'description' => $item->specifications ?: null,
                 'asset_number' => 'FA-'.now()->year.'-'.str_pad((string) rand(10, 99999), 5, '0', STR_PAD_LEFT),
                 'acquisition_date' => now(),
                 'purchase_cost' => (float) $item->estimated_unit_cost,
@@ -422,6 +487,26 @@ class ProcurementRequestResource extends Resource
         $item->save();
 
         return true;
+    }
+
+    /**
+     * Copy the requisition line's description onto the inventory item it points
+     * at, but only when the item has none of its own: a description already in
+     * the catalog is never overwritten by a requisition.
+     */
+    protected static function carryDescriptionToItem(ProcurementRequestItem $item, InventoryItem $linkedItem): void
+    {
+        $description = trim((string) $item->specifications);
+
+        if ($description === '') {
+            return;
+        }
+
+        if (trim((string) $linkedItem->description) !== '') {
+            return;
+        }
+
+        $linkedItem->forceFill(['description' => $description])->save();
     }
 
     /**

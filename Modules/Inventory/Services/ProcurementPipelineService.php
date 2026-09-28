@@ -88,6 +88,8 @@ class ProcurementPipelineService
                         FixedAsset::create([
                             'school_id' => $grn->school_id,
                             'inventory_item_id' => $item->id,
+                            'asset_name' => $item->name,
+                            'description' => $item->description ?: null,
                             'asset_number' => $assetNumber,
                             'acquisition_date' => $grn->received_date ?? now(),
                             'purchase_cost' => $unitCost,
