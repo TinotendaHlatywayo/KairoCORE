@@ -10,9 +10,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;
 use Modules\Finance\Models\Expense;
-use Modules\Finance\Models\ExpenseCategory;
 use Modules\Finance\Models\SchoolBankAccount;
 use Modules\Inventory\Filament\Resources\GoodsReceivedResource\Pages\CreateGoodsReceivedNote;
+use Modules\Inventory\Filament\Resources\PurchaseOrderResource;
+use Modules\Inventory\Filament\Resources\PurchaseOrderResource\Pages\EditPurchaseOrder;
 use Modules\Inventory\Filament\Resources\PurchaseOrderResource\Pages\ViewPurchaseOrder;
 use Modules\Inventory\Models\GoodsReceivedItem;
 use Modules\Inventory\Models\GoodsReceivedNote;
@@ -348,5 +349,143 @@ class ProcurementPipelineTest extends TestCase
         $component = Livewire::test(ViewPurchaseOrder::class, ['record' => $order->getKey()]);
         $component->assertOk();
         $component->assertSee('Refund Missing Items', false);
+    }
+
+    public function test_edit_page_loads_existing_order_items(): void
+    {
+        [, $item] = $this->seedCategoryAndItem();
+        $order = $this->seedOrder([['item_id' => $item->id, 'qty' => 5, 'cost' => 100]]);
+
+        $page = Livewire::test(EditPurchaseOrder::class, ['record' => $order->getKey()])
+            ->assertSuccessful()
+            ->instance();
+
+        $repeater = $page->getForm('form')->getComponent('data.items');
+
+        $this->assertCount(
+            1,
+            $repeater->getState(),
+            'The order items repeater must be pre-filled with the existing lines, otherwise saving the page would delete them.'
+        );
+    }
+
+    public function test_editing_line_costs_persists_the_recomputed_order_total(): void
+    {
+        [, $item] = $this->seedCategoryAndItem();
+        $order = $this->seedOrder([['item_id' => $item->id, 'qty' => 5, 'cost' => 100]]);
+
+        $this->assertEquals(500.00, (float) $order->total_amount);
+
+        $page = Livewire::test(EditPurchaseOrder::class, ['record' => $order->getKey()])
+            ->assertSuccessful()
+            ->instance();
+
+        $repeater = $page->getForm('form')->getComponent('data.items');
+        $rows = $repeater->getState();
+
+        $row = array_key_first($rows);
+        $rows[$row]['unit_cost'] = '80';
+        $rows[$row]['quantity_ordered'] = '4';
+
+        Livewire::test(EditPurchaseOrder::class, ['record' => $order->getKey()])
+            ->fillForm(['items' => $rows])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $this->assertEquals(
+            320.00,
+            (float) $order->fresh()->total_amount,
+            'The order total must reflect the edited line, not values loaded before the edit.'
+        );
+    }
+
+    public function test_approve_modal_summary_has_every_value_the_modal_renders(): void
+    {
+        // Regression: the Approve modal defined its read-only Order Summary
+        // with ->default() on the action's own schema instead of supplying the
+        // values through fillForm(), so every summary field opened blank.
+        // fillForm() is what populates a mounted action form, and it is driven
+        // by this array, so asserting the array pins the bug closed.
+        [, $item] = $this->seedCategoryAndItem();
+        $order = $this->seedOrder([['item_id' => $item->id, 'qty' => 2, 'cost' => 150]]);
+
+        $summary = PurchaseOrderResource::approvalSummary($order);
+
+        $this->assertSame([
+            'order_number' => $order->order_number,
+            'supplier' => $order->supplier?->name,
+            'order_date' => $order->order_date?->format('Y-m-d'),
+            'total_amount' => '300.00',
+            'item_count' => '1',
+        ], $summary);
+
+        $this->assertNotContains(
+            '',
+            array_values($summary),
+            'No Order Summary field may render blank.'
+        );
+    }
+
+    public function test_editing_a_unit_cost_is_reflected_on_the_view_page(): void
+    {
+        // Mirrors the reported flow: open a purchase order from the table, hit
+        // Edit, change a unit cost, then go back to the order. The View page
+        // renders the stored total_amount, so a stale figure there means the
+        // recompute did not persist.
+        [, $item] = $this->seedCategoryAndItem();
+        $order = $this->seedOrder([['item_id' => $item->id, 'qty' => 2, 'cost' => 150]]);
+        $this->assertEquals(300.0, (float) $order->total_amount);
+
+        Livewire::test(EditPurchaseOrder::class, ['record' => $order->getKey()])
+            ->fillForm([
+                'items' => [[
+                    'inventory_item_id' => $item->id,
+                    'quantity_ordered' => 2,
+                    'unit_cost' => 250.00,
+                    'is_fixed_asset' => false,
+                ]],
+            ])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $this->assertEquals(
+            500.0,
+            (float) $order->refresh()->total_amount,
+            'Saving a new unit cost must persist the recomputed order total.'
+        );
+
+        $view = Livewire::test(ViewPurchaseOrder::class, ['record' => $order->getKey()])
+            ->assertSuccessful();
+
+        $this->assertStringContainsString(
+            '500',
+            $view->html(),
+            'The order view must show the newly saved total, not the previous one.'
+        );
+    }
+
+    public function test_order_form_shows_a_live_total_that_tracks_the_lines(): void
+    {
+        $this->assertEquals(320.00, PurchaseOrderResource::totalForLines([
+            ['quantity_ordered' => '4', 'unit_cost' => '80.00'],
+        ]));
+
+        $this->assertEquals(
+            0.0,
+            PurchaseOrderResource::totalForLines(null),
+            'A brand new order has no lines yet and must show zero, not an error.'
+        );
+
+        [, $item] = $this->seedCategoryAndItem();
+        $order = $this->seedOrder([['item_id' => $item->id, 'qty' => 2, 'cost' => 150]]);
+
+        $page = Livewire::test(EditPurchaseOrder::class, ['record' => $order->getKey()])
+            ->assertSuccessful();
+
+        $this->assertStringContainsString(
+            '300.00',
+            $page->html(),
+            'The edit form must show the current order total so an edit is visible before saving.'
+        );
     }
 }
