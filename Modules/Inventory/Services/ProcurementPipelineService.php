@@ -189,12 +189,15 @@ class ProcurementPipelineService
      */
     public function recomputeOrderTotal(ProcurementOrder $order): void
     {
-        $total = 0.0;
-        foreach ($order->items as $item) {
-            $total += (float) $item->quantity_ordered * (float) $item->unit_cost;
-        }
+        // Sum with a fresh query rather than $order->items: after a save the
+        // record may still carry the items relation loaded from before the
+        // edit, which would write the old total straight back over it.
+        $total = (float) $order->items()
+            ->withoutGlobalScopes()
+            ->selectRaw('COALESCE(SUM(quantity_ordered * unit_cost), 0) AS line_total')
+            ->value('line_total');
 
-        $order->update(['total_amount' => round($total, 2)]);
+        $order->forceFill(['total_amount' => round($total, 2)])->save();
     }
 
     /**

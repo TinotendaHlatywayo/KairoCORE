@@ -71,6 +71,7 @@ class PurchaseOrderResource extends Resource
                     ])->columns(4),
 
                 Forms\Components\Section::make(__('Ordered Items'))
+                    ->description(__('The order total updates as you change quantities and unit costs.'))
                     ->schema([
                         Forms\Components\Repeater::make('items')
                             ->relationship('items')
@@ -98,8 +99,56 @@ class PurchaseOrderResource extends Resource
                                     ->required()
                                     ->columnSpan(2),
                             ])->columns(10),
+                        Forms\Components\Placeholder::make('order_total_summary')
+                            ->label(__('Order Total'))
+                            ->content(fn (Forms\Get $get): string => '$'.number_format(self::totalForLines($get('items')), 2))
                     ]),
             ]);
+    }
+
+    /**
+     * The read-only Order Summary shown in the Approve modal.
+     *
+     * These values have to be supplied through fillForm(). Defining them with
+     * ->default() on the mounted action's own schema does not populate the
+     * form, which is why the summary used to open empty.
+     *
+     * @return array<string, string>
+     */
+    public static function approvalSummary(ProcurementOrder $record): array
+    {
+        return [
+            'order_number' => $record->order_number,
+            'supplier' => $record->supplier?->name ?? '',
+            'order_date' => $record->order_date?->format('Y-m-d') ?? '',
+            'total_amount' => number_format((float) $record->total_amount, 2),
+            'item_count' => (string) $record->items()->count(),
+        ];
+    }
+
+    /**
+     * Running total of the ordered-lines repeater, so the figure is visible
+     * while the user edits instead of only after saving.
+     *
+     * @param  mixed  $items
+     */
+    public static function totalForLines($items): float
+    {
+        if (! is_array($items)) {
+            return 0.0;
+        }
+
+        $total = 0.0;
+
+        foreach ($items as $line) {
+            if (! is_array($line)) {
+                continue;
+            }
+
+            $total += (float) ($line['quantity_ordered'] ?? 0) * (float) ($line['unit_cost'] ?? 0);
+        }
+
+        return round($total, 2);
     }
 
     public static function table(Table $table): Table
@@ -135,31 +184,27 @@ class PurchaseOrderResource extends Resource
                     ->modalDescription(fn (ProcurementOrder $record): string => __('On approval the order total is deducted from the selected bank account and a paid expense is recorded.'))
                     ->modalSubmitActionLabel(__('Approve & Deduct Funds'))
                     ->fillForm(fn (ProcurementOrder $record): array => [
+                        ...self::approvalSummary($record),
                         'bank_account_id' => self::previousBankAccountId($record->school_id),
                     ])
                     ->form(fn (ProcurementOrder $record): array => [
                         Forms\Components\Section::make(__('Order Summary'))
                             ->schema([
                                 Forms\Components\TextInput::make('order_number')
-                                    ->default($record->order_number)
                                     ->disabled()
                                     ->dehydrated(false),
                                 Forms\Components\TextInput::make('supplier')
-                                    ->default($record->supplier?->name)
                                     ->disabled()
                                     ->dehydrated(false),
                                 Forms\Components\DatePicker::make('order_date')
-                                    ->default($record->order_date)
                                     ->disabled()
                                     ->dehydrated(false),
                                 Forms\Components\TextInput::make('total_amount')
-                                    ->default(number_format((float) $record->total_amount, 2))
                                     ->prefix('$')
                                     ->disabled()
                                     ->dehydrated(false),
                                 Forms\Components\TextInput::make('item_count')
                                     ->label(__('Number of Items'))
-                                    ->default($record->items()->count())
                                     ->disabled()
                                     ->dehydrated(false),
                             ])->columns(2),
