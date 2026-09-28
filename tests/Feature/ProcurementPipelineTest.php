@@ -15,6 +15,7 @@ use Modules\Finance\Models\ExpenseType;
 use Modules\Finance\Models\SchoolBankAccount;
 use Modules\Inventory\Filament\Resources\GoodsReceivedResource\Pages\CreateGoodsReceivedNote;
 use Modules\Inventory\Filament\Resources\GoodsReceivedResource\Pages\EditGoodsReceivedNote;
+use Modules\Inventory\Filament\Resources\ProcurementRequestResource\Pages\ListProcurementRequests;
 use Modules\Inventory\Filament\Resources\PurchaseOrderResource;
 use Modules\Inventory\Filament\Resources\PurchaseOrderResource\Pages\CreatePurchaseOrder;
 use Modules\Inventory\Filament\Resources\PurchaseOrderResource\Pages\EditPurchaseOrder;
@@ -26,6 +27,7 @@ use Modules\Inventory\Models\InventoryItem;
 use Modules\Inventory\Models\ProcurementOrder;
 use Modules\Inventory\Models\ProcurementOrderItem;
 use Modules\Inventory\Models\ProcurementRequest;
+use Modules\Inventory\Models\ProcurementRequestItem;
 use Modules\Inventory\Services\ProcurementPipelineService;
 use Tests\TestCase;
 
@@ -364,6 +366,136 @@ class ProcurementPipelineTest extends TestCase
         $component = Livewire::test(ViewPurchaseOrder::class, ['record' => $order->getKey()]);
         $component->assertOk();
         $component->assertSee('Refund Missing Items', false);
+    }
+
+    public function test_approve_action_on_view_page_calls_service(): void
+    {
+        [, $item] = $this->seedCategoryAndItem();
+        $order = $this->seedOrder([['item_id' => $item->id, 'qty' => 5, 'cost' => 100]]);
+        $bank = $this->seedBankAccount(1000);
+
+        App::instance('current_tenant', $this->school);
+
+        $component = Livewire::test(ViewPurchaseOrder::class, ['record' => $order->getKey()]);
+        $component->callAction('approve', ['bank_account_id' => $bank->id]);
+
+        $component->assertHasNoErrors();
+
+        $this->assertSame(500.0, (float) $bank->refresh()->balance);
+        $this->assertSame('approved', $order->refresh()->status);
+    }
+
+    public function test_refund_action_on_view_page_calls_service(): void
+    {
+        [, $item] = $this->seedCategoryAndItem();
+        // 7 laptops @100, 5 received => 2 missing => $200 refundable.
+        $order = $this->seedOrder([['item_id' => $item->id, 'qty' => 7, 'cost' => 100, 'received' => 5]]);
+        $bank = $this->seedBankAccount(1000);
+
+        App::instance('current_tenant', $this->school);
+
+        $component = Livewire::test(ViewPurchaseOrder::class, ['record' => $order->getKey()]);
+        $component->callAction('refund_missing', ['bank_account_id' => $bank->id]);
+
+        $component->assertHasNoErrors();
+
+        $this->assertSame(1200.0, (float) $bank->refresh()->balance);
+        $this->assertSame((float) 200, (float) $order->refresh()->refunded_amount);
+    }
+
+    public function test_create_form_autofills_from_linked_request_number(): void
+    {
+        [, $item] = $this->seedCategoryAndItem();
+        $supplierId = $this->seedSupplier();
+
+        $request = ProcurementRequest::create([
+            'school_id' => $this->school->id,
+            'request_number' => 'PR-AUTO-'.uniqid(),
+            'requester_id' => $this->user->id,
+            'status' => 'draft',
+            'urgency' => 'medium',
+        ]);
+        $this->created[] = $request;
+
+        $this->created[] = ProcurementRequestItem::create([
+            'procurement_request_id' => $request->id,
+            'item_name' => 'Test Laptop',
+            'inventory_item_id' => $item->id,
+            'quantity' => 3,
+            'estimated_unit_cost' => 150.00,
+            'is_fixed_asset' => true,
+        ]);
+
+        $linked = ProcurementOrder::create([
+            'school_id' => $this->school->id,
+            'procurement_request_id' => $request->id,
+            'supplier_id' => $supplierId,
+            'order_number' => 'PO-LINK-'.uniqid(),
+            'order_date' => now()->toDateString(),
+            'status' => 'draft',
+            'total_amount' => 450,
+        ]);
+        $this->created[] = $linked;
+
+        $component = Livewire::test(CreatePurchaseOrder::class);
+        $component->set('data.procurement_request_id', $request->id);
+
+        $state = $component->get('data');
+
+        $this->assertSame((int) $request->id, (int) $state['procurement_request_id']);
+        $this->assertSame($supplierId, (int) $state['supplier_id']);
+        $this->assertSame('3', (string) $state['items'][0]['quantity_ordered']);
+        $this->assertSame('150', (string) $state['items'][0]['unit_cost']);
+        $this->assertTrue((bool) $state['items'][0]['is_fixed_asset']);
+        $this->assertSame((int) $item->id, (int) $state['items'][0]['inventory_item_id']);
+    }
+
+    public function test_bulk_delete_requisitions_skips_those_with_approved_purchase_orders(): void
+    {
+        $request1 = ProcurementRequest::create([
+            'school_id' => $this->school->id,
+            'request_number' => 'PR-BULK1-'.uniqid(),
+            'requester_id' => $this->user->id,
+            'status' => 'draft',
+            'urgency' => 'low',
+        ]);
+        $this->created[] = $request1;
+
+        [, $item] = $this->seedCategoryAndItem();
+
+        $request2 = ProcurementRequest::create([
+            'school_id' => $this->school->id,
+            'request_number' => 'PR-BULK2-'.uniqid(),
+            'requester_id' => $this->user->id,
+            'status' => 'approved',
+            'urgency' => 'medium',
+        ]);
+        $this->created[] = $request2;
+
+        $this->created[] = ProcurementRequestItem::create([
+            'procurement_request_id' => $request2->id,
+            'item_name' => 'Test Laptop',
+            'inventory_item_id' => $item->id,
+            'quantity' => 1,
+            'estimated_unit_cost' => 100.00,
+        ]);
+
+        $linked = ProcurementOrder::create([
+            'school_id' => $this->school->id,
+            'procurement_request_id' => $request2->id,
+            'supplier_id' => $this->seedSupplier(),
+            'order_number' => 'PO-BULK-'.uniqid(),
+            'order_date' => now()->toDateString(),
+            'status' => 'approved',
+            'total_amount' => 100,
+        ]);
+        $this->created[] = $linked;
+
+        $component = Livewire::test(ListProcurementRequests::class);
+        $component->callTableBulkAction('delete', [$request1->id, $request2->id]);
+
+        $this->assertDatabaseMissing('procurement_requests', ['id' => $request1->id]);
+        $this->assertDatabaseHas('procurement_requests', ['id' => $request2->id]);
     }
 
     public function test_edit_page_loads_existing_order_items(): void

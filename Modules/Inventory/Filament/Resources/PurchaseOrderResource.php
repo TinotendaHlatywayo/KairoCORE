@@ -18,6 +18,7 @@ use Modules\Inventory\Filament\Resources\PurchaseOrderResource\Pages;
 use Modules\Inventory\Models\InventoryItem;
 use Modules\Inventory\Models\InventorySupplier;
 use Modules\Inventory\Models\ProcurementOrder;
+use Modules\Inventory\Models\ProcurementRequest;
 use Modules\Inventory\Services\ProcurementPipelineService;
 
 class PurchaseOrderResource extends Resource
@@ -51,6 +52,25 @@ class PurchaseOrderResource extends Resource
             ->schema([
                 Forms\Components\Section::make(__('LPO Details'))
                     ->schema([
+                        Forms\Components\Select::make('procurement_request_id')
+                            ->label(__('Request Number'))
+                            ->placeholder(__('Select a request to autofill...'))
+                            ->options(fn (?string $search = '') => ProcurementRequest::query()
+                                ->where('school_id', current_tenant()?->id ?? auth()->user()?->school_id)
+                                ->when($search, fn ($q) => fuzzy_search_where($q, ['request_number'], $search))
+                                ->orderByDesc('created_at')
+                                ->limit(50)
+                                ->pluck('request_number', 'id'))
+                            ->getOptionLabelUsing(fn ($value): ?string => ($request = ProcurementRequest::find($value))
+                                ? $request->request_number.($request->requester ? ' — '.$request->requester->name : '')
+                                : null)
+                            ->searchable()
+                            ->searchPrompt(__('Type a request number (PR-...) to pull its details...'))
+                            ->reactive()
+                            ->helperText(__('Choosing a Purchase Request pulls its items, supplier and dates into this order.'))
+                            ->afterStateUpdated(function ($state, Forms\Get $get, Forms\Set $set, $component): void {
+                                self::applyRequestToOrder($state, $get, $set, $component->getRecord());
+                            }),
                         Forms\Components\TextInput::make('order_number')
                             ->required()
                             ->disabled()
@@ -153,6 +173,50 @@ class PurchaseOrderResource extends Resource
         }
 
         return round($total, 2);
+    }
+
+    /**
+     * Pull a linked Purchase Request into the order form: reuse the supplier
+     * already chosen for that requisition, refresh the dates, and hydrate the
+     * ordered-items repeater from the requisition lines. An existing order's
+     * own lines are never overwritten.
+     */
+    public static function applyRequestToOrder($state, Forms\Get $get, Forms\Set $set, $record): void
+    {
+        if (! $state) {
+            return;
+        }
+
+        $request = ProcurementRequest::find($state);
+
+        if (! $request) {
+            return;
+        }
+
+        if ($supplierId = $request->orders()->first()?->supplier_id) {
+            $set('supplier_id', (int) $supplierId);
+        }
+
+        $set('order_date', now()->toDateString());
+
+        if ($get('expected_delivery_date') === null) {
+            $set('expected_delivery_date', now()->addDays(7)->toDateString());
+        }
+
+        if ($record instanceof ProcurementOrder && $record->items()->exists()) {
+            return;
+        }
+
+        $rows = $request->items()->orderBy('id')->get()->map(fn ($line) => [
+            'inventory_item_id' => $line->inventory_item_id,
+            'is_fixed_asset' => (bool) $line->is_fixed_asset,
+            'quantity_ordered' => (int) $line->quantity,
+            'unit_cost' => (float) $line->estimated_unit_cost,
+        ])->values()->all();
+
+        if ($rows !== []) {
+            $set('items', $rows);
+        }
     }
 
     public static function table(Table $table): Table
