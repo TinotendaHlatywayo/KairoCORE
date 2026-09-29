@@ -8,4 +8,26 @@ use Filament\Resources\Pages\ListRecords;
 class ListGeneratedReports extends ListRecords
 {
     protected static string $resource = GeneratedReportResource::class;
+
+    protected static ?string $title = 'Report Archive';
+
+    public function getTitle(): string
+    {
+        return __(static::$title ?? '');
+    }
+
+    public function getHeading(): string
+    {
+        return __('Report Archive');
+    }
+
+    public function getSubheading(): ?string
+    {
+        return __('Review, verify and download compiled reports.');
+    }
+
+    public function getBreadcrumbs(): array
+    {
+        return [];
+    }
 }
