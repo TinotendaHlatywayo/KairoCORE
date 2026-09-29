@@ -59,8 +59,19 @@ class ModuleAwareNavigationManager extends BaseNavigationManager
             return true;
         }
 
-        $visible = ModuleVisibilityManager::isModuleVisible($moduleSlug);
+        if (! ModuleVisibilityManager::isModuleVisible($moduleSlug)) {
+            return false;
+        }
 
-        return $visible;
+        $module = $service->moduleBySlug($moduleSlug);
+        if ($module) {
+            $accessibleTabs = $service->moduleTabs($module, filterPermissions: true);
+            $accessibleMore = $service->moduleMoreTabs($module, filterPermissions: true);
+            if (empty($accessibleTabs) && empty($accessibleMore)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
