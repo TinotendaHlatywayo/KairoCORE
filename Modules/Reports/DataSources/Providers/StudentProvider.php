@@ -60,7 +60,6 @@ class StudentProvider extends AbstractDatasetProvider
                     $this->connect('attendance.summary', "{$stu}.id", 'attendance_summary.student_id'),
                     $this->connect('attendance.daily', "{$stu}.id", 'attendance_daily.student_id'),
                     $this->connect('academics.enrollment', "{$stu}.id", 'academics_enrollment.student_id'),
-                    $this->connect('academics.mark_record', "{$stu}.id", 'academics_mark_record.student_id'),
                     $this->connect('academics.performance', "{$stu}.id", 'academics_performance.student_id'),
                     $this->connect('hostel.allocation', "{$stu}.id", 'hostel_allocation.student_id'),
                     $this->connect('library.issue', "{$stu}.id", 'library_issue.student_id'),

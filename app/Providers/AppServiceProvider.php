@@ -30,6 +30,7 @@ use Modules\Admin\Services\AuditLogger;
 use Modules\Admin\Services\TenantEmailConfigurationService;
 use Modules\CMS\Models\CmsPage;
 use Modules\CMS\Models\CmsWebsite;
+use Modules\Reports\Services\DatasetRegistry;
 use Modules\Communication\Livewire\ChatWorkspace;
 
 class AppServiceProvider extends ServiceProvider
@@ -47,6 +48,12 @@ class AppServiceProvider extends ServiceProvider
         // filter, the module header and visibility checks avoids re-booting
         // ~100 classes on every render.
         $this->app->singleton(ModuleNavigationService::class);
+
+        // The report dataset registry scans the provider directory and rebuilds
+        // every dataset definition on first use, then memoizes it. Resolving a
+        // fresh instance per injection point repeated that scan for every
+        // service that touches report data, so it is shared per request.
+        $this->app->singleton(DatasetRegistry::class);
 
         // Replace Filament's default navigation manager so the sidebar hides
         // every module the tenant disabled in System Settings -> Manage Modules.

@@ -35,7 +35,7 @@ class InventoryProvider extends AbstractDatasetProvider
                 ],
                 'connections' => [
                     $this->connect('inventory.transaction', 'inventory_item.id', 'inventory_transaction.inventory_item_id'),
-                    $this->connect('assets.fixed_asset', 'inventory_item.id', 'fixed_asset.inventory_item_id'),
+                    $this->connect('assets.fixed_asset', 'inventory_item.id', 'assets_fixed_asset.inventory_item_id'),
                     $this->connect('procurement.item', 'inventory_item.id', 'procurement_item.inventory_item_id'),
                 ],
                 'filters' => [
@@ -80,25 +80,28 @@ class InventoryProvider extends AbstractDatasetProvider
 
             $this->d('assets.fixed_asset', __('Fixed Assets'), 'fixed_assets', [
                 $this->f('asset_number', __('Asset Number')),
+                $this->f('asset_name', __('Asset Name')),
                 $this->f('serial_number', __('Serial Number')),
                 $this->f('acquisition_date', __('Acquisition Date'), 'date'),
-                $this->money('purchase_cost', __('Purchase Cost'), 'fixed_asset.purchase_cost'),
-                $this->money('salvage_value', __('Salvage Value'), 'fixed_asset.salvage_value'),
+                $this->money('purchase_cost', __('Purchase Cost'), 'assets_fixed_asset.purchase_cost'),
+                $this->money('salvage_value', __('Salvage Value'), 'assets_fixed_asset.salvage_value'),
                 $this->f('useful_life_years', __('Useful Life (yrs)'), 'integer'),
                 $this->f('depreciation_method', __('Depreciation Method')),
-                $this->money('current_value', __('Current Value'), 'fixed_asset.current_value'),
+                $this->money('current_value', __('Current Value'), 'assets_fixed_asset.current_value'),
+                $this->f('funding_source', __('Funding Source')),
                 $this->f('warranty_expiry', __('Warranty Expiry'), 'date'),
                 $this->f('status', __('Status')),
                 $this->f('item_name', __('Item Name'), 'string', 'fixed_asset_item.name'),
             ], [
                 'description' => __('Fixed asset register with valuation and lifecycle.'),
                 'autoJoins' => [
-                    ['alias' => 'fixed_asset_item', 'table' => 'inventory_items', 'type' => 'left', 'on' => [['fixed_asset_item.id', 'fixed_asset.inventory_item_id']]],
+                    ['alias' => 'fixed_asset_item', 'table' => 'inventory_items', 'type' => 'left', 'on' => [['fixed_asset_item.id', 'assets_fixed_asset.inventory_item_id']]],
                 ],
                 'connections' => [
-                    $this->connect('inventory.item', 'fixed_asset.inventory_item_id', 'inventory_item.id'),
-                    $this->connect('assets.maintenance', 'fixed_asset.id', 'asset_maintenance.fixed_asset_id'),
+                    $this->connect('inventory.item', 'assets_fixed_asset.inventory_item_id', 'inventory_item.id'),
+                    $this->connect('assets.maintenance', 'assets_fixed_asset.id', 'assets_maintenance.fixed_asset_id'),
                 ],
+                'default_order' => 'asset_number|asc',
                 'filters' => [
                     ['key' => 'status', 'label' => __('Status'), 'type' => 'select', 'options' => ['in_use', 'under_maintenance', 'retired', 'disposed']],
                 ],
@@ -107,19 +110,22 @@ class InventoryProvider extends AbstractDatasetProvider
             $this->d('assets.maintenance', __('Asset Maintenance Logs'), 'asset_maintenance_logs', [
                 $this->f('title', __('Title')),
                 $this->f('type', __('Type')),
+                $this->f('schedule_type', __('Schedule Type')),
                 $this->f('scheduled_date', __('Scheduled Date'), 'date'),
                 $this->f('completed_date', __('Completed Date'), 'date'),
-                $this->money('cost', __('Maintenance Cost'), 'asset_maintenance.cost'),
+                $this->money('cost', __('Maintenance Cost'), 'assets_maintenance.cost'),
                 $this->f('status', __('Status')),
+                $this->f('performed_by', __('Performed By')),
                 $this->f('asset_number', __('Asset Number'), 'string', 'asset_maintenance_asset.asset_number'),
             ], [
                 'description' => __('Preventive and corrective maintenance logs.'),
                 'autoJoins' => [
-                    ['alias' => 'asset_maintenance_asset', 'table' => 'fixed_assets', 'type' => 'left', 'on' => [['asset_maintenance_asset.id', 'asset_maintenance.fixed_asset_id']]],
+                    ['alias' => 'asset_maintenance_asset', 'table' => 'fixed_assets', 'type' => 'left', 'on' => [['asset_maintenance_asset.id', 'assets_maintenance.fixed_asset_id']]],
                 ],
                 'connections' => [
-                    $this->connect('assets.fixed_asset', 'asset_maintenance.fixed_asset_id', 'fixed_asset.id'),
+                    $this->connect('assets.fixed_asset', 'assets_maintenance.fixed_asset_id', 'assets_fixed_asset.id'),
                 ],
+                'default_order' => 'scheduled_date|desc',
             ]),
 
             $this->d('procurement.request', __('Procurement Requests'), 'procurement_requests', [
