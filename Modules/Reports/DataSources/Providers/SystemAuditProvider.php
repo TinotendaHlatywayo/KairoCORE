@@ -48,7 +48,7 @@ class SystemAuditProvider extends AbstractDatasetProvider
                     ['alias' => 'system_dept_head', 'table' => 'users', 'type' => 'left', 'on' => [['system_dept_head.id', 'system_department.head_user_id']]],
                 ],
                 'connections' => [
-                    $this->connect('hr.employee', 'system_department.id', 'hr_employee.department_id'),
+                    $this->connect('hr.employee', 'system_department.name', 'hr_employee.department'),
                 ],
                 'filters' => [
                     ['key' => 'status', 'label' => __('Status'), 'type' => 'select', 'options' => ['active', 'inactive']],

@@ -33,15 +33,25 @@ class VisualizationService
             $labels = [];
             $datasets = [];
 
+            // Resolved once, not per row: a chart's label column is a property of
+            // the chart, and it belongs to every chart — the previous guard
+            // limited it to the first visualization, leaving every other chart
+            // with an empty label axis.
+            $labelColumn = $labelField ? $this->builder->qualifiedFieldKey($labelField) : null;
+
+            if ($labelColumn) {
+                foreach ($rows as $row) {
+                    $labels[] = (string) ($row->{$labelColumn} ?? '');
+                }
+            }
+
+            $labels = array_values(array_unique($labels));
+
             foreach ($series as $s) {
                 $field = $this->builder->qualifiedFieldKey($s['field'] ?? '');
                 $values = [];
 
                 foreach ($rows as $row) {
-                    if ($labelField && $i === 0) {
-                        $labels[] = (string) ($row->{$this->builder->qualifiedFieldKey($labelField)} ?? '');
-                    }
-
                     $values[] = (float) ($row->{$field} ?? 0);
                 }
 
@@ -56,7 +66,7 @@ class VisualizationService
             $charts[] = [
                 'type' => $type,
                 'title' => $viz['title'] ?? 'Visualization',
-                'labels' => array_values(array_unique($labels)),
+                'labels' => $labels,
                 'datasets' => $datasets,
             ];
         }

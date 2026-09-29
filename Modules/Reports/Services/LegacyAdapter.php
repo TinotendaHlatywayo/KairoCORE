@@ -60,7 +60,11 @@ class LegacyAdapter
             'fields' => [
                 'student_name' => 'student_name',
                 'hostel_name' => 'hostel_name',
-                'building_name' => 'building_name',
+                // The occupancy report reaches a room through allocation → bed →
+                // room, so there is no building column to map; the floor stands
+                // in for it and `building_name` falls through to the field
+                // fallback in normalize().
+                'building_name' => 'floor_name',
                 'room_number' => 'room_number',
                 'bed_number' => 'bed_number',
                 'allocation_status' => 'status',

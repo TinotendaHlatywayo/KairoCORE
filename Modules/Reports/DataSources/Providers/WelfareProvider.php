@@ -30,9 +30,7 @@ class WelfareProvider extends AbstractDatasetProvider
                 'autoJoins' => [
                     ['alias' => 'library_book_cat', 'table' => 'library_categories', 'type' => 'left', 'on' => [['library_book_cat.id', 'library_book.library_category_id']]],
                 ],
-                'connections' => [
-                    $this->connect('library.issue', 'library_book.id', 'library_issue_book.id'),
-                ],
+                'default_order' => 'title|asc',
             ]),
 
             $this->d('library.issue', __('Book Issues / Circulation'), 'library_issues', [
@@ -58,8 +56,8 @@ class WelfareProvider extends AbstractDatasetProvider
                 ],
                 'connections' => [
                     $this->connect('students.register', 'library_issue.student_id', 'students_register.id'),
-                    $this->connect('library.book', 'library_issue_copy.library_book_id', 'library_book.id'),
                 ],
+                'default_order' => 'issued_at|desc',
                 'filters' => [
                     ['key' => 'status', 'label' => __('Status'), 'type' => 'select', 'options' => ['borrowed', 'returned', 'overdue', 'lost']],
                 ],
@@ -70,28 +68,30 @@ class WelfareProvider extends AbstractDatasetProvider
                 $this->f('allocated_at', __('Allocated At'), 'datetime'),
                 $this->f('expected_checkout_at', __('Expected Checkout'), 'datetime'),
                 $this->f('checked_out_at', __('Checked Out At'), 'datetime'),
+                $this->f('notes', __('Notes')),
                 $this->f('student_name', __('Student Name'), 'string', "CONCAT(hostel_allocation_st.first_name, ' ', hostel_allocation_st.last_name)"),
                 $this->f('admission_number', __('Admission Number'), 'string', 'hostel_allocation_st.admission_number'),
                 $this->f('hostel_name', __('Hostel'), 'string', 'hostel_allocation_hostel.name'),
-                $this->f('building_name', __('Building'), 'string', 'hostel_allocation_building.name'),
+                $this->f('hostel_type', __('Hostel Type'), 'string', 'hostel_allocation_hostel.type'),
                 $this->f('wing_name', __('Wing'), 'string', 'hostel_allocation_wing.name'),
-                $this->f('floor_name', __('Floor'), 'string', 'hostel_allocation_floor.name'),
+                $this->f('floor_name', __('Floor'), 'string', 'hostel_allocation_floor.floor_name'),
+                $this->f('floor_number', __('Floor Number'), 'integer', 'hostel_allocation_floor.floor_number'),
                 $this->f('room_number', __('Room'), 'string', 'hostel_allocation_room.room_number'),
                 $this->f('bed_number', __('Bed'), 'string', 'hostel_allocation_bed.bed_number'),
             ], [
-                'description' => __('Hostel bed allocations with full location chain.'),
+                'description' => __('Hostel bed allocations with the full room location chain.'),
                 'autoJoins' => [
                     ['alias' => 'hostel_allocation_st', 'table' => 'students', 'type' => 'left', 'on' => [['hostel_allocation_st.id', 'hostel_allocation.student_id']]],
                     ['alias' => 'hostel_allocation_bed', 'table' => 'hostel_beds', 'type' => 'left', 'on' => [['hostel_allocation_bed.id', 'hostel_allocation.bed_id']]],
                     ['alias' => 'hostel_allocation_room', 'table' => 'hostel_rooms', 'type' => 'left', 'on' => [['hostel_allocation_room.id', 'hostel_allocation_bed.room_id']]],
                     ['alias' => 'hostel_allocation_floor', 'table' => 'hostel_floors', 'type' => 'left', 'on' => [['hostel_allocation_floor.id', 'hostel_allocation_room.floor_id']]],
                     ['alias' => 'hostel_allocation_wing', 'table' => 'hostel_wings', 'type' => 'left', 'on' => [['hostel_allocation_wing.id', 'hostel_allocation_room.wing_id']]],
-                    ['alias' => 'hostel_allocation_building', 'table' => 'hostel_buildings', 'type' => 'left', 'on' => [['hostel_allocation_building.id', 'hostel_allocation_floor.building_id']]],
-                    ['alias' => 'hostel_allocation_hostel', 'table' => 'hostels', 'type' => 'left', 'on' => [['hostel_allocation_hostel.id', 'hostel_allocation_building.hostel_id']]],
+                    ['alias' => 'hostel_allocation_hostel', 'table' => 'hostels', 'type' => 'left', 'on' => [['hostel_allocation_hostel.id', 'hostel_allocation_room.hostel_id']]],
                 ],
                 'connections' => [
                     $this->connect('students.register', 'hostel_allocation.student_id', 'students_register.id'),
                 ],
+                'default_order' => 'allocated_at|desc',
                 'filters' => [
                     ['key' => 'status', 'label' => __('Status'), 'type' => 'select', 'options' => ['active', 'checked_out', 'pending']],
                 ],
@@ -101,12 +101,11 @@ class WelfareProvider extends AbstractDatasetProvider
                 $this->f('name', __('Hostel Name')),
                 $this->f('type', __('Type')),
                 $this->f('capacity', __('Capacity'), 'integer'),
+                $this->f('description', __('Description')),
                 $this->f('status', __('Status')),
             ], [
                 'description' => __('Hostel properties and capacities.'),
-                'connections' => [
-                    $this->connect('hostel.allocation', 'hostel_hostel.id', 'hostel_allocation_hostel.id'),
-                ],
+                'default_order' => 'name|asc',
             ]),
 
             $this->d('clinic.visit', __('Clinic Visits'), 'clinic_visits', [
@@ -162,9 +161,7 @@ class WelfareProvider extends AbstractDatasetProvider
                 $this->f('created_at', __('Added At'), 'datetime'),
             ], [
                 'description' => __('Curated knowledge repository assets.'),
-                'connections' => [
-                    $this->connect('library.book', 'knowledge_asset.id', 'library_book.id'),
-                ],
+                'default_order' => 'created_at|desc',
             ]),
 
             $this->d('communication.announcement', __('Announcements'), 'communication_announcements', [
