@@ -22,7 +22,7 @@ class TimetableProvider extends AbstractDatasetProvider
                 $this->f('course_name', __('Course'), 'string', 'timetable_lesson_course.name'),
                 $this->f('section_name', __('Section'), 'string', 'timetable_lesson_section.name'),
                 $this->f('subject_name', __('Subject'), 'string', 'timetable_lesson_subject.name'),
-                $this->f('teacher_name', __('Teacher'), 'string', 'timetable_lesson_teacher.name'),
+                $this->f('teacher_name', __('Teacher'), 'string', "CONCAT(timetable_lesson_teacher.first_name, ' ', timetable_lesson_teacher.last_name)"),
                 $this->f('classroom_name', __('Room'), 'string', 'timetable_lesson_classroom.name'),
                 $this->f('slot_name', __('Time Slot'), 'string', 'timetable_lesson_slot.name'),
                 $this->f('slot_start', __('Starts'), 'string', 'timetable_lesson_slot.start_time'),
