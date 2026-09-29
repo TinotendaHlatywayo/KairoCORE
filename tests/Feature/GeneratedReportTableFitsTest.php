@@ -119,4 +119,12 @@ class GeneratedReportTableFitsTest extends TestCase
             'The full phrase still widens the badge column.'
         );
     }
+
+    public function test_page_has_proper_heading_and_subheading(): void
+    {
+        $html = Livewire::test(ListGeneratedReports::class)->assertOk()->html();
+
+        $this->assertStringContainsString('Report Archive', $html);
+        $this->assertStringContainsString('Review, verify and download compiled reports.', $html);
+    }
 }
