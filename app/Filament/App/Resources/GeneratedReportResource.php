@@ -44,18 +44,23 @@ class GeneratedReportResource extends Resource
     {
         return $table
             ->columns([
+                // Compiled by and timestamp ride along as a sub-line rather than
+                // three separate columns. Both are constant-width metadata that
+                // never needs its own header, and folding them into this cell is
+                // what keeps the table inside the viewport on a laptop screen.
                 TextColumn::make('name')
-                    ->label(__('Compiled Filename'))
-                    ->searchable()
+                    ->label(__('Report'))
+                    ->description(fn (GeneratedReport $record) => collect([
+                        $record->generator?->name ?: __('System Account'),
+                        $record->created_at?->format('M d, Y H:i'),
+                    ])->implode(' · '))
+                    ->searchable(['name'])
+                    ->sortable()
                     ->wrap(),
-
-                TextColumn::make('format')
-                    ->label(__('File Extension'))
-                    ->badge()
-                    ->color(fn ($state) => $state === 'pdf' ? 'danger' : 'success'),
 
                 TextColumn::make('status')
                     ->badge()
+                    ->sortable()
                     ->color(fn (string $state): string => match ($state) {
                         'completed' => 'success',
                         'processing' => 'warning',
@@ -63,67 +68,78 @@ class GeneratedReportResource extends Resource
                         default => 'gray',
                     }),
 
+                TextColumn::make('format')
+                    ->label(__('Format'))
+                    ->badge()
+                    ->sortable()
+                    ->color(fn (string $state) => $state === 'pdf' ? 'danger' : 'success'),
+
                 TextColumn::make('record_count')
-                    ->label(__('Record Metrics'))
-                    ->numeric(),
+                    ->label(__('Records'))
+                    ->numeric()
+                    ->sortable(),
 
-                TextColumn::make('execution_ms')
-                    ->label(__('Execution'))
-                    ->formatStateUsing(fn ($state) => $state === null ? '—' : number_format((int) $state).' ms')
-                    ->toggleable(),
-
+                // "Source data has changed" is the important half of this badge,
+                // so the long phrasing moves to the tooltip rather than pushing
+                // the column wide.
                 TextColumn::make('data_validated')
-                    ->label(__('Data Accuracy'))
+                    ->label(__('Accuracy'))
                     ->badge()
                     ->toggleable()
                     ->formatStateUsing(fn (GeneratedReport $record) => match (true) {
                         $record->validated_at === null => 'Not verified',
                         $record->data_validated => 'Verified',
-                        default => 'Data changed since compilation',
+                        default => 'Source changed',
                     })
                     ->color(fn (GeneratedReport $record) => match (true) {
                         $record->validated_at === null => 'gray',
                         $record->data_validated => 'success',
                         default => 'warning',
                     })
-                    ->tooltip(fn (GeneratedReport $record) => $record->validated_at
-                        ? 'Last verified '.$record->validated_at->format('M d, Y H:i')
-                        : 'Re-run to confirm this report still matches live source data'),
+                    ->tooltip(fn (GeneratedReport $record) => match (true) {
+                        $record->validated_at === null => 'Re-run to confirm this report still matches live source data',
+                        $record->data_validated => 'Verified '.$record->validated_at->format('M d, Y H:i').' — still matches live source data',
+                        default => 'Source data changed after compilation on '.$record->validated_at->format('M d, Y H:i').' — regenerate to refresh',
+                    }),
 
-                TextColumn::make('generator.name')
-                    ->label(__('Compiled By'))
-                    ->placeholder(__('System Account')),
-
-                TextColumn::make('created_at')
-                    ->label(__('Timestamp Generated'))
-                    ->dateTime('M d, Y H:i'),
+                // A millisecond timing is a diagnostic, not a decision input, so
+                // it is one toggle away rather than always on screen.
+                TextColumn::make('execution_ms')
+                    ->label(__('Execution'))
+                    ->formatStateUsing(fn ($state) => $state === null ? '—' : number_format((int) $state).' ms')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->actions([
                 Action::make('download')
                     ->label(__('Download'))
                     ->icon('heroicon-o-cloud-arrow-down')
+                    ->tooltip(__('Download this file'))
                     ->color('primary')
+                    ->iconButton()
                     ->visible(fn (GeneratedReport $record) => $record->status === 'completed' && ! empty($record->file_path))
                     ->url(fn (GeneratedReport $record) => asset('storage/'.$record->file_path))
                     ->openUrlInNewTab(),
 
                 Action::make('verify')
-                    ->label(fn (GeneratedReport $record) => $record->validated_at ? 'Re-verify data' : 'Verify data accuracy')
+                    ->label(__('Verify data accuracy'))
                     ->icon('heroicon-o-shield-check')
+                    ->tooltip(fn (GeneratedReport $record) => $record->validated_at ? __('Re-verify data') : __('Verify data accuracy'))
                     ->color('info')
+                    ->iconButton()
                     ->requiresConfirmation()
-                    ->modalHeading('Verify data accuracy')
-                    ->modalDescription('Re-runs the underlying query against the current database and compares the compiled checksum. Flags the report if source data changed after it was generated.')
+                    ->modalHeading(__('Verify data accuracy'))
+                    ->modalDescription(__('Re-runs the underlying query against the current database and compares the compiled checksum. Flags the report if source data changed after it was generated.'))
                     ->visible(fn (GeneratedReport $record) => $record->status === 'completed' && $record->data_checksum !== null)
                     ->action(function (GeneratedReport $record) {
                         $valid = app(ReportAuditService::class)->verify($record);
 
                         Notification::make()
                             ->{$valid ? 'success' : 'warning'}()
-                            ->title($valid ? 'Data verified' : 'Source data has changed')
+                            ->title($valid ? __('Data verified') : __('Source data has changed'))
                             ->body($valid
-                                ? 'The report still matches the current database.'
-                                : 'This report was compiled from older data. Regenerate it to reflect the current database.')
+                                ? __('The report still matches the current database.')
+                                : __('This report was compiled from older data. Regenerate it to reflect the current database.'))
                             ->send();
                     }),
 
