@@ -288,6 +288,29 @@ class PermissionRegistry
     }
 
     /**
+     * Detailed CRUD descriptions for every permission, displayed as helper tooltips
+     * under checkboxes in System Administration.
+     *
+     * @return array<string, string>
+     */
+    public static function permissionDescriptions(): array
+    {
+        $descriptions = [];
+
+        foreach (self::getGranularMatrix() as $module => $config) {
+            $modLabel = strip_tags(__($config['label']));
+            foreach ($config['actions'] as $action => $label) {
+                $descriptions["{$module}.{$action}"] = __('Grants authorization to :action in the :module module (CRUD & operational privilege).', [
+                    'action' => mb_strtolower($label),
+                    'module' => $modLabel,
+                ]);
+            }
+        }
+
+        return $descriptions;
+    }
+
+    /**
      * Centralized and self-healing permission verification system.
      */
     public static function checkPermission(string $permission): bool
@@ -418,6 +441,16 @@ class PermissionRegistry
         }
     }
 
+    public static function moduleKeys(string $module): array
+    {
+        $matrix = self::getGranularMatrix();
+        if (! isset($matrix[$module]['actions'])) {
+            return [];
+        }
+
+        return array_map(fn ($action) => "{$module}.{$action}", array_keys($matrix[$module]['actions']));
+    }
+
     /**
      * Sensible default permission bundle per requested registration category.
      * These are the checkboxes the approver sees pre-ticked; departments for
@@ -427,50 +460,89 @@ class PermissionRegistry
      */
     public static function defaultPermissionsForRole(string $category): array
     {
+        $universalStaff = [
+            'communication.view_module',
+            'communication.post_announcements',
+            'reports.view_module',
+            'reports.generate',
+            'tasks.view',
+            'tasks.create',
+        ];
+
         return match ($category) {
             'student' => [
                 'student_portal.access',
             ],
-            'teaching_staff' => [
-                'academics.view_records',
-                'academics.edit',
-                'academic_ops.view',
-                'academic_ops.manage_assessments',
-                'attendance.view_module',
-                'attendance.record',
-                'exams.view_module',
-                'exams.enter_marks',
-                'exams.approve_results',
-                'exams.generate_reports',
-                'library.view_module',
-                'communication.view_module',
-                'communication.post_announcements',
-                'lms.view_module',
-                'lms.manage_content',
-                'lms.grade_submissions',
-                'knowledge.view_module',
-                'knowledge.contribute',
-                'reports.view_module',
-                'reports.generate',
-                'tasks.view',
-                'tasks.create',
-                'digital_assessment.view_module',
-                'digital_assessment.manage_questions',
-                'digital_assessment.create_assessments',
-                'digital_assessment.publish_assessments',
-                'digital_assessment.view_results',
-                'digital_assessment.mark_assessments',
-                'digital_assessment.view_leaderboards',
-            ],
-            'non_teaching_staff' => [
-                'communication.view_module',
-                'reports.view_module',
-                'reports.generate',
-                'tasks.view',
-                'tasks.create',
-            ],
             'administrator' => self::collectAllPermissionKeys(),
-            default => self::collectAllPermissionKeys(),
+            'school_administrator' => array_values(array_unique(array_merge(
+                $universalStaff,
+                self::moduleKeys('communication'),
+                self::moduleKeys('inventory'),
+                self::moduleKeys('website'),
+                self::moduleKeys('admissions'),
+                self::moduleKeys('academics'),
+                self::moduleKeys('academic_ops'),
+                self::moduleKeys('attendance'),
+                self::moduleKeys('exams'),
+                self::moduleKeys('reports'),
+                self::moduleKeys('tasks'),
+                self::moduleKeys('lms'),
+                self::moduleKeys('knowledge'),
+                self::moduleKeys('boarding'),
+                self::moduleKeys('library'),
+                self::moduleKeys('clinic'),
+            ))),
+            'teaching_staff' => array_values(array_unique(array_merge(
+                $universalStaff,
+                self::moduleKeys('academics'),
+                [
+                    'academic_ops.view',
+                    'academic_ops.manage_curriculum',
+                    'academic_ops.manage_subjects',
+                    'academic_ops.manage_timetable',
+                    'academic_ops.manage_assessments',
+                ],
+                self::moduleKeys('attendance'),
+                self::moduleKeys('exams'),
+                self::moduleKeys('lms'),
+                self::moduleKeys('digital_assessment'),
+                ['reports.view_module', 'reports.generate'],
+            ))),
+            'accounts_finance' => array_values(array_unique(array_merge(
+                $universalStaff,
+                self::moduleKeys('finance'),
+                ['reports.view_module', 'reports.generate', 'reports.export'],
+            ))),
+            'hr' => array_values(array_unique(array_merge(
+                $universalStaff,
+                self::moduleKeys('hr'),
+                self::moduleKeys('attendance'),
+                ['reports.view_module', 'reports.generate'],
+            ))),
+            'librarian' => array_values(array_unique(array_merge(
+                $universalStaff,
+                self::moduleKeys('library'),
+                self::moduleKeys('knowledge'),
+                ['reports.view_module'],
+            ))),
+            'houseparent' => array_values(array_unique(array_merge(
+                $universalStaff,
+                self::moduleKeys('boarding'),
+                ['reports.view_module'],
+            ))),
+            'health' => array_values(array_unique(array_merge(
+                $universalStaff,
+                self::moduleKeys('clinic'),
+                ['inventory.view_module', 'inventory.issue_stock'],
+                ['reports.view_module'],
+            ))),
+            'procurement' => array_values(array_unique(array_merge(
+                $universalStaff,
+                self::moduleKeys('inventory'),
+                ['reports.view_module', 'reports.generate'],
+            ))),
+            'supporting_staff', 'non_teaching_staff' => $universalStaff,
+            default => $universalStaff,
         };
     }
 
