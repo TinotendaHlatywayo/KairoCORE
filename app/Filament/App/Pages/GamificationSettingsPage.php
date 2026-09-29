@@ -2,13 +2,14 @@
 
 namespace App\Filament\App\Pages;
 
+use App\Services\ModuleVisibilityManager;
 use Filament\Forms;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
-use Filament\Pages\Page;
 use Filament\Notifications\Notification;
-use Modules\DigitalAssessment\Models\GamificationSettings;
+use Filament\Pages\Page;
+use Modules\Admin\Services\PermissionRegistry;
 use Modules\DigitalAssessment\Services\GamificationService;
 
 class GamificationSettingsPage extends Page implements HasForms
@@ -33,7 +34,11 @@ class GamificationSettingsPage extends Page implements HasForms
 
     public static function canAccess(): bool
     {
-        return false;
+        if (ModuleVisibilityManager::isSchoolAdmin()) {
+            return true;
+        }
+
+        return ModuleVisibilityManager::isModuleVisible('digital_assessment') && PermissionRegistry::checkPermission('administration.manage_settings');
     }
 
     public function mount(): void
@@ -65,7 +70,8 @@ class GamificationSettingsPage extends Page implements HasForms
     }
 
     protected function getFormSchema(): array
-    {        return [
+    {
+        return [
             Forms\Components\Section::make('Feature Toggles')
                 ->description('Enable or disable gamification features for this school.')
                 ->schema([
