@@ -2,7 +2,9 @@
 
 namespace App\Filament\App\Pages;
 
+use App\Services\ModuleVisibilityManager;
 use Filament\Pages\Page;
+use Modules\Admin\Services\PermissionRegistry;
 
 class ManualMarkingPage extends Page
 {
@@ -22,7 +24,11 @@ class ManualMarkingPage extends Page
 
     public static function canAccess(): bool
     {
-        return false;
+        if (ModuleVisibilityManager::isSchoolAdmin()) {
+            return true;
+        }
+
+        return ModuleVisibilityManager::isModuleVisible('exams') && PermissionRegistry::checkPermission('exams.enter_marks');
     }
 
     public static function getRoutePath(): string
