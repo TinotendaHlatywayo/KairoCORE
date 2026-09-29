@@ -26,3 +26,28 @@
     border-color: rgb(63 63 70);
     background: rgb(39 39 42);
 }
+
+/*
+ * Report archive: trim the horizontal cell padding so the table fits without a
+ * horizontal scrollbar on a laptop-width screen.
+ *
+ * Scoped to the resource's own page class (emitted by the Filament list-records
+ * view as fi-resource-generated-reports) so no other table in the app is
+ * affected. Filament sets px-3 with ps-6/pe-6 on the first and last cell, and
+ * these low-specificity rules need !important to win over them.
+ */
+.fi-resource-generated-reports .fi-ta-header-cell,
+.fi-resource-generated-reports .fi-ta-cell {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+}
+
+/* Let a long column header wrap instead of forcing the table wider. */
+.fi-resource-generated-reports .fi-ta-header-cell-label {
+    white-space: normal;
+}
+
+/* The report name is the one column worth letting breathe. */
+.fi-resource-generated-reports .fi-ta-cell:first-child {
+    min-width: 14rem;
+}
