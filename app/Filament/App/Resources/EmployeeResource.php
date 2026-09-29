@@ -102,10 +102,16 @@ class EmployeeResource extends Resource
                             Forms\Components\TextInput::make('designation')->placeholder(__('e.g. English Teacher'))->required(),
                             Forms\Components\Select::make('role')
                                 ->options([
-                                    'Teacher' => __('Teacher'),
-                                    'Support Staff' => __('Support Staff'),
-                                    'Accountant' => __('Accountant'),
-                                    'Administrator' => __('Administrator'),
+                                    'System Administrator' => __('System Administrator'),
+                                    'School Administrator' => __('School Administrator'),
+                                    'Teaching Staff' => __('Teaching Staff'),
+                                    'Accounts / Finance' => __('Accounts / Finance'),
+                                    'Librarian' => __('Librarian'),
+                                    'Houseparent' => __('Houseparent'),
+                                    'HR' => __('HR'),
+                                    'Health' => __('Health'),
+                                    'Procurement' => __('Procurement'),
+                                    'Supporting Staff' => __('Supporting Staff'),
                                 ])
                                 ->placeholder(__('Select System Role'))
                                 ->required(),

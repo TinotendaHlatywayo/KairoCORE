@@ -59,8 +59,9 @@ class CustomRoleResource extends Resource
                     ->label(__('Role Responsibility Description')),
                 CheckboxList::make('permissions')
                     ->label(__('Access Privileges'))
-                    ->helperText(__('Select the granular permissions this role grants. Each permission is listed as "Module — Action".'))
+                    ->helperText(__('Select the granular permissions this role grants, complete with CRUD documentation and operational tooltips.'))
                     ->options(fn () => PermissionRegistry::permissionOptions())
+                    ->descriptions(fn () => PermissionRegistry::permissionDescriptions())
                     ->columns(3)
                     ->gridDirection('row')
                     ->searchable()
