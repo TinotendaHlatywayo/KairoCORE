@@ -11,6 +11,7 @@
 # - Re-runs package discovery + Filament asset publish
 # - Clears and re-caches config/routes/views/events
 # - Runs any pending migrations
+# - Refreshes the shipped report presets for every tenant
 # - Ensures the queue worker systemd service is up
 # =====================================================================
 set -euo pipefail
@@ -24,7 +25,7 @@ if [[ ! -d "$APP_DIR/.git" ]]; then
     exit 1
 fi
 
-echo "==> 0/10 Setting app ownership + git safe.directory for $PHP_USER"
+echo "==> 0/11 Setting app ownership + git safe.directory for $PHP_USER"
 # Nginx/PHP-FPM run as $PHP_USER and must own the whole app to run composer/artisan.
 # Running this every deploy is idempotent and fixes storage/vendor ownership drift.
 sudo chown -R "$PHP_USER":"$PHP_USER" "$APP_DIR"
@@ -52,39 +53,49 @@ restore() {
 }
 trap restore EXIT
 
-echo "==> 1/10 Fetching + checking out latest ${REMOTE_BRANCH}"
+echo "==> 1/11 Fetching + checking out latest ${REMOTE_BRANCH}"
 # Safer than `reset --hard`: leaves ignored/storage files alone and aborts if there
 # are unexpected local edits to tracked files (so we never silently wipe live changes).
 sudo -u "$PHP_USER" git fetch origin
 sudo -u "$PHP_USER" git checkout --force "origin/${REMOTE_BRANCH}"
 
-echo "==> 2/10 Installing composer dependencies (no-dev)"
+echo "==> 2/11 Installing composer dependencies (no-dev)"
 sudo -u "$PHP_USER" HOME=/var/www COMPOSER_HOME=/var/www/.composer composer install --no-dev --optimize-autoloader --no-scripts --no-interaction
 
-echo "==> 3/10 Building frontend assets (Vite)"
+echo "==> 3/11 Building frontend assets (Vite)"
 sudo -u "$PHP_USER" HOME=/var/www npx vite build 2>/dev/null || sudo -u "$PHP_USER" HOME=/var/www npm run build
 
-echo "==> 4/10 Package discovery + Filament asset publish"
+echo "==> 4/11 Package discovery + Filament asset publish"
 sudo -u "$PHP_USER" HOME=/var/www php artisan package:discover --ansi
 sudo -u "$PHP_USER" HOME=/var/www php artisan filament:assets --ansi || true
 sudo -u "$PHP_USER" HOME=/var/www composer dump-autoload --no-dev --optimize
 
-echo "==> 5/10 Clearing stale caches"
+echo "==> 5/11 Clearing stale caches"
 sudo -u "$PHP_USER" HOME=/var/www php artisan config:clear
 sudo -u "$PHP_USER" HOME=/var/www php artisan route:clear
 sudo -u "$PHP_USER" HOME=/var/www php artisan view:clear
 sudo -u "$PHP_USER" HOME=/var/www php artisan event:clear
 
-echo "==> 6/10 Running migrations"
+echo "==> 6/11 Running migrations"
 sudo -u "$PHP_USER" HOME=/var/www php artisan migrate --force
 
-echo "==> 7/10 Caching views"
+echo "==> 7/11 Refreshing shipped report presets"
+# The report presets are code (ReportPresetCatalogue), so a deploy that ships a
+# fixed preset must also refresh what each tenant already has installed —
+# otherwise every existing tenant keeps its old, possibly broken templates and
+# only a fresh install would pick up the fix. The command loops over all schools
+# and upserts by (school, name), so it is idempotent.
+sudo -u "$PHP_USER" HOME=/var/www php artisan schoolcore:install-report-presets || {
+    echo "WARNING: report presets did not install. Run: php artisan schoolcore:install-report-presets" >&2
+}
+
+echo "==> 8/11 Caching views"
 sudo -u "$PHP_USER" HOME=/var/www php artisan view:cache
 
-echo "==> 8/10 Storage link (idempotent)"
+echo "==> 9/11 Storage link (idempotent)"
 sudo -u "$PHP_USER" HOME=/var/www php artisan storage:link 2>/dev/null || true
 
-echo "==> 9/10 Ensuring queue worker is running"
+echo "==> 10/11 Ensuring queue worker is running"
 sudo install -m 644 "$APP_DIR/deploy/queue-worker.service" /etc/systemd/system/kairocore-queue.service
 sudo systemctl daemon-reload
 sudo systemctl enable kairocore-queue.service 2>/dev/null || true
