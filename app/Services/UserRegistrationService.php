@@ -25,10 +25,17 @@ use Modules\Admin\Services\TenantEmailConfigurationService;
 class UserRegistrationService
 {
     public const CATEGORY_ROLE_NAMES = [
-        'administrator' => 'Administrator',
-        'student' => 'Student',
+        'administrator' => 'System Administrator',
+        'school_administrator' => 'School Administrator',
         'teaching_staff' => 'Teaching Staff',
-        'non_teaching_staff' => 'Non-Teaching Staff',
+        'accounts_finance' => 'Accounts / Finance',
+        'student' => 'Student',
+        'librarian' => 'Librarian',
+        'houseparent' => 'Houseparent',
+        'hr' => 'HR',
+        'health' => 'Health',
+        'procurement' => 'Procurement',
+        'supporting_staff' => 'Supporting Staff',
     ];
 
     /**
