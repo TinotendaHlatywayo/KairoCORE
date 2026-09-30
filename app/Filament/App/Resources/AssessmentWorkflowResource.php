@@ -16,9 +16,12 @@ use Modules\Academics\Models\Course;
 use Modules\Academics\Models\Section;
 use Modules\Academics\Models\Subject;
 use Modules\Academics\Models\Term;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class AssessmentWorkflowResource extends Resource
 {
+    use ModulePermissionAccess;
+
     protected static ?string $model = AssessmentType::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-presentation-chart-bar';

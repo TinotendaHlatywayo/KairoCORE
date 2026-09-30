@@ -15,19 +15,19 @@ use Filament\Tables\Table;
 use Modules\Academics\Models\AcademicYear;
 use Modules\Promotion\Models\PromotionItem;
 use Modules\Promotion\Models\PromotionRun;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class PromotionRunResource extends Resource
 {
+    use ModulePermissionAccess;
+
     protected static ?string $model = PromotionRun::class;
 
     protected static bool $shouldRegisterNavigation = false;
 
     protected static ?string $navigationIcon = 'heroicon-o-arrow-trending-up';
 
-    public static function canAccess(): bool
-    {
-        return ModuleVisibilityManager::isPageVisible('academics', 'promotion');
-    }
+
 
     public static function getNavigationGroup(): ?string
     {

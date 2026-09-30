@@ -4,11 +4,13 @@ namespace App\Filament\App\Pages\Hr;
 
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Navigation\ModuleNavigationService;
-use App\Services\ModuleVisibilityManager;
 use Filament\Pages\Page;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class PayrollCompensationHub extends Page
 {
+    use ModulePermissionAccess;
+
     use ModuleAwareActiveNavigation;
 
     protected static string $view = 'filament.app.pages.hr.category-hub';
@@ -24,11 +26,6 @@ class PayrollCompensationHub extends Page
     protected static ?int $navigationSort = 2;
 
     protected static ?string $slug = 'hr-payroll-compensation';
-
-    public static function canAccess(): bool
-    {
-        return ModuleVisibilityManager::isModuleVisible('hr');
-    }
 
     public static function getNavigationLabel(): string
     {

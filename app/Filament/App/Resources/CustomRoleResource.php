@@ -16,9 +16,12 @@ use Filament\Tables\Table;
 use Modules\Admin\Models\CustomRole;
 use Modules\Admin\Services\AuditLogger;
 use Modules\Admin\Services\PermissionRegistry;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class CustomRoleResource extends Resource
 {
+    use ModulePermissionAccess;
+
     public static function getNavigationGroup(): ?string
     {
         return __('System Administration');
@@ -42,10 +45,7 @@ class CustomRoleResource extends Resource
     // Reached via the module contextual tabs, not the sidebar.
     protected static bool $shouldRegisterNavigation = false;
 
-    public static function canAccess(): bool
-    {
-        return PermissionRegistry::checkPermission('administration.manage_security');
-    }
+
 
     public static function form(Form $form): Form
     {

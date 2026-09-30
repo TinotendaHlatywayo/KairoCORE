@@ -15,9 +15,12 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Modules\Admin\Models\SystemAuditLog;
 use Modules\Admin\Services\PermissionRegistry;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class SystemAuditLogResource extends Resource
 {
+    use ModulePermissionAccess;
+
     public static function getNavigationGroup(): ?string
     {
         return __('System Administration');
@@ -40,10 +43,7 @@ class SystemAuditLogResource extends Resource
 
     // Reached via the module contextual tabs, not the sidebar.
 
-    public static function canAccess(): bool
-    {
-        return PermissionRegistry::checkPermission('administration.clear_caches');
-    }
+
 
     /**
      * Beautiful structured Infolist detail panel (Fixes empty/blank View modals) [1]

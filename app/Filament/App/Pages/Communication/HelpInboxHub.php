@@ -4,11 +4,13 @@ namespace App\Filament\App\Pages\Communication;
 
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Navigation\ModuleNavigationService;
-use App\Services\ModuleVisibilityManager;
 use Filament\Pages\Page;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class HelpInboxHub extends Page
 {
+    use ModulePermissionAccess;
+
     use ModuleAwareActiveNavigation;
 
     protected static string $view = 'filament.app.pages.communication.category-hub';
@@ -24,11 +26,6 @@ class HelpInboxHub extends Page
     protected static ?int $navigationSort = 4;
 
     protected static ?string $slug = 'communication-help-inbox';
-
-    public static function canAccess(): bool
-    {
-        return ModuleVisibilityManager::isModuleVisible('communication');
-    }
 
     public static function getNavigationLabel(): string
     {

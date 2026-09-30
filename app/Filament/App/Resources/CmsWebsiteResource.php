@@ -18,9 +18,12 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Modules\CMS\Models\CmsWebsite;
 use Modules\CMS\Services\CmsTemplateService;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class CmsWebsiteResource extends Resource
 {
+    use ModulePermissionAccess;
+
     public static function getNavigationGroup(): ?string
     {
         return __('Website');

@@ -4,11 +4,13 @@ namespace App\Filament\App\Pages\Health;
 
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Navigation\ModuleNavigationService;
-use App\Services\ModuleVisibilityManager;
 use Filament\Pages\Page;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class HealthRecordsHub extends Page
 {
+    use ModulePermissionAccess;
+
     use ModuleAwareActiveNavigation;
 
     protected static string $view = 'filament.app.pages.health.category-hub';
@@ -24,11 +26,6 @@ class HealthRecordsHub extends Page
     protected static ?int $navigationSort = 1;
 
     protected static ?string $slug = 'health-records';
-
-    public static function canAccess(): bool
-    {
-        return ModuleVisibilityManager::isModuleVisible('health');
-    }
 
     public static function getNavigationLabel(): string
     {

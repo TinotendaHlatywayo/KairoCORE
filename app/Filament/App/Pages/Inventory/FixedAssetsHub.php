@@ -4,11 +4,13 @@ namespace App\Filament\App\Pages\Inventory;
 
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Navigation\ModuleNavigationService;
-use App\Services\ModuleVisibilityManager;
 use Filament\Pages\Page;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class FixedAssetsHub extends Page
 {
+    use ModulePermissionAccess;
+
     use ModuleAwareActiveNavigation;
 
     protected static string $view = 'filament.app.pages.inventory.category-hub';
@@ -24,11 +26,6 @@ class FixedAssetsHub extends Page
     protected static ?int $navigationSort = 3;
 
     protected static ?string $slug = 'inventory-fixed-assets';
-
-    public static function canAccess(): bool
-    {
-        return ModuleVisibilityManager::isModuleVisible('inventory');
-    }
 
     public static function getNavigationLabel(): string
     {

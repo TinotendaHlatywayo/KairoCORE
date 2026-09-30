@@ -16,6 +16,7 @@ use Illuminate\Validation\Rules\Password;
 use Modules\Admin\Models\CustomRole;
 use Modules\Admin\Models\Department;
 use Modules\Admin\Services\PermissionRegistry;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 /**
  * Directory of individual user accounts with the administrator approval
@@ -27,6 +28,8 @@ use Modules\Admin\Services\PermissionRegistry;
  */
 class UserAccountResource extends Resource
 {
+    use ModulePermissionAccess;
+
     public static function getNavigationGroup(): ?string
     {
         return __('System Administration');
@@ -66,12 +69,7 @@ class UserAccountResource extends Resource
         return 'Accounts awaiting approval';
     }
 
-    public static function canAccess(): bool
-    {
-        return PermissionRegistry::checkPermission('administration.manage_users')
-            || PermissionRegistry::userCan(auth()->user(), 'users.approve')
-            || PermissionRegistry::userCan(auth()->user(), 'users.reject');
-    }
+
 
     public static function canApprove(): bool
     {

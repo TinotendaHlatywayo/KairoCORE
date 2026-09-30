@@ -4,11 +4,13 @@ namespace App\Filament\App\Pages\Knowledge;
 
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Navigation\ModuleNavigationService;
-use App\Services\ModuleVisibilityManager;
 use Filament\Pages\Page;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class KnowledgeHub extends Page
 {
+    use ModulePermissionAccess;
+
     use ModuleAwareActiveNavigation;
 
     protected static string $view = 'filament.app.pages.knowledge.category-hub';
@@ -24,11 +26,6 @@ class KnowledgeHub extends Page
     protected static ?int $navigationSort = 3;
 
     protected static ?string $slug = 'knowledge-knowledge';
-
-    public static function canAccess(): bool
-    {
-        return ModuleVisibilityManager::isModuleVisible('knowledge');
-    }
 
     public static function getNavigationLabel(): string
     {

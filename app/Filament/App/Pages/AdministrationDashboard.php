@@ -12,9 +12,12 @@ use Modules\Admin\Models\CustomRole;
 use Modules\Admin\Models\SystemAuditLog;
 use Modules\Admin\Models\SystemSetting;
 use Modules\Admin\Services\PermissionRegistry;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class AdministrationDashboard extends Page
 {
+    use ModulePermissionAccess;
+
     use ModuleAwareActiveNavigation;
 
     protected static ?string $navigationIcon = 'heroicon-o-cog-8-tooth';
@@ -39,10 +42,7 @@ class AdministrationDashboard extends Page
 
     // Strictly hides "Overview" from the navigation menu [1]
 
-    public static function canAccess(): bool
-    {
-        return PermissionRegistry::checkPermission('administration.view_module');
-    }
+
 
     public function getViewData(): array
     {

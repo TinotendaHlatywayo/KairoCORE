@@ -4,11 +4,13 @@ namespace App\Filament\App\Pages\Administration;
 
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Navigation\ModuleNavigationService;
-use App\Services\ModuleVisibilityManager;
 use Filament\Pages\Page;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class SystemSettingsHub extends Page
 {
+    use ModulePermissionAccess;
+
     use ModuleAwareActiveNavigation;
 
     protected static string $view = 'filament.app.pages.administration.category-hub';
@@ -24,11 +26,6 @@ class SystemSettingsHub extends Page
     protected static ?int $navigationSort = 1;
 
     protected static ?string $slug = 'admin-system-settings';
-
-    public static function canAccess(): bool
-    {
-        return ModuleVisibilityManager::isModuleVisible('administration');
-    }
 
     public static function getNavigationLabel(): string
     {

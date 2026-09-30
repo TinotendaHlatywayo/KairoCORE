@@ -4,11 +4,13 @@ namespace App\Filament\App\Pages\Exams;
 
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Navigation\ModuleNavigationService;
-use App\Services\ModuleVisibilityManager;
 use Filament\Pages\Page;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class ReportsPublishingHub extends Page
 {
+    use ModulePermissionAccess;
+
     use ModuleAwareActiveNavigation;
 
     protected static string $view = 'filament.app.pages.exams.category-hub';
@@ -24,11 +26,6 @@ class ReportsPublishingHub extends Page
     protected static ?int $navigationSort = 3;
 
     protected static ?string $slug = 'exams-reports-publishing';
-
-    public static function canAccess(): bool
-    {
-        return ModuleVisibilityManager::isModuleVisible('exams');
-    }
 
     public static function getNavigationLabel(): string
     {

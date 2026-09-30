@@ -31,9 +31,12 @@ use Modules\Admissions\Models\ApplicationDocument;
 use Modules\Students\Models\Enrollment;
 use Modules\Students\Models\Student;
 use Modules\Students\Models\StudentDocument;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class ApplicationResource extends Resource
 {
+    use ModulePermissionAccess;
+
     public static function getNavigationGroup(): ?string
     {
         return __('Admissions');
@@ -43,10 +46,7 @@ class ApplicationResource extends Resource
 
     protected static ?string $model = Application::class;
 
-    public static function canAccess(): bool
-    {
-        return ModuleVisibilityManager::isPageVisible('admissions', 'applications');
-    }
+
 
     public static function shouldRegisterNavigation(): bool
     {
