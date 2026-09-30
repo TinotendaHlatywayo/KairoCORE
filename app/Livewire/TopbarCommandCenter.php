@@ -814,7 +814,7 @@ class TopbarCommandCenter extends Component
             if (str_contains($name, 'admin')) {
                 return 'administrator';
             }
-            if (str_contains($name, 'teacher')) {
+            if (str_contains($name, 'teach')) {
                 return 'teaching_staff';
             }
             if (str_contains($name, 'student')) {
@@ -827,7 +827,7 @@ class TopbarCommandCenter extends Component
             if (str_contains($name, 'admin')) {
                 return 'administrator';
             }
-            if (str_contains($name, 'teacher')) {
+            if (str_contains($name, 'teach')) {
                 return 'teaching_staff';
             }
         }
