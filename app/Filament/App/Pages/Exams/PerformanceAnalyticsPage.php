@@ -3,7 +3,6 @@
 namespace App\Filament\App\Pages\Exams;
 
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
-use App\Services\ModuleVisibilityManager;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
@@ -19,6 +18,7 @@ use Modules\Academics\Models\Subject;
 use Modules\Academics\Models\Term;
 use Modules\Academics\Services\GradingScaleResolver;
 use Modules\Students\Models\Enrollment;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 /**
  * Student performance analytics for the whole school, a grade/form level or an
@@ -26,6 +26,8 @@ use Modules\Students\Models\Enrollment;
  */
 class PerformanceAnalyticsPage extends Page implements HasForms
 {
+    use ModulePermissionAccess;
+
     use InteractsWithForms;
     use ModuleAwareActiveNavigation;
 
@@ -51,10 +53,6 @@ class PerformanceAnalyticsPage extends Page implements HasForms
 
     public ?int $termId = null;
 
-    public static function canAccess(): bool
-    {
-        return ModuleVisibilityManager::isModuleVisible('exams');
-    }
 
     public static function getNavigationLabel(): string
     {

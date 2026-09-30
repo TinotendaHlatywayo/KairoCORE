@@ -11,9 +11,12 @@ use Modules\Finance\Models\Payment;
 use Modules\Finance\Models\SchoolBankAccount;
 use Modules\Finance\Services\FinancialAnalyticsEngine;
 use Modules\HR\Services\PayrollCalculationService;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class FinancialStatementPage extends Page
 {
+    use ModulePermissionAccess;
+
     protected static string $view = 'filament.app.pages.finance.financial-statement';
 
     protected static ?string $navigationIcon = 'heroicon-o-document-chart-bar';
@@ -26,10 +29,6 @@ class FinancialStatementPage extends Page
 
     protected static ?string $slug = 'financial-statements';
 
-    public static function canAccess(): bool
-    {
-        return ModuleVisibilityManager::isModuleVisible('finance');
-    }
 
     public static function getNavigationLabel(): string
     {

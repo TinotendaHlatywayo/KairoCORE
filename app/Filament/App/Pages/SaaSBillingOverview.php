@@ -19,9 +19,12 @@ use Modules\SaaS\Models\SaaSTransaction;
 use Modules\SaaS\Services\BillingService;
 use Modules\SaaS\Services\GatewayResolver;
 use Modules\SaaS\Services\SubscriptionManager;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class SaaSBillingOverview extends Page
 {
+    use ModulePermissionAccess;
+
     use ModuleAwareActiveNavigation;
     use WithFileUploads;
 
@@ -70,12 +73,6 @@ class SaaSBillingOverview extends Page
 
     public ?TemporaryUploadedFile $uploadedReceiptFile = null;
 
-    public static function canAccess(): bool
-    {
-        $user = Auth::user();
-
-        return Auth::check() && $user !== null && $user->school_id !== null;
-    }
 
     public static function shouldRegisterNavigation(): bool
     {

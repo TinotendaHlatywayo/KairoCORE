@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Modules\Library\Filament\Resources;
 
 use App\Models\User;
-use App\Services\ModuleVisibilityManager;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -17,9 +16,12 @@ use Modules\Library\Models\LibraryBook;
 use Modules\Library\Models\LibraryBookCopy;
 use Modules\Library\Models\LibraryIssue;
 use Modules\Students\Models\Student;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class LibraryIssueResource extends Resource
 {
+    use ModulePermissionAccess;
+
     public static function getNavigationGroup(): ?string
     {
         return __('Library');
@@ -40,10 +42,6 @@ class LibraryIssueResource extends Resource
 
     protected static bool $shouldRegisterNavigation = false;
 
-    public static function canAccess(): bool
-    {
-        return ModuleVisibilityManager::isModuleVisible('library');
-    }
 
     public static function form(Form $form): Form
     {
