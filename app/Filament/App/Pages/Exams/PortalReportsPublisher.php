@@ -3,11 +3,13 @@
 namespace App\Filament\App\Pages\Exams;
 
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
-use App\Services\ModuleVisibilityManager;
 use Filament\Pages\Page;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class PortalReportsPublisher extends Page
 {
+    use ModulePermissionAccess;
+
     use ModuleAwareActiveNavigation;
 
     protected static string $view = 'filament.app.pages.exams.portal-reports-publisher';
@@ -26,10 +28,6 @@ class PortalReportsPublisher extends Page
 
     protected static ?string $slug = 'exams-portal-reports-publisher';
 
-    public static function canAccess(): bool
-    {
-        return ModuleVisibilityManager::isModuleVisible('exams');
-    }
 
     public static function getNavigationLabel(): string
     {

@@ -2,14 +2,16 @@
 
 namespace App\Filament\App\Pages\Finance;
 
-use App\Services\ModuleVisibilityManager;
 use Carbon\Carbon;
 use Filament\Pages\Page;
 use Modules\Finance\Services\StudentFinancialHistoryService;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class FeeCollectionsPage extends Page
 {
+    use ModulePermissionAccess;
+
     protected static string $view = 'filament.app.pages.finance.fee-collections';
 
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
@@ -24,10 +26,6 @@ class FeeCollectionsPage extends Page
 
     protected static ?string $slug = 'fee-collections';
 
-    public static function canAccess(): bool
-    {
-        return ModuleVisibilityManager::isModuleVisible('finance');
-    }
 
     public string $range = 'today';
 
