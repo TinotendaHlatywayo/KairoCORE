@@ -6,9 +6,21 @@ use App\Http\Middleware\ForceSessionCookieScope;
 use App\Http\Middleware\NoStoreHtml;
 use App\Http\Middleware\ResolveTenant;
 use App\Http\Middleware\SetUserLocale;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Session\TokenMismatchException;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
+use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -70,35 +82,57 @@ return Application::configure(basePath: dirname(__DIR__))
         });
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        $exceptions->renderable(function (\Symfony\Component\HttpKernel\Exception\NotFoundHttpException $e) {
+        $exceptions->renderable(function (NotFoundHttpException $e) {
             if (request()->expectsJson() || request()->is('api/*')) {
                 return response()->json(['message' => 'The requested resource was not found.'], 404);
             }
+
             return response()->view('errors.404', [], 404);
         });
 
-        $exceptions->renderable(function (\Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException $e) {
+        $exceptions->renderable(function (TooManyRequestsHttpException $e) {
             if (request()->expectsJson() || request()->is('api/*')) {
                 return response()->json(['message' => 'Too many requests. Please slow down.'], 429);
             }
+
             return response()->view('errors.429', [], 429);
         });
 
-        $exceptions->renderable(function (\Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException $e) {
+        $exceptions->renderable(function (AccessDeniedHttpException $e) {
             if (request()->expectsJson() || request()->is('api/*')) {
                 return response()->json(['message' => 'Access denied.'], 403);
             }
-            return response()->view('errors.419', [], 419);
+
+            return response()->view('errors.403', [], 403);
         });
 
-        $exceptions->renderable(function (\Illuminate\Session\TokenMismatchException $e) {
+        // A page the catalogue says this person may not open refuses with
+        // abort(403), which Laravel raises as a plain HttpException rather than
+        // an AccessDeniedHttpException. Without this the denial fell through to
+        // the framework's bare error page, so a perfectly ordinary outcome —
+        // following an old bookmark after a role changed — looked like a crash.
+        // Any other status returns null so it keeps its own handling.
+        $exceptions->renderable(function (HttpException $e) {
+            if ($e->getStatusCode() !== 403) {
+                return null;
+            }
+
+            if (request()->expectsJson() || request()->is('api/*')) {
+                return response()->json(['message' => 'Access denied.'], 403);
+            }
+
+            return response()->view('errors.403', [], 403);
+        });
+
+        $exceptions->renderable(function (TokenMismatchException $e) {
             if (request()->expectsJson() || request()->is('api/*')) {
                 return response()->json(['message' => 'Page expired. Please try again.'], 419);
             }
+
             return response()->view('errors.419', [], 419);
         });
 
-        $exceptions->renderable(function (\Exception $e) {
+        $exceptions->renderable(function (Exception $e) {
             // NEVER swallow framework-managed exceptions: returning null here
             // falls through to Laravel's default handling, which is what makes
             // AuthenticationException redirect guests to the LOGIN page,
@@ -106,12 +140,12 @@ return Application::configure(basePath: dirname(__DIR__))
             // status codes. Turning them into a 500 page broke the login
             // redirect for unauthenticated workspace visits.
             if (
-                $e instanceof \Illuminate\Auth\AuthenticationException
-                || $e instanceof \Illuminate\Auth\Access\AuthorizationException
-                || $e instanceof \Illuminate\Validation\ValidationException
-                || $e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException
-                || $e instanceof \Illuminate\Http\Exceptions\HttpResponseException
-                || $e instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface
+                $e instanceof AuthenticationException
+                || $e instanceof AuthorizationException
+                || $e instanceof ValidationException
+                || $e instanceof ModelNotFoundException
+                || $e instanceof HttpResponseException
+                || $e instanceof HttpExceptionInterface
             ) {
                 return null;
             }
@@ -119,13 +153,15 @@ return Application::configure(basePath: dirname(__DIR__))
             if (request()->expectsJson() || request()->is('api/*')) {
                 return response()->json(['message' => 'An internal server error occurred.'], 500);
             }
+
             return response()->view('errors.500', [], 500);
         });
 
-        $exceptions->renderable(function (\Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException $e) {
+        $exceptions->renderable(function (ServiceUnavailableHttpException $e) {
             if (request()->expectsJson() || request()->is('api/*')) {
                 return response()->json(['message' => 'Service temporarily unavailable.'], 503);
             }
+
             return response()->view('errors.503', [], 503);
         });
     })->create();

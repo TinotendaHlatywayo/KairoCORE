@@ -13,7 +13,9 @@ class ListCustomRoles extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make()->slideOver(),
+            Actions\CreateAction::make()
+                ->slideOver()
+                ->mutateFormDataUsing(fn (array $data): array => CustomRoleResource::dehydratePermissions($data)),
         ];
     }
 }

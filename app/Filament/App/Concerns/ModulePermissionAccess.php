@@ -4,6 +4,9 @@ namespace App\Filament\App\Concerns;
 
 use App\Security\CapabilityCatalog;
 use App\Services\ModuleVisibilityManager;
+use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Tabs\Tab;
 use Illuminate\Database\Eloquent\Model;
 use Modules\Admin\Services\PermissionRegistry;
 
@@ -149,5 +152,122 @@ trait ModulePermissionAccess
     public static function capabilityRecord(): ?array
     {
         return CapabilityCatalog::pageForClass(static::class);
+    }
+
+    /**
+     * Grouped permission editor tabs for roles and user overrides.
+     *
+     * @return array<int, Tab>
+     */
+    public static function permissionEditorTabs(string $fieldPrefix = 'permissions'): array
+    {
+        $tabs = [];
+
+        foreach (CapabilityCatalog::forEditor() as $mod) {
+            $modKey = $mod['key'];
+            $tabSchema = [];
+
+            // Module-wide actions
+            if (! empty($mod['actions'])) {
+                $options = [];
+                $descriptions = [];
+                foreach ($mod['actions'] as $act) {
+                    $options[$act['key']] = $act['label'];
+                    $descriptions[$act['key']] = $act['help'];
+                }
+                $tabSchema[] = Section::make(__('Module-Wide Controls'))
+                    ->description($mod['description'])
+                    ->schema([
+                        CheckboxList::make($fieldPrefix.'_mod_'.$modKey)
+                            ->label(__('Module-Wide Actions'))
+                            ->options($options)
+                            ->descriptions($descriptions)
+                            ->columns(3)
+                            ->gridDirection('row')
+                            ->bulkToggleable(),
+                    ]);
+            }
+
+            // Categories & Pages
+            foreach ($mod['categories'] as $cat) {
+                $catSchema = [];
+                foreach ($cat['pages'] as $page) {
+                    $pageOptions = [];
+                    $pageDescriptions = [];
+                    foreach ($page['actions'] as $act) {
+                        $pageOptions[$act['key']] = $act['label'];
+                        $pageDescriptions[$act['key']] = $act['help'];
+                    }
+
+                    $catSchema[] = Section::make($page['label'])
+                        ->description($page['purpose'])
+                        ->compact()
+                        ->schema([
+                            CheckboxList::make($fieldPrefix.'_page_'.$modKey.'_'.$page['key'])
+                                ->label(__('Page Operations'))
+                                ->options($pageOptions)
+                                ->descriptions($pageDescriptions)
+                                ->columns(3)
+                                ->gridDirection('row'),
+                        ]);
+                }
+
+                $tabSchema[] = Section::make($cat['label'])
+                    ->schema($catSchema)
+                    ->collapsible();
+            }
+
+            $tabs[] = Tab::make($mod['label'])
+                ->badge(count($mod['categories']))
+                ->schema($tabSchema);
+        }
+
+        return $tabs;
+    }
+
+    public static function hydratePermissions(array $data, string $sourceKey = 'permissions', string $fieldPrefix = 'permissions'): array
+    {
+        $perms = (array) ($data[$sourceKey] ?? []);
+        $data[$fieldPrefix.'_special'] = array_values(array_intersect($perms, ['*', 'student_portal.access']));
+
+        foreach (CapabilityCatalog::forEditor() as $mod) {
+            $modKey = $mod['key'];
+            if (! empty($mod['actions'])) {
+                $keys = array_column($mod['actions'], 'key');
+                $data[$fieldPrefix.'_mod_'.$modKey] = array_values(array_intersect($perms, $keys));
+            }
+            foreach ($mod['categories'] as $cat) {
+                foreach ($cat['pages'] as $page) {
+                    $keys = array_column($page['actions'], 'key');
+                    $data[$fieldPrefix.'_page_'.$modKey.'_'.$page['key']] = array_values(array_intersect($perms, $keys));
+                }
+            }
+        }
+
+        return $data;
+    }
+
+    public static function dehydratePermissions(array $data, string $targetKey = 'permissions', string $fieldPrefix = 'permissions'): array
+    {
+        $permissions = [];
+        if (! empty($data[$fieldPrefix.'_special'])) {
+            foreach ((array) $data[$fieldPrefix.'_special'] as $p) {
+                $permissions[] = $p;
+            }
+        }
+        foreach ($data as $key => $val) {
+            if (str_starts_with($key, $fieldPrefix.'_mod_') || str_starts_with($key, $fieldPrefix.'_page_')) {
+                if (is_array($val)) {
+                    foreach ($val as $p) {
+                        $permissions[] = $p;
+                    }
+                }
+                unset($data[$key]);
+            }
+        }
+        unset($data[$fieldPrefix.'_special']);
+        $data[$targetKey] = array_values(array_unique($permissions));
+
+        return $data;
     }
 }
