@@ -14,15 +14,15 @@ use Modules\Academics\Models\Section;
 use Modules\Students\Models\Enrollment;
 use Modules\Students\Models\ScreeningRule;
 use Modules\Students\Models\Student;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class PromoteStudents extends Page implements Forms\Contracts\HasForms
 {
+    use ModulePermissionAccess;
+
     use Forms\Concerns\InteractsWithForms;
 
-    public static function canAccess(): bool
-    {
-        return ModuleVisibilityManager::isPageVisible('students', 'promotion');
-    }
+
 
     protected static ?string $navigationIcon = 'heroicon-o-arrow-trending-up';
 

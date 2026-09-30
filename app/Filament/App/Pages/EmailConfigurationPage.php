@@ -9,6 +9,7 @@ use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Modules\Admin\Services\PermissionRegistry;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 /**
  * Central "Email Configuration" page under System Administration.
@@ -20,6 +21,8 @@ use Modules\Admin\Services\PermissionRegistry;
  */
 class EmailConfigurationPage extends Page implements HasForms
 {
+    use ModulePermissionAccess;
+
     use InteractsWithForms;
     use ManagesEmailConfiguration;
 
@@ -50,11 +53,7 @@ class EmailConfigurationPage extends Page implements HasForms
     // Reached via the module contextual tabs, not the sidebar.
     protected static bool $shouldRegisterNavigation = false;
 
-    public static function canAccess(): bool
-    {
-        return PermissionRegistry::checkPermission('administration.manage_email_config')
-            || PermissionRegistry::checkPermission('administration.manage_settings');
-    }
+
 
     public function mount(): void
     {

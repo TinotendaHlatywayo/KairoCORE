@@ -4,11 +4,13 @@ namespace App\Filament\App\Pages\Reports;
 
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Navigation\ModuleNavigationService;
-use App\Services\ModuleVisibilityManager;
 use Filament\Pages\Page;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class ReportsHub extends Page
 {
+    use ModulePermissionAccess;
+
     use ModuleAwareActiveNavigation;
 
     protected static string $view = 'filament.app.pages.reports.category-hub';
@@ -24,11 +26,6 @@ class ReportsHub extends Page
     protected static ?int $navigationSort = 1;
 
     protected static ?string $slug = 'reports-reports';
-
-    public static function canAccess(): bool
-    {
-        return ModuleVisibilityManager::isModuleVisible('reports');
-    }
 
     public static function getNavigationLabel(): string
     {

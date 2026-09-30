@@ -15,9 +15,12 @@ use Filament\Tables\Table;
 use Illuminate\Support\Facades\DB;
 use Modules\Academics\Models\Subject;
 use Modules\Admin\Services\PermissionRegistry;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class SubjectResource extends Resource
 {
+    use ModulePermissionAccess;
+
     public static function getNavigationGroup(): ?string
     {
         return __('Academics');
@@ -28,18 +31,7 @@ class SubjectResource extends Resource
     // Reached via the module contextual tabs, not the sidebar.
     protected static bool $shouldRegisterNavigation = false;
 
-    public static function canAccess(): bool
-    {
-        if (! ModuleVisibilityManager::isVisible('academics')) {
-            return false;
-        }
 
-        if (class_exists('\Modules\Admin\Services\PermissionRegistry')) {
-            return PermissionRegistry::checkPermission('academic_ops.manage_subjects');
-        }
-
-        return true;
-    }
 
     protected static ?string $navigationIcon = 'heroicon-o-book-open';
 

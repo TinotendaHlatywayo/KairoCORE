@@ -11,9 +11,12 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Modules\Admin\Services\PermissionRegistry;
 use Modules\DigitalAssessment\Services\GamificationService;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class GamificationSettingsPage extends Page implements HasForms
 {
+    use ModulePermissionAccess;
+
     use InteractsWithForms;
 
     protected static string $view = 'filament.app.pages.gamification-settings';
@@ -32,14 +35,7 @@ class GamificationSettingsPage extends Page implements HasForms
 
     public ?array $data = [];
 
-    public static function canAccess(): bool
-    {
-        if (ModuleVisibilityManager::isSchoolAdmin()) {
-            return true;
-        }
 
-        return ModuleVisibilityManager::isModuleVisible('digital_assessment') && PermissionRegistry::checkPermission('administration.manage_settings');
-    }
 
     public function mount(): void
     {

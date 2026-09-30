@@ -5,7 +5,6 @@ namespace App\Filament\App\Pages;
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Filament\App\Concerns\ModulePermissionAccess;
 use App\Models\User;
-use App\Services\ModuleVisibilityManager;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -32,11 +31,6 @@ class AnalyticsExplorer extends Page
     public static function getNavigationLabel(): string
     {
         return __(static::$navigationLabel);
-    }
-
-    public static function canAccess(): bool
-    {
-        return ModuleVisibilityManager::isModuleVisible('reports');
     }
 
     protected static ?string $title = 'Operational Analytics Explorer';

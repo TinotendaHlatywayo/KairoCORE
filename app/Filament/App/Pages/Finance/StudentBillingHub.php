@@ -4,13 +4,15 @@ namespace App\Filament\App\Pages\Finance;
 
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Navigation\ModuleNavigationService;
-use App\Services\ModuleVisibilityManager;
 use Filament\Pages\Page;
 use Modules\Finance\Models\Invoice;
 use Modules\Students\Models\Student;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class StudentBillingHub extends Page
 {
+    use ModulePermissionAccess;
+
     use ModuleAwareActiveNavigation;
 
     protected static string $view = 'filament.app.pages.finance.student-billing-hub';
@@ -26,11 +28,6 @@ class StudentBillingHub extends Page
     protected static ?int $navigationSort = 2;
 
     protected static ?string $slug = 'finance-student-billing';
-
-    public static function canAccess(): bool
-    {
-        return ModuleVisibilityManager::isModuleVisible('finance');
-    }
 
     public static function getNavigationLabel(): string
     {

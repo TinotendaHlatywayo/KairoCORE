@@ -6,7 +6,6 @@ use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Filament\App\Concerns\ModulePermissionAccess;
 use App\Filament\App\Resources\GeneratedReportResource;
 use App\Models\User;
-use App\Services\ModuleVisibilityManager;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\Grid;
@@ -46,11 +45,6 @@ class ReportGeneratorPage extends Page
     public static function getNavigationLabel(): string
     {
         return __(static::$navigationLabel);
-    }
-
-    public static function canAccess(): bool
-    {
-        return ModuleVisibilityManager::isModuleVisible('reports');
     }
 
     protected static ?string $title = 'Enterprise Report Designer & Generator';

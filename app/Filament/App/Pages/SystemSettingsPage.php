@@ -29,9 +29,12 @@ use Modules\Admin\Models\SystemSetting;
 use Modules\Admin\Services\AuditLogger;
 use Modules\Admin\Services\PermissionRegistry;
 use Modules\Finance\Models\SchoolBankAccount;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class SystemSettingsPage extends Page implements HasForms
 {
+    use ModulePermissionAccess;
+
     use InteractsWithForms;
     use ManagesEmailConfiguration;
 
@@ -60,10 +63,7 @@ class SystemSettingsPage extends Page implements HasForms
     // Reached via the module contextual tabs, not the sidebar.
     protected static bool $shouldRegisterNavigation = false;
 
-    public static function canAccess(): bool
-    {
-        return PermissionRegistry::checkPermission('administration.manage_settings');
-    }
+
 
     public function mount(): void
     {

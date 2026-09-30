@@ -14,9 +14,12 @@ use Filament\Tables\Table;
 use Illuminate\Support\Facades\DB;
 use Modules\Admin\Models\Department;
 use Modules\Admin\Services\PermissionRegistry;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class DepartmentResource extends Resource
 {
+    use ModulePermissionAccess;
+
     public static function getNavigationGroup(): ?string
     {
         return __('System Administration');
@@ -40,10 +43,7 @@ class DepartmentResource extends Resource
     // Reached via the module contextual tabs, not the sidebar.
     protected static bool $shouldRegisterNavigation = false;
 
-    public static function canAccess(): bool
-    {
-        return PermissionRegistry::checkPermission('administration.manage_users');
-    }
+
 
     public static function form(Form $form): Form
     {

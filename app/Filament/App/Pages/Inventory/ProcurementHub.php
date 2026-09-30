@@ -4,11 +4,13 @@ namespace App\Filament\App\Pages\Inventory;
 
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Navigation\ModuleNavigationService;
-use App\Services\ModuleVisibilityManager;
 use Filament\Pages\Page;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class ProcurementHub extends Page
 {
+    use ModulePermissionAccess;
+
     use ModuleAwareActiveNavigation;
 
     protected static string $view = 'filament.app.pages.inventory.category-hub';
@@ -24,11 +26,6 @@ class ProcurementHub extends Page
     protected static ?int $navigationSort = 2;
 
     protected static ?string $slug = 'inventory-procurement';
-
-    public static function canAccess(): bool
-    {
-        return ModuleVisibilityManager::isModuleVisible('inventory');
-    }
 
     public static function getNavigationLabel(): string
     {

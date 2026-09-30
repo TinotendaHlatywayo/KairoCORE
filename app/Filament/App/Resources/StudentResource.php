@@ -26,9 +26,12 @@ use Modules\Academics\Models\Section;
 use Modules\Admin\Services\PermissionRegistry;
 use Modules\Finance\Models\FeeWaiver;
 use Modules\Students\Models\Student;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class StudentResource extends Resource
 {
+    use ModulePermissionAccess;
+
     public static function getNavigationGroup(): ?string
     {
         return __('Students');
@@ -44,18 +47,7 @@ class StudentResource extends Resource
 
     protected static ?int $navigationSort = 1;
 
-    public static function canAccess(): bool
-    {
-        if (! ModuleVisibilityManager::isVisible('students')) {
-            return false;
-        }
 
-        if (class_exists('\Modules\Admin\Services\PermissionRegistry')) {
-            return PermissionRegistry::checkPermission('academic_ops.manage_enrolment');
-        }
-
-        return true;
-    }
 
     public static function getNavigationLabel(): string
     {

@@ -4,11 +4,13 @@ namespace App\Filament\App\Pages\Boarding;
 
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Navigation\ModuleNavigationService;
-use App\Services\ModuleVisibilityManager;
 use Filament\Pages\Page;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class WelfareHub extends Page
 {
+    use ModulePermissionAccess;
+
     use ModuleAwareActiveNavigation;
 
     protected static string $view = 'filament.app.pages.boarding.category-hub';
@@ -24,11 +26,6 @@ class WelfareHub extends Page
     protected static ?int $navigationSort = 2;
 
     protected static ?string $slug = 'boarding-welfare';
-
-    public static function canAccess(): bool
-    {
-        return ModuleVisibilityManager::isModuleVisible('boarding');
-    }
 
     public static function getNavigationLabel(): string
     {

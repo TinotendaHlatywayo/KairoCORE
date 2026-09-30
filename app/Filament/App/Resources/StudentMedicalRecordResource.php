@@ -14,9 +14,12 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Modules\Admin\Services\PermissionRegistry;
 use Modules\Clinic\Models\StudentMedicalRecord;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class StudentMedicalRecordResource extends Resource
 {
+    use ModulePermissionAccess;
+
     public static function getNavigationGroup(): ?string
     {
         return __('Health & Safety');
@@ -33,18 +36,7 @@ class StudentMedicalRecordResource extends Resource
     // Reached via the module contextual tabs, not the sidebar.
     protected static bool $shouldRegisterNavigation = false;
 
-    public static function canAccess(): bool
-    {
-        if (! ModuleVisibilityManager::isVisible('clinic')) {
-            return false;
-        }
 
-        if (class_exists('\Modules\Admin\Services\PermissionRegistry')) {
-            return PermissionRegistry::checkPermission('clinic.view_medical_profiles');
-        }
-
-        return true;
-    }
 
     public static function form(Form $form): Form
     {

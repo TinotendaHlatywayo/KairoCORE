@@ -19,9 +19,12 @@ use Modules\Academics\Models\Term;
 use Modules\Admin\Services\PermissionRegistry;
 use Modules\Timetables\Models\TimeSlot;
 use Modules\Timetables\Models\TimetableLesson;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class TimetableLessonResource extends Resource
 {
+    use ModulePermissionAccess;
+
     public static function getNavigationGroup(): ?string
     {
         return __('Academics');
@@ -32,18 +35,7 @@ class TimetableLessonResource extends Resource
     // Reached via the module contextual tabs, not the sidebar.
     protected static bool $shouldRegisterNavigation = false;
 
-    public static function canAccess(): bool
-    {
-        if (! ModuleVisibilityManager::isVisible('academics')) {
-            return false;
-        }
 
-        if (class_exists('\Modules\Admin\Services\PermissionRegistry')) {
-            return PermissionRegistry::checkPermission('academic_ops.manage_timetable');
-        }
-
-        return true;
-    }
 
     protected static ?string $navigationIcon = 'heroicon-o-calendar';
 

@@ -13,6 +13,7 @@ use App\Filament\App\Pages\AdministrationDashboard;
 use App\Filament\App\Pages\AdmissionSettingsPage;
 use App\Filament\App\Pages\Boarding\AccommodationHub;
 use App\Filament\App\Pages\Boarding\WelfareHub;
+use App\Filament\App\Pages\AnalyticsExplorer;
 use App\Filament\App\Pages\Communication\CommunityHub;
 use App\Filament\App\Pages\Communication\HelpInboxHub;
 use App\Filament\App\Pages\Communication\ScheduleTasksHub;
@@ -27,6 +28,7 @@ use App\Filament\App\Pages\ExecutiveFinancialDashboard;
 use App\Filament\App\Pages\Finance\CoreAccountingHub;
 use App\Filament\App\Pages\Finance\ExpensesPurchasingHub;
 use App\Filament\App\Pages\Finance\FeeCollectionsPage;
+use App\Filament\App\Pages\Finance\FinancialStatementPage;
 use App\Filament\App\Pages\Finance\StudentBillingHub;
 use App\Filament\App\Pages\Finance\StudentFinancialHistoryPage;
 use App\Filament\App\Pages\Health\HealthRecordsHub;
@@ -44,6 +46,8 @@ use App\Filament\App\Pages\Lms\LmsHub;
 use App\Filament\App\Pages\MyDay;
 use App\Filament\App\Pages\ReportingDashboard;
 use App\Filament\App\Pages\Reports\ReportsHub;
+use App\Filament\App\Pages\ReportGeneratorPage;
+use App\Filament\App\Pages\SaaS\SaaSHub;
 use App\Filament\App\Pages\SaaSBillingOverview;
 use App\Filament\App\Pages\Schedule;
 use App\Filament\App\Pages\SystemSettingsPage;
@@ -73,6 +77,7 @@ use App\Filament\App\Resources\DigitalAssessmentResource;
 use App\Filament\App\Resources\DisciplinaryCaseResource;
 use App\Filament\App\Resources\EmployeeAssetResource;
 use App\Filament\App\Resources\EmployeeResource;
+use App\Filament\App\Resources\EnterpriseReportTemplateResource;
 use App\Filament\App\Resources\EventCalendarResource;
 use App\Filament\App\Resources\ExpenseResource;
 use App\Filament\App\Resources\FeeCategoryResource;
@@ -81,6 +86,7 @@ use App\Filament\App\Resources\FeeStructureResource;
 use App\Filament\App\Resources\FeeWaiverResource;
 use App\Filament\App\Resources\FinanceDocumentTemplateResource;
 use App\Filament\App\Resources\FixedAssetResource;
+use App\Filament\App\Resources\GeneratedReportResource;
 use App\Filament\App\Resources\GradingScaleResource;
 use App\Filament\App\Resources\HelpdeskTicketResource;
 use App\Filament\App\Resources\HomeworkResource;
@@ -276,8 +282,8 @@ class ModuleNavigation
                     ['label' => __('Purchase Orders'), 'resource' => PurchaseOrderResource::class, 'group' => __('Procurement')],
                     ['label' => __('Goods Received'), 'resource' => GoodsReceivedResource::class, 'group' => __('Procurement')],
                     ['label' => __('Suppliers'), 'resource' => SupplierResource::class, 'group' => __('Procurement')],
-                    ['label' => __('Fixed Assets'), 'page' => FixedAssetsHub::class, 'group' => __('Fixed Assets'), 'hub' => true],
-                    ['label' => __('Fixed Assets'), 'resource' => FixedAssetResource::class, 'group' => __('Fixed Assets')],
+                    ['label' => __('Fixed Assets'), 'page' => FixedAssetsHub::class, 'key' => 'fixed_assets', 'group' => __('Fixed Assets'), 'hub' => true],
+                    ['label' => __('Fixed Assets'), 'resource' => FixedAssetResource::class, 'key' => 'fixed_asset_register', 'group' => __('Fixed Assets')],
                     ['label' => __('Asset Maintenance'), 'resource' => AssetMaintenanceResource::class, 'group' => __('Fixed Assets')],
                 ],
                 'more' => [],
@@ -342,8 +348,6 @@ class ModuleNavigation
                 'tabs' => [
                     ['label' => __('Overview'), 'page' => CommunicationCenter::class, 'group' => __('Overview'), 'icon' => 'heroicon-o-squares-2x2'],
                     ['label' => __('Schedule & Tasks'), 'page' => ScheduleTasksHub::class, 'group' => __('Schedule & Tasks'), 'hub' => true],
-                    ['label' => __('Schedule'), 'page' => Schedule::class, 'group' => __('Schedule & Tasks'), 'icon' => 'heroicon-o-calendar-days'],
-                    ['label' => __('My Day'), 'page' => MyDay::class, 'group' => __('Schedule & Tasks'), 'icon' => 'heroicon-o-check-circle'],
                     ['label' => __('Community & Engagement'), 'page' => CommunityHub::class, 'group' => __('Community & Engagement'), 'hub' => true],
                     ['label' => __('Announcements'), 'resource' => AnnouncementResource::class, 'group' => __('Community & Engagement')],
                     ['label' => __('Events'), 'resource' => EventCalendarResource::class, 'group' => __('Community & Engagement')],
@@ -406,8 +410,8 @@ class ModuleNavigation
                 'description' => __('Settings, roles, departments and audit trails.'),
                 'tabs' => [
                     ['label' => __('Overview'), 'page' => AdministrationDashboard::class, 'group' => __('Overview')],
-                    ['label' => __('System Settings'), 'page' => SystemSettingsHub::class, 'group' => __('System Settings'), 'hub' => true],
-                    ['label' => __('System Settings'), 'page' => SystemSettingsPage::class, 'group' => __('System Settings')],
+                    ['label' => __('System Settings'), 'page' => SystemSettingsHub::class, 'key' => 'system_settings', 'group' => __('System Settings'), 'hub' => true],
+                    ['label' => __('System Settings'), 'page' => SystemSettingsPage::class, 'key' => 'system_settings_panel', 'group' => __('System Settings')],
                     ['label' => __('Email Configuration'), 'page' => EmailConfigurationPage::class, 'group' => __('System Settings')],
                     ['label' => __('User Management'), 'page' => UserManagementHub::class, 'group' => __('User Management'), 'hub' => true],
                     ['label' => __('User Accounts'), 'resource' => UserAccountResource::class, 'group' => __('User Management')],

@@ -3,14 +3,45 @@
 namespace Modules\Admin\Services;
 
 use App\Models\User;
+use App\Security\CapabilityCatalog;
+use App\Security\RoleCatalogue;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Modules\Admin\Models\CustomRole;
 use Modules\Admin\Models\Department;
 
+/**
+ * Answers one question everywhere in the system: may this person do this?
+ *
+ * Resolution order for a single permission key:
+ *
+ *   1. Platform super-admins always may.
+ *   2. A role or user holding the wildcard `*` may do anything, now and later.
+ *   3. An exact match on the key always wins.
+ *   4. A page key (`finance.fee_structures.edit`) is satisfied by the matching
+ *      module-wide key (`finance.edit`), so granting a whole module covers every
+ *      page inside it — including pages added later.
+ *   5. A page's `view` is satisfied by the module's `view_module` master switch.
+ *
+ * A user's own list, when one has been saved, replaces their role's list
+ * entirely. That is what lets an administrator widen a single teacher into HR
+ * without touching anybody else, and narrow a role without touching the rest of
+ * the team.
+ */
 class PermissionRegistry
 {
     /**
-     * Returns an explicit list of core modules and granular access privileges.
+     * The wildcard held by roles with unrestricted access. It is a permission
+     * value like any other, so it survives round-tripping through a role record
+     * or a per-user snapshot.
+     */
+    public const WILDCARD = '*';
+
+    /**
+     * Older, finer-grained capability namespaces. These predate the module →
+     * category → page tree and are still asked for by a handful of screens, so
+     * they remain valid permission keys and are granted alongside the modules
+     * that own them.
      *
      * Every key returned here is a real, enforceable permission. Keys that are
      * referenced by application code MUST exist in this matrix, otherwise they
@@ -250,11 +281,11 @@ class PermissionRegistry
     }
 
     /**
-     * Flatten the granular matrix into the full list of permission keys.
+     * Flatten the legacy matrix into its permission keys.
      *
      * @return array<int, string>
      */
-    public static function collectAllPermissionKeys(): array
+    public static function legacyPermissionKeys(): array
     {
         $permissions = [];
 
@@ -268,9 +299,22 @@ class PermissionRegistry
     }
 
     /**
-     * Flat `module.action => "Module Label — Action Label"` option map used by
-     * the role, department and per-user permission pickers. A single option map
-     * guarantees the whole permission array round-trips through one field.
+     * Every permission that exists in the system: the legacy matrix plus every
+     * page and operation in the module → category → page tree.
+     *
+     * @return array<int, string>
+     */
+    public static function collectAllPermissionKeys(): array
+    {
+        return array_values(array_unique(array_merge(
+            self::legacyPermissionKeys(),
+            CapabilityCatalog::allPermissionKeys(),
+        )));
+    }
+
+    /**
+     * Flat `permission key => label` option map used by the role, department
+     * and per-user permission pickers.
      *
      * @return array<string, string>
      */
@@ -284,12 +328,43 @@ class PermissionRegistry
             }
         }
 
+        foreach (self::navigationPermissionOptions() as $key => $label) {
+            $options[$key] = $label;
+        }
+
         return $options;
     }
 
     /**
-     * Detailed CRUD descriptions for every permission, displayed as helper tooltips
-     * under checkboxes in System Administration.
+     * The module → category → page permissions, flattened for the pickers.
+     *
+     * @return array<string, string>
+     */
+    public static function navigationPermissionOptions(): array
+    {
+        $options = [];
+
+        foreach (CapabilityCatalog::modules() as $module) {
+            if ($module['key'] === 'universal') {
+                continue;
+            }
+
+            foreach ($module['pages'] as $page) {
+                $prefix = $module['label'].' — '.$page['group'].' — '.$page['label'];
+
+                foreach ($page['actions'] as $index => $action) {
+                    $options[$page['permissions'][$index]] = $prefix.' — '.CapabilityCatalog::actionLabel($action);
+                }
+            }
+        }
+
+        return $options;
+    }
+
+    /**
+     * Detailed descriptions for every permission, displayed as helper tooltips
+     * under checkboxes in System Administration. Page permissions explain what
+     * the page is for and what the operation unlocks on it.
      *
      * @return array<string, string>
      */
@@ -307,6 +382,10 @@ class PermissionRegistry
             }
         }
 
+        foreach (CapabilityCatalog::allPermissionKeys() as $key) {
+            $descriptions[$key] = CapabilityCatalog::describe($key);
+        }
+
         return $descriptions;
     }
 
@@ -314,6 +393,19 @@ class PermissionRegistry
      * Centralized and self-healing permission verification system.
      */
     public static function checkPermission(string $permission): bool
+    {
+        return self::checkAny([$permission]);
+    }
+
+    /**
+     * May the signed-in person do any one of these?
+     *
+     * Used for category hubs, where reaching the landing page means being able
+     * to open at least one of the pages behind it.
+     *
+     * @param  array<int, string>  $permissions
+     */
+    public static function checkAny(array $permissions): bool
     {
         if (! Auth::check()) {
             return false;
@@ -331,7 +423,7 @@ class PermissionRegistry
         // still missing (safe-guarded — never auto-promotes ordinary accounts).
         self::ensureAdminHasRole($user, $schoolId);
 
-        return self::userCan($user, $permission);
+        return self::userCanAny($user, $permissions);
     }
 
     /**
@@ -339,6 +431,16 @@ class PermissionRegistry
      * session. Used by notification routing and direct model checks.
      */
     public static function userCan(?User $user, string $permission): bool
+    {
+        return self::userCanAny($user, [$permission]);
+    }
+
+    /**
+     * Evaluate several alternative permissions for a specific user record.
+     *
+     * @param  array<int, string>  $permissions
+     */
+    public static function userCanAny(?User $user, array $permissions): bool
     {
         if (! $user) {
             return false;
@@ -348,28 +450,94 @@ class PermissionRegistry
             return true;
         }
 
-        // An explicit per-user permission snapshot (set by an administrator
-        // during approval or user management) wins over the role entirely.
-        if (is_array($user->permissions)) {
-            return in_array($permission, $user->permissions, true);
+        return self::isGrantedAny(self::permissionsFor($user), $permissions);
+    }
+
+    /**
+     * The permission list that actually applies to a user: their own snapshot
+     * when one has been saved, otherwise their role's list.
+     *
+     * An empty snapshot is treated as "no personal override" rather than
+     * "no permissions at all", so an account can never be silently locked out
+     * of its own workspace by an approval flow that saved nothing.
+     *
+     * @return array<int, string>
+     */
+    public static function permissionsFor(User $user): array
+    {
+        if (is_array($user->permissions) && $user->permissions !== []) {
+            return array_values($user->permissions);
         }
 
         if (! $user->custom_role_id) {
-            return false;
+            return [];
         }
 
-        // Fetch custom role safely without requiring relationships defined inside User.php
         $role = CustomRole::find($user->custom_role_id);
-        if (! $role || ! $role->permissions) {
+
+        if (! $role) {
+            return [];
+        }
+
+        return array_values($role->permissions ?? []);
+    }
+
+    /**
+     * Does a permission list satisfy a permission key?
+     *
+     * This is the single place the implication rules live, so the permission
+     * editor and the runtime gate can never disagree about what a role grants.
+     *
+     * @param  array<int, string>  $permissions
+     */
+    public static function isGranted(array $permissions, string $permission): bool
+    {
+        if ($permissions === [] || $permission === '') {
             return false;
         }
 
-        // Master administrators bypass granular capability blocks cleanly [1]
-        if ($role->name === 'Administrator') {
+        if (in_array(self::WILDCARD, $permissions, true)) {
             return true;
         }
 
-        return in_array($permission, $role->permissions, true);
+        if (in_array($permission, $permissions, true)) {
+            return true;
+        }
+
+        // A page capability is covered by the same capability granted module-wide.
+        $segments = explode('.', $permission);
+
+        if (count($segments) === 3) {
+            [$module, $page, $action] = $segments;
+
+            if (in_array("{$module}.{$action}", $permissions, true)) {
+                return true;
+            }
+
+            // "Show this module" means "show every page inside it".
+            if ($action === 'view' && in_array("{$module}.view_module", $permissions, true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Does a permission list satisfy any of the given keys?
+     *
+     * @param  array<int, string>  $permissions
+     * @param  array<int, string>  $candidates
+     */
+    public static function isGrantedAny(array $permissions, array $candidates): bool
+    {
+        foreach ($candidates as $candidate) {
+            if (self::isGranted($permissions, $candidate)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -389,14 +557,14 @@ class PermissionRegistry
 
         if ($user->custom_role_id !== null) {
             $role = CustomRole::find($user->custom_role_id);
-            if ($role && $role->name === 'Administrator') {
+            if ($role && self::roleHasUnrestrictedAccess($role)) {
                 self::reconcileAdministratorPermissions($role);
             }
 
             return true;
         }
 
-        $isAdministratorCategory = ($user->requested_role ?? null) === 'administrator';
+        $isAdministratorCategory = in_array($user->requested_role ?? null, ['administrator'], true);
         $isLegacyFounder = $user->requested_role === null
             && (int) User::query()->where('school_id', $schoolId)->min('id') === (int) $user->id;
 
@@ -404,19 +572,19 @@ class PermissionRegistry
             return false;
         }
 
-        // Check if "Administrator" role already exists for this school
-        $adminRole = CustomRole::where('school_id', $schoolId)->where('name', 'Administrator')->first();
+        // Check if the administrator role already exists for this school
+        $adminRole = CustomRole::where('school_id', $schoolId)
+            ->whereIn('name', ['Administrator', 'System Administrator'])
+            ->first();
 
         if (! $adminRole) {
             $adminRole = CustomRole::create([
                 'school_id' => $schoolId,
                 'name' => 'Administrator',
                 'description' => __('Platform-seeded administrative role with complete authorization clearance.'),
-                'permissions' => self::collectAllPermissionKeys(),
+                'permissions' => [self::WILDCARD],
                 'is_system' => true,
             ]);
-        } else {
-            self::reconcileAdministratorPermissions($adminRole);
         }
 
         // Directly update user column to prevent relationship mapping crashes
@@ -427,11 +595,43 @@ class PermissionRegistry
     }
 
     /**
-     * Merge any permissions added into the granular matrix since the role was
-     * seeded into the Administrator role, preserving the original permissions.
+     * Whether a role is an administrator role — it holds the wildcard, or it is
+     * the school's system administrator by name.
+     */
+    public static function roleHasUnrestrictedAccess(?CustomRole $role): bool
+    {
+        if (! $role) {
+            return false;
+        }
+
+        if (in_array(self::WILDCARD, $role->permissions ?? [], true)) {
+            return true;
+        }
+
+        return RoleCatalogue::keyForRoleName($role->name) === 'administrator';
+    }
+
+    /**
+     * Bring a system role up to date with the capability catalogue.
+     *
+     * Full-access roles only ever need the wildcard. Every other system role is
+     * left alone apart from the capabilities implied by the module-wide keys it
+     * already holds, which is why a role granted "Academics — everything"
+     * automatically covers pages added to Academics later.
      */
     protected static function reconcileAdministratorPermissions(CustomRole $role): void
     {
+        if (in_array(self::WILDCARD, $role->permissions ?? [], true)) {
+            return;
+        }
+
+        if (RoleCatalogue::keyForRoleName($role->name) === 'administrator') {
+            $role->permissions = [self::WILDCARD];
+            $role->save();
+
+            return;
+        }
+
         $existing = $role->permissions ?? [];
         $missing = array_values(array_diff(self::collectAllPermissionKeys(), $existing));
 
@@ -443,107 +643,36 @@ class PermissionRegistry
 
     public static function moduleKeys(string $module): array
     {
-        $matrix = self::getGranularMatrix();
-        if (! isset($matrix[$module]['actions'])) {
-            return [];
-        }
-
-        return array_map(fn ($action) => "{$module}.{$action}", array_keys($matrix[$module]['actions']));
+        return CapabilityCatalog::modulePermissionKeys($module);
     }
 
     /**
-     * Sensible default permission bundle per requested registration category.
-     * These are the checkboxes the approver sees pre-ticked; departments for
-     * non-teaching staff extend them further.
+     * The default permission bundle for a role category.
+     *
+     * These are the capabilities a person is given when the role is first
+     * assigned. An administrator may then widen or narrow them for the role, or
+     * for one individual, without any of this changing.
      *
      * @return array<int, string>
      */
     public static function defaultPermissionsForRole(string $category): array
     {
-        $universalStaff = [
-            'communication.view_module',
-            'communication.post_announcements',
-            'reports.view_module',
-            'reports.generate',
-            'tasks.view',
-            'tasks.create',
-        ];
+        if (! RoleCatalogue::exists($category)) {
+            $category = 'supporting_staff';
+        }
 
-        return match ($category) {
-            'student' => [
-                'student_portal.access',
-            ],
-            'administrator' => self::collectAllPermissionKeys(),
-            'school_administrator' => array_values(array_unique(array_merge(
-                $universalStaff,
-                self::moduleKeys('communication'),
-                self::moduleKeys('inventory'),
-                self::moduleKeys('website'),
-                self::moduleKeys('admissions'),
-                self::moduleKeys('academics'),
-                self::moduleKeys('academic_ops'),
-                self::moduleKeys('attendance'),
-                self::moduleKeys('exams'),
-                self::moduleKeys('reports'),
-                self::moduleKeys('tasks'),
-                self::moduleKeys('lms'),
-                self::moduleKeys('knowledge'),
-                self::moduleKeys('boarding'),
-                self::moduleKeys('library'),
-                self::moduleKeys('clinic'),
-            ))),
-            'teaching_staff' => array_values(array_unique(array_merge(
-                $universalStaff,
-                self::moduleKeys('academics'),
-                [
-                    'academic_ops.view',
-                    'academic_ops.manage_curriculum',
-                    'academic_ops.manage_subjects',
-                    'academic_ops.manage_timetable',
-                    'academic_ops.manage_assessments',
-                ],
-                self::moduleKeys('attendance'),
-                self::moduleKeys('exams'),
-                self::moduleKeys('lms'),
-                self::moduleKeys('digital_assessment'),
-                ['reports.view_module', 'reports.generate'],
-            ))),
-            'accounts_finance' => array_values(array_unique(array_merge(
-                $universalStaff,
-                self::moduleKeys('finance'),
-                ['reports.view_module', 'reports.generate', 'reports.export'],
-            ))),
-            'hr' => array_values(array_unique(array_merge(
-                $universalStaff,
-                self::moduleKeys('hr'),
-                self::moduleKeys('attendance'),
-                ['reports.view_module', 'reports.generate'],
-            ))),
-            'librarian' => array_values(array_unique(array_merge(
-                $universalStaff,
-                self::moduleKeys('library'),
-                self::moduleKeys('knowledge'),
-                ['reports.view_module'],
-            ))),
-            'houseparent' => array_values(array_unique(array_merge(
-                $universalStaff,
-                self::moduleKeys('boarding'),
-                ['reports.view_module'],
-            ))),
-            'health' => array_values(array_unique(array_merge(
-                $universalStaff,
-                self::moduleKeys('clinic'),
-                ['inventory.view_module', 'inventory.issue_stock'],
-                ['reports.view_module'],
-            ))),
-            'procurement' => array_values(array_unique(array_merge(
-                $universalStaff,
-                self::moduleKeys('inventory'),
-                ['reports.view_module', 'reports.generate'],
-            ))),
-            'supporting_staff', 'non_teaching_staff' => $universalStaff,
-            default => $universalStaff,
-        };
+        return RoleCatalogue::permissionsFor($category);
+    }
+
+    /**
+     * The full default bundle for a brand-new school, so the platform
+     * administrator role can be created with full clearance.
+     *
+     * @return array<int, string>
+     */
+    public static function fullAccessPermissions(): array
+    {
+        return [self::WILDCARD];
     }
 
     /**
@@ -568,8 +697,8 @@ class PermissionRegistry
 
     /**
      * The default permission set that should be pre-ticked for a user: the role
-     * defaults for their requested category combined with any department defaults.
-     * Used when configuring a new account before approval.
+     * defaults for their requested category combined with any department
+     * defaults. Used when configuring a new account before approval.
      *
      * @return array<int, string>
      */
@@ -581,7 +710,7 @@ class PermissionRegistry
             $permissions = self::defaultPermissionsForRole($user->requested_role);
         }
 
-        return array_values(array_unique(array_merge($permissions, self::departmentPermissions($user))));
+        return self::normalizePermissionList(array_merge($permissions, self::departmentPermissions($user)));
     }
 
     /**
@@ -592,7 +721,7 @@ class PermissionRegistry
      */
     public static function effectivePermissionsForUser(User $user): array
     {
-        if (is_array($user->permissions)) {
+        if (is_array($user->permissions) && $user->permissions !== []) {
             return $user->permissions;
         }
 
@@ -600,16 +729,73 @@ class PermissionRegistry
     }
 
     /**
-     * Merge a set of permission keys into a clean, de-duplicated array.
+     * Merge a set of permission keys into a clean, de-duplicated array, keeping
+     * only keys that exist in the catalogue or the legacy matrix so a role can
+     * never carry a typo that silently grants nothing.
      *
      * @param  array<int, string>  $permissions
      * @return array<int, string>
      */
     public static function normalizePermissionList(array $permissions): array
     {
-        return array_values(array_unique(array_filter(array_map(
-            fn ($p) => is_string($p) ? trim($p) : null,
-            $permissions,
-        ))));
+        $known = array_flip(self::collectAllPermissionKeys());
+
+        $clean = [];
+
+        foreach ($permissions as $permission) {
+            if (! is_string($permission)) {
+                continue;
+            }
+
+            $permission = trim($permission);
+
+            if ($permission === self::WILDCARD || isset($known[$permission])) {
+                $clean[] = $permission;
+            }
+        }
+
+        return array_values(array_unique($clean));
+    }
+
+    /**
+     * Turn a permission key into the page it belongs to, for grouping and for
+     * deciding whether a URL is reachable.
+     *
+     * @return array{0: string, 1: string}|null [module slug, page key]
+     */
+    public static function pageKeyFor(string $permission): ?array
+    {
+        $segments = explode('.', $permission);
+
+        if (count($segments) !== 3) {
+            return null;
+        }
+
+        return [$segments[0], $segments[1]];
+    }
+
+    /**
+     * The module a permission key belongs to, or null for a legacy key whose
+     * namespace does not match a navigation module.
+     */
+    public static function moduleKeyFor(string $permission): ?string
+    {
+        $module = explode('.', $permission)[0] ?? null;
+
+        return $module !== null && CapabilityCatalog::module($module) !== null ? $module : null;
+    }
+
+    /**
+     * A tidy label for a permission key, safe to show anywhere.
+     */
+    public static function labelFor(string $permission): string
+    {
+        if ($permission === self::WILDCARD) {
+            return __('Everything');
+        }
+
+        return PermissionRegistry::permissionOptions()[$permission]
+            ?? PermissionRegistry::permissionDescriptions()[$permission]
+            ?? $permission;
     }
 }

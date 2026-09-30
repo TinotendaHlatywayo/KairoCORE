@@ -17,18 +17,18 @@ use Modules\Academics\Models\Course;
 use Modules\Academics\Models\Section;
 use Modules\Academics\Models\Subject;
 use Modules\Students\Models\Student;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class PromotionWorkflowResource extends Resource
 {
+    use ModulePermissionAccess;
+
     public static function getNavigationGroup(): ?string
     {
         return __('Students');
     }
 
-    public static function canAccess(): bool
-    {
-        return ModuleVisibilityManager::isPageVisible('students', 'promotion');
-    }
+
 
     protected static ?string $model = Student::class;
 
