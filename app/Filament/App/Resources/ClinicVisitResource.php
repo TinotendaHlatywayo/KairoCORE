@@ -17,9 +17,12 @@ use Illuminate\Support\Facades\Auth;
 use Modules\Admin\Services\PermissionRegistry;
 use Modules\Clinic\Models\ClinicVisit;
 use Modules\Clinic\Services\ClinicVisitService;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class ClinicVisitResource extends Resource
 {
+    use ModulePermissionAccess;
+
     public static function getNavigationGroup(): ?string
     {
         return __('Health & Safety');
@@ -34,18 +37,7 @@ class ClinicVisitResource extends Resource
     // Reached via the module contextual tabs, not the sidebar.
     protected static bool $shouldRegisterNavigation = false;
 
-    public static function canAccess(): bool
-    {
-        if (! ModuleVisibilityManager::isVisible('clinic')) {
-            return false;
-        }
 
-        if (class_exists('\Modules\Admin\Services\PermissionRegistry')) {
-            return PermissionRegistry::checkPermission('clinic.view_module');
-        }
-
-        return true;
-    }
 
     public static function form(Form $form): Form
     {

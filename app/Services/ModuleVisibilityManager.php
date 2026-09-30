@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Security\CapabilityCatalog;
 use Illuminate\Support\Facades\Auth;
 use Modules\Admin\Models\CustomRole;
 use Modules\Admin\Models\SystemSetting;
@@ -89,9 +90,17 @@ class ModuleVisibilityManager
             return true;
         }
 
+        // Each navigation module is stored under the setting key it has always
+        // used. Several of those keys are older than the modules themselves —
+        // attendance, assessments and the knowledge area were each their own
+        // switch and now sit inside HR, Exams and Library — so they are still
+        // honoured, otherwise switching one off would silently do nothing.
         return match ($moduleSlug) {
             'health' => self::isVisible('clinic'),
             'admissions' => self::isPageVisible('admissions', 'applications'),
+            'hr' => self::isVisible('hr') && self::isVisible('attendance'),
+            'exams' => self::isVisible('exams') && self::isVisible('digital_assessment'),
+            'library' => self::isVisible('library') && self::isVisible('knowledge'),
             default => self::isVisible($moduleSlug),
         };
     }
@@ -126,6 +135,20 @@ class ModuleVisibilityManager
      */
     public static function isResourceVisible(string $class): bool
     {
+        // When the capability catalogue knows this class, it also knows exactly
+        // which module owns it. Guessing from the class name is what this method
+        // used to do, and the guesses disagree with the real structure: a
+        // TeacherAssignment is academics, not attendance; a LibraryBook is
+        // library, not finance, because "Account" appears nowhere in it but the
+        // ordering below would have caught "Classroom" first. The catalogue has
+        // no such ambiguity, so it wins whenever it has an answer.
+        $catalogued = CapabilityCatalog::moduleForClass($class);
+
+        if ($catalogued !== null) {
+            return self::isVisible($catalogued);
+        }
+
+        // Not a catalogue page: fall back to the legacy name heuristics below.
         // LMS / Knowledge / Reports / Administration / SaaS checks must run
         // BEFORE the finance heuristics below, since class names like
         // UserAccount* / SaaSBilling* would otherwise match 'Account'/'Billing'.

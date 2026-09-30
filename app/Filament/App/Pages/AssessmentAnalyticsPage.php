@@ -7,9 +7,12 @@ use Modules\DigitalAssessment\Models\DigitalAssessment;
 use Modules\DigitalAssessment\Services\ManualMarkingService;
 use Modules\DigitalAssessment\Services\QuestionAnalyticsService;
 use Modules\DigitalAssessment\Services\MasteryService;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class AssessmentAnalyticsPage extends Page
 {
+    use ModulePermissionAccess;
+
     protected static string $view = 'filament.app.pages.assessment-analytics';
 
     protected static ?string $navigationIcon = 'heroicon-o-chart-bar';

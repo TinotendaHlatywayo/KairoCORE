@@ -41,10 +41,42 @@ trait HasCsvBulkActions
 
     protected function csvBulkActions(): array
     {
-        return [
-            $this->makeImportAction(),
-            ...$this->makeExportActions(),
-        ];
+        // Move records in and out of the school is its own decision from being
+        // able to see them, so each action is offered only when the page grants
+        // it. A person who can read a list but not export it simply has no
+        // export button.
+        $actions = [];
+
+        if ($this->can('import')) {
+            $actions[] = $this->makeImportAction();
+        }
+
+        if ($this->can('export')) {
+            $actions = array_merge($actions, $this->makeExportActions());
+        }
+
+        return $actions;
+    }
+
+    /**
+     * May this person perform an operation on the page hosting these actions?
+     *
+     * The page class is reached through the record, so this resolves the owning
+     * Filament resource rather than asking the ListRecords page directly — page
+     * classes are not in the catalogue, their resource is.
+     */
+    protected function can(string $action): bool
+    {
+        // A list page belongs to a resource, so ask the resource. A standalone
+        // page is its own page, so ask itself. Either way the answer comes from
+        // the capability catalogue rather than from a guess here.
+        $owner = method_exists(static::class, 'getResource') ? static::getResource() : static::class;
+
+        if (! method_exists($owner, 'canPerform')) {
+            return true;
+        }
+
+        return $owner::canPerform($action);
     }
 
     protected function makeExportActions(): array

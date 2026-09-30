@@ -3,11 +3,13 @@
 namespace App\Filament\App\Pages\Website;
 
 use App\Navigation\ModuleNavigationService;
-use App\Services\ModuleVisibilityManager;
 use Filament\Pages\Page;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class WebsiteTemplatesHub extends Page
 {
+    use ModulePermissionAccess;
+
     protected static string $view = 'filament.app.pages.website.category-hub';
 
     protected static ?string $navigationIcon = 'heroicon-o-globe-alt';
@@ -21,11 +23,6 @@ class WebsiteTemplatesHub extends Page
     protected static ?int $navigationSort = 1;
 
     protected static ?string $slug = 'website-templates';
-
-    public static function canAccess(): bool
-    {
-        return ModuleVisibilityManager::isModuleVisible('website');
-    }
 
     public static function getNavigationLabel(): string
     {

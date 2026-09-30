@@ -15,9 +15,12 @@ use Filament\Tables\Table;
 use Modules\Academics\Models\Classroom;
 use Modules\Admin\Services\PermissionRegistry;
 use Modules\Timetables\Models\TimetableLesson;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class ClassroomResource extends Resource
 {
+    use ModulePermissionAccess;
+
     public static function getNavigationGroup(): ?string
     {
         return __('Academics');
@@ -28,18 +31,7 @@ class ClassroomResource extends Resource
     // Reached via the module contextual tabs, not the sidebar.
     protected static bool $shouldRegisterNavigation = false;
 
-    public static function canAccess(): bool
-    {
-        if (! ModuleVisibilityManager::isPageVisible('academics', 'streams')) {
-            return false;
-        }
 
-        if (class_exists('\Modules\Admin\Services\PermissionRegistry')) {
-            return PermissionRegistry::checkPermission('academic_ops.manage_classrooms');
-        }
-
-        return true;
-    }
 
     protected static ?string $navigationIcon = 'heroicon-o-home-modern';
 

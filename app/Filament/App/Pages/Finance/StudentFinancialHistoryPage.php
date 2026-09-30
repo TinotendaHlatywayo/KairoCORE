@@ -28,9 +28,12 @@ use Modules\Finance\Services\ManualFinancialEntryService;
 use Modules\Finance\Services\StudentFinancialHistoryService;
 use Modules\Students\Models\Student;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class StudentFinancialHistoryPage extends Page implements HasForms
 {
+    use ModulePermissionAccess;
+
     use HasCsvBulkActions;
     use InteractsWithForms;
 
@@ -76,11 +79,7 @@ class StudentFinancialHistoryPage extends Page implements HasForms
 
     public int $page = 1;
 
-    public static function canAccess(): bool
-    {
-        return PermissionRegistry::checkPermission('finance.view_module')
-            && PermissionRegistry::checkPermission('finance.view_reports');
-    }
+
 
     public static function canEditFinancialHistory(): bool
     {

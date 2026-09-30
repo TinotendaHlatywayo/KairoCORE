@@ -232,9 +232,13 @@ class ModuleNavigationService
             return false;
         }
 
+        // The class's own access check is the single source of truth for a
+        // tab. Once that resolves through the capability catalogue it already
+        // covers both the module toggle and this person's permissions, so there
+        // is no second rule to keep in step here.
         try {
             if (is_subclass_of($class, Resource::class)) {
-                return (bool) $class::canViewAny();
+                return (bool) $class::canAccess();
             }
 
             if (is_subclass_of($class, Page::class)) {

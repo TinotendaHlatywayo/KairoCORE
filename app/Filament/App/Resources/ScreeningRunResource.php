@@ -12,19 +12,19 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Modules\Screening\Models\ScreeningRun;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class ScreeningRunResource extends Resource
 {
+    use ModulePermissionAccess;
+
     protected static ?string $model = ScreeningRun::class;
 
     protected static bool $shouldRegisterNavigation = false;
 
     protected static ?string $navigationIcon = 'heroicon-o-funnel';
 
-    public static function canAccess(): bool
-    {
-        return ModuleVisibilityManager::isPageVisible('academics', 'screening');
-    }
+
 
     public static function getNavigationGroup(): ?string
     {

@@ -4,11 +4,13 @@ namespace App\Filament\App\Pages\Academic;
 
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Navigation\ModuleNavigationService;
-use App\Services\ModuleVisibilityManager;
 use Filament\Pages\Page;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class TimetablesTeachingHub extends Page
 {
+    use ModulePermissionAccess;
+
     use ModuleAwareActiveNavigation;
 
     protected static string $view = 'filament.app.pages.academic.category-hub';
@@ -24,11 +26,6 @@ class TimetablesTeachingHub extends Page
     protected static ?int $navigationSort = 3;
 
     protected static ?string $slug = 'academics-timetables-teaching';
-
-    public static function canAccess(): bool
-    {
-        return ModuleVisibilityManager::isModuleVisible('academics');
-    }
 
     public static function getNavigationLabel(): string
     {

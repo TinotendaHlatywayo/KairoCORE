@@ -22,9 +22,12 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Unique;
 use Modules\CMS\Models\CmsPage;
 use Modules\CMS\Models\CmsWebsite;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class CmsPageResource extends Resource
 {
+    use ModulePermissionAccess;
+
     public static function getNavigationGroup(): ?string
     {
         return __('Website');

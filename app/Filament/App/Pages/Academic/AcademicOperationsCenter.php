@@ -14,9 +14,12 @@ use Modules\Academics\Models\Assessment;
 use Modules\Academics\Models\Term;
 use Modules\Admin\Services\PermissionRegistry;
 use Modules\Students\Models\Enrollment;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class AcademicOperationsCenter extends Page
 {
+    use ModulePermissionAccess;
+
     use ModuleAwareActiveNavigation;
 
     protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
@@ -45,18 +48,7 @@ class AcademicOperationsCenter extends Page
 
     protected static bool $shouldCacheUnallocatedResources = false;
 
-    public static function canAccess(): bool
-    {
-        if (! ModuleVisibilityManager::isPageVisible('academics', 'operations')) {
-            return false;
-        }
 
-        if (class_exists('\Modules\Admin\Services\PermissionRegistry')) {
-            return PermissionRegistry::checkPermission('academic_ops.view');
-        }
-
-        return true;
-    }
 
     public array $progressData = [];
 

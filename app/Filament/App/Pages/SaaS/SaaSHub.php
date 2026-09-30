@@ -4,11 +4,13 @@ namespace App\Filament\App\Pages\SaaS;
 
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Navigation\ModuleNavigationService;
-use App\Services\ModuleVisibilityManager;
 use Filament\Pages\Page;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class SaaSHub extends Page
 {
+    use ModulePermissionAccess;
+
     use ModuleAwareActiveNavigation;
 
     protected static string $view = 'filament.app.pages.saas.category-hub';
@@ -24,11 +26,6 @@ class SaaSHub extends Page
     protected static ?int $navigationSort = 1;
 
     protected static ?string $slug = 'saas-hub';
-
-    public static function canAccess(): bool
-    {
-        return ModuleVisibilityManager::isModuleVisible('saas');
-    }
 
     public static function getNavigationLabel(): string
     {

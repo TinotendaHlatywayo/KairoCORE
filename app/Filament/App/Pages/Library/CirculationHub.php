@@ -4,11 +4,13 @@ namespace App\Filament\App\Pages\Library;
 
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Navigation\ModuleNavigationService;
-use App\Services\ModuleVisibilityManager;
 use Filament\Pages\Page;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class CirculationHub extends Page
 {
+    use ModulePermissionAccess;
+
     use ModuleAwareActiveNavigation;
 
     protected static string $view = 'filament.app.pages.library.category-hub';
@@ -24,11 +26,6 @@ class CirculationHub extends Page
     protected static ?int $navigationSort = 2;
 
     protected static ?string $slug = 'library-circulation';
-
-    public static function canAccess(): bool
-    {
-        return ModuleVisibilityManager::isModuleVisible('library');
-    }
 
     public static function getNavigationLabel(): string
     {

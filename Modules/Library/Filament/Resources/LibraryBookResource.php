@@ -19,9 +19,12 @@ use Modules\Library\Filament\Resources\LibraryBookResource\Pages\ListLibraryBook
 use Modules\Library\Filament\Resources\LibraryBookResource\RelationManagers\CopiesRelationManager;
 use Modules\Library\Models\LibraryBook;
 use Modules\Library\Models\LibraryFormat;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class LibraryBookResource extends Resource
 {
+    use ModulePermissionAccess;
+
     public static function getNavigationGroup(): ?string
     {
         return __('Library');
@@ -44,18 +47,7 @@ class LibraryBookResource extends Resource
 
     protected static bool $shouldRegisterNavigation = false;
 
-    public static function canAccess(): bool
-    {
-        if (! ModuleVisibilityManager::isVisible('library')) {
-            return false;
-        }
 
-        if (class_exists('\Modules\Admin\Services\PermissionRegistry')) {
-            return PermissionRegistry::checkPermission('library.view_module');
-        }
-
-        return true;
-    }
 
     public static function form(Form $form): Form
     {

@@ -13,9 +13,12 @@ use Filament\Tables\Table;
 use Illuminate\Support\Collection;
 use Modules\Admin\Services\PermissionRegistry;
 use Modules\Timetables\Models\TimeSlot;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class TimeSlotResource extends Resource
 {
+    use ModulePermissionAccess;
+
     public static function getNavigationGroup(): ?string
     {
         return __('Academics');
@@ -26,18 +29,7 @@ class TimeSlotResource extends Resource
     // Reached via the module contextual tabs, not the sidebar.
     protected static bool $shouldRegisterNavigation = false;
 
-    public static function canAccess(): bool
-    {
-        if (! ModuleVisibilityManager::isVisible('academics')) {
-            return false;
-        }
 
-        if (class_exists('\Modules\Admin\Services\PermissionRegistry')) {
-            return PermissionRegistry::checkPermission('academic_ops.manage_timetable');
-        }
-
-        return true;
-    }
 
     protected static ?string $navigationIcon = 'heroicon-o-clock';
 

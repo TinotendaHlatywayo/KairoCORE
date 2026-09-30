@@ -4,11 +4,13 @@ namespace App\Filament\App\Pages\Lms;
 
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Navigation\ModuleNavigationService;
-use App\Services\ModuleVisibilityManager;
 use Filament\Pages\Page;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class LmsHub extends Page
 {
+    use ModulePermissionAccess;
+
     use ModuleAwareActiveNavigation;
 
     protected static string $view = 'filament.app.pages.lms.category-hub';
@@ -24,11 +26,6 @@ class LmsHub extends Page
     protected static ?int $navigationSort = 1;
 
     protected static ?string $slug = 'lms-lms';
-
-    public static function canAccess(): bool
-    {
-        return ModuleVisibilityManager::isModuleVisible('lms');
-    }
 
     public static function getNavigationLabel(): string
     {

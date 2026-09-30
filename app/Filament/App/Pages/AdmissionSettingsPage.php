@@ -18,9 +18,12 @@ use Illuminate\Support\Facades\Auth;
 use Modules\Admin\Enums\EmailCategory;
 use Modules\Admin\Models\SystemSetting;
 use Modules\Admin\Services\PermissionRegistry;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class AdmissionSettingsPage extends Page implements HasForms
 {
+    use ModulePermissionAccess;
+
     use InteractsWithForms;
     use ManagesEmailConfiguration;
 
@@ -51,18 +54,7 @@ class AdmissionSettingsPage extends Page implements HasForms
         return __('Admission Settings');
     }
 
-    public static function canAccess(): bool
-    {
-        if (! ModuleVisibilityManager::isPageVisible('admissions', 'settings')) {
-            return false;
-        }
 
-        if (class_exists('\Modules\Admin\Services\PermissionRegistry')) {
-            return PermissionRegistry::checkPermission('academic_ops.manage_admissions');
-        }
-
-        return true;
-    }
 
     public function mount(): void
     {

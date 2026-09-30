@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Auth;
 use Modules\Admin\Models\SystemSetting;
 use Modules\Admin\Services\AuditLogger;
 use Modules\Admin\Services\PermissionRegistry;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 /**
  * Configures the layout and wording printed on invoices, receipts and
@@ -25,6 +26,8 @@ use Modules\Admin\Services\PermissionRegistry;
  */
 class BillingDocumentSettingsPage extends Page implements HasForms
 {
+    use ModulePermissionAccess;
+
     use InteractsWithForms;
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
@@ -52,12 +55,7 @@ class BillingDocumentSettingsPage extends Page implements HasForms
     // Reached via the module contextual tabs, not the sidebar.
     protected static bool $shouldRegisterNavigation = false;
 
-    public static function canAccess(): bool
-    {
-        return PermissionRegistry::checkPermission('finance.manage_fees')
-            || PermissionRegistry::checkPermission('finance.view_reports')
-            || PermissionRegistry::checkPermission('administration.manage_settings');
-    }
+
 
     public function mount(): void
     {

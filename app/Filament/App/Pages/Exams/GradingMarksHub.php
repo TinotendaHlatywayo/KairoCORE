@@ -4,11 +4,13 @@ namespace App\Filament\App\Pages\Exams;
 
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Navigation\ModuleNavigationService;
-use App\Services\ModuleVisibilityManager;
 use Filament\Pages\Page;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class GradingMarksHub extends Page
 {
+    use ModulePermissionAccess;
+
     use ModuleAwareActiveNavigation;
 
     protected static string $view = 'filament.app.pages.exams.category-hub';
@@ -24,11 +26,6 @@ class GradingMarksHub extends Page
     protected static ?int $navigationSort = 2;
 
     protected static ?string $slug = 'exams-grading-marks';
-
-    public static function canAccess(): bool
-    {
-        return ModuleVisibilityManager::isModuleVisible('exams');
-    }
 
     public static function getNavigationLabel(): string
     {

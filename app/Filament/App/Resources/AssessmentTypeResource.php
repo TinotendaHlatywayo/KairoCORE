@@ -20,9 +20,12 @@ use Modules\Academics\Models\Section;
 use Modules\Academics\Models\Subject;
 use Modules\Academics\Models\Term;
 use Modules\Admin\Services\PermissionRegistry;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class AssessmentTypeResource extends Resource
 {
+    use ModulePermissionAccess;
+
     public static function getNavigationGroup(): ?string
     {
         return __('Exams & Grading');
@@ -33,18 +36,7 @@ class AssessmentTypeResource extends Resource
     // Reached via the module contextual tabs, not the sidebar.
     protected static bool $shouldRegisterNavigation = false;
 
-    public static function canAccess(): bool
-    {
-        if (! ModuleVisibilityManager::isVisible('academics')) {
-            return false;
-        }
 
-        if (class_exists('\Modules\Admin\Services\PermissionRegistry')) {
-            return PermissionRegistry::checkPermission('academic_ops.manage_assessments');
-        }
-
-        return true;
-    }
 
     protected static ?string $navigationGroup = 'Exams & Grading';
 

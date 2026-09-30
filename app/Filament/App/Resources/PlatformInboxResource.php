@@ -12,9 +12,12 @@ use Modules\Admin\Services\PermissionRegistry;
 use Modules\SaaS\Models\PlatformMessage;
 use Modules\SaaS\Models\PlatformMessageRecipient;
 use Modules\SaaS\Services\PlatformMessagingService;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class PlatformInboxResource extends Resource
 {
+    use ModulePermissionAccess;
+
     public static function getNavigationGroup(): ?string
     {
         return __('Communication Center');
@@ -69,16 +72,7 @@ class PlatformInboxResource extends Resource
         return 'info';
     }
 
-    public static function canAccess(): bool
-    {
-        $user = Auth::user();
 
-        if (! $user || $user->school_id === null) {
-            return false;
-        }
-
-        return PermissionRegistry::checkPermission('communication.contact_platform');
-    }
 
     public static function table(Table $table): Table
     {

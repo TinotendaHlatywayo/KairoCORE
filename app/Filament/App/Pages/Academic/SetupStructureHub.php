@@ -4,11 +4,13 @@ namespace App\Filament\App\Pages\Academic;
 
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Navigation\ModuleNavigationService;
-use App\Services\ModuleVisibilityManager;
 use Filament\Pages\Page;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class SetupStructureHub extends Page
 {
+    use ModulePermissionAccess;
+
     use ModuleAwareActiveNavigation;
 
     protected static string $view = 'filament.app.pages.academic.category-hub';
@@ -24,11 +26,6 @@ class SetupStructureHub extends Page
     protected static ?int $navigationSort = 2;
 
     protected static ?string $slug = 'academics-setup-structure';
-
-    public static function canAccess(): bool
-    {
-        return ModuleVisibilityManager::isModuleVisible('academics');
-    }
 
     public static function getNavigationLabel(): string
     {

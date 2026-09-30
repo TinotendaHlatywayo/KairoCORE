@@ -23,9 +23,12 @@ use Modules\Academics\Models\Term;
 use Modules\Admin\Services\PermissionRegistry;
 use Modules\Students\Models\Enrollment;
 use Modules\Students\Models\Student;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class AssessmentMarkResource extends Resource
 {
+    use ModulePermissionAccess;
+
     public static function getEloquentQuery(): Builder
     {
         // Student column renders enrollment→student; eager load to avoid N+1.
@@ -42,18 +45,7 @@ class AssessmentMarkResource extends Resource
     // Reached via the module contextual tabs, not the sidebar.
     protected static bool $shouldRegisterNavigation = false;
 
-    public static function canAccess(): bool
-    {
-        if (! ModuleVisibilityManager::isVisible('academics')) {
-            return false;
-        }
 
-        if (class_exists('\Modules\Admin\Services\PermissionRegistry')) {
-            return PermissionRegistry::checkPermission('academic_ops.manage_assessments');
-        }
-
-        return true;
-    }
 
     protected static ?string $navigationGroup = 'Exams & Grading';
 

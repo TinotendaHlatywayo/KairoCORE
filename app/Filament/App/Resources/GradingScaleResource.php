@@ -16,9 +16,12 @@ use Modules\Academics\Models\GradingPoint;
 use Modules\Academics\Models\GradingScale;
 use Modules\Academics\Services\ZimsecGradingTemplates;
 use Modules\Admin\Services\PermissionRegistry;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class GradingScaleResource extends Resource
 {
+    use ModulePermissionAccess;
+
     public static function getNavigationGroup(): ?string
     {
         return __('Exams & Grading');
@@ -29,18 +32,7 @@ class GradingScaleResource extends Resource
     // Reached via the module contextual tabs, not the sidebar.
     protected static bool $shouldRegisterNavigation = false;
 
-    public static function canAccess(): bool
-    {
-        if (! ModuleVisibilityManager::isVisible('academics')) {
-            return false;
-        }
 
-        if (class_exists('\Modules\Admin\Services\PermissionRegistry')) {
-            return PermissionRegistry::checkPermission('academic_ops.manage_assessments');
-        }
-
-        return true;
-    }
 
     protected static ?string $navigationIcon = 'heroicon-o-adjustments-horizontal';
 

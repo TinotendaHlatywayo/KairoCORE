@@ -16,9 +16,12 @@ use Filament\Tables\Table;
 use Modules\Academics\Models\Classroom;
 use Modules\Academics\Models\Course;
 use Modules\Admin\Services\PermissionRegistry;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class CourseResource extends Resource
 {
+    use ModulePermissionAccess;
+
     public static function getNavigationGroup(): ?string
     {
         return __('Academics');
@@ -29,18 +32,7 @@ class CourseResource extends Resource
     // Reached via the module contextual tabs, not the sidebar.
     protected static bool $shouldRegisterNavigation = false;
 
-    public static function canAccess(): bool
-    {
-        if (! ModuleVisibilityManager::isPageVisible('academics', 'courses')) {
-            return false;
-        }
 
-        if (class_exists('\Modules\Admin\Services\PermissionRegistry')) {
-            return PermissionRegistry::checkPermission('academic_ops.manage_curriculum');
-        }
-
-        return true;
-    }
 
     protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
 
