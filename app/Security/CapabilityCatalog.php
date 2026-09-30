@@ -2,10 +2,33 @@
 
 namespace App\Security;
 
+use App\Filament\App\Pages\ApplicationSuccess;
+use App\Filament\App\Pages\AssessmentAnalyticsPage;
+use App\Filament\App\Pages\BillingDocumentSettingsPage;
+use App\Filament\App\Pages\Dashboard;
+use App\Filament\App\Pages\GamificationSettingsPage;
+use App\Filament\App\Pages\ManualMarkingPage;
+use App\Filament\App\Pages\MyDay;
+use App\Filament\App\Pages\PromoteStudents;
+use App\Filament\App\Pages\Schedule;
+use App\Filament\App\Pages\VisualCmsBuilder;
+use App\Filament\App\Pages\WebsiteTemplatesHub;
+use App\Filament\App\Resources\AccountResource;
+use App\Filament\App\Resources\EnterpriseReportTemplateResource;
+use App\Filament\App\Resources\ExpenseCategoryResource;
+use App\Filament\App\Resources\ExpenseTypeResource;
+use App\Filament\App\Resources\JournalEntryResource;
+use App\Filament\App\Resources\PromotionWorkflowResource;
+use App\Filament\App\Resources\ReportingWorkflowResource;
+use App\Filament\App\Resources\RevenueCategoryResource;
+use App\Filament\App\Resources\SupplierResource;
+use App\Filament\App\Resources\TimeSlotResource;
+use App\Filament\App\Resources\TimetableLessonResource;
 use App\Navigation\ModuleNavigation;
 use App\Services\ModuleVisibilityManager;
 use Illuminate\Support\Str;
 use Modules\Admin\Services\PermissionRegistry;
+use Modules\Inventory\Filament\Resources\InventoryItemResource;
 
 /**
  * The single source of truth for what the workspace can do and who may do it.
@@ -23,7 +46,7 @@ use Modules\Admin\Services\PermissionRegistry;
  *                                           ...
  *
  * Permission keys use two grammars, both of which resolve through
- * {@see \Modules\Admin\Services\PermissionRegistry::userCan()}:
+ * {@see PermissionRegistry::userCan()}:
  *
  *   - `<module>.<action>`             a module-wide capability that covers
  *                                     every page of the module.
@@ -473,38 +496,38 @@ final class CapabilityCatalog
     {
         return [
             'academics' => [
-                ['key' => 'time_slots', 'label' => __('Time Slots'), 'group' => __('Setup & Structure'), 'class' => \App\Filament\App\Resources\TimeSlotResource::class],
-                ['key' => 'timetable_lessons', 'label' => __('Timetable Entries'), 'group' => __('Timetables & Teaching'), 'class' => \App\Filament\App\Resources\TimetableLessonResource::class],
-                ['key' => 'promote_student', 'label' => __('Promote a Student'), 'group' => __('Progression'), 'class' => \App\Filament\App\Pages\PromoteStudents::class],
-                ['key' => 'promotion_workflow', 'label' => __('Promotion Workflow'), 'group' => __('Progression'), 'class' => \App\Filament\App\Resources\PromotionWorkflowResource::class],
+                ['key' => 'time_slots', 'label' => __('Time Slots'), 'group' => __('Setup & Structure'), 'class' => TimeSlotResource::class],
+                ['key' => 'timetable_lessons', 'label' => __('Timetable Entries'), 'group' => __('Timetables & Teaching'), 'class' => TimetableLessonResource::class],
+                ['key' => 'promote_student', 'label' => __('Promote a Student'), 'group' => __('Progression'), 'class' => PromoteStudents::class],
+                ['key' => 'promotion_workflow', 'label' => __('Promotion Workflow'), 'group' => __('Progression'), 'class' => PromotionWorkflowResource::class],
             ],
             'exams' => [
-                ['key' => 'manual_marking', 'label' => __('Manual Marking'), 'group' => __('Assessment Center'), 'class' => \App\Filament\App\Pages\ManualMarkingPage::class],
-                ['key' => 'assessment_analytics', 'label' => __('Assessment Analytics'), 'group' => __('Assessment Center'), 'class' => \App\Filament\App\Pages\AssessmentAnalyticsPage::class],
-                ['key' => 'gamification_settings', 'label' => __('Gamification Settings'), 'group' => __('Assessment Center'), 'class' => \App\Filament\App\Pages\GamificationSettingsPage::class],
+                ['key' => 'manual_marking', 'label' => __('Manual Marking'), 'group' => __('Assessment Center'), 'class' => ManualMarkingPage::class],
+                ['key' => 'assessment_analytics', 'label' => __('Assessment Analytics'), 'group' => __('Assessment Center'), 'class' => AssessmentAnalyticsPage::class],
+                ['key' => 'gamification_settings', 'label' => __('Gamification Settings'), 'group' => __('Assessment Center'), 'class' => GamificationSettingsPage::class],
             ],
             'finance' => [
-                ['key' => 'chart_of_accounts', 'label' => __('Chart of Accounts'), 'group' => __('Core Accounting & Setup'), 'class' => \App\Filament\App\Resources\AccountResource::class],
-                ['key' => 'journal_entries', 'label' => __('Journal Entries'), 'group' => __('Core Accounting & Setup'), 'class' => \App\Filament\App\Resources\JournalEntryResource::class],
-                ['key' => 'revenue_categories', 'label' => __('Revenue Categories'), 'group' => __('Core Accounting & Setup'), 'class' => \App\Filament\App\Resources\RevenueCategoryResource::class],
-                ['key' => 'expense_categories', 'label' => __('Expense Categories'), 'group' => __('Expenses & Purchasing'), 'class' => \App\Filament\App\Resources\ExpenseCategoryResource::class],
-                ['key' => 'expense_types', 'label' => __('Expense Types'), 'group' => __('Expenses & Purchasing'), 'class' => \App\Filament\App\Resources\ExpenseTypeResource::class],
-                ['key' => 'billing_document_settings', 'label' => __('Billing Documents'), 'group' => __('Core Accounting & Setup'), 'class' => \App\Filament\App\Pages\BillingDocumentSettingsPage::class],
-                ['key' => 'suppliers', 'label' => __('Suppliers'), 'group' => __('Core Accounting & Setup'), 'class' => \App\Filament\App\Resources\SupplierResource::class],
+                ['key' => 'chart_of_accounts', 'label' => __('Chart of Accounts'), 'group' => __('Core Accounting & Setup'), 'class' => AccountResource::class],
+                ['key' => 'journal_entries', 'label' => __('Journal Entries'), 'group' => __('Core Accounting & Setup'), 'class' => JournalEntryResource::class],
+                ['key' => 'revenue_categories', 'label' => __('Revenue Categories'), 'group' => __('Core Accounting & Setup'), 'class' => RevenueCategoryResource::class],
+                ['key' => 'expense_categories', 'label' => __('Expense Categories'), 'group' => __('Expenses & Purchasing'), 'class' => ExpenseCategoryResource::class],
+                ['key' => 'expense_types', 'label' => __('Expense Types'), 'group' => __('Expenses & Purchasing'), 'class' => ExpenseTypeResource::class],
+                ['key' => 'billing_document_settings', 'label' => __('Billing Documents'), 'group' => __('Core Accounting & Setup'), 'class' => BillingDocumentSettingsPage::class],
+                ['key' => 'suppliers', 'label' => __('Suppliers'), 'group' => __('Core Accounting & Setup'), 'class' => SupplierResource::class],
             ],
             'inventory' => [
-                ['key' => 'inventory_items', 'label' => __('Inventory Items'), 'group' => __('Stock & Inventory'), 'class' => \Modules\Inventory\Filament\Resources\InventoryItemResource::class],
+                ['key' => 'inventory_items', 'label' => __('Inventory Items'), 'group' => __('Stock & Inventory'), 'class' => InventoryItemResource::class],
             ],
             'reports' => [
-                ['key' => 'report_templates', 'label' => __('Report Templates'), 'group' => __('Reports'), 'class' => \App\Filament\App\Resources\EnterpriseReportTemplateResource::class],
-                ['key' => 'reporting_workflow', 'label' => __('Reporting Workflow'), 'group' => __('Reports'), 'class' => \App\Filament\App\Resources\ReportingWorkflowResource::class],
+                ['key' => 'report_templates', 'label' => __('Report Templates'), 'group' => __('Reports'), 'class' => EnterpriseReportTemplateResource::class],
+                ['key' => 'reporting_workflow', 'label' => __('Reporting Workflow'), 'group' => __('Reports'), 'class' => ReportingWorkflowResource::class],
             ],
             'website' => [
                 // A second, older hub class that the content manager still
                 // links to. Mapped to the same permissions as its replacement
                 // so the two can never drift apart.
-                ['key' => 'website_templates_legacy', 'label' => __('Website Templates'), 'group' => __('Templates & Design'), 'class' => \App\Filament\App\Pages\WebsiteTemplatesHub::class],
-                ['key' => 'visual_builder', 'label' => __('Visual Builder'), 'group' => __('Templates & Design'), 'class' => \App\Filament\App\Pages\VisualCmsBuilder::class],
+                ['key' => 'website_templates_legacy', 'label' => __('Website Templates'), 'group' => __('Templates & Design'), 'class' => WebsiteTemplatesHub::class],
+                ['key' => 'visual_builder', 'label' => __('Visual Builder'), 'group' => __('Templates & Design'), 'class' => VisualCmsBuilder::class],
             ],
         ];
     }
@@ -522,21 +545,21 @@ final class CapabilityCatalog
                 'key' => 'dashboard',
                 'label' => __('My Workspace'),
                 'group' => __('Everyday'),
-                'class' => \App\Filament\App\Pages\Dashboard::class,
+                'class' => Dashboard::class,
                 'universal' => true,
             ],
             [
                 'key' => 'my_day',
                 'label' => __('My Day'),
                 'group' => __('Everyday'),
-                'class' => \App\Filament\App\Pages\MyDay::class,
+                'class' => MyDay::class,
                 'universal' => true,
             ],
             [
                 'key' => 'schedule',
                 'label' => __('Schedule'),
                 'group' => __('Everyday'),
-                'class' => \App\Filament\App\Pages\Schedule::class,
+                'class' => Schedule::class,
                 'universal' => true,
             ],
         ];
@@ -552,7 +575,7 @@ final class CapabilityCatalog
     public static function incidentalPages(): array
     {
         return [
-            \App\Filament\App\Pages\ApplicationSuccess::class,
+            ApplicationSuccess::class,
         ];
     }
 
@@ -1057,6 +1080,24 @@ final class CapabilityCatalog
         }
 
         return $page + ['module' => $moduleSlug];
+    }
+
+    /**
+     * The catalogue's name for a screen, looked up by label.
+     *
+     * Used where code refers to a page the way a user would — a help message, a
+     * test asserting on what someone can reach — so that renaming a page does
+     * not leave a stale name behind in a string nobody compiles against.
+     */
+    public static function pageLabel(string $moduleSlug, string $label): ?string
+    {
+        foreach (self::module($moduleSlug)['pages'] ?? [] as $page) {
+            if ($page['label'] === $label) {
+                return $page['label'];
+            }
+        }
+
+        return null;
     }
 
     /**
