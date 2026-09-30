@@ -6,7 +6,6 @@ use App\Models\User;
 use App\Security\CapabilityCatalog;
 use App\Security\RoleCatalogue;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 use Modules\Admin\Models\CustomRole;
 use Modules\Admin\Models\Department;
 
@@ -465,21 +464,20 @@ class PermissionRegistry
      */
     public static function permissionsFor(User $user): array
     {
-        if (is_array($user->permissions) && $user->permissions !== []) {
-            return array_values($user->permissions);
+        $rolePermissions = [];
+
+        if ($user->custom_role_id) {
+            $role = CustomRole::find($user->custom_role_id);
+            if ($role && is_array($role->permissions)) {
+                $rolePermissions = $role->permissions;
+            }
+        } elseif ($user->requested_role) {
+            $rolePermissions = self::defaultPermissionsForRole($user->requested_role);
         }
 
-        if (! $user->custom_role_id) {
-            return [];
-        }
+        $personalPermissions = is_array($user->permissions) ? $user->permissions : [];
 
-        $role = CustomRole::find($user->custom_role_id);
-
-        if (! $role) {
-            return [];
-        }
-
-        return array_values($role->permissions ?? []);
+        return self::normalizePermissionList(array_merge($rolePermissions, $personalPermissions, self::departmentPermissions($user)));
     }
 
     /**
