@@ -47,11 +47,11 @@ trait HasCsvBulkActions
         // export button.
         $actions = [];
 
-        if ($this->can('import')) {
+        if ($this->canOnPage('import')) {
             $actions[] = $this->makeImportAction();
         }
 
-        if ($this->can('export')) {
+        if ($this->canOnPage('export')) {
             $actions = array_merge($actions, $this->makeExportActions());
         }
 
@@ -65,7 +65,7 @@ trait HasCsvBulkActions
      * Filament resource rather than asking the ListRecords page directly — page
      * classes are not in the catalogue, their resource is.
      */
-    protected function can(string $action): bool
+    protected function canOnPage(string $action): bool
     {
         // A list page belongs to a resource, so ask the resource. A standalone
         // page is its own page, so ask itself. Either way the answer comes from
