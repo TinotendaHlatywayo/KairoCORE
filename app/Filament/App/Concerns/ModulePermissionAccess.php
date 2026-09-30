@@ -4,6 +4,7 @@ namespace App\Filament\App\Concerns;
 
 use App\Security\CapabilityCatalog;
 use App\Services\ModuleVisibilityManager;
+use Illuminate\Database\Eloquent\Model;
 use Modules\Admin\Services\PermissionRegistry;
 
 /**
@@ -75,6 +76,48 @@ trait ModulePermissionAccess
         return PermissionRegistry::checkPermission(
             CapabilityCatalog::pagePermissionKey($page['module'], $page['key'], $action)
         );
+    }
+
+    /**
+     * Every Filament ability for this resource, answered from the catalogue.
+     *
+     * Filament decides whether to show Create, Edit, Delete, Duplicate, Restore
+     * and View actions — in a table, in a header, or on a whole page — by
+     * calling these. Overriding this one method therefore gates all of them in
+     * the same place, rather than each resource having to remember to hide each
+     * button.
+     *
+     * Where a model policy exists it is still consulted, so record-level rules
+     * a school has written (only your own records, only your department) keep
+     * working on top of the module-level decision.
+     *
+     * @param  Model|null  $record
+     */
+    public static function can(string $ability, $record = null): bool
+    {
+        if (! static::canPerform(self::abilityToOperation($ability))) {
+            return false;
+        }
+
+        return parent::can($ability, $record);
+    }
+
+    /**
+     * Filament's ability names, in terms of the operations a page declares.
+     *
+     * Filament distinguishes abilities that a page treats as one thing — a
+     * duplicate is a create, a restore is an edit — so both land on the same
+     * capability the permission editor shows.
+     */
+    protected static function abilityToOperation(string $ability): string
+    {
+        return match ($ability) {
+            'viewAny', 'view' => 'view',
+            'create', 'replicate' => 'create',
+            'update', 'edit', 'restore', 'reorder' => 'edit',
+            'delete', 'deleteAny', 'forceDelete', 'forceDeleteAny' => 'delete',
+            default => $ability,
+        };
     }
 
     /**
