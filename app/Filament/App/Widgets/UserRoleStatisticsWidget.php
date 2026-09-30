@@ -28,11 +28,16 @@ class UserRoleStatisticsWidget extends BaseWidget
             ->where('status', 'active')
             ->count();
 
-        // Employee directory role values are human labels ('Teacher',
-        // 'Support Staff', ...); the demo seeder stores the legacy
-        // 'teaching_staff' / 'non_teaching_staff' codes. Count both spellings
-        // so every real teaching employee shows up on the dashboard.
-        $teachingRoles = ['Teacher', 'teacher', 'teaching_staff'];
+        // Employee directory role values use the new role labels from the
+        // registration form ('Teaching Staff', 'Accounts / Finance', etc.).
+        // Count teaching roles explicitly; everything else is non-teaching.
+        $teachingRoles = array_values(array_unique([
+            UserRegistrationService::roleNameForCategory('teaching_staff'),
+            'Teaching Staff',
+            'Teacher',
+            'teacher',
+            'teaching_staff',
+        ]));
 
         $teachingCount = Employee::where('school_id', $schoolId)
             ->whereIn('role', $teachingRoles)
