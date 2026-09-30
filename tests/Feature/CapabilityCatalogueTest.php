@@ -1,0 +1,507 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Filament\App\Pages\ApplicationSuccess;
+use App\Filament\App\Resources\SubjectResource;
+use App\Security\CapabilityCatalog;
+use App\Security\RoleCatalogue;
+use Modules\Admin\Services\PermissionRegistry;
+use PHPUnit\Framework\Attributes\DataProvider;
+use Tests\TestCase;
+
+/**
+ * The access rules, checked against the capability catalogue directly.
+ *
+ * These are the promises the system makes: a role owns the modules it was given
+ * and nothing else, universal self-service reaches every member of staff without
+ * leaking a whole module, granting a whole module covers pages added later, and
+ * nobody can reach a screen the catalogue has not described.
+ */
+class CapabilityCatalogueTest extends TestCase
+{
+    public function test_every_role_resolves_to_a_concrete_permission_list(): void
+    {
+        foreach (RoleCatalogue::roles() as $key => $role) {
+            $permissions = RoleCatalogue::permissionsFor($key);
+
+            $this->assertNotEmpty($permissions, "{$key} resolved to no permissions");
+
+            foreach ($permissions as $permission) {
+                $this->assertTrue(
+                    in_array($permission, PermissionRegistry::collectAllPermissionKeys(), true)
+                        || $permission === PermissionRegistry::WILDCARD,
+                    "{$key} holds '{$permission}', which does not exist",
+                );
+            }
+        }
+    }
+
+    public function test_the_eleven_documented_roles_exist(): void
+    {
+        $this->assertCount(11, RoleCatalogue::roles());
+
+        foreach ([
+            'System Administrator', 'School Administrator', 'Teaching Staff',
+            'Accounts / Finance', 'HR', 'Health', 'Procurement', 'Librarian',
+            'Houseparent', 'Supporting Staff', 'Student',
+        ] as $label) {
+            $this->assertContains($label, array_column(RoleCatalogue::roles(), 'label'));
+        }
+    }
+
+    public function test_students_are_not_offered_as_employees(): void
+    {
+        $labels = array_values(RoleCatalogue::employeeRoles());
+
+        $this->assertNotContains('Student', $labels);
+        $this->assertContains('Teaching Staff', $labels);
+        $this->assertCount(10, $labels);
+    }
+
+    public function test_the_system_administrator_can_do_anything(): void
+    {
+        $permissions = RoleCatalogue::permissionsFor('administrator');
+
+        $this->assertSame([PermissionRegistry::WILDCARD], $permissions);
+
+        // The wildcard is the whole point: it covers keys that do not exist yet.
+        $this->assertTrue(PermissionRegistry::isGranted($permissions, 'anything.at_all.goes'));
+    }
+
+    public function test_the_student_role_is_confined_to_the_student_portal(): void
+    {
+        $permissions = RoleCatalogue::permissionsFor('student');
+
+        $this->assertSame(['student_portal.access'], $permissions);
+        $this->assertFalse(PermissionRegistry::isGranted($permissions, 'academics.subjects.view'));
+        $this->assertFalse(PermissionRegistry::isGranted($permissions, 'finance.invoices.view'));
+    }
+
+    #[DataProvider('roleModuleProvider')]
+    public function test_a_role_reaches_all_of_its_own_modules_and_nothing_else(
+        string $roleKey,
+        array $owned,
+    ): void {
+        $permissions = RoleCatalogue::permissionsFor($roleKey);
+
+        // Every non-staff role reaches some part of HR and Communication through
+        // the universal self-service set, so those two are asserted on their own
+        // below rather than being read as "the role owns this module".
+        $shared = ['hr', 'communication'];
+
+        $reached = [];
+
+        foreach (CapabilityCatalog::modules() as $slug => $module) {
+            if ($slug === 'universal') {
+                continue;
+            }
+
+            $visible = 0;
+
+            foreach ($module['pages'] as $key => $page) {
+                if (PermissionRegistry::isGrantedAny(
+                    $permissions,
+                    CapabilityCatalog::accessKeysFor($slug, $key),
+                )) {
+                    $visible++;
+                }
+            }
+
+            if ($visible > 0) {
+                $reached[$slug] = $visible;
+            }
+        }
+
+        foreach ($reached as $slug => $visible) {
+            if (in_array($slug, $owned, true)) {
+                $this->assertSame(
+                    count(CapabilityCatalog::module($slug)['pages']),
+                    $visible,
+                    "{$roleKey} owns {$slug} but cannot reach every page in it",
+                );
+            } elseif (! in_array($slug, $shared, true)) {
+                $this->fail("{$roleKey} reached {$visible} page(s) of {$slug}, which it does not own");
+            }
+        }
+
+        foreach ($owned as $slug) {
+            $this->assertArrayHasKey($slug, $reached, "{$roleKey} owns {$slug} but reached none of it");
+        }
+
+        // A student is the one role that gets no self-service: they are not
+        // staff, they have the portal. Every other role owns no module yet must
+        // still reach the shared screens.
+        $this->assertSame(
+            $roleKey === 'student',
+            $reached === [],
+            $roleKey === 'student'
+                ? 'A student must reach nothing but the portal'
+                : "{$roleKey} reached nothing at all, not even self-service",
+        );
+    }
+
+    /**
+     * @return array<string, array{0: string, 1: array<int, string>}>
+     */
+    public static function roleModuleProvider(): array
+    {
+        return [
+            'school administrator' => ['school_administrator', ['academics', 'admissions', 'communication', 'inventory', 'library', 'students']],
+            'teaching staff' => ['teaching_staff', ['academics', 'exams']],
+            'accounts' => ['accounts_finance', ['finance']],
+            'hr' => ['hr', ['hr']],
+            'health' => ['health', ['health']],
+            'procurement' => ['procurement', ['exams']],
+            'librarian' => ['librarian', ['website']],
+            'houseparent' => ['houseparent', ['boarding']],
+            'supporting staff' => ['supporting_staff', []],
+            'student' => ['student', []],
+        ];
+    }
+
+    /**
+     * Everyone reaches the two shared modules, but only the handful of screens
+     * that belong to every member of staff.
+     */
+    #[DataProvider('sharedModulePageProvider')]
+    public function test_self_service_reaches_only_the_universal_screens(
+        string $roleKey,
+        string $moduleKey,
+        array $expected,
+    ): void {
+        $permissions = RoleCatalogue::permissionsFor($roleKey);
+
+        $reached = [];
+
+        foreach (CapabilityCatalog::module($moduleKey)['pages'] as $key => $page) {
+            if (PermissionRegistry::isGrantedAny(
+                $permissions,
+                CapabilityCatalog::accessKeysFor($moduleKey, $key),
+            )) {
+                $reached[] = $page['label'];
+            }
+        }
+
+        sort($reached);
+        $expected = array_map(fn (string $label) => CapabilityCatalog::pageLabel($moduleKey, $label), $expected);
+        sort($expected);
+
+        $this->assertSame($expected, $reached);
+    }
+
+    /**
+     * @return array<string, array{0: string, 1: string, 2: array<int, string>}>
+     */
+    public static function sharedModulePageProvider(): array
+    {
+        // The HUBs appear because a page inside them is viewable, which is the
+        // behaviour asserted in test_a_category_hub_opens_for_anyone_who_can_reach_one_page_in_it.
+        return [
+            'supporting staff, HR' => [
+                'supporting_staff', 'hr',
+                ['Staff Directory & HR', 'Employees', 'Attendance & Leave', 'Leave Requests', 'Staff Attendance'],
+            ],
+            'supporting staff, Communication' => [
+                'supporting_staff', 'communication',
+                ['Schedule & Tasks', 'Community & Engagement', 'Announcements', 'Chat', 'Help & Inbox', 'Helpdesk'],
+            ],
+            'teaching staff, HR' => [
+                'teaching_staff', 'hr',
+                ['Staff Directory & HR', 'Employees', 'Attendance & Leave', 'Leave Requests', 'Staff Attendance'],
+            ],
+            'accounts, HR' => [
+                'accounts_finance', 'hr',
+                ['Staff Directory & HR', 'Employees', 'Attendance & Leave', 'Leave Requests', 'Staff Attendance'],
+            ],
+            'houseparent, HR' => [
+                'houseparent', 'hr',
+                ['Staff Directory & HR', 'Employees', 'Attendance & Leave', 'Leave Requests', 'Staff Attendance'],
+            ],
+        ];
+    }
+
+    /**
+     * The rest of Communication belongs to the school at large, not to one person:
+     * a supporting-staff member has no reason to read every event, resource,
+     * poll or school-wide inbox.
+     */
+    #[DataProvider('sharedModuleClosedPageProvider')]
+    public function test_self_service_leaves_the_school_wide_screens_closed(
+        string $roleKey,
+        string $moduleKey,
+        string $label,
+    ): void {
+        $permissions = RoleCatalogue::permissionsFor($roleKey);
+
+        $pages = CapabilityCatalog::module($moduleKey)['pages'];
+
+        $target = null;
+
+        foreach ($pages as $page) {
+            if ($page['label'] === $label) {
+                $target = $page;
+            }
+        }
+
+        $this->assertNotNull($target, "{$moduleKey} has no page labelled '{$label}'");
+
+        $this->assertFalse(
+            PermissionRegistry::isGrantedAny(
+                $permissions,
+                CapabilityCatalog::accessKeysFor($moduleKey, $target['key']),
+            ),
+            "{$roleKey} should not reach {$moduleKey}.{$target['key']}",
+        );
+    }
+
+    /**
+     * @return array<int, array{0: string, 1: string, 2: string}>
+     */
+    public static function sharedModuleClosedPageProvider(): array
+    {
+        return [
+            ['supporting_staff', 'communication', 'Events'],
+            ['supporting_staff', 'communication', 'Resources'],
+            ['supporting_staff', 'communication', 'Polls & Surveys'],
+            ['supporting_staff', 'communication', 'Kairo CORE Messages'],
+            ['supporting_staff', 'hr', 'Payroll Periods'],
+            ['supporting_staff', 'hr', 'Salary Grades'],
+            ['supporting_staff', 'hr', 'Staff Loans'],
+            ['supporting_staff', 'hr', 'Disciplinary Cases'],
+            ['supporting_staff', 'hr', 'Staff Assets'],
+            ['supporting_staff', 'communication', 'Overview'],
+        ];
+    }
+
+    public function test_a_teacher_cannot_reach_any_finance_page(): void
+    {
+        $permissions = RoleCatalogue::permissionsFor('teaching_staff');
+
+        $reached = [];
+
+        foreach (CapabilityCatalog::module('finance')['pages'] as $key => $page) {
+            if (PermissionRegistry::isGrantedAny(
+                $permissions,
+                CapabilityCatalog::accessKeysFor('finance', $key),
+            )) {
+                $reached[] = $page['label'];
+            }
+        }
+
+        $this->assertSame([], $reached, 'A teacher reached a finance page');
+    }
+
+    public function test_every_member_of_staff_can_manage_their_own_leave_without_the_hr_module(): void
+    {
+        foreach (RoleCatalogue::keys() as $key) {
+            if ($key === 'student') {
+                continue;
+            }
+
+            $permissions = RoleCatalogue::permissionsFor($key);
+
+            $this->assertTrue(
+                PermissionRegistry::isGranted($permissions, 'hr.leave_requests.view'),
+                "{$key} cannot see their own leave requests",
+            );
+            $this->assertTrue(
+                PermissionRegistry::isGranted($permissions, 'hr.leave_requests.create'),
+                "{$key} cannot apply for leave",
+            );
+        }
+    }
+
+    public function test_self_service_does_not_hand_staff_the_whole_hr_or_communication_module(): void
+    {
+        // A supporting-staff member owns no specialist module, so anything HR
+        // they can reach came from the universal self-service set. If that set
+        // were expressed as a module-wide key, they would have the lot.
+        $permissions = RoleCatalogue::permissionsFor('supporting_staff');
+
+        $reached = [];
+
+        foreach (CapabilityCatalog::module('hr')['pages'] as $key => $page) {
+            if (PermissionRegistry::isGrantedAny(
+                $permissions,
+                CapabilityCatalog::accessKeysFor('hr', $key),
+            )) {
+                $reached[] = $page['label'];
+            }
+        }
+
+        $this->assertNotContains('Payroll Periods', $reached);
+        $this->assertNotContains('Salary Grades', $reached);
+        $this->assertNotContains('Disciplinary Cases', $reached);
+        $this->assertContains('Leave Requests', $reached);
+    }
+
+    public function test_a_whole_module_grant_covers_pages_added_later(): void
+    {
+        // 'finance.edit' is the module-wide form. A page nobody has configured
+        // yet, sitting inside Finance, must be covered by it.
+        $this->assertTrue(PermissionRegistry::isGranted(['finance.edit'], 'finance.some_future_page.edit'));
+        $this->assertTrue(PermissionRegistry::isGranted(['finance.view_module'], 'finance.some_future_page.view'));
+
+        // ...but only the operation that was actually granted.
+        $this->assertFalse(PermissionRegistry::isGranted(['finance.view_module'], 'finance.some_future_page.delete'));
+    }
+
+    public function test_a_page_grant_does_not_leak_into_another_module(): void
+    {
+        $this->assertFalse(PermissionRegistry::isGranted(['finance.invoices.view'], 'academics.subjects.view'));
+        $this->assertFalse(PermissionRegistry::isGranted(['hr.view_module'], 'finance.invoices.view'));
+    }
+
+    public function test_viewing_a_page_does_not_imply_editing_it(): void
+    {
+        $this->assertTrue(PermissionRegistry::isGranted(['academics.subjects.view'], 'academics.subjects.view'));
+        $this->assertFalse(PermissionRegistry::isGranted(['academics.subjects.view'], 'academics.subjects.edit'));
+        $this->assertFalse(PermissionRegistry::isGranted(['academics.subjects.view'], 'academics.subjects.delete'));
+    }
+
+    public function test_naming_inexistent_permissions_is_dropped_rather_than_silently_kept(): void
+    {
+        $clean = PermissionRegistry::normalizePermissionList([
+            'academics.subjects.view',
+            'academics.not_a_page.view',
+            '  finance.invoices.view  ',
+            '',
+            '*',
+        ]);
+
+        $this->assertSame(['academics.subjects.view', 'finance.invoices.view', '*'], $clean);
+    }
+
+    /**
+     * The example the requirements describe: Setup & Structure with Level,
+     * Subjects and Classrooms granted, but not Academic Years.
+     */
+    public function test_a_group_stays_visible_when_only_some_of_its_pages_are_granted(): void
+    {
+        $permissions = [
+            'academics.level.view',
+            'academics.subjects.view',
+            'academics.classrooms.view',
+        ];
+
+        $reached = [];
+
+        foreach (CapabilityCatalog::module('academics')['pages'] as $key => $page) {
+            if (PermissionRegistry::isGrantedAny(
+                $permissions,
+                CapabilityCatalog::accessKeysFor('academics', $key),
+            )) {
+                $reached[] = $page['label'];
+            }
+        }
+
+        $this->assertContains('Level', $reached);
+        $this->assertContains('Subjects', $reached);
+        $this->assertContains('Classrooms', $reached);
+        $this->assertNotContains('Academic Years', $reached);
+    }
+
+    public function test_a_category_hub_opens_for_anyone_who_can_reach_one_page_in_it(): void
+    {
+        $teacher = RoleCatalogue::permissionsFor('teaching_staff');
+
+        // Teachers own all of Academics, so every academic hub is open to them.
+        $this->assertTrue(PermissionRegistry::isGrantedAny(
+            $teacher,
+            CapabilityCatalog::accessKeysFor('academics', 'setup_structure'),
+        ));
+
+        // And no finance hub, because they own none of Finance.
+        $this->assertFalse(PermissionRegistry::isGrantedAny(
+            $teacher,
+            CapabilityCatalog::accessKeysFor('finance', 'student_billing_revenue'),
+        ));
+        $this->assertFalse(PermissionRegistry::isGrantedAny(
+            $teacher,
+            CapabilityCatalog::accessKeysFor('finance', 'core_accounting_setup'),
+        ));
+    }
+
+    public function test_a_teacher_reaches_their_own_leave_but_not_the_payroll_hub(): void
+    {
+        $teacher = RoleCatalogue::permissionsFor('teaching_staff');
+
+        $this->assertTrue(PermissionRegistry::isGrantedAny(
+            $teacher,
+            CapabilityCatalog::accessKeysFor('hr', 'attendance_leave'),
+        ));
+        $this->assertFalse(PermissionRegistry::isGrantedAny(
+            $teacher,
+            CapabilityCatalog::accessKeysFor('hr', 'payroll_compensation'),
+        ));
+    }
+
+    public function test_the_page_labels_asserted_by_the_tests_are_the_real_ones(): void
+    {
+        // The self-service tests above name screens as a user would look for
+        // them. If a page is renamed, those tests should fail loudly rather than
+        // quietly stop asserting anything.
+        $this->assertSame('Leave Requests', CapabilityCatalog::pageLabel('hr', 'Leave Requests'));
+        $this->assertSame('Schedule & Tasks', CapabilityCatalog::pageLabel('communication', 'Schedule & Tasks'));
+        $this->assertSame('Payroll Periods', CapabilityCatalog::pageLabel('hr', 'Payroll Periods'));
+        $this->assertSame('Kairo CORE Messages', CapabilityCatalog::pageLabel('communication', 'Kairo CORE Messages'));
+    }
+
+    public function test_every_catalogue_page_names_a_class_that_exists(): void
+    {
+        foreach (CapabilityCatalog::modules() as $module) {
+            foreach ($module['pages'] as $page) {
+                $this->assertTrue(
+                    class_exists($page['class']),
+                    "{$module['key']}.{$page['key']} points at missing class {$page['class']}",
+                );
+            }
+        }
+    }
+
+    public function test_no_two_catalogue_pages_share_a_permission_key(): void
+    {
+        $keys = CapabilityCatalog::allPermissionKeys();
+
+        $this->assertSame(
+            count($keys),
+            count(array_unique($keys)),
+            'The catalogue contains a duplicate permission key',
+        );
+    }
+
+    public function test_every_catalogue_action_is_described(): void
+    {
+        foreach (CapabilityCatalog::allPermissionKeys() as $key) {
+            $description = CapabilityCatalog::describe($key);
+
+            $this->assertNotSame('', trim($description), "'{$key}' has no help text");
+        }
+    }
+
+    public function test_every_catalogue_page_explains_what_it_is_for(): void
+    {
+        foreach (CapabilityCatalog::modules() as $module) {
+            foreach ($module['pages'] as $key => $page) {
+                $this->assertNotSame('', trim((string) $page['purpose']));
+            }
+        }
+    }
+
+    public function test_a_catalogue_page_is_found_from_its_class(): void
+    {
+        $page = CapabilityCatalog::pageForClass(SubjectResource::class);
+
+        $this->assertNotNull($page);
+        $this->assertSame('academics', $page['module']);
+        $this->assertSame('subjects', $page['key']);
+    }
+
+    public function test_a_class_outside_the_catalogue_is_denied(): void
+    {
+        // ApplicationSuccess is reachable only after submitting a form; it is
+        // deliberately not a navigable page and has no capabilities of its own.
+        $this->assertNull(CapabilityCatalog::pageForClass(ApplicationSuccess::class));
+    }
+}
