@@ -32,6 +32,20 @@ class CreateUserAccount extends CreateRecord
             : null;
     }
 
+    /**
+     * Spread the account's saved additions back across the grouped editor, so an
+     * existing account opens showing what it actually holds rather than an empty
+     * editor that looks like the person has no permissions at all.
+     */
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        return UserAccountResource::hydratePermissions(
+            $data,
+            sourceKey: 'permissions',
+            fieldPrefix: 'extra_permissions',
+        );
+    }
+
     public function create(bool $another = false): void
     {
         if ($this->conflictingUserId !== null) {
@@ -43,8 +57,18 @@ class CreateUserAccount extends CreateRecord
         parent::create($another);
     }
 
+    /**
+     * Collapse the grouped override editor back into the flat list of extra
+     * permissions stored on the account.
+     */
     protected function mutateFormDataBeforeCreate(array $data): array
     {
+        $data = UserAccountResource::dehydratePermissions(
+            $data,
+            targetKey: 'permissions',
+            fieldPrefix: 'extra_permissions',
+        );
+
         $conflict = app(UserRegistrationService::class)->findConflicting(
             Filament::getTenant()?->getKey(),
             $data['email'] ?? null,

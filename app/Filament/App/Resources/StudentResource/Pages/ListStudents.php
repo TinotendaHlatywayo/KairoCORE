@@ -51,25 +51,42 @@ class ListStudents extends ListRecords
 
     protected function getHeaderActions(): array
     {
+        $actions = [
+            Actions\CreateAction::make(),
+        ];
+
+        // Moving the directory in and out of the school is its own decision from
+        // being able to read it, so each action is offered only when this page
+        // grants it. Someone who can list students but not export them simply
+        // has no Export button.
+        if ($this->canOnPage('export')) {
+            $actions = array_merge($actions, $this->makeExportActions());
+        }
+
+        if ($this->canOnPage('import')) {
+            $actions[] = $this->makeStudentImportAction();
+        }
+
+        return $actions;
+    }
+
+    protected function makeStudentImportAction(): Action
+    {
         $service = static::csvService();
         $streamName = $this->csvStreamName();
 
-        return [
-            Actions\CreateAction::make(),
-            ...$this->makeExportActions(),
-            Action::make('importStudentsCsv')
-                ->label(__('Import Students (Excel/CSV)'))
-                ->icon('heroicon-o-arrow-up-tray')
-                ->color('warning')
-                ->modalHeading(__('Import Students from Excel or CSV'))
-                ->modalDescription('Upload your file and the system matches every column automatically.')
-                ->modalWidth(MaxWidth::ExtraLarge)
-                ->modalSubmitActionLabel(__('Import Students'))
-                ->steps($this->csvImportSteps($service, $streamName, 'Students'))
-                ->action(function (array $data) use ($service, $streamName) {
-                    $this->runStudentImport($data, $service, $streamName);
-                }),
-        ];
+        return Action::make('importStudentsCsv')
+            ->label(__('Import Students (Excel/CSV)'))
+            ->icon('heroicon-o-arrow-up-tray')
+            ->color('warning')
+            ->modalHeading(__('Import Students from Excel or CSV'))
+            ->modalDescription('Upload your file and the system matches every column automatically.')
+            ->modalWidth(MaxWidth::ExtraLarge)
+            ->modalSubmitActionLabel(__('Import Students'))
+            ->steps($this->csvImportSteps($service, $streamName, 'Students'))
+            ->action(function (array $data) use ($service, $streamName) {
+                $this->runStudentImport($data, $service, $streamName);
+            });
     }
 
     protected function runStudentImport(array $data, string $service, string $streamName): void
