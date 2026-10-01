@@ -78,11 +78,13 @@ final class RoleCatalogue
      * The 11 roles a school starts with, in the order they are offered on the
      * employee registration form.
      *
-     * `modules` is empty for roles that deliberately start with nothing beyond
-     * self-service, and `portal` marks the one role that lives in the student
-     * panel rather than the staff workspace.
+     * `modules` grants full access to entire modules.
+     * `groups` grants full access to the named page groups within a module,
+     * so a role can own one part of a module without owning all of it.
+     * `except` names individual pages to hold back from those grants.
+     * `portal` marks the one role that lives in the student panel.
      *
-     * @return array<string, array{label: string, modules: array<int, string>, portal?: bool, summary: string}>
+     * @return array<string, array{label: string, modules: array<int, string>, groups?: array<string, array<int, string>>, except?: array<int, string>, everything?: bool, portal?: bool, summary: string}>
      */
     public static function roles(): array
     {
@@ -102,7 +104,17 @@ final class RoleCatalogue
             ],
             'teaching_staff' => [
                 'label' => 'Teaching Staff',
-                'modules' => ['academics', 'exams'],
+                'modules' => ['academics'],
+                'groups' => [
+                    // The three Exams & Grading areas a teacher works in daily.
+                    'exams' => ['Assessment Center', 'Grading & Marks Management', 'Reports & Academic Publishing'],
+                ],
+                'except' => [
+                    // Teachers produce report cards; publishing them to the
+                    // student portal is a separate office, so the page and every
+                    // operation on it stay out of their hands by default.
+                    'exams.publish_to_student_portal',
+                ],
                 'summary' => __('Teaches classes: academic structure, timetables and progression, plus assessments, grading and report cards.'),
             ],
             'accounts_finance' => [
@@ -122,7 +134,12 @@ final class RoleCatalogue
             ],
             'procurement' => [
                 'label' => 'Procurement',
-                'modules' => ['exams'],
+                'modules' => [],
+                'groups' => [
+                    // Procurement is the office that runs the publishing step, so
+                    // unlike teaching staff it keeps the student-portal page.
+                    'exams' => ['Assessment Center', 'Grading & Marks Management', 'Reports & Academic Publishing'],
+                ],
                 'summary' => __('Runs assessment publishing: the assessment centre, grading and marks management, and academic report publishing.'),
             ],
             'librarian' => [
@@ -237,8 +254,9 @@ final class RoleCatalogue
      *
      * Full-access roles receive the wildcard, which the permission resolver
      * treats as "everything, now and whatever is added later". Every other role
-     * receives full access to the modules it owns, plus the self-service set
-     * that every member of staff needs.
+     * receives full access to the modules it owns, plus full access to the page
+     * groups it is given within other modules, minus any page named in `except`,
+     * plus the self-service set that every member of staff needs.
      *
      * @return array<int, string>
      */
@@ -256,13 +274,94 @@ final class RoleCatalogue
             return ['student_portal.access'];
         }
 
+        return self::withoutExcludedPages(
+            self::permissionsForWithoutExclusions($key),
+            self::excludedPagesFor($key),
+        );
+    }
+
+    /**
+     * What a role would grant if its `except` list were empty.
+     *
+     * Exists so the role screen can name what is being deliberately held back.
+     * Comparing the two sets is the only honest way to answer "what does this
+     * role not get?", because a role can be denied a page it never owned anyway.
+     *
+     * @return array<int, string>
+     */
+    public static function permissionsForWithoutExclusions(string $key): array
+    {
         $role = self::roles()[$key];
 
         return self::normalize(array_merge(
             CapabilityCatalog::fullAccessTo(...$role['modules']),
+            self::groupKeys($role['groups'] ?? []),
             self::selfService(),
             self::legacyKeysFor($role['modules']),
             self::SELF_SERVICE_LEGACY,
+        ));
+    }
+
+    /**
+     * Full access to the named page groups of a module.
+     *
+     * A group is the unit the user actually thinks in ("Reports & Academic
+     * Publishing"), and the permission editor shows groups as headings, so a
+     * default role is described the same way an administrator would build it by
+     * hand.
+     *
+     * @param  array<string, array<int, string>>  $groups
+     * @return array<int, string>
+     */
+    private static function groupKeys(array $groups): array
+    {
+        $keys = [];
+
+        foreach ($groups as $moduleSlug => $groupLabels) {
+            foreach ($groupLabels as $groupLabel) {
+                foreach (CapabilityCatalog::pageKeysInGroup($moduleSlug, $groupLabel) as $pageKey) {
+                    $keys = array_merge($keys, CapabilityCatalog::fullAccessToPage($moduleSlug, $pageKey));
+                }
+            }
+        }
+
+        return $keys;
+    }
+
+    /**
+     * Strip every key belonging to a held-back page.
+     *
+     * This has to happen after the keys are collected rather than by simply not
+     * adding the page, because a module-wide grant implies the same operation on
+     * every page of that module. The only dependable way to keep a page out of a
+     * role that otherwise owns the module is to remove its keys afterwards.
+     *
+     * @param  array<int, string>  $keys
+     * @param  array<int, string>  $excluded  "module.page_key" strings.
+     * @return array<int, string>
+     */
+    private static function withoutExcludedPages(array $keys, array $excluded): array
+    {
+        if ($excluded === []) {
+            return $keys;
+        }
+
+        $prefixes = [];
+
+        foreach ($excluded as $pageKey) {
+            $prefixes[] = $pageKey.'.';
+        }
+
+        return array_values(array_filter(
+            $keys,
+            static fn (string $key): bool => ! in_array(
+                true,
+                array_map(
+                    static fn (string $prefix): bool => str_starts_with($key, $prefix),
+                    $prefixes,
+                ),
+                true,
+            ),
         ));
     }
 
@@ -303,7 +402,60 @@ final class RoleCatalogue
     }
 
     /**
-     * The navigation modules a role opens by default.
+     * The page groups a role owns inside modules it does not own outright, keyed by
+     * module slug. Used by the role permission screen to show "Reports & Academic
+     * Publishing" as the unit an administrator grants, rather than a page list.
+     *
+     * @return array<string, array<int, string>>
+     */
+    public static function groupsFor(string $key): array
+    {
+        $role = self::roles()[$key] ?? null;
+
+        return $role['groups'] ?? [];
+    }
+
+    /**
+     * Every module that any role reaches only through named groups, mapped to the
+     * group labels used across the catalogue. A group label that does not exist in
+     * its module can then be reported instead of quietly granting nothing.
+     *
+     * @return array<string, array<int, string>>
+     */
+    public static function groupsWithModules(): array
+    {
+        $map = [];
+
+        foreach (self::roles() as $role) {
+            foreach ($role['groups'] ?? [] as $moduleSlug => $labels) {
+                foreach ($labels as $label) {
+                    $map[$moduleSlug][] = $label;
+                }
+            }
+        }
+
+        foreach ($map as $moduleSlug => $labels) {
+            $map[$moduleSlug] = array_values(array_unique($labels));
+        }
+
+        return $map;
+    }
+
+    /**
+     * Pages a role is deliberately kept out of, as "module.page_key" strings.
+     *
+     * @return array<int, string>
+     */
+    public static function excludedPagesFor(string $key): array
+    {
+        $role = self::roles()[$key] ?? null;
+
+        return $role['except'] ?? [];
+    }
+
+    /**
+     * The navigation modules a role opens by default: whole modules plus any module
+     * it reaches through named groups.
      *
      * @return array<int, string>
      */
@@ -322,7 +474,10 @@ final class RoleCatalogue
             ));
         }
 
-        return $role['modules'];
+        return array_values(array_unique(array_merge(
+            $role['modules'],
+            array_keys($role['groups'] ?? []),
+        )));
     }
 
     /**

@@ -891,6 +891,56 @@ final class CapabilityCatalog
     }
 
     /**
+     * Full access to a single page: every operation that page offers.
+     *
+     * Grouping by category keeps a role's default honest. Granting a whole
+     * module would also hand over pages the role is meant to stay out of, such
+     * as publishing to the student portal.
+     *
+     * @return array<int, string>
+     */
+    public static function fullAccessToPage(string $moduleSlug, string $pageKey): array
+    {
+        $page = self::page($moduleSlug, $pageKey);
+
+        if ($page === null) {
+            return [];
+        }
+
+        $keys = [];
+
+        foreach ($page['actions'] as $action) {
+            $keys[] = self::pagePermissionKey($moduleSlug, $pageKey, $action);
+        }
+
+        return array_values(array_unique($keys));
+    }
+
+    /**
+     * The keys of every page filed under a category of a module.
+     *
+     * @return array<int, string>
+     */
+    public static function pageKeysInGroup(string $moduleSlug, string $groupLabel): array
+    {
+        $module = self::module($moduleSlug);
+
+        if ($module === null) {
+            return [];
+        }
+
+        $keys = [];
+
+        foreach ($module['pages'] as $pageKey => $page) {
+            if ($page['group'] === $groupLabel) {
+                $keys[] = $pageKey;
+            }
+        }
+
+        return $keys;
+    }
+
+    /**
      * Every explicit permission key for one module, module-wide and
      * page-scoped alike. Used by the permission editor's "select all" so the
      * saved list and the displayed list never disagree.
@@ -1098,6 +1148,18 @@ final class CapabilityCatalog
         }
 
         return null;
+    }
+
+    /**
+     * The catalogue's name for a page, looked up by page key.
+     *
+     * Used where code talks about a specific screen by its identifier, so a help
+     * message or a test never carries a page name that a later rename would make
+     * stale.
+     */
+    public static function pageName(string $moduleSlug, string $pageKey): ?string
+    {
+        return self::page($moduleSlug, $pageKey)['label'] ?? null;
     }
 
     /**

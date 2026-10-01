@@ -7,12 +7,14 @@ use App\Mail\UserRegistrationPending;
 use App\Models\School;
 use App\Models\User;
 use App\Notifications\UserRegistrationApprovalNotification;
+use App\Security\RoleCatalogue;
 use Illuminate\Support\Facades\Notification;
 use Modules\Admin\Enums\EmailCategory;
 use Modules\Admin\Models\CustomRole;
 use Modules\Admin\Models\Department;
 use Modules\Admin\Models\SystemSetting;
 use Modules\Admin\Services\PermissionRegistry;
+use Modules\Admin\Services\SystemRolePresets;
 use Modules\Admin\Services\TenantEmailConfigurationService;
 
 /**
@@ -24,25 +26,30 @@ use Modules\Admin\Services\TenantEmailConfigurationService;
  */
 class UserRegistrationService
 {
-    public const CATEGORY_ROLE_NAMES = [
-        'administrator' => 'System Administrator',
-        'school_administrator' => 'School Administrator',
-        'teaching_staff' => 'Teaching Staff',
-        'accounts_finance' => 'Accounts / Finance',
-        'student' => 'Student',
-        'librarian' => 'Librarian',
-        'houseparent' => 'Houseparent',
-        'hr' => 'HR',
-        'health' => 'Health',
-        'procurement' => 'Procurement',
-        'supporting_staff' => 'Supporting Staff',
-    ];
+    /**
+     * Category key => role label, for the roles a school can be asked for.
+     *
+     * Derived from the catalogue so the registration form, the approval dialog
+     * and the role screen can never drift apart, and so adding a role to the
+     * catalogue is enough to make it offerable.
+     *
+     * @return array<string, string>
+     */
+    public static function categoryRoleNames(): array
+    {
+        $names = [];
+
+        foreach (RoleCatalogue::roles() as $key => $role) {
+            $names[$key] = $role['label'];
+        }
+
+        return $names;
+    }
 
     /**
      * Sensible default permissions granted for each requested registration
-     * category. These defaults are never final — the approver may tick or
-     * untick permissions per account, and a per-user snapshot is materialized
-     * on approval.
+     * category. These defaults are never final — the approver may add
+     * permissions per account, which are stored on top of the role.
      *
      * @return array<int, string>
      */
@@ -53,32 +60,21 @@ class UserRegistrationService
 
     public static function roleNameForCategory(string $category): string
     {
-        return self::CATEGORY_ROLE_NAMES[$category] ?? 'Generic';
+        return self::categoryRoleNames()[$category] ?? 'Generic';
     }
 
     /**
      * Create (or reuse) the school-scoped default role for a category.
+     *
+     * Delegated to the catalogue so an approved account can never be handed a
+     * role whose defaults have drifted: an existing role is refreshed to the
+     * catalogue's current bundle unless an administrator has tailored it, and a
+     * role the school never had is created rather than silently downgraded to
+     * the fallback.
      */
     public static function ensureRoleForCategory(int $schoolId, string $category): CustomRole
     {
-        $name = self::roleNameForCategory($category);
-
-        $role = CustomRole::query()
-            ->where('school_id', $schoolId)
-            ->where('name', $name)
-            ->first();
-
-        if (! $role) {
-            $role = CustomRole::create([
-                'school_id' => $schoolId,
-                'name' => $name,
-                'description' => __('Kairo CORE default ').$name.' role.',
-                'permissions' => self::defaultPermissionsFor($category),
-                'is_system' => true,
-            ]);
-        }
-
-        return $role;
+        return SystemRolePresets::roleFor($schoolId, $category);
     }
 
     /**
@@ -132,7 +128,7 @@ class UserRegistrationService
         }
 
         $requestedRole = $data['requested_role'] ?? 'student';
-        if (! array_key_exists($requestedRole, self::CATEGORY_ROLE_NAMES)) {
+        if (! array_key_exists($requestedRole, self::categoryRoleNames())) {
             $requestedRole = 'student';
         }
 
@@ -281,10 +277,13 @@ class UserRegistrationService
             )->all());
         }
 
-        // Materialize the per-user permission snapshot: an explicit override
-        // from the approver wins; otherwise default to role + department sets.
+        // Store only the approver's additions on top of the role. Per-user
+        // permissions are additive, so writing the whole role bundle here would
+        // freeze a copy of the role onto the account: the teacher would keep
+        // Finance forever after losing it from the role, and nothing would be
+        // left that the runtime could tell apart from an intentional grant.
         $user->permissions = PermissionRegistry::normalizePermissionList(
-            $permissions ?? PermissionRegistry::defaultPermissionsForUser($user)
+            $permissions ?? []
         );
 
         $user->forceFill([

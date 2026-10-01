@@ -453,31 +453,22 @@ class PermissionRegistry
     }
 
     /**
-     * The permission list that actually applies to a user: their own snapshot
-     * when one has been saved, otherwise their role's list.
+     * Everything a user may do: their role, plus their own additions, plus
+     * anything their department unlocks.
      *
-     * An empty snapshot is treated as "no personal override" rather than
-     * "no permissions at all", so an account can never be silently locked out
-     * of its own workspace by an approval flow that saved nothing.
+     * Additive on purpose. A personal entry narrows nothing; it only ever adds,
+     * so handing a teacher an extra permission can never quietly take away
+     * something their role already gave them.
      *
      * @return array<int, string>
      */
     public static function permissionsFor(User $user): array
     {
-        $rolePermissions = [];
-
-        if ($user->custom_role_id) {
-            $role = CustomRole::find($user->custom_role_id);
-            if ($role && is_array($role->permissions)) {
-                $rolePermissions = $role->permissions;
-            }
-        } elseif ($user->requested_role) {
-            $rolePermissions = self::defaultPermissionsForRole($user->requested_role);
-        }
-
-        $personalPermissions = is_array($user->permissions) ? $user->permissions : [];
-
-        return self::normalizePermissionList(array_merge($rolePermissions, $personalPermissions, self::departmentPermissions($user)));
+        return self::normalizePermissionList(array_merge(
+            self::rolePermissionsFor($user),
+            self::personalPermissionsFor($user),
+            self::departmentPermissions($user),
+        ));
     }
 
     /**
@@ -556,7 +547,11 @@ class PermissionRegistry
         if ($user->custom_role_id !== null) {
             $role = CustomRole::find($user->custom_role_id);
             if ($role && self::roleHasUnrestrictedAccess($role)) {
-                self::reconcileAdministratorPermissions($role);
+                // An administrator role that was narrowed by an edit still has to
+                // be unrestricted, or the school's founder silently loses the
+                // platform. The catalogue decides, so this restores the wildcard
+                // from the same source every other default comes from.
+                SystemRolePresets::refresh($role);
             }
 
             return true;
@@ -570,20 +565,10 @@ class PermissionRegistry
             return false;
         }
 
-        // Check if the administrator role already exists for this school
-        $adminRole = CustomRole::where('school_id', $schoolId)
-            ->whereIn('name', ['Administrator', 'System Administrator'])
-            ->first();
-
-        if (! $adminRole) {
-            $adminRole = CustomRole::create([
-                'school_id' => $schoolId,
-                'name' => 'Administrator',
-                'description' => __('Platform-seeded administrative role with complete authorization clearance.'),
-                'permissions' => [self::WILDCARD],
-                'is_system' => true,
-            ]);
-        }
+        // The school's administrator role comes from the catalogue, so a school
+        // that lost it (or registered before roles existed) gets it back with
+        // the current full-access wildcard rather than a hand-built row.
+        $adminRole = SystemRolePresets::roleFor((int) $schoolId, 'administrator');
 
         // Directly update user column to prevent relationship mapping crashes
         $user->custom_role_id = $adminRole->id;
@@ -607,36 +592,6 @@ class PermissionRegistry
         }
 
         return RoleCatalogue::keyForRoleName($role->name) === 'administrator';
-    }
-
-    /**
-     * Bring a system role up to date with the capability catalogue.
-     *
-     * Full-access roles only ever need the wildcard. Every other system role is
-     * left alone apart from the capabilities implied by the module-wide keys it
-     * already holds, which is why a role granted "Academics — everything"
-     * automatically covers pages added to Academics later.
-     */
-    protected static function reconcileAdministratorPermissions(CustomRole $role): void
-    {
-        if (in_array(self::WILDCARD, $role->permissions ?? [], true)) {
-            return;
-        }
-
-        if (RoleCatalogue::keyForRoleName($role->name) === 'administrator') {
-            $role->permissions = [self::WILDCARD];
-            $role->save();
-
-            return;
-        }
-
-        $existing = $role->permissions ?? [];
-        $missing = array_values(array_diff(self::collectAllPermissionKeys(), $existing));
-
-        if (! empty($missing)) {
-            $role->permissions = array_values(array_unique(array_merge($existing, $missing)));
-            $role->save();
-        }
     }
 
     public static function moduleKeys(string $module): array
@@ -702,28 +657,66 @@ class PermissionRegistry
      */
     public static function defaultPermissionsForUser(User $user): array
     {
-        $permissions = [];
-
-        if ($user->requested_role) {
-            $permissions = self::defaultPermissionsForRole($user->requested_role);
-        }
-
-        return self::normalizePermissionList(array_merge($permissions, self::departmentPermissions($user)));
+        return self::normalizePermissionList(array_merge(
+            self::rolePermissionsFor($user),
+            self::departmentPermissions($user),
+        ));
     }
 
     /**
-     * The effective permission list for a user for display: their explicit
-     * snapshot when one exists, otherwise the role + department defaults.
+     * The permissions a user's role contributes on its own.
+     *
+     * A custom role wins over the catalogue role, because it is the more
+     * specific instruction: an administrator who attached a custom role meant
+     * that role to describe the job. This is the single place that precedence is
+     * decided, so the runtime gate and the editor can never disagree about what
+     * a user's role grants.
+     *
+     * @return array<int, string>
+     */
+    public static function rolePermissionsFor(User $user): array
+    {
+        if ($user->custom_role_id) {
+            $role = CustomRole::find($user->custom_role_id);
+
+            if ($role && is_array($role->permissions)) {
+                return $role->permissions;
+            }
+        }
+
+        if ($user->requested_role) {
+            return self::defaultPermissionsForRole($user->requested_role);
+        }
+
+        return [];
+    }
+
+    /**
+     * The permissions a user holds personally, on top of their role.
+     *
+     * These are additions, never a replacement. A teaching role keeps everything
+     * it brings and can be given HR or Finance on top, which is the whole point
+     * of per-user permissions.
+     *
+     * @return array<int, string>
+     */
+    public static function personalPermissionsFor(User $user): array
+    {
+        return is_array($user->permissions) ? $user->permissions : [];
+    }
+
+    /**
+     * The effective permission list for a user, exactly as the runtime gate
+     * computes it: role + personal + department.
+     *
+     * The editor shows this so the screen a user is looking at describes what
+     * they can actually do, rather than a stale snapshot of an older rule.
      *
      * @return array<int, string>
      */
     public static function effectivePermissionsForUser(User $user): array
     {
-        if (is_array($user->permissions) && $user->permissions !== []) {
-            return $user->permissions;
-        }
-
-        return self::defaultPermissionsForUser($user);
+        return self::permissionsFor($user);
     }
 
     /**

@@ -12,6 +12,7 @@
 # - Clears and re-caches config/routes/views/events
 # - Runs any pending migrations
 # - Refreshes the shipped report presets for every tenant
+# - Refreshes the default roles for every tenant
 # - Ensures the queue worker systemd service is up
 # =====================================================================
 set -euo pipefail
@@ -25,7 +26,7 @@ if [[ ! -d "$APP_DIR/.git" ]]; then
     exit 1
 fi
 
-echo "==> 0/11 Setting app ownership + git safe.directory for $PHP_USER"
+echo "==> 0/12 Setting app ownership + git safe.directory for $PHP_USER"
 # Nginx/PHP-FPM run as $PHP_USER and must own the whole app to run composer/artisan.
 # Running this every deploy is idempotent and fixes storage/vendor ownership drift.
 sudo chown -R "$PHP_USER":"$PHP_USER" "$APP_DIR"
@@ -53,33 +54,33 @@ restore() {
 }
 trap restore EXIT
 
-echo "==> 1/11 Fetching + checking out latest ${REMOTE_BRANCH}"
+echo "==> 1/12 Fetching + checking out latest ${REMOTE_BRANCH}"
 # Safer than `reset --hard`: leaves ignored/storage files alone and aborts if there
 # are unexpected local edits to tracked files (so we never silently wipe live changes).
 sudo -u "$PHP_USER" git fetch origin
 sudo -u "$PHP_USER" git checkout --force "origin/${REMOTE_BRANCH}"
 
-echo "==> 2/11 Installing composer dependencies (no-dev)"
+echo "==> 2/12 Installing composer dependencies (no-dev)"
 sudo -u "$PHP_USER" HOME=/var/www COMPOSER_HOME=/var/www/.composer composer install --no-dev --optimize-autoloader --no-scripts --no-interaction
 
-echo "==> 3/11 Building frontend assets (Vite)"
+echo "==> 3/12 Building frontend assets (Vite)"
 sudo -u "$PHP_USER" HOME=/var/www npx vite build 2>/dev/null || sudo -u "$PHP_USER" HOME=/var/www npm run build
 
-echo "==> 4/11 Package discovery + Filament asset publish"
+echo "==> 4/12 Package discovery + Filament asset publish"
 sudo -u "$PHP_USER" HOME=/var/www php artisan package:discover --ansi
 sudo -u "$PHP_USER" HOME=/var/www php artisan filament:assets --ansi || true
 sudo -u "$PHP_USER" HOME=/var/www composer dump-autoload --no-dev --optimize
 
-echo "==> 5/11 Clearing stale caches"
+echo "==> 5/12 Clearing stale caches"
 sudo -u "$PHP_USER" HOME=/var/www php artisan config:clear
 sudo -u "$PHP_USER" HOME=/var/www php artisan route:clear
 sudo -u "$PHP_USER" HOME=/var/www php artisan view:clear
 sudo -u "$PHP_USER" HOME=/var/www php artisan event:clear
 
-echo "==> 6/11 Running migrations"
+echo "==> 6/12 Running migrations"
 sudo -u "$PHP_USER" HOME=/var/www php artisan migrate --force
 
-echo "==> 7/11 Refreshing shipped report presets"
+echo "==> 7/12 Refreshing shipped report presets"
 # The report presets are code (ReportPresetCatalogue), so a deploy that ships a
 # fixed preset must also refresh what each tenant already has installed —
 # otherwise every existing tenant keeps its old, possibly broken templates and
@@ -89,13 +90,24 @@ sudo -u "$PHP_USER" HOME=/var/www php artisan schoolcore:install-report-presets 
     echo "WARNING: report presets did not install. Run: php artisan schoolcore:install-report-presets" >&2
 }
 
-echo "==> 8/11 Caching views"
+echo "==> 8/12 Refreshing default roles for every tenant"
+# The default roles are code (RoleCatalogue), so a deploy that changes what a
+# role grants must also fix the rows each tenant already has -- otherwise every
+# existing tenant keeps its old bundle and only a new school would get the new
+# one. The migration that adds custom_roles.role_key records which rows are the
+# platform's, and the command refreshes exactly those, leaving roles an
+# administrator has tailored alone.
+sudo -u "$PHP_USER" HOME=/var/www php artisan schoolcore:sync-catalogue-roles --all || {
+    echo "WARNING: default roles were not refreshed. Run: php artisan schoolcore:sync-catalogue-roles --all" >&2
+}
+
+echo "==> 9/12 Caching views"
 sudo -u "$PHP_USER" HOME=/var/www php artisan view:cache
 
-echo "==> 9/11 Storage link (idempotent)"
+echo "==> 10/12 Storage link (idempotent)"
 sudo -u "$PHP_USER" HOME=/var/www php artisan storage:link 2>/dev/null || true
 
-echo "==> 10/11 Ensuring queue worker is running"
+echo "==> 11/12 Ensuring queue worker is running"
 sudo install -m 644 "$APP_DIR/deploy/queue-worker.service" /etc/systemd/system/kairocore-queue.service
 sudo systemctl daemon-reload
 sudo systemctl enable kairocore-queue.service 2>/dev/null || true

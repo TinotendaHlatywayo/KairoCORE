@@ -127,7 +127,7 @@ class UserRoleStatisticsWidgetTest extends TestCase
 
     public function test_every_employee_role_label_is_classified_exactly_once(): void
     {
-        foreach (array_keys(UserRegistrationService::CATEGORY_ROLE_NAMES) as $category) {
+        foreach (array_keys(UserRegistrationService::categoryRoleNames()) as $category) {
             if ($category === 'student') {
                 continue;
             }
@@ -144,7 +144,7 @@ class UserRoleStatisticsWidgetTest extends TestCase
         $teachingLabel = UserRegistrationService::roleNameForCategory('teaching_staff');
         $this->assertSame(1, $counts['Teaching Staff'], "Only the '{$teachingLabel}' employee may be teaching staff.");
         $this->assertSame(
-            count(UserRegistrationService::CATEGORY_ROLE_NAMES) - 2,
+            count(UserRegistrationService::categoryRoleNames()) - 2,
             $counts['Non-Teaching Staff'],
             'Every other employee role label must be counted as non-teaching.'
         );
