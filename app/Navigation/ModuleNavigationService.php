@@ -2,6 +2,7 @@
 
 namespace App\Navigation;
 
+use App\Security\CapabilityCatalog;
 use App\Services\ModuleVisibilityManager;
 use Filament\Pages\Page;
 use Filament\Resources\Resource;
@@ -32,6 +33,15 @@ class ModuleNavigationService
      * @var array<string, bool>
      */
     protected array $moduleVisibilityCache = [];
+
+    /**
+     * Memoized URL path => module slug map for catalogued pages that are not
+     * contextual tabs, so the sidebar can resolve them without rebuilding the
+     * map on every item.
+     *
+     * @var array<string, string>|null
+     */
+    protected ?array $unlistedCache = null;
 
     public function modules(): array
     {
@@ -96,6 +106,11 @@ class ModuleNavigationService
      * Resolve which module slug a navigation URL/path belongs to, or null
      * when the path is not part of any registered module (dashboard, admin,
      * standalone pages). Used by the sidebar filter to hide module landings.
+     *
+     * Every catalogued page is considered, not only the ones that appear as a
+     * contextual tab. A page can sit in the sidebar without being a tab, and if the
+     * sidebar filter only knew about tabs then such a page would look unrelated to
+     * any module and would stay on screen after its module was switched off.
      */
     public function moduleSlugForPath(string $path): ?string
     {
@@ -107,7 +122,101 @@ class ModuleNavigationService
             }
         }
 
+        return $this->moduleSlugForUnlistedPage($path);
+    }
+
+    /**
+     * The module a page belongs to when that page is catalogued but is not one of
+     * the module's contextual tabs.
+     *
+     * The capability catalogue is the single source of truth for which class belongs
+     * to which module, so the sidebar asks it rather than keeping its own list. A
+     * page's URL is resolved from its class, so both the page's own landing URL and
+     * anything nested beneath it match.
+     */
+    protected function moduleSlugForUnlistedPage(string $path): ?string
+    {
+        $path = trim($path, '/');
+
+        if ($path === '') {
+            return null;
+        }
+
+        foreach ($this->unlistedPageUrls() as $url => $slug) {
+            if ($path === $url || str_starts_with($path, $url.'/')) {
+                return $slug;
+            }
+        }
+
         return null;
+    }
+
+    /**
+     * URL path => module slug for every catalogued page that is not already a tab.
+     *
+     * @return array<string, string>
+     */
+    protected function unlistedPageUrls(): array
+    {
+        if ($this->unlistedCache !== null) {
+            return $this->unlistedCache;
+        }
+
+        $tabbed = [];
+
+        foreach ($this->modules() as $module) {
+            foreach (array_merge($this->moduleTabs($module, false), $this->moduleMoreTabs($module, false)) as $tab) {
+                if (isset($tab['class'])) {
+                    $tabbed[$tab['class']] = true;
+                }
+            }
+        }
+
+        $urls = [];
+
+        foreach (CapabilityCatalog::classMap() as $class => [$slug, $pageKey]) {
+            if (isset($tabbed[$class])) {
+                continue;
+            }
+
+            $url = $this->urlForClass($class);
+
+            if ($url === null) {
+                continue;
+            }
+
+            // The first class to claim a path wins, so a module already listed in the
+            // navigation keeps it even if another module also offers the same page.
+            $urls[$url] ??= $slug;
+        }
+
+        // Longest URL first, so a nested page is not swallowed by a shorter prefix.
+        uksort($urls, static fn (string $a, string $b): int => strlen($b) <=> strlen($a));
+
+        return $this->unlistedCache = $urls;
+    }
+
+    /**
+     * The URL path a Filament page or resource lands on, or null when it cannot be
+     * resolved without a record (e.g. an edit form for a specific model).
+     */
+    protected function urlForClass(string $class): ?string
+    {
+        try {
+            if (is_subclass_of($class, Resource::class)) {
+                $url = $class::getUrl('index');
+            } elseif (is_subclass_of($class, Page::class)) {
+                $url = $class::getUrl();
+            } else {
+                return null;
+            }
+
+            $path = parse_url((string) $url, PHP_URL_PATH);
+
+            return filled($path) ? $this->normalizeUrl((string) $path) : null;
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 
     public function moduleTabs(array $module, bool $filterPermissions = true): array

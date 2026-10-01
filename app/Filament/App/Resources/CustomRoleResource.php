@@ -10,7 +10,9 @@ use Filament\Forms\Components\Tabs\Tab;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
+use Filament\Support\Exceptions\Halt;
 use Filament\Tables;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\IconColumn;
@@ -49,6 +51,7 @@ class CustomRoleResource extends Resource
     public static function form(Form $form): Form
     {
         $tabs = array_merge([
+            self::roleOverviewTab(),
             Tab::make(__('General Information'))
                 ->icon('heroicon-o-information-circle')
                 ->schema([
@@ -100,18 +103,31 @@ class CustomRoleResource extends Resource
                     ->label(__('Clone'))
                     ->icon('heroicon-o-document-duplicate')
                     ->color('info')
+                    // A custom action does not go through Resource::can(), so it
+                    // has to answer for itself. Cloning builds a new role, which
+                    // is a create.
+                    ->authorize(fn () => static::can('create'))
                     ->action(function (CustomRole $record) {
-                        $clone = $record->replicate();
-                        $clone->name = $record->name.' - Copy';
-                        $clone->is_system = false;
-                        $clone->save();
+                        // The copy is an administrator-owned role, so it gives up
+                        // the catalogue identity of its original: otherwise two
+                        // roles would answer to one catalogue key and a later
+                        // refresh would rewrite somebody's custom role back to
+                        // the defaults they were cloning to escape from.
+                        $clone = $record->replicateForClone();
 
                         AuditLogger::log('Clone Custom Role', 'System Administration', null, ['original' => $record->name, 'new' => $clone->name]);
                     }),
                 Tables\Actions\DeleteAction::make()
+                    ->authorize(fn () => static::can('delete'))
                     ->before(function (CustomRole $record) {
                         if ($record->is_system) {
-                            throw new \Exception('Cannot delete default system administration roles.');
+                            Notification::make()
+                                ->danger()
+                                ->title(__('This role cannot be deleted'))
+                                ->body(__('It is one of the school\'s default roles. Change its permissions instead of removing it.'))
+                                ->send();
+
+                            throw new Halt;
                         }
                     }),
             ]);

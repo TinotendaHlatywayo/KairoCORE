@@ -12,6 +12,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 use Modules\Admin\Models\SystemSetting;
+use Modules\Admin\Services\SystemRolePresets;
 
 class RegistrationWizard extends Component
 {
@@ -404,6 +405,12 @@ class RegistrationWizard extends Component
                 'requested_role' => 'administrator',
                 'account_status' => User::STATUS_PENDING,
             ]);
+
+            // Every catalogue role, created now rather than on first use: the
+            // applicant is already waiting to be told which roles their staff
+            // can be given. Eleven small rows keep that promise, and it is
+            // inside the transaction so a half-provisioned school is impossible.
+            SystemRolePresets::provisionForSchool($school);
 
             return $school;
         });

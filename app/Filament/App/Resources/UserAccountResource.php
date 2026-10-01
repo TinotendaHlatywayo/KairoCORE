@@ -2,8 +2,10 @@
 
 namespace App\Filament\App\Resources;
 
+use App\Filament\App\Concerns\ModulePermissionAccess;
 use App\Filament\App\Resources\UserAccountResource\Pages;
 use App\Models\User;
+use App\Security\RoleCatalogue;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Pages\CreateRecord;
@@ -16,7 +18,6 @@ use Illuminate\Validation\Rules\Password;
 use Modules\Admin\Models\CustomRole;
 use Modules\Admin\Models\Department;
 use Modules\Admin\Services\PermissionRegistry;
-use App\Filament\App\Concerns\ModulePermissionAccess;
 
 /**
  * Directory of individual user accounts with the administrator approval
@@ -68,8 +69,6 @@ class UserAccountResource extends Resource
     {
         return 'Accounts awaiting approval';
     }
-
-
 
     public static function canApprove(): bool
     {
@@ -125,45 +124,43 @@ class UserAccountResource extends Resource
                     ->dehydrated(false),
                 Forms\Components\Select::make('requested_role')
                     ->label(__('Requested Registration Role'))
-                    ->options(User::REGISTRATION_ROLES)
-                    ->helperText(__('Determines the default permission set pre-ticked for this account.'))
+                    ->options(RoleCatalogue::employeeRoles())
+                    ->helperText(__('Sets what this account can reach by default. You can add anything extra below without changing the role.'))
                     ->required(fn ($livewire) => $livewire instanceof Pages\CreateUserAccount)
                     ->disabled(fn ($livewire) => $livewire instanceof Pages\EditUserAccount)
-                    ->dehydrated(fn ($livewire) => $livewire instanceof Pages\CreateUserAccount)
-                    ->afterStateUpdated(function (Forms\Set $set, ?string $state) {
-                        if ($state) {
-                            $set('permissions', PermissionRegistry::defaultPermissionsForRole($state));
-                        }
-                    }),
+                    ->dehydrated(fn ($livewire) => $livewire instanceof Pages\CreateUserAccount),
                 Forms\Components\Select::make('departments')
                     ->label(__('Departments'))
                     ->relationship(name: 'departments', titleAttribute: 'name', ignoreRecord: true)
                     ->multiple()
                     ->preload()
                     ->searchable()
-                    ->helperText(__('Non-teaching staff inherit the default permissions of each assigned department.'))
-                    ->visible(fn (Forms\Get $get) => $get('requested_role') === 'non_teaching_staff')
-                    ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, array $state) {
-                        $base = PermissionRegistry::defaultPermissionsForRole($get('requested_role') ?? 'non_teaching_staff');
-                        $extra = [];
-
-                        foreach (Department::query()->whereIn('id', $state)->get() as $department) {
-                            $extra = array_merge($extra, $department->permissions ?? []);
-                        }
-
-                        $set('permissions', PermissionRegistry::normalizePermissionList(array_merge($base, $extra)));
-                    }),
-                Forms\Components\CheckboxList::make('permissions')
-                    ->label(__('Permissions'))
-                    ->options(fn () => PermissionRegistry::permissionOptions())
-                    ->columns(3)
-                    ->searchable()
-                    ->gridDirection('row')
-                    ->helperText(__('Ticked by default from the role and department bundles; untick or tick to tailor this account.'))
-                    ->formatStateUsing(fn (?User $record, $state) => $record && $state === null
-                        ? PermissionRegistry::effectivePermissionsForUser($record)
-                        : $state)
+                    ->helperText(__('Departments add their own permissions on top of the role.')),
+                Forms\Components\Placeholder::make('inherited_permissions_summary')
+                    ->label(__('Permissions From Their Role'))
+                    ->content(fn (Forms\Get $get, $livewire) => static::inheritedSummary($get, $livewire))
                     ->columnSpanFull(),
+                Forms\Components\Tabs::make('extra_permissions_tabs')
+                    ->label(__('Extra Permissions For This Account'))
+                    ->columnSpanFull()
+                    ->tabs(fn (Forms\Get $get, $livewire) => array_merge(
+                        [
+                            Forms\Components\Tabs\Tab::make(__('Personal Additions'))
+                                ->schema([
+                                    Forms\Components\Placeholder::make('additions_help')
+                                        ->label('')
+                                        ->content(__('Tick only what this person needs beyond their role. Ticking something here never removes what their role already allows, and clearing it later returns them to their role, not below it.')),
+                                ]),
+                        ],
+                        static::permissionOverrideTabs(
+                            inheritedKeys: fn () => static::inheritedPermissionKeys($get, $livewire),
+                            fieldPrefix: 'extra_permissions',
+                        ),
+                    ))
+                    // The tab list is rebuilt whenever the role changes, so the
+                    // ticked values have to be re-expanded or they would be
+                    // dropped on the next save.
+                    ->live(debounce: 500),
                 Forms\Components\Textarea::make('rejected_reason')
                     ->label(__('Rejection Reason'))
                     ->disabled()
@@ -260,6 +257,121 @@ class UserAccountResource extends Resource
     {
         return parent::getEloquentQuery()
             ->with(['customRole:id,name']);
+    }
+
+    /**
+     * The capabilities the account already has before anything is added to it.
+     *
+     * On the create screen the role is still a choice, so the answer follows the
+     * selected role plus the departments ticked alongside it — which is what the
+     * approver is about to hand out. On the edit screen the role has already
+     * been assigned, so the account itself is the authority. Reading the same
+     * resolver the runtime uses is the point: if this list disagreed with what
+     * the person can actually reach, the screen would offer them capabilities
+     * they already had and hide ones they did not.
+     *
+     * @return array<int, string>
+     */
+    protected static function inheritedPermissionKeys(Forms\Get $get, mixed $livewire): array
+    {
+        $departments = static::departmentPermissions($get);
+
+        // An explicitly chosen role wins: this is the role the approver is
+        // about to hand out, whatever the registration asked for.
+        if (filled($roleId = $get('custom_role_id'))) {
+            $role = CustomRole::query()->find($roleId);
+
+            if ($role) {
+                return PermissionRegistry::normalizePermissionList(
+                    array_merge($role->permissions ?? [], $departments)
+                );
+            }
+        }
+
+        // On the edit screen the role has already been assigned, so the account
+        // itself is the authority on what it reaches.
+        $record = $livewire instanceof Pages\EditUserAccount ? $livewire->getRecord() : null;
+
+        if ($record) {
+            return PermissionRegistry::normalizePermissionList(
+                PermissionRegistry::defaultPermissionsForUser($record)
+            );
+        }
+
+        $roleKey = $get('requested_role');
+
+        if (! RoleCatalogue::exists((string) $roleKey)) {
+            return PermissionRegistry::normalizePermissionList($departments);
+        }
+
+        return PermissionRegistry::normalizePermissionList(array_merge(
+            RoleCatalogue::permissionsFor($roleKey),
+            $departments,
+        ));
+    }
+
+    /**
+     * The permissions the departments ticked on this form contribute.
+     *
+     * Departments add to a role, so they belong in the same inherited set — a
+     * capability a department already supplies must not be offered again as an
+     * addition.
+     *
+     * @return array<int, string>
+     */
+    protected static function departmentPermissions(Forms\Get $get): array
+    {
+        $ids = array_filter((array) $get('departments'));
+
+        if ($ids === []) {
+            return [];
+        }
+
+        $permissions = [];
+
+        foreach (Department::query()->whereIn('id', $ids)->get() as $department) {
+            $permissions = array_merge($permissions, $department->permissions ?? []);
+        }
+
+        return $permissions;
+    }
+
+    /**
+     * A plain-language account of what the role already covers.
+     *
+     * Without this the "Extra Permissions" tabs read as a list of things to
+     * grant, and an administrator has no way to tell which of the roles they are
+     * choosing between actually reaches further.
+     */
+    protected static function inheritedSummary(Forms\Get $get, mixed $livewire): string
+    {
+        $permissions = static::inheritedPermissionKeys($get, $livewire);
+
+        if ($permissions === []) {
+            return __('Choose a role above and this will list what it already lets this person reach.');
+        }
+
+        $summary = RoleCatalogue::summarise($permissions);
+
+        $lines = array_map(
+            fn (string $item): string => '• '.$item,
+            array_slice($summary, 0, 12)
+        );
+
+        if (count($summary) > 12) {
+            $lines[] = __('• …and :count more areas.', ['count' => count($summary) - 12]);
+        }
+
+        $roleLabel = ($livewire instanceof Pages\EditUserAccount && $livewire->getRecord())
+            ? ($livewire->getRecord()->customRole?->name ?? __('their role'))
+            : (RoleCatalogue::exists((string) $get('requested_role'))
+                ? RoleCatalogue::label((string) $get('requested_role'))
+                : __('their role'));
+
+        return __('Already covered by :role — :count capabilities in all:', [
+            'role' => $roleLabel,
+            'count' => count($permissions),
+        ])."\n".implode("\n", $lines);
     }
 
     public static function getPages(): array

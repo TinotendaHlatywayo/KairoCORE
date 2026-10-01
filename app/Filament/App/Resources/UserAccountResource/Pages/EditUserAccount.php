@@ -9,6 +9,7 @@ use App\Services\UserRegistrationService;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
@@ -30,6 +31,34 @@ class EditUserAccount extends EditRecord
             DeleteAction::make()
                 ->visible(fn () => PermissionRegistry::checkPermission('administration.manage_users')),
         ];
+    }
+
+    /**
+     * Spread the account's saved additions back across the grouped editor.
+     */
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        return UserAccountResource::hydratePermissions(
+            $data,
+            sourceKey: 'permissions',
+            fieldPrefix: 'extra_permissions',
+        );
+    }
+
+    /**
+     * Collapse the grouped editor back into the flat list of additions.
+     *
+     * Only the additions are stored. The role's own permissions are not copied
+     * onto the account, so changing the role later genuinely changes what the
+     * person can do.
+     */
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        return UserAccountResource::dehydratePermissions(
+            $data,
+            targetKey: 'permissions',
+            fieldPrefix: 'extra_permissions',
+        );
     }
 
     protected function getResendActivationAction(): Action
@@ -86,24 +115,24 @@ class EditUserAccount extends EditRecord
                     ->helperText(__('Non-teaching staff inherit the default permissions of each assigned department.'))
                     ->visible(fn () => $this->record->requested_role === 'non_teaching_staff')
                     ->default(fn () => $this->record->departments->pluck('id')->all())
-                    ->afterStateUpdated(function (Filament\Forms\Set $set, array $state) {
-                        $base = PermissionRegistry::defaultPermissionsForRole($this->record->requested_role ?? 'non_teaching_staff');
-                        $extra = [];
-
-                        foreach (Department::query()->whereIn('id', $state)->get() as $department) {
-                            $extra = array_merge($extra, $department->permissions ?? []);
-                        }
-
-                        $set('permissions', PermissionRegistry::normalizePermissionList(array_merge($base, $extra)));
+                    ->afterStateUpdated(function () {
+                        // Departments add to the role. Nothing is copied onto the
+                        // account's own permission list, so the role stays the
+                        // single source of truth for what the job can do.
                     }),
+                Placeholder::make('inherited_summary')
+                    ->label(__('Already Granted By The Role'))
+                    ->content(fn () => __('This account already reaches :count capabilities through its role and departments. Tick below only what you want to add on top.', [
+                        'count' => count(PermissionRegistry::defaultPermissionsForUser($this->record)),
+                    ])),
                 CheckboxList::make('permissions')
-                    ->label(__('Permissions'))
+                    ->label(__('Extra Permissions On Top Of The Role'))
                     ->options(fn () => PermissionRegistry::permissionOptions())
                     ->columns(3)
                     ->gridDirection('row')
                     ->searchable()
-                    ->helperText(__('Pre-ticked with the default permissions for this role and its departments. Adjust per account. Each user gets a personal snapshot — editing another role later will not change this account.'))
-                    ->default(fn () => PermissionRegistry::defaultPermissionsForUser($this->record)),
+                    ->helperText(__('Added to the role, never subtracted from it. Clearing a tick here returns the account to its role\'s permissions rather than to no permissions.'))
+                    ->default(fn () => PermissionRegistry::personalPermissionsFor($this->record)),
             ])
             ->action(function (array $data) {
                 app(UserRegistrationService::class)->approve(

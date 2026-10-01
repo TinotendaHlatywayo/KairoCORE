@@ -5,6 +5,7 @@ namespace App\Filament\App\Resources;
 use App\Filament\App\Concerns\HasCsvBulkActions;
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Filament\App\Concerns\ModulePermissionAccess;
+use App\Security\RoleCatalogue;
 use App\Services\AccountActivationService;
 use App\Services\Csv\EmployeeCsvService;
 use App\Services\ProfilePhotoService;
@@ -101,19 +102,11 @@ class EmployeeResource extends Resource
                                 ->placeholder(__('Select or search Department')),
                             Forms\Components\TextInput::make('designation')->placeholder(__('e.g. English Teacher'))->required(),
                             Forms\Components\Select::make('role')
-                                ->options([
-                                    'System Administrator' => __('System Administrator'),
-                                    'School Administrator' => __('School Administrator'),
-                                    'Teaching Staff' => __('Teaching Staff'),
-                                    'Accounts / Finance' => __('Accounts / Finance'),
-                                    'Librarian' => __('Librarian'),
-                                    'Houseparent' => __('Houseparent'),
-                                    'HR' => __('HR'),
-                                    'Health' => __('Health'),
-                                    'Procurement' => __('Procurement'),
-                                    'Supporting Staff' => __('Supporting Staff'),
-                                ])
-                                ->placeholder(__('Select System Role'))
+                                ->label(__('Role'))
+                                ->options(fn () => RoleCatalogue::employeeRoles())
+                                ->helperText(__('Decides what this person can reach in the system. Students register through the student portal, so they are not listed here.'))
+                                ->searchable()
+                                ->placeholder(__('Select Role'))
                                 ->required(),
                             Forms\Components\Select::make('employment_type')
                                 ->options([

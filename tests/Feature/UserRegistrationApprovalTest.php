@@ -164,7 +164,12 @@ class UserRegistrationApprovalTest extends TestCase
         $role = CustomRole::query()->where('school_id', $this->schoolA->id)->where('name', 'Teaching Staff')->first();
         $this->assertNotNull($role);
         $this->assertSame($role->id, $user->custom_role_id);
-        $this->assertContains('exams.enter_marks', $role->permissions);
+
+        // What matters is the capability, not the older spelling of it: the
+        // role carries the Marks Entry page, which is what lets a teacher enter
+        // marks, and no user administration.
+        $this->assertContains('exams.marks_entry.view', $role->permissions);
+        $this->assertTrue(PermissionRegistry::isGranted($role->permissions, 'exams.marks_entry.mark'));
         $this->assertNotContains('users.approve', $role->permissions);
 
         $panel = new Panel;

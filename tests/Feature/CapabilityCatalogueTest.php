@@ -113,12 +113,28 @@ class CapabilityCatalogueTest extends TestCase
             }
         }
 
+        $groups = RoleCatalogue::groupsFor($roleKey);
+        $except = RoleCatalogue::excludedPagesFor($roleKey);
+
         foreach ($reached as $slug => $visible) {
             if (in_array($slug, $owned, true)) {
+                // A page named in `except` is deliberately held back even from a
+                // role that owns the module, so it is not counted as a miss.
+                $expected = count(CapabilityCatalog::module($slug)['pages']) - $this->excludedCount($except, $slug);
+
                 $this->assertSame(
-                    count(CapabilityCatalog::module($slug)['pages']),
+                    $expected,
                     $visible,
                     "{$roleKey} owns {$slug} but cannot reach every page in it",
+                );
+            } elseif (isset($groups[$slug])) {
+                // The role owns named categories of this module, and only those.
+                $expected = $this->groupPageCount($slug, $groups[$slug], $except);
+
+                $this->assertSame(
+                    $expected,
+                    $visible,
+                    "{$roleKey} owns the named groups of {$slug} but reached {$visible} pages instead of {$expected}",
                 );
             } elseif (! in_array($slug, $shared, true)) {
                 $this->fail("{$roleKey} reached {$visible} page(s) of {$slug}, which it does not own");
@@ -127,6 +143,16 @@ class CapabilityCatalogueTest extends TestCase
 
         foreach ($owned as $slug) {
             $this->assertArrayHasKey($slug, $reached, "{$roleKey} owns {$slug} but reached none of it");
+        }
+
+        // Every module a role reaches only through named groups must actually be
+        // reachable, otherwise a typo in a group name would silently drop access.
+        foreach (array_keys($groups) as $slug) {
+            $this->assertArrayHasKey(
+                $slug,
+                $reached,
+                "{$roleKey} owns groups of {$slug} but reached none of it",
+            );
         }
 
         // A student is the one role that gets no self-service: they are not
@@ -142,22 +168,178 @@ class CapabilityCatalogueTest extends TestCase
     }
 
     /**
+     * A role's reach is described by the modules it owns outright plus the page
+     * groups it owns inside modules it only partly owns.
+     *
      * @return array<string, array{0: string, 1: array<int, string>}>
      */
     public static function roleModuleProvider(): array
     {
         return [
             'school administrator' => ['school_administrator', ['academics', 'admissions', 'communication', 'inventory', 'library', 'students']],
-            'teaching staff' => ['teaching_staff', ['academics', 'exams']],
+            // teaching_staff owns academics outright and three groups of exams.
+            'teaching staff' => ['teaching_staff', ['academics']],
             'accounts' => ['accounts_finance', ['finance']],
             'hr' => ['hr', ['hr']],
             'health' => ['health', ['health']],
-            'procurement' => ['procurement', ['exams']],
+            // procurement owns three groups of exams, not all of it.
+            'procurement' => ['procurement', []],
             'librarian' => ['librarian', ['website']],
             'houseparent' => ['houseparent', ['boarding']],
             'supporting staff' => ['supporting_staff', []],
             'student' => ['student', []],
         ];
+    }
+
+    public function test_a_group_label_that_does_not_exist_is_reported(): void
+    {
+        $known = RoleCatalogue::groupsWithModules();
+
+        $this->assertNotSame([], $known, 'no role declares a page group');
+
+        foreach ($known as $moduleSlug => $labels) {
+            foreach ($labels as $label) {
+                $this->assertNotSame(
+                    [],
+                    CapabilityCatalog::pageKeysInGroup($moduleSlug, $label),
+                    "group \"{$label}\" is declared for {$moduleSlug} but matches no page",
+                );
+            }
+        }
+    }
+
+    public function test_every_excluded_page_is_a_real_page(): void
+    {
+        $found = false;
+
+        foreach (RoleCatalogue::keys() as $roleKey) {
+            foreach (RoleCatalogue::excludedPagesFor($roleKey) as $pageKey) {
+                $found = true;
+
+                [$moduleSlug, $page] = explode('.', $pageKey, 2);
+
+                $this->assertNotNull(
+                    CapabilityCatalog::page($moduleSlug, $page),
+                    "{$roleKey} excludes \"{$pageKey}\", which is not a real page",
+                );
+            }
+        }
+
+        $this->assertTrue($found, 'no role declares an excluded page');
+    }
+
+    public function test_teaching_staff_cannot_reach_the_student_portal_publishing_page(): void
+    {
+        $permissions = RoleCatalogue::permissionsFor('teaching_staff');
+
+        // The headline example from the requirements: a teacher may work with
+        // reports but must never see or touch Publish to Student Portal.
+        foreach (CapabilityCatalog::page('exams', 'publish_to_student_portal')['actions'] as $action) {
+            $this->assertFalse(
+                PermissionRegistry::isGranted(
+                    $permissions,
+                    CapabilityCatalog::pagePermissionKey('exams', 'publish_to_student_portal', $action),
+                ),
+                "teaching_staff must not be granted {$action} on Publish to Student Portal",
+            );
+        }
+
+        $this->assertFalse(
+            PermissionRegistry::isGrantedAny(
+                $permissions,
+                CapabilityCatalog::accessKeysFor('exams', 'publish_to_student_portal'),
+            ),
+            'teaching_staff must not reach Publish to Student Portal at all',
+        );
+
+        // ...while the rest of that category stays open to them.
+        $this->assertTrue(
+            PermissionRegistry::isGrantedAny(
+                $permissions,
+                CapabilityCatalog::accessKeysFor('exams', 'report_cards'),
+            ),
+            'teaching_staff must keep Report Cards',
+        );
+    }
+
+    public function test_the_publishing_office_keeps_the_student_portal_page(): void
+    {
+        $permissions = RoleCatalogue::permissionsFor('procurement');
+
+        // Procurement runs the publishing step, so holding that page back from
+        // the teaching role must not take it away from the office that does it.
+        $this->assertTrue(
+            PermissionRegistry::isGrantedAny(
+                $permissions,
+                CapabilityCatalog::accessKeysFor('exams', 'publish_to_student_portal'),
+            ),
+            'procurement owns assessment publishing and must reach Publish to Student Portal',
+        );
+    }
+
+    public function test_a_role_never_reaches_a_page_outside_its_modules_and_groups(): void
+    {
+        foreach (RoleCatalogue::keys() as $roleKey) {
+            if (RoleCatalogue::isFullAccess($roleKey) || RoleCatalogue::isPortalOnly($roleKey)) {
+                continue;
+            }
+
+            $permissions = RoleCatalogue::permissionsFor($roleKey);
+            $modules = RoleCatalogue::modulesFor($roleKey);
+
+            // HR and Communication are shared: every member of staff is meant to
+            // reach a few screens there, and the self-service test covers which.
+            $shared = ['hr', 'communication'];
+
+            foreach (CapabilityCatalog::modules() as $slug => $module) {
+                if ($slug === 'universal'
+                    || in_array($slug, $modules, true)
+                    || in_array($slug, $shared, true)) {
+                    continue;
+                }
+
+                foreach ($module['pages'] as $key => $page) {
+                    $this->assertFalse(
+                        PermissionRegistry::isGrantedAny(
+                            $permissions,
+                            CapabilityCatalog::accessKeysFor($slug, $key),
+                        ),
+                        "{$roleKey} does not own {$slug} but reached {$key}",
+                    );
+                }
+            }
+        }
+    }
+
+    /**
+     * How many pages of a module a set of named categories covers, minus any of
+     * them the role holds back through `except`.
+     *
+     * @param  array<int, string>  $groupLabels
+     * @param  array<int, string>  $excluded  "module.page_key" strings.
+     */
+    private function groupPageCount(string $moduleSlug, array $groupLabels, array $excluded): int
+    {
+        $keys = [];
+
+        foreach ($groupLabels as $label) {
+            foreach (CapabilityCatalog::pageKeysInGroup($moduleSlug, $label) as $pageKey) {
+                $keys[] = "{$moduleSlug}.{$pageKey}";
+            }
+        }
+
+        return count(array_diff($keys, $excluded));
+    }
+
+    /**
+     * @param  array<int, string>  $excluded  "module.page_key" strings.
+     */
+    private function excludedCount(array $excluded, string $moduleSlug): int
+    {
+        return count(array_filter(
+            $excluded,
+            static fn (string $pageKey): bool => str_starts_with($pageKey, $moduleSlug.'.'),
+        ));
     }
 
     /**

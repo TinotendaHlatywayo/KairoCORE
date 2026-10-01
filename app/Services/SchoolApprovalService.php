@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Jobs\SeedSchoolDemoDataJob;
 use App\Models\School;
 use App\Models\User;
+use Modules\Admin\Services\SystemRolePresets;
 
 /**
  * Single source of truth for approving a newly registered school.
@@ -40,6 +41,12 @@ class SchoolApprovalService
             'status' => 'pending', // Still pending — becomes 'active' when the contact completes activation
             'trial_ends_at' => now()->addMonths(3),
         ]);
+
+        // The school is about to become usable, so this is the moment its
+        // default roles have to be right: an administrator arriving at the role
+        // screen must find every catalogue role present with today's
+        // permissions, not an empty list and not last release's bundle.
+        SystemRolePresets::provisionForSchool($school);
 
         $seedDispatched = false;
         if ($school->has_dummy_data && $school->seed_status !== 'seeded') {
