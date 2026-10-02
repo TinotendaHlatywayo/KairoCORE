@@ -30,7 +30,7 @@ class TempCourseTemplateDownloadTest extends TestCase
         app()->instance('current_tenant', $school);
 
         $adminRoleId = CustomRole::where('school_id', $school->id)
-            ->where('name', 'Administrator')
+            ->where('role_key', 'administrator')
             ->value('id');
         $user = $adminRoleId
             ? User::where('school_id', $school->id)->where('custom_role_id', $adminRoleId)->first()

@@ -30,7 +30,7 @@ class ThreadInlineReplyTest extends TestCase
     {
         $school = School::query()->where('subdomain', 'chiwariraprimary')->firstOrFail();
 
-        $adminRole = CustomRole::where('school_id', $school->id)->where('name', 'Administrator')->firstOrFail();
+        $adminRole = CustomRole::where('school_id', $school->id)->where('role_key', 'administrator')->firstOrFail();
         $admin = User::where('school_id', $school->id)->where('custom_role_id', $adminRole->id)->firstOrFail();
 
         return $admin;

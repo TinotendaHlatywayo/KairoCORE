@@ -46,7 +46,7 @@ class IdCardPrintRoutesTest extends TestCase
             ]);
         }
         PermissionRegistry::ensureAdminHasRole($user, $user->school_id);
-        $roleId = CustomRole::where('school_id', $school->id)->where('name', 'Administrator')->value('id');
+        $roleId = CustomRole::where('school_id', $school->id)->where('role_key', 'administrator')->value('id');
         $user->forceFill(['custom_role_id' => $roleId, 'account_status' => 'active'])->save();
 
         $student = Student::where('school_id', $school->id)->where('status', 'active')->first();

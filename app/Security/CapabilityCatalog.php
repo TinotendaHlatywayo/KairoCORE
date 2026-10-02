@@ -248,7 +248,6 @@ final class CapabilityCatalog
 
             // ---- Communication Center -----------------------------------------
             'App\Filament\App\Pages\CommunicationCenter' => __('The communication landing page: announcements, conversations, polls and support in one view.'),
-            'App\Filament\App\Pages\Communication\ScheduleTasksHub' => __('The shared calendar and the personal task list.'),
             'App\Filament\App\Pages\Schedule' => __('The school-wide calendar of events, deadlines and meetings.'),
             'App\Filament\App\Pages\MyDay' => __('A personal view of today: my tasks, my lessons and what is due.'),
             'App\Filament\App\Pages\Communication\CommunityHub' => __('Announcements, events, chat channels, shared resources and polls.'),
@@ -361,7 +360,6 @@ final class CapabilityCatalog
             'App\Filament\App\Pages\Boarding\AccommodationHub' => ['actions' => ['view', 'assign']],
             'App\Filament\App\Pages\Boarding\WelfareHub' => ['actions' => ['view', 'run', 'override']],
             'App\Filament\App\Pages\Health\HealthRecordsHub' => ['actions' => ['view']],
-            'App\Filament\App\Pages\Communication\ScheduleTasksHub' => ['actions' => ['view', 'create', 'edit', 'delete']],
             'App\Filament\App\Pages\Communication\CommunityHub' => ['actions' => ['view', 'create', 'edit', 'delete']],
             'App\Filament\App\Pages\Communication\HelpInboxHub' => ['actions' => ['view', 'create']],
             'App\Filament\App\Pages\Website\WebsiteTemplatesHub' => ['actions' => ['view', 'create', 'edit', 'delete', 'configure']],

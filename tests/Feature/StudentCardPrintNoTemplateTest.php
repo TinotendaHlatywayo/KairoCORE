@@ -46,7 +46,7 @@ class StudentCardPrintNoTemplateTest extends TestCase
             $this->markTestSkipped('No administrator available for the school.');
         }
         PermissionRegistry::ensureAdminHasRole($user, $user->school_id);
-        $roleId = CustomRole::where('school_id', $school->id)->where('name', 'Administrator')->value('id');
+        $roleId = CustomRole::where('school_id', $school->id)->where('role_key', 'administrator')->value('id');
         if ($roleId) {
             $user->forceFill(['custom_role_id' => $roleId, 'account_status' => 'active'])->save();
         }
@@ -97,7 +97,7 @@ class StudentCardPrintNoTemplateTest extends TestCase
             $this->markTestSkipped('No administrator available for the school.');
         }
         PermissionRegistry::ensureAdminHasRole($user, $user->school_id);
-        $roleId = CustomRole::where('school_id', $school->id)->where('name', 'Administrator')->value('id');
+        $roleId = CustomRole::where('school_id', $school->id)->where('role_key', 'administrator')->value('id');
         if ($roleId) {
             $user->forceFill(['custom_role_id' => $roleId, 'account_status' => 'active'])->save();
         }

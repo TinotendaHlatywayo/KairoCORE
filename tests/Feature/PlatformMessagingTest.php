@@ -36,7 +36,7 @@ class PlatformMessagingTest extends TestCase
     {
         $school = School::query()->firstOrFail();
 
-        $adminRole = CustomRole::where('school_id', $school->id)->where('name', 'Administrator')->first();
+        $adminRole = CustomRole::where('school_id', $school->id)->where('role_key', 'administrator')->first();
 
         if ($adminRole) {
             $admin = User::where('school_id', $school->id)->where('custom_role_id', $adminRole->id)->first();

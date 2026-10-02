@@ -52,7 +52,7 @@ class CsvBulkActionsRenderTest extends TestCase
     private function adminUser(School $school): User
     {
         $adminRoleId = CustomRole::where('school_id', $school->id)
-            ->where('name', 'Administrator')
+            ->where('role_key', 'administrator')
             ->value('id');
 
         $admin = $adminRoleId
