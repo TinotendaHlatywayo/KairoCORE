@@ -345,6 +345,12 @@ class CapabilityCatalogueTest extends TestCase
     /**
      * Everyone reaches the two shared modules, but only the handful of screens
      * that belong to every member of staff.
+     *
+     * In HR that is Leave Requests and nothing else. Every other HR screen —
+     * the staff register, the attendance register, payroll — describes the
+     * school rather than the person using it, and belongs to the administrator
+     * and to HR. See HrModuleIsolationTest for the same boundary stated
+     * directly against the navigation.
      */
     #[DataProvider('sharedModulePageProvider')]
     public function test_self_service_reaches_only_the_universal_screens(
@@ -379,10 +385,15 @@ class CapabilityCatalogueTest extends TestCase
     {
         // The HUBs appear because a page inside them is viewable, which is the
         // behaviour asserted in test_a_category_hub_opens_for_anyone_who_can_reach_one_page_in_it.
+        //
+        // HR carries 'Attendance & Leave' only because Leave Requests lives
+        // under it — the hub has no content of its own to gate.
+        $ownLeave = ['Attendance & Leave', 'Leave Requests'];
+
         return [
             'supporting staff, HR' => [
                 'supporting_staff', 'hr',
-                ['Staff Directory & HR', 'Employees', 'Attendance & Leave', 'Leave Requests', 'Staff Attendance'],
+                $ownLeave,
             ],
             'supporting staff, Communication' => [
                 'supporting_staff', 'communication',
@@ -390,15 +401,15 @@ class CapabilityCatalogueTest extends TestCase
             ],
             'teaching staff, HR' => [
                 'teaching_staff', 'hr',
-                ['Staff Directory & HR', 'Employees', 'Attendance & Leave', 'Leave Requests', 'Staff Attendance'],
+                $ownLeave,
             ],
             'accounts, HR' => [
                 'accounts_finance', 'hr',
-                ['Staff Directory & HR', 'Employees', 'Attendance & Leave', 'Leave Requests', 'Staff Attendance'],
+                $ownLeave,
             ],
             'houseparent, HR' => [
                 'houseparent', 'hr',
-                ['Staff Directory & HR', 'Employees', 'Attendance & Leave', 'Leave Requests', 'Staff Attendance'],
+                $ownLeave,
             ],
         ];
     }

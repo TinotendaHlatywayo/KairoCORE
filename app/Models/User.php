@@ -111,7 +111,7 @@ class User extends Authenticatable implements FilamentUser
      */
     public function hasCustomPermissions(): bool
     {
-        return is_array($this->permissions);
+        return $this->personalPermissionList() !== null;
     }
 
     public function approvedBy()
@@ -134,15 +134,38 @@ class User extends Authenticatable implements FilamentUser
         if (array_key_exists('do_not_disturb', $this->attributes)) {
             return (bool) $this->attributes['do_not_disturb'];
         }
+
         return false;
     }
 
-    public function getPermissionsAttribute($value)
+    /**
+     * The per-user additions on top of this account's role.
+     *
+     * `$casts` already declares `permissions` as an array, which is what makes this
+     * work: the column is a longtext holding JSON, and Eloquent decodes it on the
+     * way out.
+     *
+     * This accessor used to hand back the raw attribute instead, which returned the
+     * JSON *string*. Every caller that asked `is_array($user->permissions)` then
+     * said no, so permissions granted to an individual were silently dropped and
+     * only the role's own set applied — an administrator could tick HR onto a
+     * teacher, save, and watch nothing happen. The `permissions` cast is therefore
+     * left to do its job; this method exists only to answer "was anything stored at
+     * all", where a blank column is meaningfully different from an empty list.
+     *
+     * @return array<int, string>|null
+     */
+    public function personalPermissionList(): ?array
     {
-        if (array_key_exists('permissions', $this->attributes)) {
-            return $this->attributes['permissions'];
+        $value = $this->getAttributes()['permissions'] ?? null;
+
+        if ($value === null || $value === '') {
+            return null;
         }
-        return null;
+
+        $decoded = is_array($value) ? $value : json_decode((string) $value, true);
+
+        return is_array($decoded) ? $decoded : null;
     }
 
     public function getAccountStatusAttribute($value)
@@ -150,6 +173,7 @@ class User extends Authenticatable implements FilamentUser
         if (array_key_exists('account_status', $this->attributes)) {
             return $this->attributes['account_status'];
         }
+
         return 'active';
     }
 
