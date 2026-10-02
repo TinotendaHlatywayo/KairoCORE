@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Filament\App\Pages\Academic\SetupStructureHub;
+use App\Filament\App\Pages\Schedule;
 use App\Models\School;
 use App\Models\User;
 use App\Services\ModuleVisibilityManager;
@@ -264,15 +265,71 @@ class NavigationMatchesPermissionsTest extends TestCase
     }
 
     /**
-     * The role that does own Exams keeps the screen, so the rule above narrows
-     * the role rather than removing the feature from the school.
+     * "Schedule & Tasks" used to land on a category hub with nothing in it.
+     *
+     * The hub looked for pages grouped inside the communication module, but
+     * Schedule itself lives in the universal module, so the lookup found
+     * nothing, no redirect fired, and every user was left looking at a spinner
+     * reading "Opening category…" with no way out of it. The tab now points at
+     * the Schedule page directly.
      */
-    public function test_the_exams_role_still_publishes_to_the_student_portal(): void
+    public function test_schedule_and_tasks_opens_the_real_page(): void
     {
-        $examOfficer = $this->userFor('procurement');
+        $this->userFor('supporting_staff');
 
-        $this->assertTrue(PermissionRegistry::userCan($examOfficer, 'exams.publish_to_student_portal.view'));
-        $this->assertTrue(PermissionRegistry::userCan($examOfficer, 'exams.publish_to_student_portal.publish'));
+        $url = Schedule::getUrl();
+
+        $this->get($url)->assertOk()->assertDontSee('Opening category');
+    }
+
+    /**
+     * Nobody should ever be parked on that placeholder again, whichever entry
+     * into the category they took.
+     */
+    public function test_no_navigation_entry_is_left_stuck_opening_a_category(): void
+    {
+        $this->userFor('administrator');
+
+        foreach ($this->offeredWorkspaceLinks() as $path) {
+            if ($path === '/workspace/logout') {
+                continue;
+            }
+
+            $response = $this->get($path);
+
+            if ($response->getStatusCode() !== 200) {
+                continue;
+            }
+
+            $this->assertStringNotContainsString(
+                'Opening category',
+                (string) $response->getContent(),
+                "{$path} shows the 'Opening category…' placeholder instead of its content.",
+            );
+        }
+    }
+
+    /**
+     * Procurement no longer publishes: it runs purchasing and stock. So the
+     * administrator is the only role left that can, which keeps the feature
+     * available without handing it to a job title it does not describe.
+     */
+    public function test_procurement_no_longer_publishes_and_the_administrator_does(): void
+    {
+        $procurement = $this->userFor('procurement');
+
+        $this->assertFalse(
+            PermissionRegistry::userCan($procurement, 'exams.publish_to_student_portal.publish'),
+            'Procurement runs purchasing and stock, not assessment publishing.'
+        );
+        // ...and it did gain its own module, rather than simply losing one.
+        $this->assertTrue(
+            PermissionRegistry::userCan($procurement, 'inventory.procurement.run'),
+            'Procurement must still run purchasing.',
+        );
+
+        $administrator = $this->userFor('administrator');
+        $this->assertTrue(PermissionRegistry::userCan($administrator, 'exams.publish_to_student_portal.publish'));
     }
 
     /**

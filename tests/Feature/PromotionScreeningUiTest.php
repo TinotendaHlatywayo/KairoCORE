@@ -152,7 +152,7 @@ class PromotionScreeningUiTest extends TestCase
     private function adminUser(): User
     {
         $adminRoleId = CustomRole::where('school_id', $this->school->id)
-            ->where('name', 'Administrator')
+            ->where('role_key', 'administrator')
             ->value('id');
 
         $admin = $adminRoleId

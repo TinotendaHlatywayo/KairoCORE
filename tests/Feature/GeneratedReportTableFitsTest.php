@@ -43,7 +43,7 @@ class GeneratedReportTableFitsTest extends TestCase
         PermissionRegistry::ensureAdminHasRole($user, $school->id);
 
         $roleId = CustomRole::where('school_id', $school->id)
-            ->where('name', 'Administrator')->value('id');
+            ->where('role_key', 'administrator')->value('id');
 
         if ($roleId) {
             $this->originalRoleId = $user->custom_role_id;

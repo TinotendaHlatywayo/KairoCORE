@@ -52,7 +52,7 @@ class UserAccountConflictTest extends TestCase
 
     private function adminUser(School $school): User
     {
-        $role = CustomRole::where('school_id', $school->id)->where('name', 'Administrator')->first();
+        $role = CustomRole::where('school_id', $school->id)->where('role_key', 'administrator')->first();
 
         if ($role) {
             $existing = User::where('school_id', $school->id)->where('custom_role_id', $role->id)->first();

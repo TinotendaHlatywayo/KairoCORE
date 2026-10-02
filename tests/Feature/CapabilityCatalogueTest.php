@@ -176,15 +176,16 @@ class CapabilityCatalogueTest extends TestCase
     public static function roleModuleProvider(): array
     {
         return [
-            'school administrator' => ['school_administrator', ['academics', 'admissions', 'communication', 'inventory', 'library', 'students']],
+            'school administrator' => ['school_administrator', ['academics', 'admissions', 'communication', 'inventory', 'library', 'students', 'website']],
             // teaching_staff owns academics outright and three groups of exams.
             'teaching staff' => ['teaching_staff', ['academics']],
             'accounts' => ['accounts_finance', ['finance']],
             'hr' => ['hr', ['hr']],
             'health' => ['health', ['health']],
-            // procurement owns three groups of exams, not all of it.
-            'procurement' => ['procurement', []],
-            'librarian' => ['librarian', ['website']],
+            // procurement runs purchasing and stock.
+            'procurement' => ['procurement', ['inventory']],
+            // librarian runs the library, not the public website.
+            'librarian' => ['librarian', ['library']],
             'houseparent' => ['houseparent', ['boarding']],
             'supporting staff' => ['supporting_staff', []],
             'student' => ['student', []],
@@ -262,18 +263,49 @@ class CapabilityCatalogueTest extends TestCase
         );
     }
 
-    public function test_the_publishing_office_keeps_the_student_portal_page(): void
+    /**
+     * Publishing results to the student portal is a school-level decision.
+     *
+     * Teachers are held back from it deliberately. Procurement used to hold it,
+     * because procurement ran assessment publishing — but procurement now runs
+     * purchasing and stock, which has nothing to do with marking, so the page
+     * followed the job rather than staying with the old title. What is left is
+     * the administrator, which is the correct answer: publishing to the whole
+     * school is not a departmental task, and no single job title was ever a
+     * convincing owner of it.
+     *
+     * This is worth pinning down, because "nobody but the administrator can do
+     * this" reads like a gap rather than a decision unless something says so.
+     */
+    public function test_only_the_administrator_publishes_to_the_student_portal(): void
     {
-        $permissions = RoleCatalogue::permissionsFor('procurement');
+        $keys = CapabilityCatalog::accessKeysFor('exams', 'publish_to_student_portal');
 
-        // Procurement runs the publishing step, so holding that page back from
-        // the teaching role must not take it away from the office that does it.
+        // Teachers keep everything else in that category.
+        $teacher = RoleCatalogue::permissionsFor('teaching_staff');
+        $this->assertTrue(
+            PermissionRegistry::isGrantedAny($teacher, CapabilityCatalog::accessKeysFor('exams', 'report_cards')),
+            'teaching_staff must keep Report Cards',
+        );
+        $this->assertFalse(
+            PermissionRegistry::isGrantedAny($teacher, $keys),
+            'A teacher must not publish to the student portal.',
+        );
+
+        // Procurement looks after purchasing and stock now, so it does not reach
+        // the publishing page either.
+        $this->assertFalse(
+            PermissionRegistry::isGrantedAny(RoleCatalogue::permissionsFor('procurement'), $keys),
+            'Procurement runs purchasing and stock, not assessment publishing.',
+        );
+
+        // The administrator can.
         $this->assertTrue(
             PermissionRegistry::isGrantedAny(
-                $permissions,
-                CapabilityCatalog::accessKeysFor('exams', 'publish_to_student_portal'),
+                RoleCatalogue::permissionsFor('administrator'),
+                $keys,
             ),
-            'procurement owns assessment publishing and must reach Publish to Student Portal',
+            'The administrator must be able to publish to the student portal.',
         );
     }
 
@@ -397,7 +429,7 @@ class CapabilityCatalogueTest extends TestCase
             ],
             'supporting staff, Communication' => [
                 'supporting_staff', 'communication',
-                ['Schedule & Tasks', 'Community & Engagement', 'Announcements', 'Chat', 'Help & Inbox', 'Helpdesk'],
+                ['Community & Engagement', 'Announcements', 'Chat', 'Help & Inbox', 'Helpdesk'],
             ],
             'teaching staff, HR' => [
                 'teaching_staff', 'hr',
