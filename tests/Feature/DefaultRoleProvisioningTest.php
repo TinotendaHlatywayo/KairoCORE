@@ -99,14 +99,82 @@ class DefaultRoleProvisioningTest extends TestCase
         );
     }
 
-    public function test_procurement_keeps_the_publishing_page_that_teaching_staff_loses(): void
+    public function test_procurement_runs_purchasing_and_stock(): void
     {
         SystemRolePresets::provisionForSchool($this->school);
 
         $procurement = $this->role('procurement')->permissions;
 
-        $this->assertContains('exams.publish_to_student_portal.publish', $procurement);
-        $this->assertContains('exams.reports_academic_publishing.run', $procurement);
+        $this->assertContains('inventory.view_module', $procurement);
+        $this->assertContains('inventory.procurement.run', $procurement);
+        $this->assertContains('inventory.procurement.approve', $procurement);
+        $this->assertContains('inventory.stock_inventory.run', $procurement);
+
+        // It no longer looks after assessment publishing: that was attached to
+        // the job, and procurement's job is now purchasing and stock.
+        $this->assertSame(
+            [],
+            array_values(array_filter(
+                $procurement,
+                fn (string $key): bool => str_starts_with($key, 'exams.')
+            )),
+            'Procurement must not hold any Exams & Grading permission',
+        );
+        $this->assertSame(
+            [],
+            array_values(array_filter(
+                $procurement,
+                fn (string $key): bool => str_starts_with($key, 'website.')
+            )),
+            'Procurement must not hold any Website permission',
+        );
+    }
+
+    public function test_librarian_runs_the_library_and_not_the_website(): void
+    {
+        SystemRolePresets::provisionForSchool($this->school);
+
+        $librarian = $this->role('librarian')->permissions;
+
+        $this->assertContains('library.view_module', $librarian);
+        $this->assertContains('library.catalogue.view', $librarian);
+        $this->assertContains('library.circulation.issue', $librarian);
+        $this->assertContains('library.circulation.return', $librarian);
+
+        $this->assertSame(
+            [],
+            array_values(array_filter(
+                $librarian,
+                fn (string $key): bool => str_starts_with($key, 'website.')
+            )),
+            'The public website belongs to the administrators, not the librarian',
+        );
+    }
+
+    public function test_the_public_website_belongs_to_both_administrators(): void
+    {
+        SystemRolePresets::provisionForSchool($this->school);
+
+        $systemAdmin = $this->role('administrator')->permissions;
+        $this->assertSame([PermissionRegistry::WILDCARD], $systemAdmin);
+
+        $schoolAdmin = $this->role('school_administrator')->permissions;
+        $this->assertContains('website.templates_design.view', $schoolAdmin);
+        $this->assertContains('website.templates_design.configure', $schoolAdmin);
+        $this->assertContains('website.content_manager.publish', $schoolAdmin);
+    }
+
+    public function test_the_administrator_role_is_named_system_administrator(): void
+    {
+        SystemRolePresets::provisionForSchool($this->school);
+
+        $role = $this->role('administrator');
+
+        $this->assertSame('System Administrator', $role->name);
+        $this->assertSame(
+            'System Administrator',
+            RoleCatalogue::label('administrator'),
+        );
     }
 
     public function test_a_role_left_behind_by_an_older_catalogue_is_refreshed(): void

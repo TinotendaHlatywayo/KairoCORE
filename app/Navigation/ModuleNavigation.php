@@ -11,12 +11,11 @@ use App\Filament\App\Pages\Administration\SystemSettingsHub;
 use App\Filament\App\Pages\Administration\UserManagementHub;
 use App\Filament\App\Pages\AdministrationDashboard;
 use App\Filament\App\Pages\AdmissionSettingsPage;
+use App\Filament\App\Pages\AnalyticsExplorer;
 use App\Filament\App\Pages\Boarding\AccommodationHub;
 use App\Filament\App\Pages\Boarding\WelfareHub;
-use App\Filament\App\Pages\AnalyticsExplorer;
 use App\Filament\App\Pages\Communication\CommunityHub;
 use App\Filament\App\Pages\Communication\HelpInboxHub;
-use App\Filament\App\Pages\Communication\ScheduleTasksHub;
 use App\Filament\App\Pages\CommunicationCenter;
 use App\Filament\App\Pages\EmailConfigurationPage;
 use App\Filament\App\Pages\Exams\AssessmentCenterHub;
@@ -43,10 +42,9 @@ use App\Filament\App\Pages\Knowledge\KnowledgeHub;
 use App\Filament\App\Pages\Library\CatalogueHub;
 use App\Filament\App\Pages\Library\CirculationHub;
 use App\Filament\App\Pages\Lms\LmsHub;
-use App\Filament\App\Pages\MyDay;
+use App\Filament\App\Pages\ReportGeneratorPage;
 use App\Filament\App\Pages\ReportingDashboard;
 use App\Filament\App\Pages\Reports\ReportsHub;
-use App\Filament\App\Pages\ReportGeneratorPage;
 use App\Filament\App\Pages\SaaS\SaaSHub;
 use App\Filament\App\Pages\SaaSBillingOverview;
 use App\Filament\App\Pages\Schedule;
@@ -77,7 +75,6 @@ use App\Filament\App\Resources\DigitalAssessmentResource;
 use App\Filament\App\Resources\DisciplinaryCaseResource;
 use App\Filament\App\Resources\EmployeeAssetResource;
 use App\Filament\App\Resources\EmployeeResource;
-use App\Filament\App\Resources\EnterpriseReportTemplateResource;
 use App\Filament\App\Resources\EventCalendarResource;
 use App\Filament\App\Resources\ExpenseResource;
 use App\Filament\App\Resources\FeeCategoryResource;
@@ -347,7 +344,13 @@ class ModuleNavigation
                 'landing' => CommunicationCenter::class,
                 'tabs' => [
                     ['label' => __('Overview'), 'page' => CommunicationCenter::class, 'group' => __('Overview'), 'icon' => 'heroicon-o-squares-2x2'],
-                    ['label' => __('Schedule & Tasks'), 'page' => ScheduleTasksHub::class, 'group' => __('Schedule & Tasks'), 'hub' => true],
+                    // Points at the Schedule page itself rather than at a
+                    // category hub. Schedule lives in the 'universal' module, so
+                    // ScheduleTasksHub — which looks for pages grouped inside
+                    // 'communication' — found none and redirected nowhere,
+                    // leaving every user on a spinner reading "Opening
+                    // category…" with no way forward.
+                    ['label' => __('Schedule & Tasks'), 'page' => Schedule::class, 'group' => __('Schedule & Tasks')],
                     ['label' => __('Community & Engagement'), 'page' => CommunityHub::class, 'group' => __('Community & Engagement'), 'hub' => true],
                     ['label' => __('Announcements'), 'resource' => AnnouncementResource::class, 'group' => __('Community & Engagement')],
                     ['label' => __('Events'), 'resource' => EventCalendarResource::class, 'group' => __('Community & Engagement')],

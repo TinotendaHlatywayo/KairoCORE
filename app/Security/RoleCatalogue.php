@@ -99,8 +99,17 @@ final class RoleCatalogue
                 'label' => 'School Administrator',
                 'modules' => [
                     'communication', 'inventory', 'library', 'admissions', 'students', 'academics',
+                    // The public website belongs to the school and its
+                    // administrator. It was granted to the system administrator
+                    // alone, which left nobody who maintains the school able to
+                    // change what the public sees. The librarian was the role
+                    // holding it before, which described the wrong job — the
+                    // librarian looks after the library; whoever holds
+                    // Templates & Design is maintaining the school's public
+                    // face.
+                    'website',
                 ],
-                'summary' => __('Runs the day-to-day school: communications, stock and purchasing, the library, admissions, the student body and academics.'),
+                'summary' => __('Runs the day-to-day school: communications, stock and purchasing, the library, admissions, the student body, academics and the public website.'),
             ],
             'teaching_staff' => [
                 'label' => 'Teaching Staff',
@@ -134,18 +143,13 @@ final class RoleCatalogue
             ],
             'procurement' => [
                 'label' => 'Procurement',
-                'modules' => [],
-                'groups' => [
-                    // Procurement is the office that runs the publishing step, so
-                    // unlike teaching staff it keeps the student-portal page.
-                    'exams' => ['Assessment Center', 'Grading & Marks Management', 'Reports & Academic Publishing'],
-                ],
-                'summary' => __('Runs assessment publishing: the assessment centre, grading and marks management, and academic report publishing.'),
+                'modules' => ['inventory'],
+                'summary' => __('Runs purchasing and stock: stock and inventory, procurement requests and purchase orders, suppliers, and the school\'s fixed assets.'),
             ],
             'librarian' => [
                 'label' => 'Librarian',
-                'modules' => ['website'],
-                'summary' => __('Designs and publishes the public website, including its templates and content.'),
+                'modules' => ['library'],
+                'summary' => __('Runs the library: the catalogue of books and e-resources, issuing and circulation, and the knowledge assets and galleries.'),
             ],
             'houseparent' => [
                 'label' => 'Houseparent',
@@ -527,10 +531,11 @@ final class RoleCatalogue
             'communication.chat.create',
             'communication.helpdesk.view',
             'communication.helpdesk.create',
-            'communication.schedule_tasks.view',
-            'communication.schedule_tasks.create',
-            'communication.schedule_tasks.edit',
-            'communication.schedule_tasks.delete',
+
+            // The calendar and task list. These live under `universal`, granted
+            // above; the `communication.schedule_tasks.*` keys that used to be
+            // listed here pointed at a category hub that never resolved to a
+            // page, so they granted nothing while looking like they did.
         ];
     }
 
