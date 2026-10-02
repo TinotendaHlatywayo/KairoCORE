@@ -106,7 +106,19 @@
             <!-- Quick Launch Directory Grid (Each card stands on its own with explicit border and shadow) -->
             <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
                 <!-- Link 1: Student Directory -->
-                @if (\App\Services\ModuleVisibilityManager::isVisible('students'))
+                {{-- Gated on the person's OWN permission *and* the tenant's
+                     module switch, not on either alone.
+
+                     Module visibility says the school has the module switched
+                     on; it says nothing about whether this person may open it.
+                     Checking only that was why a teacher was offered "Manage
+                     Students" and then met a 403, which reads as being excluded
+                     rather than as being told what they may do.
+
+                     The permission alone is not enough either: a role may hold
+                     a capability for a module the school has switched off, and
+                     a card for a switched-off module is a dead link. --}}
+                @if (\App\Services\ModuleVisibilityManager::isVisible('students') && \App\Filament\App\Resources\StudentResource::canAccess())
                 <a href="/workspace/students" class="group rounded-2xl border border-gray-200/80 bg-white p-6 shadow-sm transition-all hover:border-primary-400 hover:shadow-md hover:ring-2 hover:ring-primary-100 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-primary-500/60 dark:hover:ring-primary-500/20 flex flex-col justify-between">
                     <div>
                         <h4 class="font-bold text-lg text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">{{ __('Manage Students') }}</h4>
@@ -120,7 +132,7 @@
                 @endif
 
                 <!-- Link 2: Timetable Builder -->
-                @if (\App\Services\ModuleVisibilityManager::isVisible('academics'))
+                @if (\App\Services\ModuleVisibilityManager::isVisible('academics') && \Modules\Admin\Services\PermissionRegistry::checkPermission('academics.timetable_lessons.view'))
                 <a href="/workspace/timetable-lessons" class="group rounded-2xl border border-gray-200/80 bg-white p-6 shadow-sm transition-all hover:border-primary-400 hover:shadow-md hover:ring-2 hover:ring-primary-100 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-primary-500/60 dark:hover:ring-primary-500/20 flex flex-col justify-between">
                     <div>
                         <h4 class="font-bold text-lg text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">{{ __('School Timetable') }}</h4>
@@ -134,7 +146,7 @@
                 @endif
 
                 <!-- Link 3: Admissions Queue -->
-                @if (\App\Services\ModuleVisibilityManager::isPageVisible('admissions', 'applications'))
+                @if (\App\Services\ModuleVisibilityManager::isPageVisible('admissions', 'applications') && \Modules\Admin\Services\PermissionRegistry::checkPermission('admissions.applications.view'))
                 <a href="/workspace/applications" class="group rounded-2xl border border-gray-200/80 bg-white p-6 shadow-sm transition-all hover:border-primary-400 hover:shadow-md hover:ring-2 hover:ring-primary-100 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-primary-500/60 dark:hover:ring-primary-500/20 flex flex-col justify-between">
                     <div>
                         <h4 class="font-bold text-lg text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">{{ __('Online Admissions') }}</h4>

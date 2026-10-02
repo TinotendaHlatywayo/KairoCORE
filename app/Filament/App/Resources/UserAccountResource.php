@@ -98,10 +98,48 @@ class UserAccountResource extends Resource
                     ->label(__('Assigned Role'))
                     ->options(fn (?User $record) => CustomRole::query()
                         ->where('school_id', current_tenant()?->id)
-                        ->when($record, fn (Builder $q) => $q->where('id', '!=', $record->custom_role_id))
+                        ->orderBy('name')
                         ->pluck('name', 'id'))
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->live()
+                    // The current role is deliberately still offered. Hiding it
+                    // made the field look like it had already been answered, and
+                    // left no way to put somebody back on the role they had.
+                    ->helperText(__('Changing this changes everything the account can reach, except the extra permissions listed below.'))
+                    // Keep the catalogue identity on the account in step. The
+                    // runtime reads custom_role_id, but requested_role is what
+                    // the employee record, the widgets and the role editor read,
+                    // so leaving it behind would make the account report two
+                    // different jobs depending on which screen asked.
+                    ->afterStateUpdated(function ($state, $livewire) {
+                        $role = $state ? CustomRole::find($state) : null;
+
+                        if ($livewire instanceof Pages\EditUserAccount) {
+                            $record = $livewire->getRecord();
+
+                            // The record is updated first and the form is then
+                            // rebuilt from it. Refilling first would read the
+                            // OLD custom_role_id straight back into the select,
+                            // so the save would store the role the person had
+                            // before rather than the one just chosen — which is
+                            // exactly the "I changed it and nothing happened"
+                            // report.
+                            $record->forceFill([
+                                'custom_role_id' => $state,
+                                'requested_role' => $role?->role_key,
+                            ])->save();
+
+                            // The grouped "extra permissions" editor is built
+                            // from what the role already grants, so its ticked
+                            // boxes have to be rebuilt from the new role.
+                            // Otherwise a permission the new role now supplies
+                            // stays ticked and is saved on top of it as a
+                            // personal addition, which then survives every
+                            // later change to the role.
+                            $livewire->refreshFormFromRecord();
+                        }
+                    }),
                 Forms\Components\TextInput::make('password')
                     ->label(fn ($livewire) => $livewire instanceof CreateRecord ? 'Temporary Password' : 'Reset Password')
                     ->password()
@@ -129,9 +167,15 @@ class UserAccountResource extends Resource
                     ->required(fn ($livewire) => $livewire instanceof Pages\CreateUserAccount)
                     ->disabled(fn ($livewire) => $livewire instanceof Pages\EditUserAccount)
                     ->dehydrated(fn ($livewire) => $livewire instanceof Pages\CreateUserAccount),
+                // ignoreRecord is deliberately NOT used here. It only means
+                // anything for a BelongsTo (a record must not be offered as its
+                // own parent); on a BelongsToMany it makes Filament compare the
+                // related table against the owner model's key column, which
+                // produces `where users.id != ?` against `departments` and a
+                // 500 on every edit screen.
                 Forms\Components\Select::make('departments')
                     ->label(__('Departments'))
-                    ->relationship(name: 'departments', titleAttribute: 'name', ignoreRecord: true)
+                    ->relationship(name: 'departments', titleAttribute: 'name')
                     ->multiple()
                     ->preload()
                     ->searchable()

@@ -692,6 +692,43 @@ class PermissionRegistry
     }
 
     /**
+     * Does this person hold one of the given catalogue roles?
+     *
+     * Some questions are about the job, not the capability list — "may I file
+     * leave for somebody else?" is answered by being HR, because the operation
+     * is about *whose* record is touched rather than whether the page can be
+     * opened. Answering those from the role keeps them out of the permission
+     * matrix, where an addition to one person's role would otherwise become a
+     * rule for everybody holding it.
+     *
+     * The full-access role always counts, since it is the platform owner.
+     * Recognition is by `role_key` — the stable identity — and not by the role's
+     * display name, which an administrator is free to rename.
+     *
+     * @param  array<int, string>|string  $roleKeys
+     */
+    public static function userHasRole(?User $user, array|string $roleKeys): bool
+    {
+        if (! $user) {
+            return false;
+        }
+
+        $roleKeys = (array) $roleKeys;
+        $role = $user->custom_role_id ? CustomRole::find($user->custom_role_id) : null;
+
+        if (! $role) {
+            return false;
+        }
+
+        if (RoleCatalogue::isFullAccess((string) $role->role_key)) {
+            return true;
+        }
+
+        return $role->role_key !== null
+            && in_array($role->role_key, $roleKeys, true);
+    }
+
+    /**
      * The permissions a user holds personally, on top of their role.
      *
      * These are additions, never a replacement. A teaching role keeps everything

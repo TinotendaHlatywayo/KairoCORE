@@ -2,19 +2,18 @@
 
 namespace App\Filament\App\Resources;
 
-use App\Filament\App\Concerns\HasCsvBulkActions;
 use App\Filament\App\Concerns\ModulePermissionAccess;
-use App\Services\Csv\LeaveRequestCsvService;
-use Filament\Actions;
+use App\Filament\App\Resources\LeaveRequestResource\Pages\CreateLeaveRequest;
+use App\Filament\App\Resources\LeaveRequestResource\Pages\ListLeaveRequests;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
-use Filament\Resources\Pages\ListRecords;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Auth;
+use Modules\Admin\Services\PermissionRegistry;
 use Modules\HR\Models\Employee;
 use Modules\HR\Models\LeaveRequest;
 use Modules\HR\Models\LeaveType;
@@ -44,19 +43,105 @@ class LeaveRequestResource extends Resource
     // Reached via the module contextual tabs, not the sidebar.
     protected static bool $shouldRegisterNavigation = false;
 
+    /**
+     * May the signed-in person file leave on behalf of another employee?
+     *
+     * Decided by role rather than by a permission key, because this is a
+     * question about whose record is being touched. Answering it with a
+     * capability would mean a teacher's role could grow it by accident, and then
+     * every teacher would be able to approve somebody else's absence.
+     */
+    public static function mayFileForOthers(): bool
+    {
+        return PermissionRegistry::userHasRole(Auth::user(), ['hr']);
+    }
+
+    /**
+     * The employee record belonging to the signed-in person, if the school has
+     * one for them.
+     */
+    public static function ownEmployeeId(): ?int
+    {
+        $user = Auth::user();
+
+        if (! $user) {
+            return null;
+        }
+
+        return Employee::where('school_id', $user->school_id)
+            ->where('user_id', $user->id)
+            ->value('id');
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected static function employeeOptions(): array
+    {
+        $user = Auth::user();
+
+        if (! $user) {
+            return [];
+        }
+
+        // Everyone else is shown only themselves, so the dropdown can never
+        // become a way to enumerate the staff list.
+        if (! static::mayFileForOthers()) {
+            $own = static::ownEmployeeId();
+
+            return $own === null ? [] : [$own => static::employeeLabel(Employee::find($own))];
+        }
+
+        return Employee::where('school_id', $user->school_id)
+            ->orderBy('first_name')
+            ->get()
+            ->mapWithKeys(fn ($emp) => [$emp->id => static::employeeLabel($emp)])
+            ->all();
+    }
+
+    protected static function employeeLabel(?Employee $emp): string
+    {
+        if (! $emp) {
+            return __('Unknown Employee');
+        }
+
+        return "{$emp->first_name} {$emp->last_name} ({$emp->employee_number})";
+    }
+
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
+                // Who the leave is for.
+                //
+                // Filing your own leave is something every member of staff does,
+                // so it is granted to everyone as self-service. Filing it for
+                // somebody else is an HR duty: it reads and decides on another
+                // person's record. So the employee is a free choice for the
+                // administrator and for HR, and for everyone else it is fixed to
+                // their own name — shown rather than hidden, so the form still
+                // reads as a complete leave request instead of a field that
+                // mysteriously will not move.
                 Forms\Components\Select::make('employee_id')
                     ->label(__('Employee'))
-                    ->options(Employee::all()->mapWithKeys(fn ($emp) => [$emp->id => "{$emp->first_name} {$emp->last_name} ({$emp->employee_number})"]))
-                    ->searchable()
+                    ->options(fn () => static::employeeOptions())
+                    ->default(fn () => Auth::user()?->id ? static::ownEmployeeId() : null)
+                    ->searchable(fn () => static::mayFileForOthers())
                     ->preload()
+                    ->disabled(fn () => ! static::mayFileForOthers())
+                    // The employee is always submitted. When the person cannot
+                    // choose, the record still has to say whose leave it is —
+                    // dropping the field would file it against nobody, and the
+                    // approver would see an unattributed request. Server-side
+                    // enforcement lives in CreateLeaveRequest::mutateFormData
+                    // BeforeCreate, which overrides whatever arrives.
+                    ->dehydrated(true)
                     ->required(),
                 Forms\Components\Select::make('leave_type_id')
                     ->label(__('Leave Type'))
-                    ->options(LeaveType::all()->pluck('name', 'id'))
+                    ->options(fn () => LeaveType::where('school_id', current_tenant()?->id)
+                        ->orderBy('name')
+                        ->pluck('name', 'id'))
                     ->searchable()
                     ->preload()
                     ->required()
@@ -156,26 +241,11 @@ class LeaveRequestResource extends Resource
     {
         return [
             'index' => ListLeaveRequests::route('/'),
-        ];
-    }
-}
-
-class ListLeaveRequests extends ListRecords
-{
-    use HasCsvBulkActions;
-
-    protected static string $resource = LeaveRequestResource::class;
-
-    protected static function csvService(): string
-    {
-        return LeaveRequestCsvService::class;
-    }
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            Actions\CreateAction::make()->label(__('New Leave Request')),
-            ...$this->csvBulkActions(),
+            // The list screen offers "New Leave Request", so the page it points
+            // at has to exist. Without this the button resolved to
+            // `...leave-requests.create`, which is not a registered route, and
+            // every user who pressed it got a 500.
+            'create' => CreateLeaveRequest::route('/create'),
         ];
     }
 }

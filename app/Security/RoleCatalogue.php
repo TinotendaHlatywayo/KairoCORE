@@ -504,15 +504,22 @@ final class RoleCatalogue
             'universal.schedule.delete',
             'universal.schedule.export',
 
-            // Their own leave and attendance.
+            // Their own leave.
+            //
+            // Filing and tracking one's own leave is something every member of
+            // staff does, so it is granted to everyone. It is deliberately the
+            // ONLY HR page everybody gets: `hr.employees.view` and the
+            // staff-attendance keys used to sit here as well, which put the whole
+            // staff directory and the attendance register in front of every
+            // teacher, houseparent and librarian. Someone reading "Employees"
+            // as their own record found a list of colleagues, and someone
+            // reading "Staff Attendance" found a register they had no business
+            // editing. HR is now reachable by staff only for their own leave;
+            // the directory, the register and the payroll screens are the
+            // administrator's and HR's.
             'hr.leave_requests.view',
             'hr.leave_requests.create',
             'hr.leave_requests.edit',
-
-            // Their own record in the staff directory, and their own attendance.
-            'hr.employees.view',
-            'hr.staff_attendance.view',
-            'hr.staff_attendance.create',
 
             // Notices and conversations.
             'communication.announcements.view',

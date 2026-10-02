@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Security\CapabilityCatalog;
+use App\Security\RoleCatalogue;
 use Illuminate\Support\Facades\Auth;
 use Modules\Admin\Models\CustomRole;
 use Modules\Admin\Models\SystemSetting;
@@ -56,6 +57,13 @@ class ModuleVisibilityManager
         }
 
         // School-level Administrator role holders.
+        //
+        // This matches on `role_key`, not on the role's display name. A school
+        // can create any role it likes and name it whatever it likes, so a role
+        // called "Administrator" that is not the catalogue's administrator — a
+        // departmental role somebody nicknamed, say — would otherwise be handed
+        // the whole school. `role_key` is the catalogue identity and is stable
+        // across renames and across every tenant.
         $roleId = $user->custom_role_id;
         if (! $roleId) {
             return false;
@@ -63,7 +71,7 @@ class ModuleVisibilityManager
 
         $role = CustomRole::find($roleId);
 
-        return $role && $role->name === 'Administrator';
+        return $role && RoleCatalogue::isFullAccess((string) $role->role_key);
     }
 
     /**

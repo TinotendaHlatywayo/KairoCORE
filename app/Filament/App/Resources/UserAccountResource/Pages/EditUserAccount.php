@@ -61,6 +61,21 @@ class EditUserAccount extends EditRecord
         );
     }
 
+    /**
+     * Re-read the record into the form.
+     *
+     * Filament's own fillForm() is protected, but the role select needs it:
+     * the "extra permissions" editor is built from what the assigned role
+     * already grants, so changing the role has to rebuild it. Without this the
+     * boxes stay as they were, and a permission the new role now supplies is
+     * saved on top of it as a personal addition — which then survives every
+     * later change to the role.
+     */
+    public function refreshFormFromRecord(): void
+    {
+        $this->fillForm();
+    }
+
     protected function getResendActivationAction(): Action
     {
         return Action::make('resendActivation')
