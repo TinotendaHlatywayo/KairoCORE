@@ -3,6 +3,7 @@
 namespace App\Filament\App\Pages;
 
 use App\Filament\App\Concerns\ModulePermissionAccess;
+use App\Filament\App\Concerns\HasPageHelp;
 use App\Support\TeacherInitials;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -16,6 +17,14 @@ use Modules\Timetables\Models\TimetableTemplate;
 class TimetableViewerPage extends Page
 {
     use ModulePermissionAccess;
+    use HasPageHelp;
+
+    protected function getHeaderActions(): array
+    {
+        return array_filter([
+            $this->getHelpAction(),
+        ]);
+    }
 
     protected static ?string $navigationIcon = 'heroicon-o-calendar';
 

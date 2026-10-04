@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Resources\PromotionRunResource\Pages;
 
+use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Resources\PromotionRunResource;
 use App\Services\Promotion\PromotionService;
 use Filament\Actions;
@@ -12,11 +13,13 @@ use Modules\Academics\Models\AcademicYear;
 
 class ListPromotionRuns extends ListRecords
 {
+    use HasPageHelp;
+
     protected static string $resource = PromotionRunResource::class;
 
     protected function getHeaderActions(): array
     {
-        return [
+        return array_filter([
             Actions\Action::make('previewNewRun')
                 ->label(__('Preview New Promotion'))
                 ->icon('heroicon-o-eye')
@@ -48,6 +51,7 @@ class ListPromotionRuns extends ListRecords
 
                     redirect(PromotionRunResource::getUrl('view', ['record' => $run]));
                 }),
-        ];
+            $this->getHelpAction(),
+        ]);
     }
 }

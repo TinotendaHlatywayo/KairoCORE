@@ -6,12 +6,20 @@ use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Navigation\ModuleNavigationService;
 use Filament\Pages\Page;
 use App\Filament\App\Concerns\ModulePermissionAccess;
+use App\Filament\App\Concerns\HasPageHelp;
 
 class TimetablesTeachingHub extends Page
 {
     use ModulePermissionAccess;
-
     use ModuleAwareActiveNavigation;
+    use HasPageHelp;
+
+    protected function getHeaderActions(): array
+    {
+        return array_filter([
+            $this->getHelpAction(),
+        ]);
+    }
 
     protected static string $view = 'filament.app.pages.academic.category-hub';
 

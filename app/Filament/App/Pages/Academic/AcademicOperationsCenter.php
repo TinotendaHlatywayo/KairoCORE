@@ -15,12 +15,20 @@ use Modules\Academics\Models\Term;
 use Modules\Admin\Services\PermissionRegistry;
 use Modules\Students\Models\Enrollment;
 use App\Filament\App\Concerns\ModulePermissionAccess;
+use App\Filament\App\Concerns\HasPageHelp;
 
 class AcademicOperationsCenter extends Page
 {
     use ModulePermissionAccess;
-
     use ModuleAwareActiveNavigation;
+    use HasPageHelp;
+
+    protected function getHeaderActions(): array
+    {
+        return array_filter([
+            $this->getHelpAction(),
+        ]);
+    }
 
     protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
 
