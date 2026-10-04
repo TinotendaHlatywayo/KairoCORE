@@ -195,6 +195,12 @@ class AppPanelProvider extends PanelProvider
                 fn () => view('components.settings-shortcut')
             )
 
+            // Render universal page help guide button in top header bar end
+            ->renderHook(
+                PanelsRenderHook::TOPBAR_END,
+                fn () => view('components.global-help-button')
+            )
+
             // ──────────────────────────────────────────────────────────────
             // 🔍 MODERN SEARCH BAR – Using Blade View
             // ──────────────────────────────────────────────────────────────
@@ -233,6 +239,12 @@ class AppPanelProvider extends PanelProvider
             ->renderHook(
                 PanelsRenderHook::FOOTER,
                 fn () => view('components.app-footer')
+            )
+
+            // Inject sidebar sub-page hover tooltips
+            ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn () => view('components.sidebar-tooltips')
             )
 
             // ──────────────────────────────────────────────────────────────
