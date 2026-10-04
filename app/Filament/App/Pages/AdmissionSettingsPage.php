@@ -19,6 +19,7 @@ use Modules\Admin\Enums\EmailCategory;
 use Modules\Admin\Models\SystemSetting;
 use Modules\Admin\Services\PermissionRegistry;
 use App\Filament\App\Concerns\ModulePermissionAccess;
+use App\Filament\App\Concerns\HasPageHelp;
 
 class AdmissionSettingsPage extends Page implements HasForms
 {
@@ -26,6 +27,14 @@ class AdmissionSettingsPage extends Page implements HasForms
 
     use InteractsWithForms;
     use ManagesEmailConfiguration;
+    use HasPageHelp;
+
+    protected function getHeaderActions(): array
+    {
+        return array_filter([
+            $this->getHelpAction(),
+        ]);
+    }
 
     protected static ?string $navigationIcon = 'heroicon-o-envelope';
 

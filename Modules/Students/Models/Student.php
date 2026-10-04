@@ -236,6 +236,21 @@ class Student extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    public function academicYear()
+    {
+        return $this->belongsTo(\Modules\Academics\Models\AcademicYear::class, 'academic_year_id');
+    }
+
+    public function course()
+    {
+        return $this->belongsTo(\Modules\Academics\Models\Course::class, 'course_id');
+    }
+
+    public function section()
+    {
+        return $this->belongsTo(\Modules\Academics\Models\Section::class, 'section_id');
+    }
+
     public function getFullNameAttribute()
     {
         return "{$this->first_name} {$this->last_name}";
