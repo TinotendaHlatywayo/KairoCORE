@@ -3,6 +3,7 @@
 namespace App\Filament\App\Resources\StudentResource\Pages;
 
 use App\Filament\App\Concerns\HasCsvBulkActions;
+use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Resources\StudentResource;
 use App\Services\StudentCsvService;
 use Filament\Actions;
@@ -17,6 +18,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class ListStudents extends ListRecords
 {
     use HasCsvBulkActions;
+    use HasPageHelp;
 
     protected static string $resource = StudentResource::class;
 
@@ -67,7 +69,9 @@ class ListStudents extends ListRecords
             $actions[] = $this->makeStudentImportAction();
         }
 
-        return $actions;
+        $actions[] = $this->getHelpAction();
+
+        return array_filter($actions);
     }
 
     protected function makeStudentImportAction(): Action
