@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Resources\ScreeningRunResource\Pages;
 
+use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Resources\ScreeningRunResource;
 use App\Services\Screening\ScreeningService;
 use Filament\Actions;
@@ -15,6 +16,8 @@ use Modules\Promotion\Models\PromotionRun;
 
 class ListScreeningRuns extends ListRecords
 {
+    use HasPageHelp;
+
     protected static string $resource = ScreeningRunResource::class;
 
     protected function getHeaderActions(): array
@@ -120,6 +123,7 @@ class ListScreeningRuns extends ListRecords
 
                     redirect(ScreeningRunResource::getUrl('view', ['record' => $run]));
                 }),
+            $this->getHelpAction(),
         ];
     }
 }
