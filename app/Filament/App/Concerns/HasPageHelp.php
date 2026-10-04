@@ -21,7 +21,7 @@ trait HasPageHelp
             ->icon('heroicon-o-question-mark-circle')
             ->color('gray')
             ->modalHeading($help['title'])
-            ->modalDescription($help['description'])
+            ->modalDescription($help['summary'] ?? '')
             ->modalContent(view('filament.components.help-modal', ['help' => $help]))
             ->modalSubmitAction(false)
             ->modalCancelActionLabel('Close');
