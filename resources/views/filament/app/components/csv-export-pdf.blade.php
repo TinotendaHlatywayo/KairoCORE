@@ -6,23 +6,23 @@
     <style>
         body {
             font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
-            font-size: 10px;
+            font-size: 8px;
             color: #334155;
             margin: 0;
             padding: 0;
         }
-        .header-table { width: 100%; padding-bottom: 12px; margin-bottom: 18px; border-bottom: 2px solid {{ $primaryColor }}; }
-        .logo-box { width: 80px; vertical-align: middle; }
-        .logo-box img { max-height: 65px; max-width: 65px; }
-        .school-info { vertical-align: middle; padding-left: 10px; }
-        .school-name { font-size: 16px; font-weight: bold; color: #0f172a; text-transform: uppercase; }
-        .report-title { font-size: 16px; font-weight: bold; margin-bottom: 6px; text-transform: uppercase; text-align: center; color: {{ $primaryColor }}; }
-        .meta-row { text-align: center; font-size: 9px; color: #64748b; margin-bottom: 14px; }
-        .data-table { width: 100%; border-collapse: collapse; }
-        .data-table th { color: #ffffff; font-weight: bold; text-align: left; padding: 7px; border: 1px solid #e2e8f0; text-transform: uppercase; font-size: 9px; background-color: {{ $primaryColor }}; }
-        .data-table td { padding: 7px; border: 1px solid #cbd5e1; vertical-align: middle; }
+        .header-table { width: 100%; padding-bottom: 8px; margin-bottom: 12px; border-bottom: 2px solid {{ $primaryColor }}; }
+        .logo-box { width: 60px; vertical-align: middle; }
+        .logo-box img { max-height: 50px; max-width: 50px; }
+        .school-info { vertical-align: middle; padding-left: 8px; }
+        .school-name { font-size: 14px; font-weight: bold; color: #0f172a; text-transform: uppercase; }
+        .report-title { font-size: 14px; font-weight: bold; margin-bottom: 4px; text-transform: uppercase; text-align: center; color: {{ $primaryColor }}; }
+        .meta-row { text-align: center; font-size: 8px; color: #64748b; margin-bottom: 10px; }
+        .data-table { width: 100%; border-collapse: collapse; table-layout: auto; }
+        .data-table th { color: #ffffff; font-weight: bold; text-align: left; padding: 5px 6px; border: 1px solid #e2e8f0; text-transform: uppercase; font-size: 8px; background-color: {{ $primaryColor }}; }
+        .data-table td { padding: 4px 6px; border: 1px solid #cbd5e1; vertical-align: middle; font-size: 8px; word-break: break-word; }
         .data-table tr:nth-child(even) { background-color: #f8fafc; }
-        .footer-table { width: 100%; border-top: 1px solid #cbd5e1; padding-top: 10px; margin-top: 24px; font-size: 8px; color: #94a3b8; }
+        .footer-table { width: 100%; border-top: 1px solid #cbd5e1; padding-top: 8px; margin-top: 16px; font-size: 7px; color: #94a3b8; }
     </style>
 </head>
 <body>
@@ -44,7 +44,7 @@
                     ])) }}
                 </div>
             </td>
-            <td style="text-align: right; vertical-align: bottom; font-size: 8px; color: #64748b;">
+            <td style="text-align: right; vertical-align: bottom; font-size: 7px; color: #64748b;">
                 Date Run: {{ now()->format('Y-m-d H:i') }}<br>
                 Records: {{ count($rows) }}
             </td>
