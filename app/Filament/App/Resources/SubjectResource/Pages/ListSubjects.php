@@ -3,6 +3,7 @@
 namespace App\Filament\App\Resources\SubjectResource\Pages;
 
 use App\Filament\App\Concerns\HasCsvBulkActions;
+use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Resources\SubjectResource;
 use App\Services\Csv\SubjectCsvService;
 use Filament\Actions;
@@ -11,6 +12,7 @@ use Filament\Resources\Pages\ListRecords;
 class ListSubjects extends ListRecords
 {
     use HasCsvBulkActions;
+    use HasPageHelp;
 
     protected static string $resource = SubjectResource::class;
 
@@ -21,9 +23,10 @@ class ListSubjects extends ListRecords
 
     protected function getHeaderActions(): array
     {
-        return [
+        return array_filter([
             Actions\CreateAction::make(),
             ...$this->csvBulkActions(),
-        ];
+            $this->getHelpAction(),
+        ]);
     }
 }
