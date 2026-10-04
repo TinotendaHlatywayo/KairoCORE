@@ -1,11 +1,29 @@
 <div class="space-y-4 text-sm text-gray-600 dark:text-gray-300">
-    <div>
-        <h4 class="font-medium text-gray-900 dark:text-white">Workflow</h4>
-        <p class="mt-1 whitespace-pre-line">{{ $help['workflow'] }}</p>
-    </div>
-    @if(!empty($help['tips']))
-        <div class="rounded-lg bg-primary-50 p-3 text-primary-900 dark:bg-primary-950 dark:text-primary-200">
-            <span class="font-semibold">Tip:</span> {{ $help['tips'] }}
+    @if(!empty($help['summary']))
+        <div class="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+            <p>{{ $help['summary'] }}</p>
+        </div>
+    @endif
+
+    @if(!empty($help['workflow']))
+        <div>
+            <h4 class="font-medium text-gray-900 dark:text-white mb-2">Step-by-Step Workflow</h4>
+            <ul class="space-y-2">
+                @foreach($help['workflow'] as $step)
+                    <li class="flex items-start gap-2">
+                        <span class="text-primary-600 dark:text-primary-400 font-bold">✓</span>
+                        <span>{!! str_replace(['**', '—'], ['<strong>', '—</strong>'], $step) !!}</span>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    @if(!empty($help['details']))
+        <div class="border-t border-gray-200 dark:border-gray-700 pt-3 space-y-1 text-xs">
+            @foreach($help['details'] as $label => $text)
+                <div><strong>{{ $label }}:</strong> {{ $text }}</div>
+            @endforeach
         </div>
     @endif
 </div>
