@@ -12,6 +12,11 @@ use Filament\Notifications\Notification;
 use Filament\Support\Enums\MaxWidth;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -86,11 +91,11 @@ trait HasCsvBulkActions
 
         return [
             ActionGroup::make([
-                Action::make('export_csv')
-                    ->label(__('Export as CSV'))
+                Action::make('export_excel')
+                    ->label(__('Export as Excel'))
                     ->icon('heroicon-o-document-text')
                     ->color('success')
-                    ->action(fn (): StreamedResponse => $this->exportCsv($service, $filename)),
+                    ->action(fn (): StreamedResponse => $this->exportExcel($service, $filename)),
                 Action::make('export_pdf')
                     ->label(__('Export as PDF'))
                     ->icon('heroicon-o-document-arrow-down')
@@ -237,22 +242,55 @@ trait HasCsvBulkActions
         return $schema;
     }
 
-    protected function exportCsv(string $service, string $filename): StreamedResponse
+    protected function exportExcel(string $service, string $filename): StreamedResponse
     {
         $schoolId = app('current_tenant')->id;
+        $headers = $service::exportHeaders();
+        $rows = $service::exportRows($schoolId);
 
-        return response()->streamDownload(function () use ($service, $schoolId) {
-            $out = fopen('php://output', 'w');
-            fwrite($out, "\xEF\xBB\xBF"); // UTF-8 BOM so Excel opens it cleanly
-            fputcsv($out, $service::exportHeaders());
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
 
-            foreach ($service::exportRows($schoolId) as $row) {
-                fputcsv($out, $row);
-            }
+        // Header Row
+        $sheet->fromArray([$headers], null, 'A1');
+        $headerStyle = [
+            'font' => [
+                'bold' => true,
+                'color' => ['argb' => 'FFFFFF'],
+                'size' => 11,
+            ],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['argb' => '0F4C81'],
+            ],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+            ],
+        ];
+        $lastCol = Coordinate::stringFromColumnIndex(count($headers));
+        $sheet->getStyle("A1:{$lastCol}1")->applyFromArray($headerStyle);
+        $sheet->getRowDimension(1)->setRowHeight(26);
 
-            fclose($out);
-        }, "{$filename}-export-".now()->format('Y-m-d-His').'.csv', [
-            'Content-Type' => 'text/csv',
+        // Data Rows
+        $rowIndex = 2;
+        foreach ($rows as $row) {
+            $sheet->fromArray([array_values($row)], null, "A{$rowIndex}");
+            $rowIndex++;
+        }
+
+        // Auto-size columns
+        foreach (range(1, count($headers)) as $colIdx) {
+            $colLetter = Coordinate::stringFromColumnIndex($colIdx);
+            $sheet->getColumnDimension($colLetter)->setAutoSize(true);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, "{$filename}-export-".now()->format('Y-m-d-His').'.xlsx', [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ]);
     }
 

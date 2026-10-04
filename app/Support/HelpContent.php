@@ -42,12 +42,13 @@ class HelpContent
             // =========================================================
             \App\Filament\App\Resources\StudentResource::class => [
                 'title' => 'Student Directory & Profiles',
-                'summary' => 'Complete lifecycle manager for all enrolled learners, covering personal details, enrollment streams, guardians, and medical notes.',
+                'summary' => 'Complete lifecycle manager for all enrolled learners, covering personal details, enrollment streams, guardians, and bulk tools.',
                 'workflow' => [
-                    '1. Directory Search: Use search and filters to locate students by name, admission number, or grade level.',
-                    '2. Viewing Profiles: Click View on any student to inspect Student Information, personal data, guardian contacts, photo, and current enrollment details (Academic Year, Form/Grade Level, and Stream/Class).',
-                    '3. Editing & Enrollment: Click Edit to update student information, assign or change class streams, or update medical and boarding status.',
-                    '4. Bulk Operations: Use the CSV import and export tools to manage large student rosters efficiently.',
+                    '1. New Student: Click New Student to manually register an individual learner with personal details, guardian contacts, medical notes, and initial class/stream assignment.',
+                    '2. Download Excel Template & Import: Click Download Excel Template, fill the template with student details (bold fields are required, optional fields are regular), and use Import Students from Excel or CSV to batch import learners with automated validation and error logs.',
+                    '3. Viewing & Editing: Click View on any student to inspect Student Information, photo, and current enrollment details (Academic Year, Form/Grade Level, and Stream/Class). Click Edit to update records.',
+                    '4. Export All: Export the complete student roster as a nicely formatted Excel spreadsheet (Export as Excel) or a fit-to-page PDF report (Export as PDF).',
+                    '5. Row Actions: Use table row buttons to Duplicate student records, Edit details, or Delete records securely.',
                 ],
                 'details' => [
                     'Cross-Module Link' => 'Students registered here are automatically linked to Finance for invoicing, Attendance tracking, and Exam report cards.',
@@ -55,11 +56,12 @@ class HelpContent
             ],
             \App\Filament\App\Resources\CardTemplateResource::class => [
                 'title' => 'ID Card Designer & Templates',
-                'summary' => 'Design and activate official student and staff identification card layouts with secure QR verification hashes.',
+                'summary' => 'Design, layout, preview, and activate official student and staff identification card templates with secure QR verification hashes.',
                 'workflow' => [
                     '1. Create Template: Design card dimensions, upload school badges, and position student portraits and details.',
-                    '2. QR Verification: Each generated card embeds a secure verification link for instant authenticity checks.',
-                    '3. Activation: Mark your preferred template as active for single or bulk PDF card printing.',
+                    '2. Preview: Click Preview to test how the card renders with sample student data before final printing.',
+                    '3. Bulk Print ID Cards: Generate high-resolution printable PDF ID cards for all students or filtered cohorts instantly.',
+                    '4. Activation & Row Actions: Mark your preferred template active. Use table row actions to Duplicate, Edit, or Delete card templates.',
                 ],
                 'details' => [
                     'Relationship' => 'Pulls photo and identity data directly from active Student and Employee records.',
