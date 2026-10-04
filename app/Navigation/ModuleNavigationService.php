@@ -80,6 +80,16 @@ class ModuleNavigationService
     {
         $path = $path ?? request()->path();
 
+        if (str_contains($path, 'livewire/update') || request()->ajax()) {
+            $referer = request()->header('referer');
+            if ($referer) {
+                $parsedPath = parse_url($referer, PHP_URL_PATH);
+                if ($parsedPath) {
+                    $path = trim(str_replace('/workspace', '', $parsedPath), '/');
+                }
+            }
+        }
+
         foreach ($this->modules() as $module) {
             foreach (array_merge($this->moduleTabs($module, false), $this->moduleMoreTabs($module, false)) as $tab) {
                 if ($this->pathMatchesTab($path, $tab)) {

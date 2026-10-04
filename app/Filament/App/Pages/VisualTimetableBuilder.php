@@ -3,6 +3,7 @@
 namespace App\Filament\App\Pages;
 
 use App\Filament\App\Concerns\ModulePermissionAccess;
+use App\Filament\App\Concerns\HasPageHelp;
 use App\Support\TeacherInitials;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -27,6 +28,14 @@ class VisualTimetableBuilder extends Page implements Forms\Contracts\HasForms
 {
     use Forms\Concerns\InteractsWithForms;
     use ModulePermissionAccess;
+    use HasPageHelp;
+
+    protected function getHeaderActions(): array
+    {
+        return array_filter([
+            $this->getHelpAction(),
+        ]);
+    }
 
     protected static ?string $navigationIcon = 'heroicon-o-presentation-chart-line';
 
