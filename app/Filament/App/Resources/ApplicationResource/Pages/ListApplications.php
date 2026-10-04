@@ -2,12 +2,15 @@
 
 namespace App\Filament\App\Resources\ApplicationResource\Pages;
 
+use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Resources\ApplicationResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 
 class ListApplications extends ListRecords
 {
+    use HasPageHelp;
+
     protected static string $resource = ApplicationResource::class;
 
     protected static ?string $title = 'Online Applications';
@@ -29,8 +32,9 @@ class ListApplications extends ListRecords
 
     protected function getHeaderActions(): array
     {
-        return [
+        return array_filter([
             Actions\CreateAction::make(),
-        ];
+            $this->getHelpAction(),
+        ]);
     }
 }

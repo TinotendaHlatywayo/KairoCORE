@@ -64,6 +64,44 @@ class StudentResource extends Resource
         return __('Students');
     }
 
+    public static function infolist(\Filament\Infolists\Infolist $infolist): \Filament\Infolists\Infolist
+    {
+        return $infolist
+            ->schema([
+                \Filament\Infolists\Components\Section::make(__('Student Information'))
+                    ->schema([
+                        \Filament\Infolists\Components\ImageEntry::make('photo_path')
+                            ->label(__('Photo'))
+                            ->disk('public')
+                            ->circular(),
+                        \Filament\Infolists\Components\TextEntry::make('first_name')->label(__('First Name')),
+                        \Filament\Infolists\Components\TextEntry::make('last_name')->label(__('Last Name')),
+                        \Filament\Infolists\Components\TextEntry::make('student_id_number')->label(__('Student ID')),
+                        \Filament\Infolists\Components\TextEntry::make('admission_number')->label(__('Admission Number')),
+                        \Filament\Infolists\Components\TextEntry::make('gender')->label(__('Gender')),
+                        \Filament\Infolists\Components\TextEntry::make('date_of_birth')->label(__('Date of Birth'))->date(),
+                        \Filament\Infolists\Components\TextEntry::make('email')->label(__('Email')),
+                        \Filament\Infolists\Components\TextEntry::make('phone')->label(__('Phone')),
+                    ])->columns(3),
+
+                \Filament\Infolists\Components\Section::make(__('Current Enrollment'))
+                    ->description(__('Assigned form/grade level and stream for the active academic year.'))
+                    ->schema([
+                        \Filament\Infolists\Components\TextEntry::make('academicYear.name')->label(__('Academic Year'))->default('Not assigned'),
+                        \Filament\Infolists\Components\TextEntry::make('course.name')->label(__('Form / Grade (Level)'))->default('Not assigned'),
+                        \Filament\Infolists\Components\TextEntry::make('section.name')->label(__('Stream / Class'))->default('Not assigned'),
+                        \Filament\Infolists\Components\TextEntry::make('roll_number')->label(__('Roll Number'))->default('None'),
+                    ])->columns(2),
+
+                \Filament\Infolists\Components\Section::make(__('Guardian & Emergency Contact'))
+                    ->schema([
+                        \Filament\Infolists\Components\TextEntry::make('parent_email')->label(__('Parent / Guardian Email')),
+                        \Filament\Infolists\Components\TextEntry::make('emergency_contact_name')->label(__('Emergency Contact Name')),
+                        \Filament\Infolists\Components\TextEntry::make('emergency_contact_phone')->label(__('Emergency Contact Phone')),
+                    ])->columns(3),
+            ]);
+    }
+
     public static function form(Form $form): Form
     {
         return $form
