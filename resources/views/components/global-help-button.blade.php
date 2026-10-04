@@ -1,6 +1,11 @@
 @php
-    $pageClass = get_class(filament()->getCurrentPage() ?? new stdClass());
-    $help = \App\Support\HelpContent::for($pageClass);
+    try {
+        $page = filament()->getCurrentPage();
+        $pageClass = $page ? get_class($page) : null;
+    } catch (\Throwable $e) {
+        $pageClass = null;
+    }
+    $help = \App\Support\HelpContent::for($pageClass ?? '');
 @endphp
 
 <div x-data="{ open: false }" class="relative inline-flex items-center">
@@ -36,7 +41,7 @@
                             {{ __('Interactive Workflow Guide') }}
                         </span>
                         <h3 class="text-xl font-bold text-gray-900 dark:text-white">
-                            {{ $help['title'] }}
+                            {{ $help['title'] ?? __('System Guide') }}
                         </h3>
                     </div>
                     <button @click="open = false" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
@@ -50,20 +55,22 @@
                 <div class="space-y-4 text-sm text-gray-600 dark:text-gray-300">
                     <div class="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-800">
                         <h4 class="font-semibold text-gray-900 dark:text-white mb-1">{{ __('Overview') }}</h4>
-                        <p>{{ $help['summary'] }}</p>
+                        <p>{{ $help['summary'] ?? '' }}</p>
                     </div>
 
-                    <div>
-                        <h4 class="font-semibold text-gray-900 dark:text-white mb-2">{{ __('Step-by-Step Workflow') }}</h4>
-                        <ul class="space-y-2">
-                            @foreach($help['workflow'] as $step)
-                                <li class="flex items-start gap-2">
-                                    <span class="flex-shrink-0 w-5 h-5 rounded-full bg-primary-500/10 text-primary-600 dark:text-primary-400 flex items-center justify-center text-xs font-bold mt-0.5">✓</span>
-                                    <span>{!! str_replace(['**', '—'], ['<strong>', '—</strong>'], $step) !!}</span>
-                                </li>
-                            @endforeach
-                        </ul>
-                    </div>
+                    @if(!empty($help['workflow']))
+                        <div>
+                            <h4 class="font-semibold text-gray-900 dark:text-white mb-2">{{ __('Step-by-Step Workflow') }}</h4>
+                            <ul class="space-y-2">
+                                @foreach($help['workflow'] as $step)
+                                    <li class="flex items-start gap-2">
+                                        <span class="flex-shrink-0 w-5 h-5 rounded-full bg-primary-500/10 text-primary-600 dark:text-primary-400 flex items-center justify-center text-xs font-bold mt-0.5">✓</span>
+                                        <span>{!! str_replace(['**', '—'], ['<strong>', '—</strong>'], $step) ?? '' !!}</span>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
 
                     @if(!empty($help['details']))
                         <div class="border-t border-gray-200 dark:border-gray-800 pt-4 space-y-2">
