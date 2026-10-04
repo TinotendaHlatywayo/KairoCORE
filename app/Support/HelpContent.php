@@ -10,30 +10,154 @@ class HelpContent
 
         return match ($class) {
             // =========================================================
-            // ADMISSIONS MODULE
+            // ACADEMICS MODULE
             // =========================================================
-            \App\Filament\App\Resources\ApplicationResource::class => [
-                'title' => 'Online Admissions Applications',
-                'summary' => 'Manage incoming student applications submitted through the public admissions portal.',
+            'App\Filament\App\Pages\Academic\AcademicOperationsCenter' => [
+                'title' => 'Academic Operations Center',
+                'summary' => 'Central control dashboard for managing the school academic rhythm, term transitions, and operational readiness.',
                 'workflow' => [
-                    '1. Review Submissions: Inspect applicant details, previous school records, and uploaded documents.',
-                    '2. Screening & Evaluation: Run entrance screening criteria or interview evaluations.',
-                    '3. Approval & Conversion: Approve qualified applicants. Once approved, click convert to instantly generate an official Student Profile in the Student Directory.',
+                    '1. Review Active Term Status: Check current enrollment counts, active academic year, and term dates at a glance.',
+                    '2. Monitor Teaching Progress: Track timetable completion rates and staff assignment coverage across levels.',
+                    '3. Operational Actions: Quick-launch into Setup and Structure, Timetables, or Progression runs directly from summary cards.',
                 ],
                 'details' => [
-                    'Relationship' => 'Acts as the bridge between public website inquiries and internal Student enrollment records.',
+                    'Relationship' => 'Serves as the high-level home page for the Academics module, linking directly to Setup and Structure, Timetables, and Student Progression.',
+                    'Best Practice' => 'Check this dashboard at the start of every term to ensure all foundational setup steps are complete before students attend classes.',
                 ],
             ],
-            'App\Filament\App\Pages\AdmissionSettingsPage' => [
-                'title' => 'Admission Settings & Portal Configuration',
-                'summary' => 'Configure public application forms, opening/closing dates, and admission screening rules.',
+            \App\Filament\App\Resources\AcademicYearResource::class => [
+                'title' => 'Academic Years & Terms (Setup & Structure)',
+                'summary' => 'Establish the temporal foundation of the school calendar. You can register multiple historical or future years, but exactly one year must be marked as active.',
                 'workflow' => [
-                    '1. Portal Status: Open or close the public admissions portal for the current academic year.',
-                    '2. Form Customization: Set required fields and upload document checklists for prospective parents.',
-                    '3. Screening Rules: Define automated acceptance or review thresholds.',
+                    '1. Step 1 - Register Academic Year: Click New Academic Year, enter the year title (e.g., 2027), and set start and end dates.',
+                    '2. Step 2 - Configure Terms: Add operating terms (Term 1, Term 2, Term 3) with precise grading periods.',
+                    '3. Step 3 - Set Active Year: Mark the current operating year as active. Crucial: All student enrollments, attendance records, fee billing, timetables, and exam grading attach automatically to this active year.',
                 ],
                 'details' => [
-                    'Relationship' => 'Controls how prospective parents interact with the online application forms on the public school website.',
+                    'Prerequisite Relationship' => 'This is the very first page you must configure in Setup and Structure. Without an active academic year, classrooms, subjects, and timetables cannot be linked.',
+                    'Cross-Module Impact' => 'When you change the active academic year, the Finance module links fee structures, and the Student module anchors enrollments to that year.',
+                ],
+            ],
+            \App\Filament\App\Resources\ClassroomResource::class => [
+                'title' => 'Classrooms & Facilities (Setup & Structure)',
+                'summary' => 'Register physical rooms, lecture halls, laboratories, and outdoor spaces with strict capacity limits to prevent overcrowding.',
+                'workflow' => [
+                    '1. Step 1 - Add Classroom: Click New Classroom and specify the room name or number (e.g., Lab-01 or Room 12), building block, and maximum student seating capacity.',
+                    '2. Step 2 - Timetable Assignment: Classrooms created here become available in the Timetable module for lesson scheduling.',
+                    '3. Step 3 - Boarding Integration: Rooms can also be cross-referenced when allocating hostel accommodation.',
+                ],
+                'details' => [
+                    'Relationship' => 'Classrooms relate directly to Timetables and Teaching, ensuring no two classes are assigned to the same physical room at the same time.',
+                    'Best Practice' => 'Keep capacity numbers accurate; the system uses them during exam seating arrangements and hostel room allocation.',
+                ],
+            ],
+            \App\Filament\App\Resources\SubjectResource::class => [
+                'title' => 'Subjects Curriculum (Setup & Structure)',
+                'summary' => 'Define the institutional curriculum of subjects offered across the school (e.g., Mathematics, English, Physics, Shona).',
+                'workflow' => [
+                    '1. Step 1 - Create Subject: Enter the subject full name and unique subject code (e.g., MATH3, ENG-SUP).',
+                    '2. Step 2 - Departmental Grouping: Associate subjects with appropriate academic departments (e.g., Sciences, Humanities, Languages).',
+                    '3. Step 3 - Grading Scales: Link subjects to appropriate grading scales so assessment marks compute correctly in the Exams module.',
+                ],
+                'details' => [
+                    'Relationship' => 'Subjects must exist before you can assign teachers in Teacher Assignments or schedule lessons in Timetable Lessons.',
+                    'Workflow Flow' => 'Academic Years -> Classrooms -> Subjects -> Levels -> Teacher Assignments.',
+                ],
+            ],
+            \App\Filament\App\Resources\CourseResource::class => [
+                'title' => 'Grade Levels (Setup & Structure)',
+                'summary' => 'Define the grade levels or forms offered by your school (e.g., Grade 1, Grade 4, Form 1, Form 4, Lower Sixth).',
+                'workflow' => [
+                    '1. Step 1 - Create Level: Click New Level, enter level name, level ranking order, and associate tuition fees if applicable.',
+                    '2. Step 2 - Stream Setup: Group students into class streams under each level.',
+                    '3. Step 3 - Progression Linking: Levels determine how students promote from year to year in the Progression module.',
+                ],
+                'details' => [
+                    'Relationship' => 'Levels tie Student enrollments, Fee Structures, and Timetable class streams together into coherent educational cohorts.',
+                ],
+            ],
+            'App\Filament\App\Pages\Academic\TimetablesTeachingHub' => [
+                'title' => 'Timetables & Teaching Hub',
+                'summary' => 'Central hub for building templates, managing time slots, scheduling lessons, and viewing teaching timetables.',
+                'workflow' => [
+                    '1. Configure Time Slots: Set up daily operating periods (e.g., Period 1, Break, Period 2).',
+                    '2. Teacher Assignments: Allocate teachers to subjects and class streams.',
+                    '3. Lesson Scheduling: Launch the visual builder or timetable list to arrange weekly lessons.',
+                ],
+                'details' => [
+                    'Relationship' => 'Connects Setup and Structure (Classrooms, Subjects, Academic Years) with daily classroom instruction.',
+                ],
+            ],
+            'App\Filament\App\Pages\VisualTimetableBuilder' => [
+                'title' => 'Visual Timetable Builder',
+                'summary' => 'Interactive drag-and-drop builder for arranging weekly school timetables with automated conflict checks.',
+                'workflow' => [
+                    '1. Select Template: Choose the active timetable template for the term.',
+                    '2. Drag & Drop: Drag lessons across days and time slots. The system instantly verifies teacher, room, and class availability.',
+                    '3. Save & Publish: Commit changes and publish the timetable for teacher and student portal viewing.',
+                ],
+                'details' => [
+                    'Relationship' => 'Prevents teacher, classroom, and student-class double bookings automatically.',
+                ],
+            ],
+            'App\Filament\App\Pages\TimetableViewerPage' => [
+                'title' => 'View Timetable',
+                'summary' => 'Interactive grid viewer for school, stream, and class timetables with printing capabilities.',
+                'workflow' => [
+                    '1. Select Scope: Choose between School-wide, Stream, or specific Class views.',
+                    '2. Inspect Matrix: Review weekly lesson distribution across time slots.',
+                    '3. Print & Export: Print clean timetable schedules for staff noticeboards or student distribution.',
+                ],
+                'details' => [
+                    'Relationship' => 'Provides read-only access for staff and students based on their active timetable generation.',
+                ],
+            ],
+            \App\Filament\App\Resources\TeacherAssignmentResource::class => [
+                'title' => 'Teacher Assignments (Timetables & Teaching)',
+                'summary' => 'Allocate teaching staff to specific subjects, classes, and designate Form Teachers for pastoral care and attendance.',
+                'workflow' => [
+                    '1. Select Employee: Choose a registered staff member from the HR directory.',
+                    '2. Assign Role: Link the teacher to a specific Subject and Class/Stream.',
+                    '3. Form Teacher Designation: Check the box if this teacher is the primary Form Teacher for pastoral care and daily attendance tracking.',
+                ],
+                'details' => [
+                    'Relationship' => 'Connects HR and Payroll staff records with Academics and grants teachers grading permissions for their assigned student rosters.',
+                ],
+            ],
+            \App\Filament\App\Resources\TimetableLessonResource::class => [
+                'title' => 'Timetable Lessons (Timetables & Teaching)',
+                'summary' => 'Schedule and manage weekly teaching timetables with automated conflict detection preventing teacher and room double-booking.',
+                'workflow' => [
+                    '1. Configure Time Slots: Ensure operating time slots and templates are configured.',
+                    '2. Lesson Scheduling: Place lessons into the weekly matrix specifying day, time slot, room, teacher, and subject.',
+                    '3. Drag & Drop / Swapping: Use the visual timetable grid to drag or swap lessons between slots instantly.',
+                ],
+                'details' => [
+                    'Relationship' => 'Relies entirely on Classrooms, Subjects, and Teacher Assignments being set up first.',
+                ],
+            ],
+            \App\Filament\App\Resources\PromotionRunResource::class => [
+                'title' => 'Student Promotion Runs (Progression)',
+                'summary' => 'Execute end-of-year batch student promotions, repeating, or graduations based on final exam performance.',
+                'workflow' => [
+                    '1. Select Source Year: Choose the concluding academic year.',
+                    '2. Set Criteria: Review student pass/fail thresholds and terminal level graduations.',
+                    '3. Execute Run: Process batch promotions; promoted students automatically transition to the next grade level for the new academic year.',
+                ],
+                'details' => [
+                    'Relationship' => 'Ties Exams and Grading performance analytics directly to Students enrollment updates for the upcoming academic year.',
+                ],
+            ],
+            \App\Filament\App\Resources\ScreeningRunResource::class => [
+                'title' => 'Student Screening Runs (Progression)',
+                'summary' => 'Evaluate student academic eligibility and prerequisites before progression or subject streaming.',
+                'workflow' => [
+                    '1. Define Rules: Set academic prerequisites or grade cutoffs.',
+                    '2. Select Cohort: Choose target student groups for screening.',
+                    '3. Run Evaluation: System automatically filters and flags qualified learners.',
+                ],
+                'details' => [
+                    'Relationship' => 'Works in tandem with Promotion Runs to ensure academic standards are maintained.',
                 ],
             ],
 
@@ -67,86 +191,32 @@ class HelpContent
                     'Relationship' => 'Pulls photo and identity data directly from active Student and Employee records.',
                 ],
             ],
-            \App\Filament\App\Resources\StudentMedicalRecordResource::class => [
-                'title' => 'Student Medical & Health Records',
-                'summary' => 'Track learner health histories, chronic conditions, emergency allergies, and school clinic visits.',
-                'workflow' => [
-                    '1. Medical Profiles: Record critical allergies, blood groups, and physician contacts.',
-                    '2. Clinic Visits: Log daily nurse visits, treatments administered, and medication dispensed.',
-                ],
-                'details' => [
-                    'Relationship' => 'Alerts teachers and boarding staff to critical student health requirements.',
-                ],
-            ],
 
             // =========================================================
-            // ACADEMICS MODULE
+            // ADMISSIONS MODULE
             // =========================================================
-            \App\Filament\App\Resources\AcademicYearResource::class => [
-                'title' => 'Academic Years & Terms',
-                'summary' => 'Establish the temporal foundation of the school calendar by defining operating years and terms.',
+            \App\Filament\App\Resources\ApplicationResource::class => [
+                'title' => 'Online Admissions Applications',
+                'summary' => 'Manage incoming student applications submitted through the public admissions portal.',
                 'workflow' => [
-                    '1. Register Year: Create the academic year title (e.g. 2027) and date ranges.',
-                    '2. Configure Terms: Add operating terms (Term 1, Term 2, Term 3).',
-                    '3. Set Active Year: Mark the current year as active so enrollments, timetables, and billing attach correctly.',
+                    '1. Review Submissions: Inspect applicant details, previous school records, and uploaded documents.',
+                    '2. Screening & Evaluation: Run entrance screening criteria or interview evaluations.',
+                    '3. Approval & Conversion: Approve qualified applicants. Once approved, click convert to instantly generate an official Student Profile in the Student Directory.',
                 ],
                 'details' => [
-                    'Prerequisite' => 'Must be configured first before setting up classes, subjects, or timetables.',
+                    'Relationship' => 'Acts as the bridge between public website inquiries and internal Student enrollment records.',
                 ],
             ],
-            \App\Filament\App\Resources\ClassroomResource::class => [
-                'title' => 'Classrooms & Facilities',
-                'summary' => 'Register physical rooms, lecture halls, and laboratories with seating capacities.',
+            'App\Filament\App\Pages\AdmissionSettingsPage' => [
+                'title' => 'Admission Settings & Portal Configuration',
+                'summary' => 'Configure public application forms, opening/closing dates, and admission screening rules.',
                 'workflow' => [
-                    '1. Add Room: Enter room name, building, and maximum capacity.',
-                    '2. Timetable Allocation: Rooms are scheduled in timetables to prevent physical double-booking.',
+                    '1. Portal Status: Open or close the public admissions portal for the current academic year.',
+                    '2. Form Customization: Set required fields and upload document checklists for prospective parents.',
+                    '3. Screening Rules: Define automated acceptance or review thresholds.',
                 ],
                 'details' => [
-                    'Relationship' => 'Ensures room availability during lesson scheduling and exam seating.',
-                ],
-            ],
-            \App\Filament\App\Resources\SubjectResource::class => [
-                'title' => 'Subjects Curriculum',
-                'summary' => 'Define the institutional curriculum of subjects offered across grade levels.',
-                'workflow' => [
-                    '1. Create Subject: Enter subject name, code, and department.',
-                    '2. Grading Link: Associate subjects with grading scales for exam computations.',
-                ],
-                'details' => [
-                    'Prerequisite' => 'Must exist before scheduling teacher assignments or timetable lessons.',
-                ],
-            ],
-            \App\Filament\App\Resources\CourseResource::class => [
-                'title' => 'Grade Levels (Setup & Structure)',
-                'summary' => 'Define grade levels or forms offered by the school (e.g. Grade 4, Form 1, Lower Sixth).',
-                'workflow' => [
-                    '1. Create Level: Enter level name, rank order, and fee categories.',
-                    '2. Stream Setup: Organize students into class streams under each level.',
-                ],
-                'details' => [
-                    'Relationship' => 'Anchors student enrollments and fee billing cohorts.',
-                ],
-            ],
-            \App\Filament\App\Resources\TeacherAssignmentResource::class => [
-                'title' => 'Teacher Assignments',
-                'summary' => 'Allocate teaching staff to specific subjects, classes, and form-teacher roles.',
-                'workflow' => [
-                    '1. Select Staff: Choose an employee from the HR directory.',
-                    '2. Assign Role: Link teacher to course, class, and subject.',
-                ],
-                'details' => [
-                    'Relationship' => 'Connects HR staff records with Academics and grading permissions.',
-                ],
-            ],
-            \App\Filament\App\Resources\TimetableLessonResource::class => [
-                'title' => 'Timetables & Lesson Scheduling',
-                'summary' => 'Build and manage weekly teaching schedules with automated conflict detection.',
-                'workflow' => [
-                    '1. Time Slots: Set up daily lesson periods.',
-                    '2. Schedule Lessons: Place lessons into the weekly matrix specifying day, room, teacher, and subject.',
-                ],
-                'details' => [
-                    'Relationship' => 'Relies on classrooms, subjects, and teacher assignments.',
+                    'Relationship' => 'Controls how prospective parents interact with the online application forms on the public school website.',
                 ],
             ],
 
