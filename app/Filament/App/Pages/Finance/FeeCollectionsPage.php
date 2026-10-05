@@ -2,14 +2,17 @@
 
 namespace App\Filament\App\Pages\Finance;
 
+use App\Filament\App\Concerns\HasPageHelp;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 use Carbon\Carbon;
 use Filament\Pages\Page;
+use Modules\Finance\Services\FinancialHistoryExcelService;
 use Modules\Finance\Services\StudentFinancialHistoryService;
 use Symfony\Component\HttpFoundation\StreamedResponse;
-use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class FeeCollectionsPage extends Page
 {
+    use HasPageHelp;
     use ModulePermissionAccess;
 
     protected static string $view = 'filament.app.pages.finance.fee-collections';
@@ -25,7 +28,6 @@ class FeeCollectionsPage extends Page
     protected static bool $shouldRegisterNavigation = false;
 
     protected static ?string $slug = 'fee-collections';
-
 
     public string $range = 'today';
 
@@ -146,11 +148,18 @@ class FeeCollectionsPage extends Page
         $range = $this->resolveRange();
         $data = StudentFinancialHistoryService::collectionsForRange($schoolId, $range['start'], $range['end']);
 
-        return \Modules\Finance\Services\FinancialHistoryExcelService::downloadCollections(
+        return FinancialHistoryExcelService::downloadCollections(
             $data,
             $range['label'],
             $range['start'],
             $range['end'],
         );
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->getHelpAction(),
+        ];
     }
 }

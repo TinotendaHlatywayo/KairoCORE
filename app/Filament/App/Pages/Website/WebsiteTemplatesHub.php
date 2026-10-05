@@ -2,12 +2,14 @@
 
 namespace App\Filament\App\Pages\Website;
 
+use App\Filament\App\Concerns\HasPageHelp;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 use App\Navigation\ModuleNavigationService;
 use Filament\Pages\Page;
-use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class WebsiteTemplatesHub extends Page
 {
+    use HasPageHelp;
     use ModulePermissionAccess;
 
     protected static string $view = 'filament.app.pages.website.category-hub';
@@ -73,6 +75,13 @@ class WebsiteTemplatesHub extends Page
         return [
             'categoryLabel' => $this->getTitle(),
             'categoryPages' => $this->getCategoryPages(),
+        ];
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->getHelpAction(),
         ];
     }
 }

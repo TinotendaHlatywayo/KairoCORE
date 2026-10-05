@@ -3,6 +3,7 @@
 namespace App\Filament\App\Resources\DepartmentResource\Pages;
 
 use App\Filament\App\Concerns\HasCsvBulkActions;
+use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Resources\DepartmentResource;
 use App\Services\Csv\DepartmentCsvService;
 use Filament\Actions;
@@ -11,6 +12,7 @@ use Filament\Resources\Pages\ListRecords;
 class ListDepartments extends ListRecords
 {
     use HasCsvBulkActions;
+    use HasPageHelp;
 
     protected static string $resource = DepartmentResource::class;
 
@@ -22,6 +24,7 @@ class ListDepartments extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            $this->getHelpAction(),
             Actions\CreateAction::make()->slideOver(),
             ...$this->csvBulkActions(),
         ];

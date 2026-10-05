@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Pages;
 
+use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Filament\App\Concerns\ModulePermissionAccess;
 use Filament\Pages\Page;
@@ -15,6 +16,7 @@ use Modules\SaaS\Models\PlatformMessage;
 
 class CommunicationCenter extends Page
 {
+    use HasPageHelp;
     use ModuleAwareActiveNavigation;
     use ModulePermissionAccess;
 
@@ -119,6 +121,13 @@ class CommunicationCenter extends Page
             'upcomingEvents' => collect(),
             'recentThreads' => collect(),
             'platformMessages' => collect(),
+        ];
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->getHelpAction(),
         ];
     }
 }

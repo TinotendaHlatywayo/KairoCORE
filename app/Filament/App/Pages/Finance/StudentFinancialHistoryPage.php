@@ -3,6 +3,8 @@
 namespace App\Filament\App\Pages\Finance;
 
 use App\Filament\App\Concerns\HasCsvBulkActions;
+use App\Filament\App\Concerns\HasPageHelp;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
@@ -14,6 +16,7 @@ use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Filament\Support\Enums\MaxWidth;
 use Modules\Academics\Models\AcademicYear;
 use Modules\Academics\Models\Course;
 use Modules\Academics\Models\Section;
@@ -21,21 +24,20 @@ use Modules\Academics\Models\Term;
 use Modules\Admin\Services\PermissionRegistry;
 use Modules\Finance\Models\Invoice;
 use Modules\Finance\Models\Payment;
+use Modules\Finance\Services\FinanceSettingsService;
 use Modules\Finance\Services\FinancialHistoryCsvService;
 use Modules\Finance\Services\FinancialHistoryExcelService;
-use Modules\Finance\Services\FinanceSettingsService;
 use Modules\Finance\Services\ManualFinancialEntryService;
 use Modules\Finance\Services\StudentFinancialHistoryService;
 use Modules\Students\Models\Student;
 use Symfony\Component\HttpFoundation\StreamedResponse;
-use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class StudentFinancialHistoryPage extends Page implements HasForms
 {
-    use ModulePermissionAccess;
-
     use HasCsvBulkActions;
+    use HasPageHelp;
     use InteractsWithForms;
+    use ModulePermissionAccess;
 
     protected static string $view = 'filament.app.pages.finance.student-financial-history';
 
@@ -79,8 +81,6 @@ class StudentFinancialHistoryPage extends Page implements HasForms
 
     public int $page = 1;
 
-
-
     public static function canEditFinancialHistory(): bool
     {
         return PermissionRegistry::checkPermission('finance.manage_student_financial_history');
@@ -103,7 +103,7 @@ class StudentFinancialHistoryPage extends Page implements HasForms
             $this->makeImportAction()
                 ->label(__('Import Financial History (Excel/CSV)'))
                 ->modalHeading(__('Import Financial History from Excel or CSV'))
-                ->modalSubmitActionLabel(__("Import Financial History"))
+                ->modalSubmitActionLabel(__('Import Financial History'))
                 ->visible(fn (): bool => static::canEditFinancialHistory()),
         ];
     }
@@ -389,7 +389,7 @@ class StudentFinancialHistoryPage extends Page implements HasForms
             ->modalDescription(__('Deletes the invoice and its line items. Only possible when no payments or discount exist on it; recorded payments must be reversed first.'))
             ->requiresConfirmation()
             ->modalSubmitActionLabel(__('Delete Invoice'))
-            ->modalWidth(\Filament\Support\Enums\MaxWidth::Large)
+            ->modalWidth(MaxWidth::Large)
             ->form(fn (): array => [
                 Textarea::make('notes')->label(__('Reason (audit)'))->rows(2),
             ])
@@ -411,7 +411,7 @@ class StudentFinancialHistoryPage extends Page implements HasForms
             ->modalDescription(__('Undoes the money movement, restores the bank balance and marks the entry as reversed in the ledger.'))
             ->requiresConfirmation()
             ->modalSubmitActionLabel(__('Reverse Entry'))
-            ->modalWidth(\Filament\Support\Enums\MaxWidth::Large)
+            ->modalWidth(MaxWidth::Large)
             ->form(fn (): array => [
                 Textarea::make('notes')->label(__('Reason (audit)'))->rows(2),
             ])
@@ -433,7 +433,7 @@ class StudentFinancialHistoryPage extends Page implements HasForms
             ->modalDescription(__('Zeroes the discount on this invoice so the full amount becomes payable again.'))
             ->requiresConfirmation()
             ->modalSubmitActionLabel(__('Remove Waiver'))
-            ->modalWidth(\Filament\Support\Enums\MaxWidth::Large)
+            ->modalWidth(MaxWidth::Large)
             ->form(fn (): array => [
                 Textarea::make('notes')->label(__('Reason (audit)'))->rows(2),
             ])
@@ -835,5 +835,12 @@ class StudentFinancialHistoryPage extends Page implements HasForms
             }
             fclose($out);
         }, 'Financial_History_Bulk_'.now()->format('Ymd_His').'.csv', ['Content-Type' => 'text/csv']);
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->getHelpAction(),
+        ];
     }
 }

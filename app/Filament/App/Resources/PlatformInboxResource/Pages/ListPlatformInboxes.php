@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Resources\PlatformInboxResource\Pages;
 
+use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Resources\PlatformInboxResource;
 use Filament\Actions;
 use Filament\Notifications\Notification;
@@ -13,6 +14,8 @@ use Modules\SaaS\Services\PlatformMessagingService;
 
 class ListPlatformInboxes extends ListRecords
 {
+    use HasPageHelp;
+
     protected static string $resource = PlatformInboxResource::class;
 
     // ── Inline thread reply (composer inside the View Thread modal) ──
@@ -23,6 +26,7 @@ class ListPlatformInboxes extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            $this->getHelpAction(),
             Actions\CreateAction::make()->slideOver(),
         ];
     }

@@ -2,16 +2,17 @@
 
 namespace App\Filament\App\Pages\Lms;
 
+use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 use App\Navigation\ModuleNavigationService;
 use Filament\Pages\Page;
-use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class LmsHub extends Page
 {
-    use ModulePermissionAccess;
-
+    use HasPageHelp;
     use ModuleAwareActiveNavigation;
+    use ModulePermissionAccess;
 
     protected static string $view = 'filament.app.pages.lms.category-hub';
 
@@ -76,6 +77,13 @@ class LmsHub extends Page
         return [
             'categoryLabel' => $this->getTitle(),
             'categoryPages' => $this->getCategoryPages(),
+        ];
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->getHelpAction(),
         ];
     }
 }

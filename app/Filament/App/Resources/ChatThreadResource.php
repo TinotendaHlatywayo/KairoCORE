@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Resources;
 
+use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Concerns\ModulePermissionAccess;
 use App\Models\User;
 use Filament\Actions;
@@ -15,8 +16,8 @@ use Filament\Resources\Pages\ViewRecord;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Actions\Action;
-use Filament\Tables\Table;
-use Illuminate\Support\Facades\Auth; // ADDED IMPORT
+use Filament\Tables\Table; // ADDED IMPORT
+use Illuminate\Support\Facades\Auth;
 use Modules\Communication\Models\ChatMessage;
 use Modules\Communication\Models\ChatThread;
 
@@ -123,11 +124,14 @@ class ChatThreadResource extends Resource
 
 class ListChatThreads extends ListRecords
 {
+    use HasPageHelp;
+
     protected static string $resource = ChatThreadResource::class;
 
     protected function getHeaderActions(): array
     {
         return [
+            $this->getHelpAction(),
             Actions\CreateAction::make()->label(__('Create Chat Thread')),
         ];
     }

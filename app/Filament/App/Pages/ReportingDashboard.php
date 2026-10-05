@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Pages;
 
+use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Filament\App\Concerns\ModulePermissionAccess;
 use App\Models\User;
@@ -17,6 +18,7 @@ use Modules\Reports\Services\ReportExecutionService;
 
 class ReportingDashboard extends Page
 {
+    use HasPageHelp;
     use ModuleAwareActiveNavigation;
     use ModulePermissionAccess;
 
@@ -385,5 +387,12 @@ class ReportingDashboard extends Page
                 ->body($report->error_message)
                 ->send();
         }
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->getHelpAction(),
+        ];
     }
 }

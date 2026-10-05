@@ -2,9 +2,11 @@
 
 namespace App\Filament\App\Pages;
 
+use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Filament\App\Concerns\ModulePermissionAccess;
 use App\Filament\App\Resources\GeneratedReportResource;
+use App\Models\School;
 use App\Models\User;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\ColorPicker;
@@ -28,6 +30,7 @@ use Modules\Reports\Support\ReportPresetCatalogue;
 
 class ReportGeneratorPage extends Page
 {
+    use HasPageHelp;
     use ModuleAwareActiveNavigation;
     use ModulePermissionAccess;
 
@@ -817,7 +820,7 @@ class ReportGeneratorPage extends Page
 
             // `school` is read by the exporters, so resolve it now rather than
             // letting an unsaved model resolve it later.
-            $template->setRelation('school', $existing?->school ?? \App\Models\School::find($schoolId));
+            $template->setRelation('school', $existing?->school ?? School::find($schoolId));
 
             return $template;
         }
@@ -921,5 +924,12 @@ class ReportGeneratorPage extends Page
         }
 
         return $options;
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->getHelpAction(),
+        ];
     }
 }

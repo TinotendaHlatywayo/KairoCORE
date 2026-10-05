@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Pages;
 
+use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Concerns\ModulePermissionAccess;
 use Filament\Forms;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -14,6 +15,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TenantDataExportPage extends Page implements HasForms
 {
+    use HasPageHelp;
     use InteractsWithForms;
     use ModulePermissionAccess;
 
@@ -125,5 +127,12 @@ class TenantDataExportPage extends Page implements HasForms
             }
             fclose($file);
         }, "export_{$table}_".now()->format('Ymd_His').'.csv');
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->getHelpAction(),
+        ];
     }
 }

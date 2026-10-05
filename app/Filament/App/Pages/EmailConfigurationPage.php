@@ -2,14 +2,14 @@
 
 namespace App\Filament\App\Pages;
 
+use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Concerns\ManagesEmailConfiguration;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Modules\Admin\Services\PermissionRegistry;
-use App\Filament\App\Concerns\ModulePermissionAccess;
 
 /**
  * Central "Email Configuration" page under System Administration.
@@ -21,10 +21,10 @@ use App\Filament\App\Concerns\ModulePermissionAccess;
  */
 class EmailConfigurationPage extends Page implements HasForms
 {
-    use ModulePermissionAccess;
-
+    use HasPageHelp;
     use InteractsWithForms;
     use ManagesEmailConfiguration;
+    use ModulePermissionAccess;
 
     protected static ?string $navigationIcon = 'heroicon-o-envelope';
 
@@ -53,8 +53,6 @@ class EmailConfigurationPage extends Page implements HasForms
     // Reached via the module contextual tabs, not the sidebar.
     protected static bool $shouldRegisterNavigation = false;
 
-
-
     public function mount(): void
     {
         $data = [];
@@ -77,5 +75,12 @@ class EmailConfigurationPage extends Page implements HasForms
             ->title(__('Email configuration saved'))
             ->success()
             ->send();
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->getHelpAction(),
+        ];
     }
 }

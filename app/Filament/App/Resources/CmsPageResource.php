@@ -2,6 +2,8 @@
 
 namespace App\Filament\App\Resources;
 
+use App\Filament\App\Concerns\HasPageHelp;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 use App\Filament\App\Pages\VisualCmsBuilder;
 use Filament\Actions\CreateAction;
 use Filament\Forms\Components\Checkbox;
@@ -22,7 +24,6 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Unique;
 use Modules\CMS\Models\CmsPage;
 use Modules\CMS\Models\CmsWebsite;
-use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class CmsPageResource extends Resource
 {
@@ -144,11 +145,14 @@ class CmsPageResource extends Resource
 
 class ManageCmsPages extends ManageRecords
 {
+    use HasPageHelp;
+
     protected static string $resource = CmsPageResource::class;
 
     protected function getHeaderActions(): array
     {
         return [
+            $this->getHelpAction(),
             CreateAction::make(),
         ];
     }

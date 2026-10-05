@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Resources;
 
+use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Concerns\ModulePermissionAccess;
 use Filament\Actions;
 use Filament\Forms;
@@ -109,11 +110,14 @@ class EventCalendarResource extends Resource
 
 class ListEventCalendars extends ListRecords
 {
+    use HasPageHelp;
+
     protected static string $resource = EventCalendarResource::class;
 
     protected function getHeaderActions(): array
     {
         return [
+            $this->getHelpAction(),
             Actions\CreateAction::make()->label(__('New Event')),
         ];
     }

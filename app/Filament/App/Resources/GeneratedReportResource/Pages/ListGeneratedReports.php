@@ -2,11 +2,14 @@
 
 namespace App\Filament\App\Resources\GeneratedReportResource\Pages;
 
+use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Resources\GeneratedReportResource;
 use Filament\Resources\Pages\ListRecords;
 
 class ListGeneratedReports extends ListRecords
 {
+    use HasPageHelp;
+
     protected static string $resource = GeneratedReportResource::class;
 
     protected static ?string $title = 'Report Archive';
@@ -29,5 +32,12 @@ class ListGeneratedReports extends ListRecords
     public function getBreadcrumbs(): array
     {
         return [];
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->getHelpAction(),
+        ];
     }
 }

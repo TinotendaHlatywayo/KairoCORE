@@ -2,7 +2,9 @@
 
 namespace App\Filament\App\Pages;
 
+use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 use App\Models\User;
 use Carbon\Carbon;
 use Filament\Pages\Page;
@@ -11,14 +13,12 @@ use Illuminate\Support\Facades\DB;
 use Modules\Admin\Models\CustomRole;
 use Modules\Admin\Models\SystemAuditLog;
 use Modules\Admin\Models\SystemSetting;
-use Modules\Admin\Services\PermissionRegistry;
-use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class AdministrationDashboard extends Page
 {
-    use ModulePermissionAccess;
-
+    use HasPageHelp;
     use ModuleAwareActiveNavigation;
+    use ModulePermissionAccess;
 
     protected static ?string $navigationIcon = 'heroicon-o-cog-8-tooth';
 
@@ -41,8 +41,6 @@ class AdministrationDashboard extends Page
     protected static string $view = 'modules.admin.dashboard';
 
     // Strictly hides "Overview" from the navigation menu [1]
-
-
 
     public function getViewData(): array
     {
@@ -188,6 +186,13 @@ class AdministrationDashboard extends Page
                 ->latest()
                 ->limit(5)
                 ->get(),
+        ];
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->getHelpAction(),
         ];
     }
 }

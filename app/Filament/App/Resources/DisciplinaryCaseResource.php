@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Resources;
 
+use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Concerns\ModulePermissionAccess;
 use Filament\Actions;
 use Filament\Forms;
@@ -166,11 +167,14 @@ class DisciplinaryCaseResource extends Resource
 
 class ListDisciplinaryCases extends ListRecords
 {
+    use HasPageHelp;
+
     protected static string $resource = DisciplinaryCaseResource::class;
 
     protected function getHeaderActions(): array
     {
         return [
+            $this->getHelpAction(),
             Actions\CreateAction::make()->label(__('New Disciplinary Case')),
         ];
     }

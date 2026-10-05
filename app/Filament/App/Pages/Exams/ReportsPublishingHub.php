@@ -2,16 +2,17 @@
 
 namespace App\Filament\App\Pages\Exams;
 
+use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 use App\Navigation\ModuleNavigationService;
 use Filament\Pages\Page;
-use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class ReportsPublishingHub extends Page
 {
-    use ModulePermissionAccess;
-
+    use HasPageHelp;
     use ModuleAwareActiveNavigation;
+    use ModulePermissionAccess;
 
     protected static string $view = 'filament.app.pages.exams.category-hub';
 
@@ -76,6 +77,13 @@ class ReportsPublishingHub extends Page
         return [
             'categoryLabel' => $this->getTitle(),
             'categoryPages' => $this->getCategoryPages(),
+        ];
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->getHelpAction(),
         ];
     }
 }

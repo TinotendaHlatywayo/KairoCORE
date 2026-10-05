@@ -2,18 +2,19 @@
 
 namespace App\Filament\App\Pages\Finance;
 
+use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 use App\Navigation\ModuleNavigationService;
 use Filament\Pages\Page;
 use Modules\Finance\Models\Invoice;
 use Modules\Students\Models\Student;
-use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class StudentBillingHub extends Page
 {
-    use ModulePermissionAccess;
-
+    use HasPageHelp;
     use ModuleAwareActiveNavigation;
+    use ModulePermissionAccess;
 
     protected static string $view = 'filament.app.pages.finance.student-billing-hub';
 
@@ -134,6 +135,13 @@ class StudentBillingHub extends Page
             'totalCredits' => $totalCredits,
             'outstandingStudents' => $outstandingStudents,
             'totalOutstanding' => $totalOutstanding,
+        ];
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->getHelpAction(),
         ];
     }
 }

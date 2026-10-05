@@ -2,7 +2,9 @@
 
 namespace App\Filament\App\Pages\Exams;
 
+use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
@@ -18,7 +20,6 @@ use Modules\Academics\Models\Subject;
 use Modules\Academics\Models\Term;
 use Modules\Academics\Services\GradingScaleResolver;
 use Modules\Students\Models\Enrollment;
-use App\Filament\App\Concerns\ModulePermissionAccess;
 
 /**
  * Student performance analytics for the whole school, a grade/form level or an
@@ -26,10 +27,10 @@ use App\Filament\App\Concerns\ModulePermissionAccess;
  */
 class PerformanceAnalyticsPage extends Page implements HasForms
 {
-    use ModulePermissionAccess;
-
+    use HasPageHelp;
     use InteractsWithForms;
     use ModuleAwareActiveNavigation;
+    use ModulePermissionAccess;
 
     protected static string $view = 'filament.app.pages.exams.performance-analytics';
 
@@ -52,7 +53,6 @@ class PerformanceAnalyticsPage extends Page implements HasForms
     public ?int $subjectId = null;
 
     public ?int $termId = null;
-
 
     public static function getNavigationLabel(): string
     {
@@ -498,5 +498,12 @@ class PerformanceAnalyticsPage extends Page implements HasForms
         }
 
         return __('Whole School');
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->getHelpAction(),
+        ];
     }
 }

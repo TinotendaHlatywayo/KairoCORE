@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Resources;
 
+use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Concerns\ModulePermissionAccess;
 use Filament\Actions;
 use Filament\Forms;
@@ -14,6 +15,7 @@ use Filament\Tables\Actions\Action;
 use Filament\Tables\Table;
 use Modules\HR\Models\Employee;
 use Modules\HR\Models\EmployeeAsset;
+use Modules\Inventory\Models\FixedAsset;
 
 class EmployeeAssetResource extends Resource
 {
@@ -54,15 +56,16 @@ class EmployeeAssetResource extends Resource
                     ->required(),
                 Forms\Components\Select::make('fixed_asset_selector')
                     ->label(__('Select Asset from System'))
-                    ->options(fn () => \Modules\Inventory\Models\FixedAsset::with('inventoryItem')->get()->mapWithKeys(function ($asset) {
+                    ->options(fn () => FixedAsset::with('inventoryItem')->get()->mapWithKeys(function ($asset) {
                         $itemName = optional($asset->inventoryItem)->name ?? 'Asset';
+
                         return [$asset->id => "{$asset->asset_number} — {$itemName} (Serial: {$asset->serial_number})"];
                     }))
                     ->searchable()
                     ->preload()
                     ->reactive()
                     ->afterStateUpdated(function ($state, callable $set) {
-                        $asset = \Modules\Inventory\Models\FixedAsset::with('inventoryItem')->find($state);
+                        $asset = FixedAsset::with('inventoryItem')->find($state);
                         if ($asset) {
                             $itemName = optional($asset->inventoryItem)->name ?? $asset->asset_number;
                             $set('asset_name', $itemName);
@@ -161,11 +164,14 @@ class EmployeeAssetResource extends Resource
 
 class ListEmployeeAssets extends ListRecords
 {
+    use HasPageHelp;
+
     protected static string $resource = EmployeeAssetResource::class;
 
     protected function getHeaderActions(): array
     {
         return [
+            $this->getHelpAction(),
             Actions\CreateAction::make()->label(__('New Employee Asset')),
         ];
     }

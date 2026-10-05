@@ -2,7 +2,14 @@
      id="schoolcore-dashboard-wrapper" 
      data-chart-primary="{{ $chart_primary }}" 
      data-chart-accent="{{ $chart_accent }}">
-     
+    {{--
+        This page renders its own full-bleed layout instead of
+        <x-filament-panels::page>, so Filament's page header is never rendered and
+        header actions (including Help) would be unreachable. The shared actions
+        header is included here instead.
+    --}}
+    @include('filament.components.header-actions', ['actions' => $this->getCachedHeaderActions()])
+
     <!-- Row 1: Personalized Welcome Header & Dynamic Term Progress Widget -->
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div class="lg:col-span-2 flex items-center justify-between rounded-xl border border-gray-100 bg-white p-6 dark:border-gray-800 dark:bg-gray-900 schoolcore-glowing-card">
