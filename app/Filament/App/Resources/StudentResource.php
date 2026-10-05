@@ -86,11 +86,14 @@ class StudentResource extends Resource
 
                 \Filament\Infolists\Components\Section::make(__('Current Enrollment'))
                     ->description(__('Assigned form/grade level and stream for the active academic year.'))
+                    // Read from the enrollment, not the student: these columns live
+                    // on the enrollment record, so the flat names resolved to nothing
+                    // and every enrolled student was reported as "Not assigned".
                     ->schema([
-                        \Filament\Infolists\Components\TextEntry::make('academicYear.name')->label(__('Academic Year'))->default('Not assigned'),
-                        \Filament\Infolists\Components\TextEntry::make('course.name')->label(__('Form / Grade (Level)'))->default('Not assigned'),
-                        \Filament\Infolists\Components\TextEntry::make('section.name')->label(__('Stream / Class'))->default('Not assigned'),
-                        \Filament\Infolists\Components\TextEntry::make('roll_number')->label(__('Roll Number'))->default('None'),
+                        \Filament\Infolists\Components\TextEntry::make('currentEnrollment.academicYear.name')->label(__('Academic Year'))->default('Not assigned'),
+                        \Filament\Infolists\Components\TextEntry::make('currentEnrollment.course.name')->label(__('Form / Grade (Level)'))->default('Not assigned'),
+                        \Filament\Infolists\Components\TextEntry::make('currentEnrollment.section.name')->label(__('Stream / Class'))->default('Not assigned'),
+                        \Filament\Infolists\Components\TextEntry::make('currentEnrollment.roll_number')->label(__('Roll Number'))->default('None'),
                     ])->columns(2),
 
                 \Filament\Infolists\Components\Section::make(__('Guardian & Emergency Contact'))
@@ -497,7 +500,7 @@ class StudentResource extends Resource
                             ]);
                         }),
                     Tables\Actions\BulkAction::make('downloadPngs')
-                        ->label(__('Download ID Cards as PNG/ZIP'))
+                        ->label(__('Download as PNG'))
                         ->icon('heroicon-o-arrow-down-tray')
                         ->color('primary')
                         ->action(function (Collection $records) {
