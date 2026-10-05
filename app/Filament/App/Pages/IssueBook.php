@@ -2,22 +2,23 @@
 
 namespace App\Filament\App\Pages;
 
+use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
-use App\Models\User;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 use App\Models\Scopes\TenantScope;
+use App\Models\User;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Modules\Library\Models\LibraryBook;
 use Modules\Library\Models\LibraryBookCopy;
 use Modules\Library\Models\LibraryIssue;
 use Modules\Students\Models\Student;
-use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class IssueBook extends Page
 {
-    use ModulePermissionAccess;
-
+    use HasPageHelp;
     use ModuleAwareActiveNavigation;
+    use ModulePermissionAccess;
 
     protected static string $view = 'filament.app.pages.issue-book';
 
@@ -32,7 +33,6 @@ class IssueBook extends Page
     protected static ?string $title = 'Issue Physical Resource';
 
     protected static ?string $slug = 'issue-book';
-
 
     public string $bookSearch = '';
 
@@ -334,5 +334,12 @@ class IssueBook extends Page
     protected function getViewData(): array
     {
         return [];
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->getHelpAction(),
+        ];
     }
 }

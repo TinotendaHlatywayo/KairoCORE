@@ -2,7 +2,8 @@
 
 namespace App\Filament\App\Pages\Finance;
 
-use App\Services\ModuleVisibilityManager;
+use App\Filament\App\Concerns\HasPageHelp;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 use Carbon\Carbon;
 use Filament\Pages\Page;
 use Modules\Academics\Models\Term;
@@ -11,10 +12,10 @@ use Modules\Finance\Models\Payment;
 use Modules\Finance\Models\SchoolBankAccount;
 use Modules\Finance\Services\FinancialAnalyticsEngine;
 use Modules\HR\Services\PayrollCalculationService;
-use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class FinancialStatementPage extends Page
 {
+    use HasPageHelp;
     use ModulePermissionAccess;
 
     protected static string $view = 'filament.app.pages.finance.financial-statement';
@@ -28,7 +29,6 @@ class FinancialStatementPage extends Page
     protected static ?int $navigationSort = 1;
 
     protected static ?string $slug = 'financial-statements';
-
 
     public static function getNavigationLabel(): string
     {
@@ -324,5 +324,12 @@ class FinancialStatementPage extends Page
             $term->name,
             $term->academicYear?->name,
         ])));
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->getHelpAction(),
+        ];
     }
 }

@@ -2,17 +2,21 @@
 
 namespace App\Filament\App\Resources\InvoiceResource\Pages;
 
+use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Resources\InvoiceResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 
 class ListInvoices extends ListRecords
 {
+    use HasPageHelp;
+
     protected static string $resource = InvoiceResource::class;
 
     protected function getHeaderActions(): array
     {
         return [
+            $this->getHelpAction(),
             Actions\CreateAction::make(),
         ];
     }

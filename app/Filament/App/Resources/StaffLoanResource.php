@@ -3,6 +3,7 @@
 namespace App\Filament\App\Resources;
 
 use App\Filament\App\Concerns\HasCsvBulkActions;
+use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Concerns\ModulePermissionAccess;
 use App\Services\Csv\StaffLoanCsvService;
 use Filament\Actions;
@@ -271,6 +272,7 @@ class StaffLoanResource extends Resource
 class ListStaffLoans extends ListRecords
 {
     use HasCsvBulkActions;
+    use HasPageHelp;
 
     protected static string $resource = StaffLoanResource::class;
 
@@ -282,6 +284,7 @@ class ListStaffLoans extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            $this->getHelpAction(),
             Actions\CreateAction::make()->label(__('New Staff Loan')),
             ...$this->csvBulkActions(),
         ];

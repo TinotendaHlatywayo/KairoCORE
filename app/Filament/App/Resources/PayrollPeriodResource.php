@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Resources;
 
+use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Concerns\ModulePermissionAccess;
 use App\Filament\App\Resources\PayrollPeriodResource\Pages;
 use Filament\Actions;
@@ -247,11 +248,14 @@ class PayrollPeriodResource extends Resource
 
 class ListPayrollPeriods extends ListRecords
 {
+    use HasPageHelp;
+
     protected static string $resource = PayrollPeriodResource::class;
 
     protected function getHeaderActions(): array
     {
         return [
+            $this->getHelpAction(),
             Actions\CreateAction::make()->label(__('New Payroll Period')),
         ];
     }

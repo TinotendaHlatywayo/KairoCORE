@@ -2,6 +2,8 @@
 
 namespace App\Filament\App\Resources;
 
+use App\Filament\App\Concerns\HasPageHelp;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 use Filament\Actions\CreateAction;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\Select;
@@ -18,7 +20,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Modules\CMS\Models\CmsWebsite;
 use Modules\CMS\Services\CmsTemplateService;
-use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class CmsWebsiteResource extends Resource
 {
@@ -116,11 +117,14 @@ class CmsWebsiteResource extends Resource
 // Inline Page Class Definition (Matches your other module standards)
 class ManageCmsWebsites extends ManageRecords
 {
+    use HasPageHelp;
+
     protected static string $resource = CmsWebsiteResource::class;
 
     protected function getHeaderActions(): array
     {
         return [
+            $this->getHelpAction(),
             CreateAction::make(),
         ];
     }
