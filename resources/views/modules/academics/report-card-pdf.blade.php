@@ -83,6 +83,7 @@
         .qr-verify-text { font-size: 6px; color: #94a3b8; margin-top: 2px; }
 
         .security-warning { text-align: center; font-weight: bold; color: #b91c1c; font-size: 8px; margin-top: 8px; letter-spacing: 0.5px; text-transform: uppercase; }
+        .powered-by { position: fixed; bottom: 0; left: 0; right: 0; text-align: center; font-size: 7px; color: #9ca3af; padding: 2px 0; }
     </style>
 </head>
 <body>
@@ -482,6 +483,8 @@
             <div class="security-warning">
                 {{ __('⚠️ This report card is invalid without a valid school seal or official stamp ⚠️') }}
             </div>
+
+            <div class="powered-by">Powered by Kairo CORE</div>
 
         </div>
     @endforeach

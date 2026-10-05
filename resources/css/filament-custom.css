@@ -3481,3 +3481,24 @@ select.sc-input {
     .sc-module-desc { display: none; }
     .sc-terms-gate { padding: 1.5rem 0.5rem 1rem; }
 }
+
+/* ─────────────────────────────────────────────────────────────
+ * FIX: Modal & Help Overlay Z-Index Over Table Actions / Headers
+ * ───────────────────────────────────────────────────────────── */
+.fi-modal,
+.fi-modal-container,
+.fi-modal-close-overlay,
+.fi-modal-window {
+    z-index: 100000 !important;
+}
+
+.fi-modal-close-overlay {
+    position: fixed !important;
+    z-index: 99999 !important;
+}
+
+.fi-modal-window {
+    z-index: 100000 !important;
+    position: relative !important;
+}
+
