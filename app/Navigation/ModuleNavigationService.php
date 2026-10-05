@@ -6,6 +6,7 @@ use App\Security\CapabilityCatalog;
 use App\Services\ModuleVisibilityManager;
 use Filament\Pages\Page;
 use Filament\Resources\Resource;
+use Livewire\Livewire;
 
 /**
  * Resolves which module the current request belongs to and builds the
@@ -76,19 +77,79 @@ class ModuleNavigationService
         return null;
     }
 
-    public function currentModule(?string $path = null): ?array
+    /**
+     * The path of the page the user is actually looking at.
+     *
+     * The module header is a PAGE_START render hook, so Filament re-renders it on
+     * every Livewire request. Livewire posts every interaction that opens, closes
+     * or submits something in a modal (Help, Import Courses, row actions, forms)
+     * to /livewire/update, where request()->path() is "livewire/update" and
+     * belongs to no module. The header then resolved to null and rendered
+     * nothing, and Livewire morphed that empty result over the existing markup,
+     * so the whole header disappeared until a full page load.
+     *
+     * Livewire keeps the real page path in the component snapshot and exposes it
+     * through originalPath(), so that is the authoritative candidate. The referer
+     * is a fallback for endpoints that carry no snapshot. Each candidate is only
+     * accepted when it really resolves to a module, so a page that belongs to no
+     * module (the dashboard, for example) never inherits a stale header.
+     */
+    public function currentPath(): string
     {
-        $path = $path ?? request()->path();
+        foreach ($this->pagePathCandidates() as $candidate) {
+            if ($candidate !== '' && $this->moduleSlugForTabPath($candidate) !== null) {
+                return $candidate;
+            }
+        }
 
-        if (str_contains($path, 'livewire/update') || request()->ajax()) {
-            $referer = request()->header('referer');
-            if ($referer) {
-                $parsedPath = parse_url($referer, PHP_URL_PATH);
-                if ($parsedPath) {
-                    $path = trim(str_replace('/workspace', '', $parsedPath), '/');
+        return trim((string) request()->path(), '/');
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function pagePathCandidates(): array
+    {
+        $paths = [
+            trim((string) request()->path(), '/'),
+            trim((string) Livewire::originalPath(), '/'),
+        ];
+
+        // "POST" is Livewire's placeholder when a snapshot carries no path.
+        if (end($paths) === 'POST') {
+            array_pop($paths);
+        }
+
+        $referer = parse_url((string) request()->header('referer'), PHP_URL_PATH);
+
+        if (is_string($referer)) {
+            $paths[] = trim($referer, '/');
+        }
+
+        return array_values(array_unique(array_filter($paths)));
+    }
+
+    /**
+     * The module a path belongs to, by matching it against the registered tabs.
+     * Unlike currentModule() this never consults the current path itself, so it
+     * is safe to call while the current path is still being resolved.
+     */
+    protected function moduleSlugForTabPath(string $path): ?string
+    {
+        foreach ($this->modules() as $module) {
+            foreach (array_merge($this->moduleTabs($module, false), $this->moduleMoreTabs($module, false)) as $tab) {
+                if ($this->pathMatchesTab($path, $tab)) {
+                    return $module['slug'];
                 }
             }
         }
+
+        return null;
+    }
+
+    public function currentModule(?string $path = null): ?array
+    {
+        $path = $path ?? $this->currentPath();
 
         foreach ($this->modules() as $module) {
             foreach (array_merge($this->moduleTabs($module, false), $this->moduleMoreTabs($module, false)) as $tab) {
@@ -273,7 +334,7 @@ class ModuleNavigationService
 
     public function activeTabLabel(array $module, ?string $path = null): ?string
     {
-        $path = $path ?? request()->path();
+        $path = $path ?? $this->currentPath();
 
         foreach (array_merge($this->moduleTabs($module, false), $this->moduleMoreTabs($module)) as $tab) {
             if ($this->pathMatchesTab($path, $tab)) {
@@ -291,7 +352,7 @@ class ModuleNavigationService
      */
     public function activeTabGroup(array $module, ?string $path = null): ?string
     {
-        $path = $path ?? request()->path();
+        $path = $path ?? $this->currentPath();
 
         foreach (array_merge($this->moduleTabs($module, false), $this->moduleMoreTabs($module, false)) as $tab) {
             if ($this->pathMatchesTab($path, $tab)) {
