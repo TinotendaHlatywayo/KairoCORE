@@ -7,6 +7,7 @@ use App\Models\School;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Modules\Students\Models\CardPrintHistory;
 use Modules\Students\Models\CardTemplate;
 use Modules\Students\Models\Student;
@@ -177,6 +178,18 @@ class StudentCardPrintController extends Controller
         }
 
         if (! $template) {
+            // A school that answered "Use Default Template" once has a persisted
+            // system-default row (see persistedDefaultTemplate()). Fall back to it
+            // so exports stop asking for a template it already created — without
+            // this, every later export re-showed "No Active ID Card Template".
+            $template = CardTemplate::where('school_id', $schoolId)
+                ->where('is_active', true)
+                ->where('is_system_default', true)
+                ->latest('updated_at')
+                ->first();
+        }
+
+        if (! $template) {
             return null;
         }
 
@@ -306,14 +319,20 @@ class StudentCardPrintController extends Controller
             $arbitrary = $template;
         }
 
-        $paper = ($arbitrary->orientation === 'landscape') ? [0, 0, 480, 300] : [0, 0, 300, 480];
+        // The template actually used for the export. Handing the view $template
+        // left it null whenever the template was auto-resolved (the bulk action
+        // never sends a template_id), so the PNG silently fell back to the
+        // built-in design instead of the school's own card.
+        $renderTemplate = $arbitrary ?? self::defaultTemplate(app('current_tenant')->name);
+
+        $paper = (($renderTemplate->orientation ?? 'portrait') === 'landscape') ? [0, 0, 480, 300] : [0, 0, 300, 480];
 
         // Render the SAME blade used for printing (one CR80 card per page),
-        // then rasterise it to PNG via poppler's pdftoppm. This guarantees the
-        // PNG is pixel-for-pixel identical to the printed ID card.
+        // then rasterise it to PNG. This guarantees the PNG is pixel-for-pixel
+        // identical to the printed ID card.
         $pdf = Pdf::loadView('modules.students.id-card-bulk-pdf', [
             'students' => $students,
-            'selectedTemplate' => $template,
+            'selectedTemplate' => $renderTemplate,
             'school' => app('current_tenant'),
             'crop_marks' => false,
             'layout' => 'pvc',
@@ -328,55 +347,141 @@ class StudentCardPrintController extends Controller
         $pdfPath = $dir.'/cards_'.$stamp.'.pdf';
         $pdf->save($pdfPath);
 
-        $root = $dir.'/card_'.$stamp;
-        $exitCode = 1;
-        $output = [];
-        exec('pdftoppm -png -r 192 '.escapeshellarg($pdfPath).' '.escapeshellarg($root).' 2>&1', $output, $exitCode);
+        $rasteriser = self::resolveRasteriser();
 
-        if ($exitCode !== 0) {
+        // A host with no PDF rasteriser installed cannot produce PNG at all.
+        // Hand back the printable cards (with a filename that says what happened)
+        // instead of bouncing to the student list, where the reason was invisible.
+        if (! $rasteriser) {
+            Log::warning('ID card PNG export: no PDF rasteriser on this server (tried: '.implode(', ', self::$rasteriserCandidates).'); returning the printable PDF instead.', [
+                'school_id' => $schoolId,
+                'students' => $students->count(),
+            ]);
+
+            return response()->download($pdfPath, 'ID_Cards_'.$stamp.'_PNG-unavailable.pdf')->deleteFileAfterSend(true);
+        }
+
+        $root = $dir.'/card_'.$stamp;
+        $rasterised = self::rasterisePdf($pdfPath, $root, $rasteriser);
+
+        if ($rasterised['files'] === []) {
+            Log::error('ID card PNG export could not rasterise the rendered cards.', [
+                'school_id' => $schoolId,
+                'rasteriser' => $rasteriser['command'],
+                'exit_code' => $rasterised['exit_code'],
+                'output' => $rasterised['output'],
+            ]);
+
             @unlink($pdfPath);
 
-            return redirect()->back()->with('error', 'PNG export failed. Please use the PDF print option instead.');
+            return redirect()->back()->with(
+                'error',
+                'PNG export failed on this server ('.$rasteriser['command'].' exited '.$rasterised['exit_code'].'). Please use the PDF print option instead.'
+            );
         }
 
         // Single student → download the PNG directly. Multiple → ZIP archive.
         if ($students->count() === 1) {
-            $single = $root.'-1.png';
             @unlink($pdfPath);
 
-            if (! file_exists($single)) {
-                return redirect()->back()->with('error', 'PNG export failed. Please use the PDF print option instead.');
-            }
-
-            return response()->download($single)->deleteFileAfterSend(true);
+            return response()->download($rasterised['files'][0])->deleteFileAfterSend(true);
         }
 
         $zipName = 'ID_Cards_'.$stamp.'.zip';
         $zipPath = storage_path('app/public/'.$zipName);
         $zip = new \ZipArchive;
+        $added = 0;
 
         if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
-            $index = 1;
-            foreach ($students as $student) {
-                $png = $root.'-'.$index.'.png';
-                $index++;
+            foreach ($students->values() as $index => $student) {
+                $png = $rasterised['files'][$index] ?? null;
 
-                if (file_exists($png)) {
+                if ($png && file_exists($png)) {
                     $zip->addFile($png, 'ID_Card_'.($student->student_id_number ?? $student->id).'.png');
+                    $added++;
                 }
             }
             $zip->close();
         }
 
         @unlink($pdfPath);
-        foreach (glob($root.'-*.png') ?: [] as $png) {
+        foreach ($rasterised['files'] as $png) {
             @unlink($png);
         }
 
-        if (! file_exists($zipPath)) {
+        if ($added === 0 || ! file_exists($zipPath)) {
+            @unlink($zipPath);
+
             return redirect()->back()->with('error', 'Failed to create the ID card archive.');
         }
 
         return response()->download($zipPath)->deleteFileAfterSend(true);
+    }
+
+    /**
+     * PDF rasterisers this export can use, in order of preference; the first one
+     * actually installed on the server is used.
+     *
+     * pdftoppm (poppler-utils) is the fast path. Ghostscript is the fallback so
+     * a host that ships gs but not poppler can still export PNGs. Public so a
+     * test can exercise each path in isolation.
+     *
+     * @var array<int, string>
+     */
+    public static array $rasteriserCandidates = ['pdftoppm', 'gs'];
+
+    /**
+     * First installed rasteriser, or null when the server has none (or exec is
+     * disabled, which is how the export used to fail without saying so).
+     *
+     * @return array{command: string, path: string}|null
+     */
+    protected static function resolveRasteriser(): ?array
+    {
+        if (! function_exists('exec')) {
+            return null;
+        }
+
+        foreach (self::$rasteriserCandidates as $command) {
+            $path = trim((string) @exec('command -v '.escapeshellarg($command).' 2>/dev/null'));
+
+            if ($path !== '') {
+                return ['command' => $command, 'path' => $path];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Rasterise a one-card-per-page PDF into one PNG per page, in page order.
+     *
+     * @param  array{command: string, path: string}  $rasteriser
+     * @return array{files: array<int, string>, exit_code: int, output: array<int, string>}
+     */
+    protected static function rasterisePdf(string $pdfPath, string $root, array $rasteriser): array
+    {
+        $exitCode = 1;
+        $output = [];
+
+        if ($rasteriser['command'] === 'gs') {
+            exec(
+                $rasteriser['path'].' -q -dNOPAUSE -dBATCH -sDEVICE=png16m -r192 -sOutputFile='
+                    .escapeshellarg($root.'-%03d.png').' '.escapeshellarg($pdfPath).' 2>&1',
+                $output,
+                $exitCode
+            );
+        } else {
+            exec(
+                $rasteriser['path'].' -png -r 192 '.escapeshellarg($pdfPath).' '.escapeshellarg($root).' 2>&1',
+                $output,
+                $exitCode
+            );
+        }
+
+        $files = glob($root.'-*.png') ?: [];
+        natsort($files);
+
+        return ['files' => array_values($files), 'exit_code' => $exitCode, 'output' => $output];
     }
 }
