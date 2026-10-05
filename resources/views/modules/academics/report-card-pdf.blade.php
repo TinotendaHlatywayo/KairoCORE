@@ -484,12 +484,12 @@
                 {{ __('⚠️ This report card is invalid without a valid school seal or official stamp ⚠️') }}
             </div>
 
-            <div style="margin-top: 6px; text-align: center; font-size: 7px; color: #9ca3af; letter-spacing: 0.5px;">
-                Powered by Kairo CORE
-            </div>
-
         </div>
     @endforeach
+
+    {{-- Page footer: position:fixed makes DomPDF repeat this at the very
+         bottom of every page, exactly like the finance documents. --}}
+    <div class="powered-by">Powered by Kairo CORE</div>
 
 </body>
 </html>
