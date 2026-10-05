@@ -3485,20 +3485,27 @@ select.sc-input {
 /* ─────────────────────────────────────────────────────────────
  * FIX: Modal & Help Overlay Z-Index Over Table Actions / Headers
  * ───────────────────────────────────────────────────────────── */
-.fi-modal,
-.fi-modal-container,
-.fi-modal-close-overlay,
-.fi-modal-window {
-    z-index: 100000 !important;
+.fi-modal-container {
+    z-index: 1060 !important;
 }
 
 .fi-modal-close-overlay {
     position: fixed !important;
-    z-index: 99999 !important;
+    z-index: 1050 !important;
+    pointer-events: auto !important;
 }
 
 .fi-modal-window {
-    z-index: 100000 !important;
+    z-index: 1070 !important;
     position: relative !important;
+    pointer-events: auto !important;
+}
+
+/* Ensure table headers, toolbars and sticky action bars stay below modals */
+.fi-ta-header-ctn,
+.fi-ta-header-toolbar,
+.fi-ta-header,
+.fi-ta-actions {
+    z-index: 10 !important;
 }
 
