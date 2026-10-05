@@ -380,11 +380,13 @@ class StudentCardPrintController extends Controller
             );
         }
 
-        // Single student → download the PNG directly. Multiple → ZIP archive.
+        // Single student → download the PNG directly with a clean filename. Multiple → ZIP archive.
         if ($students->count() === 1) {
             @unlink($pdfPath);
+            $student = $students->first();
+            $pngName = 'ID_Card_'.($student->student_id_number ?? $student->id).'.png';
 
-            return response()->download($rasterised['files'][0])->deleteFileAfterSend(true);
+            return response()->download($rasterised['files'][0], $pngName)->deleteFileAfterSend(true);
         }
 
         $zipName = 'ID_Cards_'.$stamp.'.zip';
