@@ -2,26 +2,24 @@
 
 namespace App\Filament\App\Pages\Academic;
 
+use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 use App\Models\AcademicWorkflowHistory;
 use App\Services\Academic\AcademicReadinessScorer;
 use App\Services\Academic\AcademicValidationEngine;
 use App\Services\Academic\AcademicWorkflowEngine;
-use App\Services\ModuleVisibilityManager;
 use Filament\Pages\Page;
 use Modules\Academics\Models\AcademicYear;
 use Modules\Academics\Models\Assessment;
 use Modules\Academics\Models\Term;
-use Modules\Admin\Services\PermissionRegistry;
 use Modules\Students\Models\Enrollment;
-use App\Filament\App\Concerns\ModulePermissionAccess;
-use App\Filament\App\Concerns\HasPageHelp;
 
 class AcademicOperationsCenter extends Page
 {
-    use ModulePermissionAccess;
-    use ModuleAwareActiveNavigation;
     use HasPageHelp;
+    use ModuleAwareActiveNavigation;
+    use ModulePermissionAccess;
 
     protected function getHeaderActions(): array
     {
@@ -55,8 +53,6 @@ class AcademicOperationsCenter extends Page
     protected static ?string $breadcrumb = 'Operations Center';
 
     protected static bool $shouldCacheUnallocatedResources = false;
-
-
 
     public array $progressData = [];
 
@@ -207,27 +203,19 @@ class AcademicOperationsCenter extends Page
         return $cards;
     }
 
+    /**
+     * Where a workflow step is configured. The engine owns this mapping and only
+     * returns index and page routes, which need no parameters.
+     *
+     * This page used to keep its own copy of the map, which pointed the "terms"
+     * step at academic-years.edit. That route needs a {record}, and the view
+     * resolves these with route() and no arguments, so rendering the page threw
+     * "Missing required parameter ... [record]" whenever Terms was one of the
+     * suggested next steps - a 500 on the Academics overview.
+     */
     protected function getRouteForStep(string $stepKey): string
     {
-        $routes = [
-            'academic_year' => 'filament.app.resources.academic-years.index',
-            'terms' => 'filament.app.resources.academic-years.edit',
-            'levels' => 'filament.app.resources.courses.index',
-            'forms' => 'filament.app.resources.courses.index',
-            'streams' => 'filament.app.resources.courses.index',
-            'subjects' => 'filament.app.resources.subjects.index',
-            'classrooms' => 'filament.app.resources.classrooms.index',
-            'teachers' => 'filament.app.resources.teacher-assignments.index',
-            'time_slots' => 'filament.app.resources.time-slots.index',
-            'timetable' => 'filament.app.pages.visual-timetable-builder',
-            'assessment' => 'filament.app.resources.grading-scales.index',
-            'admissions_open' => 'filament.app.resources.applications.index',
-            'student_enrolment' => 'filament.app.resources.students.index',
-            'attendance_ready' => 'filament.app.resources.timetable-lessons.index',
-            'report_cards_ready' => 'filament.app.resources.report-templates.index',
-        ];
-
-        return $routes[$stepKey] ?? '#';
+        return app(AcademicWorkflowEngine::class)->getStepRoute($stepKey) ?? '#';
     }
 
     protected function isStepBlocked(string $stepKey, AcademicWorkflowEngine $engine): bool
