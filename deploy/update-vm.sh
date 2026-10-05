@@ -60,6 +60,9 @@ echo "==> 1/12 Fetching + checking out latest ${REMOTE_BRANCH}"
 sudo -u "$PHP_USER" git fetch origin
 sudo -u "$PHP_USER" git checkout --force "origin/${REMOTE_BRANCH}"
 
+echo "==> 1.5/12 Ensuring poppler-utils (pdftoppm) is installed for ID card PNG exports"
+sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
+
 echo "==> 2/12 Installing composer dependencies (no-dev)"
 sudo -u "$PHP_USER" HOME=/var/www COMPOSER_HOME=/var/www/.composer composer install --no-dev --optimize-autoloader --no-scripts --no-interaction
 
