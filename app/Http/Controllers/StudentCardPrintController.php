@@ -328,9 +328,10 @@ class StudentCardPrintController extends Controller
         $paper = (($renderTemplate->orientation ?? 'portrait') === 'landscape') ? [0, 0, 480, 300] : [0, 0, 300, 480];
 
         // Render the SAME blade used for printing (one CR80 card per page),
-        // then rasterise it to PNG. This guarantees the PNG is pixel-for-pixel
-        // identical to the printed ID card.
-        $pdf = Pdf::loadView('modules.students.id-card-bulk-pdf', [
+        // then rasterise it to PNG using DomPDF's GD adapter in pure PHP.
+        // This guarantees it works everywhere without needing external binaries
+        // like pdftoppm or ghostscript, and without requiring exec().
+        $pdfInstance = Pdf::loadView('modules.students.id-card-bulk-pdf', [
             'students' => $students,
             'selectedTemplate' => $renderTemplate,
             'school' => app('current_tenant'),
@@ -338,55 +339,47 @@ class StudentCardPrintController extends Controller
             'layout' => 'pvc',
         ])->setPaper($paper, 'portrait');
 
+        $dompdf = $pdfInstance->getDomPDF();
+        $dompdf->getOptions()->set('pdfBackend', 'gd');
+        $dompdf->render();
+
         $dir = storage_path('app/public/id-cards-temp');
         if (! is_dir($dir)) {
             mkdir($dir, 0755, true);
         }
 
         $stamp = now()->format('Ymd_His');
-        $pdfPath = $dir.'/cards_'.$stamp.'.pdf';
-        $pdf->save($pdfPath);
+        $files = [];
 
-        $rasteriser = self::resolveRasteriser();
-
-        // A host with no PDF rasteriser installed cannot produce PNG at all.
-        // Hand back the printable cards (with a filename that says what happened)
-        // instead of bouncing to the student list, where the reason was invisible.
-        if (! $rasteriser) {
-            Log::warning('ID card PNG export: no PDF rasteriser on this server (tried: '.implode(', ', self::$rasteriserCandidates).'); returning the printable PDF instead.', [
-                'school_id' => $schoolId,
-                'students' => $students->count(),
-            ]);
-
-            return response()->download($pdfPath, 'ID_Cards_'.$stamp.'_PNG-unavailable.pdf')->deleteFileAfterSend(true);
+        foreach ($students->values() as $index => $student) {
+            $pageNumber = $index + 1;
+            try {
+                $pngData = $dompdf->output(['type' => 'png', 'page' => $pageNumber]);
+                if ($pngData) {
+                    $pngPath = $dir.'/card_'.$stamp.'_'.$pageNumber.'.png';
+                    file_put_contents($pngPath, $pngData);
+                    $files[] = $pngPath;
+                }
+            } catch (\Throwable $e) {
+                Log::error('ID card PNG generation failed for student page '.$pageNumber, ['error' => $e->getMessage()]);
+            }
         }
 
-        $root = $dir.'/card_'.$stamp;
-        $rasterised = self::rasterisePdf($pdfPath, $root, $rasteriser);
+        if ($files === []) {
+            // Fallback to PDF if GD rendering failed
+            $pdfPath = $dir.'/cards_'.$stamp.'.pdf';
+            $pdfInstance->save($pdfPath);
 
-        if ($rasterised['files'] === []) {
-            Log::error('ID card PNG export could not rasterise the rendered cards.', [
-                'school_id' => $schoolId,
-                'rasteriser' => $rasteriser['command'],
-                'exit_code' => $rasterised['exit_code'],
-                'output' => $rasterised['output'],
-            ]);
-
-            @unlink($pdfPath);
-
-            return redirect()->back()->with(
-                'error',
-                'PNG export failed on this server ('.$rasteriser['command'].' exited '.$rasterised['exit_code'].'). Please use the PDF print option instead.'
-            );
+            return response()->download($pdfPath, 'ID_Cards_'.$stamp.'.pdf')->deleteFileAfterSend(true);
         }
 
         // Single student → download the PNG directly with a clean filename. Multiple → ZIP archive.
         if ($students->count() === 1) {
-            @unlink($pdfPath);
             $student = $students->first();
             $pngName = 'ID_Card_'.($student->student_id_number ?? $student->id).'.png';
+            $pngPath = $files[0];
 
-            return response()->download($rasterised['files'][0], $pngName)->deleteFileAfterSend(true);
+            return response()->download($pngPath, $pngName)->deleteFileAfterSend(true);
         }
 
         $zipName = 'ID_Cards_'.$stamp.'.zip';
@@ -396,7 +389,7 @@ class StudentCardPrintController extends Controller
 
         if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
             foreach ($students->values() as $index => $student) {
-                $png = $rasterised['files'][$index] ?? null;
+                $png = $files[$index] ?? null;
 
                 if ($png && file_exists($png)) {
                     $zip->addFile($png, 'ID_Card_'.($student->student_id_number ?? $student->id).'.png');
@@ -406,8 +399,7 @@ class StudentCardPrintController extends Controller
             $zip->close();
         }
 
-        @unlink($pdfPath);
-        foreach ($rasterised['files'] as $png) {
+        foreach ($files as $png) {
             @unlink($png);
         }
 

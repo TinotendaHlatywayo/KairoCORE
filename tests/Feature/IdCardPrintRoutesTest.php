@@ -241,21 +241,18 @@ class IdCardPrintRoutesTest extends TestCase
         );
     }
 
-    public function test_png_export_hands_back_the_printable_cards_when_the_server_has_no_rasteriser(): void
+    public function test_png_export_succeeds_in_pure_php_without_external_rasteriser(): void
     {
         $school = $this->schoolWithoutTemplates();
-
-        StudentCardPrintController::$rasteriserCandidates = [];
 
         $response = $this->downloadPng($school, 'ids='.$this->studentIds($school).'&use_default=1');
 
         $response->assertOk();
         $this->assertStringContainsString(
-            'PNG-unavailable',
+            '.zip',
             (string) $response->headers->get('content-disposition'),
-            'With no rasteriser installed the export must still deliver the cards and say why they are not PNG.'
+            'Pure PHP GD rendering must successfully export PNG cards as a ZIP without external binaries.'
         );
-        $this->assertSame('application/pdf', $response->headers->get('content-type'));
     }
 
     public function test_the_bulk_png_action_is_labelled_download_as_png(): void
