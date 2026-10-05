@@ -3483,25 +3483,34 @@ select.sc-input {
 }
 
 /* ─────────────────────────────────────────────────────────────
- * MODAL LAYERING
+ * MODAL LAYERING — dialogs must sit above the whole page
  *
- * Filament mounts a modal as: overlay (z-40) and a wrapper
- * (div.fixed.inset-0.z-40) that CONTAINS the window. The window is
- * therefore only ever as high as that wrapper, so raising the window
- * itself does nothing, and raising the overlay any higher than the
- * wrapper silently swallows every click on the dialog (the page then
- * looks frozen until refresh, because x-trap.noscroll holds the scroll
- * lock while the close button cannot be reached).
+ * Filament mounts a modal as two siblings inside one Alpine root:
  *
- * Correct fix: lift the overlay AND its wrapper together, keeping the
- * wrapper one step above the overlay so the dialog stays clickable and
- * the page (table toolbar, Export All, Bulk Actions) stays underneath.
+ *     .fi-modal-close-overlay            (fixed, z-40)
+ *     div.fixed.inset-0.z-40  ← wrapper, CONTAINS the dialog window
+ *
+ * Two consequences that this section has to respect:
+ *
+ *  1. The window can never be lifted on its own — it is painted inside
+ *     the wrapper's stacking context, so a z-index on .fi-modal-window
+ *     is clamped and does nothing.
+ *  2. The wrapper must stay ABOVE its own overlay. Raising the overlay
+ *     any higher than the wrapper covers the dialog and eats every
+ *     click on it; x-trap.noscroll then holds the scroll lock, so the
+ *     page looks frozen until a refresh.
+ *
+ * So both are lifted together, wrapper one step higher. The value is
+ * deliberately above every layer this app uses (teleported select
+ * dropdowns and Choices menus at 10000, the command-centre overlay at
+ * 9000, sticky sidebar 30, app footer 20) so no page control — table
+ * toolbar, Export All, Bulk Actions — can ever paint over a dialog.
  * ───────────────────────────────────────────────────────────── */
 .fi-modal-close-overlay {
-    z-index: 1050 !important;
+    z-index: 99998 !important;
 }
 
 .fi-modal-close-overlay + div {
-    z-index: 1051 !important;
+    z-index: 99999 !important;
 }
 
