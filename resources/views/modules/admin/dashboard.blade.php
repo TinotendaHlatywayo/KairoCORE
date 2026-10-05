@@ -4,11 +4,13 @@
      data-chart-accent="{{ $chart_accent }}">
     {{--
         This page renders its own full-bleed layout instead of
-        <x-filament-panels::page>, so Filament's page header is never rendered and
-        header actions (including Help) would be unreachable. The shared actions
-        header is included here instead.
+        <x-filament-panels::page>, so Filament renders neither the page header
+        that carries the header actions nor the modal container that displays
+        them. Both are included here: the actions header makes the Help button
+        visible, the modals container makes it open.
     --}}
     @include('filament.components.header-actions', ['actions' => $this->getCachedHeaderActions()])
+    <x-filament-actions::modals />
 
     <!-- Row 1: Personalized Welcome Header & Dynamic Term Progress Widget -->
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">

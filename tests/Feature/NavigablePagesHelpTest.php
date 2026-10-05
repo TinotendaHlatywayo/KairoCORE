@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Filament\App\Concerns\HasPageHelp;
+use App\Filament\App\Pages\AdministrationDashboard;
+use App\Filament\App\Pages\WebsiteContentManager;
 use App\Models\School;
 use App\Models\User;
 use App\Navigation\ModuleNavigation;
@@ -13,6 +15,7 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
+use Livewire\Livewire;
 use Modules\Admin\Models\CustomRole;
 use Tests\TestCase;
 
@@ -158,9 +161,13 @@ class NavigablePagesHelpTest extends TestCase
     }
 
     /**
-     * The rendered page must actually show the Help button. Pages that redirect
-     * (the category hubs forward to the first page of their category) are checked
-     * through their destination instead.
+     * The rendered page must actually show the Help button, and must ship the
+     * modal container that button opens into. A page that draws its own layout
+     * instead of <x-filament-panels::page> renders neither the header nor the
+     * container unless it includes both by hand, which leaves a Help button
+     * that silently does nothing. Pages that redirect (the category hubs forward
+     * to the first page of their category) are checked through their
+     * destination instead.
      */
     public function test_every_navigable_page_renders_the_help_button(): void
     {
@@ -168,6 +175,7 @@ class NavigablePagesHelpTest extends TestCase
 
         $missing = [];
         $broken = [];
+        $unopenable = [];
 
         foreach ($this->navigablePages() as $url => $page) {
             $response = $this->get('/'.$url);
@@ -186,10 +194,68 @@ class NavigablePagesHelpTest extends TestCase
 
             if (! str_contains($html, 'pageHelp')) {
                 $missing[] = "{$url} ({$page['label']})";
+
+                continue;
+            }
+
+            if (! str_contains($html, 'fi-modal') && ! str_contains($html, 'modal-close-overlay')) {
+                $unopenable[] = "{$url} ({$page['label']})";
             }
         }
 
         $this->assertSame([], $broken, 'Navigable pages must load without error.');
         $this->assertSame([], $missing, 'These pages render without a Help button.');
+        $this->assertSame([], $unopenable, 'These pages show the Help button but ship no modal container to open it in.');
+    }
+
+    /**
+     * The button is only worth having if pressing it opens guidance written for
+     * that page. Sampled across every module, plus the two pages that draw their
+     * own layout, because those assemble the header and modal container by hand.
+     */
+    public function test_the_help_modal_opens_guidance_written_for_the_page(): void
+    {
+        $this->actAsSchoolAdmin();
+
+        $pages = $this->navigablePages();
+
+        $sample = [];
+        $sampledModules = [];
+
+        foreach ($pages as $url => $page) {
+            if (isset($sampledModules[$page['module']])) {
+                continue;
+            }
+
+            $sampledModules[$page['module']] = true;
+            $sample[$url] = $page;
+        }
+
+        foreach ($pages as $url => $page) {
+            if (in_array($page['page'], [AdministrationDashboard::class, WebsiteContentManager::class], true)) {
+                $sample[$url] = $page;
+            }
+        }
+
+        $checked = 0;
+
+        foreach ($sample as $url => $page) {
+            if ($this->get('/'.$url)->isRedirect()) {
+                continue;
+            }
+
+            $checked++;
+
+            $component = Livewire::test($page['page']);
+            $component->mountAction('pageHelp');
+
+            $this->assertStringContainsString(
+                HelpContent::for($page['helpKey'])['title'],
+                html_entity_decode(strip_tags($component->html())),
+                "[{$url}] ({$page['label']}) must open its own guidance when Help is pressed."
+            );
+        }
+
+        $this->assertGreaterThanOrEqual(10, $checked, 'The Help modal should be exercised across every module.');
     }
 }
