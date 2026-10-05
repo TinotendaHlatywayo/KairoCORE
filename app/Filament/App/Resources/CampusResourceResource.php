@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Resources;
 
+use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Concerns\ModulePermissionAccess;
 use Filament\Actions;
 use Filament\Forms;
@@ -154,11 +155,14 @@ class CampusResourceResource extends Resource
 
 class ListCampusResources extends ListRecords
 {
+    use HasPageHelp;
+
     protected static string $resource = CampusResourceResource::class;
 
     protected function getHeaderActions(): array
     {
         return [
+            $this->getHelpAction(),
             Actions\CreateAction::make()->label(__('New Resource')),
         ];
     }

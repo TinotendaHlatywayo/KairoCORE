@@ -2,7 +2,9 @@
 
 namespace App\Filament\App\Pages;
 
+use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Auth;
@@ -19,13 +21,12 @@ use Modules\SaaS\Models\SaaSTransaction;
 use Modules\SaaS\Services\BillingService;
 use Modules\SaaS\Services\GatewayResolver;
 use Modules\SaaS\Services\SubscriptionManager;
-use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class SaaSBillingOverview extends Page
 {
-    use ModulePermissionAccess;
-
+    use HasPageHelp;
     use ModuleAwareActiveNavigation;
+    use ModulePermissionAccess;
     use WithFileUploads;
 
     protected static string $view = 'filament.app.pages.saas-billing-overview';
@@ -72,7 +73,6 @@ class SaaSBillingOverview extends Page
     public string $notes = '';
 
     public ?TemporaryUploadedFile $uploadedReceiptFile = null;
-
 
     public static function shouldRegisterNavigation(): bool
     {
@@ -258,6 +258,13 @@ class SaaSBillingOverview extends Page
             'invoices' => SaaSInvoice::where('school_id', $schoolId)->orderBy('id', 'DESC')->get(),
             'receipts' => SaaSReceipt::where('school_id', $schoolId)->orderBy('id', 'DESC')->get(),
             'history' => SaaSManualSubmission::where('school_id', $schoolId)->orderBy('id', 'DESC')->get(),
+        ];
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->getHelpAction(),
         ];
     }
 }

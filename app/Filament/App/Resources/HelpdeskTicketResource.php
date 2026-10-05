@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Resources;
 
+use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Concerns\ModulePermissionAccess;
 use App\Models\User;
 use Filament\Actions;
@@ -225,11 +226,14 @@ class HelpdeskTicketResource extends Resource
 
 class ListHelpdeskTickets extends ListRecords
 {
+    use HasPageHelp;
+
     protected static string $resource = HelpdeskTicketResource::class;
 
     protected function getHeaderActions(): array
     {
         return [
+            $this->getHelpAction(),
             Actions\CreateAction::make()->label(__('Open Ticket')),
         ];
     }

@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Pages;
 
+use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Concerns\ModulePermissionAccess;
 use Filament\Pages\Page;
 use Illuminate\Support\Str;
@@ -20,6 +21,7 @@ use Modules\CMS\Services\CmsTemplateService;
  */
 class WebsiteContentManager extends Page
 {
+    use HasPageHelp;
     use ModulePermissionAccess;
     use WithFileUploads;
 
@@ -340,6 +342,13 @@ class WebsiteContentManager extends Page
             "'".($theme['fontPrimary'] ?? 'Inter')."', sans-serif",
             "'".($theme['fontSecondary'] ?? 'Outfit')."', serif"
         );
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->getHelpAction(),
+        ];
     }
 }
 

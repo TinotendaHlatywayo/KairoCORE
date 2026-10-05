@@ -1,5 +1,13 @@
 <div class="wcm-shell min-h-screen flex flex-col"
      x-data="{ previewTab: 'split' }">
+    {{--
+        This page renders its own full-bleed layout instead of
+        <x-filament-panels::page>, so Filament's page header is never rendered and
+        header actions (including Help) would be unreachable. The shared actions
+        header is included here instead.
+    --}}
+    @include('filament.components.header-actions', ['actions' => $this->getCachedHeaderActions()])
+
     @include('modules.cms.studio-base')
 
     <link rel="preconnect" href="https://fonts.googleapis.com">

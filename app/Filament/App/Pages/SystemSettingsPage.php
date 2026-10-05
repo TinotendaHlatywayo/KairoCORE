@@ -2,7 +2,9 @@
 
 namespace App\Filament\App\Pages;
 
+use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Concerns\ManagesEmailConfiguration;
+use App\Filament\App\Concerns\ModulePermissionAccess;
 use App\Filament\App\Resources\SchoolBankAccountResource;
 use App\Models\School;
 use App\Models\User;
@@ -27,16 +29,14 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\HtmlString;
 use Modules\Admin\Models\SystemSetting;
 use Modules\Admin\Services\AuditLogger;
-use Modules\Admin\Services\PermissionRegistry;
 use Modules\Finance\Models\SchoolBankAccount;
-use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class SystemSettingsPage extends Page implements HasForms
 {
-    use ModulePermissionAccess;
-
+    use HasPageHelp;
     use InteractsWithForms;
     use ManagesEmailConfiguration;
+    use ModulePermissionAccess;
 
     protected static ?string $navigationIcon = 'heroicon-o-adjustments-horizontal';
 
@@ -62,8 +62,6 @@ class SystemSettingsPage extends Page implements HasForms
 
     // Reached via the module contextual tabs, not the sidebar.
     protected static bool $shouldRegisterNavigation = false;
-
-
 
     public function mount(): void
     {
@@ -219,15 +217,15 @@ class SystemSettingsPage extends Page implements HasForms
                                                 'dev_choice_2' => __('Developer\'s Choice 2 (Fuchsia + Violet Blend)'),
                                                 'dev_choice_3' => __('Developer\'s Choice 3 (Cyan + Emerald Blend)'),
                                                 'dev_choice_4' => __('Developer\'s Choice 4 (Midnight Navy + Flame Blend)'),
-                                             ])->default('emerald_heritage')
-                                             ->native(true),
-                                         Select::make('branding_font_family')
-                                             ->label(__('System Typography Font'))
-                                             ->options($this->getFontDropdownOptions())
-                                             ->allowHtml()
-                                             ->default('inter')
-                                             ->native(true)
-                                             ->live(),
+                                            ])->default('emerald_heritage')
+                                            ->native(true),
+                                        Select::make('branding_font_family')
+                                            ->label(__('System Typography Font'))
+                                            ->options($this->getFontDropdownOptions())
+                                            ->allowHtml()
+                                            ->default('inter')
+                                            ->native(true)
+                                            ->live(),
 
                                         /* -----------------------------------------------------------------
                                          * TYPOGRAPHY PREVIEW BLOCKS - COMMENTED OUT
@@ -1389,5 +1387,12 @@ class SystemSettingsPage extends Page implements HasForms
             ->title(__('Branding preferences and styles updated'))
             ->success()
             ->send();
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->getHelpAction(),
+        ];
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Filament\App\Resources;
 
 use App\Filament\App\Concerns\HasCsvBulkActions;
+use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Filament\App\Concerns\ModulePermissionAccess;
 use App\Security\RoleCatalogue;
@@ -634,6 +635,7 @@ class EmployeeResource extends Resource
 class ListEmployees extends ListRecords
 {
     use HasCsvBulkActions;
+    use HasPageHelp;
 
     protected static string $resource = EmployeeResource::class;
 
@@ -664,6 +666,7 @@ class ListEmployees extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            $this->getHelpAction(),
             Actions\CreateAction::make()->label(__('New Employee'))->color('primary'),
 
             // IMPORT (Excel/CSV wizard with downloadable template) + EXPORT ALL

@@ -3,6 +3,7 @@
 namespace App\Filament\App\Resources;
 
 use App\Filament\App\Concerns\HasCsvBulkActions;
+use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Concerns\ModulePermissionAccess;
 use App\Services\Csv\SalaryGradeCsvService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -228,6 +229,7 @@ class SalaryGradeResource extends Resource
 class ListSalaryGrades extends ListRecords
 {
     use HasCsvBulkActions;
+    use HasPageHelp;
 
     protected static string $resource = SalaryGradeResource::class;
 
@@ -239,6 +241,7 @@ class ListSalaryGrades extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            $this->getHelpAction(),
             Actions\CreateAction::make()->label(__('New Salary Grade')),
             ...$this->csvBulkActions(),
         ];

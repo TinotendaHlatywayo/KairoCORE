@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Pages;
 
+use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Concerns\ManagesTasks;
 use App\Models\User;
 use App\Models\UserTask;
@@ -21,6 +22,7 @@ use Modules\Communication\Models\EventCalendar;
  */
 class Schedule extends Page
 {
+    use HasPageHelp;
     use ManagesTasks;
 
     protected static ?string $navigationIcon = 'heroicon-o-calendar-days';
@@ -1019,5 +1021,12 @@ class Schedule extends Page
         $this->showCompleted = false;
         $this->showEvents = true;
         $this->showTasks = true;
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->getHelpAction(),
+        ];
     }
 }
