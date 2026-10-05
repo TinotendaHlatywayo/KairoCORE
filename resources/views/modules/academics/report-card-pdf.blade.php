@@ -484,7 +484,9 @@
                 {{ __('⚠️ This report card is invalid without a valid school seal or official stamp ⚠️') }}
             </div>
 
-            <div class="powered-by">Powered by Kairo CORE</div>
+            <div style="margin-top: 6px; text-align: center; font-size: 7px; color: #9ca3af; letter-spacing: 0.5px;">
+                Powered by Kairo CORE
+            </div>
 
         </div>
     @endforeach
