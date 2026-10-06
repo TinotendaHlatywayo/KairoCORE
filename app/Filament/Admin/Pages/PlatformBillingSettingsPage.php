@@ -13,6 +13,7 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Auth;
 use Modules\SaaS\Models\PlatformBillingSetting;
+use Modules\SaaS\Models\SaaSBillingSetting;
 
 /**
  * Super-admin control of the automated SaaS billing lifecycle: the reminder
@@ -50,6 +51,10 @@ class PlatformBillingSettingsPage extends Page implements HasForms
     public function mount(): void
     {
         $this->form->fill(PlatformBillingSetting::current()->attributesToArray());
+        
+        // Load SaaS billing settings (including Paynow credentials)
+        $saasSettings = SaaSBillingSetting::getActiveSettings();
+        $this->form->fill(array_merge($this->form->getState(), $saasSettings->attributesToArray()));
     }
 
     public function form(Form $form): Form
@@ -92,13 +97,39 @@ class PlatformBillingSettingsPage extends Page implements HasForms
                 Section::make(__('Super admin alerts'))
                     ->columns(2)
                     ->schema([
-                        Toggle::make('notify_super_admin_billing')
+                        Toggle::make('notify_super_admin_on_billing')
                             ->label(__('Email me on each billing day'))
+                            ->default(true),
+                        Toggle::make('notify_super_admin_on_registration')
+                            ->label(__('Email me on new school registration'))
                             ->default(true),
                         TextInput::make('super_admin_billing_email')
                             ->label(__('Billing notification inbox'))
+                            ->default('hlatywayotw@gmail.com')
                             ->email()
                             ->maxLength(150),
+                    ]),
+
+                Section::make(__('Payment Gateway Configuration'))
+                    ->description(__('Configure Paynow integration credentials for online payments.'))
+                    ->columns(2)
+                    ->schema([
+                        TextInput::make('paynow_integration_id')
+                            ->label(__('Paynow Integration ID'))
+                            ->helperText(__('Your Paynow Integration ID'))
+                            ->maxLength(100)
+                            ->default(env('PAYNOW_INTEGRATION_ID', '25965')),
+                        TextInput::make('paynow_integration_key')
+                            ->label(__('Paynow Integration Key'))
+                            ->helperText(__('Your Paynow Integration Key'))
+                            ->maxLength(100)
+                            ->password()
+                            ->default(env('PAYNOW_INTEGRATION_KEY', '669ac21f-1216-40b0-9623-91c489caca35')),
+                        TextInput::make('paynow_merchant_email')
+                            ->label(__('Paynow Merchant Email'))
+                            ->email()
+                            ->maxLength(150)
+                            ->default(env('PAYNOW_MERCHANT_EMAIL', 'twaynehlatywayo09@gmail.com')),
                     ]),
             ])
             ->statePath('data');
@@ -106,8 +137,15 @@ class PlatformBillingSettingsPage extends Page implements HasForms
 
     public function save(): void
     {
-        $settings = PlatformBillingSetting::current();
-        $settings->update($this->form->getState());
+        $data = $this->form->getState();
+        
+        // Save PlatformBillingSetting fields
+        $platformSettings = PlatformBillingSetting::current();
+        $platformSettings->update(array_intersect_key($data, array_flip($platformSettings->getFillable())));
+        
+        // Save SaaSBillingSetting fields (Paynow credentials)
+        $saasSettings = SaaSBillingSetting::getActiveSettings();
+        $saasSettings->update(array_intersect_key($data, array_flip($saasSettings->getFillable())));
 
         Notification::make()
             ->title(__('Billing automation updated'))

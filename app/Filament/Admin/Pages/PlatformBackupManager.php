@@ -35,6 +35,8 @@ class PlatformBackupManager extends Page implements HasForms
 
     public ?int $tenantSchoolId = null;
 
+    public array $selectedTenantIds = [];
+
     public array $tenantOptions = [];
 
     public static function canAccess(): bool
@@ -89,16 +91,29 @@ class PlatformBackupManager extends Page implements HasForms
             return;
         }
 
+        if ($this->backupScope === 'selected' && empty($this->selectedTenantIds)) {
+            Notification::make()
+                ->title(__('Select at least one tenant to back up'))
+                ->danger()
+                ->send();
+
+            return;
+        }
+
         try {
-            $backup = $service->executeFullBackup(
-                $this->backupScope === 'tenant' ? (int) $this->tenantSchoolId : null
-            );
+            $schoolsArg = match($this->backupScope) {
+                'tenant' => (int) $this->tenantSchoolId,
+                'selected' => array_map('intval', $this->selectedTenantIds),
+                default => null,
+            };
+
+            $backup = $service->executeFullBackup($schoolsArg);
             $this->refreshBackupsList();
 
             Notification::make()
                 ->title($backup->scope === 'tenant'
                     ? __('Tenant backup completed')
-                    : __('Full platform backup completed'))
+                    : __('Backup archive completed successfully'))
                 ->success()
                 ->send();
         } catch (\Exception $e) {
