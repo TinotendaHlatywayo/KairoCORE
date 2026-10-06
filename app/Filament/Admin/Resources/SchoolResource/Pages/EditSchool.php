@@ -8,9 +8,29 @@ use Filament\Actions;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 
+use Modules\Admin\Models\SystemSetting;
+
 class EditSchool extends EditRecord
 {
     protected static string $resource = SchoolResource::class;
+
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        $modulesData = [];
+        foreach (array_keys(config('modules')) as $moduleKey) {
+            $val = SystemSetting::withoutTenantScope()
+                ->where('school_id', $this->record->id)
+                ->where('group', 'modules')
+                ->where('key', $moduleKey)
+                ->value('value');
+
+            $modulesData[$moduleKey] = $val !== null ? filter_var($val, FILTER_VALIDATE_BOOLEAN) : true;
+        }
+
+        $data['modules'] = $modulesData;
+
+        return $data;
+    }
 
     protected function getHeaderActions(): array
     {

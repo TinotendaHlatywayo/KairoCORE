@@ -2,14 +2,14 @@
     <div class="space-y-8">
         
         <!-- Welcome Banner with Glassmorphism -->
-        <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-900 via-slate-900 to-slate-950 p-8 text-white shadow-xl border border-indigo-500/20">
+        <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-100 via-indigo-50/50 to-white dark:from-indigo-950 dark:via-slate-900 dark:to-slate-950 p-8 text-slate-900 dark:text-white shadow-xl border border-slate-200 dark:border-indigo-500/20">
             <div class="relative z-10 max-w-2xl space-y-3">
-                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                    <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30">
+                    <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
                     {{ __('Super Admin Enterprise Control Center') }}
                 </span>
-                <h1 class="text-3xl font-extrabold tracking-tight">Welcome back, {{ auth()->user()->name }}</h1>
-                <p class="text-sm text-slate-300 leading-relaxed">
+                <h1 class="text-3xl font-extrabold tracking-tight text-slate-950 dark:text-white">Welcome back, {{ auth()->user()->name }}</h1>
+                <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                     {{ __('Manage multi-tenant school subscriptions, review manual payment confirmations, monitor platform telemetry, and communicate globally with all registered institutions.') }}
                 </p>
                 <div class="pt-2 flex flex-wrap gap-3">
