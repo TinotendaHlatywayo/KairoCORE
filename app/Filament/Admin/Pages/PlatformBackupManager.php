@@ -31,6 +31,12 @@ class PlatformBackupManager extends Page implements HasForms
 
     public array $backupsList = [];
 
+    public string $backupScope = 'system';
+
+    public ?int $tenantSchoolId = null;
+
+    public array $tenantOptions = [];
+
     public static function canAccess(): bool
     {
         // Simple true statement to bypass session conflicts and register the page immediately
@@ -40,12 +46,21 @@ class PlatformBackupManager extends Page implements HasForms
     public function mount(): void
     {
         $this->form->fill();
+        $this->tenantOptions = \App\Models\School::query()->orderBy('name')->pluck('name', 'id')->all();
         $this->refreshBackupsList();
     }
 
     public function refreshBackupsList(): void
     {
-        $this->backupsList = PlatformBackup::latest()->get()->toArray();
+        $this->backupsList = PlatformBackup::with('school')->latest()->get()
+            ->map(function (PlatformBackup $backup) {
+                $data = $backup->toArray();
+                $data['school_name'] = $backup->school?->name;
+                $data['scope'] = $backup->scope ?? 'system';
+
+                return $data;
+            })
+            ->all();
     }
 
     public function form(Form $form): Form
@@ -65,12 +80,25 @@ class PlatformBackupManager extends Page implements HasForms
 
     public function triggerPlatformBackup(PlatformBackupService $service): void
     {
+        if ($this->backupScope === 'tenant' && ! $this->tenantSchoolId) {
+            Notification::make()
+                ->title(__('Select a tenant to back up'))
+                ->danger()
+                ->send();
+
+            return;
+        }
+
         try {
-            $service->executeFullBackup();
+            $backup = $service->executeFullBackup(
+                $this->backupScope === 'tenant' ? (int) $this->tenantSchoolId : null
+            );
             $this->refreshBackupsList();
 
             Notification::make()
-                ->title(__('Full platform backup completed'))
+                ->title($backup->scope === 'tenant'
+                    ? __('Tenant backup completed')
+                    : __('Full platform backup completed'))
                 ->success()
                 ->send();
         } catch (\Exception $e) {
@@ -97,8 +125,23 @@ class PlatformBackupManager extends Page implements HasForms
         $size = filesize($filePath);
         $checksum = hash_file('sha256', $filePath);
 
+        $scope = 'system';
+        $schoolId = null;
+        $zip = new \ZipArchive;
+        if ($zip->open($filePath) === true) {
+            $meta = $zip->getFromName('backup_meta.json');
+            if ($meta) {
+                $decoded = json_decode($meta, true);
+                $scope = $decoded['scope'] ?? 'system';
+                $schoolId = $decoded['school_id'] ?? null;
+            }
+            $zip->close();
+        }
+
         PlatformBackup::create([
             'filename' => $fileName,
+            'scope' => $scope,
+            'school_id' => $schoolId,
             'size_bytes' => $size,
             'checksum' => $checksum,
             'disk' => 'local',

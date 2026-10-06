@@ -2,7 +2,9 @@
 
 namespace Modules\Recovery\Models;
 
+use App\Models\School;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PlatformBackup extends Model
@@ -11,6 +13,8 @@ class PlatformBackup extends Model
 
     protected $fillable = [
         'filename',
+        'scope',
+        'school_id',
         'size_bytes',
         'checksum',
         'disk',
@@ -27,5 +31,10 @@ class PlatformBackup extends Model
     public function restoreLogs(): HasMany
     {
         return $this->hasMany(PlatformRestoreLog::class, 'backup_id');
+    }
+
+    public function school(): BelongsTo
+    {
+        return $this->belongsTo(School::class, 'school_id');
     }
 }

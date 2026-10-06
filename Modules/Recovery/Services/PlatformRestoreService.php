@@ -19,6 +19,7 @@ class PlatformRestoreService
 
         $log->update(['status' => 'processing']);
         $backup = $log->backup;
+        $log->update(['scope' => $backup->scope ?? 'system']);
 
         $filePath = "backups/{$backup->filename}";
         if (! Storage::disk($backup->disk)->exists($filePath)) {

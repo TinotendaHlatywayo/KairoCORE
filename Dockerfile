@@ -1,26 +1,32 @@
-# =============================================================================
-# Laravel Application Container (PHP-FPM)
-# Base image: php:8.3-fpm (matches the "php": "^8.3" requirement in composer.json)
-# =============================================================================
-FROM php:8.3-fpm
+FROM php:8.3-apache
 
-# -----------------------------------------------------------------------------
-# System dependencies, including the -dev libraries required to build the
-# PHP extensions below (gd, zip, mbstring, intl).
-# -----------------------------------------------------------------------------
-RUN apt-get update && apt-get install -y --no-install-recommends \
-        git \
-        curl \
-        unzip \
-        libpng-dev \
-        libjpeg62-turbo-dev \
-        libfreetype6-dev \
-        libonig-dev \
-        libzip-dev \
-        libicu-dev \
-        default-mysql-client \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j"$(nproc)" \
+# ------------------------------------------------------------
+# System dependencies
+# ------------------------------------------------------------
+
+RUN apt-get update && apt-get install -y \
+    git \
+    unzip \
+    curl \
+    libzip-dev \
+    libpng-dev \
+    libjpeg62-turbo-dev \
+    libfreetype6-dev \
+    libonig-dev \
+    libxml2-dev \
+    libicu-dev \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+
+# ------------------------------------------------------------
+# PHP extensions
+# ------------------------------------------------------------
+
+RUN docker-php-ext-configure gd \
+        --with-freetype \
+        --with-jpeg \
+    && docker-php-ext-install -j$(nproc) \
         pdo_mysql \
         mbstring \
         exif \
@@ -29,28 +35,69 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         gd \
         zip \
         intl \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+        opcache
 
-# -----------------------------------------------------------------------------
-# Composer: pulled directly from the official Composer image (no curl installer)
-# -----------------------------------------------------------------------------
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# -----------------------------------------------------------------------------
-# Application code
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------
+# Apache configuration
+# ------------------------------------------------------------
+
+RUN a2enmod rewrite headers expires
+
+
+# Laravel public directory
+ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
+
+RUN sed -ri \
+    -e "s!/var/www/html!${APACHE_DOCUMENT_ROOT}!g" \
+    /etc/apache2/sites-available/*.conf \
+    /etc/apache2/apache2.conf \
+    /etc/apache2/conf-available/*.conf
+
+
+# ------------------------------------------------------------
+# Composer
+# ------------------------------------------------------------
+
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+
+# ------------------------------------------------------------
+# Application
+# ------------------------------------------------------------
+
 WORKDIR /var/www/html
 
-COPY . /var/www/html
+COPY composer.json composer.lock ./
 
-# -----------------------------------------------------------------------------
-# Permissions: give the web server (www-data) write access to the Laravel
-# runtime directories (logs, cache, sessions, uploaded files, compiled views).
-# -----------------------------------------------------------------------------
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+RUN composer install \
+    --no-dev \
+    --no-interaction \
+    --prefer-dist \
+    --optimize-autoloader
 
-EXPOSE 9000
 
-CMD ["php-fpm"]
+COPY . .
+
+
+# ------------------------------------------------------------
+# Laravel permissions
+# ------------------------------------------------------------
+
+RUN chown -R www-data:www-data \
+    storage \
+    bootstrap/cache
+
+
+# ------------------------------------------------------------
+# Laravel production optimisations
+# ------------------------------------------------------------
+
+RUN php artisan config:cache \
+    && php artisan route:cache \
+    && php artisan view:cache
+
+
+EXPOSE 80
+
+CMD ["apache2-foreground"]

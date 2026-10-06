@@ -109,6 +109,19 @@ class PlatformMessageResource extends Resource
                         'info' => 'info',
                         default => 'gray',
                     }),
+                Tables\Columns\TextColumn::make('channel')
+                    ->label(__('Channel'))
+                    ->badge()
+                    ->formatStateUsing(fn (?string $state): string => match ($state) {
+                        'email' => __('Email'),
+                        'both' => __('Both'),
+                        default => __('In-app'),
+                    })
+                    ->color(fn (?string $state): string => match ($state) {
+                        'email' => 'info',
+                        'both' => 'success',
+                        default => 'gray',
+                    }),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label(__('Last activity'))
                     ->dateTime()
@@ -191,6 +204,15 @@ class PlatformMessageResource extends Resource
                                 'important' => 'Important',
                             ])
                             ->default('normal'),
+                        Forms\Components\Select::make('channel')
+                            ->label(__('Delivery channel'))
+                            ->options([
+                                'platform_message' => __('Platform message (in-app inbox)'),
+                                'email' => __('Email to school contact'),
+                                'both' => __('Both platform message and email'),
+                            ])
+                            ->default('platform_message')
+                            ->required(),
                     ])
                     ->action(function (array $data, $action) {
                         $actor = Auth::user();
@@ -220,6 +242,7 @@ class PlatformMessageResource extends Resource
                                 'plan_filter' => $data['plan_filter'] ?? null,
                                 'region_filter' => $data['region_filter'] ?? null,
                             ],
+                            channel: $data['channel'] ?? 'platform_message',
                         );
                     }),
             ])
@@ -258,6 +281,15 @@ class PlatformMessageResource extends Resource
                             ->label(__('Reply message'))
                             ->required()
                             ->rows(6),
+                        Forms\Components\Select::make('channel')
+                            ->label(__('Delivery channel'))
+                            ->options([
+                                'platform_message' => __('Platform message (in-app inbox)'),
+                                'email' => __('Email to school contact'),
+                                'both' => __('Both platform message and email'),
+                            ])
+                            ->default('platform_message')
+                            ->required(),
                     ])
                     ->action(function (PlatformMessage $record, array $data, $action) {
                         $school = self::resolveThreadSchool($record);
@@ -273,7 +305,12 @@ class PlatformMessageResource extends Resource
                             return;
                         }
 
-                        app(PlatformMessagingService::class)->replyFromPlatform(Auth::user(), $record, $data['body']);
+                        app(PlatformMessagingService::class)->replyFromPlatform(
+                            Auth::user(),
+                            $record,
+                            $data['body'],
+                            $data['channel'] ?? 'platform_message',
+                        );
                     }),
                 Tables\Actions\Action::make('mark_read')
                     ->label(__('Mark as read'))

@@ -18,7 +18,8 @@ class SaaSInvoice extends Model
 
     protected $fillable = [
         'uuid', 'school_id', 'saas_subscription_id', 'invoice_number',
-        'issue_date', 'due_date', 'subtotal', 'discount', 'tax_amount',
+        'issue_date', 'due_date', 'period_start', 'period_end', 'months_covered',
+        'subtotal', 'discount', 'tax_amount',
         'total', 'currency', 'status', 'is_locked', 'payment_instructions',
         'integrity_hash',
     ];
@@ -26,6 +27,9 @@ class SaaSInvoice extends Model
     protected $casts = [
         'issue_date' => 'date',
         'due_date' => 'date',
+        'period_start' => 'date',
+        'period_end' => 'date',
+        'months_covered' => 'integer',
         'subtotal' => 'decimal:2',
         'discount' => 'decimal:2',
         'tax_amount' => 'decimal:2',
