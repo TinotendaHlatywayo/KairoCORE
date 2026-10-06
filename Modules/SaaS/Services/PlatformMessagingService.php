@@ -2,10 +2,13 @@
 
 namespace Modules\SaaS\Services;
 
+use App\Mail\SaaS\PlatformMessageMail;
 use App\Models\School;
 use App\Models\User;
 use App\Notifications\PlatformMessageNotification;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Modules\SaaS\Models\PlatformMessage;
 use Modules\SaaS\Models\PlatformMessageRecipient;
 
@@ -31,8 +34,9 @@ class PlatformMessagingService
         string $scope = 'all',
         array $schoolIds = [],
         ?array $targetMeta = null,
+        string $channel = 'platform_message',
     ): PlatformMessage {
-        return DB::transaction(function () use ($actor, $subject, $body, $priority, $scope, $schoolIds, $targetMeta) {
+        return DB::transaction(function () use ($actor, $subject, $body, $priority, $scope, $schoolIds, $targetMeta, $channel) {
             $message = PlatformMessage::create([
                 'sender_type' => 'platform',
                 'sender_user_id' => $actor->id,
@@ -43,9 +47,10 @@ class PlatformMessagingService
                 'subject' => $subject,
                 'body' => $body,
                 'priority' => $priority,
+                'channel' => $channel,
             ]);
 
-            $this->createRecipients($message, $schoolIds);
+            $this->createRecipients($message, $schoolIds, $channel);
 
             return $message;
         });
@@ -81,9 +86,9 @@ class PlatformMessagingService
     /**
      * Reply to an existing conversation thread, sent by the platform to the school.
      */
-    public function replyFromPlatform(User $actor, PlatformMessage $parent, string $body): PlatformMessage
+    public function replyFromPlatform(User $actor, PlatformMessage $parent, string $body, string $channel = 'platform_message'): PlatformMessage
     {
-        return DB::transaction(function () use ($actor, $parent, $body) {
+        return DB::transaction(function () use ($actor, $parent, $body, $channel) {
             // Resolve WHO this thread belongs to. The parent itself may be a
             // platform-originated message (school_id = NULL — e.g. replying
             // from your own outbox), so fall back to any sibling message in
@@ -105,7 +110,7 @@ class PlatformMessagingService
                     ->value('school_id');
             }
 
-            $message = PlatformMessage::create([
+$message = PlatformMessage::create([
                 'sender_type' => 'platform',
                 'sender_user_id' => $actor->id,
                 'school_id' => null,
@@ -115,10 +120,11 @@ class PlatformMessagingService
                 'subject' => 'Re: '.($parent->subject ?? 'Conversation'),
                 'body' => $body,
                 'priority' => $parent->priority,
+                'channel' => $channel,
             ]);
 
             if ($schoolId) {
-                $this->createRecipients($message, [(int) $schoolId]);
+                $this->createRecipients($message, [(int) $schoolId], $channel);
             }
 
             return $message;
@@ -160,7 +166,7 @@ class PlatformMessagingService
      * Creates delivery/read-tracking rows for every target school and notifies
      * each school's users. Bulk insert makes broadcast delivery idempotent and fast.
      */
-    protected function createRecipients(PlatformMessage $message, array $schoolIds): void
+    protected function createRecipients(PlatformMessage $message, array $schoolIds, string $channel = 'platform_message'): void
     {
         $schoolIds = array_values(array_unique(array_filter(array_map('intval', $schoolIds))));
 
@@ -181,13 +187,64 @@ class PlatformMessagingService
 
         PlatformMessageRecipient::insert($rows);
 
-        $schoolIdChunks = array_chunk($schoolIds, 100);
-        foreach ($schoolIdChunks as $chunk) {
-            User::query()
-                ->whereIn('school_id', $chunk)
-                ->get()
-                ->each(fn (User $user) => $user->notify(new PlatformMessageNotification($message)));
+        if (in_array($channel, ['platform_message', 'both'], true)) {
+            $schoolIdChunks = array_chunk($schoolIds, 100);
+            foreach ($schoolIdChunks as $chunk) {
+                User::query()
+                    ->whereIn('school_id', $chunk)
+                    ->get()
+                    ->each(fn (User $user) => $user->notify(new PlatformMessageNotification($message)));
+            }
         }
+
+        if (in_array($channel, ['email', 'both'], true)) {
+            $this->emailSchools($message, $schoolIds);
+        }
+    }
+
+    /**
+     * Emails a platform message to the address that registered each target
+     * school and records the delivery outcome on the message row.
+     *
+     * @param  array<int>  $schoolIds
+     */
+    protected function emailSchools(PlatformMessage $message, array $schoolIds): void
+    {
+        $schools = School::query()
+            ->whereIn('id', $schoolIds)
+            ->get(['id', 'name', 'email_address']);
+
+        $sent = 0;
+        $errors = [];
+
+        foreach ($schools as $school) {
+            $recipient = $school->email_address;
+
+            if (! $recipient) {
+                continue;
+            }
+
+            try {
+                Mail::to($recipient)->send(new PlatformMessageMail(
+                    (string) ($message->subject ?? ''),
+                    (string) ($message->body ?? ''),
+                    (string) $school->name,
+                ));
+                $sent++;
+            } catch (\Throwable $e) {
+                $errors[] = "{$school->name}: {$e->getMessage()}";
+                Log::warning('Platform message email failed', [
+                    'school_id' => $school->id,
+                    'message_id' => $message->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        $message->forceFill([
+            'email_sent_at' => $sent > 0 ? now() : null,
+            'email_error' => $errors === [] ? null : implode("\n", $errors),
+        ])->save();
     }
 
     protected function notifyPlatformUsers(PlatformMessage $message): void

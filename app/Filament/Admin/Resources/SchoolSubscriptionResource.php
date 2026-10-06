@@ -79,6 +79,15 @@ class SchoolSubscriptionResource extends Resource
 
                 Forms\Components\Section::make('Billing Window')
                     ->schema([
+                        Forms\Components\DatePicker::make('billing_start_date')
+                            ->label(__('Billing start date'))
+                            ->helperText(__('First day the tenant becomes billable. Before this date the tenant is in its free period and no reminders or suspensions fire.')),
+                        Forms\Components\TextInput::make('billing_day_of_month')
+                            ->label(__('Billing day of month'))
+                            ->numeric()
+                            ->minValue(1)
+                            ->maxValue(28)
+                            ->helperText(__('Day (1-28) the monthly cycle repeats on. Defaults to the day of the billing start date.')),
                         Forms\Components\DateTimePicker::make('trial_ends_at'),
                         Forms\Components\DateTimePicker::make('starts_at'),
                         Forms\Components\DateTimePicker::make('ends_at'),
@@ -93,6 +102,14 @@ class SchoolSubscriptionResource extends Resource
                             ->numeric()
                             ->prefix('$')
                             ->helperText(__('Leave empty to use the plan price.')),
+                        Forms\Components\TextInput::make('custom_price_quarterly')
+                            ->numeric()
+                            ->prefix('$')
+                            ->helperText(__('Overrides the quarterly plan price when billing quarterly.')),
+                        Forms\Components\TextInput::make('custom_price_yearly')
+                            ->numeric()
+                            ->prefix('$')
+                            ->helperText(__('Overrides the yearly plan price when billing yearly.')),
                         Forms\Components\TextInput::make('credit_balance')
                             ->numeric()
                             ->prefix('$')
