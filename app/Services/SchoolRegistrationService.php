@@ -6,6 +6,7 @@ use App\Models\School;
 use App\Models\User;
 use App\Notifications\SchoolRegisteredNotification;
 use Illuminate\Support\Facades\Notification;
+use Modules\SaaS\Models\PlatformBillingSetting;
 use Modules\SaaS\Models\PlatformSetting;
 
 /**
@@ -68,6 +69,15 @@ class SchoolRegistrationService
 
         if (filled($configured) && filter_var($configured, FILTER_VALIDATE_EMAIL)) {
             return $configured;
+        }
+
+        // Fall back to the billing notifications inbox so the operator has a
+        // single address (editable in Platform Billing settings) that receives
+        // both registration and billing alerts.
+        $billingEmail = PlatformBillingSetting::current()->super_admin_billing_email;
+
+        if (filled($billingEmail) && filter_var($billingEmail, FILTER_VALIDATE_EMAIL)) {
+            return $billingEmail;
         }
 
         return platform_email_address();
