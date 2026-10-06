@@ -15,35 +15,44 @@ class BillingService
         return DB::transaction(function () use ($subscription) {
             $plan = $subscription->plan;
             $billingPeriod = $subscription->billing_period;
-
-            $unitPrice = match ($billingPeriod) {
-                'quarterly' => $plan->price_quarterly,
-                'yearly' => $plan->price_yearly,
-                default => $plan->price_monthly,
-            };
-
             $months = $subscription->billingMonths();
-            $periodStart = $subscription->billing_start_date
-                ? $subscription->nextBillingDate()
-                : Carbon::now()->startOfDay();
-            $periodEnd = $periodStart->copy()->addMonthsNoOverflow($months)->subDay();
-            $dueDate = $subscription->billing_start_date
-                ? $periodStart->copy()
-                : Carbon::now()->addDays(5)->startOfDay();
 
+            $unitPrice = $subscription->getBillingAmount();
+
+            // The period the invoice covers is the tenant's current billing
+            // month (its billing day in the present month), or the first billing
+            // date while the tenant is still inside its free period.
+            $anchor = $subscription->billing_start_date
+                ? $subscription->billing_start_date->copy()->startOfDay()
+                : Carbon::now()->startOfDay();
+
+            $billingDay = $subscription->billingDay();
+            $periodStart = Carbon::now()->startOfDay()->startOfMonth()->day($billingDay);
+
+            if ($periodStart->lt($anchor)) {
+                $periodStart = $anchor->copy();
+            }
+
+            $periodEnd = $periodStart->copy()->addMonthsNoOverflow($months)->subDay();
+            $dueDate = $periodStart->copy();
+
+            // Invoice numbers must be globally unique (there is a unique index
+            // on the column), so the tenant id and year are embedded and the
+            // per-tenant sequence is read back from its own latest invoice.
             $latestInvoice = SaaSInvoice::where('school_id', $subscription->school_id)
                 ->orderBy('id', 'DESC')
                 ->first();
 
             $nextSequence = 1;
             if ($latestInvoice) {
-                preg_match('/INV-SAAS-\d+-(\d+)/', $latestInvoice->invoice_number, $matches);
-                if (isset($matches[1])) {
-                    $nextSequence = ((int) $matches[1]) + 1;
+                $parts = explode('-', (string) $latestInvoice->invoice_number);
+                $last = (int) end($parts);
+                if ($last > 0) {
+                    $nextSequence = $last + 1;
                 }
             }
 
-            $invoiceNumber = 'INV-SAAS-'.Carbon::now()->year.'-'.str_pad((string) $nextSequence, 5, '0', STR_PAD_LEFT);
+            $invoiceNumber = 'INV-SAAS-'.$subscription->school_id.'-'.Carbon::now()->year.'-'.str_pad((string) $nextSequence, 5, '0', STR_PAD_LEFT);
 
             $invoice = SaaSInvoice::create([
                 'school_id' => $subscription->school_id,
@@ -58,17 +67,17 @@ class BillingService
                 'discount' => 0.00,
                 'tax_amount' => 0.00,
                 'total' => $unitPrice,
-                'currency' => $plan->currency,
+                'currency' => $plan->currency ?? 'USD',
                 'status' => 'unpaid',
                 'is_locked' => false,
-                'payment_instructions' => 'Payment for Kairo CORE Subscriptions on plan: '.$plan->name,
+                'payment_instructions' => 'Payment for Kairo CORE Subscriptions on plan: '.($plan->name ?? ''),
             ]);
 
             SaaSInvoiceItem::create([
                 'saas_invoice_id' => $invoice->id,
-                'description' => __('Subscription for ').$plan->name.' ['.ucfirst($billingPeriod).' Billing]',
-                'quantity' => 1,
-                'unit_price' => $unitPrice,
+                'description' => __('Subscription for ').($plan->name ?? '').' ['.ucfirst((string) $billingPeriod).' Billing - '.$months.' month(s)]',
+                'quantity' => $months,
+                'unit_price' => $unitPrice / max(1, $months),
                 'total' => $unitPrice,
             ]);
 

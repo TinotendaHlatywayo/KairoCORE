@@ -192,6 +192,10 @@ class BillingNotificationService
             $keys[] = 'super_admin_billing_alert';
         }
 
+        if ($offset === (-1 * $settings->day_before_reminder_offset) && $settings->notify_super_admin_on_billing) {
+            $keys[] = 'super_admin_billing_alert_day_before';
+        }
+
         return $keys;
     }
 
@@ -217,7 +221,7 @@ class BillingNotificationService
         $subject = $template->renderSubject($values);
         $body = $template->renderBody($values);
 
-        $isSuperAdminTemplate = $template->key === 'super_admin_billing_alert';
+        $isSuperAdminTemplate = str_starts_with($template->key, 'super_admin_billing_alert');
         $channel = match (true) {
             $template->send_platform_message && $template->send_email => 'both',
             $template->send_email => 'email',
