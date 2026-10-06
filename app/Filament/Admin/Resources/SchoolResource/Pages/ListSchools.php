@@ -5,6 +5,7 @@ namespace App\Filament\Admin\Resources\SchoolResource\Pages;
 use App\Filament\Admin\Resources\SchoolResource;
 use App\Models\School;
 use Filament\Actions;
+use Filament\Notifications\Notification;
 use Filament\Resources\Components\Tab;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Database\Eloquent\Builder;
@@ -12,6 +13,24 @@ use Illuminate\Database\Eloquent\Builder;
 class ListSchools extends ListRecords
 {
     protected static string $resource = SchoolResource::class;
+
+    public function mount(): void
+    {
+        parent::mount();
+
+        // Tell the administrator why they are suddenly back here instead of in
+        // the school: their hand-off hit its time limit and was terminated.
+        if (session()->has('platform_impersonation_expired')) {
+            $school = session()->pull('platform_impersonation_expired');
+
+            Notification::make()
+                ->title(__('Your session in :school ended', ['school' => $school ?? __('that school')]))
+                ->body(__('You were signed out to protect that school. Enter the school again whenever you need to continue.'))
+                ->warning()
+                ->persistent()
+                ->send();
+        }
+    }
 
     protected function getHeaderActions(): array
     {

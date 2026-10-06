@@ -48,6 +48,7 @@ class User extends Authenticatable implements FilamentUser
         'custom_role_id',
         'permissions',
         'account_status',
+        'is_platform_managed',
         'requested_role',
         'approved_by',
         'approved_at',

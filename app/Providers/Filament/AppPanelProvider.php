@@ -53,12 +53,15 @@ use App\Filament\App\Resources\SubjectResource;
 use app\Filament\App\Resources\SystemAuditLogResource;
 use App\Filament\App\Resources\TeacherAssignmentResource;
 use App\Filament\App\Resources\TimeSlotResource;
+use App\Filament\App\Widgets\DemoDataWidget;
 use App\Filament\App\Widgets\ReportingDashboardOverview;
+use App\Http\Middleware\EnsureImpersonationSessionIsValid;
 use App\Http\Middleware\EnsureTenantNotSuspended;
 use App\Http\Middleware\EnsureUserActive;
 use App\Http\Middleware\ResolveTenant;
 use App\Http\Middleware\SchoolPanelAuthenticate;
 use App\Http\Middleware\SetUserLocale;
+use App\Support\WorkspaceSearchIndex;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\NavigationGroup;
@@ -207,7 +210,7 @@ class AppPanelProvider extends PanelProvider
             ->renderHook(
                 'panels::sidebar.nav.start',
                 fn () => view('components.sidebar-search', [
-                    'serverItems' => \App\Support\WorkspaceSearchIndex::items(),
+                    'serverItems' => WorkspaceSearchIndex::items(),
                 ])
             )
 
@@ -231,6 +234,17 @@ class AppPanelProvider extends PanelProvider
             ->renderHook(
                 PanelsRenderHook::BODY_START,
                 fn () => view('components.page-title-typing')
+            )
+
+            // ──────────────────────────────────────────────────────────────
+            // 🔐 SYSTEM ADMINISTRATOR BANNER
+            // Loud, unmissable notice shown on every tenant page while a
+            // platform administrator is working inside a school. A no-op for
+            // ordinary tenant sessions.
+            // ──────────────────────────────────────────────────────────────
+            ->renderHook(
+                PanelsRenderHook::BODY_START,
+                fn () => view('components.platform-impersonation-banner')
             )
 
             // ──────────────────────────────────────────────────────────────
@@ -349,11 +363,11 @@ class AppPanelProvider extends PanelProvider
                 // Academic Operations Center
                 AcademicOperationsCenter::class,
 
-                 // Tenant-Level System Admin Pages
-                 AdministrationDashboard::class,
-                 SystemSettingsPage::class,
-                 EmailConfigurationPage::class,
-                 FinancialStatementPage::class,
+                // Tenant-Level System Admin Pages
+                AdministrationDashboard::class,
+                SystemSettingsPage::class,
+                EmailConfigurationPage::class,
+                FinancialStatementPage::class,
 
                 ApplicationSuccess::class,
                 AdmissionSettingsPage::class,
@@ -424,7 +438,7 @@ class AppPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/App/Widgets'), for: 'App\\Filament\\App\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,
-                \App\Filament\App\Widgets\DemoDataWidget::class,
+                DemoDataWidget::class,
                 ReportingDashboardOverview::class,
             ])
             ->middleware([
@@ -443,6 +457,7 @@ class AppPanelProvider extends PanelProvider
             ->authMiddleware([
                 SchoolPanelAuthenticate::class,
                 EnsureUserActive::class,
+                EnsureImpersonationSessionIsValid::class,
             ])
             ->tenantMiddleware([
                 EnsureTenantNotSuspended::class,
