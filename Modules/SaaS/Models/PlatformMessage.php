@@ -36,12 +36,16 @@ class PlatformMessage extends Model
         'subject',
         'body',
         'priority',
+        'channel',
+        'email_sent_at',
+        'email_error',
         'is_read',
         'read_at',
     ];
 
     protected $casts = [
         'target_meta' => 'array',
+        'email_sent_at' => 'datetime',
         'is_read' => 'boolean',
         'read_at' => 'datetime',
     ];
