@@ -94,10 +94,6 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
     Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirect'])->name('auth.google.redirect');
     Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->name('auth.google.callback');
 
-    // Completes Google SSO on the TENANT subdomain (single-use ticket from the
-    // central callback) so the session is created inside this tenant's scope.
-    Route::get('/auth/sso/consume', [GoogleAuthController::class, 'consume'])->name('auth.sso.consume');
-
     // Platform Terms of Service
     Route::get('/terms', function () {
         return view('terms.platform');
@@ -132,6 +128,15 @@ Route::get('/locale/{locale}', function (string $locale) {
 // SetUserLocale runs after ResolveTenant here so the school's locale is applied
 // (it already ran in the web group with session/user context).
 Route::domain('{tenant}.'.parse_url(config('app.url'), PHP_URL_HOST))->middleware(['tenant', SetUserLocale::class])->group(function () {
+
+    // Completes Google SSO on the TENANT subdomain (single-use ticket from the
+    // central callback) so the session is created inside this tenant's scope.
+    //
+    // MUST live in this {tenant}. domain group: the controller checks
+    // current_tenant, and the callback redirects here using the school's own
+    // subdomain. Registered on the central host it could never match the
+    // redirect target, so every tenant Google sign-in 404'd.
+    Route::get('/auth/sso/consume', [GoogleAuthController::class, 'consume'])->name('auth.sso.consume');
 
     // ── Platform -> school hand-off ─────────────────────────────────────
     // MUST stay inside this {tenant}. domain group: the entry route resolves
