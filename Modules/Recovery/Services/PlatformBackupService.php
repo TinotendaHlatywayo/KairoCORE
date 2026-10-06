@@ -10,11 +10,18 @@ use ZipArchive;
 
 class PlatformBackupService
 {
-public function executeFullBackup(?int $schoolId = null): PlatformBackup
+    public function executeFullBackup(int|array|null $schools = null): PlatformBackup
     {
         $timestamp = now()->format('Y-m-d_His');
-        $scope = $schoolId ? 'tenant' : 'system';
-        $label = $schoolId ? "TENANT_{$schoolId}" : 'PLATFORM';
+        $schoolIds = is_array($schools) ? $schools : ($schools ? [$schools] : null);
+        $scope = empty($schoolIds) ? 'system' : (count($schoolIds) === 1 ? 'tenant' : 'selected_tenants');
+        
+        $label = match($scope) {
+            'system' => 'PLATFORM',
+            'tenant' => "TENANT_{$schoolIds[0]}",
+            default => 'SELECTED_TENANTS',
+        };
+
         $fileName = "Kairo CORE_{$label}_SNAP_{$timestamp}.zip";
         $tempPath = storage_path('app/platform_temp_snapshots');
 
@@ -24,8 +31,8 @@ public function executeFullBackup(?int $schoolId = null): PlatformBackup
 
         $backupRecord = PlatformBackup::create([
             'filename' => $fileName,
-            'scope' => $scope,
-            'school_id' => $schoolId,
+            'scope' => $scope === 'selected_tenants' ? 'tenant' : $scope,
+            'school_id' => count($schoolIds ?? []) === 1 ? $schoolIds[0] : null,
             'status' => 'pending',
         ]);
 
@@ -38,11 +45,12 @@ public function executeFullBackup(?int $schoolId = null): PlatformBackup
             }
 
             // Generate full database snapshot
-            $sqlContent = $this->compileFullSchemaAndData($schoolId);
+            $sqlContent = $this->compileFullSchemaAndData($schoolIds);
             $zip->addFromString('backup_payload.sql', $sqlContent);
             $zip->addFromString('backup_meta.json', json_encode([
-                'scope' => $scope,
-                'school_id' => $schoolId,
+                'scope' => $backupRecord->scope,
+                'school_id' => $backupRecord->school_id,
+                'school_ids' => $schoolIds,
                 'generated_at' => now()->toIso8601String(),
                 'app_version' => config('app.version', 'unknown'),
             ], JSON_PRETTY_PRINT));
@@ -81,16 +89,17 @@ public function executeFullBackup(?int $schoolId = null): PlatformBackup
         }
     }
 
-    private function compileFullSchemaAndData(?int $schoolId = null): string
+    private function compileFullSchemaAndData(array|int|null $schools = null): string
     {
         $database = DB::getDatabaseName();
         $skipTables = ['platform_backups', 'platform_restore_logs'];
+        $schoolIds = is_array($schools) ? $schools : ($schools ? [$schools] : null);
 
-        if ($schoolId === null) {
+        if (empty($schoolIds)) {
             return $this->compileSystemSnapshot($skipTables);
         }
 
-        return $this->compileTenantSnapshot($database, $schoolId, $skipTables);
+        return $this->compileTenantSnapshot($database, $schoolIds, $skipTables);
     }
 
     private function compileSystemSnapshot(array $skipTables): string
@@ -121,7 +130,7 @@ public function executeFullBackup(?int $schoolId = null): PlatformBackup
         return $sql;
     }
 
-    private function compileTenantSnapshot(string $database, int $schoolId, array $skipTables): string
+    private function compileTenantSnapshot(string $database, array $schoolIds, array $skipTables): string
     {
         $tenantTables = DB::table('information_schema.columns')
             ->where('table_schema', $database)
@@ -129,10 +138,11 @@ public function executeFullBackup(?int $schoolId = null): PlatformBackup
             ->pluck('table_name')
             ->all();
 
-        $userIds = DB::table('users')->where('school_id', $schoolId)->pluck('id')->all();
+        $userIds = DB::table('users')->whereIn('school_id', $schoolIds)->pluck('id')->all();
         $userList = empty($userIds) ? '0' : implode(',', array_map('intval', $userIds));
+        $schoolList = implode(',', array_map('intval', $schoolIds));
 
-        $sql = "-- Tenant snapshot (school_id: {$schoolId})\n";
+        $sql = "-- Tenants snapshot (school_ids: {$schoolList})\n";
         $sql .= '-- Generated: '.now()->toDateTimeString()."\n\n";
         $sql .= "SET FOREIGN_KEY_CHECKS=0;\n";
 
@@ -142,16 +152,16 @@ public function executeFullBackup(?int $schoolId = null): PlatformBackup
             }
 
             if ($table === 'schools') {
-                $where = "id = {$schoolId}";
+                $where = "id IN ({$schoolList})";
             } elseif (in_array($table, $tenantTables, true)) {
-                $where = "school_id = {$schoolId}";
+                $where = "school_id IN ({$schoolList})";
             } elseif (in_array($table, ['model_has_roles', 'model_has_permissions'], true)) {
                 $where = "model_id IN ({$userList})";
             } else {
                 continue;
             }
 
-            // Scoped delete (never drop the table) then re-insert this tenant's rows only.
+            // Scoped delete (never drop the table) then re-insert these tenants' rows only.
             $sql .= "DELETE FROM `{$table}` WHERE {$where};\n";
             foreach (DB::table($table)->whereRaw($where)->get() as $row) {
                 $sql .= $this->insertRow($table, (array) $row);
