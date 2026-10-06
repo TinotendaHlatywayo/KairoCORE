@@ -1,81 +1,133 @@
-# =============================================================================
-# Laravel multi-container Docker environment
-#
-# Services:
-#   app       - PHP-FPM 8.3 (built from the local Dockerfile)
-#   webserver - Nginx (routes public requests to the app on port 9000)
-#   db        - MySQL 8.0 (named volume "dbdata" for persistence)
-#
-# All three services share the "laravel_network" bridge network.
-# =============================================================================
 services:
+
+  # ============================================================
+  # Laravel Application
+  # PHP 8.3 + Apache
+  # ============================================================
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: laravel_app
+
+    container_name: schoolcore-app
+
     restart: unless-stopped
-    # Run PHP-FPM as the host user so the bind-mounted storage/ and
-    # bootstrap/cache (owned by the host) stay writable by the workers.
-    # On Docker Desktop (Windows/macOS) UID/GID are virtualized, so the
-    # 1000 defaults are fine there too.
-    user: "${USER_ID:-1000}:${GROUP_ID:-1000}"
-    working_dir: /var/www/html
-    volumes:
-      - .:/var/www/html
+
     environment:
-      # These override the .env file inside the container so the app always
-      # talks to the "db" service on the shared network (fallbacks in .env).
-      APP_ENV: ${APP_ENV:-local}
-      APP_DEBUG: ${APP_DEBUG:-true}
+      APP_NAME: ${APP_NAME}
+      APP_ENV: ${APP_ENV:-production}
+      APP_DEBUG: ${APP_DEBUG:-false}
+      APP_URL: ${APP_URL}
+
+      LOG_CHANNEL: ${LOG_CHANNEL:-stderr}
+      LOG_LEVEL: ${LOG_LEVEL:-warning}
+
       DB_CONNECTION: mysql
       DB_HOST: db
       DB_PORT: 3306
-      DB_DATABASE: ${DB_DATABASE:-schoolcore}
-      DB_USERNAME: ${DB_USERNAME:-schooluser}
-      DB_PASSWORD: ${DB_PASSWORD:-secret}
-    depends_on:
-      - db
-    networks:
-      - laravel_network
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
 
-  webserver:
-    image: nginx:alpine
-    container_name: laravel_webserver
-    restart: unless-stopped
-    ports:
-      - "8080:80"
+    depends_on:
+      db:
+        condition: service_healthy
+
     volumes:
-      - .:/var/www/html
-      - ./docker/nginx/conf.d:/etc/nginx/conf.d
-    depends_on:
-      - app
-    networks:
-      - laravel_network
+      - laravel_storage:/var/www/html/storage
 
+    networks:
+      - client_internal
+      - kuber-proxy
+
+    # Resource protection
+    mem_limit: 1g
+    cpus: "1.0"
+    pids_limit: 200
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -f http://localhost/up || exit 1"
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+
+  # ============================================================
+  # MySQL Database
+  # ============================================================
   db:
     image: mysql:8.0
-    container_name: laravel_db
+
+    container_name: schoolcore-db
+
     restart: unless-stopped
+
     environment:
-      # NOTE: MYSQL_USER must NEVER be mapped from DB_USERNAME. If the project
-      # .env still carries an old value like "root" (e.g. from XAMPP), the
-      # official MySQL image aborts startup: MYSQL_USER is only for creating a
-      # regular, non-root user. It is therefore wired to its own variable
-      # (MYSQL_USER) and defaults to a non-root account.
-      MYSQL_DATABASE: ${DB_DATABASE:-schoolcore}
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-secret}
-      MYSQL_USER: ${MYSQL_USER:-schooluser}
-      MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_DATABASE: ${DB_DATABASE}
+
+      MYSQL_USER: ${DB_USERNAME}
+
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+
     volumes:
       - dbdata:/var/lib/mysql
+
     networks:
-      - laravel_network
+      - client_internal
+
+    # Database resource protection
+    mem_limit: 1.5g
+    cpus: "1.0"
+    pids_limit: 200
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u${DB_USERNAME}",
+          "-p${DB_PASSWORD}"
+        ]
+
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+
+# ============================================================
+# Persistent Storage
+# ============================================================
 
 volumes:
+
   dbdata:
     driver: local
 
+  laravel_storage:
+    driver: local
+
+
+# ============================================================
+# Networks
+# ============================================================
+
 networks:
-  laravel_network:
+
+  # Private client network
+  client_internal:
     driver: bridge
+
+  # Existing Kuber reverse proxy network
+  kuber-proxy:
+    external: true
