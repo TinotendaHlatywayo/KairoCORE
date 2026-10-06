@@ -15,7 +15,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Auth;
-use Modules\SaaS\Services\TenantImpersonationEngine;
+use Modules\SaaS\Services\PlatformImpersonationService;
 
 class SchoolResource extends Resource
 {
@@ -239,7 +239,16 @@ class SchoolResource extends Resource
                     ->dateTime('d M Y')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('users_count')
-                    ->counts('users')
+                    // The platform's own "System Administrator" shadow account
+                    // is not school staff, so it must not inflate the headcount
+                    // the school sees on this screen.
+                    // NOTE: must be the array form. This Filament version's counts() accepts a
+                    // single argument, so passing the constraint as a second
+                    // parameter is silently discarded and the platform account
+                    // would inflate the school's headcount.
+                    ->counts([
+                        'users' => fn ($query) => $query->where('is_platform_managed', false),
+                    ])
                     ->label(__('Admins')),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label(__('Registered'))
@@ -348,14 +357,43 @@ class SchoolResource extends Resource
                         Notification::make()->title(__('Institution Access Restored'))->success()->send();
                     }),
 
-                Tables\Actions\Action::make('impersonate')
-                    ->label(__('Impersonate'))
-                    ->icon('heroicon-o-user-plus')
+                Tables\Actions\Action::make('enter_school')
+                    ->label(__('Enter school'))
+                    ->icon('heroicon-o-arrow-top-right-on-square')
                     ->color('warning')
-                    ->action(function (School $record) {
-                        $link = TenantImpersonationEngine::generateSecureLink($record->id);
+                    ->requiresConfirmation()
+                    ->modalHeading(fn (School $record) => __('Enter :name?', ['name' => $record->name]))
+                    ->modalDescription(__('You will work inside this school as its \'System Administrator\'. A banner will remind you and every change is recorded in the platform audit log. The session ends automatically after :minutes minutes.', ['minutes' => (int) config('platform.session_ttl_minutes', 30)]))
+                    ->modalSubmitActionLabel(__('Enter school'))
+                    // Suspended and pending schools are refused by
+                    // ResolveTenant before they can render, so hide the entry
+                    // point rather than letting it dead-end on a 403.
+                    ->visible(fn (School $record) => $record->status === 'active')
+                    ->action(function (School $record, PlatformImpersonationService $service) {
+                        // The central platform session is deliberately left
+                        // signed in: it lives on a different (host-only)
+                        // cookie, and keeping it is what lets "Leave school"
+                        // return the administrator to an already-authenticated
+                        // /platform/schools.
+                        $admin = Auth::user();
 
-                        return redirect()->away($link);
+                        if (! $admin) {
+                            return Notification::make()
+                                ->title(__('Could not enter this school'))
+                                ->body(__('You are no longer signed in to the platform.'))
+                                ->danger()
+                                ->send();
+                        }
+
+                        try {
+                            return redirect()->away($service->entryUrl($record, $admin));
+                        } catch (\Throwable $e) {
+                            return Notification::make()
+                                ->title(__('Could not enter this school'))
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
                     }),
 
                 Tables\Actions\EditAction::make(),

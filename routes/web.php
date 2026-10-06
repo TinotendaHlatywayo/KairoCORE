@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\ActivationController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\DocumentDownloadController;
 use App\Http\Controllers\FinanceDocumentController;
+use App\Http\Controllers\Platform\PlatformEntryController;
 use App\Http\Controllers\SaaS\InvoiceDownloadController;
 use App\Http\Controllers\SaaS\PaynowWebhookController;
 use App\Http\Controllers\SaaS\ReceiptDownloadController;
@@ -12,13 +13,16 @@ use App\Http\Controllers\StudentCardPrintController;
 use App\Http\Controllers\StudentFeeCheckoutController;
 use App\Http\Middleware\SetUserLocale;
 use App\Livewire\RegistrationWizard;
+use App\Support\TeacherInitials;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Modules\Academics\Http\Controllers\ReportVerificationController;
+use Modules\Academics\Models\Course;
 use Modules\Academics\Models\Section;
+use Modules\Admin\Models\SystemSetting;
 use Modules\CMS\Http\Controllers\CmsRenderController;
 use Modules\Finance\Http\Controllers\FinanceDocumentVerificationController;
 use Modules\Finance\Models\StudentPaymentSubmission;
@@ -29,6 +33,8 @@ use Modules\SaaS\Models\SaaSTransaction;
 use Modules\SaaS\Services\SubscriptionManager;
 use Modules\Students\Models\Student;
 use Modules\Timetables\Models\TimeSlot;
+use Modules\Timetables\Models\TimetableLesson;
+use Modules\Timetables\Models\TimetableTemplate;
 
 // 1. Root / Central Marketing & Registration Routing (lvh.me)
 Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
@@ -99,6 +105,7 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
 
     Route::get('/terms/pdf', function () {
         $pdf = Pdf::loadView('terms.platform');
+
         return $pdf->download('Kairo CORE-Platform-Terms-of-Service.pdf');
     })->name('platform.terms.pdf');
 });
@@ -126,18 +133,31 @@ Route::get('/locale/{locale}', function (string $locale) {
 // (it already ran in the web group with session/user context).
 Route::domain('{tenant}.'.parse_url(config('app.url'), PHP_URL_HOST))->middleware(['tenant', SetUserLocale::class])->group(function () {
 
+    // ── Platform -> school hand-off ─────────────────────────────────────
+    // MUST stay inside this {tenant}. domain group: the entry route resolves
+    // current_tenant from the subdomain, and the ticket is re-checked against
+    // it. Registered on the central host it would 404 (and current_tenant
+    // would be unbound), which is the bug that killed the Google SSO hop.
+    Route::get('/platform-entry', [PlatformEntryController::class, 'enter'])
+        ->name('platform.impersonation.enter');
+
+    Route::post('/platform-exit', [PlatformEntryController::class, 'exit'])
+        ->name('platform.impersonation.exit');
+
     // School Terms & Conditions
     Route::get('/school-terms', function () {
         $school = app('current_tenant');
-        $termsContent = $school ? \Modules\Admin\Models\SystemSetting::get('legal', 'terms_content', default_school_terms()) : default_school_terms();
+        $termsContent = $school ? SystemSetting::get('legal', 'terms_content', default_school_terms()) : default_school_terms();
+
         return view('terms.school', ['school' => $school, 'termsContent' => $termsContent]);
     })->name('school.terms');
 
     Route::get('/school-terms/pdf', function () {
         $school = app('current_tenant');
-        $termsContent = $school ? \Modules\Admin\Models\SystemSetting::get('legal', 'terms_content', default_school_terms()) : default_school_terms();
+        $termsContent = $school ? SystemSetting::get('legal', 'terms_content', default_school_terms()) : default_school_terms();
         $pdf = Pdf::loadView('terms.school', ['school' => $school, 'termsContent' => $termsContent]);
-        return $pdf->download(($school?->name ?? 'School') . '-Terms-and-Conditions.pdf');
+
+        return $pdf->download(($school?->name ?? 'School').'-Terms-and-Conditions.pdf');
     })->name('school.terms.pdf');
 
     // PUBLIC CUSTOM DYNAMIC WEBSITE ROOT ENTRY POINT [2]
@@ -201,7 +221,7 @@ Route::domain('{tenant}.'.parse_url(config('app.url'), PHP_URL_HOST))->middlewar
         $school = app('current_tenant');
         $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
 
-        $activeTemplate = \Modules\Timetables\Models\TimetableTemplate::where('school_id', $school->id)->where('is_active', true)->first();
+        $activeTemplate = TimetableTemplate::where('school_id', $school->id)->where('is_active', true)->first();
 
         // Only the active template's slots belong in the official print — mixing
         // every historical template's periods into one grid duplicates names
@@ -217,7 +237,7 @@ Route::domain('{tenant}.'.parse_url(config('app.url'), PHP_URL_HOST))->middlewar
     // Official Whole-Stream (Form) Timetable Print Compiler Route — renders one
     // merged schedule grid for every class stream in the selected Form level.
     Route::get('/timetables/print-stream/{course}', function (Request $request) {
-        $course = \Modules\Academics\Models\Course::withoutGlobalScopes()
+        $course = Course::withoutGlobalScopes()
             ->whereKey((int) $request->route('course'))
             ->where('school_id', app('current_tenant')->id)
             ->first();
@@ -229,7 +249,7 @@ Route::domain('{tenant}.'.parse_url(config('app.url'), PHP_URL_HOST))->middlewar
         $school = app('current_tenant');
         $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
 
-        $activeTemplate = \Modules\Timetables\Models\TimetableTemplate::where('school_id', $school->id)->where('is_active', true)->first();
+        $activeTemplate = TimetableTemplate::where('school_id', $school->id)->where('is_active', true)->first();
 
         // Only the active template's slots belong in the official print — mixing
         // every historical template's periods into one grid duplicates names
@@ -247,7 +267,7 @@ Route::domain('{tenant}.'.parse_url(config('app.url'), PHP_URL_HOST))->middlewar
         // Pre-group lessons by (slot, day) so the blade renders each class
         // stream as a compact "Subject (Teacher Initials)" line.
         $streamMatrix = [];
-        $lessons = \Modules\Timetables\Models\TimetableLesson::where('school_id', $school->id)
+        $lessons = TimetableLesson::where('school_id', $school->id)
             ->whereIn('section_id', $sections->pluck('id'))
             ->where('template_id', $activeTemplate?->id)
             ->with(['section.course', 'subject', 'teacher', 'classroom'])
@@ -258,7 +278,7 @@ Route::domain('{tenant}.'.parse_url(config('app.url'), PHP_URL_HOST))->middlewar
             $streamMatrix[$key][] = [
                 'section_label' => trim(($lesson->section->course->name ?? $course->name).' '.$lesson->section->name),
                 'subject' => $lesson->subject->name ?? '',
-                'teacher_initials' => \App\Support\TeacherInitials::for($lesson->teacher?->name),
+                'teacher_initials' => TeacherInitials::for($lesson->teacher?->name),
                 'class_teacher' => $lesson->section->classTeacher?->name,
                 'room' => $lesson->classroom->name ?? '',
             ];
