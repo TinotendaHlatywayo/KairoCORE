@@ -2,16 +2,17 @@
 
 namespace App\Providers\Filament;
 
-use App\Filament\Admin\Pages\Dashboard;
-
 use App\Filament\Admin\Pages\Auth\Login;
+use App\Filament\Admin\Pages\Dashboard;
 use App\Filament\Admin\Pages\PlatformBackupManager;
+use App\Filament\Admin\Pages\PlatformBillingSettingsPage;
 use App\Filament\Admin\Pages\PlatformIntelligenceDashboard;
 use App\Filament\Admin\Pages\PlatformMaintenancePage;
 use App\Filament\Admin\Pages\PlatformSettingsPage;
 use App\Filament\Admin\Resources\PendingPaymentResource;
 use App\Filament\Admin\Resources\PlatformAnnouncementResource;
 use App\Filament\Admin\Resources\PlatformAuditLogResource;
+use App\Filament\Admin\Resources\PlatformBillingMessageResource;
 use App\Filament\Admin\Resources\PlatformMessageResource;
 use App\Filament\Admin\Resources\PlatformTemplateResource;
 use App\Filament\Admin\Resources\SaaSInvoiceResource;
@@ -40,6 +41,7 @@ use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Modules\SaaS\Models\PlatformSetting;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -49,7 +51,7 @@ class AdminPanelProvider extends PanelProvider
         // Platform → Settings → SaaS Branding, so resolve it per request.
         $primary = null;
         try {
-            $primary = \Modules\SaaS\Models\PlatformSetting::get('branding', 'default_primary');
+            $primary = PlatformSetting::get('branding', 'default_primary');
         } catch (\Throwable $e) {
             $primary = null;
         }
@@ -79,6 +81,7 @@ class AdminPanelProvider extends PanelProvider
                 PlatformBackupManager::class,
                 PlatformMaintenancePage::class,
                 PlatformSettingsPage::class,
+                PlatformBillingSettingsPage::class,
             ])
             ->widgets([
                 Widgets\AccountWidget::class,
@@ -125,6 +128,7 @@ class AdminPanelProvider extends PanelProvider
                 PlatformTemplateResource::class,
                 PlatformAuditLogResource::class,
                 PlatformMessageResource::class,
+                PlatformBillingMessageResource::class,
             ]);
     }
 }

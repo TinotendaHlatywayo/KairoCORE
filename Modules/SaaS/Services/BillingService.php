@@ -22,6 +22,15 @@ class BillingService
                 default => $plan->price_monthly,
             };
 
+            $months = $subscription->billingMonths();
+            $periodStart = $subscription->billing_start_date
+                ? $subscription->nextBillingDate()
+                : Carbon::now()->startOfDay();
+            $periodEnd = $periodStart->copy()->addMonthsNoOverflow($months)->subDay();
+            $dueDate = $subscription->billing_start_date
+                ? $periodStart->copy()
+                : Carbon::now()->addDays(5)->startOfDay();
+
             $latestInvoice = SaaSInvoice::where('school_id', $subscription->school_id)
                 ->orderBy('id', 'DESC')
                 ->first();
@@ -41,7 +50,10 @@ class BillingService
                 'saas_subscription_id' => $subscription->id,
                 'invoice_number' => $invoiceNumber,
                 'issue_date' => Carbon::now()->toDateString(),
-                'due_date' => Carbon::now()->addDays(5)->toDateString(),
+                'due_date' => $dueDate->toDateString(),
+                'period_start' => $periodStart->toDateString(),
+                'period_end' => $periodEnd->toDateString(),
+                'months_covered' => $months,
                 'subtotal' => $unitPrice,
                 'discount' => 0.00,
                 'tax_amount' => 0.00,
