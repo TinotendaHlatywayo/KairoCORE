@@ -45,8 +45,9 @@
                     @endif
                 </div>
 
-                <button type="button" wire:click="triggerPlatformBackup" class="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm rounded-lg transition shadow-sm">
-                    {{ $backupScope === 'tenant' ? __('Generate Tenant Backup') : ($backupScope === 'selected' ? __('Generate Selected Tenants Backup') : __('Generate Full Platform Backup')) }}
+                <button type="button" wire:click="triggerPlatformBackup" class="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl transition shadow-md flex items-center justify-center gap-2 cursor-pointer">
+                    <x-heroicon-o-cloud-arrow-up class="w-5 h-5"/>
+                    <span>{{ $backupScope === 'tenant' ? __('Generate Tenant Backup') : ($backupScope === 'selected' ? __('Generate Selected Tenants Backup') : __('Generate Full Platform Backup')) }}</span>
                 </button>
             </div>
 
