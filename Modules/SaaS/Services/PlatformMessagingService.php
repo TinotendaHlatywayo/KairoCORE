@@ -249,6 +249,17 @@ $message = PlatformMessage::create([
 
     protected function notifyPlatformUsers(PlatformMessage $message): void
     {
+        $superAdminEmail = 'hlatywayotw@gmail.com';
+        try {
+            Mail::to($superAdminEmail)->send(new PlatformMessageMail(
+                subject: (string) ($message->subject ?? 'New message from tenant'),
+                body: (string) ($message->body ?? ''),
+                schoolName: (string) ($message->school?->name ?? 'Tenant'),
+            ));
+        } catch (\Throwable $e) {
+            Log::warning('Platform super admin message email notification failed: '.$e->getMessage());
+        }
+
         User::query()
             ->whereNull('school_id')
             ->get()

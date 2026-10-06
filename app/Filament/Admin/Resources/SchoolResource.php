@@ -14,7 +14,9 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
+use Modules\Admin\Models\SystemSetting;
 use Modules\SaaS\Services\PlatformImpersonationService;
 
 class SchoolResource extends Resource
@@ -171,6 +173,26 @@ class SchoolResource extends Resource
                             ->image()
                             ->directory('school-logos'),
                     ]),
+
+                Forms\Components\Section::make('Module Visibility')
+                    ->description(__('Toggle which modules are visible to this institution. Only super admins can enable disabled modules.'))
+                    ->schema([
+                        Forms\Components\Grid::make(3)
+                            ->schema(collect(config('modules'))
+                                ->map(fn ($config, $key) => Forms\Components\Toggle::make("modules.{$key}")
+                                    ->label($config['name'])
+                                    ->helperText($config['desc'])
+                                    ->default(true)
+                                    ->inline(false)
+                                    ->onIcon('heroicon-o-check-circle')
+                                    ->offIcon('heroicon-o-x-circle')
+                                )
+                                ->values()
+                                ->all()
+                            ),
+                    ])
+                    ->collapsible()
+                    ->collapsed(true),
             ]);
     }
 
@@ -419,5 +441,28 @@ class SchoolResource extends Resource
             'create' => Pages\CreateSchool::route('/create'),
             'edit' => Pages\EditSchool::route('/{record}/edit'),
         ];
+    }
+
+    protected static function mutateFormDataBeforeCreate(array $data): array
+    {
+        if (isset($data['modules']) && is_array($data['modules'])) {
+            $school = static::getModel()::create(Arr::except($data, ['modules']));
+            foreach ($data['modules'] as $moduleKey => $enabled) {
+                SystemSetting::set('modules', $moduleKey, (bool) $enabled, $school->id);
+            }
+            return Arr::except($data, ['modules']);
+        }
+        return $data;
+    }
+
+    protected static function mutateFormDataBeforeUpdate(array $data, $record): array
+    {
+        if (isset($data['modules']) && is_array($data['modules'])) {
+            foreach ($data['modules'] as $moduleKey => $enabled) {
+                SystemSetting::set('modules', $moduleKey, (bool) $enabled, $record->id);
+            }
+            return Arr::except($data, ['modules']);
+        }
+        return $data;
     }
 }

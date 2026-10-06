@@ -74,8 +74,11 @@ class SaaSInvoiceResource extends Resource
                     ->icon('heroicon-o-arrow-down-tray')
                     ->color('success')
                     ->url(fn (SaaSInvoice $record) => route('saas.invoice.download', $record->uuid), shouldOpenInNewTab: true),
+                Tables\Actions\DeleteAction::make(),
             ])
-            ->bulkActions([]);
+            ->bulkActions([
+                Tables\Actions\DeleteBulkAction::make(),
+            ]);
     }
 
     public static function getPages(): array

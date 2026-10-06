@@ -8,17 +8,22 @@
 
                 <div class="space-y-3 mb-4">
                     <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500">{{ __('Backup scope') }}</label>
-                    <div class="grid grid-cols-2 gap-2">
+                    <div class="grid grid-cols-3 gap-1.5">
                         <button type="button" wire:click="$set('backupScope', 'system')" @class([
-                            'py-2 px-3 rounded-lg text-sm font-semibold border transition',
+                            'py-2 px-2 rounded-lg text-xs font-semibold border transition',
                             'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300' => $backupScope === 'system',
                             'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300' => $backupScope !== 'system',
-                        ])>{{ __('Whole system') }}</button>
+                        ])>{{ __('System') }}</button>
                         <button type="button" wire:click="$set('backupScope', 'tenant')" @class([
-                            'py-2 px-3 rounded-lg text-sm font-semibold border transition',
+                            'py-2 px-2 rounded-lg text-xs font-semibold border transition',
                             'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300' => $backupScope === 'tenant',
                             'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300' => $backupScope !== 'tenant',
-                        ])>{{ __('Single tenant') }}</button>
+                        ])>{{ __('Single') }}</button>
+                        <button type="button" wire:click="$set('backupScope', 'selected')" @class([
+                            'py-2 px-2 rounded-lg text-xs font-semibold border transition',
+                            'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300' => $backupScope === 'selected',
+                            'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300' => $backupScope !== 'selected',
+                        ])>{{ __('Selected') }}</button>
                     </div>
 
                     @if($backupScope === 'tenant')
@@ -28,11 +33,20 @@
                                 <option value="{{ $id }}">{{ $name }}</option>
                             @endforeach
                         </select>
+                    @elseif($backupScope === 'selected')
+                        <div class="max-h-48 overflow-y-auto space-y-1 p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-xs">
+                            @foreach($tenantOptions as $id => $name)
+                                <label class="flex items-center gap-2 p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer">
+                                    <input type="checkbox" wire:model="selectedTenantIds" value="{{ $id }}" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                    <span class="text-gray-700 dark:text-gray-200">{{ $name }}</span>
+                                </label>
+                            @endforeach
+                        </div>
                     @endif
                 </div>
 
                 <button type="button" wire:click="triggerPlatformBackup" class="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm rounded-lg transition shadow-sm">
-                    {{ $backupScope === 'tenant' ? __('Generate Tenant Backup') : __('Generate Full Platform Backup') }}
+                    {{ $backupScope === 'tenant' ? __('Generate Tenant Backup') : ($backupScope === 'selected' ? __('Generate Selected Tenants Backup') : __('Generate Full Platform Backup')) }}
                 </button>
             </div>
 
