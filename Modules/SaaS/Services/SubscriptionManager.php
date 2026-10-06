@@ -84,11 +84,17 @@ class SubscriptionManager
 
                 $subscription = $invoice->subscription;
                 if ($subscription) {
-                    $nextDate = match ($subscription->billing_period) {
-                        'quarterly' => Carbon::now()->addMonths(3)->toDateString(),
-                        'yearly' => Carbon::now()->addYear()->toDateString(),
-                        default => Carbon::now()->addMonth()->toDateString(),
-                    };
+                    // The next billing date is the day after the period the
+                    // paid invoice covered, so a yearly payment advances the
+                    // cycle a full 12 months and lands on the tenant's billing
+                    // day of month.
+                    $nextDate = $invoice->period_end
+                        ? Carbon::parse($invoice->period_end)->addDay()->toDateString()
+                        : match ($subscription->billing_period) {
+                            'quarterly' => Carbon::now()->addMonths(3)->toDateString(),
+                            'yearly' => Carbon::now()->addYear()->toDateString(),
+                            default => Carbon::now()->addMonth()->toDateString(),
+                        };
 
                     $subscription->update([
                         'status' => 'active',
@@ -99,15 +105,19 @@ class SubscriptionManager
                 }
             }
 
-            $latestReceipt = SaaSReceipt::orderBy('id', 'DESC')->first();
+            $latestReceipt = SaaSReceipt::where('school_id', $transaction->school_id)
+                ->orderBy('id', 'DESC')
+                ->first();
+
             $nextSequence = 1;
             if ($latestReceipt) {
-                preg_match('/REC-SAAS-\d+-(\d+)/', $latestReceipt->receipt_number, $matches);
-                if (isset($matches[1])) {
-                    $nextSequence = ((int) $matches[1]) + 1;
+                $parts = explode('-', (string) $latestReceipt->receipt_number);
+                $last = (int) end($parts);
+                if ($last > 0) {
+                    $nextSequence = $last + 1;
                 }
             }
-            $receiptNumber = 'REC-SAAS-'.Carbon::now()->year.'-'.str_pad((string) $nextSequence, 5, '0', STR_PAD_LEFT);
+            $receiptNumber = 'REC-SAAS-'.$transaction->school_id.'-'.Carbon::now()->year.'-'.str_pad((string) $nextSequence, 5, '0', STR_PAD_LEFT);
 
             $receipt = SaaSReceipt::create([
                 'school_id' => $transaction->school_id,

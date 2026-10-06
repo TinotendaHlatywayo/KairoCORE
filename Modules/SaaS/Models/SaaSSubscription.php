@@ -20,7 +20,8 @@ class SaaSSubscription extends Model
         'uuid', 'school_id', 'saas_plan_id', 'billing_period', 'status',
         'trial_ends_at', 'starts_at', 'ends_at', 'grace_ends_at',
         'billing_start_date', 'billing_day_of_month',
-        'custom_price_monthly', 'credit_balance', 'next_payment_date',
+        'custom_price_monthly', 'custom_price_quarterly', 'custom_price_yearly',
+        'credit_balance', 'next_payment_date',
         'last_payment_date', 'auto_deactivate_after_days', 'dunning_days_before',
     ];
 
@@ -35,6 +36,8 @@ class SaaSSubscription extends Model
         'billing_day_of_month' => 'integer',
         'credit_balance' => 'decimal:2',
         'custom_price_monthly' => 'decimal:2',
+        'custom_price_quarterly' => 'decimal:2',
+        'custom_price_yearly' => 'decimal:2',
     ];
 
     protected static function boot(): void
@@ -85,11 +88,23 @@ class SaaSSubscription extends Model
     }
 
     /**
-     * Resolves the custom monthly price set by the Super Admin, falling back to the base plan price.
+     * Resolves the amount due for the subscription's current billing period.
+     * Custom per-tenant prices take precedence, then the plan's period price,
+     * then a multiple of the monthly price as a sensible fallback.
      */
     public function getBillingAmount(): float
     {
-        return (float) ($this->custom_price_monthly ?? $this->plan->price_monthly);
+        $monthly = (float) ($this->custom_price_monthly ?? $this->plan?->price_monthly ?? 0);
+
+        return match ($this->billing_period) {
+            'quarterly' => (float) ($this->custom_price_quarterly
+                ?? $this->plan?->price_quarterly
+                ?? ($monthly * 3)),
+            'yearly' => (float) ($this->custom_price_yearly
+                ?? $this->plan?->price_yearly
+                ?? ($monthly * 12)),
+            default => $monthly,
+        };
     }
 
     /**

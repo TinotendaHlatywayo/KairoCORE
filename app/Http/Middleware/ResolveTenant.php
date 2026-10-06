@@ -66,16 +66,24 @@ class ResolveTenant
         $baseHost = parse_url($baseDomain, PHP_URL_HOST) ?? $baseDomain;
 
         if ($host === $baseHost) {
-            if (Str::startsWith($request->path(), 'student')) {
-                abort(404, 'The student portal is only available under a school subdomain.');
+            // On the shared platform domain a school can still be reached by
+            // an explicit IP mapping (a Domain row whose "domain" is the
+            // requester's IP). Useful when subdomains are unavailable, e.g.
+            // local development or LAN deployments.
+            $school = $this->resolveSchoolByIp($request->ip());
+
+            if (! $school) {
+                if (Str::startsWith($request->path(), 'student')) {
+                    abort(404, 'The student portal is only available under a school subdomain.');
+                }
+
+                return $next($request);
             }
-
-            return $next($request);
-        }
-
-        $school = $this->resolveSchool($host, $baseHost);
-        if (! $school) {
-            abort(404, 'School platform domain not registered.');
+        } else {
+            $school = $this->resolveSchool($host, $baseHost);
+            if (! $school) {
+                abort(404, 'School platform domain not registered.');
+            }
         }
 
         if ($school->status === 'suspended') {
@@ -162,5 +170,25 @@ class ResolveTenant
 
             return $domainRecord?->school;
         });
+    }
+
+    /**
+     * Resolve a school from the requester's IP address via the domains table
+     * (where "domain" holds the IP). Only consulted on the shared/base host so
+     * a school stays reachable without its own subdomain (e.g. local dev).
+     */
+    protected function resolveSchoolByIp(?string $ip): ?School
+    {
+        if (empty($ip)) {
+            return null;
+        }
+
+        $school = Domain::query()
+            ->where('domain', $ip)
+            ->where('is_active', true)
+            ->first()
+            ?->school;
+
+        return $school && $school->status === 'active' ? $school : null;
     }
 }

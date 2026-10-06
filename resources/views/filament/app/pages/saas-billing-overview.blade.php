@@ -194,13 +194,34 @@
 
             <!-- Invoices Ledger panel -->
             <div class="rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                <div class="border-b border-slate-100 px-6 py-5 dark:border-slate-800/50 flex justify-between items-center">
+                <div class="border-b border-slate-100 px-6 py-5 dark:border-slate-800/50 flex flex-wrap gap-3 justify-between items-center">
                     <h3 class="text-sm font-bold text-slate-900 dark:text-white">{{ __('Active Licensing Invoices') }}</h3>
-                    
-                    <button wire:click="generateUpcomingBill" class="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-white">
-                        <x-heroicon-o-document-plus class="h-3.5 w-3.5"/>
-                        {{ __('Create New Invoice Statement') }}
-                    </button>
+
+                    <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-1.5 bg-slate-100 p-0.5 rounded-lg dark:bg-slate-950">
+                            <span wire:ignore class="px-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">{{ __('Term') }}</span>
+                            <button type="button" wire:click="$set('billingTerm', 'monthly')" @class([
+                                'px-2.5 py-1 rounded-md text-xs font-bold transition-all',
+                                'bg-white text-indigo-600 shadow-sm dark:bg-slate-800 dark:text-white' => $billingTerm === 'monthly',
+                                'text-slate-500' => $billingTerm !== 'monthly'
+                            ])>{{ __('Monthly') }}</button>
+                            <button type="button" wire:click="$set('billingTerm', 'quarterly')" @class([
+                                'px-2.5 py-1 rounded-md text-xs font-bold transition-all',
+                                'bg-white text-indigo-600 shadow-sm dark:bg-slate-800 dark:text-white' => $billingTerm === 'quarterly',
+                                'text-slate-500' => $billingTerm !== 'quarterly'
+                            ])>{{ __('Quarterly') }}</button>
+                            <button type="button" wire:click="$set('billingTerm', 'yearly')" @class([
+                                'px-2.5 py-1 rounded-md text-xs font-bold transition-all',
+                                'bg-white text-indigo-600 shadow-sm dark:bg-slate-800 dark:text-white' => $billingTerm === 'yearly',
+                                'text-slate-500' => $billingTerm !== 'yearly'
+                            ])>{{ __('Whole year') }}</button>
+                        </div>
+
+                        <button wire:click="generateUpcomingBill" class="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-white">
+                            <x-heroicon-o-document-plus class="h-3.5 w-3.5"/>
+                            {{ __('Create New Invoice Statement') }}
+                        </button>
+                    </div>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse text-xs">

@@ -57,6 +57,8 @@ class SaaSBillingOverview extends Page
 
     public string $checkoutCurrency = 'USD';
 
+    public string $billingTerm = 'monthly'; // monthly | quarterly | yearly
+
     public float $conversionRate = 26.7231; // Exchange rate used for ZiG conversions
 
     // Manual Payment Form properties
@@ -149,6 +151,13 @@ class SaaSBillingOverview extends Page
 
     public function generateUpcomingBill(): void
     {
+        $term = in_array($this->billingTerm, ['monthly', 'quarterly', 'yearly'], true)
+            ? $this->billingTerm
+            : 'monthly';
+
+        $this->subscription->update(['billing_period' => $term]);
+        $this->subscription->refresh();
+
         $invoice = app(BillingService::class)->generateUpcomingInvoice($this->subscription);
 
         Notification::make()
