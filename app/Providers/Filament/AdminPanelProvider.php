@@ -114,9 +114,9 @@ class AdminPanelProvider extends PanelProvider
                 fn () => Blade::render('@livewire(\'admin-language-switcher\')')
             )
             // Platform notification centre: live date/time trigger + notification
-            // dropdown, mirroring the tenant workspace Command Center.
+            // dropdown, placed at the exact center of the top bar.
             ->renderHook(
-                PanelsRenderHook::TOPBAR_END,
+                PanelsRenderHook::GLOBAL_SEARCH_AFTER,
                 fn () => Blade::render('@livewire(\'platform-command-center\')')
             )
             ->middleware([
