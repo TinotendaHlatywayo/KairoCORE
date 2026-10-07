@@ -4,7 +4,6 @@ namespace Modules\SaaS\Services;
 
 use App\Mail\SaaS\PlatformBillingMail;
 use App\Models\User;
-use App\Notifications\PlatformMessageNotification;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -12,8 +11,6 @@ use Illuminate\Support\Facades\Mail;
 use Modules\SaaS\Models\PlatformBillingMessageTemplate;
 use Modules\SaaS\Models\PlatformBillingNotificationLog;
 use Modules\SaaS\Models\PlatformBillingSetting;
-use Modules\SaaS\Models\PlatformMessage;
-use Modules\SaaS\Models\PlatformMessageRecipient;
 use Modules\SaaS\Models\SaaSInvoice;
 use Modules\SaaS\Models\SaaSSubscription;
 
@@ -172,28 +169,23 @@ class BillingNotificationService
      */
     protected function applicableTemplateKeys(int $offset, PlatformBillingSetting $settings): array
     {
-        $schedule = [
-            -1 * $settings->remind_days_before => 'billing_reminder',
-            -1 * $settings->day_before_reminder_offset => 'billing_day_before',
-            0 => 'billing_due_today',
-            $settings->overdue_reminder_offset => 'billing_overdue',
-            $settings->suspension_warning_offset => 'billing_suspension_warning',
-            $settings->suspension_offset => 'billing_suspended',
-        ];
+        // Multiple templates may legitimately share the same offset (for
+        // example when "days before" and "day before" are configured to the
+        // same number). Accumulate into a list per offset instead of using the
+        // offset as the array key, which would silently overwrite one template
+        // with another.
+        $schedule = [];
+        $schedule[-1 * $settings->remind_days_before][] = 'billing_reminder';
+        $schedule[-1 * $settings->day_before_reminder_offset][] = 'billing_day_before';
+        $schedule[0][] = 'billing_due_today';
+        $schedule[$settings->overdue_reminder_offset][] = 'billing_overdue';
+        $schedule[$settings->suspension_warning_offset][] = 'billing_suspension_warning';
+        $schedule[$settings->suspension_offset][] = 'billing_suspended';
 
-        $keys = [];
-        foreach ($schedule as $scheduleOffset => $key) {
-            if ($scheduleOffset === $offset) {
-                $keys[] = $key;
-            }
-        }
+        $keys = $schedule[$offset] ?? [];
 
         if ($offset === 0 && $settings->notify_super_admin_on_billing) {
             $keys[] = 'super_admin_billing_alert';
-        }
-
-        if ($offset === (-1 * $settings->day_before_reminder_offset) && $settings->notify_super_admin_on_billing) {
-            $keys[] = 'super_admin_billing_alert_day_before';
         }
 
         return $keys;
@@ -282,33 +274,24 @@ class BillingNotificationService
     /**
      * Creates an in-app platform message for every user of the school and
      * raises the database notification.
+     *
+     * Delegates to {@see PlatformMessagingService} so automated billing notices
+     * travel the exact same delivery/tracking path as manually-sent platform
+     * messages (recipient rows, chunked notification fan-out, optional email).
      */
     protected function sendPlatformMessage(int $schoolId, string $subject, string $body): int
     {
-        $message = PlatformMessage::create([
-            'sender_type' => 'platform',
-            'sender_user_id' => null,
-            'school_id' => null,
-            'recipient_type' => 'school',
-            'recipient_scope' => 'single',
-            'subject' => $subject,
-            'body' => $body,
-            'priority' => 'important',
-            'channel' => 'platform_message',
-        ]);
+        app(PlatformMessagingService::class)->sendFromPlatform(
+            actor: null,
+            subject: $subject,
+            body: $body,
+            priority: 'important',
+            scope: 'single',
+            schoolIds: [$schoolId],
+            channel: 'platform_message',
+        );
 
-        PlatformMessageRecipient::create([
-            'message_id' => $message->id,
-            'school_id' => $schoolId,
-            'status' => 'sent',
-        ]);
-
-        $users = User::query()->where('school_id', $schoolId)->get();
-        foreach ($users as $user) {
-            $user->notify(new PlatformMessageNotification($message));
-        }
-
-        return $users->count();
+        return User::query()->where('school_id', $schoolId)->count();
     }
 
     protected function suspend(SaaSSubscription $subscription): void

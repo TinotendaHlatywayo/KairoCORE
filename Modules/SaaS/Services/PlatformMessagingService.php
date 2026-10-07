@@ -23,11 +23,13 @@ class PlatformMessagingService
     /**
      * Platform (super admin) -> tenant(s).
      *
+     * @param  User|null  $actor  The sending admin, or NULL for system messages
+     *                            (e.g. automated billing notices).
      * @param  array<int>  $schoolIds  Explicit target school ids (for 'single'/'selected').
      * @param  array|null  $targetMeta  Snapshot of the criteria used for targeting (for audit).
      */
     public function sendFromPlatform(
-        User $actor,
+        ?User $actor,
         string $subject,
         string $body,
         string $priority = 'normal',
@@ -39,7 +41,7 @@ class PlatformMessagingService
         return DB::transaction(function () use ($actor, $subject, $body, $priority, $scope, $schoolIds, $targetMeta, $channel) {
             $message = PlatformMessage::create([
                 'sender_type' => 'platform',
-                'sender_user_id' => $actor->id,
+                'sender_user_id' => $actor?->id,
                 'school_id' => null,
                 'recipient_type' => 'school',
                 'recipient_scope' => $scope,
