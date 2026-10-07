@@ -50,11 +50,17 @@ class PlatformBillingSettingsPage extends Page implements HasForms
 
     public function mount(): void
     {
-        $this->form->fill(PlatformBillingSetting::current()->attributesToArray());
-        
-        // Load SaaS billing settings (including Paynow credentials)
-        $saasSettings = SaaSBillingSetting::getActiveSettings();
-        $this->form->fill(array_merge($this->form->getState(), $saasSettings->attributesToArray()));
+        $platform = PlatformBillingSetting::current();
+        $saas = SaaSBillingSetting::getActiveSettings();
+
+        $this->form->fill(array_merge(
+            $platform->attributesToArray(),
+            [
+                'paynow_integration_id' => $saas->resolvedPaynowIntegrationId(),
+                'paynow_integration_key' => $saas->resolvedPaynowIntegrationKey(),
+                'paynow_merchant_email' => $saas->resolvedPaynowMerchantEmail(),
+            ]
+        ));
     }
 
     public function form(Form $form): Form
@@ -118,18 +124,19 @@ class PlatformBillingSettingsPage extends Page implements HasForms
                             ->label(__('Paynow Integration ID'))
                             ->helperText(__('Your Paynow Integration ID'))
                             ->maxLength(100)
-                            ->default(env('PAYNOW_INTEGRATION_ID', '25965')),
+                            ->default(env('PAYNOW_INTEGRATION_ID') ?: SaaSBillingSetting::PAYNOW_FALLBACK_ID),
                         TextInput::make('paynow_integration_key')
                             ->label(__('Paynow Integration Key'))
                             ->helperText(__('Your Paynow Integration Key'))
                             ->maxLength(100)
                             ->password()
-                            ->default(env('PAYNOW_INTEGRATION_KEY', '669ac21f-1216-40b0-9623-91c489caca35')),
+                            ->revealable()
+                            ->default(env('PAYNOW_INTEGRATION_KEY') ?: SaaSBillingSetting::PAYNOW_FALLBACK_KEY),
                         TextInput::make('paynow_merchant_email')
                             ->label(__('Paynow Merchant Email'))
                             ->email()
                             ->maxLength(150)
-                            ->default(env('PAYNOW_MERCHANT_EMAIL', 'twaynehlatywayo09@gmail.com')),
+                            ->default(env('PAYNOW_MERCHANT_EMAIL') ?: SaaSBillingSetting::PAYNOW_FALLBACK_EMAIL),
                     ]),
             ])
             ->statePath('data');

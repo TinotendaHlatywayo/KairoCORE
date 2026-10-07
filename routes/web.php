@@ -448,6 +448,12 @@ Route::middleware(['tenant', 'auth', 'throttle:rate_limit:exports'])->group(func
         ->name('application.document.view');
 });
 
+// Platform recovery archive download (super admin only, central host)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/platform/backups/{backup}/download', [\App\Http\Controllers\Platform\PlatformBackupDownloadController::class, 'download'])
+        ->name('platform.backups.download');
+});
+
 // Central SaaS Invoice & Receipt Download Endpoints
 Route::middleware(['auth'])->group(function () {
     Route::get('/saas/invoice/{uuid}/download', [InvoiceDownloadController::class, 'download'])
