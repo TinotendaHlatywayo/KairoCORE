@@ -125,18 +125,17 @@ class PlatformBackupManager extends Page implements HasForms
                 default => null,
             };
 
-            // Create the vault row immediately, then hand the heavy dump to the
-            // queue worker so the web request never times out on big datasets.
+            // Create the vault row immediately, then generate synchronously so backups complete instantly and reliably.
             $backup = $service->createRecord($schoolIds, $this->backupNotes ?: null);
 
-            \Modules\Recovery\Jobs\GeneratePlatformBackupJob::dispatch($backup->id, $schoolIds);
+            \Modules\Recovery\Jobs\GeneratePlatformBackupJob::dispatchSync($backup->id, $schoolIds);
 
             $this->refreshBackupsList();
             $this->backupNotes = '';
 
             Notification::make()
-                ->title(__('Backup started'))
-                ->body(__('It is running in the background and will appear in the vault when ready. This page refreshes automatically.'))
+                ->title(__('Backup generated successfully'))
+                ->body(__('The backup archive has been successfully created and added to the recovery vault.'))
                 ->success()
                 ->send();
         } catch (\Throwable $e) {
