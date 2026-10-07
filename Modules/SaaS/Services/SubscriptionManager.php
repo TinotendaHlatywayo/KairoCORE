@@ -75,7 +75,23 @@ class SubscriptionManager
 
     public function processTransactionVerification(SaaSTransaction $transaction): SaaSReceipt
     {
+        // Idempotency guard: the webhook, the status poll, the sandbox
+        // simulator and the manual bank approval can all reach this method for
+        // the same payment. A transaction may only ever produce ONE receipt,
+        // expense and email, so an existing receipt short-circuits immediately.
+        if ($existing = SaaSReceipt::where('saas_transaction_id', $transaction->id)->first()) {
+            return $existing;
+        }
+
         return DB::transaction(function () use ($transaction) {
+            // Re-check under a row lock to close the check-then-insert race
+            // between concurrent confirmations of the same transaction.
+            SaaSTransaction::whereKey($transaction->id)->lockForUpdate()->first();
+
+            if ($existing = SaaSReceipt::where('saas_transaction_id', $transaction->id)->first()) {
+                return $existing;
+            }
+
             $transaction->update(['status' => 'completed', 'processed_at' => Carbon::now()]);
 
             $invoice = $transaction->invoice;

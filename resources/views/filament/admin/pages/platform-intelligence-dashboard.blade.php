@@ -135,7 +135,7 @@
             <div class="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 overflow-hidden">
                 <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
                     <h3 class="text-base font-bold text-slate-900 dark:text-white">{{ __('Outstanding Unpaid Invoices') }}</h3>
-                    <a href="/platform/saas-invoices" class="text-xs font-bold text-indigo-600 hover:underline">{{ __('View All →') }}</a>
+                    <a href="{{ \App\Filament\Admin\Resources\SaaSInvoiceResource::getUrl(panel: 'admin') }}" class="text-xs font-bold text-indigo-600 hover:underline">{{ __('View All →') }}</a>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse text-xs">
