@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Pages;
 
+use App\Models\School;
 use Filament\Forms;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
@@ -56,7 +57,7 @@ class PlatformBackupManager extends Page implements HasForms
     public function mount(): void
     {
         $this->form->fill();
-        $this->tenantOptions = \App\Models\School::query()->orderBy('name')->pluck('name', 'id')->all();
+        $this->tenantOptions = School::query()->orderBy('name')->pluck('name', 'id')->all();
         $this->refreshBackupsList();
     }
 
@@ -104,7 +105,7 @@ class PlatformBackupManager extends Page implements HasForms
             ->statePath('uploadData');
     }
 
-    public function triggerPlatformBackup(PlatformBackupService $service): void
+    public function triggerPlatformBackup(): void
     {
         if ($this->backupScope === 'tenant' && ! $this->tenantSchoolId) {
             Notification::make()->title(__('Select a tenant to back up'))->danger()->send();
@@ -118,6 +119,8 @@ class PlatformBackupManager extends Page implements HasForms
             return;
         }
 
+        $service = app(PlatformBackupService::class);
+
         try {
             $schoolIds = match ($this->backupScope) {
                 'tenant' => [(int) $this->tenantSchoolId],
@@ -128,7 +131,7 @@ class PlatformBackupManager extends Page implements HasForms
             // Create the vault row immediately, then generate synchronously so backups complete instantly and reliably.
             $backup = $service->createRecord($schoolIds, $this->backupNotes ?: null);
 
-            \Modules\Recovery\Jobs\GeneratePlatformBackupJob::dispatchSync($backup->id, $schoolIds);
+            GeneratePlatformBackupJob::dispatchSync($backup->id, $schoolIds);
 
             $this->refreshBackupsList();
             $this->backupNotes = '';
@@ -276,7 +279,7 @@ class PlatformBackupManager extends Page implements HasForms
 
         // Restores touch every table and can run for minutes, so they run on
         // the queue worker too — never inside the web request.
-        \Modules\Recovery\Jobs\RestorePlatformBackupJob::dispatch($log->id);
+        RestorePlatformBackupJob::dispatch($log->id);
 
         $this->refreshBackupsList();
 
