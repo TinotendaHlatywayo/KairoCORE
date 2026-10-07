@@ -4,53 +4,91 @@ namespace Modules\Recovery\Services;
 
 use Exception;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Modules\Recovery\Models\PlatformBackup;
 use ZipArchive;
 
 class PlatformBackupService
 {
-    public function executeFullBackup(int|array|null $schools = null): PlatformBackup
+    /**
+     * Build a recovery archive.
+     *
+     * @param  int|array<int,int>|null  $schools  null = whole platform, int = one tenant, array = selected tenants
+     * @param  string|null  $notes  A free-text note shown in the recovery vault / restore picker
+     */
+    public function executeFullBackup(int|array|null $schools = null, ?string $notes = null): PlatformBackup
+    {
+        $schoolIds = $this->normalizeSchools($schools);
+        $record = $this->createRecord($schoolIds, $notes);
+
+        return $this->generate($record, $schoolIds);
+    }
+
+    /**
+     * Create the vault row up front so the UI can show a queued/pending run
+     * immediately, then dispatch the heavy generation to a worker.
+     *
+     * @param  array<int,int>|null  $schoolIds
+     */
+    public function createRecord(?array $schoolIds, ?string $notes): PlatformBackup
     {
         $timestamp = now()->format('Y-m-d_His');
-        $schoolIds = is_array($schools) ? $schools : ($schools ? [$schools] : null);
-        $scope = empty($schoolIds) ? 'system' : (count($schoolIds) === 1 ? 'tenant' : 'selected_tenants');
-        
-        $label = match($scope) {
-            'system' => 'PLATFORM',
-            'tenant' => "TENANT_{$schoolIds[0]}",
+        $scope = empty($schoolIds) ? 'system' : 'tenant';
+
+        $label = match (true) {
+            $scope === 'system' => 'PLATFORM',
+            count($schoolIds) === 1 => "TENANT_{$schoolIds[0]}",
             default => 'SELECTED_TENANTS',
         };
 
         $fileName = "Kairo CORE_{$label}_SNAP_{$timestamp}.zip";
-        $tempPath = storage_path('app/platform_temp_snapshots');
 
-        if (! file_exists($tempPath)) {
-            mkdir($tempPath, 0777, true);
-        }
-
-        $backupRecord = PlatformBackup::create([
+        return PlatformBackup::create([
             'filename' => $fileName,
-            'scope' => $scope === 'selected_tenants' ? 'tenant' : $scope,
+            'scope' => $scope,
             'school_id' => count($schoolIds ?? []) === 1 ? $schoolIds[0] : null,
+            'notes' => $notes,
             'status' => 'pending',
         ]);
+    }
+
+    /**
+     * @param  array<int,int>|null  $schoolIds
+     */
+    public function generate(PlatformBackup $backupRecord, ?array $schoolIds): PlatformBackup
+    {
+        // Streaming the dump keeps memory flat regardless of table size, but a
+        // large platform can still take a while — never let PHP kill it midway.
+        if (function_exists('set_time_limit')) {
+            @set_time_limit(0);
+        }
+
+        $fileName = $backupRecord->filename;
+        $scope = $backupRecord->scope;
+
+        // Per-run scratch directory so concurrent runs never collide.
+        $workDir = storage_path('app/platform_temp_snapshots/'.uniqid('snap_', true));
+        File::ensureDirectoryExists($workDir, 0777, true);
 
         try {
+            $sqlFile = "{$workDir}/backup_payload.sql";
+            $this->writeDatabaseDump($sqlFile, $schoolIds);
+
+            $zipFile = "{$workDir}/{$fileName}";
             $zip = new ZipArchive;
-            $zipFile = "{$tempPath}/{$fileName}";
 
             if ($zip->open($zipFile, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
-                throw new Exception('Unable to write temporary backup zip folder.');
+                throw new Exception('Unable to create the backup archive.');
             }
 
-            // Generate full database snapshot
-            $sqlContent = $this->compileFullSchemaAndData($schoolIds);
-            $zip->addFromString('backup_payload.sql', $sqlContent);
+            $zip->addFile($sqlFile, 'backup_payload.sql');
             $zip->addFromString('backup_meta.json', json_encode([
-                'scope' => $backupRecord->scope,
+                'scope' => $scope,
                 'school_id' => $backupRecord->school_id,
                 'school_ids' => $schoolIds,
+                'notes' => $backupRecord->notes,
                 'generated_at' => now()->toIso8601String(),
                 'app_version' => config('app.version', 'unknown'),
             ], JSON_PRETTY_PRINT));
@@ -59,121 +97,156 @@ class PlatformBackupService
             $size = filesize($zipFile);
             $checksum = hash_file('sha256', $zipFile);
 
-            // Copy file to local backups disk
-            $stream = fopen($zipFile, 'r+');
-            Storage::disk('local')->put("backups/{$fileName}", $stream);
-            fclose($stream);
-
-            @unlink($zipFile);
-            @rmdir($tempPath);
+            // Persist into the same local disk the vault reads from. put() with
+            // a stream copies from disk rather than buffering the archive in PHP.
+            Storage::disk('local')->put("backups/{$fileName}", fopen($zipFile, 'r'));
+            File::deleteDirectory($workDir);
 
             $backupRecord->update([
                 'size_bytes' => $size,
                 'checksum' => $checksum,
                 'status' => 'completed',
                 'is_verified' => true,
+                'error_log' => null,
             ]);
 
             return $backupRecord;
+        } catch (\Throwable $e) {
+            File::deleteDirectory($workDir);
 
-        } catch (Exception $e) {
-            if (file_exists($tempPath)) {
-                @array_map('unlink', glob("$tempPath/*"));
-                @rmdir($tempPath);
-            }
             $backupRecord->update([
                 'status' => 'failed',
                 'error_log' => $e->getMessage(),
             ]);
+
             throw $e;
         }
     }
 
-    private function compileFullSchemaAndData(array|int|null $schools = null): string
+    /**
+     * @return array<int,int>|null
+     */
+    public function normalizeSchools(int|array|null $schools): ?array
     {
-        $database = DB::getDatabaseName();
-        $skipTables = ['platform_backups', 'platform_restore_logs'];
-        $schoolIds = is_array($schools) ? $schools : ($schools ? [$schools] : null);
-
-        if (empty($schoolIds)) {
-            return $this->compileSystemSnapshot($skipTables);
+        if ($schools === null) {
+            return null;
         }
 
-        return $this->compileTenantSnapshot($database, $schoolIds, $skipTables);
+        $ids = is_array($schools) ? $schools : [$schools];
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
+
+        return $ids === [] ? null : $ids;
     }
 
-    private function compileSystemSnapshot(array $skipTables): string
+    /**
+     * Stream the SQL dump straight to disk, one row at a time, so that neither
+     * the whole table nor the whole script ever lives in PHP memory.
+     *
+     * @param  array<int,int>|null  $schoolIds
+     */
+    private function writeDatabaseDump(string $sqlFile, ?array $schoolIds): void
     {
-        $sql = "-- Full system snapshot\n";
-        $sql .= '-- Generated: '.now()->toDateTimeString()."\n\n";
-        $sql .= "SET FOREIGN_KEY_CHECKS=0;\n";
+        $handle = fopen($sqlFile, 'w');
 
-        foreach ($this->allTables() as $table) {
-            if (in_array($table, $skipTables, true)) {
-                continue;
-            }
-
-            $createTableStmt = DB::select("SHOW CREATE TABLE `{$table}`");
-            if (! empty($createTableStmt)) {
-                $sql .= "DROP TABLE IF EXISTS `{$table}`;\n";
-                $sql .= $createTableStmt[0]->{'Create Table'}.";\n\n";
-            }
-
-            foreach (DB::table($table)->get() as $row) {
-                $sql .= $this->insertRow($table, (array) $row);
-            }
-            $sql .= "\n";
+        if ($handle === false) {
+            throw new Exception('Unable to open the temporary SQL file for writing.');
         }
 
-        $sql .= "SET FOREIGN_KEY_CHECKS=1;\n";
+        $skipTables = ['platform_backups', 'platform_restore_logs', 'sessions', 'cache', 'cache_locks', 'jobs', 'job_batches', 'failed_jobs'];
 
-        return $sql;
+        fwrite($handle, "-- Kairo CORE recovery snapshot\n");
+        fwrite($handle, '-- Generated: '.now()->toIso8601String()."\n");
+        fwrite($handle, $schoolIds === null
+            ? "-- Scope: whole platform\n\n"
+            : '-- Scope: tenant(s) '.implode(',', $schoolIds)."\n\n");
+        fwrite($handle, "SET FOREIGN_KEY_CHECKS=0;\n");
+
+        if ($schoolIds === null) {
+            foreach ($this->allTables() as $table) {
+                if (in_array($table, $skipTables, true)) {
+                    continue;
+                }
+                $this->dumpStructure($handle, $table);
+                $this->dumpRows($handle, $table, null);
+            }
+        } else {
+            $tenantTables = $this->tenantTables();
+            $userIds = DB::table('users')->whereIn('school_id', $schoolIds)->pluck('id')->all();
+            $userList = empty($userIds) ? '0' : implode(',', array_map('intval', $userIds));
+            $schoolList = implode(',', $schoolIds);
+
+            foreach ($this->allTables() as $table) {
+                if (in_array($table, $skipTables, true)) {
+                    continue;
+                }
+
+                if ($table === 'schools') {
+                    $where = "id IN ({$schoolList})";
+                } elseif (in_array($table, $tenantTables, true)) {
+                    $where = "school_id IN ({$schoolList})";
+                } elseif (in_array($table, ['model_has_roles', 'model_has_permissions'], true)) {
+                    $where = "model_id IN ({$userList})";
+                } else {
+                    continue;
+                }
+
+                // Scoped replace: never drop the table, only clear this tenant's rows.
+                fwrite($handle, "DELETE FROM `{$table}` WHERE {$where};\n");
+                $this->dumpRows($handle, $table, $where);
+            }
+        }
+
+        fwrite($handle, "SET FOREIGN_KEY_CHECKS=1;\n");
+        fclose($handle);
     }
 
-    private function compileTenantSnapshot(string $database, array $schoolIds, array $skipTables): string
+    private function dumpStructure($handle, string $table): void
     {
-        $tenantTables = DB::table('information_schema.columns')
-            ->where('table_schema', $database)
+        $create = DB::select("SHOW CREATE TABLE `{$table}`");
+        if (! empty($create)) {
+            $row = (array) $create[0];
+            $ddl = $row['Create Table'] ?? array_values($row)[1] ?? null;
+            if ($ddl) {
+                fwrite($handle, "DROP TABLE IF EXISTS `{$table}`;\n{$ddl};\n");
+            }
+        }
+    }
+
+    /**
+     * @param  string|null  $where  raw WHERE clause for tenant scoping, null = all rows
+     */
+    private function dumpRows($handle, string $table, ?string $where): void
+    {
+        $query = DB::table($table)->when($where !== null, fn ($q) => $q->whereRaw($where));
+
+        if (Schema::hasColumn($table, 'id')) {
+            // Chunked reads release each batch, so memory stays flat even when a
+            // table holds hundreds of thousands of rows.
+            foreach ($query->orderBy('id')->lazyById(1000, 'id') as $row) {
+                fwrite($handle, $this->insertRow($table, (array) $row));
+            }
+        } else {
+            foreach ($query->cursor() as $row) {
+                fwrite($handle, $this->insertRow($table, (array) $row));
+            }
+        }
+    }
+
+    /**
+     * @return array<int,string>
+     */
+    private function tenantTables(): array
+    {
+        return DB::table('information_schema.columns')
+            ->where('table_schema', DB::getDatabaseName())
             ->where('column_name', 'school_id')
             ->pluck('table_name')
             ->all();
-
-        $userIds = DB::table('users')->whereIn('school_id', $schoolIds)->pluck('id')->all();
-        $userList = empty($userIds) ? '0' : implode(',', array_map('intval', $userIds));
-        $schoolList = implode(',', array_map('intval', $schoolIds));
-
-        $sql = "-- Tenants snapshot (school_ids: {$schoolList})\n";
-        $sql .= '-- Generated: '.now()->toDateTimeString()."\n\n";
-        $sql .= "SET FOREIGN_KEY_CHECKS=0;\n";
-
-        foreach ($this->allTables() as $table) {
-            if (in_array($table, $skipTables, true)) {
-                continue;
-            }
-
-            if ($table === 'schools') {
-                $where = "id IN ({$schoolList})";
-            } elseif (in_array($table, $tenantTables, true)) {
-                $where = "school_id IN ({$schoolList})";
-            } elseif (in_array($table, ['model_has_roles', 'model_has_permissions'], true)) {
-                $where = "model_id IN ({$userList})";
-            } else {
-                continue;
-            }
-
-            // Scoped delete (never drop the table) then re-insert these tenants' rows only.
-            $sql .= "DELETE FROM `{$table}` WHERE {$where};\n";
-            foreach (DB::table($table)->whereRaw($where)->get() as $row) {
-                $sql .= $this->insertRow($table, (array) $row);
-            }
-            $sql .= "\n";
-        }
-
-        $sql .= "SET FOREIGN_KEY_CHECKS=1;\n";
-
-        return $sql;
     }
 
+    /**
+     * @return array<int,string>
+     */
     private function allTables(): array
     {
         return DB::table('information_schema.tables')
@@ -187,7 +260,7 @@ class PlatformBackupService
     {
         $keys = array_map(fn ($k) => "`{$k}`", array_keys($row));
         $values = array_map(function ($v) {
-            return is_null($v) ? 'NULL' : DB::getPdo()->quote($v);
+            return is_null($v) ? 'NULL' : DB::getPdo()->quote((string) $v);
         }, array_values($row));
 
         return "INSERT INTO `{$table}` (".implode(', ', $keys).') VALUES ('.implode(', ', $values).");\n";

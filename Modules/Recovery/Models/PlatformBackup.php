@@ -15,6 +15,7 @@ class PlatformBackup extends Model
         'filename',
         'scope',
         'school_id',
+        'notes',
         'size_bytes',
         'checksum',
         'disk',
