@@ -1,32 +1,88 @@
 @php
+    use Filament\Support\Colors\Color;
+
     /**
      * Platform (admin) console theme.
      *
-     * Mirrors the school workspace "Developer's Choice 1 (Indigo + Cyan Blend)"
-     * design language: fixed brand tokens, the same sidebar/topbar polish and
-     * the animated gradient buttons driven by `data-sc-theme="dev_choice_1"`.
+     * The school workspace uses the "Developer's Choice 1 (Indigo + Cyan Blend)"
+     * language. The platform keeps that same base design but colour-codes each
+     * navigation area so the super-admin console is visually organised:
      *
-     * The school panel resolves these from the tenant's SystemSettings via
-     * modules.cms.dynamic-styles; the platform has no tenant, so the tokens are
-     * hard-set here to keep the two consoles visually consistent in both light
-     * and dark mode.
+     *   core          Indigo + Cyan   Command Center, Tenants, Intelligence, System Health
+     *   communication  Sky + Violet    Platform Messages, Billing Messages, Announcements
+     *   billing        Emerald + Teal  Plans, Subscriptions, Invoices, Payments, Billing Settings
+     *   operations     Amber + Orange  Backup Manager, Maintenance, Templates, Audit Logs
+     *
+     * Filament emits its palette as `:root { --primary-*: R, G, B }` inside
+     * `@filamentStyles` (early in <head>). This partial renders at HEAD_END, so
+     * re-declaring those variables here overrides every Filament component,
+     * form focus ring and the shared filament-custom.css accents per category.
      */
-    $primary = '#4f46e5'; // Indigo 600
-    $accent = '#06b6d4';  // Cyan 500
-    $glow = 'rgba(79, 70, 229, 0.12)';
+    $map = [
+        'filament.admin.pages.dashboard' => 'core',
+        'filament.admin.resources.schools' => 'core',
+        'filament.admin.resources.tenant-healths' => 'core',
+        'filament.admin.pages.platform-intelligence-dashboard' => 'core',
+
+        'filament.admin.resources.platform-messages' => 'communication',
+        'filament.admin.resources.platform-billing-messages' => 'communication',
+        'filament.admin.resources.platform-announcements' => 'communication',
+
+        'filament.admin.resources.saa-s-plans' => 'billing',
+        'filament.admin.resources.school-subscriptions' => 'billing',
+        'filament.admin.resources.saa-s-invoices' => 'billing',
+        'filament.admin.resources.saa-s-transactions' => 'billing',
+        'filament.admin.resources.pending-payments' => 'billing',
+        'filament.admin.pages.platform-billing-settings-page' => 'billing',
+
+        'filament.admin.pages.platform-backup-manager' => 'operations',
+        'filament.admin.pages.platform-maintenance-page' => 'operations',
+        'filament.admin.resources.platform-templates' => 'operations',
+        'filament.admin.resources.platform-audit-logs' => 'operations',
+    ];
+
+    $routeName = request()->route()?->getName() ?? '';
+
+    $category = 'core';
+
+    foreach ($map as $prefix => $cat) {
+        if ($routeName === $prefix || str_starts_with($routeName, $prefix.'.')) {
+            $category = $cat;
+            break;
+        }
+    }
+
+    $palette = [
+        'core' => ['shades' => Color::Indigo, 'accent' => '#06b6d4'],
+        'communication' => ['shades' => Color::Sky, 'accent' => '#8b5cf6'],
+        'billing' => ['shades' => Color::Emerald, 'accent' => '#14b8a6'],
+        'operations' => ['shades' => Color::Amber, 'accent' => '#f97316'],
+    ];
+
+    $shades = $palette[$category]['shades'];
+    $accent = $palette[$category]['accent'];
+    $primary = $shades[600];
+    $primaryHex = sprintf(
+        '#%02x%02x%02x',
+        ...array_map('intval', array_map('trim', explode(',', $primary)))
+    );
 @endphp
 
 <script>
     // Applied before paint so themed CSS (moving gradients, accents) is live
     // on first frame and there is no flash of an unthemed console.
     document.documentElement.setAttribute('data-sc-theme', 'dev_choice_1');
+    document.documentElement.setAttribute('data-sc-category', '{{ $category }}');
 </script>
 
 <style>
     :root {
-        --theme-primary: {{ $primary }};
+        @foreach ($shades as $shade => $value)
+        --primary-{{ $shade }}: {{ $value }};
+        @endforeach
+        --theme-primary: {{ $primaryHex }};
         --theme-accent: {{ $accent }};
-        --theme-glow: {{ $glow }};
+        --theme-glow: rgba({{ $primary }}, 0.12);
         --theme-font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
         --theme-radius: 16px;
     }
@@ -79,7 +135,7 @@
         overflow: visible !important;
     }
 
-    /* Brand-coloured active nav + header accents use the theme tokens. */
+    /* Brand-coloured active nav + header accents use the category tokens. */
     .fi-sidebar-item.fi-active > .fi-sidebar-item-btn {
         background: color-mix(in srgb, var(--theme-primary) 10%, transparent) !important;
     }
@@ -90,6 +146,6 @@
         background: color-mix(in srgb, var(--theme-primary) 22%, transparent) !important;
     }
     .dark .fi-sidebar-item.fi-active > .fi-sidebar-item-btn > .fi-sidebar-item-label {
-        color: #c7d2fe !important;
+        color: color-mix(in srgb, var(--theme-primary) 45%, white) !important;
     }
 </style>
