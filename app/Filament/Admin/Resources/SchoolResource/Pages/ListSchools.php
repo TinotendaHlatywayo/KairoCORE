@@ -14,6 +14,16 @@ class ListSchools extends ListRecords
 {
     protected static string $resource = SchoolResource::class;
 
+    public function getHeading(): string
+    {
+        return __('Institution & Tenant Management');
+    }
+
+    public function getSubheading(): ?string
+    {
+        return __('Manage registered school workspaces, review pending onboarding requests, monitor subscriptions, and access school environments securely.');
+    }
+
     public function mount(): void
     {
         parent::mount();
