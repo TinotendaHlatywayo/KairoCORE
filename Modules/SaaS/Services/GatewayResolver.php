@@ -16,18 +16,11 @@ class GatewayResolver
     {
         $settings = SaaSBillingSetting::getActiveSettings();
 
-        $paynowId = (! empty($settings->paynow_integration_id) && $settings->paynow_integration_id !== '12345')
-            ? $settings->paynow_integration_id
-            : env('PAYNOW_INTEGRATION_ID', '25965');
-
-        $paynowKey = ! empty($settings->paynow_integration_key)
-            ? $settings->paynow_integration_key
-            : env('PAYNOW_INTEGRATION_KEY', '669ac21f-1216-40b0-9623-91c489caca35');
-
         return match ($gatewayKey) {
             'paynow' => new PaynowGateway(array_merge([
-                'integration_id' => $paynowId,
-                'integration_key' => $paynowKey,
+                'integration_id' => $settings->resolvedPaynowIntegrationId(),
+                'integration_key' => $settings->resolvedPaynowIntegrationKey(),
+                'merchant_email' => $settings->resolvedPaynowMerchantEmail(),
             ], $options)),
             'paypal' => new PayPalGateway([
                 'client_id' => $settings->paypal_client_id,
