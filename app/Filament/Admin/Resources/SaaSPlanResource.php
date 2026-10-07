@@ -69,28 +69,34 @@ class SaaSPlanResource extends Resource
                             ->numeric()
                             ->prefix('$')
                             ->default(0.00)
-                            ->required(),
+                            ->live()
+                            ->afterStateUpdated(function (Forms\Get $get, Forms\Set $set, $state) {
+                                $monthly = (float) $state;
+                                if ($monthly > 0) {
+                                    if (empty($get('price_quarterly')) || (float) $get('price_quarterly') === 0.0) {
+                                        $set('price_quarterly', round($monthly * 3 * 0.95, 2)); // 5% discount default
+                                    }
+                                    if (empty($get('price_yearly')) || (float) $get('price_yearly') === 0.0) {
+                                        $set('price_yearly', round($monthly * 12 * 0.85, 2)); // 15% discount default
+                                    }
+                                }
+                            }),
                         Forms\Components\TextInput::make('price_quarterly')
                             ->numeric()
                             ->prefix('$')
-                            ->default(0.00)
-                            ->required(),
+                            ->default(0.00),
                         Forms\Components\TextInput::make('price_yearly')
                             ->numeric()
                             ->prefix('$')
-                            ->default(0.00)
-                            ->required(),
+                            ->default(0.00),
                         Forms\Components\TextInput::make('currency')
-                            ->default('USD')
-                            ->required(),
+                            ->default('USD'),
                         Forms\Components\TextInput::make('trial_days')
                             ->numeric()
-                            ->default(14)
-                            ->required(),
+                            ->default(14),
                         Forms\Components\TextInput::make('grace_days')
                             ->numeric()
-                            ->default(7)
-                            ->required(),
+                            ->default(7),
                     ])->columns(3),
 
                 Forms\Components\Section::make('Feature Allotments & Limits')
