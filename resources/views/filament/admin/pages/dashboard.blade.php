@@ -17,7 +17,7 @@
                         <x-heroicon-o-building-office-2 class="w-4 h-4"/>
                         {{ __('Manage Institutions') }}
                     </a>
-                    <a href="/platform/pending-payments" class="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl text-xs backdrop-blur-md transition-all flex items-center gap-2 border border-white/10">
+                    <a href="/platform/pending-payments" class="px-4 py-2.5 bg-slate-900/10 hover:bg-slate-900/20 text-slate-900 dark:bg-white/10 dark:hover:bg-white/20 dark:text-white font-bold rounded-xl text-xs backdrop-blur-md transition-all flex items-center gap-2 border border-slate-300 dark:border-white/10">
                         <x-heroicon-o-clock class="w-4 h-4"/>
                         Pending Confirmations ({{ $pendingConfirmations }})
                     </a>

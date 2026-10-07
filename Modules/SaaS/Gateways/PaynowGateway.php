@@ -3,6 +3,7 @@
 namespace Modules\SaaS\Gateways;
 
 use Exception;
+use Modules\SaaS\Models\SaaSBillingSetting;
 use Paynow\Payments\Paynow;
 
 class PaynowGateway implements PaymentGatewayInterface
@@ -13,17 +14,24 @@ class PaynowGateway implements PaymentGatewayInterface
 
     protected ?string $integrationKey;
 
+    protected string $merchantEmail;
+
     public function __construct(array $credentials)
     {
-        $this->integrationId = $credentials['integration_id'] ?? env('PAYNOW_INTEGRATION_ID', '25965');
-        if (empty($this->integrationId) || $this->integrationId === '12345') {
-            $this->integrationId = env('PAYNOW_INTEGRATION_ID', '25965');
-        }
+        $this->integrationId = SaaSBillingSetting::firstFilled([
+            $credentials['integration_id'] ?? null,
+            env('PAYNOW_INTEGRATION_ID'),
+        ]) ?? SaaSBillingSetting::PAYNOW_FALLBACK_ID;
 
-        $this->integrationKey = $credentials['integration_key'] ?? env('PAYNOW_INTEGRATION_KEY', '669ac21f-1216-40b0-9623-91c489caca35');
-        if (empty($this->integrationKey)) {
-            $this->integrationKey = env('PAYNOW_INTEGRATION_KEY', '669ac21f-1216-40b0-9623-91c489caca35');
-        }
+        $this->integrationKey = SaaSBillingSetting::firstFilled([
+            $credentials['integration_key'] ?? null,
+            env('PAYNOW_INTEGRATION_KEY'),
+        ]) ?? SaaSBillingSetting::PAYNOW_FALLBACK_KEY;
+
+        $this->merchantEmail = SaaSBillingSetting::firstFilled([
+            $credentials['merchant_email'] ?? null,
+            env('PAYNOW_MERCHANT_EMAIL'),
+        ]) ?? SaaSBillingSetting::PAYNOW_FALLBACK_EMAIL;
 
         $returnUrl = $credentials['return_url'] ?? route('filament.app.pages.saas-billing-overview');
         $resultUrl = $credentials['result_url'] ?? route('saas.paynow.webhook');
@@ -49,7 +57,7 @@ class PaynowGateway implements PaymentGatewayInterface
                 );
             }
 
-            $email = env('PAYNOW_MERCHANT_EMAIL', 'twaynehlatywayo09@gmail.com');
+            $email = $this->merchantEmail;
 
             $payment = $this->paynow->createPayment(
                 $payload->invoiceNumber,
