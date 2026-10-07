@@ -30,6 +30,7 @@ use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
 use Filament\PanelProvider;
+use Filament\Support\Assets\Css;
 use Filament\Support\Colors\Color;
 use Filament\View\PanelsRenderHook;
 use Filament\Widgets;
@@ -40,6 +41,7 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Vite;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Modules\SaaS\Models\PlatformSetting;
 
@@ -68,13 +70,24 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogo(fn () => view('filament.admin.partials.platform-brand-logo'))
             ->favicon(platform_favicon_url())
             ->colors([
-                'primary' => is_string($primary) && preg_match('/^#[0-9a-fA-F]{6}$/', $primary) ? $primary : Color::Blue,
+                'primary' => is_string($primary) && preg_match('/^#[0-9a-fA-F]{6}$/', $primary) ? $primary : Color::Indigo,
                 'danger' => Color::Red,
                 'gray' => Color::Slate,
-                'info' => Color::Sky,
+                'info' => Color::Cyan,
                 'success' => Color::Emerald,
                 'warning' => Color::Amber,
             ])
+            // Match the school workspace design language: shared Filament
+            // component polish + Tailwind utilities for the custom platform
+            // dashboards (Command Center, Backup Manager, Billing, etc.).
+            ->assets([
+                Css::make('filament-custom', asset(Vite::asset('resources/css/filament-custom.css'))),
+                Css::make('panel-tailwind', asset(Vite::asset('resources/css/panel-tailwind.css'))),
+            ])
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn () => view('filament.admin.partials.platform-theme-styles')
+            )
             ->pages([
                 Dashboard::class,
                 PlatformIntelligenceDashboard::class,
