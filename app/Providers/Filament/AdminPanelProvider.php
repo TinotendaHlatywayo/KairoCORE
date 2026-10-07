@@ -111,13 +111,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->renderHook(
                 PanelsRenderHook::TOPBAR_START,
-                fn () => Blade::render('@livewire(\'admin-language-switcher\')')
-            )
-            // Platform notification centre: live date/time trigger + notification
-            // dropdown, placed at the exact center of the top bar.
-            ->renderHook(
-                PanelsRenderHook::GLOBAL_SEARCH_AFTER,
-                fn () => Blade::render('@livewire(\'platform-command-center\')')
+                fn () => Blade::render('@livewire(\'admin-language-switcher\')').Blade::render('@livewire(\'platform-command-center\')')
             )
             ->middleware([
                 EncryptCookies::class,

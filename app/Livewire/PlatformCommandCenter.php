@@ -23,6 +23,8 @@ class PlatformCommandCenter extends Component
 
     public int $historyDays = 30;
 
+    protected $listeners = ['$refresh' => '$refresh', 'notificationSent' => '$refresh'];
+
     public function toggle(): void
     {
         $this->isOpen = ! $this->isOpen;
