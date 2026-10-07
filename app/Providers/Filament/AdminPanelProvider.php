@@ -113,6 +113,12 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::TOPBAR_START,
                 fn () => Blade::render('@livewire(\'admin-language-switcher\')')
             )
+            // Platform notification centre: live date/time trigger + notification
+            // dropdown, mirroring the tenant workspace Command Center.
+            ->renderHook(
+                PanelsRenderHook::TOPBAR_END,
+                fn () => Blade::render('@livewire(\'platform-command-center\')')
+            )
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
