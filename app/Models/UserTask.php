@@ -68,6 +68,7 @@ class UserTask extends Model
         'reminder_at',
         'reminder_sent_at',
         'recurrence',
+        'cleared_at',
     ];
 
     protected $casts = [
@@ -90,6 +91,14 @@ class UserTask extends Model
     public function assignee(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_to_id');
+    }
+
+    /**
+     * The school a cross-tenant task was delegated to. Null for personal tasks.
+     */
+    public function school(): BelongsTo
+    {
+        return $this->belongsTo(School::class, 'school_id');
     }
 
     public function scopeOpen(Builder $query): Builder

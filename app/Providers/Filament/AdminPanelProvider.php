@@ -111,7 +111,13 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->renderHook(
                 PanelsRenderHook::TOPBAR_START,
-                fn () => Blade::render('@livewire(\'admin-language-switcher\')').Blade::render('@livewire(\'platform-command-center\')')
+                fn () => Blade::render('@livewire(\'admin-language-switcher\')')
+                    .'<div class="platform-command-center-slot">'.Blade::render('@livewire(\'platform-command-center\')').'</div>'
+                    .'<style>'
+                    .'.fi-topbar > nav{position:relative}'
+                    .'.platform-command-center-slot{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:5;display:flex;align-items:center}'
+                    .'@media (max-width:640px){.platform-command-center-slot{display:none}}'
+                    .'</style>'
             )
             ->middleware([
                 EncryptCookies::class,
