@@ -107,7 +107,7 @@
                                 <option value="">{{ __('Select a backup…') }}</option>
                                 @foreach ($backupsList as $bk)
                                     <option value="{{ $bk['id'] }}">
-                                        {{ \Illuminate\Support\Carbon::parse($bk['created_at'])->format('Y-m-d H:i') }}
+                                        {{ \Modules\Recovery\Models\PlatformBackup::formatTimestamp($bk['created_at'], 'Y-m-d H:i') }}
                                         — {{ $bk['scope'] === 'tenant' ? ($bk['school_name'] ?? __('Tenant')) : __('System') }}
                                         @if (! empty($bk['notes'])) — {{ $bk['notes'] }} @endif
                                     </option>
@@ -172,7 +172,7 @@
                                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/30">
                                         <td class="px-2 py-3">
                                             <div class="font-medium text-gray-800 dark:text-gray-200">
-                                                {{ \Illuminate\Support\Carbon::parse($bk['created_at'])->format('d M Y, H:i') }}
+                                                {{ \Modules\Recovery\Models\PlatformBackup::formatTimestamp($bk['created_at']) }}
                                             </div>
                                             @if (! empty($bk['notes']))
                                                 <div class="text-xs text-gray-500">{{ $bk['notes'] }}</div>

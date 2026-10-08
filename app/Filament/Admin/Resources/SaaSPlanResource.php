@@ -50,13 +50,12 @@ class SaaSPlanResource extends Resource
                 Forms\Components\Section::make('Plan Configuration')
                     ->schema([
                         Forms\Components\TextInput::make('name')
-                            ->required()
                             ->maxLength(255)
-                            ->reactive()
-                            ->afterStateUpdated(fn ($state, callable $set) => $set('slug', Str::slug($state))),
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(fn ($state, callable $set) => $set('slug', Str::slug((string) $state))),
                         Forms\Components\TextInput::make('slug')
-                            ->required()
                             ->unique(table: SaaSPlan::class, ignoreRecord: true)
+                            ->helperText(__('Leave blank to generate one from the name.'))
                             ->maxLength(255),
                         Forms\Components\Textarea::make('description')
                             ->maxLength(65535)
@@ -64,22 +63,17 @@ class SaaSPlanResource extends Resource
                     ])->columns(2),
 
                 Forms\Components\Section::make('Fee Rates & Timeframes')
+                    ->description(__('Optional. Enter a monthly price and the quarterly/yearly amounts are filled in automatically by multiplying by the number of months — override them if you want to offer a discount.'))
                     ->schema([
                         Forms\Components\TextInput::make('price_monthly')
                             ->numeric()
                             ->prefix('$')
                             ->default(0.00)
                             ->live()
-                            ->afterStateUpdated(function (Forms\Get $get, Forms\Set $set, $state) {
+                            ->afterStateUpdated(function (Forms\Set $set, $state) {
                                 $monthly = (float) $state;
-                                if ($monthly > 0) {
-                                    if (empty($get('price_quarterly')) || (float) $get('price_quarterly') === 0.0) {
-                                        $set('price_quarterly', round($monthly * 3 * 0.95, 2)); // 5% discount default
-                                    }
-                                    if (empty($get('price_yearly')) || (float) $get('price_yearly') === 0.0) {
-                                        $set('price_yearly', round($monthly * 12 * 0.85, 2)); // 15% discount default
-                                    }
-                                }
+                                $set('price_quarterly', round($monthly * 3, 2));
+                                $set('price_yearly', round($monthly * 12, 2));
                             }),
                         Forms\Components\TextInput::make('price_quarterly')
                             ->numeric()
@@ -105,10 +99,8 @@ class SaaSPlanResource extends Resource
                             ->relationship('features')
                             ->schema([
                                 Forms\Components\TextInput::make('feature_key')
-                                    ->required()
                                     ->placeholder(__('e.g., max_students, api_access')),
                                 Forms\Components\TextInput::make('feature_value')
-                                    ->required()
                                     ->placeholder(__('e.g., 500, true')),
                             ])
                             ->grid(2)
