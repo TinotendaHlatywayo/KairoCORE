@@ -5,10 +5,17 @@ namespace Tests\Feature;
 use App\Filament\App\Resources\PlatformInboxResource\Pages\ListPlatformInboxes;
 use App\Models\School;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\MessageBag;
+use Illuminate\Support\ViewErrorBag;
+use Livewire\Livewire;
 use Modules\Admin\Models\CustomRole;
 use Modules\SaaS\Models\PlatformMessage;
+use Modules\SaaS\Services\PlatformMessagingService;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class ThreadInlineReplyTest extends TestCase
@@ -43,9 +50,9 @@ class ThreadInlineReplyTest extends TestCase
             $admin = $this->schoolAdmin();
             $this->actingAs($admin);
 
-            $service = app(\Modules\SaaS\Services\PlatformMessagingService::class);
+            $service = app(PlatformMessagingService::class);
             $sent = null;
-            \Illuminate\Support\Facades\Auth::login($admin);
+            Auth::login($admin);
             $sent = $service->sendFromSchool($admin, 'Thread reply test '.uniqid(), 'Original body');
 
             // The root message of this school's newest thread.
@@ -94,8 +101,57 @@ class ThreadInlineReplyTest extends TestCase
             $component->threadReplyParentId = $foreignParent->id;
             $component->threadReplyBody = 'hijack';
 
-            $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
+            $this->expectException(HttpException::class);
             $component->sendThreadReply($foreignParent->id);
+        } finally {
+            DB::rollBack();
+        }
+    }
+
+    /**
+     * Regression guard for the reported bug: the View Thread modal is rendered
+     * inside Filament's own table-action <form>, so the composer must NOT nest a
+     * second <form> (invalid HTML → browser drops it → Send did nothing). The
+     * composer must submit via wire:click instead.
+     */
+    public function test_thread_composer_does_not_nest_a_form_and_uses_wire_click(): void
+    {
+        View::share('errors', (new ViewErrorBag)->put('default', new MessageBag));
+
+        $html = view('filament.admin.resources.platform-message-thread', [
+            'messages' => collect(),
+            'threadParentId' => 42,
+            'canReply' => true,
+            'viewerSchoolId' => null,
+        ])->render();
+
+        $this->assertStringContainsString('wire:click="sendThreadReply(42)"', $html);
+        $this->assertStringNotContainsString('<form', $html);
+    }
+
+    public function test_view_thread_modal_reply_sends_through_livewire(): void
+    {
+        DB::beginTransaction();
+        try {
+            $admin = $this->schoolAdmin();
+            $this->actingAs($admin);
+
+            $service = app(PlatformMessagingService::class);
+            $root = $service->sendFromSchool($admin, 'Livewire modal '.uniqid(), 'root body');
+
+            Livewire::actingAs($admin)
+                ->test(ListPlatformInboxes::class)
+                ->mountTableAction('view_thread', $root)
+                ->assertSeeHtml('wire:click="sendThreadReply(')
+                ->set('threadReplyBody', 'reply through livewire modal')
+                ->call('sendThreadReply', $root->id)
+                ->assertHasNoErrors();
+
+            $this->assertDatabaseHas('platform_messages', [
+                'thread_id' => $root->thread_id,
+                'sender_type' => 'school',
+                'body' => 'reply through livewire modal',
+            ], 'mysql');
         } finally {
             DB::rollBack();
         }

@@ -34,7 +34,10 @@ class SaaSPlan extends Model
         static::creating(function ($plan) {
             $plan->uuid = (string) Str::uuid();
             if (empty($plan->slug)) {
-                $plan->slug = Str::slug($plan->name);
+                $plan->slug = Str::slug((string) $plan->name);
+            }
+            if (empty($plan->slug)) {
+                $plan->slug = 'plan-'.Str::lower(Str::random(8));
             }
         });
     }
