@@ -79,6 +79,12 @@ class SystemSettingsPage extends Page implements HasForms
             if (empty($state['legal_terms_content'])) {
                 $state['legal_terms_content'] = default_school_terms();
             }
+
+            // The theme field reflects the user's effective theme: their
+            // personal override if set, otherwise the school-wide default.
+            $state['branding_theme'] = $user?->theme
+                ?: ($state['branding_theme'] ?? 'emerald_heritage');
+            $state['branding_theme_scope'] = 'me';
             if (empty($state['banking_banks']) && ! empty($state['banking_bank_name'])) {
                 $state['banking_banks'] = [[
                     'bank_name' => $state['banking_bank_name'] ?? '',
@@ -111,6 +117,27 @@ class SystemSettingsPage extends Page implements HasForms
         $this->fillEmailConfigurationState($state);
 
         $this->form->fill($state);
+    }
+
+    /**
+     * Whether the current user may push a theme change to everyone in the
+     * school. Only the platform super admin and the school's own administrator
+     * (the role that carries every permission) qualify.
+     */
+    public function canApplyThemeToAll(): bool
+    {
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        if (! $user) {
+            return false;
+        }
+
+        if (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin()) {
+            return true;
+        }
+
+        return $user->customRole?->role_key === 'administrator';
     }
 
     /**
@@ -219,6 +246,16 @@ class SystemSettingsPage extends Page implements HasForms
                                                 'dev_choice_4' => __('Developer\'s Choice 4 (Midnight Navy + Flame Blend)'),
                                             ])->default('emerald_heritage')
                                             ->native(true),
+                                        Select::make('branding_theme_scope')
+                                            ->label(__('Apply theme change to'))
+                                            ->options([
+                                                'me' => __('Only me (my personal theme)'),
+                                                'all' => __('All users in this school'),
+                                            ])
+                                            ->default('me')
+                                            ->native(true)
+                                            ->visible(fn () => $this->canApplyThemeToAll())
+                                            ->helperText(__('Administrators can apply a theme to everyone. This only applies to you otherwise.')),
                                         Select::make('branding_font_family')
                                             ->label(__('System Typography Font'))
                                             ->options($this->getFontDropdownOptions())
@@ -1298,6 +1335,37 @@ class SystemSettingsPage extends Page implements HasForms
             // Email configuration keys are namespaced under "emailcfg.*" and are
             // persisted to the email_configurations table, not system_settings.
             if (str_starts_with((string) $compoundKey, 'emailcfg.')) {
+                continue;
+            }
+
+            // The theme scope is a UI control, never a persisted SystemSetting.
+            if ($compoundKey === 'branding_theme_scope') {
+                continue;
+            }
+
+            // Theme changes are personal by default. Only an administrator who
+            // explicitly chooses "all users" writes the school-wide default
+            // (and clears everyone's personal override so it takes effect).
+            if ($compoundKey === 'branding_theme') {
+                $applyToAll = ($state['branding_theme_scope'] ?? 'me') === 'all'
+                    && $this->canApplyThemeToAll();
+
+                if ($applyToAll) {
+                    $existing = SystemSetting::where('school_id', $schoolId)
+                        ->where('group', 'branding')->where('key', 'theme')->first();
+                    $oldValues['branding_theme'] = $existing?->value;
+                    $newValues['branding_theme'] = $value;
+
+                    SystemSetting::updateOrCreate(
+                        ['school_id' => $schoolId, 'group' => 'branding', 'key' => 'theme'],
+                        ['value' => $value],
+                    );
+
+                    User::where('school_id', $schoolId)->update(['theme' => null]);
+                } elseif ($user) {
+                    $user->update(['theme' => $value]);
+                }
+
                 continue;
             }
 

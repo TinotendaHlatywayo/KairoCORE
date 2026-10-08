@@ -56,6 +56,7 @@ class User extends Authenticatable implements FilamentUser
         'rejected_reason',
         'do_not_disturb',
         'locale',
+        'theme',
         'activation_token',
         'activation_token_expires_at',
     ];
