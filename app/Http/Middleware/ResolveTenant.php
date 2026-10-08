@@ -125,29 +125,37 @@ class ResolveTenant
         try {
             $theme = SystemSetting::get('branding', 'theme', 'emerald_heritage');
 
-            $primaryColor = match ($theme) {
-                'digital_cobalt' => Color::Blue,
-                'obsidian_gold' => Color::Zinc,
-                'crimson_academy' => Color::Red,
-                'ocean_breeze' => Color::Teal,
-                'forest_pine' => Color::Emerald,
-                'sunset_amber' => Color::Orange,
-                'royal_purple' => Color::Purple,
-                'steel_slate' => Color::Slate,
-                'rosewood' => Color::Rose,
-                'dev_choice_1' => Color::Indigo,
-                'dev_choice_2' => Color::Fuchsia,
-                'dev_choice_3' => Color::Cyan,
-                'dev_choice_4' => '#f05438',
-                default => Color::Green,
-            };
-
             FilamentColor::register([
-                'primary' => $primaryColor,
+                'primary' => self::primaryColorFor($theme),
             ]);
         } catch (\Exception $e) {
             // Guard against unrun migrations or CLI installations
         }
+    }
+
+    /**
+     * Map a branding theme key to its Filament primary colour. Shared by the
+     * tenant middleware (school-wide default) and the per-user render hook so
+     * both stay in lockstep.
+     */
+    public static function primaryColorFor(?string $theme): mixed
+    {
+        return match ($theme) {
+            'digital_cobalt' => Color::Blue,
+            'obsidian_gold' => Color::Zinc,
+            'crimson_academy' => Color::Red,
+            'ocean_breeze' => Color::Teal,
+            'forest_pine' => Color::Emerald,
+            'sunset_amber' => Color::Orange,
+            'royal_purple' => Color::Purple,
+            'steel_slate' => Color::Slate,
+            'rosewood' => Color::Rose,
+            'dev_choice_1' => Color::Indigo,
+            'dev_choice_2' => Color::Fuchsia,
+            'dev_choice_3' => Color::Cyan,
+            'dev_choice_4' => '#f05438',
+            default => Color::Green,
+        };
     }
 
     /**
