@@ -105,9 +105,13 @@
         @endforelse
     </div>
 
-    <!-- Inline Reply Composer -->
+    <!-- Inline Reply Composer.
+         NOTE: this view renders INSIDE Filament's table-action modal, which
+         already wraps all modal content in its own submit form. Nesting another
+         form element is invalid HTML and the browser discards it, so the reply
+         must NOT use wire:submit — it uses a plain wire:click button. -->
     @if (($canReply ?? true) && isset($threadParentId))
-        <form wire:submit="sendThreadReply({{ $threadParentId }})" class="p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-end gap-3 shadow-lg">
+        <div class="p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-end gap-3 shadow-lg">
             <textarea
                 wire:model="threadReplyBody"
                 rows="2"
@@ -116,7 +120,8 @@
                 class="flex-1 resize-none text-xs rounded-xl border-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 px-3.5 py-2.5 font-medium text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 shadow-sm"
             ></textarea>
             <button
-                type="submit"
+                type="button"
+                wire:click="sendThreadReply({{ $threadParentId }})"
                 class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md shadow-emerald-600/30 transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 style="color: #ffffff !important; background-color: #059669 !important;"
                 wire:loading.attr="disabled"
@@ -126,7 +131,7 @@
                 <span wire:loading.remove wire:target="sendThreadReply" style="color: #ffffff !important;">{{ __('Send') }}</span>
                 <span wire:loading wire:target="sendThreadReply" style="color: #ffffff !important;">{{ __('Sending…') }}</span>
             </button>
-        </form>
+        </div>
         @error('threadReplyBody')
             <div class="px-4 pb-2 bg-white dark:bg-slate-900 text-[11px] font-semibold text-red-500">{{ $message }}</div>
         @enderror
