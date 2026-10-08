@@ -71,6 +71,7 @@ use Filament\PanelProvider;
 use Filament\Support\Assets\Css;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\MaxWidth;
+use Filament\Support\Facades\FilamentColor;
 use Filament\View\PanelsRenderHook;
 use Filament\Widgets;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -79,9 +80,11 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Modules\Admin\Models\SystemSetting;
 use Modules\Inventory\Filament\Resources\AssetMaintenanceResource;
 use Modules\Inventory\Filament\Resources\GoodsReceivedResource;
 use Modules\Inventory\Filament\Resources\InventoryIssuanceResource;
@@ -172,6 +175,29 @@ class AppPanelProvider extends PanelProvider
             ->renderHook(
                 'panels::head.start',
                 fn () => '<link rel="icon" href="'.e(school_favicon_url()).'">'
+            )
+
+            // Per-user branding theme. ResolveTenant runs before the session is
+            // started, so it can only apply the school-wide default; this hook
+            // runs at render time (before @filamentStyles) and lets a user's
+            // personal theme override that default for themselves only.
+            ->renderHook(
+                PanelsRenderHook::HEAD_START,
+                function () {
+                    try {
+                        $userTheme = Auth::user()?->theme;
+                        $theme = $userTheme
+                            ?: SystemSetting::get('branding', 'theme', 'emerald_heritage');
+
+                        FilamentColor::register([
+                            'primary' => ResolveTenant::primaryColorFor($theme),
+                        ]);
+                    } catch (\Throwable $e) {
+                        // Ignore: migrations not run / CLI context.
+                    }
+
+                    return '';
+                }
             )
 
             // Render sidebar toggle button at top header start

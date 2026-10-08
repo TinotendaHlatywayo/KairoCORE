@@ -16,7 +16,10 @@
     $logoUrl = platform_logo_url();
 
     if ($schoolId) {
-        $themeSetting = SystemSetting::get('branding', 'theme');
+        // A user's personal theme (Workspace Settings → Design & Branding)
+        // overrides the school-wide default for that account only.
+        $userTheme = auth()->user()?->theme;
+        $themeSetting = $userTheme ?: SystemSetting::get('branding', 'theme');
         $theme = !empty($themeSetting) ? $themeSetting : 'emerald_heritage';
 
         $fontSetting = SystemSetting::get('branding', 'font_family');

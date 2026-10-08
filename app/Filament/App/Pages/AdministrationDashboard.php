@@ -69,8 +69,10 @@ class AdministrationDashboard extends Page
             $greeting = 'Good evening';
         }
 
-        // Extract color variables matching the active design theme
-        $theme = SystemSetting::get('branding', 'theme', 'emerald_heritage');
+        // Extract color variables matching the active design theme. A user's
+        // personal theme takes precedence over the school-wide default.
+        $theme = auth()->user()?->theme
+            ?: SystemSetting::get('branding', 'theme', 'emerald_heritage');
         $chartPrimary = '#15803d';
         $chartAccent = '#eab308';
         if ($theme === 'digital_cobalt') {
