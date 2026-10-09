@@ -26,6 +26,7 @@ class PlatformBillingMail extends Mailable
     {
         return $this
             ->subject($this->mailSubject)
+            ->from(platform_system_from_email(), platform_email_name())
             ->view('modules.saas.emails.billing-notification')
             ->with([
                 'body' => $this->mailBody,

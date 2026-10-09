@@ -6,6 +6,7 @@ use App\Mail\SaaS\PlatformMessageMail;
 use App\Models\School;
 use App\Models\User;
 use App\Notifications\PlatformMessageNotification;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -37,8 +38,9 @@ class PlatformMessagingService
         array $schoolIds = [],
         ?array $targetMeta = null,
         string $channel = 'platform_message',
+        array $userIds = [],
     ): PlatformMessage {
-        return DB::transaction(function () use ($actor, $subject, $body, $priority, $scope, $schoolIds, $targetMeta, $channel) {
+        return DB::transaction(function () use ($actor, $subject, $body, $priority, $scope, $schoolIds, $targetMeta, $channel, $userIds) {
             $message = PlatformMessage::create([
                 'sender_type' => 'platform',
                 'sender_user_id' => $actor?->id,
@@ -52,7 +54,7 @@ class PlatformMessagingService
                 'channel' => $channel,
             ]);
 
-            $this->createRecipients($message, $schoolIds, $channel);
+            $this->createRecipients($message, $schoolIds, $channel, $userIds);
 
             return $message;
         });
@@ -112,7 +114,7 @@ class PlatformMessagingService
                     ->value('school_id');
             }
 
-$message = PlatformMessage::create([
+            $message = PlatformMessage::create([
                 'sender_type' => 'platform',
                 'sender_user_id' => $actor->id,
                 'school_id' => null,
@@ -167,12 +169,33 @@ $message = PlatformMessage::create([
     /**
      * Creates delivery/read-tracking rows for every target school and notifies
      * each school's users. Bulk insert makes broadcast delivery idempotent and fast.
+     *
+     * When $userIds is non-empty the message is targeted at those specific
+     * users only: tracking rows are still recorded per school (so the tenant
+     * inbox threads correctly) but only the selected users are notified.
+     *
+     * @param  array<int>  $userIds
      */
-    protected function createRecipients(PlatformMessage $message, array $schoolIds, string $channel = 'platform_message'): void
+    protected function createRecipients(PlatformMessage $message, array $schoolIds, string $channel = 'platform_message', array $userIds = []): void
     {
+        $userIds = array_values(array_unique(array_filter(array_map('intval', $userIds))));
+
+        $targetUsers = collect();
+        if (! empty($userIds)) {
+            $targetUsers = User::withoutTenantScope()
+                ->whereIn('id', $userIds)
+                ->get(['id', 'school_id', 'name', 'email']);
+
+            foreach ($targetUsers as $user) {
+                if ($user->school_id) {
+                    $schoolIds[] = (int) $user->school_id;
+                }
+            }
+        }
+
         $schoolIds = array_values(array_unique(array_filter(array_map('intval', $schoolIds))));
 
-        if (empty($schoolIds)) {
+        if (empty($schoolIds) && $targetUsers->isEmpty()) {
             return;
         }
 
@@ -187,20 +210,58 @@ $message = PlatformMessage::create([
             ];
         }
 
-        PlatformMessageRecipient::insert($rows);
+        if (! empty($rows)) {
+            PlatformMessageRecipient::insert($rows);
+        }
 
         if (in_array($channel, ['platform_message', 'both'], true)) {
-            $schoolIdChunks = array_chunk($schoolIds, 100);
-            foreach ($schoolIdChunks as $chunk) {
-                User::query()
-                    ->whereIn('school_id', $chunk)
-                    ->get()
-                    ->each(fn (User $user) => $user->notify(new PlatformMessageNotification($message)));
+            if ($targetUsers->isNotEmpty()) {
+                $targetUsers->each(fn (User $user) => $user->notify(new PlatformMessageNotification($message)));
+            } else {
+                $schoolIdChunks = array_chunk($schoolIds, 100);
+                foreach ($schoolIdChunks as $chunk) {
+                    User::query()
+                        ->whereIn('school_id', $chunk)
+                        ->get()
+                        ->each(fn (User $user) => $user->notify(new PlatformMessageNotification($message)));
+                }
             }
         }
 
         if (in_array($channel, ['email', 'both'], true)) {
-            $this->emailSchools($message, $schoolIds);
+            if ($targetUsers->isNotEmpty()) {
+                $this->emailUsers($message, $targetUsers);
+            } else {
+                $this->emailSchools($message, $schoolIds);
+            }
+        }
+    }
+
+    /**
+     * Emails a platform message directly to the selected tenant users.
+     *
+     * @param  Collection<int, User>  $users
+     */
+    protected function emailUsers(PlatformMessage $message, $users): void
+    {
+        foreach ($users as $user) {
+            if (blank($user->email)) {
+                continue;
+            }
+
+            try {
+                Mail::to($user->email)->send(new PlatformMessageMail(
+                    (string) ($message->subject ?? ''),
+                    (string) ($message->body ?? ''),
+                    (string) ($message->school?->name ?? ''),
+                ));
+            } catch (\Throwable $e) {
+                Log::warning('Platform message email to user failed', [
+                    'user_id' => $user->id,
+                    'message_id' => $message->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
     }
 
@@ -251,17 +312,20 @@ $message = PlatformMessage::create([
 
     protected function notifyPlatformUsers(PlatformMessage $message): void
     {
-        $superAdminEmail = 'hlatywayotw@gmail.com';
+        $inbox = platform_tenant_message_email();
+
         try {
-            Mail::to($superAdminEmail)->send(new PlatformMessageMail(
-                subject: (string) ($message->subject ?? 'New message from tenant'),
-                body: (string) ($message->body ?? ''),
+            Mail::to($inbox)->send(new PlatformMessageMail(
+                subjectLine: (string) ($message->subject ?? 'New message from tenant'),
+                messageBody: (string) ($message->body ?? ''),
                 schoolName: (string) ($message->school?->name ?? 'Tenant'),
             ));
         } catch (\Throwable $e) {
             Log::warning('Platform super admin message email notification failed: '.$e->getMessage());
         }
 
+        // In-app notification center: every platform super admin sees the
+        // tenant's message in their notification centre.
         User::query()
             ->whereNull('school_id')
             ->get()

@@ -17,3 +17,8 @@ Schedule::command('saas:run-billing-notifications')
     ->dailyAt('07:00')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/saas-billing-notifications.log'));
+
+Schedule::command('saas:expire-trials')
+    ->dailyAt('07:15')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/saas-expire-trials.log'));

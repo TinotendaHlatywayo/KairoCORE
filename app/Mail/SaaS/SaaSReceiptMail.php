@@ -26,6 +26,7 @@ class SaaSReceiptMail extends Mailable
         $pdf = Pdf::loadView('modules.saas.pdf.receipt', ['receipt' => $this->receipt]);
 
         return $this->subject('Payment Verified - Kairo CORE SaaS Receipt: '.$this->receipt->receipt_number)
+            ->from(platform_system_from_email(), platform_email_name())
             ->view('modules.saas.emails.receipt')
             ->attachData($pdf->output(), $this->receipt->receipt_number.'.pdf', [
                 'mime' => 'application/pdf',

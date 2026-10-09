@@ -51,6 +51,7 @@ class SchoolRegisteredNotification extends Notification
 
         return (new MailMessage)
             ->subject(__('New school registration on Kairo CORE: ').$this->school->name)
+            ->from(platform_system_from_email(), platform_email_name())
             ->view('emails.brand', brand_email_view_data([
                 'logoUrl' => $branding['logo_url'],
                 'companyName' => $branding['company_name'],
