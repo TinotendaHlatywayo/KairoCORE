@@ -29,16 +29,16 @@
             </div>
 
             <!-- Outstanding Invoices -->
-            <div class="p-6 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between">
+            <a href="{{ \App\Filament\Admin\Resources\SaaSInvoiceResource::getUrl(panel: 'admin') }}" class="p-6 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between transition hover:border-rose-300 hover:shadow-md">
                 <div>
                     <span class="text-xs font-bold uppercase tracking-wider text-slate-400">{{ __('Outstanding Invoices') }}</span>
                     <h3 class="text-3xl font-extrabold text-rose-600 dark:text-rose-400 mt-2">${{ number_format($outstandingInvoicesTotal, 2) }}</h3>
-                    <p class="text-xs text-rose-500 font-semibold mt-1">{{ __('Pending tenant payments') }}</p>
+                    <p class="text-xs text-rose-500 font-semibold mt-1">{{ $outstandingInvoicesCount === 1 ? __('1 pending tenant payment') : __(':count pending tenant payments', ['count' => $outstandingInvoicesCount]) }}</p>
                 </div>
                 <div class="p-3 rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-950/40">
                     <x-heroicon-o-exclamation-triangle class="w-7 h-7"/>
                 </div>
-            </div>
+            </a>
 
             <!-- Active Tenants -->
             <div class="p-6 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between">

@@ -129,6 +129,10 @@ class PlatformSettingsPage extends Page implements HasForms
                                     ->label(__('Enable Automatic Trial Expiration Checks'))
                                     ->helperText(__('Suspends schools whose free trial windows have expired.'))
                                     ->default(true),
+                                Toggle::make('automation_auto_generate_recurring_expenses')
+                                    ->label(__('Auto-generate recurring KairoCORE expenses'))
+                                    ->helperText(__('Materialises each due occurrence of recurring platform expenses.'))
+                                    ->default(true),
                                 Toggle::make('automation_database_cleanup')
                                     ->label(__('Enable Scheduled Platform Cache/Log Optimization'))
                                     ->default(true),
