@@ -51,7 +51,7 @@ class HelpdeskTicketResource extends Resource
                     ->schema([
                         Forms\Components\Select::make('user_id')
                             ->label(__('Submitter / Author'))
-                            ->options(User::all()->pluck('name', 'id'))
+                            ->options(User::query()->notPlatformManaged()->pluck('name', 'id'))
                             ->searchable()
                             ->required(),
                         Forms\Components\Select::make('category')
@@ -91,7 +91,7 @@ class HelpdeskTicketResource extends Resource
                                 ])->required()->default('open'),
                             Forms\Components\Select::make('assigned_to_id')
                                 ->label(__('Assigned Agent'))
-                                ->options(User::all()->pluck('name', 'id'))
+                                ->options(User::query()->notPlatformManaged()->pluck('name', 'id'))
                                 ->searchable(),
                         ]),
                 ])->columnSpan(1),
@@ -133,7 +133,7 @@ class HelpdeskTicketResource extends Resource
                     ->form([
                         Forms\Components\Select::make('assigned_to_id')
                             ->label(__('Select Support Agent'))
-                            ->options(User::all()->pluck('name', 'id'))
+                            ->options(User::query()->notPlatformManaged()->pluck('name', 'id'))
                             ->searchable()
                             ->required(),
                     ])

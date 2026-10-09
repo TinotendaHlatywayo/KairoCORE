@@ -186,6 +186,7 @@ class IssueBook extends Page
                 ->toArray();
         } else {
             $this->recipientResults = User::query()
+                ->notPlatformManaged()
                 ->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
                         ->orWhere('email', 'like', "%{$search}%");

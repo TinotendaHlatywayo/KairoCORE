@@ -147,11 +147,12 @@ class PlatformCommandCenter extends Component
             return [];
         }
 
-        $roleId = CustomRole::where('school_id', $this->taskSchoolId)
+        $roleId = CustomRole::withoutTenantScope()
+            ->where('school_id', $this->taskSchoolId)
             ->where('role_key', 'administrator')
             ->value('id');
 
-        $query = User::query()
+        $query = User::withoutTenantScope()
             ->where('school_id', $this->taskSchoolId)
             ->where('account_status', User::STATUS_ACTIVE);
 
@@ -169,12 +170,13 @@ class PlatformCommandCenter extends Component
 
     protected function resolveSchoolAdministrator(int $schoolId): ?User
     {
-        $roleId = CustomRole::where('school_id', $schoolId)
+        $roleId = CustomRole::withoutTenantScope()
+            ->where('school_id', $schoolId)
             ->where('role_key', 'administrator')
             ->value('id');
 
         if ($roleId) {
-            $admin = User::query()
+            $admin = User::withoutTenantScope()
                 ->where('school_id', $schoolId)
                 ->where('account_status', User::STATUS_ACTIVE)
                 ->where(function ($q) use ($roleId) {
@@ -189,7 +191,7 @@ class PlatformCommandCenter extends Component
             }
         }
 
-        return User::query()
+        return User::withoutTenantScope()
             ->where('school_id', $schoolId)
             ->where('account_status', User::STATUS_ACTIVE)
             ->where('requested_role', 'administrator')
@@ -235,56 +237,72 @@ class PlatformCommandCenter extends Component
             'taskSchoolId' => ['nullable', 'integer', 'exists:schools,id'],
         ]);
 
-        $schoolId = null;
-        $assigneeId = $user->id;
+        try {
+            $schoolId = null;
+            $assigneeId = $user->id;
 
-        if ($this->taskSchoolId) {
-            $school = School::find($this->taskSchoolId);
+            if ($this->taskSchoolId) {
+                $school = School::find($this->taskSchoolId);
 
-            if (! $school) {
-                $this->addError('taskSchoolId', __('That school could not be found.'));
+                if (! $school) {
+                    $this->addError('taskSchoolId', __('That school could not be found.'));
 
-                return;
+                    return;
+                }
+
+                $admin = $this->taskAssigneeId
+                    ? User::withoutTenantScope()
+                        ->where('school_id', $school->id)
+                        ->where('account_status', User::STATUS_ACTIVE)
+                        ->find($this->taskAssigneeId)
+                    : null;
+
+                $admin ??= $this->resolveSchoolAdministrator($school->id);
+
+                if (! $admin) {
+                    $this->addError('taskSchoolId', __('This school has no active administrator to receive the task.'));
+
+                    return;
+                }
+
+                $schoolId = $school->id;
+                $assigneeId = $admin->id;
             }
 
-            $admin = $this->taskAssigneeId
-                ? User::query()
-                    ->where('school_id', $school->id)
-                    ->where('account_status', User::STATUS_ACTIVE)
-                    ->find($this->taskAssigneeId)
-                : null;
+            $task = UserTask::withoutTenantScope()->create([
+                'school_id' => $schoolId,
+                'created_by_id' => $user->id,
+                'assigned_to_id' => $assigneeId,
+                'title' => trim((string) $this->taskTitle),
+                'description' => $this->taskDescription ?: null,
+                'due_date' => $this->taskDate ?: null,
+                'due_time' => $this->taskTime ?: null,
+                'status' => UserTask::STATUS_OPEN,
+            ]);
 
-            $admin ??= $this->resolveSchoolAdministrator($school->id);
-
-            if (! $admin) {
-                $this->addError('taskSchoolId', __('This school has no active administrator to receive the task.'));
-
-                return;
+            // In single-tenant mode the BelongsToTenant hook stamps school_id
+            // onto every insert, which would file a personal platform task
+            // under the tenant school. A personal task belongs to no school.
+            if ($schoolId === null && $task->school_id !== null) {
+                $task->forceFill(['school_id' => null])->saveQuietly();
             }
 
-            $schoolId = $school->id;
-            $assigneeId = $admin->id;
+            if ($schoolId && $assigneeId !== $user->id) {
+                $recipient = User::withoutTenantScope()->find($assigneeId);
+                $recipient?->notify(new PlatformTaskAssignedNotification($task));
+            }
+
+            $this->closeAddTask();
+
+            $this->dispatch('notificationSent');
+        } catch (\Throwable $e) {
+            // Never let an unexpected failure surface as a bare 500 on the
+            // platform topbar: log it with a trace for diagnosis and keep the
+            // form open with a message the admin can act on.
+            report($e);
+
+            $this->addError('taskTitle', __('The task could not be saved. Please try again.'));
         }
-
-        $task = UserTask::create([
-            'school_id' => $schoolId,
-            'created_by_id' => $user->id,
-            'assigned_to_id' => $assigneeId,
-            'title' => trim((string) $this->taskTitle),
-            'description' => $this->taskDescription ?: null,
-            'due_date' => $this->taskDate ?: null,
-            'due_time' => $this->taskTime ?: null,
-            'status' => UserTask::STATUS_OPEN,
-        ]);
-
-        if ($schoolId && $assigneeId !== $user->id) {
-            $recipient = User::find($assigneeId);
-            $recipient?->notify(new PlatformTaskAssignedNotification($task));
-        }
-
-        $this->closeAddTask();
-
-        $this->dispatch('notificationSent');
     }
 
     protected function findPlatformTask(int $taskId): ?UserTask

@@ -65,7 +65,7 @@ class ChatThreadResource extends Resource
                 Forms\Components\Select::make('participants')
                     ->multiple()
                     ->label(__('Add Members'))
-                    ->options(User::all()->pluck('name', 'id'))
+                    ->options(User::query()->notPlatformManaged()->pluck('name', 'id'))
                     ->preload()
                     ->required()
                     ->relationship('users', 'name'),

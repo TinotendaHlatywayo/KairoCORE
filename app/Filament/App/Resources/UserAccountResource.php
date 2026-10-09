@@ -55,7 +55,7 @@ class UserAccountResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $count = User::query()->where('account_status', User::STATUS_PENDING)->count();
+        $count = User::query()->notPlatformManaged()->where('account_status', User::STATUS_PENDING)->count();
 
         return $count > 0 ? (string) $count : null;
     }
@@ -300,6 +300,7 @@ class UserAccountResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
+            ->notPlatformManaged()
             ->with(['customRole:id,name']);
     }
 

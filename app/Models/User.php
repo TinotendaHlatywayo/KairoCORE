@@ -263,4 +263,19 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->school_id === null;
     }
+
+    /**
+     * Exclude the platform's "Enter school" impersonation accounts.
+     *
+     * When a platform super admin enters a school, the platform signs in as a
+     * real user row on that school (is_platform_managed = true, email
+     * "system-administrator+{school_id}@..."). The school must be able to work
+     * normally while that is happening, but it must never discover the account
+     * in its own user lists — otherwise the tenant sees that it is being
+     * impersonated. Apply this to every tenant-facing list, picker and search.
+     */
+    public function scopeNotPlatformManaged($query)
+    {
+        return $query->where($this->getTable().'.is_platform_managed', false);
+    }
 }

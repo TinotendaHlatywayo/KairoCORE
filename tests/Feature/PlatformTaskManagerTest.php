@@ -148,4 +148,38 @@ class PlatformTaskManagerTest extends TestCase
             DB::rollBack();
         }
     }
+
+    /**
+     * Single-tenant installs bind a current_tenant on every request, and the
+     * BelongsToTenant hook then stamps school_id onto every insert. A personal
+     * platform task must not be filed under that tenant.
+     */
+    public function test_a_personal_task_stays_unscoped_in_single_tenant_mode(): void
+    {
+        DB::beginTransaction();
+        try {
+            $admin = $this->platformAdmin();
+            $school = $this->school();
+
+            Config::set('tenancy.mode', 'single');
+            Config::set('tenancy.single_tenant_id', $school->id);
+            App::instance('current_tenant', $school);
+
+            Livewire::actingAs($admin)
+                ->test(PlatformCommandCenter::class)
+                ->call('openAddTask')
+                ->set('taskTitle', 'Personal task on a single-tenant install')
+                ->call('saveTask')
+                ->assertHasNoErrors();
+
+            $task = UserTask::withoutTenantScope()
+                ->where('created_by_id', $admin->id)
+                ->where('title', 'Personal task on a single-tenant install')
+                ->firstOrFail();
+
+            $this->assertNull($task->school_id, 'A personal platform task must not be filed under the tenant.');
+        } finally {
+            DB::rollBack();
+        }
+    }
 }
