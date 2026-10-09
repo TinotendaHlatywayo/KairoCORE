@@ -61,6 +61,7 @@ class AnnouncementResource extends Resource
 
                 Forms\Components\Group::make([
                     Forms\Components\Section::make(__('Publication & Priority'))
+                        ->extraAttributes(['class' => '!overflow-visible'])
                         ->schema([
                             Forms\Components\Select::make('status')
                                 ->options([
@@ -68,7 +69,7 @@ class AnnouncementResource extends Resource
                                     'scheduled' => __('Scheduled'),
                                     'published' => __('Published'),
                                     'expired' => __('Expired'),
-                                ])->required()->default('draft'),
+                                ])->required()->default('published'),
                             Forms\Components\Select::make('priority')
                                 ->options([
                                     'low' => __('Low'),
@@ -89,6 +90,7 @@ class AnnouncementResource extends Resource
                         ]),
 
                     Forms\Components\Section::make(__('Audience Targets'))
+                        ->extraAttributes(['class' => '!overflow-visible'])
                         ->schema([
                             Forms\Components\Select::make('visibility')
                                 ->label(__('Visible to Roles'))
@@ -101,6 +103,12 @@ class AnnouncementResource extends Resource
                                     'accountant' => __('Finance Staff'),
                                     'librarian' => __('Librarians'),
                                 ])->preload(),
+                            Forms\Components\Select::make('target_user_ids')
+                                ->label(__('Target Specific Individuals'))
+                                ->multiple()
+                                ->options(fn () => User::where('school_id', auth()->user()?->school_id)->pluck('name', 'id'))
+                                ->searchable()
+                                ->preload(),
                             Forms\Components\DatePicker::make('published_at'),
                             Forms\Components\DatePicker::make('expires_at'),
                         ]),
@@ -206,8 +214,15 @@ class AnnouncementResource extends Resource
 
                         $usersQuery = User::where('school_id', $record->school_id);
 
-                        if (! empty($record->visibility)) {
-                            $usersQuery->whereIn('role', $record->visibility);
+                        if (! empty($record->visibility) || ! empty($record->target_user_ids)) {
+                            $usersQuery->where(function ($q) use ($record) {
+                                if (! empty($record->visibility)) {
+                                    $q->orWhereIn('role', $record->visibility);
+                                }
+                                if (! empty($record->target_user_ids)) {
+                                    $q->orWhereIn('id', $record->target_user_ids);
+                                }
+                            });
                         }
 
                         $notifiedUsers = $usersQuery->get();

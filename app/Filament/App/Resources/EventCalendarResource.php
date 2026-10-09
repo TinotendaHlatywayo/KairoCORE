@@ -4,6 +4,7 @@ namespace App\Filament\App\Resources;
 
 use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Concerns\ModulePermissionAccess;
+use App\Models\User;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -45,6 +46,7 @@ class EventCalendarResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Section::make(__('Event Scope'))
+                    ->extraAttributes(['class' => '!overflow-visible'])
                     ->schema([
                         Forms\Components\TextInput::make('title')
                             ->required()
@@ -63,6 +65,7 @@ class EventCalendarResource extends Resource
 
                 Forms\Components\Group::make([
                     Forms\Components\Section::make(__('Date Boundaries'))
+                        ->extraAttributes(['class' => '!overflow-visible'])
                         ->schema([
                             Forms\Components\DateTimePicker::make('start_time')->required(),
                             Forms\Components\DateTimePicker::make('end_time')->required(),
@@ -70,13 +73,22 @@ class EventCalendarResource extends Resource
                                 ->default('#1e3a8a')
                                 ->required(),
                             Forms\Components\Select::make('target_roles')
+                                ->label(__('Target Roles'))
                                 ->multiple()
                                 ->options([
                                     'admin' => __('Administrators'),
                                     'teacher' => __('Teachers'),
                                     'student' => __('Students'),
                                     'parent' => __('Parents'),
+                                    'accountant' => __('Finance Staff'),
+                                    'librarian' => __('Librarians'),
                                 ])->preload(),
+                            Forms\Components\Select::make('target_user_ids')
+                                ->label(__('Target Specific Individuals'))
+                                ->multiple()
+                                ->options(fn () => User::where('school_id', auth()->user()?->school_id)->pluck('name', 'id'))
+                                ->searchable()
+                                ->preload(),
                         ]),
                 ])->columnSpan(1),
             ])->columns(3);

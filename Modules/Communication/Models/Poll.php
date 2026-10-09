@@ -19,12 +19,14 @@ class Poll extends Model
         'type',
         'is_anonymous',
         'target_roles',
+        'target_user_ids',
         'expires_at',
     ];
 
     protected $casts = [
         'is_anonymous' => 'boolean',
         'target_roles' => 'array',
+        'target_user_ids' => 'array',
         'expires_at' => 'datetime',
     ];
 

@@ -59,6 +59,7 @@ class EventCalendar extends Model
         'reminder_sent_at',
         'color',
         'target_roles',
+        'target_user_ids',
         'target_sections',
         'recurrence',
     ];
@@ -69,6 +70,7 @@ class EventCalendar extends Model
         'all_day' => 'boolean',
         'reminder_sent_at' => 'datetime',
         'target_roles' => 'array',
+        'target_user_ids' => 'array',
         'target_sections' => 'array',
     ];
 

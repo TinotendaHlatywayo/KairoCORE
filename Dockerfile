@@ -74,7 +74,14 @@ RUN composer install \
     --no-dev \
     --no-interaction \
     --prefer-dist \
-    --optimize-autoloader
+    --optimize-autoloader \
+    --no-scripts
+
+COPY . .
+
+RUN composer dump-autoload --optimize \
+    && php artisan package:discover --ansi \
+    && php artisan filament:upgrade
 
 
 COPY . .

@@ -26,14 +26,17 @@ class StudentNotices extends Page
 
     protected function getViewData(): array
     {
+        $userId = auth()->id();
         $notices = Announcement::query()
             ->active()
             ->get()
-            ->filter(function (Announcement $notice) {
+            ->filter(function (Announcement $notice) use ($userId) {
                 $visibility = $notice->visibility ?? [];
+                $targetUserIds = $notice->target_user_ids ?? [];
 
-                // Everyone, or explicitly targeted at students.
-                return empty($visibility) || in_array('student', $visibility, true);
+                return (empty($visibility) && empty($targetUserIds))
+                    || in_array('student', $visibility, true)
+                    || in_array($userId, $targetUserIds, true);
             })
             ->sortByDesc('published_at')
             ->values();

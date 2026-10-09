@@ -20,6 +20,7 @@ class CampusResource extends Model
         'file_path',
         'category',
         'visibility',
+        'target_user_ids',
         'version',
         'tags',
         'download_count',
@@ -27,6 +28,7 @@ class CampusResource extends Model
 
     protected $casts = [
         'visibility' => 'array',
+        'target_user_ids' => 'array',
         'tags' => 'array',
         'download_count' => 'integer',
     ];
