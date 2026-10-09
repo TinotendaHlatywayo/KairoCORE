@@ -443,26 +443,43 @@ class SchoolResource extends Resource
         ];
     }
 
-    protected static function mutateFormDataBeforeCreate(array $data): array
+    /**
+     * Take the Module Visibility toggles out of the form payload and write
+     * them to system_settings.
+     *
+     * The toggles are a form-only shape: `modules` is not a column on
+     * schools, so it has to leave $data before the record is filled or it is
+     * either silently discarded (production) or rejected as a mass-assignment
+     * (local, where strict mode is on) and the switches snap back to ON.
+     *
+     * Filament only ever calls this on the Page — SchoolResource has no
+     * mutate hook of its own — so the callers live on EditSchool and
+     * CreateSchool.
+     *
+     * @return array{0: array<string, mixed>, 1: array<string, bool>} the record
+     *                                                                payload without `modules`, and the toggles to persist separately.
+     */
+    public static function splitModuleToggles(array $data): array
     {
-        if (isset($data['modules']) && is_array($data['modules'])) {
-            $school = static::getModel()::create(Arr::except($data, ['modules']));
-            foreach ($data['modules'] as $moduleKey => $enabled) {
-                SystemSetting::set('modules', $moduleKey, (bool) $enabled, $school->id);
-            }
-            return Arr::except($data, ['modules']);
+        if (! isset($data['modules']) || ! is_array($data['modules'])) {
+            return [$data, []];
         }
-        return $data;
+
+        return [
+            Arr::except($data, ['modules']),
+            array_map(fn ($enabled) => (bool) $enabled, $data['modules']),
+        ];
     }
 
-    protected static function mutateFormDataBeforeUpdate(array $data, $record): array
+    /**
+     * Persist the module toggles for a school that already exists.
+     *
+     * @param  array<string, bool>  $toggles
+     */
+    public static function writeModuleToggles(array $toggles, int $schoolId): void
     {
-        if (isset($data['modules']) && is_array($data['modules'])) {
-            foreach ($data['modules'] as $moduleKey => $enabled) {
-                SystemSetting::set('modules', $moduleKey, (bool) $enabled, $record->id);
-            }
-            return Arr::except($data, ['modules']);
+        foreach ($toggles as $moduleKey => $enabled) {
+            SystemSetting::set('modules', (string) $moduleKey, $enabled, $schoolId);
         }
-        return $data;
     }
 }

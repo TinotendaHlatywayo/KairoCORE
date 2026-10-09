@@ -48,6 +48,7 @@ trait ManagesTasks
 
         return User::query()
             ->where('school_id', $user->school_id)
+            ->notPlatformManaged()
             ->where('account_status', User::STATUS_ACTIVE)
             ->orderBy('name')
             ->pluck('name', 'id')
@@ -104,6 +105,7 @@ trait ManagesTasks
 
         return User::query()
             ->where('school_id', $user->school_id)
+            ->notPlatformManaged()
             ->whereNotNull('custom_role_id')
             ->where('account_status', User::STATUS_ACTIVE)
             ->orderBy('name')
@@ -130,6 +132,7 @@ trait ManagesTasks
 
         return User::query()
             ->where('school_id', $user->school_id)
+            ->notPlatformManaged()
             ->where('account_status', User::STATUS_ACTIVE)
             ->orderBy('name')
             ->get()
