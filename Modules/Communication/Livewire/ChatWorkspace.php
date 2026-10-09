@@ -99,17 +99,16 @@ class ChatWorkspace extends Component
             'attachments' => $attachmentPath ? [$attachmentPath] : null,
         ]);
 
-        $unmutedParticipants = ChatParticipant::where('thread_id', $thread->id)
-            ->where('is_muted', false)
+        $participants = ChatParticipant::where('thread_id', $thread->id)
             ->where('user_id', '!=', Auth::id())
             ->with(['user'])
             ->get();
 
-        foreach ($unmutedParticipants as $participant) {
+        foreach ($participants as $participant) {
             if ($participant->user) {
                 Notification::make()
-                    ->title("New Message in {$thread->name}")
-                    ->body(Auth::user()->name.': '.$this->messageText)
+                    ->title(__("New Message from ").Auth::user()->name)
+                    ->body($this->messageText)
                     ->sendToDatabase($participant->user);
             }
         }
@@ -123,8 +122,12 @@ class ChatWorkspace extends Component
     public function render()
     {
         $schoolId = Auth::user()->school_id;
+        $userId = Auth::id();
 
         $threads = ChatThread::where('school_id', $schoolId)
+            ->whereHas('users', function ($q) use ($userId) {
+                $q->where('users.id', $userId);
+            })
             ->with(['messages' => function ($q) {
                 $q->latest()->limit(1);
             }])
@@ -132,7 +135,9 @@ class ChatWorkspace extends Component
             ->get();
 
         $activeThread = $this->activeThreadId
-            ? ChatThread::with(['messages.sender', 'users'])->find($this->activeThreadId)
+            ? ChatThread::whereHas('users', function ($q) use ($userId) {
+                $q->where('users.id', $userId);
+            })->with(['messages.sender', 'users'])->find($this->activeThreadId)
             : null;
 
         return view('modules.communication.chat-workspace', [

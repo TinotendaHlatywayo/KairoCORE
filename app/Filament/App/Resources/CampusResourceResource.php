@@ -4,6 +4,7 @@ namespace App\Filament\App\Resources;
 
 use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Concerns\ModulePermissionAccess;
+use App\Models\User;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -47,6 +48,7 @@ class CampusResourceResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Section::make('Resource Properties')
+                    ->extraAttributes(['class' => '!overflow-visible'])
                     ->schema([
                         Forms\Components\TextInput::make('title')
                             ->required()
@@ -68,6 +70,7 @@ class CampusResourceResource extends Resource
 
                 Forms\Components\Group::make([
                     Forms\Components\Section::make('Security & Files')
+                        ->extraAttributes(['class' => '!overflow-visible'])
                         ->schema([
                             Forms\Components\TextInput::make('version')
                                 ->default('1.0')
@@ -99,7 +102,15 @@ class CampusResourceResource extends Resource
                                     'teacher' => __('Teachers'),
                                     'student' => __('Students'),
                                     'parent' => __('Parents'),
+                                    'accountant' => __('Finance Staff'),
+                                    'librarian' => __('Librarians'),
                                 ])->preload(),
+                            Forms\Components\Select::make('target_user_ids')
+                                ->label(__('Target Specific Individuals'))
+                                ->multiple()
+                                ->options(fn () => User::where('school_id', auth()->user()?->school_id)->pluck('name', 'id'))
+                                ->searchable()
+                                ->preload(),
                         ]),
                 ])->columnSpan(1),
             ])->columns(3);
