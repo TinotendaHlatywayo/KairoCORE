@@ -24,6 +24,8 @@ class PlatformIntelligenceDashboard extends Page
 
     public float $outstandingInvoicesTotal = 0.00;
 
+    public int $outstandingInvoicesCount = 0;
+
     public $recentTransactions;
 
     public $outstandingInvoices;
@@ -40,7 +42,8 @@ class PlatformIntelligenceDashboard extends Page
 
         // Comprehensive Financial Analytics
         $this->totalRevenue = (float) SaaSTransaction::where('status', 'completed')->sum('amount');
-        $this->outstandingInvoicesTotal = (float) SaaSInvoice::where('status', 'unpaid')->sum('total');
+        $this->outstandingInvoicesTotal = (float) SaaSInvoice::whereIn('status', ['unpaid', 'partially_paid'])->sum('total');
+        $this->outstandingInvoicesCount = SaaSInvoice::whereIn('status', ['unpaid', 'partially_paid'])->count();
 
         $this->recentTransactions = SaaSTransaction::with(['school', 'invoice'])
             ->latest('processed_at')
@@ -48,7 +51,7 @@ class PlatformIntelligenceDashboard extends Page
             ->get();
 
         $this->outstandingInvoices = SaaSInvoice::with(['school', 'subscription.plan'])
-            ->where('status', 'unpaid')
+            ->whereIn('status', ['unpaid', 'partially_paid'])
             ->latest('due_date')
             ->limit(8)
             ->get();

@@ -22,3 +22,8 @@ Schedule::command('saas:expire-trials')
     ->dailyAt('07:15')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/saas-expire-trials.log'));
+
+Schedule::command('finance:generate-recurring-expenses')
+    ->dailyAt('07:30')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/platform-recurring-expenses.log'));
