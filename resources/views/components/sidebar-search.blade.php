@@ -1,6 +1,7 @@
 {{-- resources/views/components/sidebar-search.blade.php --}}
 <div x-data="searchBar()" 
      x-init="init()"
+     x-on:click.outside="isOpen = false"
      class="search-bar-wrapper sticky top-0 z-50 px-4 py-3"
      style="background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); border-bottom: 1px solid rgba(226, 232, 240, 0.6);">
     
@@ -18,8 +19,8 @@
         <input 
             x-model="search"
             x-ref="searchInput"
-            x-on:input="filterMenu()"
-            x-on:focus="isFocused = true"
+            x-on:input="isOpen = true; filterMenu()"
+            x-on:focus="isFocused = true; if (search.length > 0) isOpen = true;"
             x-on:blur="setTimeout(() => isFocused = false, 200)"
             type="text" 
             placeholder="{{ __('Search workspace...') }}" 
@@ -57,13 +58,12 @@
     </div>
 
     <!-- Search Results Dropdown -->
-    <div x-show="search.length > 0 && filteredItems.length > 0" 
+    <div x-show="isOpen && search.length > 0 && filteredItems.length > 0" 
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0 -translate-y-2 scale-95"
          x-transition:enter-end="opacity-100 translate-y-0 scale-100"
          class="absolute left-4 right-4 mt-2 bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-gray-200/60 dark:border-gray-800/60 overflow-hidden max-h-80 overflow-y-auto z-50 search-results-scroll"
-         style="display: none;"
-         x-show="search.length > 0 && filteredItems.length > 0">
+         style="display: none;">
         
         <div class="p-2 space-y-1">
             <template x-for="item in filteredItems" :key="item.id">
@@ -82,7 +82,7 @@
     </div>
 
     <!-- No Results State -->
-    <div x-show="search.length > 0 && filteredItems.length === 0" 
+    <div x-show="isOpen && search.length > 0 && filteredItems.length === 0" 
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0 -translate-y-2"
          x-transition:enter-end="opacity-100 translate-y-0"
@@ -210,6 +210,7 @@
     document.addEventListener('alpine:init', () => {
         Alpine.data('searchBar', () => ({
             search: '',
+            isOpen: false,
             isFocused: false,
             filteredItems: [],
             menuItems: [],
@@ -227,9 +228,11 @@
                         const input = this.$el.querySelector('input');
                         if (input) input.focus();
                     }
-                    // Escape to clear
-                    if (e.key === 'Escape' && this.search.length > 0) {
-                        this.clearSearch();
+                    // Escape to close dropdown (without clearing active search filter)
+                    if (e.key === 'Escape') {
+                        this.isOpen = false;
+                        const input = this.$el.querySelector('input');
+                        if (input) input.blur();
                     }
                 });
             },

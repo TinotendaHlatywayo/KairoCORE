@@ -115,6 +115,10 @@ class CustomRole extends Model
 
     public function users(): HasMany
     {
-        return $this->hasMany(User::class, 'custom_role_id');
+        // The platform's "Enter school" impersonation accounts hold the
+        // administrator role but are not school staff. Exclude them so a role's
+        // headcount reflects the people the school actually manages.
+        return $this->hasMany(User::class, 'custom_role_id')
+            ->where('is_platform_managed', false);
     }
 }

@@ -153,6 +153,7 @@ class PlatformCommandCenter extends Component
             ->value('id');
 
         $query = User::withoutTenantScope()
+            ->notPlatformManaged()
             ->where('school_id', $this->taskSchoolId)
             ->where('account_status', User::STATUS_ACTIVE);
 
@@ -177,6 +178,7 @@ class PlatformCommandCenter extends Component
 
         if ($roleId) {
             $admin = User::withoutTenantScope()
+                ->notPlatformManaged()
                 ->where('school_id', $schoolId)
                 ->where('account_status', User::STATUS_ACTIVE)
                 ->where(function ($q) use ($roleId) {
@@ -192,6 +194,7 @@ class PlatformCommandCenter extends Component
         }
 
         return User::withoutTenantScope()
+            ->notPlatformManaged()
             ->where('school_id', $schoolId)
             ->where('account_status', User::STATUS_ACTIVE)
             ->where('requested_role', 'administrator')

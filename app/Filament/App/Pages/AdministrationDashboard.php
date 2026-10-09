@@ -95,7 +95,7 @@ class AdministrationDashboard extends Page
             $chartAccent = '#f05438';
         }
 
-        $totalUsers = User::where('school_id', $schoolId)->count();
+        $totalUsers = User::where('school_id', $schoolId)->notPlatformManaged()->count();
         $rolesCount = CustomRole::where('school_id', $schoolId)->count();
         $failedLogins = SystemAuditLog::where('school_id', $schoolId)
             ->where('action', 'like', '%Login%')

@@ -10,10 +10,10 @@ class PlatformUserRoleStatisticsWidget extends BaseWidget
 {
     protected function getStats(): array
     {
-        $teachingCount = User::where('requested_role', 'teaching_staff')->count();
-        $nonTeachingCount = User::where('requested_role', 'non_teaching_staff')->count();
-        $adminCount = User::whereIn('requested_role', ['administrator', 'admin'])->count();
-        $studentCount = User::where('requested_role', 'student')->count();
+        $teachingCount = User::notPlatformManaged()->where('requested_role', 'teaching_staff')->count();
+        $nonTeachingCount = User::notPlatformManaged()->where('requested_role', 'non_teaching_staff')->count();
+        $adminCount = User::notPlatformManaged()->whereIn('requested_role', ['administrator', 'admin'])->count();
+        $studentCount = User::notPlatformManaged()->where('requested_role', 'student')->count();
 
         return [
             Stat::make(__('Platform Teaching Staff'), $teachingCount)

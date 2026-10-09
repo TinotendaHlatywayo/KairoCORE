@@ -11,8 +11,7 @@ use Modules\SaaS\Models\SaaSSubscription;
 class BillingService
 {
     public function generateUpcomingInvoice(SaaSSubscription $subscription): SaaSInvoice
-    {
-        return DB::transaction(function () use ($subscription) {
+    {        return DB::transaction(function () use ($subscription) {
             $plan = $subscription->plan;
             $billingPeriod = $subscription->billing_period;
             $months = $subscription->billingMonths();
@@ -83,5 +82,57 @@ class BillingService
 
             return $invoice;
         });
+    }
+
+    /**
+     * Raises the upcoming invoice for every billable subscription (one that has
+     * reached its first billing date and is not cancelled), skipping any that
+     * still have an open invoice so nothing is double-billed.
+     *
+     * @return array{processed:int,generated:int,skipped:int,failed:int}
+     */
+    public function generateInvoicesForAllSchools(?Carbon $onDate = null): array
+    {
+        $today = ($onDate ? $onDate->copy() : Carbon::today())->startOfDay();
+
+        $summary = ['processed' => 0, 'generated' => 0, 'skipped' => 0, 'failed' => 0];
+
+        $subscriptions = SaaSSubscription::query()
+            ->with('plan')
+            ->whereNotIn('status', ['cancelled'])
+            ->whereNotNull('billing_start_date')
+            ->whereDate('billing_start_date', '<=', $today)
+            ->get();
+
+        foreach ($subscriptions as $subscription) {
+            $summary['processed']++;
+
+            if (! $subscription->plan) {
+                $summary['skipped']++;
+
+                continue;
+            }
+
+            $hasOpenInvoice = SaaSInvoice::query()
+                ->where('saas_subscription_id', $subscription->id)
+                ->whereIn('status', ['unpaid', 'partially_paid'])
+                ->exists();
+
+            if ($hasOpenInvoice) {
+                $summary['skipped']++;
+
+                continue;
+            }
+
+            try {
+                $this->generateUpcomingInvoice($subscription);
+                $summary['generated']++;
+            } catch (\Throwable $e) {
+                $summary['failed']++;
+                report($e);
+            }
+        }
+
+        return $summary;
     }
 }

@@ -41,7 +41,7 @@ class RosterAccountProvisioningService
             'name' => $student->full_name,
             'username' => $student->full_name,
             'requested_role' => $requestedRole ?: 'student',
-        ]);
+        ], User::STATUS_PENDING);
 
         if ($student->user_id !== $user->id) {
             $student->user_id = $user->id;
@@ -80,7 +80,7 @@ class RosterAccountProvisioningService
             'name' => trim("{$employee->first_name} {$employee->last_name}"),
             'username' => trim("{$employee->first_name} {$employee->last_name}"),
             'requested_role' => $role,
-        ]);
+        ], User::STATUS_ACTIVE);
 
         if ($employee->user_id !== $user->id) {
             $employee->user_id = $user->id;
@@ -134,10 +134,29 @@ class RosterAccountProvisioningService
         ]);
     }
 
-    protected function prepareAccount(User $user, array $attributes): void
+    /**
+     * Apply the roster details to the account without ever knocking it back.
+     *
+     * Staff and students are provisioned by an administrator from the directory,
+     * so re-running provisioning (linking an edit, re-sending an invitation)
+     * must never demote an account that has already been reviewed. Only an
+     * account that is still waiting on activation/review takes the status the
+     * caller asks for; anything already active, suspended or rejected keeps its
+     * state. Re-sending an activation email used to force active staff back to
+     * "pending", locking them out of the workspace.
+     */
+    protected function prepareAccount(User $user, array $attributes, string $newStatus = User::STATUS_PENDING): void
     {
+        $status = in_array($user->account_status, [
+            User::STATUS_ACTIVE,
+            User::STATUS_SUSPENDED,
+            User::STATUS_REJECTED,
+        ], true)
+            ? $user->account_status
+            : $newStatus;
+
         $user->forceFill(array_merge($attributes, [
-            'account_status' => User::STATUS_PENDING,
+            'account_status' => $status,
         ]))->save();
     }
 

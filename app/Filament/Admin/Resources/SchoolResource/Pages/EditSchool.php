@@ -8,6 +8,7 @@ use Filament\Actions;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Modules\Admin\Models\SystemSetting;
+use Modules\SaaS\Services\SubscriptionProvisioner;
 
 class EditSchool extends EditRecord
 {
@@ -40,9 +41,21 @@ class EditSchool extends EditRecord
      */
     protected function mutateFormDataBeforeSave(array $data): array
     {
+        $planId = $data['subscription_plan_id'] ?? null;
+        unset($data['subscription_plan_id']);
+
         [$data, $toggles] = SchoolResource::splitModuleToggles($data);
 
         SchoolResource::writeModuleToggles($toggles, (int) $this->record->id);
+
+        // Keep the billing ledger in step with the plan chosen on this screen.
+        $provisioner = app(SubscriptionProvisioner::class);
+
+        if ($planId) {
+            $provisioner->assignPlan($this->record, (int) $planId);
+        } else {
+            $provisioner->ensureForSchool($this->record);
+        }
 
         return $data;
     }

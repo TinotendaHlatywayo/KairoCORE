@@ -141,13 +141,16 @@ class EditUserAccount extends EditRecord
                         'count' => count(PermissionRegistry::defaultPermissionsForUser($this->record)),
                     ])),
                 CheckboxList::make('permissions')
-                    ->label(__('Extra Permissions On Top Of The Role'))
+                    ->label(__('Permissions On Top Of The Role'))
                     ->options(fn () => PermissionRegistry::permissionOptions())
                     ->columns(3)
                     ->gridDirection('row')
                     ->searchable()
-                    ->helperText(__('Added to the role, never subtracted from it. Clearing a tick here returns the account to its role\'s permissions rather than to no permissions.'))
-                    ->default(fn () => PermissionRegistry::personalPermissionsFor($this->record)),
+                    ->helperText(__('The role\'s default permissions are shown ticked so you can see what the account reaches. Tick anything extra this person needs on top; the role\'s defaults always apply and are not stored again on the account.'))
+                    ->default(fn () => PermissionRegistry::normalizePermissionList(array_merge(
+                        PermissionRegistry::defaultPermissionsForUser($this->record),
+                        PermissionRegistry::personalPermissionsFor($this->record),
+                    ))),
             ])
             ->action(function (array $data) {
                 app(UserRegistrationService::class)->approve(

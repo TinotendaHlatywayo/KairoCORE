@@ -164,6 +164,20 @@ class SchoolResource extends Resource
                             ->required(),
                         Forms\Components\DateTimePicker::make('trial_ends_at')
                             ->label(__('Trial Expiration Date')),
+                        Forms\Components\Select::make('subscription_plan_id')
+                            ->label(__('Subscription Plan'))
+                            ->options(fn () => \Modules\SaaS\Models\SaaSPlan::query()
+                                ->where('is_active', true)
+                                ->orderBy('price_monthly')
+                                ->pluck('name', 'id'))
+                            ->searchable()
+                            ->preload()
+                            ->afterStateHydrated(function (Forms\Components\Select $component, $state, ?School $record) {
+                                if ($record?->exists) {
+                                    $component->state($record->saasSubscription?->saas_plan_id);
+                                }
+                            })
+                            ->helperText(__('The plan this institution is billed on. Saving updates its subscription immediately.')),
                     ])->columns(3),
 
                 Forms\Components\Section::make('Branding & Logos')

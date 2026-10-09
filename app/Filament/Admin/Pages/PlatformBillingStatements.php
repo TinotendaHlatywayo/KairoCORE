@@ -52,11 +52,17 @@ class PlatformBillingStatements extends Page implements HasForms
 
     public function mount(): void
     {
+        $preselected = (int) request()->query('school_id');
+
         $this->form->fill([
-            'school_id' => null,
+            'school_id' => $preselected > 0 ? $preselected : null,
             'start_date' => now()->startOfYear()->toDateString(),
             'end_date' => now()->toDateString(),
         ]);
+
+        if ($preselected > 0) {
+            $this->generate();
+        }
     }
 
     public function form(Form $form): Form
@@ -124,6 +130,34 @@ class PlatformBillingStatements extends Page implements HasForms
 
                     return response()->streamDownload(fn () => print ($pdf->output()), $name);
                 }),
+            Action::make('download_history_pdf')
+                ->label(__('Download Payment History PDF'))
+                ->icon('heroicon-o-clock')
+                ->color('gray')
+                ->disabled(fn (): bool => $this->selectedSchoolId() === null)
+                ->action(function () {
+                    $schoolId = $this->selectedSchoolId();
+
+                    if (! $schoolId) {
+                        return null;
+                    }
+
+                    $history = app(PlatformFinanceService::class)->paymentHistory($schoolId);
+
+                    $pdf = Pdf::loadView('modules.saas.pdf.payment-history', ['history' => $history]);
+
+                    return response()->streamDownload(
+                        fn () => print ($pdf->output()),
+                        'payment-history-'.$schoolId.'.pdf',
+                    );
+                }),
         ];
+    }
+
+    protected function selectedSchoolId(): ?int
+    {
+        $schoolId = $this->data['school_id'] ?? null;
+
+        return $schoolId ? (int) $schoolId : null;
     }
 }

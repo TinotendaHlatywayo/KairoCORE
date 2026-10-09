@@ -4,25 +4,26 @@
     <meta charset="UTF-8">
     <title>KairoCORE Financial Statement</title>
     <style>
-        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #1e293b; margin: 0; padding: 24px; font-size: 12px; line-height: 1.5; }
-        h1 { font-size: 22px; margin: 0; color: #4f46e5; }
-        .muted { color: #64748b; }
-        .header { border-bottom: 3px solid #4f46e5; padding-bottom: 14px; margin-bottom: 22px; }
+        body { font-family: Arial, Helvetica, sans-serif; color: #222222; margin: 0; padding: 26px; font-size: 12px; line-height: 1.5; }
+        h1 { font-size: 22px; margin: 0; color: #1F2E43; letter-spacing: 1px; }
+        .muted { color: #666666; }
+        .header { border-bottom: 3px solid #1F2E43; padding-bottom: 14px; margin-bottom: 22px; }
         .right { text-align: right; }
         .kpis { width: 100%; border-collapse: collapse; margin-bottom: 26px; }
         .kpis td { width: 25%; padding: 0 6px; }
-        .kpi { border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; }
-        .kpi .label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; font-weight: 700; }
-        .kpi .value { font-size: 18px; font-weight: bold; margin-top: 6px; color: #0f172a; }
-        .kpi .value.negative { color: #b91c1c; }
+        .kpi { border: 1px solid #E2E8F0; border-radius: 6px; padding: 14px; }
+        .kpi .label { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: #666666; font-weight: bold; }
+        .kpi .value { font-size: 18px; font-weight: bold; margin-top: 6px; color: #1F2E43; }
+        .kpi .value.negative { color: #EF5F4D; }
         table.data { width: 100%; border-collapse: collapse; margin-bottom: 26px; }
-        table.data th { background: #f8fafc; border-bottom: 2px solid #e2e8f0; color: #475569; font-weight: 700; text-align: left; padding: 9px 10px; font-size: 10px; text-transform: uppercase; }
-        table.data td { border-bottom: 1px solid #e2e8f0; padding: 9px 10px; color: #334155; }
+        table.data th { background: #1F2E43; color: #ffffff; border-bottom: 2px solid #1F2E43; font-weight: bold; text-align: left; padding: 9px 10px; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; }
+        table.data td { border-bottom: 1px solid #E8EBEF; padding: 9px 10px; color: #444444; }
+        table.data tr:nth-child(even) td { background: #F6F7F9; }
         table.data td.num, table.data th.num { text-align: right; }
-        .section-title { font-size: 13px; font-weight: 700; color: #0f172a; margin: 0 0 10px; }
+        .section-title { font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 1.5px; color: #1F2E43; margin: 0 0 10px; border-left: 5px solid #EF5F4D; padding-left: 10px; }
         .pos { color: #15803d; }
         .neg { color: #b91c1c; }
-        .footer { border-top: 1px solid #e2e8f0; padding-top: 16px; margin-top: 34px; font-size: 10px; color: #94a3b8; text-align: center; }
+        .footer { border-top: 1px solid #E2E8F0; padding-top: 14px; margin-top: 34px; font-size: 10px; color: #666666; text-align: center; }
     </style>
 </head>
 <body>
