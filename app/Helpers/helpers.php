@@ -60,6 +60,72 @@ if (! function_exists('platform_email_name')) {
     }
 }
 
+if (! function_exists('platform_notification_email')) {
+    /**
+     * Inbox that receives new-school-registration alerts. Editable under
+     * Platform → Settings → Notifications. Defaults to hlatwayne@gmail.com.
+     */
+    function platform_notification_email(): string
+    {
+        try {
+            $configured = PlatformSetting::get('notifications', 'super_admin_email');
+        } catch (Throwable $e) {
+            $configured = null;
+        }
+
+        if (is_string($configured) && filter_var(trim($configured), FILTER_VALIDATE_EMAIL)) {
+            return trim($configured);
+        }
+
+        return 'hlatwayne@gmail.com';
+    }
+}
+
+if (! function_exists('platform_tenant_message_email')) {
+    /**
+     * Inbox that receives an alert whenever a tenant messages the platform.
+     * Editable under Platform → Settings → Notifications.
+     * Defaults to hlatwayne@gmail.com.
+     */
+    function platform_tenant_message_email(): string
+    {
+        try {
+            $configured = PlatformSetting::get('notifications', 'tenant_message_email');
+        } catch (Throwable $e) {
+            $configured = null;
+        }
+
+        if (is_string($configured) && filter_var(trim($configured), FILTER_VALIDATE_EMAIL)) {
+            return trim($configured);
+        }
+
+        return 'hlatwayne@gmail.com';
+    }
+}
+
+if (! function_exists('platform_system_from_email')) {
+    /**
+     * The address platform-generated mail is sent "from". Editable under
+     * Platform → Settings → Notifications so the operator can switch the
+     * responsible sender without a redeploy. Falls back to the SMTP account
+     * (MAIL_FROM_ADDRESS) when unset.
+     */
+    function platform_system_from_email(): string
+    {
+        try {
+            $configured = PlatformSetting::get('notifications', 'system_from_email');
+        } catch (Throwable $e) {
+            $configured = null;
+        }
+
+        if (is_string($configured) && filter_var(trim($configured), FILTER_VALIDATE_EMAIL)) {
+            return trim($configured);
+        }
+
+        return platform_email_address();
+    }
+}
+
 if (! function_exists('platform_name')) {
     /**
      * The public SaaS platform name. Configurable under
