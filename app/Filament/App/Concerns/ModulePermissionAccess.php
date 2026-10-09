@@ -34,11 +34,23 @@ trait ModulePermissionAccess
      */
     public static function canAccess(): bool
     {
+        $page = CapabilityCatalog::pageForClass(static::class);
+
+        // A module switch is a decision about the school, not about the person
+        // asking, so it is checked before any role is consulted. Otherwise
+        // "off" would only ever mean "off for people who are not
+        // administrators" — which is exactly what a tenant reported: toggling
+        // a module off still left it open to the school's own admins (and to
+        // the platform's "Enter school" account, which is one of them).
+        if ($page !== null && ! static::moduleIsOpen($page)) {
+            return false;
+        }
+
+        // Full-access school administrators skip the capability check itself,
+        // but not the module switch above.
         if (ModuleVisibilityManager::isSchoolAdmin()) {
             return true;
         }
-
-        $page = CapabilityCatalog::pageForClass(static::class);
 
         // Not in the catalogue: deny. Fail closed by design.
         if ($page === null) {
@@ -47,17 +59,26 @@ trait ModulePermissionAccess
 
         $module = $page['module'];
 
+        return PermissionRegistry::checkAny(CapabilityCatalog::accessKeysFor($module, $page['key']));
+    }
+
+    /**
+     * Both halves of "is this screen switched on here": the module's master
+     * switch plus the sub-page switch inside it.
+     *
+     * @param  array<string, mixed>  $page
+     */
+    protected static function moduleIsOpen(array $page): bool
+    {
+        $module = $page['module'];
+
         // A module the school has not enabled stays hidden regardless of role.
         if ($module !== 'universal' && ! ModuleVisibilityManager::isModuleVisible($module)) {
             return false;
         }
 
         // Nor does a part of a module the school has individually switched off.
-        if (! CapabilityCatalog::isPageTenantEnabled($module, $page['key'])) {
-            return false;
-        }
-
-        return PermissionRegistry::checkAny(CapabilityCatalog::accessKeysFor($module, $page['key']));
+        return CapabilityCatalog::isPageTenantEnabled($module, $page['key']);
     }
 
     /**
@@ -69,11 +90,15 @@ trait ModulePermissionAccess
      */
     public static function canPerform(string $action): bool
     {
+        $page = CapabilityCatalog::pageForClass(static::class);
+
+        if ($page !== null && ! static::moduleIsOpen($page)) {
+            return false;
+        }
+
         if (ModuleVisibilityManager::isSchoolAdmin()) {
             return true;
         }
-
-        $page = CapabilityCatalog::pageForClass(static::class);
 
         if ($page === null) {
             return false;

@@ -115,7 +115,13 @@ class AdminPanelProvider extends PanelProvider
                     .'<div class="platform-command-center-slot">'.Blade::render('@livewire(\'platform-command-center\')').'</div>'
                     .'<style>'
                     .'.fi-topbar > nav{position:relative}'
-                    .'.platform-command-center-slot{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:5;display:flex;align-items:center}'
+                    // Centre the trigger with flex, NOT a transform: a transformed
+                    // ancestor becomes the containing block for position:fixed, so
+                    // the dropdown's full-screen overlay was being squeezed into the
+                    // trigger's own box. pointer-events lets clicks through the empty
+                    // middle of the topbar while keeping the trigger interactive.
+                    .'.platform-command-center-slot{position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;pointer-events:none}'
+                    .'.platform-command-center-slot > *{pointer-events:auto}'
                     .'@media (max-width:640px){.platform-command-center-slot{display:none}}'
                     .'</style>'
             )

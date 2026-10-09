@@ -46,7 +46,7 @@ class StaffAttendanceResource extends Resource
                     ->schema([
                         Forms\Components\Select::make('user_id')
                             ->label(__('Employee'))
-                            ->options(User::whereNotNull('school_id')->pluck('name', 'id'))
+                            ->options(User::query()->notPlatformManaged()->whereNotNull('school_id')->pluck('name', 'id'))
                             ->required(),
                         Forms\Components\DatePicker::make('date')
                             ->default(now())

@@ -7,7 +7,6 @@ use App\Services\SchoolApprovalService;
 use Filament\Actions;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
-
 use Modules\Admin\Models\SystemSetting;
 
 class EditSchool extends EditRecord
@@ -28,6 +27,22 @@ class EditSchool extends EditRecord
         }
 
         $data['modules'] = $modulesData;
+
+        return $data;
+    }
+
+    /**
+     * Persist the Module Visibility switches when the school is saved.
+     *
+     * Filament calls this on the page, never on the resource, so without it
+     * the toggles were dropped on every save and a switch flipped off for a
+     * tenant simply did nothing.
+     */
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        [$data, $toggles] = SchoolResource::splitModuleToggles($data);
+
+        SchoolResource::writeModuleToggles($toggles, (int) $this->record->id);
 
         return $data;
     }
