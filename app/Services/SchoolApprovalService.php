@@ -48,6 +48,15 @@ class SchoolApprovalService
         // permissions, not an empty list and not last release's bundle.
         SystemRolePresets::provisionForSchool($school);
 
+        // Every institution must appear on the platform's subscription ledger,
+        // so it gets a billing record the moment it is approved rather than
+        // only once someone opens its billing page.
+        try {
+            app(\Modules\SaaS\Services\SubscriptionProvisioner::class)->ensureForSchool($school);
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
         $seedDispatched = false;
         if ($school->has_dummy_data && $school->seed_status !== 'seeded') {
             SeedSchoolDemoDataJob::dispatch($school->id);

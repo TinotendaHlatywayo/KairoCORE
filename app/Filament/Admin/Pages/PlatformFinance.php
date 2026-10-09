@@ -6,6 +6,7 @@ use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
@@ -53,6 +54,7 @@ class PlatformFinance extends Page implements HasForms
         $this->form->fill([
             'start_date' => now()->startOfYear()->toDateString(),
             'end_date' => now()->toDateString(),
+            'year' => (int) now()->year,
         ]);
 
         $this->generateReport();
@@ -72,9 +74,25 @@ class PlatformFinance extends Page implements HasForms
                     ->required()
                     ->live()
                     ->afterStateUpdated(fn () => $this->generateReport()),
+                Select::make('year')
+                    ->label(__('Monthly breakdown year'))
+                    ->options(fn () => collect($this->availableYears())
+                        ->mapWithKeys(fn (int $year) => [$year => (string) $year])
+                        ->all())
+                    ->required()
+                    ->live()
+                    ->afterStateUpdated(fn () => $this->generateReport()),
             ])
-            ->columns(2)
+            ->columns(3)
             ->statePath('data');
+    }
+
+    /**
+     * @return list<int>
+     */
+    public function availableYears(): array
+    {
+        return app(PlatformFinanceService::class)->availableYears();
     }
 
     public function generateReport(): void
@@ -88,7 +106,15 @@ class PlatformFinance extends Page implements HasForms
             return;
         }
 
-        $this->report = app(PlatformFinanceService::class)->summary($start, $end);
+        $service = app(PlatformFinanceService::class);
+
+        $this->report = $service->summary($start, $end);
+
+        $year = (int) ($state['year'] ?? now()->year);
+        $breakdown = $service->yearBreakdown($year);
+
+        $this->report['year'] = $breakdown['year'];
+        $this->report['months'] = $breakdown['months'];
     }
 
     protected function getHeaderActions(): array

@@ -61,6 +61,7 @@
                                 <th class="px-6 py-3.5">{{ __('Due') }}</th>
                                 <th class="px-6 py-3.5">{{ __('Status') }}</th>
                                 <th class="px-6 py-3.5 text-right">{{ __('Total') }}</th>
+                                <th class="px-6 py-3.5 text-right">{{ __('Document') }}</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 text-slate-600 dark:divide-slate-800 dark:text-slate-400">
@@ -71,9 +72,12 @@
                                     <td class="px-6 py-3.5">{{ $invoice->due_date?->format('M d, Y') }}</td>
                                     <td class="px-6 py-3.5 uppercase text-[10px] font-bold">{{ $invoice->status }}</td>
                                     <td class="px-6 py-3.5 text-right font-bold">${{ number_format($invoice->total, 2) }}</td>
+                                    <td class="px-6 py-3.5 text-right">
+                                        <a href="{{ route('saas.invoice.download', $invoice->uuid) }}" target="_blank" class="font-semibold text-indigo-600 hover:underline dark:text-indigo-400">{{ __('PDF') }}</a>
+                                    </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="5" class="px-6 py-6 text-center text-slate-400">{{ __('No invoices in this period.') }}</td></tr>
+                                <tr><td colspan="6" class="px-6 py-6 text-center text-slate-400">{{ __('No invoices in this period.') }}</td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -92,6 +96,7 @@
                                 <th class="px-6 py-3.5">{{ __('Invoice #') }}</th>
                                 <th class="px-6 py-3.5">{{ __('Issued') }}</th>
                                 <th class="px-6 py-3.5 text-right">{{ __('Amount') }}</th>
+                                <th class="px-6 py-3.5 text-right">{{ __('Document') }}</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 text-slate-600 dark:divide-slate-800 dark:text-slate-400">
@@ -101,9 +106,12 @@
                                     <td class="px-6 py-3.5">{{ $receipt->invoice?->invoice_number ?? '—' }}</td>
                                     <td class="px-6 py-3.5">{{ $receipt->issued_at?->format('M d, Y H:i') }}</td>
                                     <td class="px-6 py-3.5 text-right font-bold text-emerald-600 dark:text-emerald-400">${{ number_format($receipt->amount_paid, 2) }}</td>
+                                    <td class="px-6 py-3.5 text-right">
+                                        <a href="{{ route('saas.receipt.download', $receipt->uuid) }}" target="_blank" class="font-semibold text-emerald-600 hover:underline dark:text-emerald-400">{{ __('PDF') }}</a>
+                                    </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="4" class="px-6 py-6 text-center text-slate-400">{{ __('No receipts in this period.') }}</td></tr>
+                                <tr><td colspan="5" class="px-6 py-6 text-center text-slate-400">{{ __('No receipts in this period.') }}</td></tr>
                             @endforelse
                         </tbody>
                     </table>

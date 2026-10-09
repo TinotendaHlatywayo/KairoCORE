@@ -45,12 +45,9 @@ class SaaSSubscription extends Model
         parent::boot();
         static::creating(function ($subscription) {
             $subscription->uuid = (string) Str::uuid();
-            if (empty($subscription->next_payment_date)) {
-                $subscription->next_payment_date = now()->addDays(14)->toDateString();
-            }
 
             // Give every tenant its own billing cycle: free from registration
-            // until billing_start_date, then billable monthly on that day.
+            // until billing_start_date, then billable from that day on.
             if (empty($subscription->billing_start_date)) {
                 $freeDays = 30;
                 try {
@@ -68,6 +65,15 @@ class SaaSSubscription extends Model
                 if (empty($subscription->billing_day_of_month)) {
                     $subscription->billing_day_of_month = max(1, min(28, (int) $start->day));
                 }
+            }
+
+            // The first bill falls on the day the free period ends. Callers
+            // provisioning a pre-existing tenant pass an explicit future date
+            // so they are not immediately flagged as overdue.
+            if (empty($subscription->next_payment_date)) {
+                $subscription->next_payment_date = $subscription->billing_start_date
+                    ? Carbon::parse($subscription->billing_start_date)->toDateString()
+                    : now()->addDays(14)->toDateString();
             }
         });
     }
@@ -117,7 +123,7 @@ class SaaSSubscription extends Model
         if ($this->credit_balance >= $due) {
             $this->decrement('credit_balance', $due);
 
-            $nextDate = Carbon::parse($this->next_payment_date)->addDays(30)->toDateString();
+            $nextDate = $this->advanceNextPaymentDate()->toDateString();
 
             $this->update([
                 'last_payment_date' => now()->toDateString(),
@@ -130,6 +136,53 @@ class SaaSSubscription extends Model
         }
 
         return false;
+    }
+
+    /**
+     * Number of days the subscription's billing period covers.
+     *
+     * The platform bills in fixed windows rather than calendar months: monthly
+     * is 30 days, quarterly 90 and yearly 365, so the next invoice always falls
+     * the same amount of time after the previous one.
+     */
+    public function periodDays(): int
+    {
+        return match ($this->billing_period) {
+            'quarterly' => 90,
+            'yearly' => 365,
+            default => 30,
+        };
+    }
+
+    /**
+     * The next billing date, counted from the given date (defaults to the
+     * current next_payment_date). Used after a payment is recorded.
+     */
+    public function advanceNextPaymentDate(?Carbon $from = null): Carbon
+    {
+        $base = $from
+            ? Carbon::parse($from)
+            : ($this->next_payment_date ? Carbon::parse($this->next_payment_date) : now());
+
+        return $base->copy()->startOfDay()->addDays($this->periodDays());
+    }
+
+    /**
+     * The first due date that is not already behind us. A new tenant bills on
+     * the day its free period ends; a tenant whose free period has already
+     * passed is placed on its next normal cycle rather than immediately overdue.
+     */
+    public function initialNextPaymentDate(): Carbon
+    {
+        $start = $this->billing_start_date
+            ? Carbon::parse($this->billing_start_date)->startOfDay()
+            : now()->startOfDay();
+
+        if ($start->gte(now()->startOfDay())) {
+            return $start;
+        }
+
+        return $this->nextBillingDate();
     }
 
     public function isTrialing(): bool

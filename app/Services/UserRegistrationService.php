@@ -132,6 +132,13 @@ class UserRegistrationService
             $requestedRole = 'student';
         }
 
+        // Attach the catalogue role straight away so the account is created
+        // with its default permissions and the User Management "Assigned Role"
+        // column is populated from day one. The role stays the single source of
+        // truth for what the account can reach; approval only decides whether
+        // the person may sign in.
+        $role = self::ensureRoleForCategory($school->id, $requestedRole);
+
         $user = User::create([
             'school_id' => $school->id,
             'name' => $data['name'],
@@ -140,6 +147,7 @@ class UserRegistrationService
             'password' => $data['password'],
             'account_status' => User::STATUS_PENDING,
             'requested_role' => $requestedRole,
+            'custom_role_id' => $role->id,
         ]);
 
         $this->notifyApprovers($school, $user);
@@ -158,11 +166,21 @@ class UserRegistrationService
             $user->restore();
         }
 
+        $requestedRole = $data['requested_role'] ?? $user->requested_role ?? 'student';
+        if (! array_key_exists($requestedRole, self::categoryRoleNames())) {
+            $requestedRole = 'student';
+        }
+
+        // Re-attach (or refresh) the catalogue role so the merged account keeps
+        // its default permissions and its Assigned Role is never left blank.
+        $role = self::ensureRoleForCategory($school->id, $requestedRole);
+
         $user->forceFill([
             'name' => $data['name'],
             'email' => $email,
             'phone' => $data['phone'] ?? $user->phone,
-            'requested_role' => $data['requested_role'] ?? $user->requested_role ?? 'student',
+            'requested_role' => $requestedRole,
+            'custom_role_id' => $role->id,
             'account_status' => User::STATUS_PENDING,
             'rejected_reason' => null,
             'approved_by' => null,
@@ -282,9 +300,18 @@ class UserRegistrationService
         // freeze a copy of the role onto the account: the teacher would keep
         // Finance forever after losing it from the role, and nothing would be
         // left that the runtime could tell apart from an intentional grant.
-        $user->permissions = PermissionRegistry::normalizePermissionList(
-            $permissions ?? []
-        );
+        // The approval screen pre-ticks the role's defaults so the approver can
+        // see them; anything already implied by the role or a department is
+        // therefore filtered back out before it is saved.
+        if ($permissions === null) {
+            $user->permissions = [];
+        } else {
+            $inherited = PermissionRegistry::defaultPermissionsForUser($user);
+            $user->permissions = array_values(array_filter(
+                PermissionRegistry::normalizePermissionList($permissions),
+                fn (string $permission): bool => ! PermissionRegistry::isGranted($inherited, $permission),
+            ));
+        }
 
         $user->forceFill([
             'account_status' => User::STATUS_ACTIVE,

@@ -2,16 +2,19 @@
 
 namespace App\Filament\Admin\Resources;
 
+use App\Filament\Admin\Pages\PlatformBillingStatements;
 use App\Filament\Admin\Resources\SchoolSubscriptionResource\Pages;
 use App\Models\School;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Auth;
 use Modules\SaaS\Models\SaaSPlan;
 use Modules\SaaS\Models\SaaSSubscription;
+use Modules\SaaS\Services\BillingService;
 
 class SchoolSubscriptionResource extends Resource
 {
@@ -47,15 +50,28 @@ class SchoolSubscriptionResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Section::make('Subscription')
+                    ->description(__('Billing starts automatically once the tenant grace period (free days after registration) ends, then repeats every 30 days (monthly), 90 days (quarterly) or 365 days (yearly).'))
                     ->schema([
                         Forms\Components\Select::make('school_id')
                             ->label(__('Institution'))
-                            ->options(School::pluck('name', 'id'))
+                            // Only schools without a subscription can be picked,
+                            // so a second row can never hit the unique index.
+                            // The record's own school stays available on edit.
+                            ->options(fn (?SaaSSubscription $record) => School::query()
+                                ->where(function ($query) use ($record) {
+                                    $query->doesntHave('saasSubscription');
+
+                                    if ($record?->school_id) {
+                                        $query->orWhere('id', $record->school_id);
+                                    }
+                                })
+                                ->orderBy('name')
+                                ->pluck('name', 'id'))
                             ->required()
                             ->searchable(),
                         Forms\Components\Select::make('saas_plan_id')
                             ->label(__('Plan'))
-                            ->options(SaaSPlan::pluck('name', 'id'))
+                            ->options(SaaSPlan::where('is_active', true)->pluck('name', 'id'))
                             ->required(),
                         Forms\Components\Select::make('billing_period')
                             ->options([
@@ -75,51 +91,6 @@ class SchoolSubscriptionResource extends Resource
                             ])
                             ->default('trialing')
                             ->required(),
-                    ])->columns(2),
-
-                Forms\Components\Section::make('Billing Window')
-                    ->schema([
-                        Forms\Components\DatePicker::make('billing_start_date')
-                            ->label(__('Billing start date'))
-                            ->helperText(__('First day the tenant becomes billable. Before this date the tenant is in its free period and no reminders or suspensions fire.')),
-                        Forms\Components\TextInput::make('billing_day_of_month')
-                            ->label(__('Billing day of month'))
-                            ->numeric()
-                            ->minValue(1)
-                            ->maxValue(28)
-                            ->helperText(__('Day (1-28) the monthly cycle repeats on. Defaults to the day of the billing start date.')),
-                        Forms\Components\DateTimePicker::make('trial_ends_at'),
-                        Forms\Components\DateTimePicker::make('starts_at'),
-                        Forms\Components\DateTimePicker::make('ends_at'),
-                        Forms\Components\DateTimePicker::make('grace_ends_at'),
-                        Forms\Components\DatePicker::make('next_payment_date'),
-                        Forms\Components\DatePicker::make('last_payment_date'),
-                    ])->columns(3),
-
-                Forms\Components\Section::make('Pricing & Ledger')
-                    ->schema([
-                        Forms\Components\TextInput::make('custom_price_monthly')
-                            ->numeric()
-                            ->prefix('$')
-                            ->helperText(__('Leave empty to use the plan price.')),
-                        Forms\Components\TextInput::make('custom_price_quarterly')
-                            ->numeric()
-                            ->prefix('$')
-                            ->helperText(__('Overrides the quarterly plan price when billing quarterly.')),
-                        Forms\Components\TextInput::make('custom_price_yearly')
-                            ->numeric()
-                            ->prefix('$')
-                            ->helperText(__('Overrides the yearly plan price when billing yearly.')),
-                        Forms\Components\TextInput::make('credit_balance')
-                            ->numeric()
-                            ->prefix('$')
-                            ->default(0),
-                        Forms\Components\TextInput::make('auto_deactivate_after_days')
-                            ->numeric()
-                            ->default(5),
-                        Forms\Components\TextInput::make('dunning_days_before')
-                            ->numeric()
-                            ->default(2),
                     ])->columns(2),
             ]);
     }
@@ -177,6 +148,44 @@ class SchoolSubscriptionResource extends Resource
                     ->options(SaaSPlan::pluck('name', 'id')),
             ])
             ->actions([
+                Tables\Actions\Action::make('generate_invoice')
+                    ->label(__('Generate invoice'))
+                    ->icon('heroicon-o-document-plus')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->visible(fn (SaaSSubscription $record): bool => $record->plan !== null)
+                    ->action(function (SaaSSubscription $record): void {
+                        try {
+                            $invoice = app(BillingService::class)->generateUpcomingInvoice($record);
+
+                            Notification::make()
+                                ->title(__('Invoice generated'))
+                                ->body(__('Invoice :number created for :school.', [
+                                    'number' => $invoice->invoice_number,
+                                    'school' => $record->school?->name ?? __('the school'),
+                                ]))
+                                ->success()
+                                ->send();
+                        } catch (\Throwable $e) {
+                            report($e);
+
+                            Notification::make()
+                                ->title(__('Unable to generate invoice'))
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    }),
+                Tables\Actions\Action::make('billing_documents')
+                    ->label(__('Billing documents'))
+                    ->icon('heroicon-o-document-text')
+                    ->color('gray')
+                    ->url(fn (SaaSSubscription $record): string => PlatformBillingStatements::getUrl(
+                        ['school_id' => $record->school_id],
+                        true,
+                        'admin',
+                    ))
+                    ->openUrlInNewTab(),
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([]);

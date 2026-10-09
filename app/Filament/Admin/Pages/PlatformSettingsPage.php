@@ -133,6 +133,18 @@ class PlatformSettingsPage extends Page implements HasForms
                                     ->label(__('Auto-generate recurring KairoCORE expenses'))
                                     ->helperText(__('Materialises each due occurrence of recurring platform expenses.'))
                                     ->default(true),
+                                Toggle::make('automation_send_expense_reminders')
+                                    ->label(__('Email reminders for recurring KairoCORE expenses'))
+                                    ->helperText(__('Sends a warning before, the day before and on the due date of each recurring platform expense.'))
+                                    ->default(true),
+                                TextInput::make('automation_expense_reminder_days')
+                                    ->label(__('First expense reminder (days before)'))
+                                    ->numeric()
+                                    ->minValue(1)
+                                    ->maxValue(60)
+                                    ->default(5)
+                                    ->helperText(__('How many days ahead the first warning is emailed.'))
+                                    ->visible(fn (callable $get) => (bool) $get('automation_send_expense_reminders')),
                                 Toggle::make('automation_database_cleanup')
                                     ->label(__('Enable Scheduled Platform Cache/Log Optimization'))
                                     ->default(true),

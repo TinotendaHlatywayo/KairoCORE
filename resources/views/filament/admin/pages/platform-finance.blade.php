@@ -3,7 +3,7 @@
         <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div class="mb-4">
                 <h3 class="text-base font-bold text-slate-900 dark:text-white">{{ __('Statement period') }}</h3>
-                <p class="text-xs text-slate-500">{{ __('Choose a date range to build the KairoCORE profit & loss view.') }}</p>
+                <p class="text-xs text-slate-500">{{ __('Choose a date range to build the KairoCORE profit & loss view, and a year for the monthly breakdown below.') }}</p>
             </div>
             {{ $this->form }}
         </div>
@@ -64,7 +64,7 @@
 
         <div class="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 overflow-hidden">
             <div class="flex items-center justify-between border-b border-slate-100 px-6 py-5 dark:border-slate-800">
-                <h3 class="text-base font-bold text-slate-900 dark:text-white">{{ __('Monthly Breakdown') }}</h3>
+                <h3 class="text-base font-bold text-slate-900 dark:text-white">{{ __('Monthly Breakdown') }} — {{ $report['year'] ?? now()->year }}</h3>
                 <span class="text-xs font-semibold text-slate-400">{{ $currency }}</span>
             </div>
             <div class="overflow-x-auto">
@@ -87,7 +87,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" class="px-6 py-8 text-center text-slate-400">{{ __('No activity in this period.') }}</td>
+                                <td colspan="4" class="px-6 py-8 text-center text-slate-400">{{ __('No completed months recorded for this year.') }}</td>
                             </tr>
                         @endforelse
                     </tbody>

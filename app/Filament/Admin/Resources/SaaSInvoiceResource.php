@@ -74,6 +74,12 @@ class SaaSInvoiceResource extends Resource
                     ->icon('heroicon-o-arrow-down-tray')
                     ->color('success')
                     ->url(fn (SaaSInvoice $record) => route('saas.invoice.download', $record->uuid), shouldOpenInNewTab: true),
+                Tables\Actions\Action::make('download_receipt')
+                    ->label(__('Receipt'))
+                    ->icon('heroicon-o-document-check')
+                    ->color('info')
+                    ->visible(fn (SaaSInvoice $record): bool => $record->receipt !== null)
+                    ->url(fn (SaaSInvoice $record) => route('saas.receipt.download', $record->receipt->uuid), shouldOpenInNewTab: true),
                 Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([

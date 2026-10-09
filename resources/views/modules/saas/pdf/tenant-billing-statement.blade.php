@@ -4,22 +4,24 @@
     <meta charset="UTF-8">
     <title>Tenant Billing Statement</title>
     <style>
-        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #1e293b; margin: 0; padding: 24px; font-size: 12px; line-height: 1.5; }
-        h1 { font-size: 20px; margin: 0; color: #4f46e5; }
-        .muted { color: #64748b; }
-        .header { border-bottom: 3px solid #4f46e5; padding-bottom: 14px; margin-bottom: 20px; }
+        body { font-family: Arial, Helvetica, sans-serif; color: #222222; margin: 0; padding: 26px; font-size: 12px; line-height: 1.5; }
+        h1 { font-size: 22px; margin: 0; color: #1F2E43; letter-spacing: 1px; }
+        .muted { color: #666666; }
+        .header { border-bottom: 3px solid #1F2E43; padding-bottom: 14px; margin-bottom: 20px; }
         .right { text-align: right; }
         .summary { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
         .summary td { width: 33.33%; padding: 0 6px; }
-        .box { border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; }
-        .box .label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; font-weight: 700; }
-        .box .value { font-size: 17px; font-weight: bold; margin-top: 6px; color: #0f172a; }
-        .section-title { font-size: 13px; font-weight: 700; color: #0f172a; margin: 22px 0 8px; }
+        .box { border: 1px solid #E2E8F0; border-radius: 6px; padding: 14px; }
+        .box .label { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: #666666; font-weight: bold; }
+        .box .value { font-size: 17px; font-weight: bold; margin-top: 6px; color: #1F2E43; }
+        .section-title { font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 1.5px; color: #1F2E43; margin: 22px 0 8px; border-left: 5px solid #EF5F4D; padding-left: 10px; }
         table.data { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
-        table.data th { background: #f8fafc; border-bottom: 2px solid #e2e8f0; color: #475569; font-weight: 700; text-align: left; padding: 8px 10px; font-size: 10px; text-transform: uppercase; }
-        table.data td { border-bottom: 1px solid #e2e8f0; padding: 8px 10px; color: #334155; }
+        table.data th { background: #1F2E43; color: #ffffff; border-bottom: 2px solid #1F2E43; font-weight: bold; text-align: left; padding: 9px 10px; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; }
+        table.data td { border-bottom: 1px solid #E8EBEF; padding: 9px 10px; color: #444444; }
+        table.data tr:nth-child(even) td { background: #F6F7F9; }
         table.data td.num, table.data th.num { text-align: right; }
-        .footer { border-top: 1px solid #e2e8f0; padding-top: 16px; margin-top: 30px; font-size: 10px; color: #94a3b8; text-align: center; }
+        .footer { border-top: 1px solid #E2E8F0; padding-top: 14px; margin-top: 28px; font-size: 10px; color: #666666; text-align: center; line-height: 1.7; }
+        .outstanding { color: #EF5F4D; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -32,13 +34,13 @@
         <table style="width: 100%;">
             <tr>
                 <td>
-                    <h1>{{ __('KairoCORE') }}</h1>
+                    <h1>KairoCORE</h1>
                     <div class="muted" style="margin-top: 4px;">{{ __('Tenant Billing Statement') }}</div>
                 </td>
                 <td class="right muted">
-                    <div><strong>{{ __('Institution:') }}</strong> {{ $school?->name ?? __('Unknown') }}</div>
-                    <div><strong>{{ __('Period:') }}</strong> {{ $statement['start']->format('M d, Y') }} &ndash; {{ $statement['end']->format('M d, Y') }}</div>
-                    <div><strong>{{ __('Generated:') }}</strong> {{ now()->format('M d, Y H:i') }}</div>
+                    <div><strong style="color:#444444;">{{ __('Institution:') }}</strong> {{ $school?->name ?? __('Unknown') }}</div>
+                    <div><strong style="color:#444444;">{{ __('Period:') }}</strong> {{ $statement['start']->format('d M Y') }} &ndash; {{ $statement['end']->format('d M Y') }}</div>
+                    <div><strong style="color:#444444;">{{ __('Generated:') }}</strong> {{ now()->format('d M Y H:i') }}</div>
                 </td>
             </tr>
         </table>
@@ -67,8 +69,8 @@
             @forelse($statement['invoices'] as $invoice)
                 <tr>
                     <td>{{ $invoice->invoice_number }}</td>
-                    <td>{{ $invoice->issue_date?->format('M d, Y') }}</td>
-                    <td>{{ $invoice->due_date?->format('M d, Y') }}</td>
+                    <td>{{ $invoice->issue_date?->format('d M Y') }}</td>
+                    <td>{{ $invoice->due_date?->format('d M Y') }}</td>
                     <td style="text-transform: uppercase;">{{ $invoice->status }}</td>
                     <td class="num">${{ number_format($invoice->total, 2) }}</td>
                 </tr>
@@ -93,7 +95,7 @@
                 <tr>
                     <td>{{ $receipt->receipt_number }}</td>
                     <td>{{ $receipt->invoice?->invoice_number ?? '—' }}</td>
-                    <td>{{ $receipt->issued_at?->format('M d, Y') }}</td>
+                    <td>{{ $receipt->issued_at?->format('d M Y') }}</td>
                     <td class="num">${{ number_format($receipt->amount_paid, 2) }}</td>
                 </tr>
             @empty
@@ -117,7 +119,7 @@
                 <tr>
                     <td>{{ $payment->transaction_reference ?: $payment->uuid }}</td>
                     <td style="text-transform: uppercase;">{{ $payment->payment_gateway_key }}</td>
-                    <td>{{ $payment->processed_at?->format('M d, Y') }}</td>
+                    <td>{{ $payment->processed_at?->format('d M Y') }}</td>
                     <td class="num">${{ number_format($payment->amount, 2) }}</td>
                 </tr>
             @empty

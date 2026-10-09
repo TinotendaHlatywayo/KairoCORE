@@ -225,7 +225,7 @@ class TempRosterRegistrationSmokeTest extends TestCase
         $this->assertSame(User::STATUS_PENDING, $user->account_status, 'Silent auto-create must never produce an active account.');
     }
 
-    public function test_csv_employee_import_provisions_locked_account_with_activation_token(): void
+    public function test_csv_employee_import_provisions_active_account_with_activation_token(): void
     {
         $grade = SalaryGrade::create([
             'school_id' => $this->school->id,
@@ -250,7 +250,7 @@ class TempRosterRegistrationSmokeTest extends TestCase
 
         $user = User::withoutGlobalScopes()->find($employee->user_id);
         $this->assertNotNull($user);
-        $this->assertSame(User::STATUS_PENDING, $user->account_status, 'Imported staff accounts must be locked until activated.');
+        $this->assertSame(User::STATUS_ACTIVE, $user->account_status, 'Imported staff accounts are approved on import because an administrator added them.');
         $this->assertNotNull($user->activation_token, 'First-time import must issue an activation email.');
 
         // Re-import same email: the email is already in use, so the row is

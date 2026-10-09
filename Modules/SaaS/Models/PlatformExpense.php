@@ -91,6 +91,11 @@ class PlatformExpense extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    public function reminders(): HasMany
+    {
+        return $this->hasMany(PlatformExpenseReminder::class, 'platform_expense_id');
+    }
+
     public function scopePaid(Builder $query): Builder
     {
         return $query->where('is_paid', true);
