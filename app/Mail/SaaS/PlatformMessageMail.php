@@ -25,6 +25,7 @@ class PlatformMessageMail extends Mailable
     public function build(): self
     {
         return $this->subject($this->subjectLine)
+            ->from(platform_system_from_email(), platform_email_name())
             ->view('modules.saas.emails.platform-message')
             ->with([
                 'subjectLine' => $this->subjectLine,

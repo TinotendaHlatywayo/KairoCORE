@@ -138,24 +138,33 @@ class PlatformSettingsPage extends Page implements HasForms
                             ->icon('heroicon-o-bell-alert')
                             ->schema([
                                 Placeholder::make('notifications_intro')
-                                    ->label(__('School Registration Alerts'))
+                                    ->label(__('Platform Notifications'))
                                     ->content(new HtmlString(
-                                        'Every time a new institution registers, platform administrators are notified '.
-                                        'inside this console. Use the options below to also receive an email so applications '.
-                                        'are never missed. The inbox defaults to the platform sender address (<strong>'.
-                                        e(platform_email_address()).'</strong>).'
+                                        'Control where the platform sends its alert emails. In-app notifications are always '.
+                                        'delivered inside this console; these addresses only decide the email copies. Defaults to '.
+                                        '<strong>hlatwayne@gmail.com</strong> and can be changed at any time.'
                                     ))
                                     ->columnSpanFull(),
+                                TextInput::make('notifications_super_admin_email')
+                                    ->label(__('New school registration alert email'))
+                                    ->email()
+                                    ->default('hlatwayne@gmail.com')
+                                    ->helperText(__('Receives an email every time a new institution registers.')),
+                                TextInput::make('notifications_tenant_message_email')
+                                    ->label(__('Tenant message alert email'))
+                                    ->email()
+                                    ->default('hlatwayne@gmail.com')
+                                    ->helperText(__('Receives an email whenever a tenant sends a message to Kairo CORE.')),
                                 Toggle::make('notifications_email_on_school_registration')
-                                    ->label(__('Send email when a new school registers'))
+                                    ->label(__('Email me when a new school registers'))
                                     ->default(true)
                                     ->helperText(__('In-app notifications are always delivered; this only controls the email copy.')),
-                                TextInput::make('notifications_super_admin_email')
-                                    ->label(__('Platform Notification Inbox (Email)'))
+                                TextInput::make('notifications_system_from_email')
+                                    ->label(__('System email (From address)'))
                                     ->email()
                                     ->default(platform_email_address())
-                                    ->helperText(__('Where new-school-registration emails are delivered (e.g. twaynehlatywayo09@gmail.com).')),
-                            ])->columns(1),
+                                    ->helperText(__('The address platform emails are sent from. Use one of the inboxes above, or a verified alias of the SMTP account.')),
+                            ])->columns(2),
 
                         Tab::make('Email Branding')
                             ->icon('heroicon-o-envelope-open')

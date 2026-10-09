@@ -4,12 +4,14 @@ namespace App\Filament\Admin\Resources;
 
 use App\Filament\Admin\Resources\PlatformMessageResource\Pages\ListPlatformMessages;
 use App\Models\School;
+use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Get;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Modules\SaaS\Models\PlatformMessage;
 use Modules\SaaS\Models\SaaSPlan;
@@ -44,7 +46,7 @@ class PlatformMessageResource extends Resource
         return $user && $user->school_id === null;
     }
 
-    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    public static function getEloquentQuery(): Builder
     {
         // Gmail-style conversations: ONE table row per thread (the newest
         // message represents it), plus eager loads used by columns/actions.
@@ -156,6 +158,7 @@ class PlatformMessageResource extends Resource
                                 'all' => __('All tenants'),
                                 'selected' => __('Tenants matching criteria'),
                                 'single' => __('A specific tenant'),
+                                'users' => __('Specific user(s) of a tenant'),
                             ])
                             ->default('all')
                             ->live()
@@ -164,8 +167,24 @@ class PlatformMessageResource extends Resource
                             ->label(__('Tenant'))
                             ->options(fn () => School::query()->pluck('name', 'id'))
                             ->searchable()
-                            ->visible(fn (Get $get): bool => $get('audience') === 'single')
-                            ->required(fn (Get $get): bool => $get('audience') === 'single'),
+                            ->live()
+                            ->visible(fn (Get $get): bool => in_array($get('audience'), ['single', 'users'], true))
+                            ->required(fn (Get $get): bool => in_array($get('audience'), ['single', 'users'], true)),
+                        Forms\Components\Select::make('role_filter')
+                            ->label(__('Filter by role'))
+                            ->options(User::REGISTRATION_ROLES)
+                            ->live()
+                            ->visible(fn (Get $get): bool => $get('audience') === 'users')
+                            ->helperText(__('Optional — narrow the recipient list before searching by name.')),
+                        Forms\Components\Select::make('user_ids')
+                            ->label(__('Recipients'))
+                            ->multiple()
+                            ->searchable()
+                            ->visible(fn (Get $get): bool => $get('audience') === 'users')
+                            ->required(fn (Get $get): bool => $get('audience') === 'users')
+                            ->options(fn (Get $get): array => self::recipientUserOptions((int) $get('school_id'), $get('role_filter')))
+                            ->getSearchResultsUsing(fn (string $search, Get $get): array => self::recipientUserOptions((int) $get('school_id'), $get('role_filter'), $search))
+                            ->getOptionLabelsUsing(fn (array $values): array => User::withoutTenantScope()->whereIn('id', $values)->pluck('name', 'id')->all()),
                         Forms\Components\Select::make('status_filter')
                             ->label(__('Status is one of'))
                             ->options([
@@ -216,11 +235,26 @@ class PlatformMessageResource extends Resource
                     ])
                     ->action(function (array $data, $action) {
                         $actor = Auth::user();
-                        $schoolIds = self::resolveTargetSchools($data);
-                        if (empty($schoolIds)) {
+                        $userIds = [];
+
+                        if (($data['audience'] ?? null) === 'users') {
+                            $userIds = array_values(array_unique(array_filter(array_map('intval', $data['user_ids'] ?? []))));
+                            $schoolIds = User::withoutTenantScope()
+                                ->whereIn('id', $userIds)
+                                ->whereNotNull('school_id')
+                                ->pluck('school_id')
+                                ->map(fn ($id) => (int) $id)
+                                ->unique()
+                                ->values()
+                                ->all();
+                        } else {
+                            $schoolIds = self::resolveTargetSchools($data);
+                        }
+
+                        if (empty($schoolIds) && empty($userIds)) {
                             Notification::make()
-                                ->title(__('No matching tenants'))
-                                ->body('No tenants matched the selected criteria. Add at least one filter or choose a broader audience.')
+                                ->title(__('No matching recipients'))
+                                ->body('No tenants or users matched the selected criteria. Add at least one filter or choose a broader audience.')
                                 ->warning()
                                 ->send();
 
@@ -241,8 +275,11 @@ class PlatformMessageResource extends Resource
                                 'status_filter' => $data['status_filter'] ?? null,
                                 'plan_filter' => $data['plan_filter'] ?? null,
                                 'region_filter' => $data['region_filter'] ?? null,
+                                'role_filter' => $data['role_filter'] ?? null,
+                                'user_ids' => $userIds ?: null,
                             ],
                             channel: $data['channel'] ?? 'platform_message',
+                            userIds: $userIds,
                         );
                     }),
             ])
@@ -325,6 +362,40 @@ class PlatformMessageResource extends Resource
                             ->update(['is_read' => true, 'read_at' => now()]);
                     }),
             ]);
+    }
+
+    /**
+     * Searchable recipient options for the "specific users" audience: active,
+     * non-platform-managed users of one school, optionally narrowed by role
+     * and/or a name/email search term.
+     *
+     * @return array<int, string>
+     */
+    protected static function recipientUserOptions(int $schoolId, ?string $role = null, ?string $search = null): array
+    {
+        if ($schoolId <= 0) {
+            return [];
+        }
+
+        $query = User::withoutTenantScope()
+            ->where('school_id', $schoolId)
+            ->where('account_status', User::STATUS_ACTIVE)
+            ->notPlatformManaged()
+            ->orderBy('name');
+
+        if (filled($role)) {
+            $query->where('requested_role', $role);
+        }
+
+        if (filled($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', '%'.$search.'%')
+                    ->orWhere('email', 'like', '%'.$search.'%')
+                    ->orWhere('username', 'like', '%'.$search.'%');
+            });
+        }
+
+        return $query->limit(50)->pluck('name', 'id')->all();
     }
 
     protected static function resolveTargetSchools(array $data): array

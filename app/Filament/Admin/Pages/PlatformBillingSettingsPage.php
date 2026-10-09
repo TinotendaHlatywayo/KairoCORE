@@ -106,9 +106,6 @@ class PlatformBillingSettingsPage extends Page implements HasForms
                         Toggle::make('notify_super_admin_on_billing')
                             ->label(__('Email me on each billing day'))
                             ->default(true),
-                        Toggle::make('notify_super_admin_on_registration')
-                            ->label(__('Email me on new school registration'))
-                            ->default(true),
                         TextInput::make('super_admin_billing_email')
                             ->label(__('Billing notification inbox'))
                             ->default('hlatywayotw@gmail.com')
@@ -145,11 +142,11 @@ class PlatformBillingSettingsPage extends Page implements HasForms
     public function save(): void
     {
         $data = $this->form->getState();
-        
+
         // Save PlatformBillingSetting fields
         $platformSettings = PlatformBillingSetting::current();
         $platformSettings->update(array_intersect_key($data, array_flip($platformSettings->getFillable())));
-        
+
         // Save SaaSBillingSetting fields (Paynow credentials)
         $saasSettings = SaaSBillingSetting::getActiveSettings();
         $saasSettings->update(array_intersect_key($data, array_flip($saasSettings->getFillable())));
