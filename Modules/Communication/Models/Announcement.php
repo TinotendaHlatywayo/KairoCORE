@@ -22,6 +22,7 @@ class Announcement extends Model
         'expires_at',
         'status',
         'visibility',
+        'target_user_ids',
         'priority',
         'display_style',
         'requires_acknowledgement',
@@ -30,6 +31,7 @@ class Announcement extends Model
     protected $casts = [
         'attachments' => 'array',
         'visibility' => 'array',
+        'target_user_ids' => 'array',
         'published_at' => 'datetime',
         'expires_at' => 'datetime',
         'requires_acknowledgement' => 'boolean',
