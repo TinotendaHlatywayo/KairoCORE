@@ -291,7 +291,7 @@ class BillingNotificationService
             channel: 'platform_message',
         );
 
-        return User::query()->where('school_id', $schoolId)->count();
+        return User::query()->where('school_id', $schoolId)->notPlatformManaged()->count();
     }
 
     protected function suspend(SaaSSubscription $subscription): void

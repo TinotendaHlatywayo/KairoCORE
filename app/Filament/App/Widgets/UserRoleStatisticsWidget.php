@@ -50,6 +50,7 @@ class UserRoleStatisticsWidget extends BaseWidget
             ->count();
 
         $adminCount = User::where('school_id', $schoolId)
+            ->notPlatformManaged()
             ->where('account_status', 'active')
             ->where(function ($q) {
                 $q->where('requested_role', 'administrator')

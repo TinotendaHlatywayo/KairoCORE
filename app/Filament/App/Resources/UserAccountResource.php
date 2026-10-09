@@ -279,7 +279,6 @@ class UserAccountResource extends Resource
                         User::STATUS_REJECTED => 'Rejected',
                         User::STATUS_SUSPENDED => 'Suspended',
                     ])
-                    ->default(User::STATUS_PENDING)
                     ->placeholder(__('All statuses')),
                 Tables\Filters\SelectFilter::make('requested_role')
                     ->label(__('Requested Role'))

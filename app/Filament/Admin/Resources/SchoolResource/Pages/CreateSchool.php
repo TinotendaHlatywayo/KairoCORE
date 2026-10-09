@@ -4,6 +4,7 @@ namespace App\Filament\Admin\Resources\SchoolResource\Pages;
 
 use App\Filament\Admin\Resources\SchoolResource;
 use Filament\Resources\Pages\CreateRecord;
+use Modules\SaaS\Services\SubscriptionProvisioner;
 
 class CreateSchool extends CreateRecord
 {
@@ -18,8 +19,20 @@ class CreateSchool extends CreateRecord
      */
     protected array $pendingModuleToggles = [];
 
+    /**
+     * Subscription plan picked on the create form. Held until the school row
+     * exists, then applied to the provisioned subscription.
+     */
+    protected ?int $pendingPlanId = null;
+
     protected function mutateFormDataBeforeCreate(array $data): array
     {
+        $this->pendingPlanId = isset($data['subscription_plan_id'])
+            ? (int) $data['subscription_plan_id']
+            : null;
+
+        unset($data['subscription_plan_id']);
+
         [$data, $this->pendingModuleToggles] = SchoolResource::splitModuleToggles($data);
 
         return $data;
@@ -32,5 +45,17 @@ class CreateSchool extends CreateRecord
         }
 
         $this->pendingModuleToggles = [];
+
+        if ($this->record !== null) {
+            $provisioner = app(SubscriptionProvisioner::class);
+
+            if ($this->pendingPlanId) {
+                $provisioner->assignPlan($this->record, $this->pendingPlanId);
+            } else {
+                $provisioner->ensureForSchool($this->record);
+            }
+        }
+
+        $this->pendingPlanId = null;
     }
 }
