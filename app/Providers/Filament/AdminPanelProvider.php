@@ -6,6 +6,8 @@ use App\Filament\Admin\Pages\Auth\Login;
 use App\Filament\Admin\Pages\Dashboard;
 use App\Filament\Admin\Pages\PlatformBackupManager;
 use App\Filament\Admin\Pages\PlatformBillingSettingsPage;
+use App\Filament\Admin\Pages\PlatformBillingStatements;
+use App\Filament\Admin\Pages\PlatformFinance;
 use App\Filament\Admin\Pages\PlatformIntelligenceDashboard;
 use App\Filament\Admin\Pages\PlatformMaintenancePage;
 use App\Filament\Admin\Pages\PlatformSettingsPage;
@@ -13,6 +15,7 @@ use App\Filament\Admin\Resources\PendingPaymentResource;
 use App\Filament\Admin\Resources\PlatformAnnouncementResource;
 use App\Filament\Admin\Resources\PlatformAuditLogResource;
 use App\Filament\Admin\Resources\PlatformBillingMessageResource;
+use App\Filament\Admin\Resources\PlatformExpenseResource;
 use App\Filament\Admin\Resources\PlatformMessageResource;
 use App\Filament\Admin\Resources\PlatformTemplateResource;
 use App\Filament\Admin\Resources\SaaSInvoiceResource;
@@ -95,6 +98,8 @@ class AdminPanelProvider extends PanelProvider
                 PlatformMaintenancePage::class,
                 PlatformSettingsPage::class,
                 PlatformBillingSettingsPage::class,
+                PlatformFinance::class,
+                PlatformBillingStatements::class,
             ])
             ->widgets([
                 Widgets\AccountWidget::class,
@@ -104,6 +109,7 @@ class AdminPanelProvider extends PanelProvider
                 NavigationGroup::make('Overview')->collapsible(false),
                 NavigationGroup::make('Tenants')->collapsible(),
                 NavigationGroup::make('Billing & Subscriptions')->collapsible(),
+                NavigationGroup::make('Finance')->collapsible(),
                 NavigationGroup::make('Intelligence')->collapsible(),
                 NavigationGroup::make('Operations')->collapsible(),
                 NavigationGroup::make('Communication')->collapsible(),
@@ -154,6 +160,7 @@ class AdminPanelProvider extends PanelProvider
                 PlatformAuditLogResource::class,
                 PlatformMessageResource::class,
                 PlatformBillingMessageResource::class,
+                PlatformExpenseResource::class,
             ]);
     }
 }
