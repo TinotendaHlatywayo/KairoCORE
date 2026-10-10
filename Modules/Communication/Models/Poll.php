@@ -20,6 +20,7 @@ class Poll extends Model
         'description',
         'type',
         'is_anonymous',
+        'show_results',
         'target_roles',
         'target_user_ids',
         'created_by',
@@ -28,6 +29,7 @@ class Poll extends Model
 
     protected $casts = [
         'is_anonymous' => 'boolean',
+        'show_results' => 'boolean',
         'target_roles' => 'array',
         'target_user_ids' => 'array',
         'expires_at' => 'datetime',

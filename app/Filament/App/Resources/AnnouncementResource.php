@@ -124,12 +124,13 @@ class AnnouncementResource extends Resource
                                 ->options(fn () => User::where('school_id', auth()->user()?->school_id)->pluck('name', 'id'))
                                 ->searchable()
                                 ->preload(),
-                            Forms\Components\DatePicker::make('published_at')
+                            Forms\Components\DateTimePicker::make('published_at')
                                 ->default(now())
-                                ->helperText(__('Defaults to today — you can pick another date.')),
-                            Forms\Components\DatePicker::make('expires_at')
-                                ->default(now())
-                                ->helperText(__('Defaults to today — you can pick another date.')),
+                                ->seconds(false)
+                                ->helperText(__('Defaults to now — you can schedule another date.')),
+                            Forms\Components\DateTimePicker::make('expires_at')
+                                ->seconds(false)
+                                ->helperText(__('Leave empty to keep the notice visible until you change its status.')),
                         ]),
 
                     Forms\Components\Section::make(__('Attachments'))
