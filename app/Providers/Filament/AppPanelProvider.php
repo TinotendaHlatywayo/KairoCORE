@@ -17,6 +17,7 @@ use App\Filament\App\Pages\EmailConfigurationPage;
 use App\Filament\App\Pages\Finance\FinancialStatementPage;
 use App\Filament\App\Pages\IssueBook;
 use App\Filament\App\Pages\MyDay;
+use App\Filament\App\Pages\Notices;
 use App\Filament\App\Pages\ReportGeneratorPage;
 use App\Filament\App\Pages\ReportingDashboard;
 use App\Filament\App\Pages\SaaSBillingOverview;
@@ -386,6 +387,7 @@ class AppPanelProvider extends PanelProvider
                 ReportGeneratorPage::class,
                 AnalyticsExplorer::class,
                 CommunicationCenter::class,
+                Notices::class,
 
                 // Academic Operations Center
                 AcademicOperationsCenter::class,

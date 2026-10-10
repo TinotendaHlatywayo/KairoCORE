@@ -1056,6 +1056,50 @@ if (! function_exists('document_date')) {
     }
 }
 
+if (! function_exists('document_logo_data_uri')) {
+    /**
+     * Base64 data-URI of the Kairo CORE logo PNG for use inside dompdf documents,
+     * where external/absolute image paths are unreliable. Empty string if the
+     * asset has not been generated yet.
+     */
+    function document_logo_data_uri(): string
+    {
+        static $cached;
+
+        if (is_string($cached)) {
+            return $cached;
+        }
+
+        $path = public_path('img/kairo-core-logo.png');
+
+        return $cached = (is_file($path) && is_readable($path))
+            ? 'data:image/png;base64,'.base64_encode((string) file_get_contents($path))
+            : '';
+    }
+}
+
+if (! function_exists('document_watermark_data_uri')) {
+    /**
+     * Base64 data-URI of the ~6%-opacity-on-white Kairo CORE watermark PNG.
+     * The opacity is baked into the pixels so dompdf (which ignores CSS
+     * opacity) still prints a faint centered watermark.
+     */
+    function document_watermark_data_uri(): string
+    {
+        static $cached;
+
+        if (is_string($cached)) {
+            return $cached;
+        }
+
+        $path = public_path('img/kairo-core-watermark.png');
+
+        return $cached = (is_file($path) && is_readable($path))
+            ? 'data:image/png;base64,'.base64_encode((string) file_get_contents($path))
+            : '';
+    }
+}
+
 if (! function_exists('brand_email_view_data')) {
     /**
      * Merge resolved branding with per-email content into a ready-to-render

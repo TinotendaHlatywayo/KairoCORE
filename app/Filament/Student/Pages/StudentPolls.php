@@ -6,6 +6,7 @@ use App\Filament\Student\Resources\HomeworkResource;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Collection;
+use Illuminate\Validation\ValidationException;
 use Modules\Communication\Models\Poll;
 use Modules\Communication\Models\PollVote;
 
@@ -13,8 +14,10 @@ use Modules\Communication\Models\PollVote;
  * Student-facing Polls & Surveys.
  *
  * Shows every open poll/survey targeted at students (or everyone). A student
- * may cast exactly one vote per poll, after which live percentage standings
- * are displayed.
+ * may cast exactly one vote per poll. Open feedback surveys collect a typed
+ * answer; multi-choice polls record one chosen option. Live percentage
+ * standings are shown after voting (or once closed) only when the creator
+ * enabled "show results" for participants.
  */
 class StudentPolls extends Page
 {
@@ -30,6 +33,8 @@ class StudentPolls extends Page
 
     protected static ?string $slug = 'polls-surveys';
 
+    public array $responses = [];
+
     public static function getNavigationLabel(): string
     {
         return __('Polls & Surveys');
@@ -44,11 +49,7 @@ class StudentPolls extends Page
         }
 
         if ($poll->expires_at && $poll->expires_at->lt(now())) {
-            Notification::make()
-                ->title(__('Poll Closed'))
-                ->body(__('This poll has closed. Voting is no longer available.'))
-                ->warning()
-                ->send();
+            $this->sendClosedNotification();
 
             return;
         }
@@ -57,6 +58,37 @@ class StudentPolls extends Page
             return;
         }
 
+        $this->recordVote($poll, ['option_id' => $optionId]);
+    }
+
+    public function submitSurvey(int $pollId): void
+    {
+        $poll = $this->polls->firstWhere(fn (array $entry) => $entry['poll']->id === $pollId)['poll'] ?? null;
+
+        if (! $poll || $poll->type !== 'survey') {
+            return;
+        }
+
+        if ($poll->expires_at && $poll->expires_at->lt(now())) {
+            $this->sendClosedNotification();
+
+            return;
+        }
+
+        $response = trim((string) ($this->responses[$pollId] ?? ''));
+
+        if ($response === '') {
+            throw ValidationException::withMessages([
+                "responses.{$pollId}" => __('Please type your response before submitting.'),
+            ]);
+        }
+
+        $this->recordVote($poll, ['written_response' => $response]);
+        $this->responses[$pollId] = '';
+    }
+
+    private function recordVote(Poll $poll, array $payload): void
+    {
         $existing = PollVote::query()
             ->where('poll_id', $poll->id)
             ->where('user_id', auth()->id())
@@ -66,17 +98,25 @@ class StudentPolls extends Page
             return;
         }
 
-        PollVote::create([
+        PollVote::create(array_merge([
             'school_id' => $poll->school_id,
             'poll_id' => $poll->id,
-            'option_id' => $optionId,
             'user_id' => auth()->id(),
-        ]);
+        ], $payload));
 
         Notification::make()
-            ->title(__('Vote Recorded'))
+            ->title(__('Response Recorded'))
             ->body(__('Thank you! Your response has been saved.'))
             ->success()
+            ->send();
+    }
+
+    private function sendClosedNotification(): void
+    {
+        Notification::make()
+            ->title(__('Poll Closed'))
+            ->body(__('This poll has closed. Voting is no longer available.'))
+            ->warning()
             ->send();
     }
 

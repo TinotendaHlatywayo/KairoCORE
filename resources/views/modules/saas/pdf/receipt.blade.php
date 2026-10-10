@@ -10,14 +10,16 @@
         $closingFontSize = (int) ($cfg['closing_font_size'] ?? 13);
         $closingWeight = (string) ($cfg['closing_font_weight'] ?? 'bold');
         $closingAlign = (string) ($cfg['closing_align'] ?? 'center');
-        $watermarkColor = document_watermark_color((string) $primary, (float) ($cfg['watermark_opacity'] ?? 0.06));
+        $logoUri = document_logo_data_uri();
+        $watermarkUri = document_watermark_data_uri();
     @endphp
     <meta charset="UTF-8">
     <title>SaaS Subscription Payment Receipt: {{ $receipt->receipt_number }}</title>
     <style>
         * { box-sizing: border-box; }
         body { position: relative; font-family: Arial, Helvetica, sans-serif; color: #222222; margin: 0; padding: 28px; line-height: 1.5; font-size: 12px; }
-        .brand { font-size: 22px; font-weight: bold; color: {{ $dark }}; margin: 0; letter-spacing: 1px; }
+        .brand { margin: 0; }
+        .brand img { height: 50px; width: auto; }
         .brand-sub { font-size: 10px; color: #666666; text-transform: uppercase; letter-spacing: 2px; margin-top: 3px; }
         .doc-title { font-size: 22px; font-weight: bold; color: {{ $primary }}; margin: 0; text-transform: uppercase; letter-spacing: 2px; text-align: right; }
         .doc-meta { font-size: 11px; color: #444444; text-align: right; margin-top: 6px; }
@@ -37,18 +39,23 @@
         .footer .closing-title { font-size: {{ $closingFontSize }}px; font-weight: {{ $closingWeight }}; text-align: {{ $closingAlign }}; color: #222222; margin: 0 0 2px; }
         .footer .closing-sub { text-align: {{ $closingAlign }}; margin: 0 0 8px; }
         .footer .hash { color: #999999; font-size: 9px; word-break: break-all; }
-        .watermark { position: absolute; left: 0; right: 0; top: 33%; text-align: center; font-size: 88px; font-weight: bold; letter-spacing: 24px; color: {{ $watermarkColor }}; white-space: nowrap; }
+        .watermark { position: absolute; left: 0; right: 0; top: 34%; text-align: center; }
+        .watermark img { width: 55%; max-width: 620px; }
     </style>
 </head>
 <body>
-    @if($cfg['watermark_enabled'])
-        <div class="watermark">KAIRO CORE</div>
+    @if($cfg['watermark_enabled'] && $watermarkUri !== '')
+        <div class="watermark"><img src="{{ $watermarkUri }}" alt=""></div>
     @endif
 
     <table class="layout">
         <tr>
             <td style="padding-right: 10px;">
-                <p class="brand">{{ strtoupper($cfg['business_name']) }}</p>
+                @if($logoUri !== '')
+                    <p class="brand"><img src="{{ $logoUri }}" alt="{{ $cfg['business_name'] }}"></p>
+                @else
+                    <p class="brand" style="font-size:22px; font-weight:bold; color: {{ $dark }};">{{ strtoupper($cfg['business_name']) }}</p>
+                @endif
                 <div class="brand-sub">{{ __('Subscription Receipt') }}</div>
             </td>
             <td style="text-align: right; padding-right: 0;">

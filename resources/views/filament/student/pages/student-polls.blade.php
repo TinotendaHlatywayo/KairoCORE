@@ -16,6 +16,7 @@
                         $myVote = $item['myVote'];
                         $totalVotes = $item['totalVotes'];
                         $isClosed = $poll->expires_at && $poll->expires_at->lt(now());
+                        $canSeeResults = ($hasVoted || $isClosed) && $poll->show_results;
                     @endphp
 
                     <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -25,7 +26,7 @@
                                 {{ ucfirst($poll->type) }}
                             </span>
                             <span class="text-[11px] text-slate-400">
-                                {{ $isClosed ? __('Closed') : ($poll->expires_at ? __('Closes').' '.$poll->expires_at->format('d M Y') : __('Open')) }}
+                                {{ $isClosed ? __('Closed') : ($poll->expires_at ? __('Closes').' '.$poll->expires_at->format('d M Y H:i') : __('Open')) }}
                                 @if ($poll->is_anonymous) · {{ __('Anonymous') }} @endif
                             </span>
                         </div>
@@ -35,44 +36,76 @@
                             <p class="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-300">{{ $poll->description }}</p>
                         @endif
 
-                        {{-- Vote options --}}
-                        <div class="mt-4 space-y-2">
-                            @foreach ($poll->options as $option)
-                                @if ($hasVoted || $isClosed)
-                                    @php
-                                        $count = $option->votes->count();
-                                        $pct = $totalVotes > 0 ? round(($count / $totalVotes) * 100) : 0;
-                                        $isMine = $myVote && $myVote->option_id === $option->id;
-                                    @endphp
-                                    <div class="rounded-lg border p-3 {{ $isMine ? 'border-indigo-300 bg-indigo-50 dark:border-indigo-700 dark:bg-indigo-950/40' : 'border-slate-100 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-950/40' }}">
-                                        <div class="flex items-center justify-between gap-2">
-                                            <p class="text-xs font-bold text-slate-800 dark:text-slate-200">
-                                                {{ $option->option_value }}
-                                                @if ($isMine) <span class="ml-1 text-[10px] font-semibold text-indigo-600 dark:text-indigo-300">{{ __('Your vote') }}</span> @endif
-                                            </p>
-                                            <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400">{{ $pct }}% · {{ $count }}</span>
-                                        </div>
-                                        <div class="mt-2 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
-                                            <div class="h-full rounded-full {{ $isMine ? 'bg-indigo-500' : 'bg-emerald-400' }}" style="width: {{ $pct }}%"></div>
-                                        </div>
-                                    </div>
-                                @else
-                                    <button
-                                        type="button"
-                                        wire:click="vote({{ $poll->id }}, {{ $option->id }})"
-                                        class="flex w-full items-center gap-3 rounded-lg border border-slate-200 px-4 py-3 text-left text-xs font-bold text-slate-700 transition hover:border-indigo-400 hover:bg-indigo-50 dark:border-slate-700 dark:text-slate-200 dark:hover:border-indigo-600 dark:hover:bg-indigo-950/40"
-                                    >
-                                        <span class="flex h-4 w-4 items-center justify-center rounded-full border border-slate-300 dark:border-slate-600"></span>
-                                        {{ $option->option_value }}
-                                    </button>
-                                @endif
-                            @endforeach
-                        </div>
+                        {{-- ===== OPEN FEEDBACK SURVEY (typed answer) ===== --}}
+                        @if($poll->type === 'survey' && ! $hasVoted && ! $isClosed)
+                            <div class="mt-4 space-y-3">
+                                <textarea
+                                    wire:model="responses.{{ $poll->id }}"
+                                    rows="3"
+                                    placeholder="{{ __('Type your response here…') }}"
+                                    class="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                                ></textarea>
+                                <button
+                                    type="button"
+                                    wire:click="submitSurvey({{ $poll->id }})"
+                                    class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-indigo-500"
+                                >
+                                    <x-heroicon-o-paper-airplane class="h-4 w-4"/>
+                                    {{ __('Submit Response') }}
+                                </button>
+                                @error("responses.{$poll->id}")
+                                    <p class="text-[11px] font-semibold text-rose-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        @endif
 
-                        @if (! $hasVoted && ! $isClosed)
-                            <p class="mt-3 text-[10px] text-slate-400">{{ __('Tap an option to cast your vote. You can only vote once.') }}</p>
-                        @else
-                            <p class="mt-3 text-[10px] text-slate-400">{{ __('Total responses:') }} {{ $totalVotes }}</p>
+                        {{-- ===== MULTI-CHOICE (option buttons / results bars) ===== --}}
+                        @if($poll->type !== 'survey' && $poll->options->isNotEmpty())
+                            <div class="mt-4 space-y-2">
+                                @foreach ($poll->options as $option)
+                                    @if ($canSeeResults)
+                                        @php
+                                            $count = $option->votes->count();
+                                            $pct = $totalVotes > 0 ? round(($count / $totalVotes) * 100) : 0;
+                                            $isMine = $myVote && $myVote->option_id === $option->id;
+                                        @endphp
+                                        <div class="rounded-lg border p-3 {{ $isMine ? 'border-indigo-300 bg-indigo-50 dark:border-indigo-700 dark:bg-indigo-950/40' : 'border-slate-100 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-950/40' }}">
+                                            <div class="flex items-center justify-between gap-2">
+                                                <p class="text-xs font-bold text-slate-800 dark:text-slate-200">
+                                                    {{ $option->option_value }}
+                                                    @if ($isMine) <span class="ml-1 text-[10px] font-semibold text-indigo-600 dark:text-indigo-300">{{ __('Your vote') }}</span> @endif
+                                                </p>
+                                                <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400">{{ $pct }}% · {{ $count }}</span>
+                                            </div>
+                                            <div class="mt-2 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+                                                <div class="h-full rounded-full {{ $isMine ? 'bg-indigo-500' : 'bg-emerald-400' }}" style="width: {{ max($pct, $count > 0 ? 4 : 0) }}%"></div>
+                                            </div>
+                                        </div>
+                                    @elseif(! $hasVoted && ! $isClosed)
+                                        <button
+                                            type="button"
+                                            wire:click="vote({{ $poll->id }}, {{ $option->id }})"
+                                            class="flex w-full items-center gap-3 rounded-lg border border-slate-200 px-4 py-3 text-left text-xs font-bold text-slate-700 transition hover:border-indigo-400 hover:bg-indigo-50 dark:border-slate-700 dark:text-slate-200 dark:hover:border-indigo-600 dark:hover:bg-indigo-950/40"
+                                        >
+                                            <span class="flex h-4 w-4 items-center justify-center rounded-full border border-slate-300 dark:border-slate-600"></span>
+                                            {{ $option->option_value }}
+                                        </button>
+                                    @endif
+                                @endforeach
+                            </div>
+                        @endif
+
+                        @if($isClosed && $poll->type !== 'survey' && $poll->options->isNotEmpty() && ! $canSeeResults)
+                            <p class="mt-3 text-[10px] text-slate-400">{{ __('Results were not shared for this poll. Total responses:') }} {{ $totalVotes }}</p>
+                        @endif
+
+                        @if (! $hasVoted && ! $isClosed && ($poll->type === 'survey' || $poll->options->isNotEmpty()))
+                            <p class="mt-3 text-[10px] text-slate-400">{{ $poll->type === 'survey' ? __('Type your answer and submit. You can only respond once.') : __('Tap an option to cast your vote. You can only vote once.') }}</p>
+                        @elseif($hasVoted)
+                            <p class="mt-3 text-[10px] text-slate-400">
+                                {{ __('Your response has been recorded.') }}
+                                @if($canSeeResults) {{ __('Total responses:') }} {{ $totalVotes }} @endif
+                            </p>
                         @endif
                     </div>
                 @empty

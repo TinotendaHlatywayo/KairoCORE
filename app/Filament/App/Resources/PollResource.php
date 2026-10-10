@@ -10,6 +10,7 @@ use App\Services\ModuleVisibilityManager;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Infolists\Components\Section as InfolistSection;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Infolist;
@@ -22,6 +23,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Table;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Modules\Communication\Models\Poll;
 use Modules\Communication\Models\PollVote;
@@ -66,10 +68,18 @@ class PollResource extends Resource
                                 'poll' => __('Quick Multi-choice Poll'),
                                 'survey' => __('Open Feedback Survey'),
                                 'election' => __('Formal Student/Staff Election'),
-                            ])->required(),
+                            ])
+                            ->required()
+                            ->live()
+                            ->helperText(fn ($state) => $state === 'survey'
+                                ? __('Participants type their own answers — predefined choices are optional.')
+                                : __('Participants pick one of the predefined choices below.')),
                         Forms\Components\Toggle::make('is_anonymous')
                             ->default(false)
-                            ->helperText(__('When off, the poll creator and school administrator can see who voted and their response.')),
+                            ->helperText(__('When ON, nobody (including the creator) can see who responded — only the tallies.')),
+                        Forms\Components\Toggle::make('show_results')
+                            ->default(true)
+                            ->helperText(__('When ON, targeted participants can see the live results after responding. The creator always sees full results.')),
                     ])->columnSpan(2),
 
                 Forms\Components\Group::make([
@@ -87,11 +97,15 @@ class PollResource extends Resource
                                 ->options(fn () => User::where('school_id', auth()->user()?->school_id)->pluck('name', 'id'))
                                 ->searchable()
                                 ->preload(),
-                            Forms\Components\DatePicker::make('expires_at')->required(),
+                            Forms\Components\DateTimePicker::make('expires_at')
+                                ->label(__('Expires At'))
+                                ->required()
+                                ->default(now()->addDays(7))
+                                ->seconds(false),
                         ]),
                 ])->columnSpan(1),
 
-                // INLINE OPTIONS BUILDER
+                // INLINE OPTIONS BUILDER (optional for open feedback surveys)
                 Forms\Components\Section::make(__('Choice Parameters'))
                     ->schema([
                         Forms\Components\Repeater::make('options')
@@ -101,7 +115,14 @@ class PollResource extends Resource
                                     ->label(__('Choice Option Label'))
                                     ->required(),
                             ])
-                            ->minItems(2)
+                            ->minItems(function (Get $get): int {
+                                return $get('type') === 'survey' ? 0 : 2;
+                            })
+                            ->helperText(function (Get $get): string {
+                                return $get('type') === 'survey'
+                                    ? __('Optional for open feedback surveys — participants type their own answer instead.')
+                                    : __('Add at least two choices. Participants pick one.');
+                            })
                             ->columns(1),
                     ])->columnSpanFull(),
             ])->columns(3);
@@ -109,8 +130,8 @@ class PollResource extends Resource
 
     /**
      * The poll creator and the school administrator may always read the results
-     * (including, for non-anonymous polls, who voted). Everyone else can vote
-     * or look at the question but never sees the tallies of other people.
+     * (including, for non-anonymous polls, who voted). Everyone else sees the
+     * question only or casts a vote from the grid.
      */
     public static function canViewResults($record): bool
     {
@@ -143,51 +164,17 @@ class PollResource extends Resource
                         TextEntry::make('type')
                             ->badge(),
                         TextEntry::make('expires_at')
-                            ->label(__('Closing Date'))
-                            ->date(),
+                            ->label(__('Expires At'))
+                            ->dateTime(),
                     ]),
 
                 InfolistSection::make(__('Live Voting Results'))
                     ->visible(fn ($record) => self::canViewResults($record))
                     ->schema([
-                        TextEntry::make('options_summary')
-                            ->label(__('Current Standing (Percentage & Count)'))
-                            ->formatStateUsing(function ($record) {
-                                $totalVotes = $record->votes()->count();
-                                if ($totalVotes === 0) {
-                                    return __('No votes have been recorded for this poll.');
-                                }
-
-                                return $record->options->map(function ($opt) use ($totalVotes) {
-                                    $optVotes = $opt->votes()->count();
-                                    $pct = $totalVotes > 0 ? round(($optVotes / $totalVotes) * 100, 1) : 0;
-
-                                    return "• {$opt->option_value}: {$optVotes} ".($optVotes === 1 ? __('vote') : __('votes'))." ({$pct}%)";
-                                })->implode("\n");
-                            })
-                            ->listWithLineBreaks(),
-                    ]),
-
-                InfolistSection::make(__('Respondents'))
-                    ->visible(fn ($record) => self::canViewResults($record) && ! $record->is_anonymous)
-                    ->schema([
-                        TextEntry::make('respondents_summary')
-                            ->label(__('Who Voted and Their Choice'))
-                            ->formatStateUsing(function ($record) {
-                                $votes = $record->votes()->with('user', 'option')->get();
-
-                                if ($votes->isEmpty()) {
-                                    return __('Nobody has voted yet.');
-                                }
-
-                                return $votes->map(function ($vote) {
-                                    $respondent = $vote->user?->name ?? __('Unknown');
-                                    $choice = $vote->option?->option_value ?? ($vote->written_response ?: __('—'));
-
-                                    return "• {$respondent}: {$choice}";
-                                })->implode("\n");
-                            })
-                            ->listWithLineBreaks(),
+                        TextEntry::make('results_bars')
+                            ->label(__('Current Standing'))
+                            ->html()
+                            ->formatStateUsing(fn ($record) => view('filament.app.resources.poll-results', ['poll' => $record])->render()),
                     ]),
             ]);
     }
@@ -198,23 +185,38 @@ class PollResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('question')->searchable()->wrap(),
                 Tables\Columns\TextColumn::make('type'),
-                Tables\Columns\IconColumn::make('is_anonymous')->boolean(),
+                Tables\Columns\IconColumn::make('is_anonymous')->boolean()->label(__('Anonymous')),
                 Tables\Columns\TextColumn::make('votes_count')->counts('votes')->label(__('Participation')),
-                Tables\Columns\TextColumn::make('expires_at')->date()->label(__('Closing Date')),
+                Tables\Columns\TextColumn::make('expires_at')->label(__('Expires'))
+                    ->formatStateUsing(fn ($state) => $state?->format('d M Y H:i')),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make()
                     ->label(fn ($record) => self::canViewResults($record) ? __('View Results') : __('View'))
                     ->visible(fn ($record) => self::canViewResults($record)),
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make()
+                    ->requiresConfirmation()
+                    ->modalHeading(__('Delete Poll & Survey'))
+                    ->label(__('Delete')),
 
                 // INTERACTIVE ACTION: CAST VOTE DIRECTLY FROM GRID
                 Action::make('vote')
                     ->label(__('Vote'))
                     ->icon('heroicon-o-pencil-square')
                     ->color('success')
-                    ->visible(fn ($record) => $record->expires_at->isFuture() && ! PollVote::where('poll_id', $record->id)->where('user_id', Auth::id())->exists())
+                    ->visible(fn ($record) => $record->expires_at?->isFuture()
+                        && ! PollVote::where('poll_id', $record->id)->where('user_id', Auth::id())->exists())
                     ->form(function ($record) {
+                        if ($record->type === 'survey') {
+                            return [
+                                Forms\Components\Textarea::make('written_response')
+                                    ->label(__('Your Response'))
+                                    ->required()
+                                    ->rows(3),
+                            ];
+                        }
+
                         return [
                             Forms\Components\Select::make('option_id')
                                 ->label(__('Select Option'))
@@ -226,16 +228,59 @@ class PollResource extends Resource
                         PollVote::create([
                             'school_id' => $record->school_id,
                             'poll_id' => $record->id,
-                            'option_id' => $data['option_id'],
+                            'option_id' => $data['option_id'] ?? null,
+                            'written_response' => $data['written_response'] ?? null,
                             'user_id' => Auth::id(),
                         ]);
 
                         Notification::make()
-                            ->title(__('Vote Recorded'))
+                            ->title(__('Response Recorded'))
                             ->success()
                             ->send();
                     }),
             ]);
+    }
+
+    /**
+     * Resolve the users a poll/survey is aimed at and fan an in-app
+     * notification out to exactly those users (same audience rules as
+     * announcements: real role keys + specific individuals).
+     *
+     * @return Collection<int, User>
+     */
+    public static function broadcastToAudience(Poll $record)
+    {
+        $usersQuery = User::query()->where('school_id', $record->school_id);
+
+        $roles = $record->target_roles ?? [];
+        $targetUserIds = $record->target_user_ids ?? [];
+
+        if (! empty($roles) || ! empty($targetUserIds)) {
+            $usersQuery->where(function ($q) use ($roles, $targetUserIds) {
+                if (! empty($roles)) {
+                    $q->where(function ($roleQ) use ($roles) {
+                        $roleQ->whereIn('requested_role', $roles)
+                            ->orWhereHas('customRole', fn ($r) => $r->whereIn('role_key', $roles));
+                    });
+                }
+
+                if (! empty($targetUserIds)) {
+                    $q->orWhereIn('id', $targetUserIds);
+                }
+            });
+        }
+
+        $targetedUsers = $usersQuery->get();
+
+        foreach ($targetedUsers as $user) {
+            Notification::make()
+                ->title(__($record->type === 'survey' ? 'New Survey' : 'New Poll'))
+                ->body($record->question)
+                ->info()
+                ->sendToDatabase($user);
+        }
+
+        return $targetedUsers;
     }
 
     public static function getPages(): array
@@ -263,6 +308,7 @@ class ListPolls extends ListRecords
         ];
     }
 }
+
 class CreatePoll extends CreateRecord
 {
     protected static string $resource = PollResource::class;
@@ -273,11 +319,40 @@ class CreatePoll extends CreateRecord
 
         return $data;
     }
+
+    protected function afterCreate(): void
+    {
+        try {
+            PollResource::broadcastToAudience($this->record);
+        } catch (\Throwable $e) {
+            report($e);
+        }
+    }
 }
+
 class EditPoll extends EditRecord
 {
     protected static string $resource = PollResource::class;
+
+    protected function afterSave(): void
+    {
+        // The content genuinely changed — the previous responses were cast
+        // against the old question/type, so clear them instead of leaving
+        // stale answers sitting on the new poll.
+        try {
+            if ($this->record->wasChanged('question') || $this->record->wasChanged('type')) {
+                $this->record->votes()->delete();
+            }
+
+            if ($this->record->wasChanged('target_roles') || $this->record->wasChanged('target_user_ids')) {
+                PollResource::broadcastToAudience($this->record->fresh());
+            }
+        } catch (\Throwable $e) {
+            report($e);
+        }
+    }
 }
+
 class ViewPoll extends ViewRecord
 {
     protected static string $resource = PollResource::class;
