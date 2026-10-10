@@ -2,8 +2,10 @@
 
 namespace Modules\Communication\Models;
 
+use App\Models\User;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Poll extends Model
@@ -20,6 +22,7 @@ class Poll extends Model
         'is_anonymous',
         'target_roles',
         'target_user_ids',
+        'created_by',
         'expires_at',
     ];
 
@@ -29,6 +32,11 @@ class Poll extends Model
         'target_user_ids' => 'array',
         'expires_at' => 'datetime',
     ];
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
 
     public function options(): HasMany
     {

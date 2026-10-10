@@ -91,6 +91,14 @@ class AnnouncementResource extends Resource
                                 ])->required()->default('card'),
                             Forms\Components\Toggle::make('requires_acknowledgement')
                                 ->default(false),
+                            Forms\Components\Select::make('attachment_policy')
+                                ->label(__('Attachment Access'))
+                                ->options([
+                                    'view_download' => __('View & Download'),
+                                    'view_only' => __('View Only'),
+                                ])
+                                ->default('view_download')
+                                ->helperText(__('Controls whether attached photos/documents can be downloaded or only viewed online.')),
                             Forms\Components\Select::make('channel')
                                 ->label(__('Delivery Channel'))
                                 ->options([
@@ -116,8 +124,12 @@ class AnnouncementResource extends Resource
                                 ->options(fn () => User::where('school_id', auth()->user()?->school_id)->pluck('name', 'id'))
                                 ->searchable()
                                 ->preload(),
-                            Forms\Components\DatePicker::make('published_at'),
-                            Forms\Components\DatePicker::make('expires_at'),
+                            Forms\Components\DatePicker::make('published_at')
+                                ->default(now())
+                                ->helperText(__('Defaults to today — you can pick another date.')),
+                            Forms\Components\DatePicker::make('expires_at')
+                                ->default(now())
+                                ->helperText(__('Defaults to today — you can pick another date.')),
                         ]),
 
                     Forms\Components\Section::make(__('Attachments'))
@@ -191,13 +203,6 @@ class AnnouncementResource extends Resource
                         return Carbon::parse($state)->diffForHumans();
                     })
                     ->color(fn ($state) => $state && Carbon::parse($state)->isPast() ? 'danger' : 'gray'),
-                Tables\Columns\TextColumn::make('content')
-                    ->label(__('Message'))
-                    ->html()
-                    ->limit(120)
-                    ->tooltip(function ($record) {
-                        return strip_tags((string) $record->content);
-                    }),
             ])
             ->filters([
                 // ARCHIVE HISTORY TOGGLE BUTTON
@@ -212,6 +217,13 @@ class AnnouncementResource extends Resource
                     }),
             ])
             ->actions([
+                Tables\Actions\ViewAction::make()
+                    ->label(__('View Announcement'))
+                    ->modalHeading(fn (Announcement $record) => $record->title)
+                    ->modalContent(fn (Announcement $record) => view(
+                        'filament.app.resources.announcement-preview',
+                        ['notice' => $record]
+                    )),
                 Tables\Actions\EditAction::make(),
 
                 Action::make('publish')
@@ -290,7 +302,7 @@ class AnnouncementResource extends Resource
                     Mail::to($user->email)->send(new AnnouncementPublishedMail(
                         title: $record->title,
                         content: str_replace('&nbsp;', ' ', (string) preg_replace('/<p[^>]*>|<\/p>/i', '', (string) $record->content)),
-                        schoolName: $record->school->name ?? '',
+                        schoolName: $record->school?->name ?? '',
                     ));
                 }
             } catch (\Throwable $e) {
@@ -332,7 +344,11 @@ class CreateAnnouncement extends CreateRecord
     protected function afterCreate(): void
     {
         if ($this->record->status === 'published') {
-            AnnouncementResource::broadcastToAudience($this->record);
+            try {
+                AnnouncementResource::broadcastToAudience($this->record);
+            } catch (\Throwable $e) {
+                report($e);
+            }
         }
     }
 }
@@ -346,7 +362,11 @@ class EditAnnouncement extends EditRecord
             && ($this->record->wasChanged('status')
                 || $this->record->wasChanged('visibility')
                 || $this->record->wasChanged('target_user_ids'))) {
-            AnnouncementResource::broadcastToAudience($this->record);
+            try {
+                AnnouncementResource::broadcastToAudience($this->record);
+            } catch (\Throwable $e) {
+                report($e);
+            }
         }
     }
 }

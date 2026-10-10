@@ -1,59 +1,74 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    @php
+        $cfg = platform_document_config();
+        $brand = email_branding();
+        $school = $invoice->school;
+        $primary = $cfg['primary_color'];
+        $dark = $cfg['dark_color'];
+        $light = $cfg['light_fill'];
+        $closingFontSize = (int) ($cfg['closing_font_size'] ?? 13);
+        $closingWeight = (string) ($cfg['closing_font_weight'] ?? 'bold');
+        $closingAlign = (string) ($cfg['closing_align'] ?? 'center');
+        $watermarkColor = document_watermark_color((string) $primary, (float) ($cfg['watermark_opacity'] ?? 0.06));
+    @endphp
     <meta charset="UTF-8">
     <title>SaaS Subscription Invoice: {{ $invoice->invoice_number }}</title>
     <style>
         * { box-sizing: border-box; }
-        body { font-family: Arial, Helvetica, sans-serif; color: #222222; margin: 0; padding: 28px; line-height: 1.5; font-size: 12px; }
-        .brand { font-size: 24px; font-weight: bold; color: #1F2E43; margin: 0; letter-spacing: 1px; }
+        body { position: relative; font-family: Arial, Helvetica, sans-serif; color: #222222; margin: 0; padding: 28px; line-height: 1.5; font-size: 12px; }
+        .brand { font-size: 24px; font-weight: bold; color: {{ $dark }}; margin: 0; letter-spacing: 1px; }
         .brand-sub { font-size: 10px; color: #666666; text-transform: uppercase; letter-spacing: 2px; margin-top: 3px; }
-        .doc-title { font-size: 26px; font-weight: bold; color: #EF5F4D; margin: 0; text-transform: uppercase; letter-spacing: 2px; text-align: right; }
+        .doc-title { font-size: 26px; font-weight: bold; color: {{ $primary }}; margin: 0; text-transform: uppercase; letter-spacing: 2px; text-align: right; }
         .doc-meta { font-size: 11px; color: #444444; text-align: right; margin-top: 6px; line-height: 1.7; }
-        .rule { height: 3px; background: #1F2E43; margin: 16px 0 22px; }
-        .section-title { font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 1.5px; color: #1F2E43; margin-bottom: 6px; }
+        .rule { height: 3px; background: {{ $dark }}; margin: 16px 0 22px; }
+        .section-title { font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 1.5px; color: {{ $dark }}; margin-bottom: 6px; }
         .party { font-size: 12px; line-height: 1.7; color: #444444; }
         .party strong { color: #222222; }
         table.layout { width: 100%; border-collapse: collapse; }
         table.layout > tbody > tr > td { vertical-align: top; width: 50%; padding: 0 10px; }
         table.items { width: 100%; border-collapse: collapse; margin: 20px 0 8px; }
-        table.items th { background: #1F2E43; color: #ffffff; font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; text-align: left; padding: 10px 12px; }
+        table.items th { background: {{ $dark }}; color: #ffffff; font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; text-align: left; padding: 10px 12px; }
         table.items td { border-bottom: 1px solid #E2E8F0; padding: 11px 12px; font-size: 12px; color: #333333; }
-        table.items tr:nth-child(even) td { background: #F6F7F9; }
+        table.items tr:nth-child(even) td { background: {{ $light }}; }
         table.totals { width: 45%; margin-left: auto; border-collapse: collapse; margin-top: 8px; }
         table.totals td { padding: 7px 12px; font-size: 12px; }
         table.totals td.label { color: #666666; text-align: right; }
         table.totals td.value { font-weight: bold; text-align: right; color: #222222; }
-        table.totals tr.total td { border-top: 2px solid #1F2E43; font-size: 15px; }
-        table.totals tr.total td.label { color: #1F2E43; font-weight: bold; }
-        table.totals tr.total td.value { color: #EF5F4D; font-size: 16px; }
-        .note-box { background: #F3F5F8; border-left: 4px solid #EF5F4D; padding: 12px 16px; margin: 22px 0; font-size: 11px; color: #444444; }
-        .note-box .note-title { font-weight: bold; text-transform: uppercase; letter-spacing: 1px; font-size: 10px; color: #1F2E43; margin-bottom: 5px; }
+        table.totals tr.total td { border-top: 2px solid {{ $dark }}; font-size: 15px; }
+        table.totals tr.total td.label { color: {{ $dark }}; font-weight: bold; }
+        table.totals tr.total td.value { color: {{ $primary }}; font-size: 16px; }
+        .note-box { background: {{ $light }}; border-left: 4px solid {{ $primary }}; padding: 12px 16px; margin: 22px 0; font-size: 11px; color: #444444; }
+        .note-box .note-title { font-weight: bold; text-transform: uppercase; letter-spacing: 1px; font-size: 10px; color: {{ $dark }}; margin-bottom: 5px; }
         table.pay { width: 100%; border-collapse: collapse; margin-top: 6px; }
         table.pay td { padding: 5px 10px; font-size: 11px; color: #444444; border-bottom: 1px solid #E2E8F0; }
-        table.pay td.method { font-weight: bold; color: #1F2E43; width: 45%; }
-        .footer { border-top: 1px solid #E2E8F0; margin-top: 28px; padding-top: 14px; font-size: 10px; color: #666666; text-align: center; line-height: 1.7; }
-        .footer .hash { color: #999999; font-size: 9px; word-break: break-all; }
+        table.pay td.method { font-weight: bold; color: {{ $dark }}; width: 45%; }
+        .footer { border-top: 1px solid #E2E8F0; margin-top: 28px; padding-top: 14px; font-size: 10px; color: #666666; line-height: 1.7; }
+        .footer .closing-title { font-size: {{ $closingFontSize }}px; font-weight: {{ $closingWeight }}; text-align: {{ $closingAlign }}; color: #222222; margin: 0 0 2px; }
+        .footer .closing-sub { text-align: {{ $closingAlign }}; margin: 0 0 8px; }
+        .footer .note { text-align: {{ $closingAlign }}; }
+        .footer .hash { color: #999999; font-size: 9px; word-break: break-all; text-align: center; }
+        .watermark { position: absolute; left: 0; right: 0; top: 33%; text-align: center; font-size: 88px; font-weight: bold; letter-spacing: 24px; color: {{ $watermarkColor }}; white-space: nowrap; }
     </style>
 </head>
 <body>
-    @php
-        $brand = email_branding();
-        $school = $invoice->school;
-    @endphp
+    @if($cfg['watermark_enabled'])
+        <div class="watermark">KAIRO CORE</div>
+    @endif
 
     <table class="layout">
         <tr>
             <td style="padding-left: 0;">
-                <p class="brand">{{ strtoupper($brand['company_name']) }}</p>
+                <p class="brand">{{ strtoupper($cfg['business_name']) }}</p>
                 <div class="brand-sub">{{ __('Enterprise Software Infrastructure') }}</div>
             </td>
             <td style="text-align: right; padding-right: 0;">
                 <h1 class="doc-title">{{ __('Invoice') }}</h1>
                 <div class="doc-meta">
                     <strong>{{ __('Invoice No:') }}</strong> {{ $invoice->invoice_number }}<br>
-                    <strong>{{ __('Date:') }}</strong> {{ $invoice->issue_date->format('d M Y') }}<br>
-                    <strong>{{ __('Due Date:') }}</strong> {{ $invoice->due_date->format('d M Y') }}
+                    <strong>{{ __('Date:') }}</strong> {{ document_date($invoice->issue_date) }}<br>
+                    <strong>{{ __('Due Date:') }}</strong> {{ document_date($invoice->due_date) }}
                 </div>
             </td>
         </tr>
@@ -75,10 +90,11 @@
             <td style="padding-right: 0;">
                 <div class="section-title">{{ __('From') }}</div>
                 <div class="party">
-                    <strong>{{ $brand['company_name'] }}</strong><br>
-                    @if ($brand['company_address']){{ $brand['company_address'] }}<br>@endif
-                    @if ($brand['company_phone']){{ __('Phone:') }} {{ $brand['company_phone'] }}<br>@endif
-                    @if ($brand['company_email']){{ __('Email:') }} {{ $brand['company_email'] }}@endif
+                    <strong>{{ $cfg['business_name'] }}</strong><br>
+                    @if ($cfg['from_line_1']){{ $cfg['from_line_1'] }}<br>@endif
+                    @if ($cfg['from_line_2']){{ $cfg['from_line_2'] }}<br>@endif
+                    @if ($cfg['from_phone']){{ __('Phone:') }} {{ $cfg['from_phone'] }}<br>@endif
+                    @if ($cfg['from_email']){{ __('Email:') }} {{ $cfg['from_email'] }}@endif
                 </div>
             </td>
         </tr>
@@ -125,25 +141,33 @@
     </table>
 
     <div class="note-box">
-        <div class="note-title">{{ __('Payment Details') }}</div>
-        {{ $invoice->payment_instructions ?: __('Please use the invoice number as your payment reference.') }}
+        <div class="note-title">{{ $cfg['callout_title'] }}</div>
+        {{ $invoice->payment_instructions ?: ($cfg['callout_body'] ?: __('Please use the invoice number as your payment reference.')) }}
         <table class="pay">
-            <tr>
-                <td class="method">{{ __('EcoCash') }}</td>
-                <td>0785556855</td>
-            </tr>
-            <tr>
-                <td class="method">{{ __('Bank (CABS USD Account)') }}</td>
-                <td>1149411511</td>
-            </tr>
+            @forelse((array) $cfg['payment_channels'] as $channel)
+                <tr>
+                    <td class="method">{{ $channel['method'] ?? '' }}</td>
+                    <td>{{ $channel['number'] ?? '' }}</td>
+                </tr>
+            @empty
+                <tr>
+                    <td class="method">{{ __('EcoCash') }}</td>
+                    <td>0785556855</td>
+                </tr>
+                <tr>
+                    <td class="method">{{ __('Bank (CABS USD Account)') }}</td>
+                    <td>1149411511</td>
+                </tr>
+            @endforelse
         </table>
     </div>
 
     <div class="footer">
-        <p>{{ __('Thank you for your business! Please use the invoice number as your payment reference.') }}</p>
-        <p>{{ __('All international invoices can be settled via multi-currency or cross-border payment rails.') }}</p>
+        <p class="closing-title">{{ $cfg['closing_title'] }}</p>
+        <p class="closing-sub">{{ $cfg['closing_subtitle'] }}</p>
+        <p class="note">{{ $cfg['cross_border_notice'] }}</p>
         <p class="hash">{{ __('Security checksum:') }} {{ $invoice->integrity_hash }}</p>
-        <p>&copy; {{ date('Y') }} {{ $brand['company_name'] }}. {{ __('All rights reserved.') }}</p>
+        <p style="text-align: center;">&copy; {{ date('Y') }} {{ $cfg['business_name'] }}. {{ __('All rights reserved.') }}</p>
     </div>
 </body>
 </html>
