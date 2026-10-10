@@ -2,12 +2,14 @@
 
 namespace App\Filament\App\Resources;
 
-use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Concerns\ModulePermissionAccess;
+use App\Filament\App\Resources\PollResource\Pages\CreatePoll;
+use App\Filament\App\Resources\PollResource\Pages\EditPoll;
+use App\Filament\App\Resources\PollResource\Pages\ListPolls;
+use App\Filament\App\Resources\PollResource\Pages\ViewPoll;
 use App\Models\User;
 use App\Security\RoleCatalogue;
 use App\Services\ModuleVisibilityManager;
-use Filament\Actions;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
@@ -15,10 +17,6 @@ use Filament\Infolists\Components\Section as InfolistSection;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Infolist;
 use Filament\Notifications\Notification;
-use Filament\Resources\Pages\CreateRecord;
-use Filament\Resources\Pages\EditRecord;
-use Filament\Resources\Pages\ListRecords;
-use Filament\Resources\Pages\ViewRecord;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Actions\Action;
@@ -78,8 +76,8 @@ class PollResource extends Resource
                             ->default(false)
                             ->helperText(__('When ON, nobody (including the creator) can see who responded — only the tallies.')),
                         Forms\Components\Toggle::make('show_results')
-                            ->default(true)
-                            ->helperText(__('When ON, targeted participants can see the live results after responding. The creator always sees full results.')),
+                            ->default(false)
+                            ->helperText(__('When ON, targeted participants can see the live results after responding. When OFF (recommended), results are visible only to the creator and school administrators.')),
                     ])->columnSpan(2),
 
                 Forms\Components\Group::make([
@@ -111,6 +109,7 @@ class PollResource extends Resource
                         Forms\Components\Repeater::make('options')
                             ->relationship('options')
                             ->schema([
+                                Forms\Components\Hidden::make('id'),
                                 Forms\Components\TextInput::make('option_value')
                                     ->label(__('Choice Option Label'))
                                     ->required(),
@@ -173,8 +172,9 @@ class PollResource extends Resource
                     ->schema([
                         TextEntry::make('results_bars')
                             ->label(__('Current Standing'))
+                            ->state(fn ($record): string => view('filament.app.resources.poll-results', ['poll' => $record])->render())
                             ->html()
-                            ->formatStateUsing(fn ($record) => view('filament.app.resources.poll-results', ['poll' => $record])->render()),
+                            ->extraAttributes(['class' => 'w-full']),
                     ]),
             ]);
     }
@@ -292,68 +292,4 @@ class PollResource extends Resource
             'view' => ViewPoll::route('/{record}'),
         ];
     }
-}
-
-class ListPolls extends ListRecords
-{
-    use HasPageHelp;
-
-    protected static string $resource = PollResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            $this->getHelpAction(),
-            Actions\CreateAction::make()->label(__('New Poll/Survey')),
-        ];
-    }
-}
-
-class CreatePoll extends CreateRecord
-{
-    protected static string $resource = PollResource::class;
-
-    protected function mutateFormDataBeforeCreate(array $data): array
-    {
-        $data['created_by'] = auth()->id();
-
-        return $data;
-    }
-
-    protected function afterCreate(): void
-    {
-        try {
-            PollResource::broadcastToAudience($this->record);
-        } catch (\Throwable $e) {
-            report($e);
-        }
-    }
-}
-
-class EditPoll extends EditRecord
-{
-    protected static string $resource = PollResource::class;
-
-    protected function afterSave(): void
-    {
-        // The content genuinely changed — the previous responses were cast
-        // against the old question/type, so clear them instead of leaving
-        // stale answers sitting on the new poll.
-        try {
-            if ($this->record->wasChanged('question') || $this->record->wasChanged('type')) {
-                $this->record->votes()->delete();
-            }
-
-            if ($this->record->wasChanged('target_roles') || $this->record->wasChanged('target_user_ids')) {
-                PollResource::broadcastToAudience($this->record->fresh());
-            }
-        } catch (\Throwable $e) {
-            report($e);
-        }
-    }
-}
-
-class ViewPoll extends ViewRecord
-{
-    protected static string $resource = PollResource::class;
 }

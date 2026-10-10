@@ -16,14 +16,18 @@ class AnnouncementPublishedMail extends Mailable
         public string $title,
         public string $content,
         public string $schoolName,
-        public array $attachments = [],
+        public array $attachmentPaths = [],
     ) {}
 
     public function build(): self
     {
         $mail = $this->subject('New Notice: '.$this->title)->view('emails.announcement-published');
 
-        foreach ($this->attachments as $path) {
+        // Mailable owns `$attachments`; the parent class appends to it. Adding
+        // our own typed `$attachments` would redeclare the inherited property
+        // (a fatal error on PHP 8.4), so paths are held separately and handed
+        // to the parent's attach() helper which does the bookkeeping.
+        foreach ($this->attachmentPaths as $path) {
             if ($path && Storage::disk('public')->exists($path)) {
                 $mail->attach(Storage::disk('public')->path($path));
             }
