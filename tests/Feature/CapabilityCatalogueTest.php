@@ -429,7 +429,7 @@ class CapabilityCatalogueTest extends TestCase
             ],
             'supporting staff, Communication' => [
                 'supporting_staff', 'communication',
-                ['Community & Engagement', 'Announcements', 'Chat', 'Help & Inbox', 'Helpdesk'],
+                ['Community & Engagement', 'Announcements', 'Chat', 'Help & Inbox', 'Helpdesk', 'Events', 'Polls & Surveys', 'Resources'],
             ],
             'teaching staff, HR' => [
                 'teaching_staff', 'hr',
@@ -447,9 +447,10 @@ class CapabilityCatalogueTest extends TestCase
     }
 
     /**
-     * The rest of Communication belongs to the school at large, not to one person:
-     * a supporting-staff member has no reason to read every event, resource,
-     * poll or school-wide inbox.
+     * The rest of Communication belongs to ranges the whole school should not
+     * see. The Community & Engagement set (Events, Resources, Polls & Surveys)
+     * is deliberately open to every role; the platform's Kairo CORE inbox and
+     * the module Overview remain peripheral to a supporting-staff member.
      */
     #[DataProvider('sharedModuleClosedPageProvider')]
     public function test_self_service_leaves_the_school_wide_screens_closed(
@@ -486,9 +487,6 @@ class CapabilityCatalogueTest extends TestCase
     public static function sharedModuleClosedPageProvider(): array
     {
         return [
-            ['supporting_staff', 'communication', 'Events'],
-            ['supporting_staff', 'communication', 'Resources'],
-            ['supporting_staff', 'communication', 'Polls & Surveys'],
             ['supporting_staff', 'communication', 'Kairo CORE Messages'],
             ['supporting_staff', 'hr', 'Payroll Periods'],
             ['supporting_staff', 'hr', 'Salary Grades'],

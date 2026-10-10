@@ -4,7 +4,9 @@ namespace App\Filament\App\Resources;
 
 use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Concerns\ModulePermissionAccess;
+use App\Mail\AnnouncementPublishedMail;
 use App\Models\User;
+use App\Security\RoleCatalogue;
 use Carbon\Carbon;
 use Filament\Actions;
 use Filament\Forms;
@@ -18,6 +20,8 @@ use Filament\Tables;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Mail;
 use Modules\Communication\Models\Announcement;
 
 class AnnouncementResource extends Resource
@@ -61,7 +65,7 @@ class AnnouncementResource extends Resource
 
                 Forms\Components\Group::make([
                     Forms\Components\Section::make(__('Publication & Priority'))
-                        ->extraAttributes(['class' => '!overflow-visible'])
+                        ->extraAttributes(['class' => 'overflow-visible!'])
                         ->schema([
                             Forms\Components\Select::make('status')
                                 ->options([
@@ -87,22 +91,25 @@ class AnnouncementResource extends Resource
                                 ])->required()->default('card'),
                             Forms\Components\Toggle::make('requires_acknowledgement')
                                 ->default(false),
+                            Forms\Components\Select::make('channel')
+                                ->label(__('Delivery Channel'))
+                                ->options([
+                                    'system_only' => __('System only'),
+                                    'email_only' => __('Email only'),
+                                    'both' => __('System and Email'),
+                                ])
+                                ->default('system_only')
+                                ->helperText(__('System delivers an in-app notification inside each user\'s portal; Email sends the full notice to matching addresses.')),
                         ]),
 
                     Forms\Components\Section::make(__('Audience Targets'))
-                        ->extraAttributes(['class' => '!overflow-visible'])
+                        ->extraAttributes(['class' => 'overflow-visible!'])
                         ->schema([
                             Forms\Components\Select::make('visibility')
                                 ->label(__('Visible to Roles'))
                                 ->multiple()
-                                ->options([
-                                    'admin' => __('Administrators'),
-                                    'teacher' => __('Teachers'),
-                                    'student' => __('Students'),
-                                    'parent' => __('Parents'),
-                                    'accountant' => __('Finance Staff'),
-                                    'librarian' => __('Librarians'),
-                                ])->preload(),
+                                ->options(fn (): array => RoleCatalogue::audienceRoleOptions())
+                                ->preload(),
                             Forms\Components\Select::make('target_user_ids')
                                 ->label(__('Target Specific Individuals'))
                                 ->multiple()
@@ -184,6 +191,13 @@ class AnnouncementResource extends Resource
                         return Carbon::parse($state)->diffForHumans();
                     })
                     ->color(fn ($state) => $state && Carbon::parse($state)->isPast() ? 'danger' : 'gray'),
+                Tables\Columns\TextColumn::make('content')
+                    ->label(__('Message'))
+                    ->html()
+                    ->limit(120)
+                    ->tooltip(function ($record) {
+                        return strip_tags((string) $record->content);
+                    }),
             ])
             ->filters([
                 // ARCHIVE HISTORY TOGGLE BUTTON
@@ -212,28 +226,7 @@ class AnnouncementResource extends Resource
                             'published_at' => now(),
                         ]);
 
-                        $usersQuery = User::where('school_id', $record->school_id);
-
-                        if (! empty($record->visibility) || ! empty($record->target_user_ids)) {
-                            $usersQuery->where(function ($q) use ($record) {
-                                if (! empty($record->visibility)) {
-                                    $q->orWhereIn('role', $record->visibility);
-                                }
-                                if (! empty($record->target_user_ids)) {
-                                    $q->orWhereIn('id', $record->target_user_ids);
-                                }
-                            });
-                        }
-
-                        $notifiedUsers = $usersQuery->get();
-
-                        foreach ($notifiedUsers as $user) {
-                            Notification::make()
-                                ->title(__('New Notice Published'))
-                                ->body(__('Important Announcement: ').$record->title)
-                                ->success()
-                                ->sendToDatabase($user);
-                        }
+                        static::broadcastToAudience($record);
 
                         Notification::make()
                             ->title(__('Notice Published and Broadcasted'))
@@ -241,6 +234,71 @@ class AnnouncementResource extends Resource
                             ->send();
                     }),
             ]);
+    }
+
+    /**
+     * Resolve the users a notice is aimed at and fan an in-app notification out
+     * to exactly those users (plus an email hook for the channel setting).
+     *
+     * Roles are matched against the real role storage (`requested_role` and
+     * `custom_roles.role_key`), not a non-existent `users.role` column, so a
+     * role-targeted notice actually reaches its audience.
+     *
+     * @return Collection<int, User>
+     */
+    public static function broadcastToAudience(Announcement $record)
+    {
+        $usersQuery = User::query()->where('school_id', $record->school_id);
+
+        $visibility = $record->visibility ?? [];
+        $targetUserIds = $record->target_user_ids ?? [];
+
+        if (! empty($visibility) || ! empty($targetUserIds)) {
+            $usersQuery->where(function ($q) use ($visibility, $targetUserIds) {
+                if (! empty($visibility)) {
+                    $q->where(function ($roleQ) use ($visibility) {
+                        $roleQ->whereIn('requested_role', $visibility)
+                            ->orWhereHas('customRole', fn ($r) => $r->whereIn('role_key', $visibility));
+                    });
+                }
+
+                if (! empty($targetUserIds)) {
+                    $q->orWhereIn('id', $targetUserIds);
+                }
+            });
+        }
+
+        $notifiedUsers = $usersQuery->get();
+
+        $channel = $record->channel ?? 'system_only';
+        $notifyInApp = in_array($channel, ['system_only', 'both'], true);
+        $notifyByEmail = in_array($channel, ['email_only', 'both'], true);
+
+        foreach ($notifiedUsers as $user) {
+            if ($notifyInApp) {
+                Notification::make()
+                    ->title(__('New Notice Published'))
+                    ->body(__('Important Announcement: ').$record->title)
+                    ->success()
+                    ->sendToDatabase($user);
+            }
+        }
+
+        if ($notifyByEmail) {
+            try {
+                foreach ($notifiedUsers->whereNotNull('email') as $user) {
+                    Mail::to($user->email)->send(new AnnouncementPublishedMail(
+                        title: $record->title,
+                        content: str_replace('&nbsp;', ' ', (string) preg_replace('/<p[^>]*>|<\/p>/i', '', (string) $record->content)),
+                        schoolName: $record->school->name ?? '',
+                    ));
+                }
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        }
+
+        return $notifiedUsers;
     }
 
     public static function getPages(): array
@@ -270,8 +328,25 @@ class ListAnnouncements extends ListRecords
 class CreateAnnouncement extends CreateRecord
 {
     protected static string $resource = AnnouncementResource::class;
+
+    protected function afterCreate(): void
+    {
+        if ($this->record->status === 'published') {
+            AnnouncementResource::broadcastToAudience($this->record);
+        }
+    }
 }
 class EditAnnouncement extends EditRecord
 {
     protected static string $resource = AnnouncementResource::class;
+
+    protected function afterSave(): void
+    {
+        if ($this->record->status === 'published'
+            && ($this->record->wasChanged('status')
+                || $this->record->wasChanged('visibility')
+                || $this->record->wasChanged('target_user_ids'))) {
+            AnnouncementResource::broadcastToAudience($this->record);
+        }
+    }
 }

@@ -193,6 +193,26 @@ final class RoleCatalogue
     }
 
     /**
+     * The audience options offered when targeting communication content
+     * (announcements, events, resources, polls) at whole roles.
+     *
+     * Uses the real catalogue role keys so the stored values match
+     * `users.requested_role` / `custom_roles.role_key` exactly.
+     *
+     * @return array<string, string>
+     */
+    public static function audienceRoleOptions(): array
+    {
+        $options = [];
+
+        foreach (self::roles() as $key => $role) {
+            $options[$key] = $role['label'];
+        }
+
+        return $options;
+    }
+
+    /**
      * @return array<int, string>
      */
     public static function keys(): array
@@ -531,6 +551,15 @@ final class RoleCatalogue
             'communication.chat.create',
             'communication.helpdesk.view',
             'communication.helpdesk.create',
+
+            // The whole Community & Engagement set. Every member of staff gets to
+            // read announcements, the calendar, campus resources and the polls &
+            // surveys, so a school can talk to its whole staff without tuning
+            // per-role visibility. The individual audience targeting still decides
+            // who actually sees or receives each item.
+            'communication.events.view',
+            'communication.resources.view',
+            'communication.polls_surveys.view',
 
             // The calendar and task list. These live under `universal`, granted
             // above; the `communication.schedule_tasks.*` keys that used to be

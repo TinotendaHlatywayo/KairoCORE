@@ -142,6 +142,7 @@ class SchoolResource extends Resource
 
                 Forms\Components\Section::make('Platform Status & Setup')
                     ->description(__('Access rules, trial periods, and academic presets'))
+                    ->extraAttributes(['class' => 'overflow-visible!'])
                     ->schema([
                         Forms\Components\Select::make('status')
                             ->label(__('Status'))
