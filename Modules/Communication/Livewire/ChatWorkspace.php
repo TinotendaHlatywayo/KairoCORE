@@ -9,6 +9,7 @@ use Livewire\WithFileUploads;
 use Modules\Communication\Models\ChatMessage;
 use Modules\Communication\Models\ChatParticipant;
 use Modules\Communication\Models\ChatThread;
+use Modules\Communication\Services\PlatformChatBridge;
 
 class ChatWorkspace extends Component
 {
@@ -29,11 +30,10 @@ class ChatWorkspace extends Component
 
     public function mount(?ChatThread $record = null): void
     {
-        if ($record && $record->exists) {
+        if ($record && $record->exists && $this->isParticipantThread($record->id)) {
             $this->activeThreadId = $record->id;
         } else {
-            $firstThread = ChatThread::first();
-            $this->activeThreadId = $firstThread ? $firstThread->id : null;
+            $this->activeThreadId = $this->firstOwnThreadId();
         }
 
         $this->checkMuteStatus();
@@ -41,9 +41,41 @@ class ChatWorkspace extends Component
 
     public function selectThread(int $threadId): void
     {
+        if (! $this->isParticipantThread($threadId)) {
+            return;
+        }
+
         $this->activeThreadId = $threadId;
         $this->messageText = '';
         $this->checkMuteStatus();
+    }
+
+    public function isParticipantThread(int $threadId): bool
+    {
+        $userId = Auth::id();
+        $schoolId = Auth::user()->school_id;
+
+        if (! $userId || ! $schoolId) {
+            return false;
+        }
+
+        return ChatParticipant::where('school_id', $schoolId)
+            ->where('thread_id', $threadId)
+            ->where('user_id', $userId)
+            ->exists();
+    }
+
+    public function firstOwnThreadId(): ?int
+    {
+        $userId = Auth::id();
+
+        return ChatThread::whereHas('users', function ($q) use ($userId) {
+            $q->where('users.id', $userId);
+        })
+            ->withExists(['messages as has_messages'])
+            ->orderByDesc('has_messages')
+            ->orderByDesc('updated_at')
+            ->value('id');
     }
 
     public function checkMuteStatus(): void
@@ -84,6 +116,10 @@ class ChatWorkspace extends Component
             return;
         }
 
+        if (! $this->isParticipantThread((int) $this->activeThreadId)) {
+            return;
+        }
+
         $thread = ChatThread::findOrFail($this->activeThreadId);
 
         $attachmentPath = null;
@@ -107,11 +143,15 @@ class ChatWorkspace extends Component
         foreach ($participants as $participant) {
             if ($participant->user) {
                 Notification::make()
-                    ->title(__("New Message from ").Auth::user()->name)
+                    ->title(__('New Message from ').Auth::user()->name)
                     ->body($this->messageText)
                     ->sendToDatabase($participant->user);
             }
         }
+
+        // If this thread was started from the platform inbox (KairoCORE), push
+        // the reply back so the communicating platform user sees it too.
+        PlatformChatBridge::mirrorChatReplyToPlatform($message);
 
         $this->messageText = '';
         $this->attachment = null;

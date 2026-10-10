@@ -17,6 +17,7 @@ use Filament\Tables;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Table;
 use Modules\Communication\Models\CampusResource;
+use App\Security\RoleCatalogue;
 
 class CampusResourceResource extends Resource
 {
@@ -48,7 +49,7 @@ class CampusResourceResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Section::make('Resource Properties')
-                    ->extraAttributes(['class' => '!overflow-visible'])
+                    ->extraAttributes(['class' => 'overflow-visible!'])
                     ->schema([
                         Forms\Components\TextInput::make('title')
                             ->required()
@@ -70,7 +71,7 @@ class CampusResourceResource extends Resource
 
                 Forms\Components\Group::make([
                     Forms\Components\Section::make('Security & Files')
-                        ->extraAttributes(['class' => '!overflow-visible'])
+                        ->extraAttributes(['class' => 'overflow-visible!'])
                         ->schema([
                             Forms\Components\TextInput::make('version')
                                 ->default('1.0')
@@ -97,14 +98,8 @@ class CampusResourceResource extends Resource
                             Forms\Components\Select::make('visibility')
                                 ->label(__('Download Eligibility'))
                                 ->multiple()
-                                ->options([
-                                    'admin' => __('Administrators'),
-                                    'teacher' => __('Teachers'),
-                                    'student' => __('Students'),
-                                    'parent' => __('Parents'),
-                                    'accountant' => __('Finance Staff'),
-                                    'librarian' => __('Librarians'),
-                                ])->preload(),
+                                ->options(fn (): array => RoleCatalogue::audienceRoleOptions())
+                                ->preload(),
                             Forms\Components\Select::make('target_user_ids')
                                 ->label(__('Target Specific Individuals'))
                                 ->multiple()

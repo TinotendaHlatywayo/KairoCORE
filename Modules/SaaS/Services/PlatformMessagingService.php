@@ -10,6 +10,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Modules\Communication\Services\PlatformChatBridge;
 use Modules\SaaS\Models\PlatformMessage;
 use Modules\SaaS\Models\PlatformMessageRecipient;
 
@@ -47,7 +48,7 @@ class PlatformMessagingService
                 'school_id' => null,
                 'recipient_type' => 'school',
                 'recipient_scope' => $scope,
-                'target_meta' => $targetMeta,
+                'target_meta' => $targetMeta ?? ($userIds !== [] ? ['user_ids' => $userIds] : null),
                 'subject' => $subject,
                 'body' => $body,
                 'priority' => $priority,
@@ -129,6 +130,7 @@ class PlatformMessagingService
 
             if ($schoolId) {
                 $this->createRecipients($message, [(int) $schoolId], $channel);
+                PlatformChatBridge::mirrorPlatformReplyToChat($message, (int) $schoolId);
             }
 
             return $message;
@@ -217,6 +219,11 @@ class PlatformMessagingService
         if (in_array($channel, ['platform_message', 'both'], true)) {
             if ($targetUsers->isNotEmpty()) {
                 $targetUsers->each(fn (User $user) => $user->notify(new PlatformMessageNotification($message)));
+
+                // A message aimed at specific people must also surface in their
+                // portal Chat (students have no KairoCORE inbox). The bridge
+                // creates a private one-to-one thread only those persons share.
+                $targetUsers->each(fn (User $user) => PlatformChatBridge::mirrorPlatformMessage($message, $user));
             } else {
                 $schoolIdChunks = array_chunk($schoolIds, 100);
                 foreach ($schoolIdChunks as $chunk) {

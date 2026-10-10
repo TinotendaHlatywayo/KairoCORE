@@ -13,7 +13,9 @@
                         </div>
                         <span class="text-[11px] text-slate-400">{{ $notice->published_at?->format('d M Y H:i') ?? $notice->created_at->format('d M Y') }}</span>
                     </div>
-                    <p class="mt-2 text-xs leading-relaxed text-slate-600 dark:text-slate-300">{{ $notice->content }}</p>
+                    <div class="prose-sm prose-headings:font-bold prose-p:mt-1 prose-p:leading-relaxed mt-2 max-w-none text-xs leading-relaxed text-slate-600 dark:text-slate-300 [&_p]:mt-1 [&_p]:mb-2 [&_p:first-child]:mt-0 [&_p:last-child]:mb-0">
+                        {!! $notice->content !!}
+                    </div>
 
                     @if(! empty($notice->attachments))
                         <div class="mt-3 flex flex-wrap gap-2">
