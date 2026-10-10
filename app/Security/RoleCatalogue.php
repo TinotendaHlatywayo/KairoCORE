@@ -547,6 +547,7 @@ final class RoleCatalogue
 
             // Notices and conversations.
             'communication.announcements.view',
+            'communication.announcements.create',
             'communication.chat.view',
             'communication.chat.create',
             'communication.helpdesk.view',
@@ -556,10 +557,16 @@ final class RoleCatalogue
             // read announcements, the calendar, campus resources and the polls &
             // surveys, so a school can talk to its whole staff without tuning
             // per-role visibility. The individual audience targeting still decides
-            // who actually sees or receives each item.
+            // who actually sees or receives each item. Create is open to every
+            // role too — a teacher or houseparent should be able to raise an
+            // announcement, event, resource or poll; who sees it stays governed
+            // by the audience targeting chosen on that item.
             'communication.events.view',
+            'communication.events.create',
             'communication.resources.view',
+            'communication.resources.create',
             'communication.polls_surveys.view',
+            'communication.polls_surveys.create',
 
             // The calendar and task list. These live under `universal`, granted
             // above; the `communication.schedule_tasks.*` keys that used to be

@@ -10,4 +10,6 @@ use Filament\Resources\Pages\ListRecords;
 class ListSaaSInvoices extends ListRecords
 {
     protected static string $resource = SaaSInvoiceResource::class;
+
+    protected static ?string $title = 'Platform Invoices';
 }

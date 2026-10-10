@@ -1,46 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    @php
+        $cfg = platform_document_config();
+        $currency = $statement['currency'] ?? 'USD';
+        $school = $statement['school'];
+        $primary = $cfg['primary_color'];
+        $dark = $cfg['dark_color'];
+        $light = $cfg['light_fill'];
+        $watermarkColor = document_watermark_color((string) $primary, (float) ($cfg['watermark_opacity'] ?? 0.06));
+    @endphp
     <meta charset="UTF-8">
     <title>Tenant Billing Statement</title>
     <style>
-        body { font-family: Arial, Helvetica, sans-serif; color: #222222; margin: 0; padding: 26px; font-size: 12px; line-height: 1.5; }
-        h1 { font-size: 22px; margin: 0; color: #1F2E43; letter-spacing: 1px; }
+        body { position: relative; font-family: Arial, Helvetica, sans-serif; color: #222222; margin: 0; padding: 26px; font-size: 12px; line-height: 1.5; }
+        h1 { font-size: 22px; margin: 0; color: {{ $dark }}; letter-spacing: 1px; }
         .muted { color: #666666; }
-        .header { border-bottom: 3px solid #1F2E43; padding-bottom: 14px; margin-bottom: 20px; }
+        .header { border-bottom: 3px solid {{ $dark }}; padding-bottom: 14px; margin-bottom: 20px; }
         .right { text-align: right; }
         .summary { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
         .summary td { width: 33.33%; padding: 0 6px; }
         .box { border: 1px solid #E2E8F0; border-radius: 6px; padding: 14px; }
         .box .label { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: #666666; font-weight: bold; }
-        .box .value { font-size: 17px; font-weight: bold; margin-top: 6px; color: #1F2E43; }
-        .section-title { font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 1.5px; color: #1F2E43; margin: 22px 0 8px; border-left: 5px solid #EF5F4D; padding-left: 10px; }
+        .box .value { font-size: 17px; font-weight: bold; margin-top: 6px; color: {{ $dark }}; }
+        .section-title { font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 1.5px; color: {{ $dark }}; margin: 22px 0 8px; border-left: 5px solid {{ $primary }}; padding-left: 10px; }
         table.data { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
-        table.data th { background: #1F2E43; color: #ffffff; border-bottom: 2px solid #1F2E43; font-weight: bold; text-align: left; padding: 9px 10px; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; }
+        table.data th { background: {{ $dark }}; color: #ffffff; border-bottom: 2px solid {{ $dark }}; font-weight: bold; text-align: left; padding: 9px 10px; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; }
         table.data td { border-bottom: 1px solid #E8EBEF; padding: 9px 10px; color: #444444; }
-        table.data tr:nth-child(even) td { background: #F6F7F9; }
+        table.data tr:nth-child(even) td { background: {{ $light }}; }
         table.data td.num, table.data th.num { text-align: right; }
         .footer { border-top: 1px solid #E2E8F0; padding-top: 14px; margin-top: 28px; font-size: 10px; color: #666666; text-align: center; line-height: 1.7; }
-        .outstanding { color: #EF5F4D; font-weight: bold; }
+        .outstanding { color: {{ $primary }}; font-weight: bold; }
+        .watermark { position: absolute; left: 0; right: 0; top: 33%; text-align: center; font-size: 88px; font-weight: bold; letter-spacing: 24px; color: {{ $watermarkColor }}; white-space: nowrap; }
     </style>
 </head>
 <body>
-    @php
-        $currency = $statement['currency'] ?? 'USD';
-        $school = $statement['school'];
-    @endphp
+    @if($cfg['watermark_enabled'])
+        <div class="watermark">KAIRO CORE</div>
+    @endif
 
     <div class="header">
         <table style="width: 100%;">
             <tr>
                 <td>
-                    <h1>KairoCORE</h1>
+                    <h1>{{ strtoupper($cfg['business_name']) }}</h1>
                     <div class="muted" style="margin-top: 4px;">{{ __('Tenant Billing Statement') }}</div>
                 </td>
                 <td class="right muted">
                     <div><strong style="color:#444444;">{{ __('Institution:') }}</strong> {{ $school?->name ?? __('Unknown') }}</div>
-                    <div><strong style="color:#444444;">{{ __('Period:') }}</strong> {{ $statement['start']->format('d M Y') }} &ndash; {{ $statement['end']->format('d M Y') }}</div>
-                    <div><strong style="color:#444444;">{{ __('Generated:') }}</strong> {{ now()->format('d M Y H:i') }}</div>
+                    <div><strong style="color:#444444;">{{ __('Period:') }}</strong> {{ document_date($statement['start']) }} &ndash; {{ document_date($statement['end']) }}</div>
+                    <div><strong style="color:#444444;">{{ __('Generated:') }}</strong> {{ document_date(now(), 'd M Y H:i') }}</div>
                 </td>
             </tr>
         </table>
@@ -69,8 +78,8 @@
             @forelse($statement['invoices'] as $invoice)
                 <tr>
                     <td>{{ $invoice->invoice_number }}</td>
-                    <td>{{ $invoice->issue_date?->format('d M Y') }}</td>
-                    <td>{{ $invoice->due_date?->format('d M Y') }}</td>
+                    <td>{{ document_date($invoice->issue_date) }}</td>
+                    <td>{{ document_date($invoice->due_date) }}</td>
                     <td style="text-transform: uppercase;">{{ $invoice->status }}</td>
                     <td class="num">${{ number_format($invoice->total, 2) }}</td>
                 </tr>
@@ -95,7 +104,7 @@
                 <tr>
                     <td>{{ $receipt->receipt_number }}</td>
                     <td>{{ $receipt->invoice?->invoice_number ?? '—' }}</td>
-                    <td>{{ $receipt->issued_at?->format('d M Y') }}</td>
+                    <td>{{ document_date($receipt->issued_at) }}</td>
                     <td class="num">${{ number_format($receipt->amount_paid, 2) }}</td>
                 </tr>
             @empty
@@ -119,7 +128,7 @@
                 <tr>
                     <td>{{ $payment->transaction_reference ?: $payment->uuid }}</td>
                     <td style="text-transform: uppercase;">{{ $payment->payment_gateway_key }}</td>
-                    <td>{{ $payment->processed_at?->format('d M Y') }}</td>
+                    <td>{{ document_date($payment->processed_at) }}</td>
                     <td class="num">${{ number_format($payment->amount, 2) }}</td>
                 </tr>
             @empty
@@ -129,8 +138,9 @@
     </table>
 
     <div class="footer">
-        <p>{{ __('Outstanding balance: $:amount :currency', ['amount' => number_format($statement['outstanding_total'] ?? 0, 2), 'currency' => $currency]) }}</p>
-        <p>{{ __('This is a system-generated statement. &copy; :year Kairo CORE Software Inc.', ['year' => now()->year]) }}</p>
+        <p><span class="outstanding">{{ __('Outstanding balance: $:amount :currency', ['amount' => number_format($statement['outstanding_total'] ?? 0, 2), 'currency' => $currency]) }}</span></p>
+        <p>{{ $cfg['cross_border_notice'] }}</p>
+        <p>{{ __('This is a system-generated statement. &copy; :year :company', ['year' => now()->year, 'company' => $cfg['business_name']]) }}</p>
     </div>
 </body>
 </html>

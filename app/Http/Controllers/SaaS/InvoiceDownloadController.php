@@ -13,6 +13,29 @@ class InvoiceDownloadController extends Controller
     public function download(Request $request, string $uuid)
     {
         $invoice = SaaSInvoice::where('uuid', $uuid)->firstOrFail();
+        $this->authorizeInvoice($invoice);
+
+        $pdf = Pdf::loadView('modules.saas.pdf.invoice', ['invoice' => $invoice]);
+
+        return $pdf->download($invoice->invoice_number.'.pdf');
+    }
+
+    /**
+     * Stream the invoice inline so a "View" button can open the real document
+     * in the browser instead of only offering a download.
+     */
+    public function view(Request $request, string $uuid)
+    {
+        $invoice = SaaSInvoice::where('uuid', $uuid)->firstOrFail();
+        $this->authorizeInvoice($invoice);
+
+        $pdf = Pdf::loadView('modules.saas.pdf.invoice', ['invoice' => $invoice]);
+
+        return $pdf->stream($invoice->invoice_number.'.pdf');
+    }
+
+    private function authorizeInvoice(SaaSInvoice $invoice): void
+    {
         $user = Auth::user();
 
         // Security boundary validation
@@ -25,9 +48,5 @@ class InvoiceDownloadController extends Controller
         if ($invoice->integrity_hash !== $computedHash) {
             abort(400, 'Security Checksum Violation. Document may be modified.');
         }
-
-        $pdf = Pdf::loadView('modules.saas.pdf.invoice', ['invoice' => $invoice]);
-
-        return $pdf->download($invoice->invoice_number.'.pdf');
     }
 }

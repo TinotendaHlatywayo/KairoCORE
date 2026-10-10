@@ -3,8 +3,10 @@
 use App\Http\Controllers\AcademicReportPdfController;
 use App\Http\Controllers\Auth\ActivationController;
 use App\Http\Controllers\Auth\GoogleAuthController;
+use App\Http\Controllers\Communication\CommunicationAttachmentController;
 use App\Http\Controllers\DocumentDownloadController;
 use App\Http\Controllers\FinanceDocumentController;
+use App\Http\Controllers\Platform\PlatformBackupDownloadController;
 use App\Http\Controllers\Platform\PlatformEntryController;
 use App\Http\Controllers\SaaS\InvoiceDownloadController;
 use App\Http\Controllers\SaaS\PaynowWebhookController;
@@ -450,7 +452,7 @@ Route::middleware(['tenant', 'auth', 'throttle:rate_limit:exports'])->group(func
 
 // Platform recovery archive download (super admin only, central host)
 Route::middleware(['auth'])->group(function () {
-    Route::get('/platform/backups/{backup}/download', [\App\Http\Controllers\Platform\PlatformBackupDownloadController::class, 'download'])
+    Route::get('/platform/backups/{backup}/download', [PlatformBackupDownloadController::class, 'download'])
         ->name('platform.backups.download');
 });
 
@@ -461,6 +463,12 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/saas/receipt/{uuid}/download', [ReceiptDownloadController::class, 'download'])
         ->name('saas.receipt.download');
+
+    Route::get('/saas/invoice/{uuid}/view', [InvoiceDownloadController::class, 'view'])
+        ->name('saas.invoice.view');
+
+    Route::get('/communication/attachments/download', [CommunicationAttachmentController::class, 'download'])
+        ->name('communication.attachment.download');
 });
 
 // Paynow Sandbox Simulator Routes

@@ -4,6 +4,9 @@ namespace App\Filament\App\Resources;
 
 use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Concerns\ModulePermissionAccess;
+use App\Models\User;
+use App\Security\RoleCatalogue;
+use App\Services\ModuleVisibilityManager;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -22,7 +25,6 @@ use Filament\Tables\Table;
 use Illuminate\Support\Facades\Auth;
 use Modules\Communication\Models\Poll;
 use Modules\Communication\Models\PollVote;
-use App\Security\RoleCatalogue;
 
 class PollResource extends Resource
 {
@@ -66,7 +68,8 @@ class PollResource extends Resource
                                 'election' => __('Formal Student/Staff Election'),
                             ])->required(),
                         Forms\Components\Toggle::make('is_anonymous')
-                            ->default(false),
+                            ->default(false)
+                            ->helperText(__('When off, the poll creator and school administrator can see who voted and their response.')),
                     ])->columnSpan(2),
 
                 Forms\Components\Group::make([
@@ -77,6 +80,12 @@ class PollResource extends Resource
                                 ->label(__('Target Roles'))
                                 ->multiple()
                                 ->options(fn (): array => RoleCatalogue::audienceRoleOptions())
+                                ->preload(),
+                            Forms\Components\Select::make('target_user_ids')
+                                ->label(__('Target Specific Individuals'))
+                                ->multiple()
+                                ->options(fn () => User::where('school_id', auth()->user()?->school_id)->pluck('name', 'id'))
+                                ->searchable()
                                 ->preload(),
                             Forms\Components\DatePicker::make('expires_at')->required(),
                         ]),
@@ -98,17 +107,49 @@ class PollResource extends Resource
             ])->columns(3);
     }
 
+    /**
+     * The poll creator and the school administrator may always read the results
+     * (including, for non-anonymous polls, who voted). Everyone else can vote
+     * or look at the question but never sees the tallies of other people.
+     */
+    public static function canViewResults($record): bool
+    {
+        $user = Auth::user();
+
+        if (! $user) {
+            return false;
+        }
+
+        if ($user->school_id === null) {
+            return true;
+        }
+
+        if ((int) $user->id === (int) ($record->created_by ?? 0)) {
+            return true;
+        }
+
+        return ModuleVisibilityManager::isSchoolAdmin();
+    }
+
     public static function infolist(Infolist $infolist): Infolist
     {
         return $infolist
             ->schema([
-                InfolistSection::make(__('Live Voting Results Summary'))
+                InfolistSection::make(__('Poll & Survey'))
                     ->schema([
                         TextEntry::make('question')
                             ->weight('bold')
                             ->size('lg'),
+                        TextEntry::make('type')
+                            ->badge(),
+                        TextEntry::make('expires_at')
+                            ->label(__('Closing Date'))
+                            ->date(),
+                    ]),
 
-                        // DESIGN: Dynamic Percentage Standings Calculator
+                InfolistSection::make(__('Live Voting Results'))
+                    ->visible(fn ($record) => self::canViewResults($record))
+                    ->schema([
                         TextEntry::make('options_summary')
                             ->label(__('Current Standing (Percentage & Count)'))
                             ->formatStateUsing(function ($record) {
@@ -119,9 +160,31 @@ class PollResource extends Resource
 
                                 return $record->options->map(function ($opt) use ($totalVotes) {
                                     $optVotes = $opt->votes()->count();
-                                    $pct = round(($optVotes / $totalVotes) * 100, 1);
+                                    $pct = $totalVotes > 0 ? round(($optVotes / $totalVotes) * 100, 1) : 0;
 
-                                    return "• {$opt->option_value}: {$optVotes} votes ({$pct}%)";
+                                    return "• {$opt->option_value}: {$optVotes} ".($optVotes === 1 ? __('vote') : __('votes'))." ({$pct}%)";
+                                })->implode("\n");
+                            })
+                            ->listWithLineBreaks(),
+                    ]),
+
+                InfolistSection::make(__('Respondents'))
+                    ->visible(fn ($record) => self::canViewResults($record) && ! $record->is_anonymous)
+                    ->schema([
+                        TextEntry::make('respondents_summary')
+                            ->label(__('Who Voted and Their Choice'))
+                            ->formatStateUsing(function ($record) {
+                                $votes = $record->votes()->with('user', 'option')->get();
+
+                                if ($votes->isEmpty()) {
+                                    return __('Nobody has voted yet.');
+                                }
+
+                                return $votes->map(function ($vote) {
+                                    $respondent = $vote->user?->name ?? __('Unknown');
+                                    $choice = $vote->option?->option_value ?? ($vote->written_response ?: __('—'));
+
+                                    return "• {$respondent}: {$choice}";
                                 })->implode("\n");
                             })
                             ->listWithLineBreaks(),
@@ -140,7 +203,9 @@ class PollResource extends Resource
                 Tables\Columns\TextColumn::make('expires_at')->date()->label(__('Closing Date')),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->label(fn ($record) => self::canViewResults($record) ? __('View Results') : __('View'))
+                    ->visible(fn ($record) => self::canViewResults($record)),
                 Tables\Actions\EditAction::make(),
 
                 // INTERACTIVE ACTION: CAST VOTE DIRECTLY FROM GRID
@@ -201,6 +266,13 @@ class ListPolls extends ListRecords
 class CreatePoll extends CreateRecord
 {
     protected static string $resource = PollResource::class;
+
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        $data['created_by'] = auth()->id();
+
+        return $data;
+    }
 }
 class EditPoll extends EditRecord
 {
