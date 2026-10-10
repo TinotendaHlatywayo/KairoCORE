@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="290 260 2040 920" width="2040" height="920" role="img" aria-label="Kairo CORE logo">
+  <title>Kairo CORE</title>
+  <defs>
+    <linearGradient id="navy" gradientUnits="userSpaceOnUse" x1="340" y1="292" x2="2288" y2="1147">
+      <stop offset="0" stop-color="#2f4468"/>
+      <stop offset="1" stop-color="#1f3250"/>
+    </linearGradient>
+    <linearGradient id="orange" gradientUnits="userSpaceOnUse" x1="340" y1="292" x2="2288" y2="1147">
+      <stop offset="0" stop-color="#ea7046"/>
+      <stop offset="1" stop-color="#d95b33"/>
+    </linearGradient>
+    <linearGradient id="orangeDark" gradientUnits="userSpaceOnUse" x1="1270" y1="925" x2="2270" y2="1145">
+      <stop offset="0" stop-color="#d8643f"/>
+      <stop offset="1" stop-color="#c85030"/>
+    </linearGradient>
+    <radialGradient id="disc" cx="0.5" cy="0.5" r="0.6">
+      <stop offset="0" stop-color="#ee8559"/>
+      <stop offset="0.6" stop-color="#e2653c"/>
+      <stop offset="1" stop-color="#d4542b"/>
+    </radialGradient>
+  </defs>
+
+  <!-- ===== K symbol ===== -->
+  <g>
+    <!-- Navy upper-left bracket -->
+    <path fill="url(#navy)" d="M340 292 H640 V527 C620 545 590 556 560 558 H540 V388 H443 V632 L340 700 Z"/>
+    <!-- Navy lower-left bracket -->
+    <path fill="url(#navy)" d="M340 738 L443 805 V1040 H540 V875 H560 C590 877 620 888 640 906 V1147 H340 Z"/>
+    <!-- Navy upper diagonal -->
+    <path fill="url(#navy)" d="M1090 292 H1170 L1183 305 V338 L875 676 H760 L772 648 Z"/>
+    <!-- Navy lower diagonal -->
+    <path fill="url(#navy)" d="M770 780 H860 L1183 1105 V1147 H1100 L755 792 Z"/>
+    <!-- Orange upper slash -->
+    <path fill="url(#orange)" d="M895 292 H1035 L770 573 Q710 570 668 535 Z"/>
+    <!-- Orange lower slash -->
+    <path fill="url(#orange)" d="M895 1147 H1035 L770 866 Q710 869 668 904 Z"/>
+    <!-- Orange connector -->
+    <rect x="700" y="664" width="400" height="112" fill="url(#orange)"/>
+    <circle cx="1090" cy="718" r="88" fill="url(#disc)"/>
+    <circle cx="645" cy="720" r="124" fill="url(#disc)"/>
+  </g>
+
+  <!-- ===== "airo" ===== -->
+  <g fill="url(#navy)">
+    <path fill-rule="evenodd" d="M1270 765 a115 70 0 1 0 230 0 a115 70 0 1 0 -230 0 Z M1335 763 a70 33 0 1 0 140 0 a70 33 0 1 0 -140 0 Z"/>
+    <rect x="1475" y="640" width="85" height="192"/>
+    <path fill="none" stroke="url(#navy)" stroke-width="85" d="M1318 605 C1335 575 1380 562 1430 562 C1500 562 1518 605 1518 650"/>
+    <rect x="1612" y="520" width="88" height="312"/>
+    <circle cx="1656" cy="433" r="56"/>
+    <path d="M1765 520 H1850 V566 C1875 535 1905 518 1950 518 V603 C1895 600 1850 630 1850 700 V832 H1765 Z"/>
+    <path fill-rule="evenodd" d="M1928 678 a180 158 0 1 0 360 0 a180 158 0 1 0 -360 0 Z M2028 678 a80 78 0 1 0 160 0 a80 78 0 1 0 -160 0 Z"/>
+  </g>
+
+  <!-- ===== "CORE" ===== -->
+  <g fill="url(#orangeDark)" stroke="none">
+    <path fill="none" stroke="url(#orangeDark)" stroke-width="60" d="M1441 980 A82 82 0 1 0 1441 1090"/>
+    <ellipse cx="1656" cy="1035" rx="86" ry="82" fill="none" stroke="url(#orangeDark)" stroke-width="60"/>
+    <rect x="1848" y="925" width="62" height="220"/>
+    <path fill="none" stroke="url(#orangeDark)" stroke-width="60" d="M1879 956 H1965 Q2012 956 2012 1000 Q2012 1044 1965 1044 H1879"/>
+    <path d="M1930 1060 H1990 L2043 1145 H1972 Z"/>
+    <path d="M2140 925 H2270 V980 H2200 V1010 H2255 V1060 H2200 V1090 H2270 V1145 H2140 Z"/>
+  </g>
+</svg>

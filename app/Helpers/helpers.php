@@ -2,6 +2,7 @@
 
 use App\Models\School;
 use App\Services\TerminologyService;
+use Carbon\CarbonInterface;
 use chillerlan\QRCode\Common\EccLevel;
 use chillerlan\QRCode\Common\Mode;
 use chillerlan\QRCode\Output\QRGdImagePNG;
@@ -945,6 +946,113 @@ if (! function_exists('email_branding')) {
             'company_phone' => filled($phone) ? trim((string) $phone) : null,
             'company_email' => filled($email) ? strtolower(trim((string) $email)) : null,
         ];
+    }
+}
+
+if (! function_exists('platform_document_config')) {
+    /**
+     * The dynamic configuration for every platform-printed financial document
+     * (invoices, receipts and account statements). Values stored by the super
+     * admin under Platform Settings → Documents win; anything not set falls
+     * back to the KairoCORE_Invoice.docx design defaults (coral/navy/off-white).
+     *
+     * $fallback lets callers requesting one key get a single value instead of
+     * the whole merged array.
+     */
+    function platform_document_config(?string $fallback = null): mixed
+    {
+        $branding = (function (): array {
+            try {
+                return email_branding();
+            } catch (Throwable) {
+                return [];
+            }
+        })();
+
+        $defaults = [
+            'primary_color' => '#EE5D4B',
+            'dark_color' => '#1E2A38',
+            'light_fill' => '#F8F9FA',
+            'watermark_enabled' => true,
+            'watermark_opacity' => 0.06,
+            'business_name' => (string) ($branding['company_name'] ?? config('app.name', 'Kairo CORE')),
+            'from_line_1' => $branding['company_address'] ?? null,
+            'from_line_2' => null,
+            'from_phone' => $branding['company_phone'] ?? null,
+            'from_email' => isset($branding['company_email']) ? strtolower((string) $branding['company_email']) : null,
+            'payment_channels' => [
+                ['method' => 'EcoCash', 'number' => '0785556855'],
+                ['method' => 'Bank (CABS USD Account)', 'number' => '1149411511'],
+            ],
+            'callout_title' => 'Payment Details',
+            'callout_body' => 'Please use the invoice number as your payment reference.',
+            'cross_border_notice' => 'All international invoices can be settled via multi-currency or cross-border payment rails.',
+            'closing_title' => 'Thank you for your business!',
+            'closing_subtitle' => 'Please use the invoice number as your payment reference.',
+            'closing_font_size' => '13',
+            'closing_font_weight' => 'bold',
+            'closing_align' => 'center',
+            'date_format' => 'd F Y',
+        ];
+
+        try {
+            $rows = PlatformSetting::query()->where('group', 'documents')->get();
+            foreach ($rows as $row) {
+                $value = json_decode((string) $row->value, true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    $value = $row->value;
+                }
+                $defaults[$row->key] = $value;
+            }
+        } catch (Throwable) {
+            // During migrations / first boot there is no settings table yet.
+        }
+
+        if ($fallback !== null) {
+            return $defaults[$fallback] ?? null;
+        }
+
+        return $defaults;
+    }
+}
+
+if (! function_exists('document_watermark_color')) {
+    /**
+     * Blends the document accent color onto white at the configured watermark
+     * opacity so dompdf (which ignores CSS opacity) still renders a faint,
+     * print-safe watermark.
+     */
+    function document_watermark_color(string $hex = '#EE5D4B', float $opacity = 0.06): string
+    {
+        $hex = trim((string) $hex, '#');
+        if (strlen($hex) === 3) {
+            $hex = $hex[0].$hex[0].$hex[1].$hex[1].$hex[2].$hex[2];
+        }
+
+        $r = hexdec(substr($hex, 0, 2));
+        $g = hexdec(substr($hex, 2, 2));
+        $b = hexdec(substr($hex, 4, 2));
+        $a = max(0.0, min(1.0, (float) $opacity));
+
+        $blend = static fn (int $c): int => (int) round(255 + ($c - 255) * $a);
+
+        return sprintf('#%02X%02X%02X', $blend($r), $blend($g), $blend($b));
+    }
+}
+
+if (! function_exists('document_date')) {
+    /**
+     * Format a date using the configured document date format, e.g. "21 October 2026".
+     */
+    function document_date(CarbonInterface|string|null $date, ?string $format = null): string
+    {
+        if ($date === null || $date === '') {
+            return '';
+        }
+
+        $format ??= (string) platform_document_config('date_format');
+
+        return Carbon\Carbon::parse($date)->format($format);
     }
 }
 

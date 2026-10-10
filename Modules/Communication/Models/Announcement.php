@@ -2,9 +2,11 @@
 
 namespace Modules\Communication\Models;
 
+use App\Models\School;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Announcement extends Model
@@ -26,6 +28,7 @@ class Announcement extends Model
         'priority',
         'display_style',
         'requires_acknowledgement',
+        'attachment_policy',
         'channel',
     ];
 
@@ -37,6 +40,11 @@ class Announcement extends Model
         'expires_at' => 'datetime',
         'requires_acknowledgement' => 'boolean',
     ];
+
+    public function school(): BelongsTo
+    {
+        return $this->belongsTo(School::class, 'school_id')->withoutGlobalScopes();
+    }
 
     /**
      * Scope to retrieve currently valid published notices.
