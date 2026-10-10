@@ -2,17 +2,16 @@
 
 namespace App\Filament\App\Resources;
 
+use App\Filament\App\Concerns\ModulePermissionAccess;
 use App\Filament\App\Resources\PlatformInboxResource\Pages\ListPlatformInboxes;
 use Filament\Forms;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Auth;
-use Modules\Admin\Services\PermissionRegistry;
 use Modules\SaaS\Models\PlatformMessage;
 use Modules\SaaS\Models\PlatformMessageRecipient;
 use Modules\SaaS\Services\PlatformMessagingService;
-use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class PlatformInboxResource extends Resource
 {
@@ -72,11 +71,10 @@ class PlatformInboxResource extends Resource
         return 'info';
     }
 
-
-
     public static function table(Table $table): Table
     {
         $schoolId = Auth::user()->school_id;
+        $userId = Auth::id();
         $receivedIds = PlatformMessageRecipient::query()
             ->where('school_id', $schoolId)
             ->pluck('message_id');
@@ -84,9 +82,20 @@ class PlatformInboxResource extends Resource
         return $table
             ->query(
                 PlatformMessage::withoutTenantScope()
-                    ->where(function ($q) use ($schoolId, $receivedIds) {
+                    ->where(function ($q) use ($schoolId, $userId, $receivedIds) {
                         $q->where(fn ($q2) => $q2->where('sender_type', 'school')->where('school_id', $schoolId))
-                            ->orWhere(fn ($q2) => $q2->where('sender_type', 'platform')->whereIn('id', $receivedIds));
+                            ->orWhere(function ($q2) use ($userId, $receivedIds) {
+                                $q2->where('sender_type', 'platform')
+                                    ->whereIn('id', $receivedIds)
+                                    // A message aimed at specific users is private:
+                                    // only its target(s) (and the school sender)
+                                    // may ever see it in the inbox.
+                                    ->where(function ($q3) use ($userId) {
+                                        $q3->where(fn ($q4) => $q4->where('recipient_scope', '!=', 'users')->orWhereNull('recipient_scope'))
+                                            ->orWhere(fn ($q4) => $q4->where('recipient_scope', 'users')->whereJsonContains('target_meta->user_ids', $userId))
+                                            ->orWhere(fn ($q4) => $q4->where('recipient_scope', 'users')->where('sender_user_id', $userId));
+                                    });
+                            });
                     })
             )
             ->columns([

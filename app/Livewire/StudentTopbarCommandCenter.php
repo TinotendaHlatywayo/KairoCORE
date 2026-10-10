@@ -57,9 +57,11 @@ class StudentTopbarCommandCenter extends TopbarCommandCenter
             ->get()
             ->filter(function (EventCalendar $event) use ($userId) {
                 $roles = $event->target_roles ?? [];
+                $targetUserIds = $event->target_user_ids ?? [];
 
-                return empty($roles)
+                return (empty($roles) && empty($targetUserIds))
                     || in_array('student', $roles, true)
+                    || in_array($userId, $targetUserIds, true)
                     || $event->created_by_id === $userId;
             })
             ->values();
@@ -86,9 +88,11 @@ class StudentTopbarCommandCenter extends TopbarCommandCenter
             ->get()
             ->filter(function (EventCalendar $event) use ($userId) {
                 $roles = $event->target_roles ?? [];
+                $targetUserIds = $event->target_user_ids ?? [];
 
-                return empty($roles)
+                return (empty($roles) && empty($targetUserIds))
                     || in_array('student', $roles, true)
+                    || in_array($userId, $targetUserIds, true)
                     || $event->created_by_id === $userId;
             })
             ->map(function (EventCalendar $event) {

@@ -15,6 +15,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Modules\Communication\Models\EventCalendar;
+use App\Security\RoleCatalogue;
 
 class EventCalendarResource extends Resource
 {
@@ -46,7 +47,7 @@ class EventCalendarResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Section::make(__('Event Scope'))
-                    ->extraAttributes(['class' => '!overflow-visible'])
+                    ->extraAttributes(['class' => 'overflow-visible!'])
                     ->schema([
                         Forms\Components\TextInput::make('title')
                             ->required()
@@ -65,7 +66,7 @@ class EventCalendarResource extends Resource
 
                 Forms\Components\Group::make([
                     Forms\Components\Section::make(__('Date Boundaries'))
-                        ->extraAttributes(['class' => '!overflow-visible'])
+                        ->extraAttributes(['class' => 'overflow-visible!'])
                         ->schema([
                             Forms\Components\DateTimePicker::make('start_time')->required(),
                             Forms\Components\DateTimePicker::make('end_time')->required(),
@@ -75,14 +76,8 @@ class EventCalendarResource extends Resource
                             Forms\Components\Select::make('target_roles')
                                 ->label(__('Target Roles'))
                                 ->multiple()
-                                ->options([
-                                    'admin' => __('Administrators'),
-                                    'teacher' => __('Teachers'),
-                                    'student' => __('Students'),
-                                    'parent' => __('Parents'),
-                                    'accountant' => __('Finance Staff'),
-                                    'librarian' => __('Librarians'),
-                                ])->preload(),
+                                ->options(fn (): array => RoleCatalogue::audienceRoleOptions())
+                                ->preload(),
                             Forms\Components\Select::make('target_user_ids')
                                 ->label(__('Target Specific Individuals'))
                                 ->multiple()

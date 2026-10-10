@@ -22,6 +22,7 @@ use Filament\Tables\Table;
 use Illuminate\Support\Facades\Auth;
 use Modules\Communication\Models\Poll;
 use Modules\Communication\Models\PollVote;
+use App\Security\RoleCatalogue;
 
 class PollResource extends Resource
 {
@@ -70,15 +71,13 @@ class PollResource extends Resource
 
                 Forms\Components\Group::make([
                     Forms\Components\Section::make(__('Audience Boundaries'))
+                        ->extraAttributes(['class' => 'overflow-visible!'])
                         ->schema([
                             Forms\Components\Select::make('target_roles')
+                                ->label(__('Target Roles'))
                                 ->multiple()
-                                ->options([
-                                    'admin' => __('Administrators'),
-                                    'teacher' => __('Teachers'),
-                                    'student' => __('Students'),
-                                    'parent' => __('Parents'),
-                                ])->preload(),
+                                ->options(fn (): array => RoleCatalogue::audienceRoleOptions())
+                                ->preload(),
                             Forms\Components\DatePicker::make('expires_at')->required(),
                         ]),
                 ])->columnSpan(1),

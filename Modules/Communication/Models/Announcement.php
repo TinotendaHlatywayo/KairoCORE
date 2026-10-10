@@ -26,6 +26,7 @@ class Announcement extends Model
         'priority',
         'display_style',
         'requires_acknowledgement',
+        'channel',
     ];
 
     protected $casts = [
