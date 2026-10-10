@@ -10,7 +10,7 @@ return new class extends Migration
     {
         if (Schema::hasTable('communication_polls') && ! Schema::hasColumn('communication_polls', 'show_results')) {
             Schema::table('communication_polls', function (Blueprint $table) {
-                $table->boolean('show_results')->default(true)->after('is_anonymous');
+                $table->boolean('show_results')->default(false)->after('is_anonymous');
             });
         }
     }

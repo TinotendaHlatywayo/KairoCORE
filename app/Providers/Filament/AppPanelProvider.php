@@ -25,6 +25,7 @@ use App\Filament\App\Pages\Schedule;
 use App\Filament\App\Pages\SystemSettingsPage;
 use App\Filament\App\Pages\VisualCmsBuilder;
 use App\Filament\App\Resources\AcademicYearResource;
+use App\Filament\App\Resources\AnnouncementResource;
 use App\Filament\App\Resources\AssessmentWorkflowResource;
 use App\Filament\App\Resources\ClassroomResource;
 use App\Filament\App\Resources\ClinicVisitResource;
@@ -45,6 +46,7 @@ use App\Filament\App\Resources\HostelOutPassResource;
 use App\Filament\App\Resources\HostelResource;
 use App\Filament\App\Resources\HostelRoomResource;
 use app\Filament\App\Resources\PlatformInboxResource;
+use App\Filament\App\Resources\PollResource;
 use App\Filament\App\Resources\PromotionWorkflowResource;
 use App\Filament\App\Resources\ReportTemplateResource;
 use App\Filament\App\Resources\SaaSMySubscriptionResource;
@@ -374,6 +376,10 @@ class AppPanelProvider extends PanelProvider
 
                 // Cross-Tenant Platform Messaging (permission-gated)
                 PlatformInboxResource::class,
+
+                // Communication Center
+                AnnouncementResource::class,
+                PollResource::class,
             ])
 
             ->discoverPages(in: app_path('Filament/App/Pages'), for: 'App\\Filament\\App\\Pages')
