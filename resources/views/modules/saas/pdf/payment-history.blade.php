@@ -8,7 +8,7 @@
         $primary = $cfg['primary_color'];
         $dark = $cfg['dark_color'];
         $light = $cfg['light_fill'];
-        $watermarkColor = document_watermark_color((string) $primary, (float) ($cfg['watermark_opacity'] ?? 0.06));
+        $watermarkUri = document_watermark_data_uri();
     @endphp
     <meta charset="UTF-8">
     <title>Payment History</title>
@@ -30,12 +30,13 @@
         table.data tr:nth-child(even) td { background: {{ $light }}; }
         table.data td.num, table.data th.num { text-align: right; }
         .footer { border-top: 1px solid #E2E8F0; padding-top: 14px; margin-top: 28px; font-size: 10px; color: #666666; text-align: center; line-height: 1.7; }
-        .watermark { position: absolute; left: 0; right: 0; top: 33%; text-align: center; font-size: 88px; font-weight: bold; letter-spacing: 24px; color: {{ $watermarkColor }}; white-space: nowrap; }
+        .watermark { position: absolute; left: 0; right: 0; top: 34%; text-align: center; }
+        .watermark img { width: 55%; max-width: 620px; }
     </style>
 </head>
 <body>
-    @if($cfg['watermark_enabled'])
-        <div class="watermark">KAIRO CORE</div>
+    @if($cfg['watermark_enabled'] && $watermarkUri !== '')
+        <div class="watermark"><img src="{{ $watermarkUri }}" alt=""></div>
     @endif
 
     <div class="header">
