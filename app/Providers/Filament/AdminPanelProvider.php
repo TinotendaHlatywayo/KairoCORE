@@ -7,6 +7,7 @@ use App\Filament\Admin\Pages\Dashboard;
 use App\Filament\Admin\Pages\PlatformBackupManager;
 use App\Filament\Admin\Pages\PlatformBillingSettingsPage;
 use App\Filament\Admin\Pages\PlatformBillingStatements;
+use App\Filament\Admin\Pages\PlatformDocumentConfigPage;
 use App\Filament\Admin\Pages\PlatformFinance;
 use App\Filament\Admin\Pages\PlatformIntelligenceDashboard;
 use App\Filament\Admin\Pages\PlatformMaintenancePage;
@@ -98,6 +99,7 @@ class AdminPanelProvider extends PanelProvider
                 PlatformMaintenancePage::class,
                 PlatformSettingsPage::class,
                 PlatformBillingSettingsPage::class,
+                PlatformDocumentConfigPage::class,
                 PlatformFinance::class,
                 PlatformBillingStatements::class,
             ])
