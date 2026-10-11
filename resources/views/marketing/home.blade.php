@@ -1,6 +1,7 @@
 @extends('marketing.layout')
 
-@section('title', __('Kairo CORE - Multi-Tenant School Management Platform'))
+@section('title', platform_name().' - '.__('Multi-Tenant School Management Platform'))
+@section('meta_description', __('Run your entire school administration from a single, secure platform. Admissions, academics, fees, attendance, communication and a customizable public website for every school.'))
 
 @section('content')
 @if(session()->has('success_message'))

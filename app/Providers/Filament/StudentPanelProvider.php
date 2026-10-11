@@ -92,6 +92,12 @@ class StudentPanelProvider extends PanelProvider
                 fn () => '<link rel="icon" href="'.e(school_favicon_url()).'">'
             )
 
+            // Private authenticated panel: keep every page out of search indexes.
+            ->renderHook(
+                PanelsRenderHook::HEAD_START,
+                fn () => '<meta name="robots" content="noindex, nofollow">'
+            )
+
             ->renderHook(
                 PanelsRenderHook::TOPBAR_START,
                 fn () => view('components.sidebar-toggle-btn')

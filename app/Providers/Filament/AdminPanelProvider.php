@@ -92,6 +92,11 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::HEAD_END,
                 fn () => view('filament.admin.partials.platform-theme-styles')
             )
+            // Private authenticated panel: keep every page out of search indexes.
+            ->renderHook(
+                PanelsRenderHook::HEAD_START,
+                fn () => '<meta name="robots" content="noindex, nofollow">'
+            )
             ->pages([
                 Dashboard::class,
                 PlatformIntelligenceDashboard::class,

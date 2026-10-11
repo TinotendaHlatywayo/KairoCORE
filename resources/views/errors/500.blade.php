@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ __('Server Error') }} — Kairo CORE</title>
+    <meta name="robots" content="noindex, nofollow">
+    <title>{{ __('Server Error') }} — {{ platform_name() }}</title>
     <style>
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
         body{

@@ -180,6 +180,12 @@ class AppPanelProvider extends PanelProvider
                 fn () => '<link rel="icon" href="'.e(school_favicon_url()).'">'
             )
 
+            // Private authenticated panel: keep every page out of search indexes.
+            ->renderHook(
+                PanelsRenderHook::HEAD_START,
+                fn () => '<meta name="robots" content="noindex, nofollow">'
+            )
+
             // Per-user branding theme. ResolveTenant runs before the session is
             // started, so it can only apply the school-wide default; this hook
             // runs at render time (before @filamentStyles) and lets a user's

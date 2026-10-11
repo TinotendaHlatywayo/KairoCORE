@@ -3,12 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', platform_name() . ' - ' . __('Multi-Tenant School Management Platform'))</title>
-    <meta name="description" content="{{ __(platform_name() . ' is a multi-tenant school management platform with admissions, academics, fees, attendance, communication, and a customizable public website for every school.') }}">
-    <meta property="og:type" content="website">
-    <meta property="og:site_name" content="{{ platform_name() }}">
-    <meta property="og:title" content="{{ platform_name() }} - {{ __('Multi-Tenant School Management Platform') }}">
-    <meta property="og:description" content="{{ __('Run your entire school administration from a single, secure platform.') }}">
+    @php
+        $metaTitle = trim((string) $__env->yieldContent('meta_title'));
+        if ($metaTitle === '') {
+            $metaTitle = trim((string) $__env->yieldContent('title', platform_name().' - '.__('Multi-Tenant School Management Platform')));
+        }
+        $metaDescription = trim((string) $__env->yieldContent('meta_description', platform_seo_description()));
+    @endphp
+    @include('partials.seo', [
+        'seoTitle' => $metaTitle,
+        'seoDescription' => $metaDescription,
+        'seoCanonical' => url()->current(),
+        'seoImage' => platform_og_image_url(),
+        'seoRobots' => 'index, follow',
+        'seoType' => 'website',
+        'seoJsonLd' => [platform_website_schema(), platform_organization_schema()],
+    ])
     <link rel="icon" href="{{ platform_favicon_url() }}">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800&display=swap" rel="stylesheet">
     <style>
