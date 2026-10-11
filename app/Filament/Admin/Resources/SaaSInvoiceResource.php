@@ -3,6 +3,8 @@
 namespace App\Filament\Admin\Resources;
 
 use App\Filament\Admin\Resources\SaaSInvoiceResource\Pages;
+use Filament\Forms;
+use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -37,6 +39,16 @@ class SaaSInvoiceResource extends Resource
         $user = Auth::user();
 
         return $user && $user->school_id === null;
+    }
+
+    public static function form(Form $form): Form
+    {
+        return $form
+            ->schema([
+                Forms\Components\DatePicker::make('due_date')
+                    ->label(__('Due Date'))
+                    ->required(),
+            ]);
     }
 
     public static function table(Table $table): Table
@@ -90,6 +102,8 @@ class SaaSInvoiceResource extends Resource
                     ->color('info')
                     ->visible(fn (SaaSInvoice $record): bool => $record->receipt !== null)
                     ->url(fn (SaaSInvoice $record) => route('saas.receipt.download', $record->receipt->uuid), shouldOpenInNewTab: true),
+                Tables\Actions\EditAction::make()
+                    ->label(__('Edit Due Date')),
                 Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([

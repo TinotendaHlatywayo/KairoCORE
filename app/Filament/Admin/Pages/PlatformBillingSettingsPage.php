@@ -2,7 +2,9 @@
 
 namespace App\Filament\Admin\Pages;
 
+use App\Models\School;
 use App\Models\User;
+use Filament\Forms;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -55,6 +57,7 @@ class PlatformBillingSettingsPage extends Page implements HasForms
 
         $this->form->fill(array_merge(
             $platform->attributesToArray(),
+            $saas->attributesToArray(),
             [
                 'paynow_integration_id' => $saas->resolvedPaynowIntegrationId(),
                 'paynow_integration_key' => $saas->resolvedPaynowIntegrationKey(),
@@ -67,6 +70,27 @@ class PlatformBillingSettingsPage extends Page implements HasForms
     {
         return $form
             ->schema([
+                Section::make(__('Settings Scope'))
+                    ->description(__('Choose whether these billing settings apply globally to all tenants or to specific selected institutions.'))
+                    ->schema([
+                        Forms\Components\Select::make('scope_type')
+                            ->label(__('Apply Settings To'))
+                            ->options([
+                                'all' => __('All Tenants (Global Default)'),
+                                'specific' => __('Specific Tenants Only'),
+                            ])
+                            ->default('all')
+                            ->reactive()
+                            ->required(),
+                        Forms\Components\Select::make('target_school_ids')
+                            ->label(__('Select Target Institutions'))
+                            ->options(School::orderBy('name')->pluck('name', 'id'))
+                            ->multiple()
+                            ->searchable()
+                            ->visible(fn (callable $get) => $get('scope_type') === 'specific')
+                            ->helperText(__('Only the selected schools will inherit these billing schedule and grace period rules.')),
+                    ]),
+
                 Section::make(__('Reminder schedule'))
                     ->description(__('Days relative to each tenant\'s billing date. Set 0 to disable a step.'))
                     ->columns(2)
@@ -111,6 +135,27 @@ class PlatformBillingSettingsPage extends Page implements HasForms
                             ->default('hlatywayotw@gmail.com')
                             ->email()
                             ->maxLength(150),
+                    ]),
+
+                Section::make(__('Platform Banking Details'))
+                    ->description(__('Configure bank deposit details shown to tenants on their billing statements and invoices.'))
+                    ->columns(2)
+                    ->schema([
+                        TextInput::make('bank_name')
+                            ->label(__('Bank Name'))
+                            ->maxLength(150),
+                        TextInput::make('bank_account_name')
+                            ->label(__('Account Holder Name'))
+                            ->maxLength(150),
+                        TextInput::make('bank_account_number')
+                            ->label(__('Account Number'))
+                            ->maxLength(100),
+                        TextInput::make('bank_branch_code')
+                            ->label(__('Branch Code'))
+                            ->maxLength(50),
+                        TextInput::make('bank_swift_code')
+                            ->label(__('SWIFT BIC Code'))
+                            ->maxLength(50),
                     ]),
 
                 Section::make(__('Payment Gateway Configuration'))

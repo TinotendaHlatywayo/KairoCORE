@@ -13,6 +13,14 @@ class BillingService
     public function generateUpcomingInvoice(SaaSSubscription $subscription): SaaSInvoice
     {
         return DB::transaction(function () use ($subscription) {
+            $existingUnpaid = SaaSInvoice::where('school_id', $subscription->school_id)
+                ->where('status', 'unpaid')
+                ->first();
+
+            if ($existingUnpaid) {
+                return $existingUnpaid;
+            }
+
             $plan = $subscription->plan;
             $billingPeriod = $subscription->billing_period;
             $months = $subscription->billingMonths();
@@ -34,7 +42,9 @@ class BillingService
             }
 
             $periodEnd = $periodStart->copy()->addMonthsNoOverflow($months)->subDay();
-            $dueDate = $periodStart->copy();
+            $dueDate = $subscription->next_payment_date
+                ? Carbon::parse($subscription->next_payment_date)->startOfDay()
+                : $periodStart->copy();
 
             // Invoice numbers must be globally unique (there is a unique index
             // on the column), so the tenant id and year are embedded and the
