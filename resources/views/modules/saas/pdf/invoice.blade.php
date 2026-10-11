@@ -6,7 +6,7 @@
         $brand = email_branding();
         $school = $invoice->school;
 
-        // KairoCORE brand palette (fixed to match the approved invoice design)
+        // KairoCORE brand palette
         $primary = '#EF5F4D';   // coral
         $dark    = '#1F2E43';   // navy
         $light   = '#F3F5F8';   // soft grey-blue
@@ -15,26 +15,39 @@
         $closingWeight   = (string) ($cfg['closing_font_weight'] ?? 'bold');
         $closingAlign    = (string) ($cfg['closing_align'] ?? 'center');
 
-        // Load the full KairoCORE logo + watermark from the project root
-        // (/opt/lampp/htdocs/SchoolManagementSystem/schoolcore). Falls back to the
-        // configured helpers if the files are missing.
-        $imageToDataUri = function (string $file): string {
-            $path = base_path($file);
-            if (is_file($path) && is_readable($path)) {
-                return 'data:image/png;base64,' . base64_encode(file_get_contents($path));
+        // Locate the full KairoCORE logo + watermark PNGs. Several folders are tried
+        // so it works wherever the files were placed. The old helper images are NOT
+        // used, because they return a cropped logo.
+        $findAsset = function (string $file): ?string {
+            $dirs = array_filter([
+                base_path(),
+                public_path(),
+                base_path('public'),
+                storage_path('app/public'),
+                resource_path('images'),
+                dirname(base_path()),
+                '/opt/lampp/htdocs/SchoolManagementSystem/schoolcore',
+                $_SERVER['DOCUMENT_ROOT'] ?? null,
+            ]);
+            foreach ($dirs as $dir) {
+                $path = rtrim($dir, '/\\') . DIRECTORY_SEPARATOR . $file;
+                if (is_file($path)) {
+                    if (is_readable($path)) {
+                        return $path;
+                    }
+                    \Log::warning('Invoice asset found but not readable (chmod 644 it): ' . $path);
+                }
             }
-            return '';
+            \Log::warning('Invoice asset not found: ' . $file);
+            return null;
         };
 
-        $logoUri = $imageToDataUri('KairoCORE_logo_transparent.png');
-        if ($logoUri === '') {
-            $logoUri = document_logo_data_uri();
-        }
+        $toDataUri = function (?string $path): string {
+            return $path ? 'data:image/png;base64,' . base64_encode(file_get_contents($path)) : '';
+        };
 
-        $watermarkUri = $imageToDataUri('KairoCORE_watermark.png');
-        if ($watermarkUri === '') {
-            $watermarkUri = document_watermark_data_uri();
-        }
+        $logoUri      = $toDataUri($findAsset('KairoCORE_logo_transparent.png'));
+        $watermarkUri = $toDataUri($findAsset('KairoCORE_watermark.png'));
 
         $discount    = (float) ($invoice->discount ?? 0);
         $calloutBody = $invoice->payment_instructions ?: ($cfg['callout_body'] ?? '');
@@ -52,6 +65,8 @@
         .meta-line { font-size: 11px; color: #222222; text-align: right; line-height: 1.6; }
         .meta-lbl { color: {{ $primary }}; font-weight: bold; }
         .rule { height: 2px; background: {{ $primary }}; margin: 18px 0 22px; font-size: 1px; line-height: 1px; }
+        .wordmark { font-size: 34px; font-weight: bold; color: {{ $dark }}; line-height: 1; }
+        .wordmark span { color: {{ $primary }}; }
 
         /* Parties */
         .section-title { font-size: 9px; font-weight: bold; text-transform: uppercase; color: {{ $primary }}; margin-bottom: 5px; }
@@ -90,23 +105,22 @@
 
         /* Watermark: full KairoCORE logo, centred behind the content */
         .watermark { position: absolute; left: 0; top: 330px; width: 100%; text-align: center; z-index: -1; }
-        .watermark img { width: 520px; height: 230px; }
     </style>
 </head>
 <body>
-    @if(!empty($cfg['watermark_enabled']) && $watermarkUri !== '')
+    @if($watermarkUri !== '')
         <div class="watermark"><img src="{{ $watermarkUri }}" alt="" width="520" height="230"></div>
     @endif
 
-    {{-- Header: logo height matches the Invoice title + meta block on the right --}}
+    {{-- Header: full logo (top-left), same height as the Invoice block on the right --}}
     <table width="100%">
         <tr>
             <td width="50%" style="vertical-align: top;">
                 @if($logoUri !== '')
-                    {{-- Original image is 1709x755 (ratio 2.264); 92px tall => ~208px wide --}}
-                    <img src="{{ $logoUri }}" alt="{{ $cfg['business_name'] }}" width="208" height="92" style="display: block;">
+                    {{-- Source image is 1709x755 (ratio 2.264): 92px tall => 208px wide --}}
+                    <img src="{{ $logoUri }}" alt="Kairo CORE" width="208" height="92" style="display: block;">
                 @else
-                    <div style="font-size: 26px; font-weight: bold; color: {{ $dark }};">{{ $cfg['business_name'] }}</div>
+                    <div class="wordmark" style="padding-top: 8px;">Kairo<br><span>CORE</span></div>
                 @endif
             </td>
             <td width="50%" style="vertical-align: top;">
