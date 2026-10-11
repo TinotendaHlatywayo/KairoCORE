@@ -10,6 +10,7 @@ use App\Models\UserTask;
 use App\Notifications\TaskAssignedNotification;
 use App\Notifications\UserRegistrationApprovalNotification;
 use Filament\Facades\Filament;
+use Filament\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -350,6 +351,23 @@ class TopbarCommandCenterTest extends TestCase
             ->assertSet('unreadNotificationCount', 0);
 
         $this->assertNotNull($me->fresh()->notifications()->first()->cleared_at);
+    }
+
+    public function test_announcement_and_poll_database_notifications_surface_in_the_bell(): void
+    {
+        $me = $this->user();
+
+        // Announcements and polls are delivered via Filament's database
+        // notification class; it must count towards the bell badge.
+        $me->notifications()->create([
+            'id' => (string) Str::uuid(),
+            'type' => DatabaseNotification::class,
+            'data' => json_encode(['title' => 'New Notice Published', 'body' => 'Important Announcement: Exam venues']),
+        ]);
+
+        Livewire::actingAs($me)
+            ->test(TopbarCommandCenter::class)
+            ->assertSet('unreadNotificationCount', 1);
     }
 
     public function test_notification_history_returns_last_30_days_including_untracked(): void
