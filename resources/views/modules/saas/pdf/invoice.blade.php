@@ -15,39 +15,15 @@
         $closingWeight   = (string) ($cfg['closing_font_weight'] ?? 'bold');
         $closingAlign    = (string) ($cfg['closing_align'] ?? 'center');
 
-        // Locate the full KairoCORE logo + watermark PNGs. Several folders are tried
-        // so it works wherever the files were placed. The old helper images are NOT
-        // used, because they return a cropped logo.
-        $findAsset = function (string $file): ?string {
-            $dirs = array_filter([
-                base_path(),
-                public_path(),
-                base_path('public'),
-                storage_path('app/public'),
-                resource_path('images'),
-                dirname(base_path()),
-                '/opt/lampp/htdocs/SchoolManagementSystem/schoolcore',
-                $_SERVER['DOCUMENT_ROOT'] ?? null,
-            ]);
-            foreach ($dirs as $dir) {
-                $path = rtrim($dir, '/\\') . DIRECTORY_SEPARATOR . $file;
-                if (is_file($path)) {
-                    if (is_readable($path)) {
-                        return $path;
-                    }
-                    \Log::warning('Invoice asset found but not readable (chmod 644 it): ' . $path);
-                }
-            }
-            \Log::warning('Invoice asset not found: ' . $file);
-            return null;
-        };
+        // Kairo CORE logo + faded watermark, resolved through the shared
+        // document helpers (super-admin uploads win over the bundled assets).
+        $logoUri      = document_logo_data_uri();
+        $watermarkUri = document_watermark_data_uri();
+        [$logoWidth, $logoHeight] = document_logo_dimensions();
 
-        $toDataUri = function (?string $path): string {
-            return $path ? 'data:image/png;base64,' . base64_encode(file_get_contents($path)) : '';
-        };
-
-        $logoUri      = $toDataUri($findAsset('KairoCORE_logo_transparent.png'));
-        $watermarkUri = $toDataUri($findAsset('KairoCORE_watermark.png'));
+        // Keep the logo about 92px tall while preserving its aspect ratio.
+        $logoW = (int) max(1, round(92 * ($logoWidth / max(1, $logoHeight))));
+        $logoH = 92;
 
         $discount    = (float) ($invoice->discount ?? 0);
         $calloutBody = $invoice->payment_instructions ?: ($cfg['callout_body'] ?? '');
@@ -103,22 +79,22 @@
         .hash { color: #999999; font-size: 8px; text-align: center; margin: 0 0 2px; word-wrap: break-word; }
         .copy { text-align: center; font-size: 9px; color: #999999; margin: 0; }
 
-        /* Watermark: full KairoCORE logo, centred behind the content */
+        /* Watermark: full logo, centred behind the content (image is already ~7% opacity) */
         .watermark { position: absolute; left: 0; top: 330px; width: 100%; text-align: center; z-index: -1; }
     </style>
 </head>
 <body>
-    @if($watermarkUri !== '')
-        <div class="watermark"><img src="{{ $watermarkUri }}" alt="" width="520" height="230"></div>
+    @if(($cfg['watermark_enabled'] ?? true) && $watermarkUri !== '')
+        <div class="watermark"><img src="{{ $watermarkUri }}" alt="" width="560"></div>
     @endif
 
-    {{-- Header: full logo (top-left), same height as the Invoice block on the right --}}
+    {{-- Header: full logo top-left, same height as the Invoice block on the right --}}
     <table width="100%">
         <tr>
             <td width="50%" style="vertical-align: top;">
                 @if($logoUri !== '')
-                    {{-- Source image is 1709x755 (ratio 2.264): 92px tall => 208px wide --}}
-                    <img src="{{ $logoUri }}" alt="Kairo CORE" width="208" height="92" style="display: block;">
+                    {{-- Logo keeps its aspect ratio at 92px tall --}}
+                    <img src="{{ $logoUri }}" alt="Kairo CORE" width="{{ $logoW }}" height="{{ $logoH }}" style="display: block;">
                 @else
                     <div class="wordmark" style="padding-top: 8px;">Kairo<br><span>CORE</span></div>
                 @endif
