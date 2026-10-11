@@ -1,6 +1,10 @@
 @extends('marketing.layout')
 
-@section('title', __('Contact - Kairo CORE'))
+@section('title', __('Contact').' - '.platform_name())
+@section('meta_description', __('Contact :company about platform plans, pricing tiers, deployments or support.', ['company' => platform_name()]))
+@push('seo_jsonld')
+<script type="application/ld+json">{!! json_encode(platform_breadcrumb_list([['name' => __('Home'), 'url' => route('marketing.home')], ['name' => __('Contact'), 'url' => route('marketing.contact')]]), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
+@endpush
 
 @section('content')
 <section class="sc-section">

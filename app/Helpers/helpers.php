@@ -197,6 +197,84 @@ if (! function_exists('platform_branding_asset_url')) {
     }
 }
 
+if (! function_exists('platform_seo_description')) {
+    /**
+     * Default meta description for the public platform pages.
+     */
+    function platform_seo_description(): string
+    {
+        return (string) __(platform_name().' is a multi-tenant school management platform with admissions, academics, fees, attendance, communication, and a customizable public website for every school.');
+    }
+}
+
+if (! function_exists('platform_og_image_url')) {
+    /**
+     * Default social share image for the platform pages (uploaded logo first).
+     */
+    function platform_og_image_url(): string
+    {
+        return platform_logo_url();
+    }
+}
+
+if (! function_exists('platform_website_schema')) {
+    /**
+     * schema.org WebSite node for the platform marketing site.
+     */
+    function platform_website_schema(): array
+    {
+        return [
+            '@context' => 'https://schema.org',
+            '@type' => 'WebSite',
+            'name' => platform_name(),
+            'url' => url('/'),
+        ];
+    }
+}
+
+if (! function_exists('platform_organization_schema')) {
+    /**
+     * schema.org Organization node for the platform marketing site.
+     */
+    function platform_organization_schema(): array
+    {
+        return [
+            '@context' => 'https://schema.org',
+            '@type' => 'Organization',
+            'name' => platform_name(),
+            'url' => url('/'),
+            'logo' => platform_og_image_url(),
+        ];
+    }
+}
+
+if (! function_exists('platform_breadcrumb_list')) {
+    /**
+     * Build a schema.org BreadcrumbList node.
+     *
+     * @param  array<int, array{name: string, url: string}>  $items
+     */
+    function platform_breadcrumb_list(array $items): array
+    {
+        $list = [];
+
+        foreach (array_values($items) as $index => $item) {
+            $list[] = [
+                '@type' => 'ListItem',
+                'position' => $index + 1,
+                'name' => $item['name'] ?? '',
+                'item' => $item['url'] ?? '',
+            ];
+        }
+
+        return [
+            '@context' => 'https://schema.org',
+            '@type' => 'BreadcrumbList',
+            'itemListElement' => $list,
+        ];
+    }
+}
+
 if (! function_exists('school_favicon_url')) {
     /**
      * The active tenant's favicon: school-uploaded first, then the platform

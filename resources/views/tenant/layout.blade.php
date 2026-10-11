@@ -22,8 +22,8 @@
             <div class="collapse navbar-collapse" id="tenantNav">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-4">
                     <li class="nav-item"><a class="nav-link text-secondary fw-semibold" href="{{ route('tenant.home') }}">{{ __('Home') }}</a></li>
-                    <li class="nav-item"><a class="nav-link text-secondary fw-semibold" href="{{ route('tenant.about') }}">{{ __('About') }}</a></li>
-                    <li class="nav-item"><a class="nav-link text-secondary fw-semibold" href="{{ route('tenant.contact') }}">{{ __('Contact') }}</a></li>
+                    <li class="nav-item"><a class="nav-link text-secondary fw-semibold" href="{{ route('cms-render', ['slug' => 'about']) }}">{{ __('About') }}</a></li>
+                    <li class="nav-item"><a class="nav-link text-secondary fw-semibold" href="{{ route('cms-render', ['slug' => 'contact']) }}">{{ __('Contact') }}</a></li>
                 </ul>
                 <div class="d-flex gap-2">
                     <a href="{{ route('cms-render', ['slug' => 'apply-online']) }}" class="btn btn-outline-success fw-semibold">{{ __('Apply Online') }}</a>

@@ -3,8 +3,17 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="{{ __('Kairo CORE Platform Terms of Service and Terms of Use') }}">
-    <title>{{ __('Terms of Service & Terms of Use') }} - Kairo CORE</title>
+    <meta name="description" content="{{ __('Platform Terms of Service and Terms of Use for :company.', ['company' => platform_name()]) }}">
+    <link rel="canonical" href="{{ url()->current() }}">
+    <meta name="robots" content="index, follow">
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="{{ platform_name() }}">
+    <meta property="og:title" content="{{ __('Terms of Service & Terms of Use') }} - {{ platform_name() }}">
+    <meta property="og:description" content="{{ __('Platform Terms of Service and Terms of Use for :company.', ['company' => platform_name()]) }}">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:image" content="{{ platform_og_image_url() }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <title>{{ __('Terms of Service & Terms of Use') }} - {{ platform_name() }}</title>
     <style>
         :root{--primary:#f26b3a;--primary-dark:#d95427;--primary-soft:#fff1eb;--navy:#172b4d;--navy-dark:#0e1d35;--blue:#2b456c;--ink:#0f172a;--text:#475569;--muted:#64748b;--line:#dfe5ec;--surface:#fff;--alt:#f6f8fb;--danger:#991b1b;--danger-bg:#fef2f2;--radius:20px}
         *{box-sizing:border-box}html{scroll-behavior:smooth}

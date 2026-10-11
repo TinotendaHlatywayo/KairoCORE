@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ __('Application Submitted Successfully - Kairo CORE') }}</title>
+    <meta name="robots" content="noindex, nofollow">
+    <title>{{ __('Application Submitted Successfully') }} - {{ platform_name() }}</title>
     <style>
         * { box-sizing: border-box; }
         html, body { margin: 0; padding: 0; }
