@@ -1,43 +1,13 @@
 @extends('marketing.layout')
 
-@section('title', __('Contact').' - '.platform_name())
-@section('meta_description', __('Contact :company about platform plans, pricing tiers, deployments or support.', ['company' => platform_name()]))
-@push('seo_jsonld')
-<script type="application/ld+json">{!! json_encode(platform_breadcrumb_list([['name' => __('Home'), 'url' => route('marketing.home')], ['name' => __('Contact'), 'url' => route('marketing.contact')]]), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
-@endpush
+@section('title', platform_name().' - Contact')
+@section('meta_description', __('Contact us.'))
 
 @section('content')
-<section class="sc-section">
-    <div class="sc-container">
-        <div class="sc-grid" style="justify-content: center;">
-            <div class="sc-col-lg-6">
-                <h1 class="sc-page-title">{{ __('Contact Support') }}</h1>
-                <p class="sc-page-lead">{{ __('Have questions regarding platform plans, pricing tiers, or deployment options? Reach out below.') }}</p>
-
-                <div class="sc-card">
-                    <div class="sc-card-body">
-                        <form class="sc-form" action="{{ route('marketing.contact.submit') }}" method="POST">
-                            @csrf
-                            <div class="sc-field">
-                                <label class="sc-form-label" for="contact-name">{{ __('Your Name') }}</label>
-                                <input id="contact-name" type="text" name="name" class="sc-input" required>
-                            </div>
-                            <div class="sc-field">
-                                <label class="sc-form-label" for="contact-email">{{ __('Email Address') }}</label>
-                                <input id="contact-email" type="email" name="email" class="sc-input" required>
-                            </div>
-                            <div class="sc-field">
-                                <label class="sc-form-label" for="contact-message">{{ __('Message') }}</label>
-                                <textarea id="contact-message" name="message" class="sc-textarea" rows="4" required></textarea>
-                            </div>
-                            <div>
-                                <button type="submit" class="sc-btn sc-btn-primary sc-btn-block">{{ __('Send Message') }}</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
+<section class="bg-white py-12">
+    <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+        <h1 class="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">Contact</h1>
+        <p class="mt-6 text-lg text-slate-600 leading-8">Get in touch to learn more about how KairoCORE can help your school.</p>
     </div>
 </section>
 @endsection
