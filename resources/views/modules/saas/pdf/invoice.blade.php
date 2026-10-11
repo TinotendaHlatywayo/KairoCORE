@@ -14,10 +14,30 @@
         $closingFontSize = (int) ($cfg['closing_font_size'] ?? 15);
         $closingWeight   = (string) ($cfg['closing_font_weight'] ?? 'bold');
         $closingAlign    = (string) ($cfg['closing_align'] ?? 'center');
-        $logoUri      = document_logo_data_uri();
-        $watermarkUri = document_watermark_data_uri();
-        $discount     = (float) ($invoice->discount ?? 0);
-        $calloutBody  = $invoice->payment_instructions ?: ($cfg['callout_body'] ?? '');
+
+        // Load the full KairoCORE logo + watermark from the project root
+        // (/opt/lampp/htdocs/SchoolManagementSystem/schoolcore). Falls back to the
+        // configured helpers if the files are missing.
+        $imageToDataUri = function (string $file): string {
+            $path = base_path($file);
+            if (is_file($path) && is_readable($path)) {
+                return 'data:image/png;base64,' . base64_encode(file_get_contents($path));
+            }
+            return '';
+        };
+
+        $logoUri = $imageToDataUri('KairoCORE_logo_transparent.png');
+        if ($logoUri === '') {
+            $logoUri = document_logo_data_uri();
+        }
+
+        $watermarkUri = $imageToDataUri('KairoCORE_watermark.png');
+        if ($watermarkUri === '') {
+            $watermarkUri = document_watermark_data_uri();
+        }
+
+        $discount    = (float) ($invoice->discount ?? 0);
+        $calloutBody = $invoice->payment_instructions ?: ($cfg['callout_body'] ?? '');
     @endphp
     <meta charset="UTF-8">
     <title>SaaS Subscription Invoice: {{ $invoice->invoice_number }}</title>
@@ -28,7 +48,7 @@
         td, th { vertical-align: top; }
 
         /* Header */
-        .doc-title { font-size: 32px; font-weight: bold; color: {{ $dark }}; margin: 0; text-align: right; }
+        .doc-title { font-size: 32px; font-weight: bold; color: {{ $dark }}; margin: 0; text-align: right; line-height: 1.1; }
         .meta-line { font-size: 11px; color: #222222; text-align: right; line-height: 1.6; }
         .meta-lbl { color: {{ $primary }}; font-weight: bold; }
         .rule { height: 2px; background: {{ $primary }}; margin: 18px 0 22px; font-size: 1px; line-height: 1px; }
@@ -68,27 +88,28 @@
         .hash { color: #999999; font-size: 8px; text-align: center; margin: 0 0 2px; word-wrap: break-word; }
         .copy { text-align: center; font-size: 9px; color: #999999; margin: 0; }
 
-        /* Watermark (sits behind content) */
-        .watermark { position: absolute; left: 0; top: 300px; width: 100%; text-align: center; z-index: -1; }
-        .watermark img { width: 480px; height: auto; }
+        /* Watermark: full KairoCORE logo, centred behind the content */
+        .watermark { position: absolute; left: 0; top: 330px; width: 100%; text-align: center; z-index: -1; }
+        .watermark img { width: 520px; height: 230px; }
     </style>
 </head>
 <body>
     @if(!empty($cfg['watermark_enabled']) && $watermarkUri !== '')
-        <div class="watermark"><img src="{{ $watermarkUri }}" alt=""></div>
+        <div class="watermark"><img src="{{ $watermarkUri }}" alt="" width="520" height="230"></div>
     @endif
 
-    {{-- Header --}}
+    {{-- Header: logo height matches the Invoice title + meta block on the right --}}
     <table width="100%">
         <tr>
-            <td width="50%" style="vertical-align: middle;">
+            <td width="50%" style="vertical-align: top;">
                 @if($logoUri !== '')
-                    <img src="{{ $logoUri }}" alt="{{ $cfg['business_name'] }}" width="150" height="66">
+                    {{-- Original image is 1709x755 (ratio 2.264); 92px tall => ~208px wide --}}
+                    <img src="{{ $logoUri }}" alt="{{ $cfg['business_name'] }}" width="208" height="92" style="display: block;">
                 @else
                     <div style="font-size: 26px; font-weight: bold; color: {{ $dark }};">{{ $cfg['business_name'] }}</div>
                 @endif
             </td>
-            <td width="50%">
+            <td width="50%" style="vertical-align: top;">
                 <h1 class="doc-title">{{ __('Invoice') }}</h1>
                 <div class="meta-line" style="margin-top: 10px;"><span class="meta-lbl">{{ __('Invoice No:') }}</span> {{ $invoice->invoice_number }}</div>
                 <div class="meta-line"><span class="meta-lbl">{{ __('Date:') }}</span> {{ document_date($invoice->issue_date) }}</div>
