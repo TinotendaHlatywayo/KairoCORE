@@ -76,6 +76,15 @@ class SaaSSubscription extends Model
                     : now()->addDays(14)->toDateString();
             }
         });
+
+        static::updating(function ($subscription) {
+            if ($subscription->isDirty('billing_period')) {
+                $base = $subscription->getOriginal('next_payment_date')
+                    ? Carbon::parse($subscription->getOriginal('next_payment_date'))
+                    : now();
+                $subscription->next_payment_date = $base->copy()->startOfDay()->addDays($subscription->periodDays())->toDateString();
+            }
+        });
     }
 
     public function school(): BelongsTo

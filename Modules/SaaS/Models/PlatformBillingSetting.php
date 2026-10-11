@@ -13,6 +13,8 @@ class PlatformBillingSetting extends Model
     protected $table = 'platform_billing_settings';
 
     protected $fillable = [
+        'scope_type',
+        'target_school_ids',
         'remind_days_before',
         'day_before_reminder_offset',
         'overdue_reminder_offset',
@@ -26,6 +28,7 @@ class PlatformBillingSetting extends Model
     ];
 
     protected $casts = [
+        'target_school_ids' => 'array',
         'remind_days_before' => 'integer',
         'day_before_reminder_offset' => 'integer',
         'overdue_reminder_offset' => 'integer',
@@ -37,9 +40,19 @@ class PlatformBillingSetting extends Model
         'default_free_days' => 'integer',
     ];
 
-    public static function current(): self
+    public static function current(?int $schoolId = null): self
     {
-        return static::query()->firstOrCreate([], [
+        if ($schoolId) {
+            $specific = static::where('scope_type', 'specific')
+                ->whereJsonContains('target_school_ids', $schoolId)
+                ->first();
+            if ($specific) {
+                return $specific;
+            }
+        }
+
+        return static::where('scope_type', 'all')->orWhereNull('scope_type')->first() ?: static::query()->firstOrCreate([], [
+            'scope_type' => 'all',
             'remind_days_before' => 3,
             'day_before_reminder_offset' => 1,
             'overdue_reminder_offset' => 1,
