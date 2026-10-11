@@ -89,7 +89,7 @@
 
         .sc-kpi-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(85px, 1fr));
             gap: 0.75rem;
         }
 
@@ -97,10 +97,7 @@
             display: flex;
             align-items: center;
             gap: 0.75rem;
-            padding: 1rem 1.125rem;
-            /* Explicit solid surfaces: matches the opaque card look of every
-               other workspace page instead of relying on --gray-* variables,
-               which resolve to semi-transparent values under some themes. */
+            padding: 0.75rem 0.875rem;
             background: #ffffff;
             border: 1px solid #e5e7eb;
             border-radius: 0.75rem;
@@ -129,10 +126,10 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 2.25rem;
-            height: 2.25rem;
+            width: 1.875rem;
+            height: 1.875rem;
             flex: none;
-            border-radius: 0.625rem;
+            border-radius: 0.5rem;
             color: #fff;
         }
 
@@ -146,7 +143,7 @@
         .sc-kpi-body { display: flex; flex-direction: column; min-width: 0; }
 
         .sc-kpi-value {
-            font-size: 1.375rem;
+            font-size: 1rem;
             font-weight: 700;
             line-height: 1.1;
             color: var(--gray-900, #111827);
@@ -156,8 +153,8 @@
         .dark .sc-kpi-value { color: var(--gray-50, #f9fafb); }
 
         .sc-kpi-label {
-            margin-top: 0.125rem;
-            font-size: 0.75rem;
+            margin-top: 0.0625rem;
+            font-size: 0.625rem;
             font-weight: 500;
             color: var(--gray-500, #6b7280);
             white-space: nowrap;

@@ -114,7 +114,11 @@ class AnnouncementResource extends Resource
                             Forms\Components\Select::make('visibility')
                                 ->label(__('Visible to Roles'))
                                 ->multiple()
-                                ->options(fn (): array => RoleCatalogue::audienceRoleOptions())
+                                ->options(function (): array {
+                                    $options = RoleCatalogue::audienceRoleOptions();
+                                    $options['all'] = __('All Roles');
+                                    return $options;
+                                })
                                 ->preload(),
                             Forms\Components\Select::make('target_user_ids')
                                 ->label(__('Target Specific Individuals'))
@@ -219,6 +223,7 @@ class AnnouncementResource extends Resource
                 Tables\Actions\ViewAction::make()
                     ->label(__('View Announcement'))
                     ->modalHeading(fn (Announcement $record) => $record->title)
+                    ->modalWidth('6xl')
                     ->modalContent(fn (Announcement $record) => view(
                         'filament.app.resources.announcement-preview',
                         ['notice' => $record]
@@ -264,19 +269,35 @@ class AnnouncementResource extends Resource
         $visibility = $record->visibility ?? [];
         $targetUserIds = $record->target_user_ids ?? [];
 
-        if (! empty($visibility) || ! empty($targetUserIds)) {
-            $usersQuery->where(function ($q) use ($visibility, $targetUserIds) {
-                if (! empty($visibility)) {
-                    $q->where(function ($roleQ) use ($visibility) {
-                        $roleQ->whereIn('requested_role', $visibility)
-                            ->orWhereHas('customRole', fn ($r) => $r->whereIn('role_key', $visibility));
-                    });
-                }
+        $sendToAll = in_array('all', $visibility, true);
 
+        if (($sendToAll && empty($targetUserIds)) || (empty($visibility) && empty($targetUserIds))) {
+            // send to all users in school
+        } else {
+            if ($sendToAll) {
                 if (! empty($targetUserIds)) {
-                    $q->orWhereIn('id', $targetUserIds);
+                    $usersQuery->whereIn('id', $targetUserIds);
                 }
-            });
+                // if no specific targets, send to all (no additional filter)
+            } else {
+                $usersQuery->where(function ($q) use ($visibility, $targetUserIds) {
+                    $roleOr = false;
+                    if (! empty($visibility)) {
+                        $q->where(function ($roleQ) use ($visibility) {
+                            $roleQ->whereIn('requested_role', $visibility)
+                                ->orWhereHas('customRole', fn ($r) => $r->whereIn('role_key', $visibility));
+                        });
+                        $roleOr = true;
+                    }
+                    if (! empty($targetUserIds)) {
+                        if ($roleOr) {
+                            $q->orWhereIn('id', $targetUserIds);
+                        } else {
+                            $q->whereIn('id', $targetUserIds);
+                        }
+                    }
+                });
+            }
         }
 
         $notifiedUsers = $usersQuery->get();
