@@ -1056,11 +1056,38 @@ if (! function_exists('document_date')) {
     }
 }
 
+if (! function_exists('document_logo_local_path')) {
+    /**
+     * Resolve the full-colour logo file used on printed documents. A logo
+     * uploaded by the super admin (Platform → Documents) wins; otherwise the
+     * bundled Kairo CORE transparent logo is used. Returns null when no logo is
+     * readable, in which case document templates fall back to a text wordmark.
+     */
+    function document_logo_local_path(): ?string
+    {
+        try {
+            $uploaded = platform_document_config('logo');
+            if (is_array($uploaded)) {
+                $uploaded = $uploaded[0] ?? null;
+            }
+            if (is_string($uploaded) && $uploaded !== '' && Storage::disk('public')->exists($uploaded)) {
+                return Storage::disk('public')->path($uploaded);
+            }
+        } catch (Throwable) {
+            // Settings table may not exist during a fresh install.
+        }
+
+        $path = public_path('img/kairo-core-logo.png');
+
+        return (is_file($path) && is_readable($path)) ? $path : null;
+    }
+}
+
 if (! function_exists('document_logo_data_uri')) {
     /**
-     * Base64 data-URI of the Kairo CORE logo PNG for use inside dompdf documents,
-     * where external/absolute image paths are unreliable. Empty string if the
-     * asset has not been generated yet.
+     * Base64 data-URI of the document logo PNG for use inside dompdf documents,
+     * where external/absolute image paths are unreliable. Empty string when no
+     * logo exists, so templates can fall back to a text wordmark.
      */
     function document_logo_data_uri(): string
     {
@@ -1070,19 +1097,143 @@ if (! function_exists('document_logo_data_uri')) {
             return $cached;
         }
 
-        $path = public_path('img/kairo-core-logo.png');
+        $path = document_logo_local_path();
 
-        return $cached = (is_file($path) && is_readable($path))
+        return $cached = ($path !== null)
             ? 'data:image/png;base64,'.base64_encode((string) file_get_contents($path))
             : '';
     }
 }
 
+if (! function_exists('document_logo_dimensions')) {
+    /**
+     * Natural pixel dimensions (width, height) of the configured document logo,
+     * so templates can size the logo height first and keep the aspect ratio.
+     */
+    function document_logo_dimensions(): array
+    {
+        static $cached;
+
+        if (is_array($cached)) {
+            return $cached;
+        }
+
+        $path = document_logo_local_path();
+
+        if ($path !== null && ($size = @getimagesize($path)) !== false) {
+            return $cached = [(int) $size[0], (int) $size[1]];
+        }
+
+        return $cached = [200, 88];
+    }
+}
+
+if (! function_exists('document_watermark_cache_path')) {
+    /**
+     * Generate (and cache) a faded watermark PNG server-side from the configured
+     * full-colour logo, blending it toward white by the configured opacity so
+     * dompdf (which ignores CSS opacity) still prints a faint, print-safe,
+     * centred logo. The result is cached by logo + opacity so it is baked once.
+     * Returns the file path, or null when the logo cannot be processed.
+     */
+    function document_watermark_cache_path(): ?string
+    {
+        $logoPath = document_logo_local_path();
+        if ($logoPath === null || ! is_file($logoPath)) {
+            return null;
+        }
+
+        $opacity = (float) platform_document_config('watermark_opacity', 0.06);
+        $opacity = max(0.0, min(1.0, $opacity));
+
+        $dir = storage_path('framework/cache/documents');
+        $key = md5((string) realpath($logoPath).'|'.sprintf('%.4F', $opacity));
+        $file = $dir.DIRECTORY_SEPARATOR.'watermark-'.$key.'.png';
+
+        if (is_file($file) && is_readable($file)) {
+            return $file;
+        }
+
+        try {
+            if (! extension_loaded('gd')) {
+                return null;
+            }
+
+            if (! is_dir($dir) && ! @mkdir($dir, 0775, true) && ! is_dir($dir)) {
+                return null;
+            }
+
+            $size = @getimagesize($logoPath);
+            if ($size === false) {
+                return null;
+            }
+            [$width, $height, $mime] = [(int) $size[0], (int) $size[1], (int) $size[2]];
+
+            $src = match ($mime) {
+                IMAGETYPE_PNG => @imagecreatefrompng($logoPath),
+                IMAGETYPE_JPEG => @imagecreatefromjpeg($logoPath),
+                IMAGETYPE_GIF => @imagecreatefromgif($logoPath),
+                IMAGETYPE_WEBP => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($logoPath) : false,
+                default => false,
+            };
+            if ($src === false) {
+                return null;
+            }
+
+            // Preserve any transparency in the source logo (the Kairo CORE PNG
+            // has a transparent background).
+            imagealphablending($src, false);
+            imagesavealpha($src, true);
+
+            // Upscale small logos so the watermark still covers a good part of
+            // the page without looking pixelated.
+            $targetWidth = 600;
+            if ($width < $targetWidth) {
+                $targetHeight = (int) round($height * ($targetWidth / $width));
+                $scaled = imagecreatetruecolor($targetWidth, $targetHeight);
+                imagealphablending($scaled, false);
+                imagesavealpha($scaled, true);
+                imagecopyresampled($scaled, $src, 0, 0, 0, 0, $targetWidth, $targetHeight, $width, $height);
+                imagedestroy($src);
+                [$src, $width, $height] = [$scaled, $targetWidth, $targetHeight];
+            }
+
+            // Composite the (possible transparent) logo onto a white canvas so
+            // every pixel has a predictable colour before fading.
+            $composite = imagecreatetruecolor($width, $height);
+            $white = imagecolorallocate($composite, 255, 255, 255);
+            imagefill($composite, 0, 0, $white);
+            imagealphablending($composite, true);
+            imagecopy($composite, $src, 0, 0, 0, 0, $width, $height);
+            imagedestroy($src);
+
+            // Fade toward white by (1 - opacity). At 6% opacity the logo looks
+            // like a ~6%-opacity layer, which dompdf can render reliably.
+            $faded = imagecreatetruecolor($width, $height);
+            imagealphablending($faded, false);
+            imagesavealpha($faded, true);
+            $white = imagecolorallocate($faded, 255, 255, 255);
+            imagefill($faded, 0, 0, $white);
+            imagealphablending($faded, true);
+            imagecopymerge($faded, $composite, 0, 0, 0, 0, $width, $height, (int) round((1 - $opacity) * 100));
+            imagedestroy($composite);
+
+            imagepng($faded, $file);
+            imagedestroy($faded);
+            @chmod($file, 0664);
+
+            return $file;
+        } catch (Throwable) {
+            return null;
+        }
+    }
+}
+
 if (! function_exists('document_watermark_data_uri')) {
     /**
-     * Base64 data-URI of the ~6%-opacity-on-white Kairo CORE watermark PNG.
-     * The opacity is baked into the pixels so dompdf (which ignores CSS
-     * opacity) still prints a faint centered watermark.
+     * Base64 data-URI of the watermark PNG for dompdf documents. A watermark
+     * image uploaded by the super admin wins; otherwise the faded watermark is
+     * generated from the document logo at the configured opacity.
      */
     function document_watermark_data_uri(): string
     {
@@ -1092,7 +1243,21 @@ if (! function_exists('document_watermark_data_uri')) {
             return $cached;
         }
 
-        $path = public_path('img/kairo-core-watermark.png');
+        $path = null;
+
+        try {
+            $uploaded = platform_document_config('watermark_image');
+            if (is_array($uploaded)) {
+                $uploaded = $uploaded[0] ?? null;
+            }
+            if (is_string($uploaded) && $uploaded !== '' && Storage::disk('public')->exists($uploaded)) {
+                $path = Storage::disk('public')->path($uploaded);
+            }
+        } catch (Throwable) {
+            $path = null;
+        }
+
+        $path ??= document_watermark_cache_path() ?? public_path('img/kairo-core-watermark.png');
 
         return $cached = (is_file($path) && is_readable($path))
             ? 'data:image/png;base64,'.base64_encode((string) file_get_contents($path))
