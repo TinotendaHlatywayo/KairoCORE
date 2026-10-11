@@ -95,6 +95,10 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
         return view('marketing.contact');
     })->name('marketing.contact');
 
+    Route::get('/features', function () {
+        return view('marketing.features');
+    })->name('marketing.features');
+
     Route::post('/contact', function (Request $request) {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],
