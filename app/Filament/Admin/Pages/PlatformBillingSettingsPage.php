@@ -36,6 +36,11 @@ class PlatformBillingSettingsPage extends Page implements HasForms
         return __(static::$navigationLabel);
     }
 
+    public function getTitle(): string
+    {
+        return __('Platform Billing Settings');
+    }
+
     protected static ?int $navigationSort = 20;
 
     protected static string $view = 'filament.admin.pages.platform-billing-settings';

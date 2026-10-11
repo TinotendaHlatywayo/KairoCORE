@@ -35,6 +35,11 @@ class PlatformSettingsPage extends Page implements HasForms
         return __(static::$navigationLabel);
     }
 
+    public function getTitle(): string
+    {
+        return __('Platform Settings');
+    }
+
     protected static ?int $navigationSort = 1;
 
     protected static string $view = 'modules.saas.platform-settings';

@@ -34,7 +34,10 @@ class PlatformDocumentConfigPage extends Page
 
     protected static ?string $navigationLabel = 'Document Configuration';
 
-    protected static ?string $title = 'Platform Document Configuration';
+    public function getTitle(): string
+    {
+        return __('Platform Document Configuration');
+    }
 
     protected static string $view = 'filament.admin.pages.platform-document-config';
 

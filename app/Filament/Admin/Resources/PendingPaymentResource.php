@@ -3,6 +3,7 @@
 namespace App\Filament\Admin\Resources;
 
 use App\Filament\Admin\Resources\PendingPaymentResource\Pages;
+use App\Mail\SaaS\SaaSCustomReceiptMail;
 use Filament\Forms;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
@@ -10,7 +11,10 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Modules\SaaS\Models\SaaSManualSubmission;
+use Modules\SaaS\Models\SaaSReceipt;
 use Modules\SaaS\Models\SaaSTransaction;
 use Modules\SaaS\Services\SubscriptionManager;
 
@@ -64,12 +68,17 @@ class PendingPaymentResource extends Resource
                     ->slideOver()
                     ->modalWidth('2xl')
                     ->modalHeading(fn (SaaSManualSubmission $record) => __('Approve & Credit — ').$record->school?->name)
-                    ->form(static::details())
+                    ->form(static::approvalForm())
                     ->visible(fn (SaaSManualSubmission $record) => $record->status === 'pending')
-                    ->action(function (SaaSManualSubmission $record) {
-                        DB::transaction(function () use ($record) {
+                    ->action(function (SaaSManualSubmission $record, array $data) {
+                        $amount = (float) $data['amount'];
+                        $receiptMode = $data['receipt_mode'] ?? 'system';
+                        $customPath = static::firstUploadPath($data['custom_receipt'] ?? null);
+
+                        $transaction = DB::transaction(function () use ($record, $amount, $receiptMode) {
                             $record->update([
                                 'status' => 'approved',
+                                'amount' => $amount,
                                 'reviewed_by_id' => Auth::id(),
                                 'reviewed_at' => now(),
                             ]);
@@ -79,14 +88,25 @@ class PendingPaymentResource extends Resource
                                 'saas_invoice_id' => $record->saas_invoice_id,
                                 'payment_gateway_key' => 'manual_bank',
                                 'transaction_reference' => $record->reference_number,
-                                'amount' => $record->amount,
+                                'amount' => $amount,
                                 'currency' => $record->currency,
                                 'status' => 'completed',
                                 'processed_at' => now(),
                             ]);
 
-                            app(SubscriptionManager::class)->processTransactionVerification($transaction);
+                            // Suppress the system PDF email when a custom receipt
+                            // will be emailed instead.
+                            app(SubscriptionManager::class)->processTransactionVerification(
+                                $transaction,
+                                $receiptMode !== 'custom'
+                            );
+
+                            return $transaction;
                         });
+
+                        if ($receiptMode === 'custom' && $customPath) {
+                            static::sendCustomReceipt($record, $transaction, $customPath);
+                        }
 
                         Notification::make()
                             ->title(__('Payment Approved'))
@@ -149,6 +169,83 @@ class PendingPaymentResource extends Resource
                 ->openable()
                 ->downloadable(),
         ];
+    }
+
+    /**
+     * Approval form: review the submission, set the amount to credit and pick
+     * between the generated system receipt and an uploaded custom receipt.
+     *
+     * @return array<int, Forms\Components\Component>
+     */
+    protected static function approvalForm(): array
+    {
+        return [
+            ...static::details(),
+            Forms\Components\TextInput::make('amount')
+                ->label(__('Credit Amount'))
+                ->helperText(__('Defaults to the amount the school stated. Adjust it if the actual deposit differs.'))
+                ->numeric()
+                ->minValue(0.01)
+                ->required()
+                ->default(fn (SaaSManualSubmission $record) => $record->amount),
+            Forms\Components\Radio::make('receipt_mode')
+                ->label(__('Receipt'))
+                ->options([
+                    'system' => __('Generate the system receipt (default)'),
+                    'custom' => __('Upload a custom receipt'),
+                ])
+                ->default('system')
+                ->required()
+                ->live(),
+            Forms\Components\FileUpload::make('custom_receipt')
+                ->label(__('Custom Receipt File'))
+                ->helperText(__('Emailed to the school instead of the generated PDF receipt.'))
+                ->disk('public')
+                ->directory('saas/manual-receipts')
+                ->acceptedFileTypes(['application/pdf', 'image/png', 'image/jpeg'])
+                ->maxSize(10240)
+                ->visible(fn (callable $get) => $get('receipt_mode') === 'custom')
+                ->required(fn (callable $get) => $get('receipt_mode') === 'custom'),
+        ];
+    }
+
+    /**
+     * FileUpload state can arrive as a string path or an array depending on the
+     * Filament version, so normalise it to the first stored path.
+     */
+    protected static function firstUploadPath(mixed $value): ?string
+    {
+        if (is_array($value)) {
+            $value = reset($value);
+        }
+
+        return is_string($value) && $value !== '' ? $value : null;
+    }
+
+    /**
+     * Email the school the uploaded custom receipt for an approved payment.
+     */
+    protected static function sendCustomReceipt(SaaSManualSubmission $record, SaaSTransaction $transaction, string $path): void
+    {
+        try {
+            $receipt = SaaSReceipt::where('saas_transaction_id', $transaction->id)->first();
+
+            if (! $receipt) {
+                return;
+            }
+
+            $recipientEmail = $record->school?->email_address
+                ?? 'admin@'.$record->school?->subdomain.'.schoolcore.test';
+
+            Mail::to($recipientEmail)->send(new SaaSCustomReceiptMail(
+                $receipt,
+                'public',
+                $path,
+                basename($path),
+            ));
+        } catch (\Throwable $e) {
+            Log::warning('Failed to email custom manual receipt: '.$e->getMessage());
+        }
     }
 
     public static function getPages(): array

@@ -30,6 +30,11 @@ class PlatformMaintenancePage extends Page implements HasForms
         return __(static::$navigationLabel);
     }
 
+    public function getTitle(): string
+    {
+        return __('Platform Maintenance');
+    }
+
     protected static ?int $navigationSort = 3;
 
     protected static string $view = 'modules.saas.maintenance';

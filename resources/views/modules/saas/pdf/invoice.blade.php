@@ -12,6 +12,11 @@
         $discount = (float) ($invoice->discount ?? 0);
         $calloutBody = $invoice->payment_instructions ?: ($cfg['callout_body'] ?? null);
 
+        // Outstanding balance from the school's other unpaid invoices. Shown as
+        // its own line and folded into the grand total (presentation only).
+        $outstanding = (float) ($outstanding ?? 0);
+        $grandTotal = (float) $invoice->total + $outstanding;
+
         // Line items: "Title [details]" -> bold title + grey details underneath.
         $itemRows = collect($invoice->items)->map(function ($item) {
             $raw = trim((string) $item->description);
@@ -90,8 +95,12 @@
         'cfg' => $cfg,
         'totals' => [
             'subtotal' => $invoice->subtotal,
+            'extra' => $outstanding > 0 ? [[
+                'label' => __('Outstanding (previous invoices)'),
+                'value' => '$'.number_format($outstanding, 2),
+            ]] : [],
             'discount' => $discount,
-            'total' => $invoice->total,
+            'total' => $grandTotal,
             'totalLabel' => __('Total Due'),
         ],
     ])
