@@ -91,6 +91,12 @@ class SchoolSubscriptionResource extends Resource
                             ])
                             ->default('trialing')
                             ->required(),
+                        Forms\Components\DatePicker::make('next_payment_date')
+                            ->label(__('Next Payment Date'))
+                            ->native(false)
+                            ->displayFormat('d M Y')
+                            ->helperText(__('The next date this school is billed. Adjusting it changes when the next invoice is issued.'))
+                            ->disabledOn('create'),
                     ])->columns(2),
             ]);
     }
