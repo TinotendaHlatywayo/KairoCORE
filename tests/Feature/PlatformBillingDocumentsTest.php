@@ -377,6 +377,18 @@ class PlatformBillingDocumentsTest extends TestCase
         }
     }
 
+    public function test_super_admin_can_preview_sample_documents(): void
+    {
+        $this->actingAs($this->admin());
+
+        foreach (['invoice', 'receipt', 'statement'] as $type) {
+            $response = $this->get(route('platform.documents.preview', ['type' => $type]));
+
+            $response->assertOk();
+            $this->assertStringContainsString('application/pdf', (string) $response->headers->get('content-type'));
+        }
+    }
+
     private function admin(): User
     {
         return User::whereNull('school_id')

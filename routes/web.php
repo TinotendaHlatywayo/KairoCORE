@@ -8,11 +8,13 @@ use App\Http\Controllers\DocumentDownloadController;
 use App\Http\Controllers\FinanceDocumentController;
 use App\Http\Controllers\Platform\PlatformBackupDownloadController;
 use App\Http\Controllers\Platform\PlatformEntryController;
+use App\Http\Controllers\SaaS\DocumentPreviewController;
 use App\Http\Controllers\SaaS\InvoiceDownloadController;
 use App\Http\Controllers\SaaS\PaynowWebhookController;
 use App\Http\Controllers\SaaS\ReceiptDownloadController;
 use App\Http\Controllers\StudentCardPrintController;
 use App\Http\Controllers\StudentFeeCheckoutController;
+use App\Http\Middleware\EnsurePlatformAdmin;
 use App\Http\Middleware\SetUserLocale;
 use App\Livewire\RegistrationWizard;
 use App\Support\TeacherInitials;
@@ -454,6 +456,11 @@ Route::middleware(['tenant', 'auth', 'throttle:rate_limit:exports'])->group(func
 Route::middleware(['auth'])->group(function () {
     Route::get('/platform/backups/{backup}/download', [PlatformBackupDownloadController::class, 'download'])
         ->name('platform.backups.download');
+
+    // Sample document previews for the super admin document config screen.
+    Route::get('/platform/documents/preview/{type}', [DocumentPreviewController::class, 'show'])
+        ->middleware(EnsurePlatformAdmin::class)
+        ->name('platform.documents.preview');
 });
 
 // Central SaaS Invoice & Receipt Download Endpoints
