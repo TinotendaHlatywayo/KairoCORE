@@ -418,11 +418,13 @@ class PollCreationAndResultsTest extends TestCase
                 'expires_at' => null,
                 'visibility' => ['teaching_staff'],
                 'channel' => 'both',
+                'attachments' => ['communication/notices/exam-timetable.pdf'],
             ]);
 
             AnnouncementResource::broadcastToAudience($notice);
 
-            Mail::assertSent(AnnouncementPublishedMail::class, fn ($mail) => $mail->hasTo($emailRecipient->email));
+            Mail::assertSent(AnnouncementPublishedMail::class, fn ($mail) => $mail->hasTo($emailRecipient->email)
+                && $mail->attachmentPaths === ['communication/notices/exam-timetable.pdf']);
 
             $this->assertDatabaseHas('notifications', [
                 'notifiable_id' => $emailRecipient->id,

@@ -17,6 +17,7 @@ use App\Notifications\TaskOverdueNotification;
 use App\Notifications\TaskReminderNotification;
 use App\Notifications\UserRegistrationApprovalNotification;
 use Carbon\Carbon;
+use Filament\Notifications\DatabaseNotification;
 use Illuminate\Support\Collection;
 use Livewire\Component;
 use Modules\Admin\Services\PermissionRegistry;
@@ -619,6 +620,10 @@ class TopbarCommandCenter extends Component
             EventReminderNotification::class,
             ProfilePhotoRejectedNotification::class,
             PlatformMessageNotification::class,
+            // Announcements, polls/surveys, fee confirmations and chat-bridge
+            // notices are delivered through Filament's database notification
+            // class; track it so they surface in the bell and its badge.
+            DatabaseNotification::class,
         ];
     }
 

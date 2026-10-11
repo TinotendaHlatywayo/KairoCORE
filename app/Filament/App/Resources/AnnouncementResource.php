@@ -302,6 +302,7 @@ class AnnouncementResource extends Resource
                         title: $record->title,
                         content: str_replace('&nbsp;', ' ', (string) preg_replace('/<p[^>]*>|<\/p>/i', '', (string) $record->content)),
                         schoolName: $record->school?->name ?? '',
+                        attachmentPaths: $record->attachments ?? [],
                     ));
                 }
             } catch (\Throwable $e) {
@@ -321,4 +322,3 @@ class AnnouncementResource extends Resource
         ];
     }
 }
-
