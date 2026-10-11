@@ -64,7 +64,7 @@ class DocumentPreviewController extends Controller
 
         $invoice->setRelation('items', collect([$item]));
 
-        return ['invoice' => $invoice];
+        return ['invoice' => $invoice, 'outstanding' => 120.00];
     }
 
     private function receiptSample(): array

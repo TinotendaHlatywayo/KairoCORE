@@ -15,7 +15,10 @@ class InvoiceDownloadController extends Controller
         $invoice = SaaSInvoice::where('uuid', $uuid)->firstOrFail();
         $this->authorizeInvoice($invoice);
 
-        $pdf = Pdf::loadView('modules.saas.pdf.invoice', ['invoice' => $invoice]);
+        $pdf = Pdf::loadView('modules.saas.pdf.invoice', [
+            'invoice' => $invoice,
+            'outstanding' => $invoice->outstandingPriorTotal(),
+        ]);
 
         return $pdf->download($invoice->invoice_number.'.pdf');
     }
@@ -29,7 +32,10 @@ class InvoiceDownloadController extends Controller
         $invoice = SaaSInvoice::where('uuid', $uuid)->firstOrFail();
         $this->authorizeInvoice($invoice);
 
-        $pdf = Pdf::loadView('modules.saas.pdf.invoice', ['invoice' => $invoice]);
+        $pdf = Pdf::loadView('modules.saas.pdf.invoice', [
+            'invoice' => $invoice,
+            'outstanding' => $invoice->outstandingPriorTotal(),
+        ]);
 
         return $pdf->stream($invoice->invoice_number.'.pdf');
     }

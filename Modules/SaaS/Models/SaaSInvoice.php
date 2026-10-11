@@ -77,4 +77,22 @@ class SaaSInvoice extends Model
     {
         return $this->hasOne(SaaSReceipt::class, 'saas_invoice_id');
     }
+
+    /**
+     * Total still owed on this school's OTHER unpaid invoices. Presentation
+     * only: the stored invoice total and integrity hash are never changed by
+     * this figure; documents add it to the grand total when rendering.
+     */
+    public function outstandingPriorTotal(): float
+    {
+        if (! $this->school_id) {
+            return 0.0;
+        }
+
+        return (float) static::query()
+            ->where('school_id', $this->school_id)
+            ->when($this->exists, fn ($query) => $query->whereKeyNot($this->getKey()))
+            ->where('status', 'unpaid')
+            ->sum('total');
+    }
 }

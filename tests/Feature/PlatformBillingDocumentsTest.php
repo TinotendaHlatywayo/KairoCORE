@@ -2,19 +2,28 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Admin\Pages\PlatformBillingSettingsPage;
 use App\Filament\Admin\Pages\PlatformBillingStatements;
 use App\Filament\Admin\Pages\PlatformDocumentConfigPage;
+use App\Filament\Admin\Pages\PlatformMaintenancePage;
+use App\Filament\Admin\Pages\PlatformSettingsPage;
+use App\Filament\Admin\Resources\PendingPaymentResource\Pages\ListPendingPayments;
 use App\Filament\Admin\Resources\SaaSInvoiceResource\Pages\ListSaaSInvoices;
 use App\Filament\Admin\Resources\SaaSInvoiceResource\Pages\ViewSaaSInvoice;
 use App\Filament\Admin\Resources\SchoolSubscriptionResource\Pages\ListSchoolSubscriptions;
+use App\Mail\SaaS\SaaSCustomReceiptMail;
+use App\Mail\SaaS\SaaSReceiptMail;
 use App\Models\School;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Modules\SaaS\Models\SaaSInvoice;
+use Modules\SaaS\Models\SaaSManualSubmission;
 use Modules\SaaS\Models\SaaSPlan;
 use Modules\SaaS\Models\SaaSReceipt;
 use Modules\SaaS\Models\SaaSSubscription;
@@ -427,6 +436,141 @@ class PlatformBillingDocumentsTest extends TestCase
             $response->assertOk();
             $this->assertStringContainsString('application/pdf', (string) $response->headers->get('content-type'));
         }
+    }
+
+    public function test_invoice_document_folds_prior_unpaid_invoices_into_the_total(): void
+    {
+        DB::beginTransaction();
+
+        try {
+            $school = $this->makeSchool();
+            $plan = $this->makePlan();
+
+            $subscription = SaaSSubscription::create([
+                'school_id' => $school->id,
+                'saas_plan_id' => $plan->id,
+                'billing_period' => 'monthly',
+                'status' => 'active',
+                'billing_start_date' => now()->subDays(5)->toDateString(),
+            ]);
+
+            SaaSInvoice::create([
+                'school_id' => $school->id,
+                'saas_subscription_id' => $subscription->id,
+                'invoice_number' => 'INV-OLD-'.uniqid(),
+                'issue_date' => now()->subDays(40)->toDateString(),
+                'due_date' => now()->subDays(33)->toDateString(),
+                'subtotal' => 75.00,
+                'discount' => 0.00,
+                'total' => 75.00,
+                'currency' => 'USD',
+                'status' => 'unpaid',
+            ]);
+
+            $current = SaaSInvoice::create([
+                'school_id' => $school->id,
+                'saas_subscription_id' => $subscription->id,
+                'invoice_number' => 'INV-NEW-'.uniqid(),
+                'issue_date' => now()->toDateString(),
+                'due_date' => now()->toDateString(),
+                'subtotal' => 40.00,
+                'discount' => 0.00,
+                'total' => 40.00,
+                'currency' => 'USD',
+                'status' => 'unpaid',
+            ]);
+
+            $this->assertSame(75.0, $current->outstandingPriorTotal());
+
+            $html = view('modules.saas.pdf.invoice', [
+                'invoice' => $current,
+                'outstanding' => $current->outstandingPriorTotal(),
+            ])->render();
+
+            $this->assertStringContainsString(__('Outstanding (previous invoices)'), $html);
+            $this->assertStringContainsString(number_format(115.00, 2), $html);
+        } finally {
+            DB::rollBack();
+        }
+    }
+
+    public function test_manual_approval_can_credit_a_custom_amount_and_email_a_custom_receipt(): void
+    {
+        DB::beginTransaction();
+
+        try {
+            Mail::fake();
+
+            $school = $this->makeSchool();
+            $plan = $this->makePlan();
+
+            $subscription = SaaSSubscription::create([
+                'school_id' => $school->id,
+                'saas_plan_id' => $plan->id,
+                'billing_period' => 'monthly',
+                'status' => 'active',
+                'billing_start_date' => now()->subDays(5)->toDateString(),
+            ]);
+
+            $invoice = SaaSInvoice::create([
+                'school_id' => $school->id,
+                'saas_subscription_id' => $subscription->id,
+                'invoice_number' => 'INV-MAN-'.uniqid(),
+                'issue_date' => now()->toDateString(),
+                'due_date' => now()->toDateString(),
+                'subtotal' => 50.00,
+                'discount' => 0.00,
+                'total' => 50.00,
+                'currency' => 'USD',
+                'status' => 'unpaid',
+            ]);
+
+            Storage::disk('public')->put('saas/manual-receipts/test-receipt.pdf', 'dummy');
+
+            $submission = SaaSManualSubmission::create([
+                'school_id' => $school->id,
+                'saas_invoice_id' => $invoice->id,
+                'reference_number' => 'REF-'.uniqid(),
+                'amount' => 50.00,
+                'currency' => 'USD',
+                'payment_date' => now()->toDateString(),
+                'bank_name' => 'CBZ',
+                'status' => 'pending',
+            ]);
+
+            $this->actingAs($this->admin());
+            Filament::setCurrentPanel(Filament::getPanel('admin'));
+
+            Livewire::test(ListPendingPayments::class)
+                ->callTableAction('approve', $submission, data: [
+                    'amount' => 65.00,
+                    'receipt_mode' => 'custom',
+                    'custom_receipt' => ['saas/manual-receipts/test-receipt.pdf'],
+                ])
+                ->assertHasNoTableActionErrors();
+
+            $this->assertSame('approved', $submission->fresh()->status);
+            $this->assertSame(50.0, (float) $invoice->fresh()->total);
+
+            $transaction = SaaSTransaction::where('school_id', $school->id)
+                ->where('amount', 65.00)
+                ->first();
+            $this->assertNotNull($transaction, 'The credit amount should come from the form, not the stated amount.');
+
+            Mail::assertSent(SaaSCustomReceiptMail::class);
+            Mail::assertNotSent(SaaSReceiptMail::class);
+        } finally {
+            DB::rollBack();
+        }
+    }
+
+    public function test_admin_pages_expose_clean_page_titles(): void
+    {
+        $this->actingAs($this->admin());
+
+        $this->assertSame(__('Platform Settings'), app(PlatformSettingsPage::class)->getTitle());
+        $this->assertSame(__('Platform Maintenance'), app(PlatformMaintenancePage::class)->getTitle());
+        $this->assertSame(__('Platform Billing Settings'), app(PlatformBillingSettingsPage::class)->getTitle());
     }
 
     private function admin(): User

@@ -25,13 +25,13 @@ class PlatformExpenseResource extends Resource
 
     protected static ?string $navigationGroup = 'Finance';
 
-    protected static ?string $navigationLabel = 'KairoCORE Expenses';
+    protected static ?string $navigationLabel = 'Expenses';
 
     protected static ?int $navigationSort = 10;
 
     public static function getNavigationLabel(): string
     {
-        return __(static::$navigationLabel);
+        return __(':brand Expenses', ['brand' => platform_name()]);
     }
 
     public static function canAccess(): bool

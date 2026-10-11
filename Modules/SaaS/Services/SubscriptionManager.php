@@ -73,17 +73,19 @@ class SubscriptionManager
         });
     }
 
-    public function processTransactionVerification(SaaSTransaction $transaction): SaaSReceipt
+    public function processTransactionVerification(SaaSTransaction $transaction, bool $emailReceipt = true): SaaSReceipt
     {
         // Idempotency guard: the webhook, the status poll, the sandbox
         // simulator and the manual bank approval can all reach this method for
         // the same payment. A transaction may only ever produce ONE receipt,
         // expense and email, so an existing receipt short-circuits immediately.
+        // $emailReceipt lets manual approval send a custom uploaded receipt
+        // instead of the generated PDF.
         if ($existing = SaaSReceipt::where('saas_transaction_id', $transaction->id)->first()) {
             return $existing;
         }
 
-        return DB::transaction(function () use ($transaction) {
+        return DB::transaction(function () use ($transaction, $emailReceipt) {
             // Re-check under a row lock to close the check-then-insert race
             // between concurrent confirmations of the same transaction.
             SaaSTransaction::whereKey($transaction->id)->lockForUpdate()->first();
@@ -147,8 +149,10 @@ class SubscriptionManager
 
             // Automatically send the invoice/receipt notification email to the school administration email on file
             try {
-                $recipientEmail = $transaction->school->email_address ?? 'admin@'.$transaction->school->subdomain.'.schoolcore.test';
-                Mail::to($recipientEmail)->send(new SaaSReceiptMail($receipt));
+                if ($emailReceipt) {
+                    $recipientEmail = $transaction->school->email_address ?? 'admin@'.$transaction->school->subdomain.'.schoolcore.test';
+                    Mail::to($recipientEmail)->send(new SaaSReceiptMail($receipt));
+                }
             } catch (\Exception $e) {
                 // Fail silently to prevent database transaction rollbacks due to local mail server disconnects
             }
