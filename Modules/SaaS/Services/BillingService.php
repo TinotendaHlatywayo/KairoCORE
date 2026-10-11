@@ -11,7 +11,8 @@ use Modules\SaaS\Models\SaaSSubscription;
 class BillingService
 {
     public function generateUpcomingInvoice(SaaSSubscription $subscription): SaaSInvoice
-    {        return DB::transaction(function () use ($subscription) {
+    {
+        return DB::transaction(function () use ($subscription) {
             $plan = $subscription->plan;
             $billingPeriod = $subscription->billing_period;
             $months = $subscription->billingMonths();
@@ -51,7 +52,10 @@ class BillingService
                 }
             }
 
-            $invoiceNumber = 'INV-SAAS-'.$subscription->school_id.'-'.Carbon::now()->year.'-'.str_pad((string) $nextSequence, 5, '0', STR_PAD_LEFT);
+            do {
+                $invoiceNumber = 'INV-SAAS-'.$subscription->school_id.'-'.Carbon::now()->year.'-'.str_pad((string) $nextSequence, 5, '0', STR_PAD_LEFT);
+                $nextSequence++;
+            } while (SaaSInvoice::where('invoice_number', $invoiceNumber)->exists());
 
             $invoice = SaaSInvoice::create([
                 'school_id' => $subscription->school_id,
