@@ -39,23 +39,7 @@
 
         $emptyMessage = __('Subscription charges for :plan', ['plan' => $invoice->subscription?->plan?->name ?? __('your plan')]);
 
-        // Platform banking details (editable under Finance) shown alongside the
-        // configured payment channels, so tenants can pay by transfer too.
-        $bankDetails = [];
-        try {
-            $bank = \Modules\SaaS\Models\SaaSBillingSetting::getActiveSettings();
-            if (collect([$bank->bank_name, $bank->bank_account_number, $bank->bank_account_name, $bank->bank_swift_code])->filter()->isNotEmpty()) {
-                $bankDetails = [
-                    'bank_name' => $bank->bank_name,
-                    'bank_account_name' => $bank->bank_account_name,
-                    'bank_account_number' => $bank->bank_account_number,
-                    'bank_branch_code' => $bank->bank_branch_code,
-                    'bank_swift_code' => $bank->bank_swift_code,
-                ];
-            }
-        } catch (\Throwable $e) {
-            $bankDetails = [];
-        }
+
     @endphp
     <meta charset="UTF-8">
     <title>SaaS Subscription Invoice: {{ $invoice->invoice_number }}</title>
@@ -113,11 +97,7 @@
         </div>
     @endif
 
-    @include('modules.saas.pdf.partials.payments', [
-        'cfg' => $cfg,
-        'paymentTitle' => __('Payment Details'),
-        'bankDetails' => $bankDetails,
-    ])
+
 
     @include('modules.saas.pdf.partials.footer', [
         'cfg' => $cfg,
