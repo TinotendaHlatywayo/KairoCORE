@@ -5,6 +5,7 @@ namespace App\Filament\Admin\Pages;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Forms\Components\ColorPicker;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Tabs;
@@ -25,15 +26,17 @@ use Modules\SaaS\Models\PlatformSetting;
  */
 class PlatformDocumentConfigPage extends Page
 {
+    public ?array $data = [];
+
     protected static ?string $navigationIcon = 'heroicon-o-document-chart-bar';
 
-    protected static ?string $navigationGroup = 'SaaS & Finance';
+    protected static ?string $navigationGroup = 'Finance';
 
     protected static ?string $navigationLabel = 'Document Configuration';
 
     protected static ?string $title = 'Platform Document Configuration';
 
-    protected string $view = 'filament.admin.pages.platform-document-config';
+    protected static string $view = 'filament.admin.pages.platform-document-config';
 
     public static function canAccess(): bool
     {
@@ -61,27 +64,57 @@ class PlatformDocumentConfigPage extends Page
                         Tab::make('Branding')
                             ->icon('heroicon-o-paint-brush')
                             ->schema([
-                                ColorPicker::make('documents_primary_color')->label(__('Primary Accent Color'))->default('#EE5D4B'),
-                                ColorPicker::make('documents_dark_color')->label(__('Dark / Navy Color'))->default('#1E2A38'),
-                                ColorPicker::make('documents_light_fill')->label(__('Light Background Fill'))->default('#F8F9FA'),
+                                FileUpload::make('documents_logo')
+                                    ->label(__('Document Logo'))
+                                    ->helperText(__('Upload the full-colour logo printed on invoices, receipts and statements. Leave empty to use the bundled Kairo CORE logo.'))
+                                    ->disk('public')
+                                    ->directory('platform/documents')
+                                    ->image()
+                                    ->maxSize(4096)
+                                    ->columnSpanFull(),
+                                ColorPicker::make('documents_primary_color')
+                                    ->label(__('Primary Accent Color'))
+                                    ->default('#EF5F4D')
+                                    ->rules(['regex:/^#[0-9a-fA-F]{6}$/']),
+                                ColorPicker::make('documents_dark_color')
+                                    ->label(__('Dark / Navy Color'))
+                                    ->default('#1F2E43')
+                                    ->rules(['regex:/^#[0-9a-fA-F]{6}$/']),
+                                ColorPicker::make('documents_light_fill')
+                                    ->label(__('Light Background Fill'))
+                                    ->default('#F3F5F8')
+                                    ->rules(['regex:/^#[0-9a-fA-F]{6}$/']),
                                 Toggle::make('documents_watermark_enabled')->label(__('Background Watermark'))->default(true),
                                 TextInput::make('documents_watermark_opacity')
                                     ->label(__('Watermark Opacity'))
+                                    ->helperText(__('0.06 means the logo prints at about 6% intensity. The faded version is generated from your logo and cached.'))
                                     ->numeric()
                                     ->minValue(0)
-                                    ->maxValue(0.2)
+                                    ->maxValue(1)
                                     ->step(0.01)
                                     ->default(0.06),
+                                FileUpload::make('documents_watermark_image')
+                                    ->label(__('Custom Watermark Image (optional)'))
+                                    ->helperText(__('When set, this image is used as-is instead of the generated faded logo.'))
+                                    ->disk('public')
+                                    ->directory('platform/documents')
+                                    ->image()
+                                    ->maxSize(4096),
                             ])->columns(2),
 
                         Tab::make('From / Contact')
                             ->icon('heroicon-o-building-office')
                             ->schema([
-                                TextInput::make('documents_business_name')->label(__('Business Name')),
-                                TextInput::make('documents_from_line_1')->label(__('Address Line 1')),
-                                TextInput::make('documents_from_line_2')->label(__('Address Line 2')),
-                                TextInput::make('documents_from_phone')->label(__('Phone')),
-                                TextInput::make('documents_from_email')->label(__('Email')),
+                                TextInput::make('documents_business_name')
+                                    ->label(__('Business Name'))
+                                    ->maxLength(150),
+                                TextInput::make('documents_from_line_1')->label(__('Address Line 1'))->maxLength(150),
+                                TextInput::make('documents_from_line_2')->label(__('Address Line 2'))->maxLength(150),
+                                TextInput::make('documents_from_phone')->label(__('Phone'))->maxLength(50),
+                                TextInput::make('documents_from_email')
+                                    ->label(__('Email'))
+                                    ->email()
+                                    ->maxLength(150),
                             ])->columns(2),
 
                         Tab::make('Payment Channels')
@@ -90,8 +123,8 @@ class PlatformDocumentConfigPage extends Page
                                 Repeater::make('documents_payment_channels')
                                     ->label(__('Payment Methods & Account Numbers'))
                                     ->schema([
-                                        TextInput::make('method')->label(__('Method'))->required(),
-                                        TextInput::make('number')->label(__('Account / Number'))->required(),
+                                        TextInput::make('method')->label(__('Method'))->required()->maxLength(80),
+                                        TextInput::make('number')->label(__('Account / Number'))->required()->maxLength(120),
                                     ])
                                     ->columns(2)
                                     ->default([
@@ -115,7 +148,12 @@ class PlatformDocumentConfigPage extends Page
                             ->schema([
                                 TextInput::make('documents_closing_title')->label(__('Closing Title'))->default('Thank you for your business!'),
                                 TextInput::make('documents_closing_subtitle')->label(__('Closing Subtitle'))->default('Please use the invoice number as your payment reference.'),
-                                TextInput::make('documents_closing_font_size')->label(__('Closing Font Size (px)'))->default('13'),
+                                TextInput::make('documents_closing_font_size')
+                                    ->label(__('Closing Font Size (px)'))
+                                    ->numeric()
+                                    ->minValue(8)
+                                    ->maxValue(40)
+                                    ->default('13'),
                                 Select::make('documents_closing_font_weight')
                                     ->label(__('Closing Font Weight'))
                                     ->options([
@@ -134,7 +172,8 @@ class PlatformDocumentConfigPage extends Page
                                 TextInput::make('documents_date_format')->label(__('Date Format (PHP)'))->default('d F Y'),
                             ])->columns(2),
                     ]),
-            ]);
+            ])
+            ->statePath('data');
     }
 
     public function save(): void
@@ -168,11 +207,13 @@ class PlatformDocumentConfigPage extends Page
     private function schemaDefaults(): array
     {
         return [
-            'primary_color' => '#EE5D4B',
-            'dark_color' => '#1E2A38',
-            'light_fill' => '#F8F9FA',
+            'primary_color' => '#EF5F4D',
+            'dark_color' => '#1F2E43',
+            'light_fill' => '#F3F5F8',
             'watermark_enabled' => true,
             'watermark_opacity' => 0.06,
+            'logo' => null,
+            'watermark_image' => null,
             'business_name' => null,
             'from_line_1' => null,
             'from_line_2' => null,

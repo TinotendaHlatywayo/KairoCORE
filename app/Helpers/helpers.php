@@ -970,11 +970,13 @@ if (! function_exists('platform_document_config')) {
         })();
 
         $defaults = [
-            'primary_color' => '#EE5D4B',
-            'dark_color' => '#1E2A38',
-            'light_fill' => '#F8F9FA',
+            'primary_color' => '#EF5F4D',
+            'dark_color' => '#1F2E43',
+            'light_fill' => '#F3F5F8',
             'watermark_enabled' => true,
             'watermark_opacity' => 0.06,
+            'logo' => null,
+            'watermark_image' => null,
             'business_name' => (string) ($branding['company_name'] ?? config('app.name', 'Kairo CORE')),
             'from_line_1' => $branding['company_address'] ?? null,
             'from_line_2' => null,

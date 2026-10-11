@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Filament\Admin\Pages\PlatformBillingStatements;
+use App\Filament\Admin\Pages\PlatformDocumentConfigPage;
 use App\Filament\Admin\Resources\SaaSInvoiceResource\Pages\ListSaaSInvoices;
 use App\Filament\Admin\Resources\SchoolSubscriptionResource\Pages\ListSchoolSubscriptions;
 use App\Models\School;
@@ -316,6 +317,61 @@ class PlatformBillingDocumentsTest extends TestCase
             $this->assertNotEmpty(Pdf::loadView('modules.saas.pdf.platform-financial-statement', ['report' => $report])->output());
             $this->assertNotEmpty(Pdf::loadView('modules.saas.pdf.tenant-billing-statement', ['statement' => $statement])->output());
             $this->assertNotEmpty(Pdf::loadView('modules.saas.pdf.payment-history', ['history' => $history])->output());
+        } finally {
+            DB::rollBack();
+        }
+    }
+
+    public function test_the_document_configuration_page_accepts_valid_document_settings(): void
+    {
+        DB::beginTransaction();
+
+        try {
+            $this->actingAs($this->admin());
+            Filament::setCurrentPanel(Filament::getPanel('admin'));
+
+            Livewire::test(PlatformDocumentConfigPage::class)
+                ->fillForm([
+                    'documents_primary_color' => '#EF5F4D',
+                    'documents_dark_color' => '#1F2E43',
+                    'documents_light_fill' => '#F3F5F8',
+                    'documents_watermark_enabled' => true,
+                    'documents_watermark_opacity' => 0.06,
+                    'documents_business_name' => 'Kairo CORE Test',
+                    'documents_from_email' => 'billing@example.test',
+                    'documents_date_format' => 'd M Y',
+                ])
+                ->call('save');
+
+            Livewire::test(PlatformDocumentConfigPage::class)
+                ->assertFormSet(['documents_primary_color' => '#EF5F4D']);
+
+            $this->assertSame('#EF5F4D', platform_document_config('primary_color'));
+            $this->assertSame('billing@example.test', platform_document_config('from_email'));
+            $this->assertSame('d M Y', platform_document_config('date_format'));
+        } finally {
+            DB::rollBack();
+        }
+    }
+
+    public function test_the_document_configuration_page_rejects_invalid_hex_and_email(): void
+    {
+        DB::beginTransaction();
+
+        try {
+            $this->actingAs($this->admin());
+            Filament::setCurrentPanel(Filament::getPanel('admin'));
+
+            Livewire::test(PlatformDocumentConfigPage::class)
+                ->fillForm([
+                    'documents_primary_color' => 'not-a-hex',
+                    'documents_from_email' => 'not-an-email',
+                ])
+                ->call('save')
+                ->assertHasFormErrors([
+                    'documents_primary_color',
+                    'documents_from_email',
+                ]);
         } finally {
             DB::rollBack();
         }
