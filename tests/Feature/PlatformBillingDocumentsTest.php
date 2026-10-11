@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Filament\Admin\Pages\PlatformBillingStatements;
 use App\Filament\Admin\Pages\PlatformDocumentConfigPage;
 use App\Filament\Admin\Resources\SaaSInvoiceResource\Pages\ListSaaSInvoices;
+use App\Filament\Admin\Resources\SaaSInvoiceResource\Pages\ViewSaaSInvoice;
 use App\Filament\Admin\Resources\SchoolSubscriptionResource\Pages\ListSchoolSubscriptions;
 use App\Models\School;
 use App\Models\User;
@@ -372,6 +373,45 @@ class PlatformBillingDocumentsTest extends TestCase
                     'documents_primary_color',
                     'documents_from_email',
                 ]);
+        } finally {
+            DB::rollBack();
+        }
+    }
+
+    public function test_super_admin_can_open_the_dedicated_invoice_view_page(): void
+    {
+        DB::beginTransaction();
+
+        try {
+            $school = $this->makeSchool();
+            $plan = $this->makePlan();
+
+            $subscription = SaaSSubscription::create([
+                'school_id' => $school->id,
+                'saas_plan_id' => $plan->id,
+                'billing_period' => 'monthly',
+                'status' => 'active',
+                'billing_start_date' => now()->subDays(5)->toDateString(),
+            ]);
+
+            $invoice = SaaSInvoice::create([
+                'school_id' => $school->id,
+                'saas_subscription_id' => $subscription->id,
+                'invoice_number' => 'INV-VIEW-'.uniqid(),
+                'issue_date' => now()->toDateString(),
+                'due_date' => now()->toDateString(),
+                'subtotal' => 40.00,
+                'discount' => 0.00,
+                'total' => 40.00,
+                'currency' => 'USD',
+                'status' => 'unpaid',
+            ]);
+
+            $this->actingAs($this->admin());
+            Filament::setCurrentPanel(Filament::getPanel('admin'));
+
+            Livewire::test(ViewSaaSInvoice::class, ['record' => $invoice->id])
+                ->assertSuccessful();
         } finally {
             DB::rollBack();
         }

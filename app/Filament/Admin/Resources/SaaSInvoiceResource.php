@@ -83,14 +83,8 @@ class SaaSInvoiceResource extends Resource
                 Tables\Actions\Action::make('view')
                     ->label(__('View'))
                     ->icon('heroicon-o-eye')
-                    ->color('primary')
-                    ->modalHeading(fn (SaaSInvoice $record) => __('Invoice').' #'.$record->invoice_number)
-                    ->modalSubmitAction(false)
-                    ->modalCancelActionLabel(__('Close'))
-                    ->modalContent(fn (SaaSInvoice $record) => view(
-                        'filament.admin.resources.saas-invoice-view',
-                        ['invoice' => $record]
-                    )),
+                    ->color('info')
+                    ->url(fn (SaaSInvoice $record): string => static::getUrl('view', ['record' => $record])),
                 Tables\Actions\Action::make('download_pdf')
                     ->label(__('Download PDF'))
                     ->icon('heroicon-o-arrow-down-tray')
@@ -115,6 +109,7 @@ class SaaSInvoiceResource extends Resource
     {
         return [
             'index' => Pages\ListSaaSInvoices::route('/'),
+            'view' => Pages\ViewSaaSInvoice::route('/{record}/view'),
         ];
     }
 }

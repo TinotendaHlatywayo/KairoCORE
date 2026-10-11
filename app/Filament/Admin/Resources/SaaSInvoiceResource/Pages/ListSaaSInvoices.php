@@ -11,5 +11,10 @@ class ListSaaSInvoices extends ListRecords
 {
     protected static string $resource = SaaSInvoiceResource::class;
 
-    protected static ?string $title = 'Platform Invoices';
+    protected static ?string $title = 'Invoices';
+
+    public function getSubheading(): ?string
+    {
+        return __('Subscription invoices issued to each institution.');
+    }
 }
