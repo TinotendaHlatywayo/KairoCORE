@@ -62,6 +62,7 @@ class EventCalendar extends Model
         'target_user_ids',
         'target_sections',
         'recurrence',
+        'channel',
     ];
 
     protected $casts = [

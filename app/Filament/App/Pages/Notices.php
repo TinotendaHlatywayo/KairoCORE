@@ -23,7 +23,7 @@ class Notices extends Page
 
     protected static ?string $navigationLabel = 'Notices';
 
-    protected static ?string $title = 'School Notices';
+    protected static ?string $title = 'School Notices & Announcements';
 
     protected static string $view = 'filament.app.pages.notices';
 
@@ -55,6 +55,10 @@ class Notices extends Page
                 }
 
                 if (! empty($targets) && in_array($user?->id, $targets, true)) {
+                    return true;
+                }
+
+                if (in_array('all', $visibility, true)) {
                     return true;
                 }
 

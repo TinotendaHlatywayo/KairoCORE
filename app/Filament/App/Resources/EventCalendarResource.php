@@ -76,7 +76,11 @@ class EventCalendarResource extends Resource
                             Forms\Components\Select::make('target_roles')
                                 ->label(__('Target Roles'))
                                 ->multiple()
-                                ->options(fn (): array => RoleCatalogue::audienceRoleOptions())
+                                ->options(function (): array {
+                                    $options = RoleCatalogue::audienceRoleOptions();
+                                    $options['all'] = __('All Roles');
+                                    return $options;
+                                })
                                 ->preload(),
                             Forms\Components\Select::make('target_user_ids')
                                 ->label(__('Target Specific Individuals'))
@@ -84,6 +88,14 @@ class EventCalendarResource extends Resource
                                 ->options(fn () => User::where('school_id', auth()->user()?->school_id)->pluck('name', 'id'))
                                 ->searchable()
                                 ->preload(),
+                            Forms\Components\Select::make('channel')
+                                ->label(__('Delivery Channel'))
+                                ->options([
+                                    'system_only' => __('System only'),
+                                    'email_only' => __('Email only'),
+                                    'both' => __('System and Email'),
+                                ])
+                                ->default('system_only'),
                         ]),
                 ])->columnSpan(1),
             ])->columns(3);

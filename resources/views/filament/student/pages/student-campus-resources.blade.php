@@ -11,7 +11,7 @@
                 <p class="text-base font-medium text-gray-600 dark:text-gray-300">{{ __('No campus resources available yet.') }}</p>
             </div>
         @else
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
                 @foreach($resources as $res)
                     <div class="bg-white dark:bg-gray-900 rounded-2xl p-5 shadow-sm border border-gray-200 dark:border-gray-800 flex flex-col justify-between">
                         <div>
