@@ -53,9 +53,11 @@ class SaaSBillingSetting extends Model
         if (! $settings) {
             $settings = new static;
             $settings->fill([
-                'bank_name' => 'Steward Bank',
-                'bank_account_name' => 'Kairo CORE Systems Ltd',
-                'bank_account_number' => '1002345678',
+                'bank_name' => '',
+                'bank_account_name' => '',
+                'bank_account_number' => '',
+                'bank_branch_code' => '',
+                'bank_swift_code' => '',
                 'paynow_integration_id' => env('PAYNOW_INTEGRATION_ID') ?: self::PAYNOW_FALLBACK_ID,
                 'paynow_integration_key' => env('PAYNOW_INTEGRATION_KEY') ?: self::PAYNOW_FALLBACK_KEY,
             ]);
