@@ -125,6 +125,73 @@ class EventCalendarResource extends Resource
             'edit' => EditEventCalendar::route('/{record}/edit'),
         ];
     }
+
+    public static function broadcastToAudience(EventCalendar $record)
+    {
+        $usersQuery = \App\Models\User::query()->where('school_id', $record->school_id);
+
+        $visibility = $record->target_roles ?? [];
+        $targetUserIds = $record->target_user_ids ?? [];
+
+        $sendToAll = in_array('all', $visibility, true);
+
+        if ($sendToAll) {
+            if (! empty($targetUserIds)) {
+                $usersQuery->whereIn('id', $targetUserIds);
+            }
+        } else {
+            $usersQuery->where(function ($q) use ($visibility, $targetUserIds) {
+                $roleOr = false;
+                if (! empty($visibility)) {
+                    $q->where(function ($roleQ) use ($visibility) {
+                        $roleQ->whereIn('requested_role', $visibility)
+                            ->orWhereHas('customRole', fn ($r) => $r->whereIn('role_key', $visibility));
+                    });
+                    $roleOr = true;
+                }
+                if (! empty($targetUserIds)) {
+                    if ($roleOr) {
+                        $q->orWhereIn('id', $targetUserIds);
+                    } else {
+                        $q->whereIn('id', $targetUserIds);
+                    }
+                }
+            });
+        }
+
+        $notifiedUsers = $usersQuery->get();
+
+        $channel = $record->channel ?? 'system_only';
+        $notifyInApp = in_array($channel, ['system_only', 'both'], true);
+        $notifyByEmail = in_array($channel, ['email_only', 'both'], true);
+
+        foreach ($notifiedUsers as $user) {
+            if ($notifyInApp) {
+                \Filament\Notifications\Notification::make()
+                    ->title(__('New Event'))
+                    ->body(__('Event: ').$record->title)
+                    ->success()
+                    ->sendToDatabase($user);
+            }
+        }
+
+        if ($notifyByEmail && ! empty($notifiedUsers->whereNotNull('email')->count())) {
+            try {
+                foreach ($notifiedUsers->whereNotNull('email') as $user) {
+                    \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\AnnouncementPublishedMail(
+                        title: $record->title,
+                        content: str_replace('&nbsp;', ' ', (string) preg_replace('/<p[^>]*>|<\/p>/i', '', (string) $record->description)),
+                        schoolName: $record->school?->name ?? '',
+                        attachmentPaths: [],
+                    ));
+                }
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        }
+
+        return $notifiedUsers;
+    }
 }
 
 class ListEventCalendars extends ListRecords
@@ -144,8 +211,28 @@ class ListEventCalendars extends ListRecords
 class CreateEventCalendar extends CreateRecord
 {
     protected static string $resource = EventCalendarResource::class;
+
+    protected function afterCreate(): void
+    {
+        try {
+            EventCalendarResource::broadcastToAudience($this->record);
+        } catch (\Throwable $e) {
+            report($e);
+        }
+    }
 }
 class EditEventCalendar extends EditRecord
 {
     protected static string $resource = EventCalendarResource::class;
+
+    protected function afterSave(): void
+    {
+        if ($this->record->wasChanged('target_roles') || $this->record->wasChanged('target_user_ids') || $this->record->wasChanged('channel')) {
+            try {
+                EventCalendarResource::broadcastToAudience($this->record);
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        }
+    }
 }
