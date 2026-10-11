@@ -53,6 +53,10 @@
     .statement-intro { font-size: 9px; font-weight: bold; text-transform: uppercase; color: {{ $primary }}; margin: 0 0 2px; letter-spacing: 0.5px; }
     table.summary { width: 100%; margin-top: 22px; }
     table.summary td { width: 33.33%; padding: 0 10px 0 0; }
+    table.summary td:last-child { padding-right: 0; }
+    table.summary.cols-4 td { width: 25%; }
+    .pos { color: #15803d; }
+    .neg { color: #b91c1c; }
     .box { background: {{ $light }}; border-left: 4px solid {{ $primary }}; padding: 12px 14px; }
     .box .label { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: {{ $primary }}; font-weight: bold; }
     .box .value { font-size: 17px; font-weight: bold; margin-top: 6px; color: {{ $dark }}; }
