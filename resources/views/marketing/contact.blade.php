@@ -11,9 +11,13 @@
     </div>
 </section>
 @push('seo_jsonld')
-    {!! json_encode(platform_breadcrumb_list([
-        ['name' => __('Home'), 'url' => route('marketing.home')],
-        ['name' => __('Contact'), 'url' => route('marketing.contact')],
-    ]), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+    {!! json_encode([
+        '@context' => 'https://schema.org',
+        '@type' => 'BreadcrumbList',
+        'itemListElement' => [
+            ['@type' => 'ListItem', 'position' => 1, 'name' => __('Home'), 'item' => route('marketing.home')],
+            ['@type' => 'ListItem', 'position' => 2, 'name' => __('Contact'), 'item' => route('marketing.contact')],
+        ],
+    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
 @endpush
 @endsection
