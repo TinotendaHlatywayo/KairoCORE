@@ -49,22 +49,12 @@ class SaaSSubscription extends Model
             // Give every tenant its own billing cycle: free from registration
             // until billing_start_date, then billable from that day on.
             if (empty($subscription->billing_start_date)) {
-                $freeDays = 30;
-                try {
-                    $freeDays = (int) PlatformBillingSetting::current()->default_free_days;
-                } catch (\Throwable $e) {
-                    // Settings table not migrated yet (e.g. during a fresh
-                    // install) — fall back to the 30-day default.
-                }
-
                 $registeredAt = $subscription->school?->created_at ?? now();
-                $start = Carbon::parse($registeredAt)->addDays(max(0, $freeDays));
+                $reg = Carbon::parse($registeredAt);
+                $start = $reg->copy()->addMonth()->setDay(5)->startOfDay();
 
                 $subscription->billing_start_date = $start->toDateString();
-
-                if (empty($subscription->billing_day_of_month)) {
-                    $subscription->billing_day_of_month = max(1, min(28, (int) $start->day));
-                }
+                $subscription->billing_day_of_month = 5;
             }
 
             // The first bill falls on the day the free period ends. Callers

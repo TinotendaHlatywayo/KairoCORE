@@ -97,6 +97,18 @@
         </div>
     @endif
 
+    @php
+        $platformBilling = \Modules\SaaS\Models\PlatformBillingSetting::current();
+        $bankDetails = [
+            'bank_name' => $platformBilling->bank_name ?? '',
+            'bank_account_name' => $platformBilling->bank_account_name ?? '',
+            'bank_account_number' => $platformBilling->bank_account_number ?? '',
+            'bank_branch_code' => $platformBilling->bank_branch_code ?? '',
+            'bank_swift_code' => $platformBilling->bank_swift_code ?? '',
+        ];
+    @endphp
+    @include('modules.saas.pdf.partials.payments', ['cfg' => $cfg, 'bankDetails' => $bankDetails])
+
 
 
     @include('modules.saas.pdf.partials.footer', [

@@ -2872,6 +2872,7 @@ select.sc-input {
     position: relative; display: flex; align-items: center;
     width: 100%; border-radius: 0.65rem;
     border: 1px solid #e2e8f0; background: #fff;
+    overflow: hidden;
     transition: all 0.18s ease;
 }
 .sc-assignee-input:focus-within { border-color: var(--sc-primary-500); box-shadow: 0 0 0 3px rgba(var(--primary-500),0.15); }

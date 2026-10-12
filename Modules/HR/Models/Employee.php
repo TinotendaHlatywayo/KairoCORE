@@ -53,6 +53,7 @@ class Employee extends Model
         'document_academic',
         'document_professional',
         'individual_allowances',
+        'custom_fields',
     ];
 
     protected $casts = [
@@ -60,6 +61,7 @@ class Employee extends Model
         'dependents' => 'array',
         'next_of_kin' => 'array',
         'individual_allowances' => 'array',
+        'custom_fields' => 'array',
         'date_of_birth' => 'date',
         'contract_end_date' => 'date',
         'date_joined' => 'date',

@@ -53,10 +53,12 @@ class Student extends Model
         'course_id',
         'section_id',
         'roll_number',
+        'custom_fields',
     ];
 
     protected $casts = [
         'date_of_birth' => 'date',
+        'custom_fields' => 'array',
         'admission_date' => 'date',
         'card_expiry_date' => 'date',
         'photo_rejected_at' => 'datetime',

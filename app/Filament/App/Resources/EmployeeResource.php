@@ -185,14 +185,30 @@ class EmployeeResource extends Resource
                                 ->acceptedFileTypes(['application/pdf'])
                                 ->maxSize(5120),
 
-                            Forms\Components\FileUpload::make('document_professional')
-                                ->label(__('Professional Certifications (PDF)'))
-                                ->disk('public')
-                                ->directory('hr/documents')
-                                ->placeholder(__('Drag & drop or Click to select Professional Certifications'))
-                                ->acceptedFileTypes(['application/pdf'])
-                                ->maxSize(5120),
-                        ])->columns(2),
+                             Forms\Components\FileUpload::make('document_professional')
+                                 ->label(__('Professional Certifications (PDF)'))
+                                 ->disk('public')
+                                 ->directory('hr/documents')
+                                 ->placeholder(__('Drag & drop or Click to select Professional Certifications'))
+                                 ->acceptedFileTypes(['application/pdf'])
+                                 ->maxSize(5120),
+                         ])->columns(2),
+
+                    FormWizard\Step::make('Custom Fields')
+                        ->schema([
+                            Forms\Components\Section::make(__('Custom Fields'))
+                                ->description(__('Add any additional custom data fields for this staff member (e.g., certification number, office room, etc.)'))
+                                ->schema([
+                                    Forms\Components\Repeater::make('custom_fields')
+                                        ->label(__('Custom Fields'))
+                                        ->schema([
+                                            Forms\Components\TextInput::make('key')->label(__('Field Name'))->required(),
+                                            Forms\Components\TextInput::make('value')->label(__('Field Value'))->required(),
+                                        ])
+                                        ->columns(2)
+                                        ->columnSpanFull(),
+                                ]),
+                        ]),
                 ])->columnSpanFull(),
             ]);
     }
