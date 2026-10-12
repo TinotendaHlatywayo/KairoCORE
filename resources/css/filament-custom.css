@@ -3536,7 +3536,7 @@ select.sc-input {
     .fi-ta-content, .fi-ta-table {
         overflow-x: auto !important;
         -webkit-overflow-scrolling: touch;
-        max-width: 100vw;
+        max-width: 100%;
     }
     
     /* Form fields stack in single column on mobile */
@@ -3740,6 +3740,145 @@ select.sc-input {
         #sc-scroll-progress {
             animation: none !important;
         }
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+ * PHASE 3 — TABLES & FORMS (mobile/tablet only, < 1024px)
+ *
+ * Tables scroll inside their own container instead of widening the page,
+ * toolbars/filters/pagination wrap, and forms present one clean column
+ * with full-width, comfortably tappable controls.
+ * ═══════════════════════════════════════════════════════════════════ */
+@media (max-width: 1023px) {
+    /* ── Tables ─────────────────────────────────────────────────── */
+    .fi-ta-ctn,
+    .fi-ta-content {
+        max-width: 100% !important;
+    }
+
+    .fi-ta-content {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-x: contain;
+    }
+
+    /* Let the table take its natural width and scroll, rather than being
+       squeezed into unreadable columns. */
+    .fi-ta-table {
+        max-width: none !important;
+        min-width: 100%;
+    }
+
+    /* Tighter cells fit more columns before the user needs to scroll. */
+    .fi-ta-cell,
+    .fi-ta-header-cell {
+        padding-inline: 0.65rem !important;
+        white-space: nowrap;
+    }
+
+    .fi-ta-header-cell-label {
+        white-space: nowrap;
+    }
+
+    /* The first column (usually the record name) may wrap so it stays
+       readable instead of forcing a very wide scroll area. */
+    .fi-ta-cell:first-child {
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    /* List toolbar: keep search, filters and actions wrapping neatly. */
+    .fi-ta-header-toolbar {
+        flex-wrap: wrap !important;
+        gap: 0.5rem !important;
+    }
+
+    .fi-ta-header-toolbar > * {
+        min-width: 0;
+    }
+
+    .fi-ta-filters,
+    .fi-ta-actions,
+    .fi-ta-filter-indicators {
+        flex-wrap: wrap !important;
+    }
+
+    /* Pagination wraps and stays tap-friendly. */
+    .fi-pagination {
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+        gap: 0.25rem;
+    }
+
+    .fi-pagination-items {
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+    }
+
+    /* ── Forms ──────────────────────────────────────────────────── */
+    /* On phone widths, collapse multi-column forms to a single column and
+       let every field span the full row (Filament keeps a 2-column grid on
+       mobile when a form is declared with ->columns(2)). */
+    @media (max-width: 640px) {
+        .fi-fo-component-ctn {
+            --cols-default: repeat(1, minmax(0, 1fr)) !important;
+        }
+
+        .fi-fo-component-ctn > * {
+            --col-span-default: span 1 !important;
+            --col-start-default: auto !important;
+        }
+    }
+
+    /* Field wrappers must never force horizontal overflow. */
+    .fi-fo-field-wrp {
+        min-width: 0 !important;
+    }
+
+    /* Repeaters and their rows scroll rather than overflowing the page. */
+    .fi-fo-repeater-item,
+    .fi-fo-repeater-item-content {
+        max-width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Wizard step header scrolls horizontally instead of squashing. */
+    .fi-fo-wizard-header {
+        flex-wrap: nowrap !important;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-x: contain;
+    }
+
+    /* Form action buttons wrap and stay full width / tappable. */
+    .fi-form-actions {
+        flex-wrap: wrap !important;
+        gap: 0.5rem;
+    }
+
+    .fi-form-actions > * {
+        flex: 1 1 auto;
+    }
+
+    /* Section headers + actions wrap instead of overflowing. */
+    .fi-section-header {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .fi-section-header-actions {
+        flex-wrap: wrap;
+    }
+
+    /* Editors, textareas, uploads and pickers never exceed the viewport. */
+    .fi-fo-rich-editor,
+    .fi-fo-textarea textarea,
+    .fi-fo-file-upload,
+    .fi-fo-select,
+    .fi-fo-date-time-picker-panel {
+        max-width: 100% !important;
     }
 }
 
