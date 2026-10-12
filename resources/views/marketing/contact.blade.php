@@ -10,4 +10,10 @@
         <p class="mt-6 text-lg text-slate-600 leading-8">Get in touch to learn more about how KairoCORE can help your school.</p>
     </div>
 </section>
+@push('seo_jsonld')
+    {!! json_encode(platform_breadcrumb_list([
+        ['name' => __('Home'), 'url' => route('marketing.home')],
+        ['name' => __('Contact'), 'url' => route('marketing.contact')],
+    ]), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+@endpush
 @endsection
