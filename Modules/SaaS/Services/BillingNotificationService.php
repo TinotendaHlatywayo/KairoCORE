@@ -175,8 +175,12 @@ class BillingNotificationService
         // offset as the array key, which would silently overwrite one template
         // with another.
         $schedule = [];
-        $schedule[-1 * $settings->remind_days_before][] = 'billing_reminder';
-        $schedule[-1 * $settings->day_before_reminder_offset][] = 'billing_day_before';
+        if (! empty($settings->remind_days_before)) {
+            $schedule[-1 * $settings->remind_days_before][] = 'billing_reminder';
+        }
+        if (! is_null($settings->day_before_reminder_offset)) {
+            $schedule[-1 * $settings->day_before_reminder_offset][] = 'billing_day_before';
+        }
         $schedule[0][] = 'billing_due_today';
         $schedule[$settings->overdue_reminder_offset][] = 'billing_overdue';
         $schedule[$settings->suspension_warning_offset][] = 'billing_suspension_warning';

@@ -258,6 +258,22 @@ class StudentResource extends Resource
                                     ])->columns(2),
                             ]),
 
+                        Tab::make(__('Custom Fields'))
+                            ->schema([
+                                Forms\Components\Section::make(__('Custom Fields'))
+                                    ->description(__('Add any additional custom data fields for this student (e.g., Parent Email Address, Alt Phone, etc.)'))
+                                    ->schema([
+                                        Forms\Components\Repeater::make('custom_fields')
+                                            ->label(__('Custom Fields'))
+                                            ->schema([
+                                                Forms\Components\TextInput::make('key')->label(__('Field Name'))->required(),
+                                                Forms\Components\TextInput::make('value')->label(__('Field Value'))->required(),
+                                            ])
+                                            ->columns(2)
+                                            ->columnSpanFull(),
+                                    ]),
+                            ]),
+
                         Tab::make(__('ID Card'))
                             ->schema([
                                 Forms\Components\Section::make(__('Card Status'))

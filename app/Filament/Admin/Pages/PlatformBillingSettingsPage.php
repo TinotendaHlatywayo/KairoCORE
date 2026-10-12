@@ -102,10 +102,10 @@ class PlatformBillingSettingsPage extends Page implements HasForms
                     ->schema([
                         TextInput::make('remind_days_before')
                             ->label(__('First reminder (days before)'))
-                            ->numeric()->minValue(1)->maxValue(30)->required()->default(3),
+                            ->numeric()->minValue(1)->maxValue(30)->required(false)->default(3),
                         TextInput::make('day_before_reminder_offset')
                             ->label(__('Day-before reminder (days before)'))
-                            ->numeric()->minValue(0)->maxValue(30)->required()->default(1),
+                            ->numeric()->minValue(0)->maxValue(30)->required(false)->default(1),
                         TextInput::make('overdue_reminder_offset')
                             ->label(__('Overdue reminder (days after)'))
                             ->numeric()->minValue(1)->maxValue(30)->required()->default(1),

@@ -379,7 +379,7 @@ trait ManagesTasks
             'due_time' => $this->taskForm['due_time'] ?: null,
             'priority' => $this->taskForm['priority'] ?? 'medium',
             'important' => (bool) ($this->taskForm['important'] ?? false),
-            'reminder_at' => $this->taskForm['reminder_at'] ? Carbon::parse($this->taskForm['reminder_at']) : null,
+            'reminder_at' => !empty($this->taskForm['reminder_at']) ? Carbon::parse($this->taskForm['reminder_at']) : null,
             'recurrence' => $this->taskForm['recurrence'] ?? 'none',
         ];
 

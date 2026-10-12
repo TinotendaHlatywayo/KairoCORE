@@ -25,6 +25,11 @@ class PlatformBillingSetting extends Model
         'notify_super_admin_on_registration',
         'super_admin_billing_email',
         'default_free_days',
+        'bank_name',
+        'bank_account_name',
+        'bank_account_number',
+        'bank_branch_code',
+        'bank_swift_code',
     ];
 
     protected $casts = [
