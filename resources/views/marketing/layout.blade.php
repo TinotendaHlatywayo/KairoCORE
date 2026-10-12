@@ -88,7 +88,7 @@
             <div class="flex flex-col items-center justify-between gap-4 sm:flex-row">
                 <p class="text-sm text-slate-500">&copy; {{ date('Y') }} {{ platform_name() }}. All rights reserved.</p>
                 <div class="flex gap-6 text-sm text-slate-600">
-                    <a href="{{ route('terms.platform') }}" class="hover:text-slate-900">{{ __('Terms') }}</a>
+                    <a href="{{ route('platform.terms') }}" class="hover:text-slate-900">{{ __('Terms') }}</a>
                     <a href="{{ route('marketing.contact') }}" class="hover:text-slate-900">{{ __('Contact') }}</a>
                 </div>
             </div>
