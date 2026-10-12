@@ -51,9 +51,9 @@
                     ],
                     [
                         'name' => 'Communications',
-                        'desc' => 'Notices, announcements, messages and alerts.',
-                        'subs' => ['Announcements', 'SMS/Email Alerts', 'Parent Communication'],
-                        'img' => 'https://images.unsplash.com/photo-1479920252409-6e3d8e8d4866?w=1200&q=80&auto=format&fit=crop',
+                        'desc' => 'Announcements and timely alerts to parents and staff.',
+                        'subs' => ['School Announcements', 'Email or WhatsApp Alerts', 'Parent Engagement'],
+                        'img' => 'https://images.unsplash.com/photo-1577563908411-5077b6dc7624?w=1200&q=80&auto=format&fit=crop',
                     ],
                     [
                         'name' => 'Library',
@@ -62,15 +62,15 @@
                         'img' => 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=1200&q=80&auto=format&fit=crop',
                     ],
                     [
-                        'name' => 'Transport',
-                        'desc' => 'Routes, vehicles, drivers and student transport.',
-                        'subs' => ['Route Management', 'Vehicle Tracking', 'Transport Fees'],
-                        'img' => 'https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=1200&q=80&auto=format&fit=crop',
+                        'name' => 'Health & Wellness',
+                        'desc' => 'Student health records, clinic visits, medications and alerts.',
+                        'subs' => ['Health Records', 'Clinic Visits', 'Medical Alerts'],
+                        'img' => 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1200&q=80&auto=format&fit=crop',
                     ],
                     [
-                        'name' => 'Inventory',
-                        'desc' => 'Supplies, stock, purchases and assets.',
-                        'subs' => ['Stock Management', 'Purchase Orders', 'Asset Tracking'],
+                        'name' => 'Inventory & Procurement',
+                        'desc' => 'Stock management, procurement, requisitions and assets.',
+                        'subs' => ['Stock Management', 'Requisitions & Purchase Orders', 'Asset Tracking'],
                         'img' => 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=1200&q=80&auto=format&fit=crop',
                     ],
                     [
@@ -122,7 +122,7 @@
                             @endforeach
                         </ul>
                         <div class="mt-6">
-                            <a href="{{ url('/platform') }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Explore {{ $f['name'] }}</a>
+                            <a href="{{ route('marketing.features') }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors hover:shadow-sm">Explore {{ $f['name'] }}</a>
                         </div>
                     </div>
                 </div>
