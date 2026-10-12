@@ -24,13 +24,17 @@ class PlatformSetting extends Model
 
     public static function get(string $group, string $key, mixed $default = null): mixed
     {
-        $setting = self::where('group', $group)->where('key', $key)->first();
-        if (! $setting) {
+        try {
+            $setting = self::where('group', $group)->where('key', $key)->first();
+            if (! $setting) {
+                return $default;
+            }
+
+            $decoded = json_decode($setting->value, true);
+
+            return (json_last_error() === JSON_ERROR_NONE) ? $decoded : $setting->value;
+        } catch (\Throwable $e) {
             return $default;
         }
-
-        $decoded = json_decode($setting->value, true);
-
-        return (json_last_error() === JSON_ERROR_NONE) ? $decoded : $setting->value;
     }
 }

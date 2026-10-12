@@ -9,6 +9,10 @@
             $metaTitle = trim((string) $__env->yieldContent('title', platform_name().' - School Management System'));
         }
         $metaDescription = trim((string) $__env->yieldContent('meta_description', platform_seo_description()));
+        $schemas = [platform_website_schema(), platform_organization_schema()];
+        if (isset($seoJsonLd) && is_array($seoJsonLd)) {
+            $schemas = array_merge($schemas, $seoJsonLd);
+        }
     @endphp
     @include('partials.seo', [
         'seoTitle' => $metaTitle,
@@ -17,7 +21,7 @@
         'seoImage' => platform_og_image_url(),
         'seoRobots' => 'index, follow',
         'seoType' => 'website',
-        'seoJsonLd' => [platform_website_schema(), platform_organization_schema()],
+        'seoJsonLd' => $schemas,
     ])
     @stack('seo_jsonld')
     <link rel="icon" href="{{ platform_favicon_url() }}">
@@ -53,7 +57,7 @@
             <div class="flex h-16 items-center justify-between">
                 <div class="flex items-center gap-6">
                     <a href="{{ route('marketing.home') }}" class="flex items-center gap-2 font-bold text-lg">
-                        <img src="{{ asset('images/kairo-core-logo.png') }}" alt="{{ platform_name() }} logo" class="h-9 w-auto" loading="lazy">
+                        <img src="{{ asset('images/kairo-core-logo.png') }}" alt="{{ platform_name() }} logo" class="h-12 w-auto" loading="lazy">
                     </a>
                     <div class="hidden lg:flex lg:items-center lg:gap-6">
                         <a href="{{ route('marketing.home') }}" class="text-sm font-medium {{ request()->routeIs('marketing.home') ? 'text-slate-900' : 'text-slate-700' }} hover:text-slate-900 transition-colors">{{ __('Home') }}</a>
@@ -107,8 +111,8 @@
         <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
                 <div class="space-y-3">
-                    <img src="{{ asset('images/kairo-core-logo.png') }}" alt="{{ platform_name() }} logo" class="h-10 w-auto" loading="lazy">
-                    <p class="text-sm text-slate-200">Cloud-based school management platform built for schools in Zimbabwe.</p>
+                    <img src="{{ asset('images/kairo-core-logo.png') }}" alt="{{ platform_name() }} logo" class="h-12 w-auto" loading="lazy">
+                    <p class="text-sm text-slate-200">Cloud-based school management platform built for schools.</p>
                 </div>
                 <div>
                     <h3 class="text-sm font-semibold mb-3">Product</h3>
