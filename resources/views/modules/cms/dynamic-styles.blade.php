@@ -209,6 +209,12 @@
             opacity: ' . $bgOpacity . ';
             pointer-events: none;
         }
+        @media (max-width: 1024px) {
+            body::before {
+                background-size: contain;
+                opacity: 0.03;
+            }
+        }
 
         /* Card Edge Glow & Animation Transitions */
         .schoolcore-glowing-card {

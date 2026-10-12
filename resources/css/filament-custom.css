@@ -750,28 +750,42 @@ body {
     initial-value: 4.5rem;
 }
 
-.fi-layout {
-    display: flex !important;
-    flex-direction: row !important;
-}
-
-.fi-sidebar {
-    order: 1 !important;
-    position: sticky !important;
-    top: 0 !important;
-    height: 100vh !important;
-    flex-shrink: 0 !important;
-    width: 20rem !important;
-    background: #ffffff !important;
-    border-right: 1px solid #e2e8f0 !important;
-    box-shadow: 4px 0 24px rgba(15, 23, 42, 0.04);
-    z-index: 30;
-    transition: width 0.28s ease, transform 0.28s ease !important;
-}
-
 @media (min-width: 1024px) {
+    .fi-layout {
+        display: flex !important;
+        flex-direction: row !important;
+    }
+    .fi-sidebar {
+        order: 1 !important;
+        position: sticky !important;
+        top: 0 !important;
+        height: 100vh !important;
+        flex-shrink: 0 !important;
+        width: 20rem !important;
+        background: #ffffff !important;
+        border-right: 1px solid #e2e8f0 !important;
+        box-shadow: 4px 0 24px rgba(15, 23, 42, 0.04);
+        z-index: 30;
+        transition: width 0.28s ease, transform 0.28s ease !important;
+    }
     .fi-sidebar:not(.fi-sidebar-open) {
         width: 4.5rem !important;
+    }
+}
+
+@media (max-width: 1023px) {
+    .fi-sidebar {
+        position: fixed !important;
+        top: 0 !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        height: 100dvh !important;
+        width: 18rem !important;
+        max-width: 85vw !important;
+        z-index: 50 !important;
+        background: #ffffff !important;
+        box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25) !important;
+        transition: transform 0.25s ease !important;
     }
 }
 
@@ -3506,11 +3520,48 @@ select.sc-input {
  * 9000, sticky sidebar 30, app footer 20) so no page control — table
  * toolbar, Export All, Bulk Actions — can ever paint over a dialog.
  * ───────────────────────────────────────────────────────────── */
-.fi-modal-close-overlay {
-    z-index: 99998 !important;
+.fi-sidebar-close-overlay {
+    z-index: 40 !important;
+}
+.fi-sidebar.fi-sidebar-open {
+    z-index: 50 !important;
+}
+.fi-topbar {
+    z-index: 20 !important;
 }
 
-.fi-modal-close-overlay + div {
-    z-index: 99999 !important;
+/* Phase 3: Shared Component Mobile Patterns */
+@media (max-width: 768px) {
+    /* Tables horizontal overflow protection */
+    .fi-ta-content, .fi-ta-table {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+        max-width: 100vw;
+    }
+    
+    /* Form fields stack in single column on mobile */
+    .fi-fo-field-wrp, .fi-section-content {
+        width: 100% !important;
+    }
+    
+    /* Touch targets minimum size */
+    button, a.fi-btn, .fi-dropdown-list-item, input[type="checkbox"], input[type="radio"] {
+        min-height: 40px;
+    }
+    
+    /* Page headers stack title and actions */
+    .fi-header {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 0.75rem !important;
+    }
+    .fi-header-actions {
+        flex-wrap: wrap !important;
+        width: 100% !important;
+    }
+    .fi-header-actions > * {
+        flex: 1 1 auto;
+        justify-content: center;
+    }
 }
 
