@@ -10,4 +10,10 @@
         <p class="mt-6 text-lg text-slate-600 leading-8">KairoCORE is a modern, responsive school management system designed to streamline admissions, academics, finance, HR, communications and daily operations for schools of all sizes.</p>
     </div>
 </section>
+@push('seo_jsonld')
+    {!! json_encode(platform_breadcrumb_list([
+        ['name' => __('Home'), 'url' => route('marketing.home')],
+        ['name' => __('About'), 'url' => route('marketing.about')],
+    ]), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+@endpush
 @endsection
