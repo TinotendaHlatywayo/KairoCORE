@@ -88,11 +88,29 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
     })->name('marketing.sitemap');
 
     Route::get('/about', function () {
-        return view('marketing.about');
+        return view('marketing.about', [
+            'seoJsonLd' => [
+                platform_website_schema(),
+                platform_organization_schema(),
+                platform_breadcrumb_list([
+                    ['name' => __('Home'), 'url' => route('marketing.home')],
+                    ['name' => __('About'), 'url' => route('marketing.about')],
+                ]),
+            ],
+        ]);
     })->name('marketing.about');
 
     Route::get('/contact', function () {
-        return view('marketing.contact');
+        return view('marketing.contact', [
+            'seoJsonLd' => [
+                platform_website_schema(),
+                platform_organization_schema(),
+                platform_breadcrumb_list([
+                    ['name' => __('Home'), 'url' => route('marketing.home')],
+                    ['name' => __('Contact'), 'url' => route('marketing.contact')],
+                ]),
+            ],
+        ]);
     })->name('marketing.contact');
 
     Route::get('/features', function () {
