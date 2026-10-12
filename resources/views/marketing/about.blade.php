@@ -11,9 +11,9 @@
     </div>
 </section>
 @push('seo_jsonld')
-    {!! json_encode(platform_breadcrumb_list([
+    <script type="application/ld+json">{!! json_encode(platform_breadcrumb_list([
         ['name' => __('Home'), 'url' => route('marketing.home')],
         ['name' => __('About'), 'url' => route('marketing.about')],
-    ]), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+    ]), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
 @endpush
 @endsection

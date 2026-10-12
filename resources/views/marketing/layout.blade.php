@@ -19,6 +19,7 @@
         'seoType' => 'website',
         'seoJsonLd' => [platform_website_schema(), platform_organization_schema()],
     ])
+    @stack('seo_jsonld')
     <link rel="icon" href="{{ platform_favicon_url() }}">
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800&family=plus-jakarta-sans:400,600,700,800&display=swap" rel="stylesheet">
