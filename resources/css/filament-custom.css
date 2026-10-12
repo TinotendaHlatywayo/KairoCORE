@@ -3565,3 +3565,181 @@ select.sc-input {
     }
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+ * PHASE 2 — MOBILE FOUNDATION (only applies below the 1024px breakpoint)
+ *
+ * Everything in this section is scoped to `max-width: 1023px`, so the
+ * desktop appearance at 1024px and above is left byte-for-byte unchanged.
+ *
+ * One z-index scale is declared here and reused by the drawer, backdrop
+ * and floating chrome:
+ *   content  <  floating buttons  <  sticky header
+ *            <  backdrop  <  drawer  <  modals  <  toasts
+ * ═══════════════════════════════════════════════════════════════════ */
+:root {
+    --sc-z-content: 1;
+    --sc-z-fab: 20;
+    --sc-z-header: 30;
+    --sc-z-backdrop: 45;
+    --sc-z-drawer: 50;
+    --sc-z-modal: 60;
+    --sc-z-toast: 70;
+}
+
+@media (max-width: 1023px) {
+    /* 1. No sideways page scroll. `clip` (unlike `hidden`) does not create a
+       scroll container, so `position: sticky` on the topbar keeps working. */
+    html,
+    body {
+        max-width: 100%;
+        overflow-x: clip;
+    }
+
+    /* 2. The sidebar column must never reserve width in the content flow on
+       phones. Collapse the flex layout so the main column is full width. */
+    .fi-layout {
+        display: block !important;
+        flex-direction: column !important;
+        min-height: 100dvh !important;
+    }
+
+    .fi-main-ctn {
+        order: initial !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        min-height: 100dvh !important;
+    }
+
+    /* 3. Sidebar becomes an off-canvas drawer: fixed left, ~85% wide (max
+       320px), full height, internally scrollable, hidden until opened. The
+       explicit transform guarantees it is off-screen even before Alpine
+       boots (the `fi-sidebar-open` class is added when it opens). */
+    .fi-sidebar {
+        position: fixed !important;
+        top: 0 !important;
+        bottom: 0 !important;
+        inset-inline-start: 0 !important;
+        inset-inline-end: auto !important;
+        height: 100dvh !important;
+        width: min(85vw, 320px) !important;
+        max-width: min(85vw, 320px) !important;
+        z-index: var(--sc-z-drawer) !important;
+        transform: translateX(-100%) !important;
+        transition: transform 0.25s ease !important;
+        overflow: hidden !important;
+    }
+
+    .fi-sidebar.fi-sidebar-open {
+        transform: translateX(0) !important;
+        z-index: var(--sc-z-drawer) !important;
+    }
+
+    .fi-sidebar .fi-sidebar-nav {
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* 4. The backdrop must cover EVERYTHING behind the drawer — including the
+       sticky header and any floating/toolbar controls. */
+    .fi-sidebar-close-overlay {
+        position: fixed !important;
+        inset: 0 !important;
+        z-index: var(--sc-z-backdrop) !important;
+        background: rgba(15, 23, 42, 0.45) !important;
+        -webkit-backdrop-filter: blur(2px);
+        backdrop-filter: blur(2px);
+    }
+
+    /* Header and floating chrome always sit below the backdrop. */
+    .fi-topbar {
+        z-index: var(--sc-z-header) !important;
+    }
+
+    #sc-scroll-progress {
+        z-index: var(--sc-z-header) !important;
+        height: 3px;
+    }
+
+    .platform-command-center-slot,
+    .sc-cc-trigger {
+        z-index: var(--sc-z-fab) !important;
+    }
+
+    /* 5. Footer: full width, centred, never clipped. */
+    .sc-app-footer {
+        padding-inline: 1rem !important;
+        overflow-wrap: anywhere;
+    }
+
+    .sc-app-footer .px-4 {
+        padding-inline: 0 !important;
+    }
+
+    /* 6. Base font size at least 16px prevents iOS Safari input zoom; tap
+       targets are at least 44x44px with breathing room. */
+    input,
+    select,
+    textarea {
+        font-size: 16px !important;
+    }
+
+    button,
+    a.fi-btn,
+    .fi-btn,
+    .fi-icon-btn,
+    .fi-sidebar-item-button,
+    .fi-dropdown-list-item,
+    .fi-pagination-item {
+        min-height: 44px;
+    }
+
+    .fi-icon-btn {
+        min-width: 44px;
+    }
+
+    input[type="checkbox"],
+    input[type="radio"] {
+        min-width: 1.25rem;
+        min-height: 1.25rem;
+    }
+
+    .fi-fo-checkbox-list-option,
+    label:has(> input[type="checkbox"]),
+    label:has(> input[type="radio"]) {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+    }
+
+    /* 7. Scale headings down and stop long words/emails/numbers from forcing
+       horizontal overflow. */
+    .fi-header-heading {
+        font-size: clamp(1.25rem, 5.2vw, 1.75rem) !important;
+    }
+
+    .fi-ta-cell,
+    .fi-ta-header-cell,
+    .fi-in-entry-wrp,
+    .fi-fo-field-wrp {
+        overflow-wrap: anywhere;
+    }
+
+    .fi-ta-content {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+        max-width: 100%;
+    }
+
+    /* 8. Respect the user's reduced-motion preference. */
+    @media (prefers-reduced-motion: reduce) {
+        .fi-sidebar,
+        .fi-sidebar-close-overlay {
+            transition: none !important;
+        }
+
+        #sc-scroll-progress {
+            animation: none !important;
+        }
+    }
+}
+

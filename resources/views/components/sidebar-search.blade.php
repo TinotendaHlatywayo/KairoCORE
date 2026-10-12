@@ -2,7 +2,7 @@
 <div x-data="searchBar()" 
      x-init="init()"
      x-on:click.outside="isOpen = false"
-     class="search-bar-wrapper sticky top-0 z-50 px-4 py-3"
+     class="search-bar-wrapper relative px-4 py-3"
      style="background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); border-bottom: 1px solid rgba(226, 232, 240, 0.6);">
     
     <div class="relative group">
@@ -96,9 +96,7 @@
 
 <style>
     .search-bar-wrapper {
-        position: sticky;
-        top: 0;
-        z-index: 50;
+        position: relative;
         background: rgba(255, 255, 255, 0.72);
         backdrop-filter: blur(20px) saturate(180%);
         -webkit-backdrop-filter: blur(20px) saturate(180%);

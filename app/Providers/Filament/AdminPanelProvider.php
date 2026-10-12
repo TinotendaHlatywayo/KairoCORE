@@ -138,6 +138,11 @@ class AdminPanelProvider extends PanelProvider
                     .'@media (max-width:640px){.platform-command-center-slot{display:none}}'
                     .'</style>'
             )
+            // Mobile drawer foundation (scroll lock, Escape, aria, focus).
+            ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn () => view('components.mobile-drawer-a11y')
+            )
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

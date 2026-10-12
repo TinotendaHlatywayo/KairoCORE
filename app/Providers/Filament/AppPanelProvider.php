@@ -297,6 +297,12 @@ class AppPanelProvider extends PanelProvider
                 fn () => view('components.sidebar-tooltips')
             )
 
+            // Mobile drawer foundation (scroll lock, Escape, aria, focus).
+            ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn () => view('components.mobile-drawer-a11y')
+            )
+
             // ──────────────────────────────────────────────────────────────
             // 🚀 UNIFIED DATE & TIME + TASK MANAGER COMMAND CENTER
             // Single centered trigger (live date/time) opening a split-pane

@@ -28,6 +28,7 @@
         /* ─────────────────────────── SCENE WRAPPER ─────────────────────────── */
         .sc-reg-wrap {
             min-height: 100vh;
+            min-height: 100dvh;
             overflow-x: hidden;
             position: relative;
             background: linear-gradient(135deg, #0b1033 0%, #141b4d 45%, #1e1b4b 100%);
@@ -38,6 +39,7 @@
             z-index: 10;
             display: flex;
             min-height: 100vh;
+            min-height: 100dvh;
             align-items: center;
             justify-content: center;
             padding: 2rem 1rem;
