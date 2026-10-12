@@ -138,6 +138,12 @@ class StudentPanelProvider extends PanelProvider
                 fn () => view('components.app-footer')
             )
 
+            // Mobile drawer foundation (scroll lock, Escape, aria, focus).
+            ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn () => view('components.mobile-drawer-a11y')
+            )
+
             ->homeUrl(fn () => StudentDashboard::getUrl())
 
             ->discoverResources(in: app_path('Filament/Student/Resources'), for: 'App\\Filament\\Student\\Resources')

@@ -56,6 +56,7 @@
 <style>
     .sc-login-scene-wrap {
         min-height: 100vh;
+        min-height: 100dvh;
         overflow-x: hidden;
         position: relative;
     }
@@ -65,6 +66,7 @@
         z-index: 10;
         display: flex;
         min-height: 100vh;
+        min-height: 100dvh;
         align-items: center;
         justify-content: center;
         padding: 2.5rem 1rem;

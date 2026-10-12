@@ -209,7 +209,7 @@
             opacity: ' . $bgOpacity . ';
             pointer-events: none;
         }
-        @media (max-width: 1024px) {
+        @media (max-width: 1023px) {
             body::before {
                 background-size: contain;
                 opacity: 0.03;
@@ -369,8 +369,18 @@
         liveOverrideBlock.innerHTML = `
             body::before {
                 background-image: url('${data.bg_url}') !important;
-                background-size: ${data.background_scaling} !important;
-                opacity: ${data.background_opacity} !important;
+            }
+            @media (min-width: 1024px) {
+                body::before {
+                    background-size: ${data.background_scaling} !important;
+                    opacity: ${data.background_opacity} !important;
+                }
+            }
+            @media (max-width: 1023px) {
+                body::before {
+                    background-size: contain !important;
+                    opacity: ${Math.min(parseFloat(data.background_opacity) || 0.08, 0.03)} !important;
+                }
             }
             .fi-logo {
                 height: ${capLogoHeight(data.logo_height)} !important;
