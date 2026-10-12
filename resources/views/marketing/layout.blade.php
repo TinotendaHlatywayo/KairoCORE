@@ -134,7 +134,6 @@
                     <h3 class="text-sm font-semibold mb-3">Resources</h3>
                     <ul class="space-y-2 text-sm text-slate-200">
                         <li><a href="{{ route('marketing.home') }}" class="hover:text-white">Resources</a></li>
-                        <li><a href="{{ url('/platform') }}" class="hover:text-white">Live demo</a></li>
                         <li><a href="{{ route('register') }}" class="hover:text-white">Book a demo</a></li>
                     </ul>
                 </div>

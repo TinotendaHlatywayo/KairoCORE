@@ -15,7 +15,6 @@
                 <p class="mt-6 max-w-xl text-base sm:text-lg leading-8 text-slate-600">Admissions, academics, fees & billing, attendance, HR & payroll, communications, library, inventory & procurement, health & wellness - all in one responsive system.</p>
                 <div class="mt-8 flex flex-wrap gap-3">
                     <a href="{{ route('register') }}" class="inline-flex items-center gap-2 rounded-lg bg-[#D94B39] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#c14332] transition-colors">Book a personal demo</a>
-                    <a href="{{ url('/platform') }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors">Explore live demo</a>
                     <a href="{{ route('marketing.features') }}" class="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors">Explore Features</a>
                 </div>
                 <div class="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-600">
