@@ -209,11 +209,12 @@ if (! function_exists('platform_seo_description')) {
 
 if (! function_exists('platform_og_image_url')) {
     /**
-     * Default social share image for the platform pages (uploaded logo first).
+     * Social share (Open Graph / Twitter) image for the platform pages.
+     * Prefers an uploaded OG image, then the bundled 1200px social card.
      */
     function platform_og_image_url(): string
     {
-        return platform_logo_url();
+        return platform_branding_asset_url('platform_og_image', 'images/og-kairocore.jpg');
     }
 }
 
@@ -243,7 +244,7 @@ if (! function_exists('platform_organization_schema')) {
             '@type' => 'Organization',
             'name' => platform_name(),
             'url' => url('/'),
-            'logo' => platform_og_image_url(),
+            'logo' => platform_logo_url(),
         ];
     }
 }
