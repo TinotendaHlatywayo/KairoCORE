@@ -366,60 +366,68 @@ trait ManagesTasks
             'taskForm.priority' => ['required', 'in:low,medium,high'],
         ]);
 
-        $spec = json_decode($this->taskForm['assignee_spec'] ?? '', true) ?: ['mode' => 'self'];
-        $assigneeIds = array_values(array_unique(array_filter($this->resolveAssigneeSpec($spec))));
-        if (empty($assigneeIds)) {
-            $assigneeIds = [$user->id];
-        }
-
-        $base = [
-            'title' => trim($this->taskForm['title']),
-            'description' => $this->taskForm['description'] ?: null,
-            'due_date' => $this->taskForm['due_date'] ?: null,
-            'due_time' => $this->taskForm['due_time'] ?: null,
-            'priority' => $this->taskForm['priority'] ?? 'medium',
-            'important' => (bool) ($this->taskForm['important'] ?? false),
-            'reminder_at' => !empty($this->taskForm['reminder_at']) ? Carbon::parse($this->taskForm['reminder_at']) : null,
-            'recurrence' => $this->taskForm['recurrence'] ?? 'none',
-        ];
-
-        $createdTasks = [];
-
-        if ($this->editingTask && $this->taskId) {
-            $task = $this->findOwnedTask($this->taskId);
-            if (! $task) {
-                return;
+        try {
+            $spec = json_decode((string) ($this->taskForm['assignee_spec'] ?? ''), true) ?: ['mode' => 'self'];
+            $assigneeIds = array_values(array_unique(array_filter($this->resolveAssigneeSpec($spec))));
+            if (empty($assigneeIds)) {
+                $assigneeIds = [$user->id];
             }
 
-            $wasAssignedTo = $task->assigned_to_id;
-            $task->update([...$base, 'assigned_to_id' => $assigneeIds[0]]);
+            $base = [
+                'title' => trim((string) ($this->taskForm['title'] ?? '')),
+                'description' => ($this->taskForm['description'] ?? null) ?: null,
+                'due_date' => ($this->taskForm['due_date'] ?? null) ?: null,
+                'due_time' => ($this->taskForm['due_time'] ?? null) ?: null,
+                'priority' => $this->taskForm['priority'] ?? 'medium',
+                'important' => (bool) ($this->taskForm['important'] ?? false),
+                'reminder_at' => ! empty($this->taskForm['reminder_at']) ? Carbon::parse($this->taskForm['reminder_at']) : null,
+                'recurrence' => $this->taskForm['recurrence'] ?? 'none',
+            ];
 
-            if ($assigneeIds[0] !== $user->id && $assigneeIds[0] !== $wasAssignedTo) {
-                $recipient = User::query()->find($assigneeIds[0]);
-                $recipient?->notify(new TaskAssignedNotification($task->fresh()));
-            }
+            $createdTasks = [];
 
-            $createdTasks[] = $task;
-        } else {
-            foreach ($assigneeIds as $assigneeId) {
-                $task = UserTask::create([
-                    ...$base,
-                    'school_id' => $user->school_id,
-                    'created_by_id' => $user->id,
-                    'assigned_to_id' => $assigneeId,
-                    'status' => UserTask::STATUS_OPEN,
-                ]);
+            if ($this->editingTask && $this->taskId) {
+                $task = $this->findOwnedTask($this->taskId);
+                if (! $task) {
+                    return;
+                }
+
+                $wasAssignedTo = $task->assigned_to_id;
+                $task->update([...$base, 'assigned_to_id' => $assigneeIds[0]]);
+
+                if ($assigneeIds[0] !== $user->id && $assigneeIds[0] !== $wasAssignedTo) {
+                    $recipient = User::query()->find($assigneeIds[0]);
+                    $recipient?->notify(new TaskAssignedNotification($task->fresh()));
+                }
+
                 $createdTasks[] = $task;
+            } else {
+                foreach ($assigneeIds as $assigneeId) {
+                    $task = UserTask::create([
+                        ...$base,
+                        'school_id' => $user->school_id,
+                        'created_by_id' => $user->id,
+                        'assigned_to_id' => $assigneeId,
+                        'status' => UserTask::STATUS_OPEN,
+                    ]);
+                    $createdTasks[] = $task;
 
-                if ($assigneeId !== $user->id) {
-                    $recipient = User::query()->find($assigneeId);
-                    $recipient?->notify(new TaskAssignedNotification($task));
+                    if ($assigneeId !== $user->id) {
+                        $recipient = User::query()->find($assigneeId);
+                        $recipient?->notify(new TaskAssignedNotification($task));
+                    }
                 }
             }
-        }
 
-        $this->dispatch('taskCreated');
-        $this->closeTaskModal();
+            $this->dispatch('taskCreated');
+            $this->closeTaskModal();
+        } catch (\Throwable $e) {
+            // A task must never surface as a bare 500. Log it with a trace and
+            // keep the modal open with an actionable message instead.
+            report($e);
+
+            $this->addError('taskForm.title', __('The task could not be saved. Please try again.'));
+        }
     }
 
     public function toggleTaskDone(int $id): void
