@@ -66,8 +66,9 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
     Route::get('/sitemap.xml', function () {
         $urls = [
             ['loc' => route('marketing.home'), 'changefreq' => 'weekly', 'priority' => '1.0'],
+            ['loc' => route('marketing.features'), 'changefreq' => 'monthly', 'priority' => '0.8'],
             ['loc' => route('marketing.about'), 'changefreq' => 'monthly', 'priority' => '0.8'],
-            ['loc' => route('marketing.contact'), 'changefreq' => 'monthly', 'priority' => '0.8'],
+            ['loc' => route('marketing.contact'), 'changefreq' => 'monthly', 'priority' => '0.7'],
             ['loc' => route('platform.terms'), 'changefreq' => 'yearly', 'priority' => '0.5'],
         ];
 
