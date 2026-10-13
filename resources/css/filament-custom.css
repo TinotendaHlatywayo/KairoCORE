@@ -3676,8 +3676,15 @@ select.sc-input {
         padding-inline: 0 !important;
     }
 
-    /* 6. Base font size at least 16px prevents iOS Safari input zoom; tap
-       targets are at least 44x44px with breathing room. */
+    /* 6. Base text is never smaller than 16px on phones/tablets: this keeps
+       body copy readable and prevents iOS Safari input zoom. Dense UI (table
+       cells, badges, helper/caption text) keeps its own explicit smaller
+       sizes — only text that would otherwise inherit the body size grows.
+       Tap targets are at least 44x44px with breathing room. */
+    body {
+        font-size: 16px;
+    }
+
     input,
     select,
     textarea {
