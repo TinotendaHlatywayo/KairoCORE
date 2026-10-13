@@ -7,8 +7,8 @@
 <section class="bg-white py-12">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="text-center">
-            <h1 class="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">All Features</h1>
-            <p class="mt-4 text-lg text-slate-600">Everything you need to run your school efficiently</p>
+            <h1 class="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">Every tool your school needs</h1>
+            <p class="mt-4 text-lg text-slate-600">From admissions to analytics, KairoCORE brings the day-to-day running of your school into one connected platform.</p>
         </div>
         <div class="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             @php
@@ -108,25 +108,33 @@
             @foreach($features as $f)
                 <div class="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md">
                     <div class="aspect-[16/9] w-full overflow-hidden bg-slate-100">
-                        <img src="{{ $f['img'] }}" alt="{{ $f['name'] }}" class="h-full w-full object-cover">
+                        <img src="{{ $f['img'] }}" alt="{{ $f['name'] }}" class="h-full w-full object-cover" loading="lazy" decoding="async">
                     </div>
-                    <div class="flex flex-1 flex-col p-5">
-                        <h3 class="text-lg font-semibold text-slate-900">{{ $f['name'] }}</h3>
+                    <div class="flex flex-1 flex-col p-6">
+                        <h3 class="text-base font-semibold text-slate-900">{{ $f['name'] }}</h3>
                         <p class="mt-2 text-sm text-slate-600">{{ $f['desc'] }}</p>
                         <ul class="mt-4 space-y-2">
                             @foreach($f['subs'] as $sub)
                                 <li class="flex items-center gap-2 text-sm text-slate-600">
-                                    <svg class="h-4 w-4 text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[#EF5F4D]" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
                                     <span>{{ $sub }}</span>
                                 </li>
                             @endforeach
                         </ul>
-                        <div class="mt-6">
-                            <a href="{{ route('marketing.features') }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors hover:shadow-sm">Explore {{ $f['name'] }}</a>
-                        </div>
                     </div>
                 </div>
             @endforeach
+        </div>
+    </div>
+</section>
+
+<section class="bg-slate-50 py-16">
+    <div class="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
+        <h2 class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Not sure where to start?</h2>
+        <p class="mt-4 text-lg text-slate-600">Book a personal demo and we will show you the modules that matter most to your school.</p>
+        <div class="mt-8 flex flex-wrap justify-center gap-3">
+            <a href="{{ route('register') }}" class="inline-flex items-center gap-2 rounded-lg bg-[#D94B39] px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[#c14332] transition-colors">Book a personal demo</a>
+            <a href="{{ route('marketing.contact') }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-white transition-colors">Contact us</a>
         </div>
     </div>
 </section>
