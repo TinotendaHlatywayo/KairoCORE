@@ -57,7 +57,10 @@
             <div class="flex h-16 items-center justify-between">
                 <div class="flex items-center gap-6">
                     <a href="{{ route('marketing.home') }}" class="flex items-center gap-2 font-bold text-lg">
-                        <img src="{{ asset('images/kairo-core-logo.png') }}" alt="{{ platform_name() }} logo" class="h-12 w-auto" loading="lazy">
+                        <picture>
+                            <source srcset="{{ asset('images/kairo-core-logo.webp') }}" type="image/webp">
+                            <img src="{{ asset('images/kairo-core-logo.png') }}" alt="{{ platform_name() }} logo" width="480" height="268" class="h-12 w-auto">
+                        </picture>
                     </a>
                     <div class="hidden lg:flex lg:items-center lg:gap-6">
                         <a href="{{ route('marketing.home') }}" class="text-sm font-medium {{ request()->routeIs('marketing.home') ? 'text-slate-900' : 'text-slate-700' }} hover:text-slate-900 transition-colors">{{ __('Home') }}</a>
@@ -111,7 +114,10 @@
         <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
                 <div class="space-y-3">
-                    <img src="{{ asset('images/kairo-core-logo.png') }}" alt="{{ platform_name() }} logo" class="h-12 w-auto" loading="lazy">
+                    <picture>
+                        <source srcset="{{ asset('images/kairo-core-logo.webp') }}" type="image/webp">
+                        <img src="{{ asset('images/kairo-core-logo.png') }}" alt="{{ platform_name() }} logo" width="480" height="268" class="h-12 w-auto" loading="lazy">
+                    </picture>
                     <p class="text-sm text-slate-200">Cloud-based school management platform built for schools.</p>
                 </div>
                 <div>
