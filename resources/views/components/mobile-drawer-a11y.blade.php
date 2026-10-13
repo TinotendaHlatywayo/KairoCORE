@@ -7,6 +7,8 @@
     - Closes on Escape and after tapping a navigation link.
     - Keeps `aria-expanded` on every toggle in sync.
     - Remembers and restores focus to the button that opened the drawer.
+    - Traps keyboard focus inside the drawer while it is open.
+    - Gives the drawer an `id` and an accessible dialog name.
     - Everything is a no-op at >= 1024px, so desktop is untouched.
 --}}
 @once
@@ -41,39 +43,55 @@
         );
     }
 
+    var ownsLock = false;
+
     function lock(open) {
-        document.documentElement.style.overflow = open ? 'hidden' : '';
-        document.body.style.overflow = open ? 'hidden' : '';
+        if (open) {
+            if (ownsLock) return;
+            ownsLock = true;
+            document.documentElement.style.overflow = 'hidden';
+            document.body.style.overflow = 'hidden';
+        } else {
+            if (!ownsLock) return;
+            ownsLock = false;
+            document.documentElement.style.overflow = '';
+            document.body.style.overflow = '';
+        }
     }
 
     function apply() {
         var s = sidebar();
+
+        if (s && !s.id) { s.id = 'fi-sidebar'; }
 
         if (!mq.matches) {
             lock(false);
             if (s) {
                 s.removeAttribute('role');
                 s.removeAttribute('aria-modal');
+                s.removeAttribute('aria-label');
             }
             toggles().forEach(function (b) { b.setAttribute('aria-expanded', 'true'); });
             return;
         }
 
         if (!s) { lock(false); return; }
-        if (!s.id) { s.id = 'fi-sidebar'; }
 
         var open = isOpen(s);
         if (open) {
             s.setAttribute('role', 'dialog');
             s.setAttribute('aria-modal', 'true');
+            if (!s.hasAttribute('aria-label')) {
+                s.setAttribute('aria-label', @js(__('Navigation')));
+            }
         } else {
             s.removeAttribute('role');
-            s.setAttribute('aria-modal', 'false');
+            s.removeAttribute('aria-modal');
         }
         toggles().forEach(function (b) { b.setAttribute('aria-expanded', open ? 'true' : 'false'); });
 
         if (open) {
-            if (document.body.style.overflow !== 'hidden') {
+            if (!ownsLock) {
                 lastTrigger = document.activeElement;
                 lock(true);
                 var f = focusables(s);
@@ -82,7 +100,7 @@
                 }
             }
         } else {
-            var wasLocked = document.body.style.overflow === 'hidden';
+            var wasLocked = ownsLock;
             lock(false);
             if (wasLocked && lastTrigger && document.contains(lastTrigger)) {
                 try { lastTrigger.focus({ preventScroll: true }); } catch (e) {}
@@ -97,8 +115,34 @@
     }
 
     document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape' && mq.matches && isOpen(sidebar())) {
+        if (!mq.matches || !isOpen(sidebar())) return;
+
+        if (e.key === 'Escape') {
             closeDrawer();
+            return;
+        }
+
+        // While the drawer is modal, keep Tab focus inside it so keyboard
+        // users cannot reach the obscured page behind the backdrop.
+        if (e.key !== 'Tab') return;
+
+        var s = sidebar();
+        var f = focusables(s);
+        if (!f.length) return;
+
+        var first = f[0];
+        var last = f[f.length - 1];
+        var active = document.activeElement;
+        var inside = s.contains(active);
+
+        if (e.shiftKey) {
+            if (active === first || !inside) {
+                e.preventDefault();
+                last.focus();
+            }
+        } else if (active === last || !inside) {
+            e.preventDefault();
+            first.focus();
         }
     }, true);
 
