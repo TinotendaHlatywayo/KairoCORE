@@ -113,6 +113,12 @@ class StudentPanelProvider extends PanelProvider
                 fn () => Blade::render('@livewire(\'admin-language-switcher\')')
             )
 
+            // Pin/fix the sidebar (tablet & up) so it never auto-hides.
+            ->renderHook(
+                PanelsRenderHook::TOPBAR_START,
+                fn () => view('components.sidebar-fixed-toggle')
+            )
+
             // 🚀 UNIFIED DATE & TIME + TASK MANAGER COMMAND CENTER
             // Mirrors the staff workspace topbar: a centered live date/time
             // trigger opening a Task Manager + interactive calendar dropdown.
