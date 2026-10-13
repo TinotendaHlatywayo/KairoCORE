@@ -3883,3 +3883,108 @@ select.sc-input {
     }
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+ * 26. FIXED SIDEBAR MODE — opt-in, tablet & up
+ *
+ * The "Pin sidebar" button in the topbar (Platform admin + Student
+ * portal) toggles `body.sc-sidebar-fixed`. While active, from 768px up
+ * the sidebar reserves its own column and stays permanently visible:
+ * it ignores the off-canvas drawer, the collapsed icon rail and the
+ * hover-reveal, so navigation is always on screen.
+ *
+ * Phones (<768px) are untouched and keep the off-canvas drawer.
+ * ═══════════════════════════════════════════════════════════════════ */
+@media (min-width: 768px) {
+    body.sc-sidebar-fixed .fi-layout {
+        display: flex !important;
+        flex-direction: row !important;
+        min-height: 100dvh !important;
+    }
+
+    body.sidebar-right.sc-sidebar-fixed .fi-layout {
+        flex-direction: row-reverse !important;
+    }
+
+    body.sc-sidebar-fixed .fi-sidebar {
+        position: sticky !important;
+        top: 0 !important;
+        bottom: auto !important;
+        inset-inline-start: auto !important;
+        inset-inline-end: auto !important;
+        height: 100dvh !important;
+        width: 20rem !important;
+        max-width: 20rem !important;
+        flex: none !important;
+        transform: none !important;
+        transition: none !important;
+        z-index: 30 !important;
+    }
+
+    /* Cancel the collapsed hover-reveal chrome. */
+    body.sc-sidebar-fixed .fi-sidebar,
+    body.sc-sidebar-fixed .fi-sidebar:not(.fi-sidebar-open):hover {
+        box-shadow: none !important;
+    }
+
+    body.sc-sidebar-fixed .fi-sidebar-close-overlay {
+        display: none !important;
+    }
+
+    body.sc-sidebar-fixed .fi-main-ctn {
+        order: 2 !important;
+        width: auto !important;
+        min-width: 0 !important;
+        flex: 1 1 0% !important;
+        min-height: 100dvh !important;
+    }
+
+    /* Re-reveal the labels, badges, group headers and logo. */
+    body.sc-sidebar-fixed .fi-sidebar .fi-sidebar-item-label,
+    body.sc-sidebar-fixed .fi-sidebar .fi-sidebar-item-badge {
+        display: block !important;
+        opacity: 1 !important;
+    }
+
+    body.sc-sidebar-fixed .fi-sidebar .fi-sidebar-group-button {
+        display: flex !important;
+        opacity: 1 !important;
+    }
+
+    body.sc-sidebar-fixed .fi-sidebar .fi-sidebar-header > div {
+        display: block !important;
+        opacity: 1 !important;
+    }
+}
+
+/* Restore the full workspace search field when pinned while the rail was
+   collapsed (the compact icon-only rules only apply at >=1024px). */
+@media (min-width: 1024px) {
+    body.sc-sidebar-fixed .fi-sidebar:not(.fi-sidebar-open) .search-bar-wrapper {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+    }
+
+    body.sc-sidebar-fixed .fi-sidebar:not(.fi-sidebar-open) .search-bar-wrapper input,
+    body.sc-sidebar-fixed .fi-sidebar:not(.fi-sidebar-open) .search-bar-wrapper .right-3\.5:not(button) {
+        display: block !important;
+    }
+
+    body.sc-sidebar-fixed .fi-sidebar:not(.fi-sidebar-open) .search-bar-wrapper .relative.group {
+        height: auto !important;
+        margin-inline: 0 !important;
+    }
+
+    body.sc-sidebar-fixed .fi-sidebar:not(.fi-sidebar-open) .search-bar-wrapper .relative.group > div:first-child {
+        left: 0.875rem !important;
+        right: auto !important;
+        transform: translateY(-50%) !important;
+    }
+}
+
+/* The pin control is pointless on phones — the drawer is intentional there. */
+@media (max-width: 767px) {
+    .sc-sidebar-fixed-toggle {
+        display: none !important;
+    }
+}
+

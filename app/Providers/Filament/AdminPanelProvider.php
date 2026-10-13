@@ -125,6 +125,7 @@ class AdminPanelProvider extends PanelProvider
             ->renderHook(
                 PanelsRenderHook::TOPBAR_START,
                 fn () => Blade::render('@livewire(\'admin-language-switcher\')')
+                    .view('components.sidebar-fixed-toggle')
                     .'<div class="platform-command-center-slot">'.Blade::render('@livewire(\'platform-command-center\')').'</div>'
                     .'<style>'
                     .'.fi-topbar > nav{position:relative}'
