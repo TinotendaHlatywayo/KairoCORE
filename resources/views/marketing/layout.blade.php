@@ -118,7 +118,7 @@
                         <source srcset="{{ asset('images/kairo-core-logo.webp') }}" type="image/webp">
                         <img src="{{ asset('images/kairo-core-logo.png') }}" alt="{{ platform_name() }} logo" width="480" height="268" class="h-12 w-auto" loading="lazy">
                     </picture>
-                    <p class="text-sm text-slate-200">Cloud-based school management platform built for schools.</p>
+                    <p class="text-sm text-slate-200">{{ marketing_content('footer_tagline') }}</p>
                 </div>
                 <div>
                     <h3 class="text-sm font-semibold mb-3">Product</h3>

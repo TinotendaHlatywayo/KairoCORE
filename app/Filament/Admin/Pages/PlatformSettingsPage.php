@@ -10,6 +10,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Tabs; // Explicit import resolving layout compilation errors [1]
 use Filament\Forms\Components\Tabs\Tab;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
@@ -219,6 +220,122 @@ class PlatformSettingsPage extends Page implements HasForms
                                     ->label(__('TikTok profile URL'))
                                     ->url()
                                     ->default('https://tiktok.com'),
+                            ])->columns(2),
+
+                        Tab::make('Website Content')
+                            ->icon('heroicon-o-globe-alt')
+                            ->schema([
+                                Placeholder::make('marketing_intro')
+                                    ->label(__('Public website content'))
+                                    ->content(new HtmlString(
+                                        'These fields edit the public marketing site. Leave any field blank to fall back to the shipped copy. '
+                                        .'Button links accept a full URL or a site-relative path such as <strong>/platform</strong>.'
+                                    ))
+                                    ->columnSpanFull(),
+                                TextInput::make('marketing_announcement')
+                                    ->label(__('Announcement bar'))
+                                    ->maxLength(160)
+                                    ->default(marketing_content('announcement'))
+                                    ->columnSpanFull(),
+                                TextInput::make('marketing_hero_title')
+                                    ->label(__('Hero title'))
+                                    ->maxLength(160)
+                                    ->default(marketing_content('hero_title'))
+                                    ->columnSpanFull(),
+                                Textarea::make('marketing_hero_subtitle')
+                                    ->label(__('Hero subtitle'))
+                                    ->rows(2)
+                                    ->maxLength(400)
+                                    ->default(marketing_content('hero_subtitle'))
+                                    ->columnSpanFull(),
+                                TextInput::make('marketing_hero_image')
+                                    ->label(__('Hero image URL'))
+                                    ->url()
+                                    ->default(marketing_content('hero_image'))
+                                    ->helperText(__('Link to a hosted image, or leave blank to keep the bundled default.'))
+                                    ->columnSpanFull(),
+                                TextInput::make('marketing_hero_primary_label')
+                                    ->label(__('Hero primary button label'))
+                                    ->default(marketing_content('hero_primary_label')),
+                                TextInput::make('marketing_hero_primary_url')
+                                    ->label(__('Hero primary button link'))
+                                    ->default(marketing_content('hero_primary_url'))
+                                    ->helperText(__('Defaults to the registration page when blank.')),
+                                TextInput::make('marketing_hero_secondary_label')
+                                    ->label(__('Hero secondary button label'))
+                                    ->default(marketing_content('hero_secondary_label')),
+                                TextInput::make('marketing_hero_secondary_url')
+                                    ->label(__('Hero secondary button link'))
+                                    ->default(marketing_content('hero_secondary_url'))
+                                    ->helperText(__('Defaults to the features page when blank.')),
+                                TextInput::make('marketing_modules_title')
+                                    ->label(__('Modules section title'))
+                                    ->default(marketing_content('modules_title'))
+                                    ->columnSpanFull(),
+                                Textarea::make('marketing_modules_subtitle')
+                                    ->label(__('Modules section subtitle'))
+                                    ->rows(2)
+                                    ->default(marketing_content('modules_subtitle'))
+                                    ->columnSpanFull(),
+                                TextInput::make('marketing_benefits_title')
+                                    ->label(__('Benefits section title'))
+                                    ->default(marketing_content('benefits_title'))
+                                    ->columnSpanFull(),
+                                Textarea::make('marketing_benefits_subtitle')
+                                    ->label(__('Benefits section subtitle'))
+                                    ->rows(2)
+                                    ->default(marketing_content('benefits_subtitle'))
+                                    ->columnSpanFull(),
+                                TextInput::make('marketing_steps_title')
+                                    ->label(__('How-it-works section title'))
+                                    ->default(marketing_content('steps_title'))
+                                    ->columnSpanFull(),
+                                Textarea::make('marketing_steps_subtitle')
+                                    ->label(__('How-it-works section subtitle'))
+                                    ->rows(2)
+                                    ->default(marketing_content('steps_subtitle'))
+                                    ->columnSpanFull(),
+                                TextInput::make('marketing_cta_title')
+                                    ->label(__('Closing CTA title'))
+                                    ->default(marketing_content('cta_title'))
+                                    ->columnSpanFull(),
+                                Textarea::make('marketing_cta_subtitle')
+                                    ->label(__('Closing CTA subtitle'))
+                                    ->rows(2)
+                                    ->default(marketing_content('cta_subtitle'))
+                                    ->columnSpanFull(),
+                                TextInput::make('marketing_cta_primary_label')
+                                    ->label(__('Closing CTA primary label'))
+                                    ->default(marketing_content('cta_primary_label')),
+                                TextInput::make('marketing_cta_primary_url')
+                                    ->label(__('Closing CTA primary link'))
+                                    ->default(marketing_content('cta_primary_url'))
+                                    ->helperText(__('Defaults to the registration page when blank.')),
+                                TextInput::make('marketing_cta_secondary_label')
+                                    ->label(__('Closing CTA secondary label'))
+                                    ->default(marketing_content('cta_secondary_label')),
+                                TextInput::make('marketing_cta_secondary_url')
+                                    ->label(__('Closing CTA secondary link'))
+                                    ->default(marketing_content('cta_secondary_url'))
+                                    ->helperText(__('Defaults to the features page when blank.')),
+                                TextInput::make('marketing_footer_tagline')
+                                    ->label(__('Footer tagline'))
+                                    ->maxLength(200)
+                                    ->default(marketing_content('footer_tagline'))
+                                    ->columnSpanFull(),
+                                TextInput::make('marketing_meta_title')
+                                    ->label(__('Home SEO title'))
+                                    ->maxLength(70)
+                                    ->default(marketing_content('meta_title'))
+                                    ->helperText(__('Leave blank to use the platform name.'))
+                                    ->columnSpanFull(),
+                                Textarea::make('marketing_meta_description')
+                                    ->label(__('Home SEO description'))
+                                    ->rows(2)
+                                    ->maxLength(180)
+                                    ->default(marketing_content('meta_description'))
+                                    ->helperText(__('Leave blank to use the default platform description.'))
+                                    ->columnSpanFull(),
                             ])->columns(2),
 
                         Tab::make('Email Branding')
