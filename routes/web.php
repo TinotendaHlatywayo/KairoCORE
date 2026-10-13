@@ -64,12 +64,19 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
     })->name('marketing.robots');
 
     Route::get('/sitemap.xml', function () {
+        $lastmod = static function (string $view): string {
+            $path = resource_path("views/{$view}.blade.php");
+            $time = is_file($path) ? filemtime($path) : false;
+
+            return date('c', $time ?: time());
+        };
+
         $urls = [
-            ['loc' => route('marketing.home'), 'changefreq' => 'weekly', 'priority' => '1.0'],
-            ['loc' => route('marketing.features'), 'changefreq' => 'monthly', 'priority' => '0.8'],
-            ['loc' => route('marketing.about'), 'changefreq' => 'monthly', 'priority' => '0.8'],
-            ['loc' => route('marketing.contact'), 'changefreq' => 'monthly', 'priority' => '0.7'],
-            ['loc' => route('platform.terms'), 'changefreq' => 'yearly', 'priority' => '0.5'],
+            ['loc' => route('marketing.home'), 'lastmod' => $lastmod('marketing/home'), 'changefreq' => 'weekly', 'priority' => '1.0'],
+            ['loc' => route('marketing.features'), 'lastmod' => $lastmod('marketing/features'), 'changefreq' => 'monthly', 'priority' => '0.8'],
+            ['loc' => route('marketing.about'), 'lastmod' => $lastmod('marketing/about'), 'changefreq' => 'monthly', 'priority' => '0.8'],
+            ['loc' => route('marketing.contact'), 'lastmod' => $lastmod('marketing/contact'), 'changefreq' => 'monthly', 'priority' => '0.7'],
+            ['loc' => route('platform.terms'), 'lastmod' => $lastmod('terms/platform'), 'changefreq' => 'yearly', 'priority' => '0.5'],
         ];
 
         $xml = '<?xml version="1.0" encoding="UTF-8"?>';
@@ -78,6 +85,9 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
         foreach ($urls as $url) {
             $xml .= '<url>';
             $xml .= '<loc>'.htmlspecialchars($url['loc']).'</loc>';
+            if (! empty($url['lastmod'])) {
+                $xml .= '<lastmod>'.$url['lastmod'].'</lastmod>';
+            }
             $xml .= '<changefreq>'.$url['changefreq'].'</changefreq>';
             $xml .= '<priority>'.$url['priority'].'</priority>';
             $xml .= '</url>';
