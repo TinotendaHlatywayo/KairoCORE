@@ -17,7 +17,13 @@
 
     @if ($isOpen)
         <div class="pcc-overlay" wire:click.self="close">
-            <div class="pcc-panel" wire:click.stop>
+            <div
+                class="pcc-panel"
+                wire:click.stop
+                x-on:click.outside="$wire.close()"
+                x-on:keydown.escape.window="$wire.close()"
+                tabindex="-1"
+            >
                 <div class="pcc-head">
                     <div class="pcc-tabs">
                         <button type="button" class="pcc-tab {{ $tab === 'tasks' ? 'pcc-tab-active' : '' }}" wire:click="setTab('tasks')">
@@ -270,6 +276,21 @@
         .pcc-input { width: 100%; border: 1px solid rgba(100,116,139,.3); border-radius: .55rem; padding: .45rem .6rem; font-size: .78rem; background: transparent; color: inherit; }
         .pcc-input:focus { outline: 2px solid rgba(99,102,241,.5); outline-offset: 0; border-color: transparent; }
         .dark .pcc-input { border-color: rgba(148,163,184,.3); }
+        /* Native selects must render exactly ONE chevron. Reset the platform
+           appearance and paint a single, non-repeating arrow. Without the
+           appearance reset the browser paints its own arrow on top of ours,
+           and a repeated background-image tiles a row of arrows across the bar. */
+        select.pcc-input {
+            -webkit-appearance: none; -moz-appearance: none; appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right .6rem center;
+            background-size: 1rem;
+            padding-right: 2.2rem;
+        }
+        .dark select.pcc-input {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23cbd5e1' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+        }
         .pcc-error { font-size: .66rem; font-weight: 700; color: #e11d48; }
         .pcc-primary { margin-top: .2rem; border: 0; border-radius: .6rem; padding: .55rem .8rem; font-size: .78rem; font-weight: 800; color: #fff; cursor: pointer; background: linear-gradient(135deg, #6366f1, #06b6d4); }
         .pcc-primary:hover { filter: brightness(1.05); }

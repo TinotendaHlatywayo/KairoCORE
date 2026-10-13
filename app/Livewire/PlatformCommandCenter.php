@@ -50,7 +50,7 @@ class PlatformCommandCenter extends Component
 
     public ?int $taskAssigneeId = null;
 
-    protected $listeners = ['$refresh' => '$refresh', 'notificationSent' => '$refresh'];
+    protected $listeners = ['$refresh' => '$refresh', 'platform-task-saved' => '$refresh'];
 
     public function toggle(): void
     {
@@ -243,7 +243,6 @@ class PlatformCommandCenter extends Component
         try {
             $schoolId = null;
             $assigneeId = $user->id;
-
             if ($this->taskSchoolId) {
                 $school = School::find($this->taskSchoolId);
 
@@ -297,7 +296,7 @@ class PlatformCommandCenter extends Component
 
             $this->closeAddTask();
 
-            $this->dispatch('notificationSent');
+            $this->dispatch('platform-task-saved');
         } catch (\Throwable $e) {
             // Never let an unexpected failure surface as a bare 500 on the
             // platform topbar: log it with a trace for diagnosis and keep the

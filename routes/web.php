@@ -124,10 +124,14 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
             'message' => ['required', 'string', 'max:2000'],
         ]);
 
+        $recipient = \Modules\SaaS\Models\PlatformSetting::get('contact', 'email')
+            ?: config('mail.platform.address')
+            ?: config('mail.from.address');
+
         Mail::raw(
             "Name: {$data['name']}\nEmail: {$data['email']}\n\n{$data['message']}",
-            function ($message) use ($data) {
-                $message->to(config('mail.platform.address') ?: config('mail.from.address'))
+            function ($message) use ($data, $recipient) {
+                $message->to($recipient)
                     ->replyTo($data['email'], $data['name'])
                     ->subject('Kairo CORE Contact: '.$data['name']);
             }

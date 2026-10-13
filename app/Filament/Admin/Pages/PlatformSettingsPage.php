@@ -187,6 +187,40 @@ class PlatformSettingsPage extends Page implements HasForms
                                     ->helperText(__('The address platform emails are sent from. Use one of the inboxes above, or a verified alias of the SMTP account.')),
                             ])->columns(2),
 
+                        Tab::make('Contact Channels')
+                            ->icon('heroicon-o-phone')
+                            ->schema([
+                                Placeholder::make('contact_intro')
+                                    ->label(__('Public contact channels'))
+                                    ->content(new HtmlString(
+                                        'These details power the public website contact page and decide where the contact form delivers. '
+                                        .'Leave a channel blank to hide it on the site.'
+                                    ))
+                                    ->columnSpanFull(),
+                                TextInput::make('contact_email')
+                                    ->label(__('Contact email address'))
+                                    ->email()
+                                    ->default('hlatwayne@gmail.com')
+                                    ->helperText(__('Shown on the website and receives messages sent through the public contact form.')),
+                                TextInput::make('contact_whatsapp')
+                                    ->label(__('WhatsApp number'))
+                                    ->tel()
+                                    ->default('263786366855')
+                                    ->helperText(__('Full international number, digits only — no +, spaces or dashes.')),
+                                TextInput::make('contact_facebook')
+                                    ->label(__('Facebook page URL'))
+                                    ->url()
+                                    ->default('https://facebook.com'),
+                                TextInput::make('contact_instagram')
+                                    ->label(__('Instagram profile URL'))
+                                    ->url()
+                                    ->default('https://instagram.com'),
+                                TextInput::make('contact_tiktok')
+                                    ->label(__('TikTok profile URL'))
+                                    ->url()
+                                    ->default('https://tiktok.com'),
+                            ])->columns(2),
+
                         Tab::make('Email Branding')
                             ->icon('heroicon-o-envelope-open')
                             ->schema([
