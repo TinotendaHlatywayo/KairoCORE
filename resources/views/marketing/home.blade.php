@@ -1,22 +1,22 @@
 @extends('marketing.layout')
 
-@section('title', platform_name().' - School Management System')
-@section('meta_description', __('Modern school management system for admissions, academics, fees, attendance, HR, communications and more.'))
+@section('title', marketing_content('meta_title') ?: platform_name().' - School Management System')
+@section('meta_description', marketing_content('meta_description') ?: __('Modern school management system for admissions, academics, fees, attendance, HR, communications and more.'))
 
 @section('content')
 <div class="bg-[#1F2E43] text-white text-center text-xs sm:text-sm py-2 px-4">
-    <span>Cloud-based &middot; Multi-currency &middot; Built for Zimbabwean schools</span>
+    <span>{{ marketing_content('announcement') }}</span>
 </div>
 
 <section class="relative overflow-hidden bg-white">
     <div class="mx-auto max-w-7xl px-4 pb-16 pt-10 sm:px-6 lg:px-8 lg:pt-16">
         <div class="grid items-center gap-10 lg:grid-cols-2">
             <div>
-                <h1 class="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tight text-slate-900 leading-tight">Run your whole school from one platform</h1>
-                <p class="mt-6 max-w-xl text-base sm:text-lg leading-8 text-slate-600">KairoCORE brings admissions, academics, fees, attendance, HR, communication and more together in one secure, cloud-based system &mdash; so your team spends less time on paperwork and more time on students.</p>
+                <h1 class="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tight text-slate-900 leading-tight">{{ marketing_content('hero_title') }}</h1>
+                <p class="mt-6 max-w-xl text-base sm:text-lg leading-8 text-slate-600">{{ marketing_content('hero_subtitle') }}</p>
                 <div class="mt-8 flex flex-wrap gap-3">
-                    <a href="{{ route('register') }}" class="inline-flex items-center gap-2 rounded-lg bg-[#D94B39] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#c14332] transition-colors">Book a personal demo</a>
-                    <a href="{{ route('marketing.features') }}" class="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors">Explore features</a>
+                    <a href="{{ marketing_content('hero_primary_url') ?: route('register') }}" class="inline-flex items-center gap-2 rounded-lg bg-[#D94B39] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#c14332] transition-colors">{{ marketing_content('hero_primary_label') }}</a>
+                    <a href="{{ marketing_content('hero_secondary_url') ?: route('marketing.features') }}" class="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors">{{ marketing_content('hero_secondary_label') }}</a>
                 </div>
                 <div class="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-600">
                     <span class="flex items-center gap-1"><span class="h-1.5 w-1.5 rounded-full bg-green-600"></span>Easy to set up</span>
@@ -26,7 +26,7 @@
             </div>
             <div class="relative">
                 <div class="aspect-[16/10] w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 shadow-sm">
-                    <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1600&q=80&auto=format&fit=crop" alt="Students working together in a classroom" class="h-full w-full object-cover" loading="eager">
+                    <img src="{{ marketing_content('hero_image') }}" alt="Students working together in a classroom" class="h-full w-full object-cover" loading="eager">
                 </div>
             </div>
         </div>
@@ -36,8 +36,8 @@
 <section class="bg-slate-50 py-14 sm:py-20">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="mx-auto max-w-2xl text-center">
-            <h2 class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Everything your school runs on, in one place</h2>
-            <p class="mt-4 text-lg text-slate-600">From the first admission enquiry to the final report card, every department works from the same system.</p>
+            <h2 class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">{{ marketing_content('modules_title') }}</h2>
+            <p class="mt-4 text-lg text-slate-600">{{ marketing_content('modules_subtitle') }}</p>
         </div>
         @php
             $modules = [
@@ -69,8 +69,8 @@
 <section class="bg-white py-16 sm:py-20">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="mx-auto max-w-2xl text-center">
-            <h2 class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Why schools choose KairoCORE</h2>
-            <p class="mt-4 text-lg text-slate-600">A single, dependable system that grows with your school.</p>
+            <h2 class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">{{ marketing_content('benefits_title') }}</h2>
+            <p class="mt-4 text-lg text-slate-600">{{ marketing_content('benefits_subtitle') }}</p>
         </div>
         @php
             $benefits = [
@@ -115,8 +115,8 @@
 <section class="bg-slate-50 py-16 sm:py-20">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="mx-auto max-w-2xl text-center">
-            <h2 class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Up and running in days, not months</h2>
-            <p class="mt-4 text-lg text-slate-600">Getting your school onto KairoCORE is straightforward.</p>
+            <h2 class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">{{ marketing_content('steps_title') }}</h2>
+            <p class="mt-4 text-lg text-slate-600">{{ marketing_content('steps_subtitle') }}</p>
         </div>
         <div class="mt-12 grid gap-8 md:grid-cols-3">
             <div class="text-center">
@@ -140,11 +140,11 @@
 
 <section class="bg-[#1F2E43] py-16">
     <div class="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
-        <h2 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">Ready to see KairoCORE in action?</h2>
-        <p class="mt-4 text-lg text-slate-200">Book a personal demo tailored to your school — no obligation.</p>
+        <h2 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">{{ marketing_content('cta_title') }}</h2>
+        <p class="mt-4 text-lg text-slate-200">{{ marketing_content('cta_subtitle') }}</p>
         <div class="mt-8 flex flex-wrap justify-center gap-3">
-            <a href="{{ route('register') }}" class="inline-flex items-center gap-2 rounded-lg bg-[#EF5F4D] px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[#D94B39] transition-colors">Book a personal demo</a>
-            <a href="{{ route('marketing.features') }}" class="inline-flex items-center gap-2 rounded-lg border border-white/30 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10 transition-colors">Explore features</a>
+            <a href="{{ marketing_content('cta_primary_url') ?: route('register') }}" class="inline-flex items-center gap-2 rounded-lg bg-[#EF5F4D] px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[#D94B39] transition-colors">{{ marketing_content('cta_primary_label') }}</a>
+            <a href="{{ marketing_content('cta_secondary_url') ?: route('marketing.features') }}" class="inline-flex items-center gap-2 rounded-lg border border-white/30 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10 transition-colors">{{ marketing_content('cta_secondary_label') }}</a>
         </div>
     </div>
 </section>

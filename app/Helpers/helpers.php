@@ -207,6 +207,74 @@ if (! function_exists('platform_seo_description')) {
     }
 }
 
+if (! function_exists('marketing_content_defaults')) {
+    /**
+     * Shipped copy for the public marketing site. These values are the single
+     * source of truth for the "Website Content" editor in the platform panel:
+     * each field toggles between the stored PlatformSetting and the default.
+     *
+     * @return array<string, string>
+     */
+    function marketing_content_defaults(): array
+    {
+        return [
+            'announcement' => 'Cloud-based · Multi-currency · Built for Zimbabwean schools',
+            'hero_title' => 'Run your whole school from one platform',
+            'hero_subtitle' => 'KairoCORE brings admissions, academics, fees, attendance, HR, communication and more together in one secure, cloud-based system — so your team spends less time on paperwork and more time on students.',
+            'hero_image' => 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1600&q=80&auto=format&fit=crop',
+            'hero_primary_label' => 'Book a personal demo',
+            'hero_secondary_label' => 'Explore features',
+            'modules_title' => 'Everything your school runs on, in one place',
+            'modules_subtitle' => 'From the first admission enquiry to the final report card, every department works from the same system.',
+            'benefits_title' => 'Why schools choose KairoCORE',
+            'benefits_subtitle' => 'A single, dependable system that grows with your school.',
+            'steps_title' => 'Up and running in days, not months',
+            'steps_subtitle' => 'Getting your school onto KairoCORE is straightforward.',
+            'cta_title' => 'Ready to see KairoCORE in action?',
+            'cta_subtitle' => 'Book a personal demo tailored to your school — no obligation.',
+            'cta_primary_label' => 'Book a personal demo',
+            'cta_secondary_label' => 'Explore features',
+            'footer_tagline' => 'Cloud-based school management platform built for schools.',
+            'meta_title' => '',
+            'meta_description' => '',
+        ];
+    }
+}
+
+if (! function_exists('marketing_content')) {
+    /**
+     * Read an editable marketing-site value, falling back to the shipped copy.
+     * Values live in the PlatformSetting "marketing" group so no schema change
+     * is required; the whole group is read once per request.
+     */
+    function marketing_content(string $key, ?string $default = null): string
+    {
+        static $values = null;
+
+        if ($values === null) {
+            $values = [];
+
+            try {
+                foreach (PlatformSetting::where('group', 'marketing')->get() as $setting) {
+                    $decoded = json_decode((string) $setting->value, true);
+                    $value = (json_last_error() === JSON_ERROR_NONE) ? $decoded : $setting->value;
+                    $values[$setting->key] = is_array($value) ? (string) ($value[0] ?? '') : (string) $value;
+                }
+            } catch (Throwable $e) {
+                $values = [];
+            }
+        }
+
+        $value = $values[$key] ?? null;
+
+        if ($value === null || $value === '') {
+            $value = marketing_content_defaults()[$key] ?? $default;
+        }
+
+        return (string) ($value ?? '');
+    }
+}
+
 if (! function_exists('platform_og_image_url')) {
     /**
      * Social share (Open Graph / Twitter) image for the platform pages.
