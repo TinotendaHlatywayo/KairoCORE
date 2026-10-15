@@ -40,17 +40,35 @@ jobs:
             kairocore-app:latest \
             | gzip -1 > "kairocore-${IMAGE_TAG}.tar.gz"
 
+      
       - name: Configure SSH
         env:
           SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
           SSH_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        shell: bash
         run: |
           set -euo pipefail
+
           install -m 700 -d ~/.ssh
+
+          test -n "$SSH_PRIVATE_KEY" || {
+            echo "ERROR: VPS_SSH_PRIVATE_KEY is empty."
+            exit 1
+          }
+
+          test -n "$SSH_KNOWN_HOSTS" || {
+            echo "ERROR: VPS_KNOWN_HOSTS is empty."
+            exit 1
+          }
+
           printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
+
           printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
+
+          ssh-keygen -lf ~/.ssh/known_hosts
+
 
       - name: Transfer image to VPS
         env:
