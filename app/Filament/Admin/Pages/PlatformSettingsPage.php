@@ -136,8 +136,8 @@ class PlatformSettingsPage extends Page implements HasForms
                             ->schema([
                                 TextInput::make('branding_platform_name')->label(__('SaaS Platform Name'))->required(),
                                 ColorPicker::make('branding_default_primary')->label(__('Global Primary Color'))->default('#4f46e5'),
-                                FileUpload::make('branding_platform_logo')->label(__('Super Admin Console Logo'))->directory('platform/branding'),
-                                FileUpload::make('branding_platform_favicon')->label(__('Platform Favicon'))->directory('platform/branding'),
+                                FileUpload::make('branding_platform_logo')->label(__('Super Admin Console Logo'))->disk('public')->directory('platform/branding'),
+                                FileUpload::make('branding_platform_favicon')->label(__('Platform Favicon'))->disk('public')->directory('platform/branding'),
                             ])->columns(2),
 
                         Tab::make('Module Control & Flags')
@@ -323,13 +323,13 @@ class PlatformSettingsPage extends Page implements HasForms
                                                     ->label(__('Navbar logo (light background)'))
                                                     ->helperText(__('Leave blank for the bundled logo. Accepts a URL or an images/ path.'))
                                                     ->columnSpanFull(),
-                                                FileUpload::make('marketing_nav_logo_upload')
+                                                FileUpload::make('marketing_nav_logo_upload')->disk('public')
                                                     ->label(__('Upload navbar logo'))
                                                     ->image()
                                                     ->directory('platform/website')
                                                     ->maxSize(1024)
                                                     ->helperText(fn () => __('Current: :value', ['value' => $this->marketingDisplayValue('nav_logo', $this->marketingLocale) ?: __('(default bundled logo)')])),
-                                                FileUpload::make('marketing_footer_logo_upload')
+                                                FileUpload::make('marketing_footer_logo_upload')->disk('public')
                                                     ->label(__('Upload footer logo (dark background)'))
                                                     ->image()
                                                     ->directory('platform/website')
@@ -567,6 +567,7 @@ class PlatformSettingsPage extends Page implements HasForms
                                     ))
                                     ->columnSpanFull(),
                                 FileUpload::make('email_logo_path')
+                                    ->disk('public')
                                     ->label(__('Email logo'))
                                     ->image()
                                     ->imageEditor()
@@ -1031,7 +1032,7 @@ class PlatformSettingsPage extends Page implements HasForms
                 ->label($label)
                 ->helperText(__('Leave blank to keep the bundled default. Accepts a URL or an images/ path.'))
                 ->columnSpanFull(),
-            FileUpload::make('marketing_'.$key.'_upload')
+            FileUpload::make('marketing_'.$key.'_upload')->disk('public')
                 ->label(__('Upload replacement'))
                 ->image()
                 ->directory('platform/website')
