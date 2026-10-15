@@ -3,6 +3,8 @@
 namespace App\Filament\Admin\Resources\SchoolResource\Pages;
 
 use App\Filament\Admin\Resources\SchoolResource;
+use App\Filament\Admin\Widgets\PlatformInstitutionOverviewWidget;
+use App\Filament\Admin\Widgets\PlatformPeopleOverviewWidget;
 use App\Models\School;
 use Filament\Actions;
 use Filament\Notifications\Notification;
@@ -13,6 +15,13 @@ use Illuminate\Database\Eloquent\Builder;
 class ListSchools extends ListRecords
 {
     protected static string $resource = SchoolResource::class;
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            PlatformInstitutionOverviewWidget::class,
+        ]; // TEMP BISECT
+    }
 
     public function getHeading(): string
     {
