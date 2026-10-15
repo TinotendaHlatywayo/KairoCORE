@@ -319,22 +319,18 @@ class PlatformSettingsPage extends Page implements HasForms
                                                 TextInput::make('marketing_announcement')
                                                     ->label(__('Announcement bar (optional)'))
                                                     ->maxLength(160),
-                                                TextInput::make('marketing_nav_logo')
-                                                    ->label(__('Navbar logo (light background)'))
-                                                    ->helperText(__('Leave blank for the bundled logo. Accepts a URL or an images/ path.'))
-                                                    ->columnSpanFull(),
-                                                FileUpload::make('marketing_nav_logo_upload')->disk('public')
-                                                    ->label(__('Upload navbar logo'))
-                                                    ->image()
-                                                    ->directory('platform/website')
-                                                    ->maxSize(1024)
-                                                    ->helperText(fn () => __('Current: :value', ['value' => $this->marketingDisplayValue('nav_logo', $this->marketingLocale) ?: __('(default bundled logo)')])),
-                                                FileUpload::make('marketing_footer_logo_upload')->disk('public')
-                                                    ->label(__('Upload footer logo (dark background)'))
-                                                    ->image()
-                                                    ->directory('platform/website')
-                                                    ->maxSize(1024)
-                                                    ->helperText(fn () => __('Current: :value', ['value' => $this->marketingDisplayValue('footer_logo', $this->marketingLocale) ?: __('(default bundled white logo)')])),
+                                                 FileUpload::make('marketing_nav_logo')
+                                                     ->label(__('Navbar logo (light background)'))
+                                                     ->disk('public')
+                                                     ->directory('platform/website')
+                                                     ->image()
+                                                     ->columnSpanFull(),
+                                                 FileUpload::make('marketing_footer_logo')
+                                                     ->label(__('Footer logo (dark background)'))
+                                                     ->disk('public')
+                                                     ->directory('platform/website')
+                                                     ->image()
+                                                     ->columnSpanFull(),
 
                                                 $this->mText('hero_badge', __('Hero badge'), null, true),
                                                 $this->mText('hero_title', __('Hero title'), null, true),
@@ -446,12 +442,11 @@ class PlatformSettingsPage extends Page implements HasForms
                                                         TextInput::make('sub1')->label(__('Sub-feature 1')),
                                                         TextInput::make('sub2')->label(__('Sub-feature 2')),
                                                         TextInput::make('sub3')->label(__('Sub-feature 3')),
-                                                        TextInput::make('image')->label(__('Image URL or path'))->columnSpanFull(),
-                                                        FileUpload::make('image_upload')
-                                                            ->label(__('Upload image (replaces URL above)'))
-                                                            ->image()
+                                                        FileUpload::make('image')
+                                                            ->label(__('Feature image'))
+                                                            ->disk('public')
                                                             ->directory('platform/website')
-                                                            ->maxSize(2048)
+                                                            ->image()
                                                             ->columnSpanFull(),
                                                     ]),
 
@@ -605,9 +600,6 @@ class PlatformSettingsPage extends Page implements HasForms
         $this->form->fill($this->data);
 
         $state = $this->form->getState();
-
-        // A filled "upload" field replaces the value of its target field.
-        $this->foldMarketingUploads($state);
 
         $locale = (string) ($this->data['marketing_language'] ?? $this->marketingLocale ?? 'en');
         if (! in_array($locale, array_keys(supported_locales()), true)) {
@@ -982,62 +974,23 @@ class PlatformSettingsPage extends Page implements HasForms
      *
      * @param  array<string, mixed>  $data
      */
-    protected function foldMarketingUploads(array &$data): void
-    {
-        foreach ($data as $key => &$value) {
-            if (! is_array($value)) {
-                continue;
-            }
-
-            $this->foldMarketingUploads($value);
-
-            if (is_string($key) && str_ends_with($key, '_upload')) {
-                if (! empty($value)) {
-                    $data[substr($key, 0, -7)] = is_array($value) ? ($value[0] ?? null) : $value;
-                }
-                $value = null;
-            }
-        }
-
-        unset($value);
-    }
-
     /**
-     * Standard single-line website-content text field.
-     */
-    protected function mText(string $key, string $label, ?string $hint = null, bool $full = false): TextInput
-    {
-        $field = TextInput::make('marketing_'.$key)->label($label);
-
-        if ($hint !== null) {
-            $field->helperText($hint);
-        }
-
-        if ($full) {
-            $field->columnSpanFull();
-        }
-
-        return $field;
-    }
-
-    /**
-     * Website-content image field: URL/path input plus an upload to replace it.
+     * Website-content image field: direct file upload replacing text URL inputs.
      *
-     * @return array<int, TextInput|FileUpload>
+     * @return array<int, FileUpload>
      */
     protected function mImage(string $key, string $label): array
     {
         return [
-            TextInput::make('marketing_'.$key)
+            FileUpload::make('marketing_'.$key)
                 ->label($label)
-                ->helperText(__('Leave blank to keep the bundled default. Accepts a URL or an images/ path.'))
-                ->columnSpanFull(),
-            FileUpload::make('marketing_'.$key.'_upload')->disk('public')
-                ->label(__('Upload replacement'))
-                ->image()
+                ->disk('public')
                 ->directory('platform/website')
-                ->maxSize(2048)
-                ->helperText(fn () => __('Current: :value', ['value' => $this->marketingDisplayValue($key, $this->marketingLocale) ?: __('(bundled default)')])),
+                ->image()
+                ->imageEditor()
+                ->maxSize(4096)
+                ->helperText(__('Upload an image from your computer or device.'))
+                ->columnSpanFull(),
         ];
     }
 }
