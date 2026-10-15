@@ -975,6 +975,24 @@ class PlatformSettingsPage extends Page implements HasForms
      * @param  array<string, mixed>  $data
      */
     /**
+     * Standard single-line website-content text field.
+     */
+    protected function mText(string $key, string $label, ?string $hint = null, bool $full = false): TextInput
+    {
+        $field = TextInput::make('marketing_'.$key)->label($label);
+
+        if ($hint !== null) {
+            $field->helperText($hint);
+        }
+
+        if ($full) {
+            $field->columnSpanFull();
+        }
+
+        return $field;
+    }
+
+    /**
      * Website-content image field: direct file upload replacing text URL inputs.
      *
      * @return array<int, FileUpload>
