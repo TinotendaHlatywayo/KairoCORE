@@ -95,7 +95,7 @@ class AdminPanelProvider extends PanelProvider
             // Private authenticated panel: keep every page out of search indexes.
             ->renderHook(
                 PanelsRenderHook::HEAD_START,
-                fn () => '<meta name="robots" content="noindex, nofollow">'
+                fn () => '<meta name="robots" content="noindex, nofollow"><meta name="csrf-token" content="'.csrf_token().'">'
             )
             ->pages([
                 Dashboard::class,
