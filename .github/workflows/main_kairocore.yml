@@ -43,27 +43,16 @@ jobs:
       - name: Configure SSH
         env:
           SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
-          SSH_KEY_PASSPHRASE: ${{ secrets.VPS_SSH_KEY_PASSPHRASE }}
           SSH_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
         shell: bash
         run: |
           set -euo pipefail
-
           install -m 700 -d ~/.ssh
-
-          test -n "$SSH_PRIVATE_KEY"
-          test -n "$SSH_KEY_PASSPHRASE"
-          test -n "$SSH_KNOWN_HOSTS"
-
           printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-
           printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
-
-          eval "$(ssh-agent -s)"
-          printf '%s\n' "$SSH_KEY_PASSPHRASE" |
-            ssh-add ~/.ssh/deploy_key
+          ssh-keygen -y -f ~/.ssh/deploy_key > /dev/null
 
       - name: Transfer image to VPS
         env:
