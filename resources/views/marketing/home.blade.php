@@ -79,7 +79,17 @@
         @for($i = 0; $i < 2; $i++)
         <div class="flex shrink-0 items-center gap-14">
             @foreach (marketing_merged_list('home_stats') as $stat)
-            <div class="flex items-center gap-3"><span class="text-2xl font-extrabold text-[#1F2E43]" data-countup="{{ $stat['value'] ?? '0' }}" data-suffix="{{ $stat['suffix'] ?? '' }}">0</span><span class="text-sm font-medium text-slate-500">{{ $stat['label'] ?? '' }}</span></div>
+            <div class="flex items-center gap-3">
+                @if(!empty($stat['icon']))
+                <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-[#1F2E43]/8 text-[#1F2E43]">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4.5 w-4.5"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $stat['icon'] }}"/></svg>
+                </span>
+                @endif
+                <div class="flex items-baseline gap-1.5">
+                    <span class="text-2xl font-extrabold text-[#1F2E43] dark:text-white" data-countup="{{ $stat['value'] ?? '0' }}" data-suffix="{{ $stat['suffix'] ?? '' }}">0</span>
+                    <span class="text-sm font-medium text-slate-500 dark:text-slate-400">{{ $stat['label'] ?? '' }}</span>
+                </div>
+            </div>
             <div class="h-1 w-1 rounded-full bg-slate-300"></div>
             @endforeach
         </div>
