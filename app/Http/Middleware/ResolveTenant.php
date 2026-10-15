@@ -66,6 +66,14 @@ class ResolveTenant
         $baseHost = parse_url($baseDomain, PHP_URL_HOST) ?? $baseDomain;
 
         if ($host === $baseHost) {
+            // Platform super-admin console routes must never bind a tenant:
+            // IP-based school resolution would otherwise hijack /platform/*
+            // requests (and their Livewire updates), corrupting the session
+            // context and CSRF handling.
+            if ($request->is('platform') || $request->is('platform/*')) {
+                return $next($request);
+            }
+
             // On the shared platform domain a school can still be reached by
             // an explicit IP mapping (a Domain row whose "domain" is the
             // requester's IP). Useful when subdomains are unavailable, e.g.
