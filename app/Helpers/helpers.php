@@ -313,7 +313,7 @@ if (! function_exists('marketing_content_defaults')) {
             'hero_badge' => __('Built for schools globally with multi-language support'),
             'hero_title' => __('Run your whole school from one platform'),
             'hero_subtitle' => __('KairoCORE brings admissions, academics, fees, attendance, HR, communication and more together in one secure, cloud-based system, so your team spends less time on paperwork and more time on students.'),
-            'hero_image' => 'https://images.pexels.com/photos/19348206/pexels-photo-19348206.jpeg?auto=compress&cs=tinysrgb&w=1600',
+            'hero_image' => 'https://images.pexels.com/photos/15984013/pexels-photo-15984013.jpeg?auto=compress&cs=tinysrgb&w=1600',
             'hero_primary_label' => __('Book a personal demo'),
             'hero_primary_url' => '',
             'hero_secondary_label' => __('Explore features'),
