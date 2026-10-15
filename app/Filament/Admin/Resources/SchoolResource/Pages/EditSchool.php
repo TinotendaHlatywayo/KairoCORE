@@ -3,6 +3,8 @@
 namespace App\Filament\Admin\Resources\SchoolResource\Pages;
 
 use App\Filament\Admin\Resources\SchoolResource;
+use App\Filament\Admin\Widgets\SchoolPeopleStatisticsWidget;
+use App\Filament\Admin\Widgets\SchoolRoleStatisticsWidget;
 use App\Services\SchoolApprovalService;
 use Filament\Actions;
 use Filament\Notifications\Notification;
@@ -13,6 +15,14 @@ use Modules\SaaS\Services\SubscriptionProvisioner;
 class EditSchool extends EditRecord
 {
     protected static string $resource = SchoolResource::class;
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            SchoolPeopleStatisticsWidget::class,
+            SchoolRoleStatisticsWidget::class,
+        ];
+    }
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
