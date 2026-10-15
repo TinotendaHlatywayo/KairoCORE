@@ -295,7 +295,7 @@
                                  x-transition:leave="transition ease-in duration-150"
                                  x-transition:leave-start="opacity-100 translate-y-0 scale-100"
                                  x-transition:leave-end="opacity-0 translate-y-2 scale-95"
-                                 class="absolute left-0 top-full mt-2 w-[52rem] max-w-[94vw] rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-[#0F172A]/95 shadow-2xl backdrop-blur-xl ring-1 ring-black/5 z-50 overflow-hidden">
+                                 class="absolute left-0 top-full mt-2 w-[58rem] max-w-[96vw] rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/98 dark:bg-[#0F172A]/98 shadow-2xl backdrop-blur-xl ring-1 ring-black/5 z-50 overflow-hidden">
 
                                 <div class="p-6">
                                     <div class="flex items-center justify-between pb-4 mb-4 border-b border-slate-100 dark:border-slate-800/80">
@@ -317,7 +317,7 @@
                                             </div>
                                             <div class="flex-1 min-w-0">
                                                 <div class="flex items-center gap-1.5">
-                                                    <p class="text-sm font-bold text-slate-900 dark:text-white group-hover:text-[#D94B39] dark:group-hover:text-[#EF5F4D] transition-colors">{{ __('Core') }}</p>
+                                                    <p class="text-sm font-bold text-slate-900 dark:text-white transition-colors">{{ __('Core') }}</p>
                                                     <svg class="arrow-hint h-3.5 w-3.5 text-[#D94B39] dark:text-[#EF5F4D]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
                                                 </div>
                                                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">{{ __('Admissions, Students, Academics') }}</p>
@@ -331,7 +331,7 @@
                                             </div>
                                             <div class="flex-1 min-w-0">
                                                 <div class="flex items-center gap-1.5">
-                                                    <p class="text-sm font-bold text-slate-900 dark:text-white group-hover:text-[#D94B39] dark:group-hover:text-[#EF5F4D] transition-colors">{{ __('Finance & Fees') }}</p>
+                                                    <p class="text-sm font-bold text-slate-900 dark:text-white transition-colors">{{ __('Finance & Fees') }}</p>
                                                     <svg class="arrow-hint h-3.5 w-3.5 text-[#D94B39] dark:text-[#EF5F4D]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
                                                 </div>
                                                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">{{ __('Fees, Billing, Invoicing, Accounting') }}</p>
@@ -345,7 +345,7 @@
                                             </div>
                                             <div class="flex-1 min-w-0">
                                                 <div class="flex items-center gap-1.5">
-                                                    <p class="text-sm font-bold text-slate-900 dark:text-white group-hover:text-[#D94B39] dark:group-hover:text-[#EF5F4D] transition-colors">{{ __('People') }}</p>
+                                                    <p class="text-sm font-bold text-slate-900 dark:text-white transition-colors">{{ __('People') }}</p>
                                                     <svg class="arrow-hint h-3.5 w-3.5 text-[#D94B39] dark:text-[#EF5F4D]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
                                                 </div>
                                                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">{{ __('HR, Payroll, Staff') }}</p>
@@ -359,7 +359,7 @@
                                             </div>
                                             <div class="flex-1 min-w-0">
                                                 <div class="flex items-center gap-1.5">
-                                                    <p class="text-sm font-bold text-slate-900 dark:text-white group-hover:text-[#D94B39] dark:group-hover:text-[#EF5F4D] transition-colors">{{ __('Health & Wellness') }}</p>
+                                                    <p class="text-sm font-bold text-slate-900 dark:text-white transition-colors">{{ __('Health & Wellness') }}</p>
                                                     <svg class="arrow-hint h-3.5 w-3.5 text-[#D94B39] dark:text-[#EF5F4D]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
                                                 </div>
                                                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">{{ __('Clinic, Records, Follow-ups') }}</p>
@@ -373,7 +373,7 @@
                                             </div>
                                             <div class="flex-1 min-w-0">
                                                 <div class="flex items-center gap-1.5">
-                                                    <p class="text-sm font-bold text-slate-900 dark:text-white group-hover:text-[#D94B39] dark:group-hover:text-[#EF5F4D] transition-colors">{{ __('Inventory & Procurement') }}</p>
+                                                    <p class="text-sm font-bold text-slate-900 dark:text-white transition-colors">{{ __('Inventory & Procurement') }}</p>
                                                     <svg class="arrow-hint h-3.5 w-3.5 text-[#D94B39] dark:text-[#EF5F4D]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
                                                 </div>
                                                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">{{ __('Stock, Requisitions, Assets') }}</p>
@@ -387,7 +387,7 @@
                                             </div>
                                             <div class="flex-1 min-w-0">
                                                 <div class="flex items-center gap-1.5">
-                                                    <p class="text-sm font-bold text-slate-900 dark:text-white group-hover:text-[#D94B39] dark:group-hover:text-[#EF5F4D] transition-colors">{{ __('Communications') }}</p>
+                                                    <p class="text-sm font-bold text-slate-900 dark:text-white transition-colors">{{ __('Communications') }}</p>
                                                     <svg class="arrow-hint h-3.5 w-3.5 text-[#D94B39] dark:text-[#EF5F4D]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
                                                 </div>
                                                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">{{ __('Announcements, Email or WhatsApp Alerts') }}</p>
@@ -401,7 +401,7 @@
                                             </div>
                                             <div class="flex-1 min-w-0">
                                                 <div class="flex items-center gap-1.5">
-                                                    <p class="text-sm font-bold text-slate-900 dark:text-white group-hover:text-[#D94B39] dark:group-hover:text-[#EF5F4D] transition-colors">{{ __('Academics & Exams') }}</p>
+                                                    <p class="text-sm font-bold text-slate-900 dark:text-white transition-colors">{{ __('Academics & Exams') }}</p>
                                                     <svg class="arrow-hint h-3.5 w-3.5 text-[#D94B39] dark:text-[#EF5F4D]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
                                                 </div>
                                                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">{{ __('Timetables, Results, Reports') }}</p>

@@ -446,26 +446,6 @@
                                       class="contact-input resize-y min-h-[120px]"
                                       placeholder="{{ marketing_content('contact_form_placeholder_message') }}">{{ old('message') }}</textarea>
 
-                            {{-- Live User Input Validation Dashboard: Words, Letters, Digits, Special Characters --}}
-                            <div class="mt-2.5 flex flex-wrap items-center gap-1.5 sm:gap-2 pt-1 border-t border-slate-100 dark:border-slate-800/80">
-                                <span class="metric-chip" id="chip-words">
-                                    <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12"/></svg>
-                                    <span id="chip-words-text">0 Words (min 3)</span>
-                                </span>
-                                <span class="metric-chip" id="chip-letters">
-                                    <span>Aa</span>
-                                    <span id="chip-letters-text">0 Letters</span>
-                                </span>
-                                <span class="metric-chip" id="chip-digits">
-                                    <span>#</span>
-                                    <span id="chip-digits-text">0 Digits</span>
-                                </span>
-                                <span class="metric-chip" id="chip-specials">
-                                    <span>@</span>
-                                    <span id="chip-specials-text">0 Symbols</span>
-                                </span>
-                            </div>
-
                             {{-- Custom inline validation message --}}
                             <div class="field-hint-bubble" id="message-hint">
                                 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
@@ -492,7 +472,7 @@
                 {{-- Real WhatsApp Direct Channel --}}
                 @if($contactWhatsapp)
                 <a href="https://wa.me/{{ ltrim($contactWhatsapp, '+') }}" target="_blank" rel="noopener" class="channel-card group">
-                    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-600 group-hover:text-white transition-all shadow-sm">
+                    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 transition-all shadow-sm hover:shadow-emerald-200">
                         {{-- Real WhatsApp Icon --}}
                         <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
@@ -510,7 +490,7 @@
                 {{-- Real Mail Direct Channel --}}
                 @if($contactEmail)
                 <a href="mailto:{{ $contactEmail }}" class="channel-card group">
-                    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 dark:bg-blue-950/50 text-[#1F2E43] dark:text-blue-400 group-hover:bg-[#1F2E43] group-hover:text-white transition-all shadow-sm">
+                    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 dark:bg-blue-950/50 text-[#1F2E43] dark:text-blue-400 transition-all shadow-sm hover:shadow-slate-300">
                         {{-- Real Mail Icon --}}
                         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/>
@@ -553,7 +533,7 @@
                                     </svg>
                                 </span>
                                 <span class="mt-2 block text-xs font-bold text-slate-900 dark:text-white">Facebook</span>
-                                <span class="mt-1 inline-flex items-center gap-1 rounded-full bg-[#1877F2]/10 dark:bg-[#1877F2]/20 px-2 py-0.5 text-[10px] font-bold text-[#1877F2] dark:text-[#42A5F5] group-hover:bg-[#1877F2] group-hover:text-white transition-colors">
+                                <span class="mt-1 inline-flex items-center gap-1 rounded-full bg-[#1877F2]/10 dark:bg-[#1877F2]/20 px-2 py-0.5 text-[10px] font-bold text-[#1877F2] dark:text-[#42A5F5] transition-colors">
                                     {{ __('Follow') }}
                                 </span>
                             </div>
@@ -564,7 +544,7 @@
                         @if($socialInstagram)
                         <a href="{{ $socialInstagram }}" target="_blank" rel="noopener" class="glow-card-wrap glow-instagram group">
                             <div class="glow-card-inner">
-                                <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-[#FD1D1D]/15 to-[#833AB4]/15 text-[#E1306C] group-hover:bg-gradient-to-tr group-hover:from-[#FD1D1D] group-hover:to-[#833AB4] group-hover:text-white transition-all duration-300 shadow-sm">
+                                <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-[#FD1D1D]/15 to-[#833AB4]/15 text-[#E1306C] transition-all duration-300 shadow-sm">
                                     {{-- Real Instagram SVG --}}
                                     <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
                                         <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
@@ -582,7 +562,7 @@
                         @if($socialTiktok)
                         <a href="{{ $socialTiktok }}" target="_blank" rel="noopener" class="glow-card-wrap glow-tiktok group">
                             <div class="glow-card-inner">
-                                <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-black/10 dark:bg-white/10 text-slate-900 dark:text-white group-hover:bg-slate-900 group-hover:text-[#25F4EE] transition-all duration-300 shadow-sm">
+                                <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-black/10 dark:bg-white/10 text-slate-900 dark:text-white transition-colors transition-all duration-300 shadow-sm">
                                     {{-- Real TikTok SVG --}}
                                     <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
                                         <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V7.91a8.16 8.16 0 004.76 1.52V5.98a4.83 4.83 0 01-1-.29z"/>
@@ -602,7 +582,7 @@
                 {{-- Trust Banner Image --}}
                 <div class="reveal reveal-d4 overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0F172A] shadow-sm">
                     <div class="aspect-[16/9] w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
-                        <img src="{{ marketing_image('contact_image') }}" alt="{{ __('African professionals collaborating around a laptop') }}" class="h-full w-full object-cover transition-transform duration-500 hover:scale-105" loading="lazy">
+                        <img src="{{ marketing_image('contact_image') }}" alt="{{ __('Diverse team of professionals collaborating around a laptop in a modern office') }}" class="h-full w-full object-cover transition-transform duration-500 hover:scale-105" loading="lazy">
                     </div>
                     <div class="p-5">
                         <p class="text-sm font-bold text-slate-900 dark:text-white">{{ marketing_content('contact_card_title') }}</p>
@@ -628,14 +608,6 @@
     var nameCounter = document.getElementById('name-counter');
     var messageCharLimit = document.getElementById('message-char-limit');
 
-    var chipWords = document.getElementById('chip-words');
-    var chipWordsText = document.getElementById('chip-words-text');
-    var chipLetters = document.getElementById('chip-letters');
-    var chipLettersText = document.getElementById('chip-letters-text');
-    var chipDigits = document.getElementById('chip-digits');
-    var chipDigitsText = document.getElementById('chip-digits-text');
-    var chipSpecials = document.getElementById('chip-specials');
-    var chipSpecialsText = document.getElementById('chip-specials-text');
 
     var securityAlert = document.getElementById('security-alert-box');
     var securityAlertText = document.getElementById('security-alert-text');
@@ -747,36 +719,8 @@
         var charCount = val.length;
         messageCharLimit.textContent = charCount + ' / 2,000 chars';
 
-        // Count metrics: Words, Letters, Digits, Special Characters
-        var words = val.length ? val.split(/\s+/).filter(Boolean) : [];
-        var wordCount = words.length;
-
-        var lettersMatch = val.match(/\p{L}/gu) || [];
-        var lettersCount = lettersMatch.length;
-
-        var digitsMatch = val.match(/[0-9]/g) || [];
-        var digitsCount = digitsMatch.length;
-
-        var specialsMatch = val.match(/[^\p{L}0-9\s]/gu) || [];
-        var specialsCount = specialsMatch.length;
-
-        // Update metric chips UI
-        chipWordsText.textContent = wordCount + ' ' + (wordCount === 1 ? 'Word' : 'Words') + ' (min 3)';
-        chipLettersText.textContent = lettersCount + ' ' + (lettersCount === 1 ? 'Letter' : 'Letters');
-        chipDigitsText.textContent = digitsCount + ' ' + (digitsCount === 1 ? 'Digit' : 'Digits');
-        chipSpecialsText.textContent = specialsCount + ' ' + (specialsCount === 1 ? 'Symbol' : 'Symbols');
-
-        if (wordCount >= 3) {
-            chipWords.className = 'metric-chip valid';
-        } else if (wordCount > 0) {
-            chipWords.className = 'metric-chip warning';
-        } else {
-            chipWords.className = 'metric-chip';
-        }
-
-        chipLetters.className = lettersCount > 0 ? 'metric-chip valid' : 'metric-chip';
-        chipDigits.className = digitsCount > 0 ? 'metric-chip valid' : 'metric-chip';
-        chipSpecials.className = specialsCount > 15 ? 'metric-chip warning' : (specialsCount > 0 ? 'metric-chip valid' : 'metric-chip');
+        // Word count for validation
+        var wordCount = val.length ? val.split(/\s+/).filter(Boolean).length : 0;
 
         // Check for script attacks
         if (detectScriptAttack(val)) {
