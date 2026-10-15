@@ -1,19 +1,53 @@
-# Environment files and secrets
+# Secrets / local state — never bake into the image
 .env
 .env.*
-!.env.example
+!.env.production.example
+*.pem
+auth.json
 
-# Git metadata and CI configuration
+# VCS / CI
 .git
+.gitignore
+.gitattributes
 .github
+.idea
+.vscode
+.editorconfig
 
 # Deployment archives and backups
-deploy/incoming/
+deploy
 docker-compose.yml.backup-*
 *.tar
 *.tar.gz
 
-# Local development and generated files
+# Dependencies and build output are produced inside the image
+vendor
+node_modules
+public/build
+public/hot
+public/storage
+
+# Runtime data
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+bootstrap/cache/*
+
+# Not needed in production
+tests
+phpunit.xml
+*.docx
+*.zip
+*.md
+System_documentation.txt
+.~lock.*
+docker-compose*.yml
+Dockerfile*
+railway.json
+start.sh
+start_school.sh
+.htaccess
 .DS_Store
 Thumbs.db
 *.log
