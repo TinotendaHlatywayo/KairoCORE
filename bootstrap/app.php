@@ -31,6 +31,16 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // The app sits behind Nginx Proxy Manager, which terminates TLS and
+        // forwards X-Forwarded-Proto/Host. Without this Laravel thinks every
+        // request is plain http and generates http:// asset/redirect URLs
+        // (mixed content, broken Livewire/Filament). Set TRUSTED_PROXIES to
+        // '*' or a comma-separated list of proxy IPs/CIDRs.
+        $trusted = (string) env('TRUSTED_PROXIES', '*');
+        $middleware->trustProxies(
+            at: $trusted === '*' ? '*' : array_values(array_filter(array_map('trim', explode(',', $trusted)))),
+        );
+
         // Exclude only external service webhooks that cannot provide browser CSRF tokens
         $middleware->validateCsrfTokens(except: [
             'saas/paynow/webhook',
