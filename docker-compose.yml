@@ -1,133 +1,127 @@
+# =============================================================================
+# Kairo CORE — Kuber VPS stack
+#
+#   Nginx Proxy Manager (kuber-npm) ──► kairocore-web:80   (shared proxy network)
+#                                          │
+#                                          └─► kairocore-db:3306  (private network)
+#
+# NOTHING is published on the host: no `ports:` anywhere. The database lives on
+# an `internal: true` network, so it can't be reached from outside or from other
+# stacks, and has no internet access. Only `kairocore-web` joins the shared
+# NPM network.
+# =============================================================================
+name: kairocore
+
+x-app: &app
+  build:
+    context: .
+    dockerfile: Dockerfile
+  image: kairocore-app:latest
+  restart: unless-stopped
+  env_file: .env
+  environment:
+    # Force container-correct values regardless of what is in .env
+    APP_ENV: production
+    APP_DEBUG: "false"
+    LOG_CHANNEL: stderr
+    DB_CONNECTION: mysql
+    DB_HOST: kairocore-db
+    DB_PORT: "3306"
+  volumes:
+    - kairo_storage:/var/www/html/storage
+
 services:
 
-  # ============================================================
-  # Laravel Application
-  # PHP 8.3 + Apache
-  # ============================================================
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-
-    container_name: schoolcore-app
-
-    restart: unless-stopped
-
-    environment:
-      APP_NAME: ${APP_NAME}
-      APP_ENV: ${APP_ENV:-production}
-      APP_DEBUG: ${APP_DEBUG:-false}
-      APP_URL: ${APP_URL}
-
-      LOG_CHANNEL: ${LOG_CHANNEL:-stderr}
-      LOG_LEVEL: ${LOG_LEVEL:-warning}
-
-      DB_CONNECTION: mysql
-      DB_HOST: db
-      DB_PORT: 3306
-      DB_DATABASE: ${DB_DATABASE}
-      DB_USERNAME: ${DB_USERNAME}
-      DB_PASSWORD: ${DB_PASSWORD}
-
+  # ── Web (Apache + PHP) ─────────────────────────────────────────────────────
+  kairocore-web:
+    <<: *app
+    container_name: kairocore-web
     depends_on:
-      db:
+      kairocore-db:
         condition: service_healthy
-
-    volumes:
-      - laravel_storage:/var/www/html/storage
-
     networks:
-      - client_internal
-      - kuber-proxy
-
-    # Resource protection
+      - internal      # talks to the database
+      - proxy         # reachable by NPM (also gives outbound internet)
     mem_limit: 1g
     cpus: "1.0"
     pids_limit: 200
-
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "curl -f http://localhost/up || exit 1"
-        ]
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1/up >/dev/null || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s
+      start_period: 300s   # first boot runs ~120 migrations before Apache starts
 
-
-  # ============================================================
-  # MySQL Database
-  # ============================================================
-  db:
-    image: mysql:8.0
-
-    container_name: schoolcore-db
-
-    restart: unless-stopped
-
-    environment:
-      MYSQL_DATABASE: ${DB_DATABASE}
-
-      MYSQL_USER: ${DB_USERNAME}
-
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-
-    volumes:
-      - dbdata:/var/lib/mysql
-
+  # ── Queue worker (QUEUE_CONNECTION=database) ───────────────────────────────
+  # Reports, emails, backups and school registration run as queued jobs.
+  kairocore-queue:
+    <<: *app
+    container_name: kairocore-queue
+    command: ["php", "artisan", "queue:work", "--sleep=3", "--tries=3", "--timeout=300", "--max-time=3600"]
+    depends_on:
+      kairocore-web:
+        condition: service_healthy     # web runs migrations first
     networks:
-      - client_internal
+      - internal
+      - egress        # outbound only (SMTP, Paynow); not on the shared proxy network
+    mem_limit: 512m
+    cpus: "0.5"
+    pids_limit: 100
 
-    # Database resource protection
-    mem_limit: 1.5g
+  # ── Scheduler (routes/console.php: reminders, billing, trial expiry) ───────
+  kairocore-scheduler:
+    <<: *app
+    container_name: kairocore-scheduler
+    command: ["php", "artisan", "schedule:work"]
+    depends_on:
+      kairocore-web:
+        condition: service_healthy
+    networks:
+      - internal
+      - egress
+    mem_limit: 256m
+    cpus: "0.25"
+    pids_limit: 100
+
+  # ── MySQL ──────────────────────────────────────────────────────────────────
+  kairocore-db:
+    image: ${MYSQL_IMAGE:-mysql:8.4}
+    container_name: kairocore-db
+    restart: unless-stopped
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:?set DB_DATABASE in .env}
+      MYSQL_USER: ${DB_USERNAME:?set DB_USERNAME in .env (must NOT be root)}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD in .env}
+    volumes:
+      - kairo_dbdata:/var/lib/mysql
+    networks:
+      - internal      # ONLY the private network
+    mem_limit: 1536m
     cpus: "1.0"
     pids_limit: 200
-
     healthcheck:
-      test:
-        [
-          "CMD",
-          "mysqladmin",
-          "ping",
-          "-h",
-          "localhost",
-          "-u${DB_USERNAME}",
-          "-p${DB_PASSWORD}"
-        ]
-
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
       interval: 10s
       timeout: 5s
       retries: 10
-      start_period: 30s
-
-
-# ============================================================
-# Persistent Storage
-# ============================================================
+      start_period: 40s
 
 volumes:
-
-  dbdata:
-    driver: local
-
-  laravel_storage:
-    driver: local
-
-
-# ============================================================
-# Networks
-# ============================================================
+  kairo_dbdata:
+  kairo_storage:
 
 networks:
+  # Private, no route to the internet or to other stacks
+  internal:
+    internal: true
 
-  # Private client network
-  client_internal:
-    driver: bridge
+  # Outbound-only network for the worker/scheduler (not shared with anything)
+  egress:
 
-  # Existing Kuber reverse proxy network
-  kuber-proxy:
+  # Existing Nginx Proxy Manager network. Confirm the real name on the VPS:
+  #   docker inspect kuber-npm --format '{{json .NetworkSettings.Networks}}'
+  proxy:
     external: true
+    name: ${PROXY_NETWORK:-kuber-proxy}

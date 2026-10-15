@@ -79,7 +79,7 @@ jobs:
           ssh -i ~/.ssh/deploy_key \
             -o BatchMode=yes \
             "kuberdeploy@${VPS_HOST}" \
-            "bash /opt/kuber/clients/KairoCORE/deploy/deploy.sh '${IMAGE_TAG}'"
+            "bash /opt/kuber/clients/KairoCORE/deploy/deploy.sh '${IMAGE_TAG}' '/opt/kuber/clients/KairoCORE/deploy/incoming/kairocore-${IMAGE_TAG}.tar.gz'"
 
       - name: Clean up SSH credentials
         if: always()
