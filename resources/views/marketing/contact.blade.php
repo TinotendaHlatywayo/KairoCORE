@@ -526,7 +526,7 @@
                         @if($socialFacebook)
                         <a href="{{ $socialFacebook }}" target="_blank" rel="noopener" class="glow-card-wrap glow-facebook group">
                             <div class="glow-card-inner">
-                                <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1877F2]/10 text-[#1877F2] group-hover:bg-[#1877F2] group-hover:text-white transition-all duration-300 shadow-sm">
+                                <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1877F2]/10 text-[#1877F2] transition-transform duration-300 group-hover:scale-110 shadow-sm">
                                     {{-- Real Facebook SVG --}}
                                     <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
                                         <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
@@ -551,7 +551,7 @@
                                     </svg>
                                 </span>
                                 <span class="mt-2 block text-xs font-bold text-slate-900 dark:text-white">Instagram</span>
-                                <span class="mt-1 inline-flex items-center gap-1 rounded-full bg-[#E1306C]/10 dark:bg-[#E1306C]/20 px-2 py-0.5 text-[10px] font-bold text-[#E1306C] group-hover:bg-[#E1306C] group-hover:text-white transition-colors">
+                                <span class="mt-1 inline-flex items-center gap-1 rounded-full bg-[#E1306C]/10 px-2 py-0.5 text-[10px] font-bold text-[#E1306C] transition-transform duration-300 group-hover:scale-105">
                                     {{ __('Follow') }}
                                 </span>
                             </div>
@@ -569,7 +569,7 @@
                                     </svg>
                                 </span>
                                 <span class="mt-2 block text-xs font-bold text-slate-900 dark:text-white">TikTok</span>
-                                <span class="mt-1 inline-flex items-center gap-1 rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[10px] font-bold text-slate-900 dark:text-white group-hover:bg-[#FE2C55] group-hover:text-white transition-colors">
+                                <span class="mt-1 inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-900 transition-transform duration-300 group-hover:scale-105">
                                     {{ __('Follow') }}
                                 </span>
                             </div>
