@@ -596,6 +596,11 @@ class PlatformSettingsPage extends Page implements HasForms
 
     public function save(): void
     {
+        // Defensive normalisation: Filament FileUpload state must be an array,
+        // but legacy/persisted string paths can leak through and crash validation.
+        $this->normaliseFileUploadState($this->data ?? []);
+        $this->form->fill($this->data);
+
         $state = $this->form->getState();
 
         // A filled "upload" field replaces the value of its target field.
@@ -936,6 +941,36 @@ class PlatformSettingsPage extends Page implements HasForms
         unset($v);
 
         return $data;
+    }
+
+    /**
+     * Wrap any FileUpload state that leaked through as a string into an array.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    protected function normaliseFileUploadState(array &$data): void
+    {
+        foreach ($data as $key => &$value) {
+            if (is_array($value)) {
+                $this->normaliseFileUploadState($value);
+                continue;
+            }
+
+            if (is_string($value) && (str_ends_with((string) $key, '_upload') || in_array((string) $key, ['branding_platform_logo', 'branding_platform_favicon', 'email_logo_path'], true))) {
+                $value = $value === '' ? null : [$value];
+            }
+        }
+        unset($value);
+    }
+
+    public function getFormUploadedFiles(string $statePath): ?array
+    {
+        if (isset($this->data[$statePath]) && is_string($this->data[$statePath])) {
+            $this->data[$statePath] = $this->data[$statePath] === '' ? null : [$this->data[$statePath]];
+            $this->form->fill($this->data);
+        }
+
+        return parent::getFormUploadedFiles($statePath);
     }
 
     /**
