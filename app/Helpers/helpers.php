@@ -267,6 +267,7 @@ if (! function_exists('marketing_live_stats')) {
                 'schools' => (string) DB::table('schools')->whereNull('deleted_at')->count(),
                 'students' => (string) DB::table('students')->whereNull('deleted_at')->count(),
                 'staff' => (string) $staff->count(),
+                'users' => (string) DB::table('users')->whereNull('deleted_at')->count(),
                 'languages' => (string) count(supported_locales()),
                 'modules' => (string) count(config('modules', [])),
             ];
@@ -275,6 +276,7 @@ if (! function_exists('marketing_live_stats')) {
                 'schools' => '250',
                 'students' => '45000',
                 'staff' => '3200',
+                'users' => '48200',
                 'languages' => '6',
                 'modules' => '19',
             ];
@@ -404,11 +406,11 @@ if (! function_exists('marketing_list_defaults')) {
 
         return [
             'home_stats' => [
-                ['value' => marketing_live_stats()['schools'], 'suffix' => '', 'label' => __('Schools onboard')],
-                ['value' => marketing_live_stats()['students'], 'suffix' => '', 'label' => __('Students managed')],
-                ['value' => marketing_live_stats()['staff'], 'suffix' => '', 'label' => __('Staff on platform')],
-                ['value' => '99', 'suffix' => '%', 'label' => __('Uptime')],
-                ['value' => marketing_live_stats()['languages'], 'suffix' => '', 'label' => __('Languages')],
+                ['value' => marketing_live_stats()['schools'], 'suffix' => '', 'label' => __('Schools onboard'), 'icon' => 'M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332c0-.458-.186-.895-.515-1.22a1.65 1.65 0 0 0-1.22-.515H8.265c-.458 0-.895.186-1.22.515-.33.325-.515.762-.515 1.22V21'],
+                ['value' => marketing_live_stats()['students'], 'suffix' => '', 'label' => __('Students managed'), 'icon' => 'M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25'],
+                ['value' => marketing_live_stats()['users'], 'suffix' => '', 'label' => __('Total users'), 'icon' => 'M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0z'],
+                ['value' => '99', 'suffix' => '%', 'label' => __('Uptime'), 'icon' => 'M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z'],
+                ['value' => marketing_live_stats()['languages'], 'suffix' => '', 'label' => __('Languages'), 'icon' => 'M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418'],
             ],
             'home_modules' => [
                 ['name' => __('Admissions'), 'desc' => __('Applications, enrolment and complete student records.'), 'icon' => 'M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z'],
