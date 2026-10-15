@@ -106,28 +106,7 @@
         border-color: rgba(239, 68, 68, 0.3);
     }
 
-    /* Security Alert Banner */
-    .security-alert-box {
-        display: none;
-        align-items: flex-start;
-        gap: 0.75rem;
-        padding: 0.875rem 1rem;
-        border-radius: 0.875rem;
-        background: #FEF2F2;
-        border: 1.5px solid #EF4444;
-        color: #991B1B;
-        font-size: 0.775rem;
-        line-height: 1.25rem;
-        animation: fadeInShake 0.3s ease both;
-    }
-    .security-alert-box.active {
-        display: flex;
-    }
-    html.dark .security-alert-box {
-        background: rgba(239, 68, 68, 0.12);
-        border-color: #F87171;
-        color: #FCA5A5;
-    }
+
 
     /* ==========================================================================
        Glowing Line Social Follow Cards
@@ -329,17 +308,6 @@
                         <div>
                             <h3 class="text-xl font-bold text-slate-900 dark:text-white">{{ marketing_content('contact_form_title') }}</h3>
                             <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ __('We respond to all school inquiries within 24 hours.') }}</p>
-                        </div>
-                    </div>
-
-                    {{-- Form Security Alert Banner --}}
-                    <div id="security-alert-box" class="security-alert-box mt-5">
-                        <svg class="h-5 w-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0-10.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.25-8.25-3.286zm0 13.036h.007v.008H12v-.008z"/>
-                        </svg>
-                        <div>
-                            <strong class="font-bold block">{{ __('Security Alert') }}</strong>
-                            <span id="security-alert-text">{{ __('Script tags, HTML elements, and executable code are strictly forbidden for security.') }}</span>
                         </div>
                     </div>
 
@@ -584,8 +552,7 @@
     var messageCharLimit = document.getElementById('message-char-limit');
 
 
-    var securityAlert = document.getElementById('security-alert-box');
-    var securityAlertText = document.getElementById('security-alert-text');
+
 
     var nameHint = document.getElementById('name-hint');
     var nameHintText = document.getElementById('name-hint-text');
@@ -703,11 +670,8 @@
             messageInput.classList.remove('is-valid');
             messageHint.classList.add('show');
             messageHintText.textContent = 'Script tags, HTML tags, or executable code detected in your message!';
-            securityAlert.classList.add('active');
-            securityAlertText.textContent = 'Blocked potential script injection. Remove any HTML or <script> tags before submitting.';
             return false;
         } else {
-            securityAlert.classList.remove('active');
         }
 
         if (charCount === 0) {
