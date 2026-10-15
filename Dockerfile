@@ -1,8 +1,26 @@
-FROM php:8.3-apache
 
 # ------------------------------------------------------------
-# System dependencies
+# Stage 1: Build Laravel Vite frontend assets
 # ------------------------------------------------------------
+FROM node:22-bookworm-slim AS assets
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY vite.config.js ./
+COPY resources ./resources
+COPY public ./public
+
+RUN npm run build \
+    && test -s /app/public/build/manifest.json
+
+
+# ------------------------------------------------------------
+# Stage 2: PHP / Apache application
+# ------------------------------------------------------------
+FROM php:8.3-apache
 
 RUN apt-get update && apt-get install -y \
     git \
@@ -18,15 +36,10 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-
-# ------------------------------------------------------------
-# PHP extensions
-# ------------------------------------------------------------
-
 RUN docker-php-ext-configure gd \
         --with-freetype \
         --with-jpeg \
-    && docker-php-ext-install -j$(nproc) \
+    && docker-php-ext-install -j"$(nproc)" \
         pdo_mysql \
         mbstring \
         exif \
@@ -37,15 +50,8 @@ RUN docker-php-ext-configure gd \
         intl \
         opcache
 
-
-# ------------------------------------------------------------
-# Apache configuration
-# ------------------------------------------------------------
-
 RUN a2enmod rewrite headers expires
 
-
-# Laravel public directory
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 
 RUN sed -ri \
@@ -54,17 +60,7 @@ RUN sed -ri \
     /etc/apache2/apache2.conf \
     /etc/apache2/conf-available/*.conf
 
-
-# ------------------------------------------------------------
-# Composer
-# ------------------------------------------------------------
-
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
-
-
-# ------------------------------------------------------------
-# Application
-# ------------------------------------------------------------
 
 WORKDIR /var/www/html
 
@@ -72,38 +68,27 @@ COPY composer.json composer.lock ./
 
 RUN composer install \
     --no-dev \
-    --no-interaction \
     --prefer-dist \
+    --no-interaction \
+    --no-progress \
     --optimize-autoloader \
     --no-scripts
 
 COPY . .
 
-RUN composer dump-autoload --optimize \
+# Frontend manifest must exist before Artisan runs
+COPY --from=assets /app/public/build ./public/build
+
+RUN git config --global --add safe.directory /var/www/html \
+    && composer dump-autoload --optimize \
     && php artisan package:discover --ansi \
     && php artisan filament:upgrade
 
-
-COPY . .
-
-
-# ------------------------------------------------------------
-# Laravel permissions
-# ------------------------------------------------------------
-
-RUN chown -R www-data:www-data \
-    storage \
-    bootstrap/cache
-
-
-# ------------------------------------------------------------
-# Laravel production optimisations
-# ------------------------------------------------------------
+RUN chown -R www-data:www-data storage bootstrap/cache
 
 RUN php artisan config:cache \
     && php artisan route:cache \
     && php artisan view:cache
-
 
 EXPOSE 80
 
