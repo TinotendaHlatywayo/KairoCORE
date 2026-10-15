@@ -11,6 +11,7 @@ use chillerlan\QRCode\QROptions;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Modules\Admin\Models\SystemSetting;
@@ -207,71 +208,423 @@ if (! function_exists('platform_seo_description')) {
     }
 }
 
+if (! function_exists('supported_locales')) {
+    /**
+     * Single source of truth for the site languages (code => label). Used by
+     * resolve_app_locale(), the marketing language switcher and the live stat
+     * counts, so adding a locale here updates all three at once.
+     *
+     * @return array<string, string>
+     */
+    function supported_locales(): array
+    {
+        return [
+            'en' => 'English',
+            'sn' => 'Shona',
+            'sw' => 'Swahili',
+            'fr' => 'Français',
+            'pt' => 'Português',
+            'es' => 'Español',
+        ];
+    }
+}
+
+if (! function_exists('marketing_live_stats')) {
+    /**
+     * Live counts from this install, backing the marketing stats marquee, the
+     * About page stats and the hero stat cards. Uses the query builder (never
+     * Eloquent) so the BelongsToTenant global scopes cannot bite on public
+     * marketing pages. Cached for the request; falls back to static defaults
+     * if the database is unavailable (deploy time, migrations, CLI).
+     *
+     * @return array{schools: string, students: string, staff: string, languages: string, modules: string}
+     */
+    function marketing_live_stats(): array
+    {
+        static $stats = null;
+
+        if ($stats !== null) {
+            return $stats;
+        }
+
+        try {
+            $studentRoleIds = DB::table('custom_roles')->where('name', 'Student')->pluck('id')->all();
+
+            $staff = DB::table('users')
+                ->whereNull('deleted_at')
+                ->whereNotNull('school_id')
+                ->where(function ($query) {
+                    $query->whereNull('requested_role')->orWhere('requested_role', '<>', 'student');
+                });
+
+            if ($studentRoleIds !== []) {
+                $staff->where(function ($query) use ($studentRoleIds) {
+                    $query->whereNull('custom_role_id')->orWhereNotIn('custom_role_id', $studentRoleIds);
+                });
+            }
+
+            $stats = [
+                'schools' => (string) DB::table('schools')->whereNull('deleted_at')->count(),
+                'students' => (string) DB::table('students')->whereNull('deleted_at')->count(),
+                'staff' => (string) $staff->count(),
+                'languages' => (string) count(supported_locales()),
+                'modules' => (string) count(config('modules', [])),
+            ];
+        } catch (Throwable $e) {
+            $stats = [
+                'schools' => '250',
+                'students' => '45000',
+                'staff' => '3200',
+                'languages' => '6',
+                'modules' => '19',
+            ];
+        }
+
+        return $stats;
+    }
+}
+
 if (! function_exists('marketing_content_defaults')) {
     /**
      * Shipped copy for the public marketing site. These values are the single
      * source of truth for the "Website Content" editor in the platform panel:
      * each field toggles between the stored PlatformSetting and the default.
      *
+     * Every string goes through __() so the shipped defaults are translated in
+     * all six site languages. Admin overrides can be customised per language
+     * via "{key}@{locale}" PlatformSettings — see marketing_content().
+     *
      * @return array<string, string>
      */
     function marketing_content_defaults(): array
     {
         return [
-            'announcement' => 'Cloud-based · Multi-currency · Built for Zimbabwean schools',
-            'hero_title' => 'Run your whole school from one platform',
-            'hero_subtitle' => 'KairoCORE brings admissions, academics, fees, attendance, HR, communication and more together in one secure, cloud-based system — so your team spends less time on paperwork and more time on students.',
-            'hero_image' => 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1600&q=80&auto=format&fit=crop',
-            'hero_primary_label' => 'Book a personal demo',
-            'hero_secondary_label' => 'Explore features',
-            'modules_title' => 'Everything your school runs on, in one place',
-            'modules_subtitle' => 'From the first admission enquiry to the final report card, every department works from the same system.',
-            'benefits_title' => 'Why schools choose KairoCORE',
-            'benefits_subtitle' => 'A single, dependable system that grows with your school.',
-            'steps_title' => 'Up and running in days, not months',
-            'steps_subtitle' => 'Getting your school onto KairoCORE is straightforward.',
-            'cta_title' => 'Ready to see KairoCORE in action?',
-            'cta_subtitle' => 'Book a personal demo tailored to your school — no obligation.',
-            'cta_primary_label' => 'Book a personal demo',
-            'cta_secondary_label' => 'Explore features',
-            'footer_tagline' => 'Cloud-based school management platform built for schools.',
+            // ── Global ──────────────────────────────────────────────
+            'announcement' => '',
+            'nav_logo' => '',
+            'footer_logo' => '',
+            'footer_tagline' => __('Cloud-based school management platform built for schools.'),
             'meta_title' => '',
             'meta_description' => '',
+
+            // ── Home · hero ─────────────────────────────────────────
+            'hero_badge' => __('Built for schools globally with multi-language support'),
+            'hero_title' => __('Run your whole school from one platform'),
+            'hero_subtitle' => __('KairoCORE brings admissions, academics, fees, attendance, HR, communication and more together in one secure, cloud-based system, so your team spends less time on paperwork and more time on students.'),
+            'hero_image' => 'https://images.pexels.com/photos/19348206/pexels-photo-19348206.jpeg?auto=compress&cs=tinysrgb&w=1600',
+            'hero_primary_label' => __('Book a personal demo'),
+            'hero_primary_url' => '',
+            'hero_secondary_label' => __('Explore features'),
+            'hero_secondary_url' => '',
+            'hero_trust_1' => __('Easy to set up'),
+            'hero_trust_2' => __('Secure & reliable'),
+            'hero_trust_3' => __('Multi-currency billing'),
+            'hero_stat_1_label' => __('Modules included'),
+            'hero_stat_1_value' => marketing_live_stats()['modules'],
+            'hero_stat_2_label' => __('Schools running KairoCORE'),
+            'hero_stat_2_value' => marketing_live_stats()['schools'],
+
+            // ── Home · sections ─────────────────────────────────────
+            'modules_title' => __('Everything your school runs on, in one place'),
+            'modules_subtitle' => __('From the first admission enquiry to the final report card, every department works from the same system.'),
+            'modules_cta_label' => __('See every feature'),
+            'benefits_title' => __('Why schools choose KairoCORE'),
+            'benefits_subtitle' => __('A single, dependable system that grows with your school.'),
+            'steps_title' => __('Up and running in days, not months'),
+            'steps_subtitle' => __('Getting your school onto KairoCORE is straightforward.'),
+            'cta_title' => __('Ready to see KairoCORE in action?'),
+            'cta_subtitle' => __('Book a personal demo tailored to your school, no obligation.'),
+            'cta_primary_label' => __('Book a personal demo'),
+            'cta_primary_url' => '',
+            'cta_secondary_label' => __('Explore features'),
+            'cta_secondary_url' => '',
+
+            // ── Features page ───────────────────────────────────────
+            'features_badge' => __('Platform'),
+            'features_title' => __('Every tool your school needs'),
+            'features_subtitle' => __('From admissions to analytics, KairoCORE brings the day-to-day running of your school into one connected platform.'),
+            'features_cta_title' => __('Not sure where to start?'),
+            'features_cta_subtitle' => __('Book a personal demo and we will show you the modules that matter most to your school.'),
+            'features_cta_primary_label' => __('Book a personal demo'),
+            'features_cta_secondary_label' => __('Contact us'),
+
+            // ── About page ──────────────────────────────────────────
+            'about_badge' => __('About us'),
+            'about_title' => __('School software built for the way schools actually run'),
+            'about_intro' => __('KairoCORE is a modern, all-in-one school management system. It brings admissions, academics, finance, HR, communication, health, inventory and daily operations into one secure, cloud-based platform, for schools of every size.'),
+            'about_image' => 'https://images.pexels.com/photos/36467878/pexels-photo-36467878.jpeg?auto=compress&cs=tinysrgb&w=1440',
+            'about_founded_label' => __('Founded in'),
+            'about_founded_value' => 'Harare, Zimbabwe',
+            'about_why_badge' => __('Why KairoCORE'),
+            'about_why_title' => __('Why schools choose KairoCORE'),
+            'about_story_badge' => __('Our story'),
+            'about_story_title' => __('Built in Zimbabwe, for schools everywhere'),
+            'about_story_p1' => __('KairoCORE started with a simple observation: school administrators were drowning in paperwork, duplicate records and disconnected spreadsheets. We built one system that mirrors how schools really work, term by term, class by class, fee by fee, and made it affordable and simple enough for any school to adopt.'),
+            'about_story_p2' => __('Today, primary and secondary schools run admissions, exams, fees and parent communication on KairoCORE every day.'),
+            'about_cta_title' => __('Want to see how KairoCORE fits your school?'),
+            'about_cta_subtitle' => __('Book a personal demo and we will walk you through it, module by module.'),
+
+            // ── Contact page ────────────────────────────────────────
+            'contact_badge' => __('Contact'),
+            'contact_title' => __('Get in touch'),
+            'contact_intro' => __('Have questions about KairoCORE or want to schedule a personalized demo? Reach out to us through any of the channels below.'),
+            'contact_form_title' => __('Send us a message'),
+            'contact_form_name_label' => __('Your name'),
+            'contact_form_email_label' => __('Your email'),
+            'contact_form_message_label' => __('Message'),
+            'contact_form_placeholder_name' => __('Tendai Marufu'),
+            'contact_form_placeholder_message' => __('Tell us a little about your school and what you need...'),
+            'contact_form_submit_label' => __('Send message'),
+            'contact_whatsapp_title' => __('WhatsApp us'),
+            'contact_whatsapp_note' => __('Fastest replies during office hours'),
+            'contact_email_title' => __('Email support'),
+            'contact_email_note' => __('For quotes, demos and support'),
+            'contact_office_title' => __('Office hours'),
+            'contact_office_hours' => __('Monday – Friday, 08:00 – 17:00 (CAT)'),
+            'contact_office_location' => __('Harare, Zimbabwe'),
+            'contact_follow_label' => __('Follow'),
+            'contact_image' => 'https://images.pexels.com/photos/3894376/pexels-photo-3894376.jpeg?auto=compress&cs=tinysrgb&w=1440',
+            'contact_card_title' => __('Talk to a school specialist'),
+            'contact_card_text' => __('We understand school terms, fee cycles and exam seasons, and we speak your language.'),
         ];
+    }
+}
+
+if (! function_exists('marketing_list_defaults')) {
+    /**
+     * Shipped defaults for the repeater-backed lists on the marketing site.
+     * Structure fields (icons, keys, categories) are not translated; all
+     * human-readable text goes through __().
+     *
+     * @return array<string, array<int, array<string, mixed>>>
+     */
+    function marketing_list_defaults(): array
+    {
+        $px = fn (int $id, int $w = 1440) => "https://images.pexels.com/photos/{$id}/pexels-photo-{$id}.jpeg?auto=compress&cs=tinysrgb&w={$w}";
+
+        return [
+            'home_stats' => [
+                ['value' => marketing_live_stats()['schools'], 'suffix' => '', 'label' => __('Schools onboard')],
+                ['value' => marketing_live_stats()['students'], 'suffix' => '', 'label' => __('Students managed')],
+                ['value' => marketing_live_stats()['staff'], 'suffix' => '', 'label' => __('Staff on platform')],
+                ['value' => '99', 'suffix' => '%', 'label' => __('Uptime')],
+                ['value' => marketing_live_stats()['languages'], 'suffix' => '', 'label' => __('Languages')],
+            ],
+            'home_modules' => [
+                ['name' => __('Admissions'), 'desc' => __('Applications, enrolment and complete student records.'), 'icon' => 'M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z'],
+                ['name' => __('Academics'), 'desc' => __('Classes, subjects, timetables and report cards.'), 'icon' => 'M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25'],
+                ['name' => __('Finance & Fees'), 'desc' => __('Fee structures, invoicing and multi-currency billing.'), 'icon' => 'M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33'],
+                ['name' => __('Attendance'), 'desc' => __('Daily student and staff attendance with alerts.'), 'icon' => 'M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z'],
+                ['name' => __('HR & Payroll'), 'desc' => __('Staff records, leave management and payroll.'), 'icon' => 'M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z'],
+                ['name' => __('Communication'), 'desc' => __('Announcements and email or WhatsApp alerts to parents.'), 'icon' => 'M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z'],
+                ['name' => __('Exams & Results'), 'desc' => __('Exam scheduling, grading schemes and result publishing.'), 'icon' => 'M16.5 8.25V6a2.25 2.25 0 0 0-2.25-2.25H6A2.25 2.25 0 0 0 3.75 6v8.25A2.25 2.25 0 0 0 6 16.5h2.25m8.25-8.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-7.5A2.25 2.25 0 0 1 8.25 18v-1.5m8.25-8.25h-6a2.25 2.25 0 0 0-2.25 2.25v6'],
+                ['name' => __('Library'), 'desc' => __('Book catalogue, issuance tracking, returns and fines.'), 'icon' => 'M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25'],
+                ['name' => __('Health & Wellness'), 'desc' => __('Student health records, clinic visits and medical alerts.'), 'icon' => 'M21 7.5V18a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 18V7.5m18 0A2.25 2.25 0 0 0 18.75 5.25H5.25A2.25 2.25 0 0 0 3 7.5m18 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L4.07 9.659A2.25 2.25 0 0 1 3 7.743V7.5'],
+            ],
+            'home_benefits' => [
+                ['name' => __('One system for the whole school'), 'desc' => __('Admissions, academics, finance, HR and communication share the same data, so nothing has to be captured twice.'), 'icon' => 'M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25A2.25 2.25 0 0 1 8.25 10.5H6A2.25 2.25 0 0 1 3.75 8.25V6ZM13.5 6A2.25 2.25 0 0 1 15.75 3.75h2.25A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25A2.25 2.25 0 0 1 13.5 8.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z'],
+                ['name' => __('Save hours of admin every week'), 'desc' => __('Automated fees, invoices, report cards and alerts replace repetitive paperwork so your staff can focus on learners.'), 'icon' => 'M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z'],
+                ['name' => __('Reach parents where they are'), 'desc' => __('Send announcements and timely updates by email or WhatsApp, and let parents follow attendance, fees and results.'), 'icon' => 'M10.5 1.5H8.25A2.25 2.25 0 0 0 6 3.75v16.5a2.25 2.25 0 0 0 2.25 2.25h7.5A2.25 2.25 0 0 0 18 20.25V3.75a2.25 2.25 0 0 0-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 16.5h3'],
+                ['name' => __('Secure, cloud-based and current'), 'desc' => __('Your data is backed up and always up to date, with role-based access so everyone sees only what they should.'), 'icon' => 'M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z'],
+            ],
+            'home_steps' => [
+                ['title' => __('Register your school'), 'desc' => __('Create your school account in minutes and get your own secure workspace.')],
+                ['title' => __('Set up your school'), 'desc' => __('Add classes, staff, fee structures and branding, with our team on hand to help.')],
+                ['title' => __('Go live'), 'desc' => __('Start managing admissions, academics, fees and communication from day one.')],
+            ],
+            'features_list' => [
+                ['key' => 'admissions', 'cat' => 'admin', 'name' => __('Admissions'), 'desc' => __('Manage student enrolment, applications and admission workflow.'), 'detail' => __('Run your whole admissions season from one place. Families apply online, your team reviews applications, places learners and issues offer letters, while every document, sibling link and placement stays attached to a single student record that follows the child through every grade.'), 'sub1' => __('Online applications'), 'sub2' => __('Student registration'), 'sub3' => __('Admission approval'), 'image' => $px(35305047)],
+                ['key' => 'academics', 'cat' => 'academic', 'name' => __('Academics'), 'desc' => __('Classes, timetables, subjects, grading and report cards.'), 'detail' => __('Set up subjects, class streams and once-off timetables, then grade against your own scheme: marks, letters or percentages. Term reports are generated per class in seconds, ready to print or share with parents.'), 'sub1' => __('Class management'), 'sub2' => __('Timetable scheduling'), 'sub3' => __('Report cards'), 'image' => $px(5905554)],
+                ['key' => 'students', 'cat' => 'academic', 'name' => __('Students'), 'desc' => __('Comprehensive student profiles and records.'), 'detail' => __('Every learner gets a complete profile: guardian contacts, medical notes, transport, fee history, attendance and results, searchable in one directory your whole team can trust.'), 'sub1' => __('Student profiles'), 'sub2' => __('Attendance tracking'), 'sub3' => __('Student directory'), 'image' => $px(14909652)],
+                ['key' => 'finance', 'cat' => 'admin', 'name' => __('Finance & Fees'), 'desc' => __('Fees, billing, invoicing and financial management.'), 'detail' => __('Build fee structures per grade and term, generate invoices in bulk and reconcile payments in US dollars, ZiG or any currency you bill in. Bursars see balances, arrears and daily receipts on one dashboard.'), 'sub1' => __('Fee structure'), 'sub2' => __('Invoicing'), 'sub3' => __('Financial history'), 'image' => $px(8872369)],
+                ['key' => 'hr', 'cat' => 'admin', 'name' => __('HR & Payroll'), 'desc' => __('Staff management, leave, attendance and payroll.'), 'detail' => __('Keep contracts, qualifications and emergency contacts in one staff register. Track leave approvals and run payroll with allowances and deductions calculated automatically each month.'), 'sub1' => __('Staff records'), 'sub2' => __('Leave management'), 'sub3' => __('Payroll processing'), 'image' => $px(8550496)],
+                ['key' => 'attendance', 'cat' => 'campus', 'name' => __('Attendance'), 'desc' => __('Track student and staff attendance with ease.'), 'detail' => __('Form teachers mark the register from any phone or desktop in under a minute. Absences roll up into class and grade reports, and guardians can be alerted the same day.'), 'sub1' => __('Daily attendance'), 'sub2' => __('Attendance reports'), 'sub3' => __('Absence alerts'), 'image' => $px(19982406)],
+                ['key' => 'communications', 'cat' => 'campus', 'name' => __('Communications'), 'desc' => __('Announcements and timely alerts to parents and staff.'), 'detail' => __('Publish circulars, event reminders and urgent notices once, and deliver them by email or WhatsApp to the right guardians, classes or the whole school, with delivery status you can check.'), 'sub1' => __('School announcements'), 'sub2' => __('Email or WhatsApp alerts'), 'sub3' => __('Parent engagement'), 'image' => $px(36752223)],
+                ['key' => 'library', 'cat' => 'academic', 'name' => __('Library'), 'desc' => __('Manage library resources and circulation.'), 'detail' => __('Catalogue every title, issue and return books against a reader card, and let overdue fines accrue automatically so the library runs itself between visits.'), 'sub1' => __('Book catalogue'), 'sub2' => __('Issuance tracking'), 'sub3' => __('Returns & fines'), 'image' => $px(3966555)],
+                ['key' => 'health', 'cat' => 'campus', 'name' => __('Health & Wellness'), 'desc' => __('Student health records, clinic visits, medications and alerts.'), 'detail' => __('Record allergies, chronic conditions and clinic visits on the student file, log medication administered, and flag critical medical alerts that staff must see before an activity or trip.'), 'sub1' => __('Health records'), 'sub2' => __('Clinic visits'), 'sub3' => __('Medical alerts'), 'image' => $px(5430213)],
+                ['key' => 'inventory', 'cat' => 'admin', 'name' => __('Inventory & Procurement'), 'desc' => __('Stock management, procurement, requisitions and assets.'), 'detail' => __('Track consumables and equipment across stores, raise requisitions that route for approval, and follow every purchase order from request to delivery.'), 'sub1' => __('Stock management'), 'sub2' => __('Requisitions & purchase orders'), 'sub3' => __('Asset tracking'), 'image' => $px(8069554)],
+                ['key' => 'exams', 'cat' => 'academic', 'name' => __('Exams & Results'), 'desc' => __('Examinations, grading schemes and result publication.'), 'detail' => __('Schedule exams by form and subject, capture marks with your own grading scheme, and publish ranked results, transcripts and analyse-of-results the moment marking is complete.'), 'sub1' => __('Exam scheduling'), 'sub2' => __('Grade setup'), 'sub3' => __('Result publication'), 'image' => $px(32719717)],
+                ['key' => 'lms', 'cat' => 'academic', 'name' => __('LMS'), 'desc' => __('Learning management with assignments and resources.'), 'detail' => __('Share lesson materials, set assignments and collect submissions online. Teachers mark and give feedback in the same place, and students see every deadline in one feed.'), 'sub1' => __('Assignments'), 'sub2' => __('Course materials'), 'sub3' => __('Student submissions'), 'image' => $px(11025019)],
+                ['key' => 'boarding', 'cat' => 'campus', 'name' => __('Boarding & Hostel'), 'desc' => __('Hostel management, rooms and allocations.'), 'detail' => __('Allocate beds by house and dormitory, record night-by-night boarding attendance, and bill boarding fees alongside term charges so housemasters always know who is on campus.'), 'sub1' => __('Room allocation'), 'sub2' => __('Hostel attendance'), 'sub3' => __('Boarding fees'), 'image' => $px(33613739)],
+                ['key' => 'reports', 'cat' => 'admin', 'name' => __('Reports & Analytics'), 'desc' => __('Comprehensive reports and data insights.'), 'detail' => __('Turn daily operations into decisions: enrolment trends, fee collection rates, subject performance and staff summaries, exportable to PDF or spreadsheet for your governing body.'), 'sub1' => __('Financial reports'), 'sub2' => __('Academic reports'), 'sub3' => __('Custom reports'), 'image' => $px(7173020)],
+                ['key' => 'cms', 'cat' => 'admin', 'name' => __('Website CMS'), 'desc' => __('Manage school website content easily.'), 'detail' => __('Publish news, calendars, policies and photo galleries to your public school website from the same system your admin team already uses, no developer needed.'), 'sub1' => __('Page management'), 'sub2' => __('Media library'), 'sub3' => __('Content editor'), 'image' => $px(6956760)],
+            ],
+            'about_pillars' => [
+                ['title' => __('Our mission'), 'desc' => __('To give every school the tools to run smoothly, reducing administrative burden, improving transparency, and freeing teachers and administrators to focus on learners.'), 'icon' => 'M15.59 14.37a6 6 0 0 1-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 0 0 6.16-12.12A14.98 14.98 0 0 0 9.63 8.41m5.96 5.96a14.926 14.926 0 0 1-5.841 2.58m-.109-8.59a20.005 20.005 0 0 0-5.499-2.58m7.175 5.499a19.92 19.92 0 0 0 2.498-6.256M16.5 12a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z'],
+                ['title' => __('Our vision'), 'desc' => __('A future where every school runs on reliable, affordable, modern technology, with real-time insight into academics, finances and day-to-day operations.'), 'icon' => 'M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z'],
+                ['title' => __('How we build'), 'desc' => __('With schools, not just for them. Every module is shaped by real school workflows, tested with administrators, and kept simple enough to use every day.'), 'icon' => 'M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456Z'],
+            ],
+            'about_why_points' => [
+                ['text' => __('One connected platform for every department')],
+                ['text' => __('Built for African schools with multi-currency fees and WhatsApp alerts')],
+                ['text' => __('Simple enough for busy admin teams to adopt quickly')],
+                ['text' => __('Role-based access and regular backups keep your data safe')],
+                ['text' => __('Reports and dashboards that turn daily data into decisions')],
+                ['text' => __('A team that understands school operations, on hand to help')],
+            ],
+            'about_stats' => [
+                ['value' => marketing_live_stats()['schools'], 'suffix' => '', 'label' => __('Schools onboard')],
+                ['value' => marketing_live_stats()['students'], 'suffix' => '', 'label' => __('Students managed')],
+                ['value' => marketing_live_stats()['languages'], 'suffix' => '', 'label' => __('Languages supported')],
+                ['value' => '99', 'suffix' => '%', 'label' => __('Platform uptime')],
+            ],
+        ];
+    }
+}
+
+if (! function_exists('marketing_settings_map')) {
+    /**
+     * All PlatformSetting rows in the "marketing" group, keyed by setting key.
+     * List values are stored as JSON arrays; scalars as plain strings. Read
+     * once per request.
+     *
+     * @return array<string, mixed>
+     */
+    function marketing_settings_map(): array
+    {
+        static $map = null;
+
+        if ($map === null) {
+            $map = [];
+
+            try {
+                foreach (PlatformSetting::where('group', 'marketing')->get() as $setting) {
+                    $decoded = json_decode((string) $setting->value, true);
+                    $map[$setting->key] = (json_last_error() === JSON_ERROR_NONE && is_array($decoded))
+                        ? $decoded
+                        : (string) $setting->value;
+                }
+            } catch (Throwable $e) {
+                $map = [];
+            }
+        }
+
+        return $map;
     }
 }
 
 if (! function_exists('marketing_content')) {
     /**
-     * Read an editable marketing-site value, falling back to the shipped copy.
-     * Values live in the PlatformSetting "marketing" group so no schema change
-     * is required; the whole group is read once per request.
+     * Read an editable marketing-site scalar, falling back to the shipped copy.
+     *
+     * Resolution order:
+     *   1. "{key}@{locale}" — a per-language override saved from the editor
+     *   2. "{key}"          — the base (default-language) override
+     *   3. the shipped default, which is __()-translated at runtime
      */
     function marketing_content(string $key, ?string $default = null): string
     {
-        static $values = null;
+        $map = marketing_settings_map();
+        $locale = app()->getLocale();
 
-        if ($values === null) {
-            $values = [];
-
-            try {
-                foreach (PlatformSetting::where('group', 'marketing')->get() as $setting) {
-                    $decoded = json_decode((string) $setting->value, true);
-                    $value = (json_last_error() === JSON_ERROR_NONE) ? $decoded : $setting->value;
-                    $values[$setting->key] = is_array($value) ? (string) ($value[0] ?? '') : (string) $value;
-                }
-            } catch (Throwable $e) {
-                $values = [];
-            }
+        $value = $map[$key.'@'.$locale] ?? null;
+        if (is_array($value)) {
+            $value = null;
         }
 
-        $value = $values[$key] ?? null;
+        if ($value === null || $value === '') {
+            $value = $map[$key] ?? null;
+            if (is_array($value)) {
+                $value = null;
+            }
+        }
 
         if ($value === null || $value === '') {
             $value = marketing_content_defaults()[$key] ?? $default;
         }
 
         return (string) ($value ?? '');
+    }
+}
+
+if (! function_exists('marketing_raw_setting')) {
+    /**
+     * Raw stored override for a marketing key in a given locale (or the base
+     * key when $locale is null). Returns null when nothing has been stored —
+     * used by the settings editor to prefill fields.
+     */
+    function marketing_raw_setting(string $key, ?string $locale = null): mixed
+    {
+        $map = marketing_settings_map();
+
+        return $map[$locale ? $key.'@'.$locale : $key] ?? null;
+    }
+}
+
+if (! function_exists('marketing_merged_list')) {
+    /**
+     * A marketing list (repeater) for the current locale, merged over the
+     * shipped defaults. Stored items override defaults positionally; stored
+     * extras beyond the defaults are appended. Empty storage falls back to
+     * the full default list so the site never renders blank sections.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    function marketing_merged_list(string $key): array
+    {
+        $defaults = marketing_list_defaults()[$key] ?? [];
+        $map = marketing_settings_map();
+        $locale = app()->getLocale();
+
+        $stored = $map[$key.'@'.$locale] ?? null;
+        if (! is_array($stored) || $stored === []) {
+            $stored = $map[$key] ?? null;
+        }
+        if (! is_array($stored) || $stored === []) {
+            return $defaults;
+        }
+
+        // The stored list is authoritative for length (deletions stick);
+        // positionally inherit structural fields (icon, key, image) from the
+        // defaults, and treat blank strings as "reset to default".
+        $merged = [];
+        foreach (array_values($stored) as $i => $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+            $clean = array_filter($item, fn ($v) => $v !== '' && $v !== null);
+            $merged[] = array_merge($defaults[$i] ?? [], $clean);
+        }
+
+        return $merged ?: $defaults;
+    }
+}
+
+if (! function_exists('marketing_resolve_image')) {
+    /**
+     * Turn a stored image value (absolute URL, "images/..." asset path or a
+     * public-disk storage path from an upload) into a full URL. Falls back to
+     * $fallback when empty.
+     */
+    function marketing_resolve_image(?string $value, string $fallback = ''): string
+    {
+        $value = trim((string) $value);
+
+        if ($value === '') {
+            $value = trim($fallback);
+        }
+        if ($value === '') {
+            return '';
+        }
+        if (preg_match('#^(https?:)?//#i', $value)) {
+            return $value;
+        }
+        if (str_starts_with($value, 'images/')) {
+            return asset($value);
+        }
+
+        return Storage::disk('public')->url(ltrim($value, '/'));
+    }
+}
+
+if (! function_exists('marketing_image')) {
+    /**
+     * Resolved URL for an editable marketing image key (with per-locale
+     * override support via marketing_content()).
+     */
+    function marketing_image(string $key, string $fallback = ''): string
+    {
+        return marketing_resolve_image(marketing_content($key), $fallback);
     }
 }
 
@@ -931,7 +1284,7 @@ if (! function_exists('resolve_app_locale')) {
             $locale = $isCentralDomain ? 'en' : config('app.fallback_locale', 'en');
         }
 
-        $supported = ['en', 'sn', 'sw', 'fr', 'pt', 'es'];
+        $supported = array_keys(supported_locales());
 
         return in_array($locale, $supported, true) ? $locale : 'en';
     }
