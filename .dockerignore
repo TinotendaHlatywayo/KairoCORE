@@ -1,0 +1,19 @@
+# Environment files and secrets
+.env
+.env.*
+!.env.example
+
+# Git metadata and CI configuration
+.git
+.github
+
+# Deployment archives and backups
+deploy/incoming/
+docker-compose.yml.backup-*
+*.tar
+*.tar.gz
+
+# Local development and generated files
+.DS_Store
+Thumbs.db
+*.log
