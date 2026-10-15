@@ -21,13 +21,16 @@ if [ -z "$APP_KEY" ]; then
 fi
 
 # Named volume may be empty / root-owned on first start
-mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache
+mkdir -p storage/app/public storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache
 if [ "$(id -u)" = "0" ]; then
     chown -R www-data:www-data storage bootstrap/cache
 fi
 
 if [ "$1" = "apache2-foreground" ]; then
-    art storage:link --force >/dev/null 2>&1 || true
+    # Run as the current user (root): www-data cannot write to the root-owned
+    # public/ directory, so linking through art() would silently fail and every
+    # uploaded file (/storage/...) would 404.
+    php artisan storage:link --force || echo "WARN: storage:link failed; uploaded files will 404" >&2
 
     if [ "${RUN_MIGRATIONS:-true}" = "true" ]; then
         echo "==> Running migrations"
