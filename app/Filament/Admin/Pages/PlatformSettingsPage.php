@@ -79,7 +79,13 @@ class PlatformSettingsPage extends Page implements HasForms
                 if (str_ends_with((string) $setting->key, '_upload')) {
                     continue;
                 }
-                $state[$setting->group.'_'.$setting->key] = json_decode((string) $setting->value, true) ?? $setting->value;
+                $decoded = json_decode((string) $setting->value, true);
+                $value = ($decoded !== null) ? $decoded : $setting->value;
+                // Strip any stale upload scratch values nested in arrays.
+                if (is_array($value)) {
+                    $value = self::stripUploadKeys($value);
+                }
+                $state[$setting->group.'_'.$setting->key] = $value;
             }
         } catch (\Exception $e) {
             // Guard during database migrations sync phase
@@ -107,11 +113,14 @@ class PlatformSettingsPage extends Page implements HasForms
         foreach (array_keys($state) as $k) {
             if (is_string($k) && str_ends_with($k, '_upload')) {
                 unset($state[$k]);
+                continue;
+            }
+            // FileUpload state must be an array; wrap legacy string paths.
+            if (is_string($state[$k]) && in_array($k, ['branding_platform_logo', 'branding_platform_favicon', 'email_logo_path'], true)) {
+                $state[$k] = $state[$k] === '' ? null : [$state[$k]];
             }
         }
 
-        // Arrays containing stale upload keys (repeater items) are normalised
-        // best-effort by leaving them; top-level upload keys are cleared.
         $this->form->fill($state);
         $this->snapshotMarketingState();
     }
@@ -910,6 +919,23 @@ class PlatformSettingsPage extends Page implements HasForms
         }
 
         return $a == $b;
+    }
+
+    /** Recursively remove any '*_upload' scratch keys from persisted state. */
+    protected static function stripUploadKeys(array $data): array
+    {
+        foreach ($data as $k => &$v) {
+            if (is_string($k) && str_ends_with($k, '_upload')) {
+                unset($data[$k]);
+                continue;
+            }
+            if (is_array($v)) {
+                $v = self::stripUploadKeys($v);
+            }
+        }
+        unset($v);
+
+        return $data;
     }
 
     /**
