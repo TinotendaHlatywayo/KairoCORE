@@ -598,7 +598,9 @@ class PlatformSettingsPage extends Page implements HasForms
     {
         // Defensive normalisation: Filament FileUpload state must be an array,
         // but legacy/persisted string paths can leak through and crash validation.
-        $this->normaliseFileUploadState($this->data ?? []);
+        $data = $this->data ?? [];
+        $this->normaliseFileUploadState($data);
+        $this->data = $data;
         $this->form->fill($this->data);
 
         $state = $this->form->getState();
