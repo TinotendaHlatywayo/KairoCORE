@@ -26,7 +26,7 @@
             </div>
             <div class="reveal reveal-d2 relative">
                 <div class="relative aspect-[4/3] w-full overflow-hidden rounded-3xl border border-slate-200 bg-slate-100 shadow-2xl shadow-slate-900/10">
-                    <img src="{{ marketing_image('about_image') }}" alt="{{ __('Pupils at a school in southern Africa') }}" class="h-full w-full object-cover" loading="lazy">
+                    <img src="{{ marketing_image('about_image') }}" alt="{{ __('Diverse students learning in a modern classroom') }}" class="h-full w-full object-cover" loading="lazy">
                     <div class="absolute inset-0 bg-gradient-to-t from-slate-900/25 via-transparent to-transparent"></div>
                 </div>
                 <div class="float-slow absolute -bottom-5 -left-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl sm:-left-8">
