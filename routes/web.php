@@ -46,6 +46,22 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
         return view('marketing.home');
     })->name('marketing.home');
 
+    Route::get('/language/{locale}', function (string $locale) {
+        $supported = ['en', 'sn', 'sw', 'fr', 'pt', 'es'];
+
+        if (! in_array($locale, $supported, true)) {
+            abort(404);
+        }
+
+        session(['locale' => $locale]);
+
+        if (auth()->check()) {
+            auth()->user()->forceFill(['locale' => $locale])->saveQuietly();
+        }
+
+        return redirect()->back();
+    })->name('marketing.language');
+
     Route::get('/robots.txt', function () {
         $sitemap = url('/sitemap.xml');
 

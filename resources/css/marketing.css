@@ -1,0 +1,4 @@
+@import 'tailwindcss';
+
+@source '../../resources/views/marketing/**/*.blade.php';
+@source '../../resources/views/partials/seo.blade.php';
