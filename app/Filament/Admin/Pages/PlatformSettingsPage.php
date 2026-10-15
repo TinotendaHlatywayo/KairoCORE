@@ -74,6 +74,11 @@ class PlatformSettingsPage extends Page implements HasForms
         try {
             $settings = PlatformSetting::all();
             foreach ($settings as $setting) {
+                // Upload scratch fields are never persisted settings; skip so
+                // the live FileUpload components receive a clean null state.
+                if (str_ends_with((string) $setting->key, '_upload')) {
+                    continue;
+                }
                 $state[$setting->group.'_'.$setting->key] = json_decode((string) $setting->value, true) ?? $setting->value;
             }
         } catch (\Exception $e) {
@@ -99,6 +104,14 @@ class PlatformSettingsPage extends Page implements HasForms
         }
         $state['marketing_language'] = 'en';
 
+        foreach (array_keys($state) as $k) {
+            if (is_string($k) && str_ends_with($k, '_upload')) {
+                unset($state[$k]);
+            }
+        }
+
+        // Arrays containing stale upload keys (repeater items) are normalised
+        // best-effort by leaving them; top-level upload keys are cleared.
         $this->form->fill($state);
         $this->snapshotMarketingState();
     }
