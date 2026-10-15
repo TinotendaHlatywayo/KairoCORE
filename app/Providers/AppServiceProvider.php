@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use Livewire\Component;
 use Livewire\Livewire;
 use Modules\Admin\Models\SystemAuditLog;
 use Modules\Admin\Services\AuditLogger;
@@ -197,6 +198,35 @@ class AppServiceProvider extends ServiceProvider
         Livewire::component('assessment.take-assessment', \App\Livewire\Assessment\TakeAssessment::class);
         Livewire::component('assessment.marking-queue', \App\Livewire\Assessment\MarkingQueue::class);
         Livewire::component('exams.portal-reports-publisher', \App\Livewire\Exams\PortalReportsPublisher::class);
+
+        // Same failure mode, generalized: Filament renders page header/footer
+        // widgets by CLASS (@livewire($widgetClass)), so the first render
+        // works — but update requests only carry the derived NAME (e.g.
+        // "app.filament.admin.widgets.platform-institution-overview-widget").
+        // With the default class_namespace (App\Livewire) that name cannot be
+        // reverse-mapped, so ReleaseToken::verify() throws
+        // LivewireReleaseTokenMismatchException and the update 419s. That 419
+        // is never logged and survives every refresh/cookie-clear, because the
+        // mapping is structurally missing. Map any otherwise-unresolvable
+        // "app.*" name back onto its App\* component class.
+        Livewire::resolveMissingComponent(function (string $name): ?string {
+            if (! str_starts_with($name, 'app.')) {
+                return null;
+            }
+
+            // The leading "app" segment IS the App\ root namespace — drop it
+            // instead of prepending a second one.
+            $class = '\\App\\'.collect(explode('.', $name))
+                ->skip(1)
+                ->map(fn (string $segment): string => (string) str($segment)->studly())
+                ->join('\\');
+
+            if (! class_exists($class) || ! is_subclass_of($class, Component::class)) {
+                return null;
+            }
+
+            return $class;
+        });
 
         // 3. Register the strict platform policy mapping
         Gate::policy(School::class, SchoolPolicy::class);
