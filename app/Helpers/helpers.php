@@ -313,7 +313,7 @@ if (! function_exists('marketing_content_defaults')) {
             'hero_badge' => __('Built for schools globally with multi-language support'),
             'hero_title' => __('Run your whole school from one platform'),
             'hero_subtitle' => __('KairoCORE brings admissions, academics, fees, attendance, HR, communication and more together in one secure, cloud-based system, so your team spends less time on paperwork and more time on students.'),
-            'hero_image' => 'https://images.pexels.com/photos/15984013/pexels-photo-15984013.jpeg?auto=compress&cs=tinysrgb&w=1600',
+            'hero_image' => 'https://images.pexels.com/photos/15984014/pexels-photo-15984014.jpeg?auto=compress&cs=tinysrgb&w=1600',
             'hero_primary_label' => __('Book a personal demo'),
             'hero_primary_url' => '',
             'hero_secondary_label' => __('Explore features'),
@@ -354,7 +354,7 @@ if (! function_exists('marketing_content_defaults')) {
             'about_badge' => __('About us'),
             'about_title' => __('School software built for the way schools actually run'),
             'about_intro' => __('KairoCORE is a modern, all-in-one school management system. It brings admissions, academics, finance, HR, communication, health, inventory and daily operations into one secure, cloud-based platform, for schools of every size.'),
-            'about_image' => 'https://images.pexels.com/photos/36467878/pexels-photo-36467878.jpeg?auto=compress&cs=tinysrgb&w=1440',
+            'about_image' => 'https://images.pexels.com/photos/15984015/pexels-photo-15984015.jpeg?auto=compress&cs=tinysrgb&w=1440',
             'about_founded_label' => __('Founded in'),
             'about_founded_value' => 'Harare, Zimbabwe',
             'about_why_badge' => __('Why KairoCORE'),
@@ -368,7 +368,7 @@ if (! function_exists('marketing_content_defaults')) {
 
             // ── Contact page ────────────────────────────────────────
             'contact_badge' => __('Contact'),
-            'contact_title' => __('Get in touch'),
+            'contact_title' => __('Reach out to us'),
             'contact_intro' => __('Have questions about KairoCORE or want to schedule a personalized demo? Reach out to us through any of the channels below.'),
             'contact_form_title' => __('Send us a message'),
             'contact_form_name_label' => __('Your name'),
@@ -385,7 +385,7 @@ if (! function_exists('marketing_content_defaults')) {
             'contact_office_hours' => __('Monday – Friday, 08:00 – 17:00 (CAT)'),
             'contact_office_location' => __('Harare, Zimbabwe'),
             'contact_follow_label' => __('Follow'),
-            'contact_image' => 'https://images.pexels.com/photos/3894376/pexels-photo-3894376.jpeg?auto=compress&cs=tinysrgb&w=1440',
+            'contact_image' => 'https://images.pexels.com/photos/3184339/pexels-photo-3184339.jpeg?auto=compress&cs=tinysrgb&w=1440',
             'contact_card_title' => __('Talk to a school specialist'),
             'contact_card_text' => __('We understand school terms, fee cycles and exam seasons, and we speak your language.'),
         ];
