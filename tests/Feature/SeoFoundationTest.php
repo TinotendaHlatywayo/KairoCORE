@@ -17,6 +17,11 @@ class SeoFoundationTest extends TestCase
         return [
             'home' => route('marketing.home'),
             'features' => route('marketing.features'),
+            'school-fees' => route('marketing.school-fees'),
+            'students' => route('marketing.students'),
+            'admissions' => route('marketing.admissions'),
+            'academics' => route('marketing.academics'),
+            'security' => route('marketing.security'),
             'about' => route('marketing.about'),
             'contact' => route('marketing.contact'),
             'help' => route('marketing.help'),
