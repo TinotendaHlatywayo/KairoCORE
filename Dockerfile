@@ -76,6 +76,9 @@ RUN composer install \
 
 COPY . .
 
+# Raise PHP's upload limits so website videos (~50 MB) can be uploaded.
+COPY docker/php/uploads.ini /usr/local/etc/php/conf.d/zz-uploads.ini
+
 # Frontend manifest must exist before Artisan runs
 COPY --from=assets /app/public/build ./public/build
 
