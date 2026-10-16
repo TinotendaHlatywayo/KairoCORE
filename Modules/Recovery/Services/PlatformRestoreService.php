@@ -65,8 +65,10 @@ class PlatformRestoreService
             }
 
             DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+            DB::statement("SET SESSION sql_mode = 'NO_ENGINE_SUBSTITUTION';");
             $this->runSqlStream($stream);
             DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+            DB::statement("SET SESSION sql_mode = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';");
 
             fclose($stream);
             $zip->close();
@@ -86,7 +88,7 @@ class PlatformRestoreService
             }
             $log->update([
                 'status' => 'failed',
-                'error_details' => $e->getMessage(),
+                'error_details' => mb_substr($e->getMessage(), 0, 5000),
             ]);
             throw $e;
         }
