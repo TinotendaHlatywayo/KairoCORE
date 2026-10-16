@@ -1397,6 +1397,15 @@ class SystemSettingsPage extends Page implements HasForms
 
             $serialized = is_array($value) ? json_encode($value) : $value;
 
+            // FileUpload fields dehydrate to null when their state is empty
+            // (nothing selected / file no longer resolvable). Never overwrite
+            // a stored asset path with that empty value — it would wipe the
+            // previously imported logo/favicon/wallpaper on unrelated saves.
+            if (in_array($compoundKey, ['branding_logo_path', 'branding_favicon_path', 'branding_bg_path', 'email_logo_path'], true)
+                && ($serialized === null || $serialized === '' || $serialized === '[]')) {
+                continue;
+            }
+
             $oldValues[$compoundKey] = $settingModel ? $settingModel->value : null;
             $newValues[$compoundKey] = $serialized;
 
