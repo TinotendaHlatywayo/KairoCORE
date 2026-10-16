@@ -31,16 +31,17 @@ class DatabaseSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        // 2. Recreate the Central Founder User account
-        DB::table('users')->insertOrIgnore([
-            'id' => 1,
-            'school_id' => null, // NULL designates a central/system-wide user
-            'name' => 'System Founder',
-            'email' => 'twaynehlatywayo09@gmail.com', // Super Admin login email
-            'password' => Hash::make('securepassword'), // securepassword
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        // 2. Recreate or update the Central Founder User account
+        DB::table('users')->updateOrInsert(
+            ['id' => 1],
+            [
+                'school_id' => null,
+                'name' => 'System Founder',
+                'email' => 'twaynehlatywayo09@gmail.com',
+                'password' => Hash::make('securepassword'),
+                'updated_at' => now(),
+            ]
+        );
 
         // 3. Assign the global 'super_admin' role to User ID 1 (System Founder)
         DB::table('model_has_roles')->insertOrIgnore([

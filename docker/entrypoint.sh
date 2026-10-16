@@ -33,8 +33,9 @@ if [ "$1" = "apache2-foreground" ]; then
     php artisan storage:link --force || echo "WARN: storage:link failed; uploaded files will 404" >&2
 
     if [ "${RUN_MIGRATIONS:-true}" = "true" ]; then
-        echo "==> Running migrations"
+        echo "==> Running migrations and seeding database"
         art migrate --force
+        art db:seed --force
     fi
 
     echo "==> Building production caches"

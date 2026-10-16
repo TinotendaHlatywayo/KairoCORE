@@ -1437,7 +1437,7 @@ class SystemSettingsPage extends Page implements HasForms
         $this->saveEmailConfiguration($state);
 
         // Resolve URLs for the live-reload event [1.2]
-        $logoUrl = asset('images/logo-transparent.png');
+        $logoUrl = platform_logo_url();
         if (! empty($state['branding_logo_path'])) {
             $logoUrl = asset('storage/'.$state['branding_logo_path']);
         }
