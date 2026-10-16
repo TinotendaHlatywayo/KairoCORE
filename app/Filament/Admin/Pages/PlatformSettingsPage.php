@@ -116,7 +116,7 @@ class PlatformSettingsPage extends Page implements HasForms
                 continue;
             }
             // FileUpload state must be an array; wrap legacy string paths.
-            if (is_string($state[$k]) && in_array($k, ['branding_platform_logo', 'branding_platform_favicon', 'email_logo_path'], true)) {
+            if (is_string($state[$k]) && $this->isImageUploadKey($k)) {
                 $state[$k] = $state[$k] === '' ? null : [$state[$k]];
             }
         }
@@ -592,12 +592,15 @@ class PlatformSettingsPage extends Page implements HasForms
 
     public function save(): void
     {
-        // Defensive normalisation: Filament FileUpload state must be an array,
-        // but legacy/persisted string paths can leak through and crash validation.
+        // Normalise any FileUpload state that leaked through as a bare string.
+        // Intentionally NOT calling $this->form->fill() here: Form::fill()
+        // re-runs afterStateHydrated, which existence-filters FileUpload state
+        // against the target disk and discards Livewire TemporaryUploadedFile
+        // instances (their temp paths live on the upload disk, not the public
+        // disk) — silently wiping the upload before it can be persisted.
         $data = $this->data ?? [];
         $this->normaliseFileUploadState($data);
         $this->data = $data;
-        $this->form->fill($this->data);
 
         $state = $this->form->getState();
 
@@ -628,21 +631,39 @@ class PlatformSettingsPage extends Page implements HasForms
                 $key = $locale === 'en' ? $key : $key.'@'.$locale;
             }
 
+            $settingValue = $value;
+            if ($this->isImageUploadKey($compoundKey) && is_array($settingValue)) {
+                $settingValue = array_values($settingValue)[0] ?? null;
+            } else {
+                $settingValue = is_array($value) ? json_encode($value) : $value;
+            }
+
+            // Never let an empty FileUpload state overwrite a stored asset:
+            // empty state dehydrates to null and would wipe the previous value.
+            if ($this->isImageUploadKey($compoundKey)
+                && ($settingValue === null || $settingValue === '' || $settingValue === [] || $settingValue === '[]')) {
+                continue;
+            }
+
             PlatformSetting::updateOrCreate(
                 [
                     'group' => $group,
                     'key' => $key,
                 ],
                 [
-                    'value' => is_array($value) ? json_encode($value) : $value,
+                    'value' => $settingValue,
                 ]
             );
         }
 
-        // Reflect folded uploads / saved values back into the live form and
-        // re-snapshot so a second Save in the same session stays idempotent.
+        // Reflect saved values back into the live form and re-snapshot so a
+        // second Save in the same session stays idempotent. Image keys are
+        // skipped: their form state already holds the hydrated array (writing
+        // the dehydrated string back would break the FileUpload component).
         foreach ($state as $compoundKey => $value) {
-            if (is_string($compoundKey) && str_starts_with($compoundKey, 'marketing_')) {
+            if (is_string($compoundKey)
+                && str_starts_with($compoundKey, 'marketing_')
+                && ! $this->isImageUploadKey($compoundKey)) {
                 $this->data[$compoundKey] = $value;
             }
         }
@@ -837,9 +858,18 @@ class PlatformSettingsPage extends Page implements HasForms
         $snapshot = [];
 
         foreach ($this->data ?? [] as $compoundKey => $value) {
-            if (is_string($compoundKey) && str_starts_with($compoundKey, 'marketing_')) {
-                $snapshot[$compoundKey] = $value;
+            if (! is_string($compoundKey) || ! str_starts_with($compoundKey, 'marketing_')) {
+                continue;
             }
+
+            // FileUpload state is a (uuid-keyed) array of stored paths; the
+            // dirty check compares against the dehydrated scalar, so store
+            // just the effective value here.
+            if ($this->isImageUploadKey($compoundKey) && is_array($value)) {
+                $value = array_values($value)[0] ?? null;
+            }
+
+            $snapshot[$compoundKey] = $value;
         }
 
         $this->marketingSnapshot = $snapshot;
@@ -938,6 +968,22 @@ class PlatformSettingsPage extends Page implements HasForms
         return $data;
     }
 
+    protected function isImageUploadKey(string $key): bool
+    {
+        $imageKeys = [
+            'branding_platform_logo',
+            'branding_platform_favicon',
+            'email_logo_path',
+            'marketing_nav_logo',
+            'marketing_footer_logo',
+            'marketing_hero_image',
+            'marketing_about_image',
+            'marketing_contact_image',
+        ];
+
+        return in_array($key, $imageKeys, true);
+    }
+
     /**
      * Wrap any FileUpload state that leaked through as a string into an array.
      *
@@ -951,7 +997,7 @@ class PlatformSettingsPage extends Page implements HasForms
                 continue;
             }
 
-            if (is_string($value) && (str_ends_with((string) $key, '_upload') || in_array((string) $key, ['branding_platform_logo', 'branding_platform_favicon', 'email_logo_path'], true))) {
+            if (is_string($value) && (str_ends_with((string) $key, '_upload') || $this->isImageUploadKey($key))) {
                 $value = $value === '' ? null : [$value];
             }
         }
@@ -960,7 +1006,7 @@ class PlatformSettingsPage extends Page implements HasForms
 
     public function getFormUploadedFiles(string $statePath): ?array
     {
-        if (isset($this->data[$statePath]) && is_string($this->data[$statePath])) {
+        if (isset($this->data[$statePath]) && is_string($this->data[$statePath]) && $this->isImageUploadKey($statePath)) {
             $this->data[$statePath] = $this->data[$statePath] === '' ? null : [$this->data[$statePath]];
             $this->form->fill($this->data);
         }
@@ -1007,7 +1053,9 @@ class PlatformSettingsPage extends Page implements HasForms
                 ->image()
                 ->imageEditor()
                 ->maxSize(4096)
-                ->helperText(__('Upload an image from your computer or device.'))
+                ->helperText(fn () => __('Upload an image from your computer or device. Current: :value', [
+                    'value' => $this->marketingDisplayValue($key, $this->marketingLocale) ?: __('(bundled default)'),
+                ]))
                 ->columnSpanFull(),
         ];
     }
