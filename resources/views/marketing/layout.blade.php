@@ -599,7 +599,8 @@
                 <div>
                     <h3 class="text-sm font-semibold mb-3">{{ __('Resources') }}</h3>
                     <ul class="space-y-2 text-sm text-slate-200">
-                        <li><a href="{{ route('marketing.home') }}" class="hover:text-white">{{ __('Resources') }}</a></li>
+                        <li><a href="{{ route('marketing.help') }}" class="hover:text-white">{{ __('Help Center') }}</a></li>
+                        <li><a href="{{ route('marketing.help.enroll') }}" class="hover:text-white">{{ __('How to enroll a student') }}</a></li>
                         <li><a href="{{ route('register') }}" class="hover:text-white">{{ __('Book a demo') }}</a></li>
                     </ul>
                 </div>
