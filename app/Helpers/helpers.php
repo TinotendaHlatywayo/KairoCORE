@@ -154,7 +154,7 @@ if (! function_exists('platform_logo_url')) {
      */
     function platform_logo_url(): string
     {
-        return platform_branding_asset_url('platform_logo', 'images/logo-transparent.png');
+        return platform_branding_asset_url('platform_logo', 'images/kairo-core-logo.png');
     }
 }
 
