@@ -106,6 +106,11 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
             ."## Public pages (crawlable)\n\n"
             ."- Home: {$base}\n"
             ."- Features: ".route('marketing.features')."\n"
+            ."- School fees & finance: ".route('marketing.school-fees')."\n"
+            ."- Student information system: ".route('marketing.students')."\n"
+            ."- Admissions & enrolment: ".route('marketing.admissions')."\n"
+            ."- Academics, exams & report cards: ".route('marketing.academics')."\n"
+            ."- Security & data protection: ".route('marketing.security')."\n"
             ."- About: ".route('marketing.about')."\n"
             ."- Contact: ".route('marketing.contact')."\n"
             ."- Help center: ".route('marketing.help')."\n"
@@ -139,6 +144,11 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
         $urls = [
             ['loc' => route('marketing.home'), 'lastmod' => $lastmod('marketing/home'), 'changefreq' => 'weekly', 'priority' => '1.0'],
             ['loc' => route('marketing.features'), 'lastmod' => $lastmod('marketing/features'), 'changefreq' => 'monthly', 'priority' => '0.8'],
+            ['loc' => route('marketing.school-fees'), 'lastmod' => $lastmod('marketing/school-fees'), 'changefreq' => 'monthly', 'priority' => '0.8'],
+            ['loc' => route('marketing.students'), 'lastmod' => $lastmod('marketing/students'), 'changefreq' => 'monthly', 'priority' => '0.8'],
+            ['loc' => route('marketing.admissions'), 'lastmod' => $lastmod('marketing/admissions'), 'changefreq' => 'monthly', 'priority' => '0.8'],
+            ['loc' => route('marketing.academics'), 'lastmod' => $lastmod('marketing/academics'), 'changefreq' => 'monthly', 'priority' => '0.8'],
+            ['loc' => route('marketing.security'), 'lastmod' => $lastmod('marketing/security'), 'changefreq' => 'yearly', 'priority' => '0.5'],
             ['loc' => route('marketing.help'), 'lastmod' => $lastmod('marketing/help'), 'changefreq' => 'weekly', 'priority' => '0.9'],
             ['loc' => route('marketing.help.enroll'), 'lastmod' => $lastmod('marketing/help-enroll-student'), 'changefreq' => 'monthly', 'priority' => '0.9'],
             ['loc' => route('marketing.help.register'), 'lastmod' => $lastmod('marketing/help-register-school'), 'changefreq' => 'monthly', 'priority' => '0.9'],
@@ -200,6 +210,62 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
             ],
         ]);
     })->name('marketing.features');
+
+    // Solution pages — one per verified search intent (see docs/seo/KEYWORD_AND_PAGE_MAP.md).
+    Route::get('/school-fees', function () {
+        return view('marketing.school-fees', [
+            'seoJsonLd' => [
+                platform_breadcrumb_list([
+                    ['name' => __('Home'), 'url' => route('marketing.home')],
+                    ['name' => __('Fees & Finance'), 'url' => route('marketing.school-fees')],
+                ]),
+            ],
+        ]);
+    })->name('marketing.school-fees');
+
+    Route::get('/students', function () {
+        return view('marketing.students', [
+            'seoJsonLd' => [
+                platform_breadcrumb_list([
+                    ['name' => __('Home'), 'url' => route('marketing.home')],
+                    ['name' => __('Students'), 'url' => route('marketing.students')],
+                ]),
+            ],
+        ]);
+    })->name('marketing.students');
+
+    Route::get('/admissions', function () {
+        return view('marketing.admissions', [
+            'seoJsonLd' => [
+                platform_breadcrumb_list([
+                    ['name' => __('Home'), 'url' => route('marketing.home')],
+                    ['name' => __('Admissions'), 'url' => route('marketing.admissions')],
+                ]),
+            ],
+        ]);
+    })->name('marketing.admissions');
+
+    Route::get('/academics', function () {
+        return view('marketing.academics', [
+            'seoJsonLd' => [
+                platform_breadcrumb_list([
+                    ['name' => __('Home'), 'url' => route('marketing.home')],
+                    ['name' => __('Academics'), 'url' => route('marketing.academics')],
+                ]),
+            ],
+        ]);
+    })->name('marketing.academics');
+
+    Route::get('/security', function () {
+        return view('marketing.security', [
+            'seoJsonLd' => [
+                platform_breadcrumb_list([
+                    ['name' => __('Home'), 'url' => route('marketing.home')],
+                    ['name' => __('Security'), 'url' => route('marketing.security')],
+                ]),
+            ],
+        ]);
+    })->name('marketing.security');
 
     // Public help center — crawlable How-To content for search engines and AI assistants.
     Route::get('/help', function () {
