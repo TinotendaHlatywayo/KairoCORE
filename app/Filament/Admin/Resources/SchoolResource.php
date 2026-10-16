@@ -307,7 +307,8 @@ class SchoolResource extends Resource
                         'south_africa' => 'South Africa',
                         'us' => 'United States',
                     ]),
-            ])
+            ], layout: Tables\Enums\FiltersLayout::AboveContent)
+            ->filtersFormColumns(2)
             ->actions([
                 Tables\Actions\Action::make('approve')
                     ->label(__('Approve & Send Activation'))
