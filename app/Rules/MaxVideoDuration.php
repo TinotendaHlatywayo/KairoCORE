@@ -43,6 +43,19 @@ class MaxVideoDuration implements ValidationRule
         }
 
         $trimStart = max(0.0, $this->trimStart);
+
+        // A trim start at or past the end of the video yields zero frames:
+        // ffmpeg still exits 0 and writes a tiny, blank WebP, which renders
+        // as an empty image slot. Reject it here with a real explanation.
+        if ($trimStart >= $seconds - 0.1) {
+            $fail(strtr('The trim start (:trim s) is at or past the end of this :got-second video, so there is nothing left to show. Lower the trim start so it starts before the video ends.', [
+                ':trim' => rtrim(rtrim(number_format($trimStart, 1), '0'), '.'),
+                ':got' => number_format($seconds, 1),
+            ]));
+
+            return;
+        }
+
         $limit = $this->maxSeconds + $trimStart;
 
         // Half a second of tolerance: "8 second" clips exported from
