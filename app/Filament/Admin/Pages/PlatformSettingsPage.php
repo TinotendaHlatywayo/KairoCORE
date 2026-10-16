@@ -21,6 +21,7 @@ use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\HtmlString;
@@ -1283,7 +1284,10 @@ class PlatformSettingsPage extends Page implements HasForms
     }
 
     /**
-     * Wrap any FileUpload state that leaked through as a string into an array.
+     * Wrap any FileUpload state that leaked through as a string into an array
+     * (top level and inside repeaters — feature-card images dehydrate to a
+     * plain path string on every save and would otherwise reach Filament's
+     * validation/dehydration as a string).
      *
      * @param  array<string, mixed>  $data
      */
@@ -1295,7 +1299,13 @@ class PlatformSettingsPage extends Page implements HasForms
                 continue;
             }
 
-            if (is_string($value) && (str_ends_with((string) $key, '_upload') || $this->isImageUploadKey($key))) {
+            $isFileState = is_string($key) && (
+                str_ends_with($key, '_upload')
+                || $this->isImageUploadKey($key)
+                || $key === 'image' // feature-card FileUpload inside the repeater
+            );
+
+            if (is_string($value) && $isFileState) {
                 $value = $value === '' ? null : [$value];
             }
         }
@@ -1304,9 +1314,19 @@ class PlatformSettingsPage extends Page implements HasForms
 
     public function getFormUploadedFiles(string $statePath): ?array
     {
-        if (isset($this->data[$statePath]) && is_string($this->data[$statePath]) && $this->isImageUploadKey($statePath)) {
-            $this->data[$statePath] = $this->data[$statePath] === '' ? null : [$this->data[$statePath]];
-            $this->form->fill($this->data);
+        // The file-upload blade asks the page for this field's stored-file
+        // info before every upload/save. A field hydrated from the database
+        // (or echoed back after a dehydrating save) holds a plain string
+        // path, but Filament iterates file state as a uuid-keyed array —
+        // wrap the string here for whatever FileUpload path was requested
+        // (hero, logos, feature-card images) so the walk cannot foreach a
+        // string and 500. Mutating $this->data is enough: component state
+        // is read straight from the Livewire property, and skipping fill()
+        // keeps other fields' fresh TemporaryUploadedFile state intact.
+        $state = data_get($this, $statePath);
+
+        if (is_string($state)) {
+            data_set($this, $statePath, $state === '' ? null : [(string) Str::uuid() => $state]);
         }
 
         return parent::getFormUploadedFiles($statePath);
