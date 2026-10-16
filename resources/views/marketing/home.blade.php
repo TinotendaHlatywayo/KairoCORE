@@ -1,6 +1,6 @@
 @extends('marketing.layout')
 
-@section('title', marketing_content('meta_title') ?: platform_name().' - School Management System')
+@section('title', marketing_content('meta_title') ?: platform_name().' - School Management System in Zimbabwe')
 @section('meta_description', marketing_content('meta_description') ?: __('Modern school management system for admissions, academics, fees, attendance, HR, communications and more.'))
 
 @push('styles')

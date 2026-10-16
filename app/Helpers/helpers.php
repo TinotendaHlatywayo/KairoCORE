@@ -672,6 +672,34 @@ if (! function_exists('platform_organization_schema')) {
     }
 }
 
+if (! function_exists('platform_software_schema')) {
+    /**
+     * schema.org SoftwareApplication node for Kairo CORE itself.
+     *
+     * Deliberately omits offers/ratings/reviews/customer counts — no pricing
+     * or social-proof claims are published on the marketing site, and schema
+     * must mirror only visible, verifiable content.
+     */
+    function platform_software_schema(): array
+    {
+        return [
+            '@context' => 'https://schema.org',
+            '@type' => 'SoftwareApplication',
+            'name' => platform_name(),
+            'url' => url('/'),
+            'applicationCategory' => 'EducationalApplication',
+            'operatingSystem' => 'Web browser',
+            'description' => platform_seo_description(),
+            'image' => platform_og_image_url() ?: null,
+            'publisher' => [
+                '@type' => 'Organization',
+                'name' => platform_name(),
+                'url' => url('/'),
+            ],
+        ];
+    }
+}
+
 if (! function_exists('platform_breadcrumb_list')) {
     /**
      * Build a schema.org BreadcrumbList node.
