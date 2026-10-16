@@ -2,7 +2,9 @@
 
 namespace App\Filament\Admin\Pages;
 
+use App\Jobs\ConvertWebsiteMediaToWebp;
 use App\Models\User;
+use App\Rules\MaxVideoDuration;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Placeholder;
@@ -19,6 +21,7 @@ use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\HtmlString;
 use Modules\SaaS\Models\PlatformSetting;
 
@@ -59,6 +62,18 @@ class PlatformSettingsPage extends Page implements HasForms
      * @var array<string, mixed>
      */
     public array $marketingSnapshot = [];
+
+    /** Website media slots accept photos, GIFs and short videos alike. */
+    protected const WEBSITE_MEDIA_MIME_TYPES = [
+        'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif',
+        'image/bmp', 'image/tiff',
+        'video/mp4', 'video/quicktime', 'video/webm', 'video/x-m4v',
+        'video/x-msvideo', 'video/mpeg', 'video/3gpp', 'video/x-matroska',
+        'video/x-ms-wmv',
+    ];
+
+    /** Website conversions queued during the current save() run. */
+    protected int $queuedMediaConversions = 0;
 
     public static function canAccess(): bool
     {
@@ -110,6 +125,22 @@ class PlatformSettingsPage extends Page implements HasForms
         }
         $state['marketing_language'] = 'en';
 
+        // Slots whose video is still converting show the pending upload
+        // instead of the current image (source kept under "{key}_source").
+        foreach (array_keys($state) as $compoundKey) {
+            if (! is_string($compoundKey) || ! str_ends_with($compoundKey, '_source')) {
+                continue;
+            }
+
+            $target = substr($compoundKey, 0, -strlen('_source'));
+            $pending = $state[$compoundKey];
+            unset($state[$compoundKey]);
+
+            if (is_string($pending) && $pending !== '' && $this->isImageUploadKey($target)) {
+                $state[$target] = [$pending];
+            }
+        }
+
         foreach (array_keys($state) as $k) {
             if (is_string($k) && str_ends_with($k, '_upload')) {
                 unset($state[$k]);
@@ -136,8 +167,8 @@ class PlatformSettingsPage extends Page implements HasForms
                             ->schema([
                                 TextInput::make('branding_platform_name')->label(__('SaaS Platform Name'))->required(),
                                 ColorPicker::make('branding_default_primary')->label(__('Global Primary Color'))->default('#4f46e5'),
-                                FileUpload::make('branding_platform_logo')->label(__('Super Admin Console Logo'))->disk('public')->directory('platform/branding'),
-                                FileUpload::make('branding_platform_favicon')->label(__('Platform Favicon'))->disk('public')->directory('platform/branding'),
+                                FileUpload::make('branding_platform_logo')->label(__('Super Admin Console Logo'))->disk('public')->directory('platform/branding')->image(),
+                                FileUpload::make('branding_platform_favicon')->label(__('Platform Favicon'))->disk('public')->directory('platform/branding')->image(),
                             ])->columns(2),
 
                         Tab::make('Module Control & Flags')
@@ -308,6 +339,17 @@ class PlatformSettingsPage extends Page implements HasForms
                                     ->afterStateUpdated(fn ($state) => $this->switchMarketingLocale((string) $state))
                                     ->columnSpanFull(),
 
+                                Select::make('media_video_fps')
+                                    ->label(__('Animation frame rate'))
+                                    ->options([
+                                        '10' => __('10 fps (smallest files)'),
+                                        '20' => __('20 fps (balanced)'),
+                                        '30' => __('30 fps (smoothest, default)'),
+                                    ])
+                                    ->default('30')
+                                    ->helperText(__('Frame rate used when a website video or GIF is converted to an animated WebP in the background. Photos are converted to WebP automatically on save; the source video is deleted afterwards.'))
+                                    ->columnSpanFull(),
+
                                 Tabs::make('marketingSections')
                                     ->columnSpanFull()
                                     ->tabs([
@@ -323,13 +365,19 @@ class PlatformSettingsPage extends Page implements HasForms
                                                      ->label(__('Navbar logo (light background)'))
                                                      ->disk('public')
                                                      ->directory('platform/website')
-                                                     ->image()
+                                                     ->acceptedFileTypes(self::WEBSITE_MEDIA_MIME_TYPES)
+                                                     ->maxSize(51200)
+                                                     ->rule(new MaxVideoDuration(8))
+                                                     ->helperText(__('Image, GIF or a video up to 8 seconds — converted to WebP (animated for GIF/video) in the background.'))
                                                      ->columnSpanFull(),
                                                  FileUpload::make('marketing_footer_logo')
                                                      ->label(__('Footer logo (dark background)'))
                                                      ->disk('public')
                                                      ->directory('platform/website')
-                                                     ->image()
+                                                     ->acceptedFileTypes(self::WEBSITE_MEDIA_MIME_TYPES)
+                                                     ->maxSize(51200)
+                                                     ->rule(new MaxVideoDuration(8))
+                                                     ->helperText(__('Image, GIF or a video up to 8 seconds — converted to WebP (animated for GIF/video) in the background.'))
                                                      ->columnSpanFull(),
 
                                                 $this->mText('hero_badge', __('Hero badge'), null, true),
@@ -446,7 +494,10 @@ class PlatformSettingsPage extends Page implements HasForms
                                                             ->label(__('Feature image'))
                                                             ->disk('public')
                                                             ->directory('platform/website')
-                                                            ->image()
+                                                            ->acceptedFileTypes(self::WEBSITE_MEDIA_MIME_TYPES)
+                                                            ->maxSize(51200)
+                                                            ->rule(new MaxVideoDuration(8))
+                                                            ->helperText(__('Image, GIF or a video up to 8 seconds — converted to WebP (animated for GIF/video) in the background.'))
                                                             ->columnSpanFull(),
                                                     ]),
 
@@ -609,6 +660,8 @@ class PlatformSettingsPage extends Page implements HasForms
             $locale = 'en';
         }
 
+        $this->queuedMediaConversions = 0;
+
         foreach ($state as $compoundKey => $value) {
             $parts = explode('_', (string) $compoundKey, 2);
             if (count($parts) < 2) {
@@ -631,8 +684,16 @@ class PlatformSettingsPage extends Page implements HasForms
                 $key = $locale === 'en' ? $key : $key.'@'.$locale;
             }
 
+            $featureJobs = [];
+            $stillJob = null;
+
             $settingValue = $value;
-            if ($this->isImageUploadKey($compoundKey) && is_array($settingValue)) {
+            if ($compoundKey === 'marketing_features_list' && is_array($value)) {
+                // Feature-card videos are queued for conversion; the public
+                // list keeps serving the current images until WebP is ready.
+                [$preparedItems, $featureJobs] = $this->prepareFeatureCardMedia($value, $group, $key);
+                $settingValue = json_encode($preparedItems);
+            } elseif ($this->isImageUploadKey($compoundKey) && is_array($settingValue)) {
                 $settingValue = array_values($settingValue)[0] ?? null;
             } else {
                 $settingValue = is_array($value) ? json_encode($value) : $value;
@@ -645,6 +706,51 @@ class PlatformSettingsPage extends Page implements HasForms
                 continue;
             }
 
+            // Website media uploads convert to WebP in the background.
+            // Videos keep the current public value until the job swaps in
+            // the animated WebP, so their conversion can start right away;
+            // photos are queued after the row write below, so the job can
+            // safely point the setting at the resulting WebP.
+            if ($this->isImageUploadKey($compoundKey)
+                && str_starts_with($compoundKey, 'marketing_')
+                && is_string($settingValue)
+                && ! str_contains($settingValue, '://')) {
+                if (ConvertWebsiteMediaToWebp::isAnimatedMediaPath($settingValue)) {
+                    if (! Storage::disk('public')->exists($settingValue)) {
+                        // Stale state (the video was already consumed by a
+                        // previous conversion) — keep the current value.
+                        continue;
+                    }
+
+                    $sourceKey = $key.'_source';
+
+                    PlatformSetting::updateOrCreate(
+                        [
+                            'group' => $group,
+                            'key' => $sourceKey,
+                        ],
+                        [
+                            'value' => $settingValue,
+                        ]
+                    );
+
+                    ConvertWebsiteMediaToWebp::dispatch($group, $key, $settingValue, $this->websiteAnimationFps(), $sourceKey);
+                    $this->queuedMediaConversions++;
+
+                    continue;
+                }
+
+                if (ConvertWebsiteMediaToWebp::isStillImagePath($settingValue)
+                    && Storage::disk('public')->exists($settingValue)) {
+                    $stillJob = new ConvertWebsiteMediaToWebp(
+                        $group,
+                        $key,
+                        $settingValue,
+                        $this->websiteAnimationFps()
+                    );
+                }
+            }
+
             PlatformSetting::updateOrCreate(
                 [
                     'group' => $group,
@@ -654,6 +760,17 @@ class PlatformSettingsPage extends Page implements HasForms
                     'value' => $settingValue,
                 ]
             );
+
+            // Conversions start only once the owning row is persisted, so a
+            // synchronous worker cannot read a stale value.
+            if ($stillJob !== null) {
+                dispatch($stillJob);
+                $this->queuedMediaConversions++;
+            }
+            foreach ($featureJobs as $featureJob) {
+                dispatch($featureJob);
+                $this->queuedMediaConversions++;
+            }
         }
 
         // Reflect saved values back into the live form and re-snapshot so a
@@ -673,11 +790,110 @@ class PlatformSettingsPage extends Page implements HasForms
             ->title(__('Platform configurations updated'))
             ->success()
             ->send();
+
+        if ($this->queuedMediaConversions > 0) {
+            Notification::make()
+                ->title(__('Media queued for WebP conversion'))
+                ->body(__('Your upload is being converted in the background — the website picks up the new WebP (animated for videos and GIFs) within about a minute, and the source video is deleted afterwards.'))
+                ->info()
+                ->send();
+        }
     }
 
     // ───────────────────────────────────────────────────────────────
-    // Website Content (marketing) helpers
+    // Website content (marketing) helpers
     // ───────────────────────────────────────────────────────────────
+
+    /**
+     * Prepare a features-card list for persistence: card videos/GIFs get a
+     * deferred conversion job while the list keeps serving the images the
+     * site currently displays (the pending upload is remembered under
+     * "image_source" so the editor can re-display it after a reload).
+     *
+     * Jobs are returned undispatched — the caller dispatches them after the
+     * row has been written, so a synchronous worker cannot read stale data.
+     *
+     * @param  array<int|string, array<string, mixed>>  $items
+     * @return array{0: array<int|string, array<string, mixed>>, 1: array<int, ConvertWebsiteMediaToWebp>}
+     */
+    protected function prepareFeatureCardMedia(array $items, string $group, string $key): array
+    {
+        // Previous public images by position: the stored row is
+        // authoritative (it holds the value the site renders even while a
+        // conversion is pending); the mount snapshot covers the case where
+        // no row exists yet. Lists align positionally through fill(), the
+        // same assumption marketingDisplayList() makes.
+        $previousImages = [];
+        $storedList = marketing_settings_map()[$key] ?? null;
+
+        $previousSource = (is_array($storedList) && $storedList !== [])
+            ? $storedList
+            : (array) ($this->marketingSnapshot['marketing_features_list'] ?? []);
+
+        foreach (array_values($previousSource) as $previous) {
+            $previousImages[] = is_array($previous) ? ($previous['image'] ?? null) : null;
+        }
+
+        $jobs = [];
+        $position = 0;
+
+        foreach ($items as $i => $item) {
+            if (! is_array($item)) {
+                $position++;
+                continue;
+            }
+
+            $media = $item['image'] ?? null;
+            if (is_array($media)) {
+                $media = array_values($media)[0] ?? null;
+            }
+
+            if (is_string($media) && $media !== '' && ! str_contains($media, '://')) {
+                if (ConvertWebsiteMediaToWebp::isAnimatedMediaPath($media)) {
+                    if (Storage::disk('public')->exists($media)) {
+                        // Never let a raw video path reach the public
+                        // markup: queue it and remember the pending upload.
+                        $jobs[] = new ConvertWebsiteMediaToWebp(
+                            $group,
+                            $key,
+                            $media,
+                            $this->websiteAnimationFps(),
+                            null,
+                            (string) $i
+                        );
+
+                        $items[$i]['image_source'] = $media;
+                    }
+
+                    // Keep serving the previous image until the WebP lands
+                    // (also covers stale state whose video was consumed).
+                    $items[$i]['image'] = $previousImages[$position] ?? null;
+                } elseif (ConvertWebsiteMediaToWebp::isStillImagePath($media)
+                    && Storage::disk('public')->exists($media)) {
+                    $jobs[] = new ConvertWebsiteMediaToWebp(
+                        $group,
+                        $key,
+                        $media,
+                        $this->websiteAnimationFps(),
+                        null,
+                        (string) $i
+                    );
+                }
+            }
+
+            $position++;
+        }
+
+        return [$items, $jobs];
+    }
+
+    /** Frame rate for background WebP animations (media/video_fps, default 30). */
+    protected function websiteAnimationFps(): int
+    {
+        $fps = (int) PlatformSetting::get('media', 'video_fps', 30);
+
+        return in_array($fps, [10, 20, 30], true) ? $fps : 30;
+    }
 
     /**
      * Scalar website-content keys (edit targets of the form fields).
@@ -785,6 +1001,17 @@ class PlatformSettingsPage extends Page implements HasForms
                 }
                 $clean = array_filter($item, fn ($v) => $v !== '' && $v !== null);
                 $merged[] = array_merge($defaults[$i] ?? [], $clean);
+            }
+
+            // A card video still converting: re-display the pending upload
+            // in the editor while the site keeps rendering "image".
+            foreach ($merged as $i => $item) {
+                if (is_array($item)
+                    && isset($item['image_source'])
+                    && is_string($item['image_source'])
+                    && $item['image_source'] !== '') {
+                    $merged[$i]['image'] = $item['image_source'];
+                }
             }
 
             return $merged ?: $defaults;
@@ -1039,7 +1266,9 @@ class PlatformSettingsPage extends Page implements HasForms
     }
 
     /**
-     * Website-content image field: direct file upload replacing text URL inputs.
+     * Website-content media field: photos, GIFs and short videos are all
+     * accepted; uploads are converted to WebP in the background (see
+     * ConvertWebsiteMediaToWebp) so static images become animations.
      *
      * @return array<int, FileUpload>
      */
@@ -1050,10 +1279,10 @@ class PlatformSettingsPage extends Page implements HasForms
                 ->label($label)
                 ->disk('public')
                 ->directory('platform/website')
-                ->image()
-                ->imageEditor()
-                ->maxSize(4096)
-                ->helperText(fn () => __('Upload an image from your computer or device. Current: :value', [
+                ->acceptedFileTypes(self::WEBSITE_MEDIA_MIME_TYPES)
+                ->maxSize(51200)
+                ->rule(new MaxVideoDuration(8))
+                ->helperText(fn () => __('Image, GIF or a video up to 8 seconds. Converted to WebP in the background (animated for GIF/video, at the Animation frame rate). Current: :value', [
                     'value' => $this->marketingDisplayValue($key, $this->marketingLocale) ?: __('(bundled default)'),
                 ]))
                 ->columnSpanFull(),
