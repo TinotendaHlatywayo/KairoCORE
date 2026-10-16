@@ -505,4 +505,120 @@ class WebsiteMediaWebpConversionTest extends TestCase
         $this->assertTrue($publicUntouched, 'hero_image changed while the video was pending');
         $this->assertTrue($redisplaysPending, 'reloaded page did not re-display the pending video');
     }
+
+    /**
+     * The browser's file-upload blade calls $wire.getFormUploadedFiles(path)
+     * (state watch / pre-save scan). A save dehydrates a feature-card image
+     * to a plain string path and echoes it back into $this->data without
+     * re-wrapping, so that next call reached Filament's foreach()-over-state
+     * with a string and 500'd. Reproduces the real sequence: upload → save →
+     * blade call.
+     */
+    public function test_get_form_uploaded_files_wraps_string_feature_image_state(): void
+    {
+        Queue::fake();
+        $this->actingAsPlatformAdmin();
+
+        $stored = PlatformSetting::where('group', 'marketing')->where('key', 'features_list')->first();
+        $originalList = $stored?->value;
+
+        $component = Livewire::test(PlatformSettingsPage::class);
+
+        $list = $component->get('data.marketing_features_list');
+        $this->assertIsArray($list);
+        $itemKey = array_key_first($list);
+        $statePath = 'data.marketing_features_list.'.$itemKey.'.image';
+
+        $component
+            ->set($statePath, [UploadedFile::fake()->create('echo-clip.mp4', 256, 'video/mp4')])
+            ->call('save');
+
+        $pushedPath = null;
+        Queue::assertPushed(
+            ConvertWebsiteMediaToWebp::class,
+            function (ConvertWebsiteMediaToWebp $job) use (&$pushedPath): bool {
+                $pushedPath = $job->path;
+
+                return $job->key === 'features_list';
+            }
+        );
+
+        // Post-save echo: the dehydrated single-file state is a bare string.
+        $itemKey = array_key_first($component->get('data.marketing_features_list'));
+        $statePath = 'data.marketing_features_list.'.$itemKey.'.image';
+        $echoed = $component->get($statePath);
+        $this->assertIsString($echoed, 'expected the save to echo a dehydrated string path back into data');
+
+        // The blade's call must not throw, and it must leave an array state.
+        $component->call('getFormUploadedFiles', $statePath);
+
+        $wrapped = $component->get($statePath);
+        $this->assertIsArray($wrapped, 'string feature image state was not wrapped into an array');
+        $this->assertContains($echoed, array_values($wrapped));
+
+        // Restore the stored list and remove the upload this test created.
+        if ($stored) {
+            $stored->update(['value' => $originalList]);
+        }
+        if ($pushedPath !== null) {
+            Storage::disk('public')->delete($pushedPath);
+        }
+    }
+
+    /**
+     * A feature-card video upload must save, queue conversion with the card's
+     * trim start, and remember the pending upload under image_source while the
+     * public list keeps serving the previous image.
+     */
+    public function test_feature_card_video_saves_and_queues_conversion(): void
+    {
+        Queue::fake();
+        $this->actingAsPlatformAdmin();
+
+        $stored = PlatformSetting::where('group', 'marketing')->where('key', 'features_list')->first();
+        $originalList = $stored?->value;
+
+        $component = Livewire::test(PlatformSettingsPage::class);
+        $list = $component->get('data.marketing_features_list');
+        $itemKey = array_key_first($list);
+        $statePath = 'data.marketing_features_list.'.$itemKey.'.image';
+
+        $component
+            ->set($statePath, [UploadedFile::fake()->create('feature-clip.mp4', 256, 'video/mp4')])
+            ->set('data.marketing_features_list.'.$itemKey.'.trim_start', '4')
+            ->call('save');
+
+        $pushedJob = null;
+        Queue::assertPushed(
+            ConvertWebsiteMediaToWebp::class,
+            function (ConvertWebsiteMediaToWebp $job) use (&$pushedJob): bool {
+                $pushedJob = $job;
+
+                return $job->key === 'features_list'
+                    && str_ends_with($job->path, '.mp4')
+                    && $job->trimStart === 4.0;
+            }
+        );
+
+        $saved = json_decode(
+            (string) PlatformSetting::where('group', 'marketing')->where('key', 'features_list')->value('value'),
+            true
+        );
+        $savedItem = $saved[$itemKey] ?? $saved[array_key_first($saved)] ?? null;
+        $pendingRecorded = is_array($savedItem)
+            && str_ends_with((string) ($savedItem['image_source'] ?? ''), '.mp4');
+        $publicImageKept = is_array($savedItem)
+            && ($savedItem['image'] ?? null) !== ($savedItem['image_source'] ?? null);
+
+        // Restore the stored list and remove the upload this test created.
+        if ($stored) {
+            $stored->update(['value' => $originalList]);
+        }
+        if ($pushedJob !== null) {
+            Storage::disk('public')->delete($pushedJob->path);
+        }
+
+        $this->assertTrue($pendingRecorded, 'pending feature video was not recorded under image_source');
+        $this->assertTrue($publicImageKept, 'public feature image was not kept while the video converts');
+    }
 }
