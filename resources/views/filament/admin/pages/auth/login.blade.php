@@ -1,5 +1,5 @@
 @php
-    $logoUrl = asset('images/logo-transparent.png');
+    $logoUrl = platform_logo_url();
 @endphp
 
 <div>
