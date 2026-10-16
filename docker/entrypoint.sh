@@ -28,8 +28,8 @@ fi
 
 if [ "$1" = "apache2-foreground" ]; then
     # Ensure public/storage symlink exists so uploaded media (videos, images,
-    // school logos) are served at /storage/... . Remove any stale directory or
-    // broken symlink first so storage:link succeeds.
+    # school logos) are served at /storage/... . Remove any stale directory or
+    # broken symlink first so storage:link succeeds.
     if [ -e public/storage ] && [ ! -L public/storage ]; then
         rm -rf public/storage
     fi
