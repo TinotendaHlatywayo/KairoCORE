@@ -46,6 +46,7 @@ class ConvertWebsiteMediaToWebp implements ShouldQueue
         public ?string $sourceKey = null,
         public ?string $itemKey = null,
         public string $field = 'image',
+        public float $trimStart = 0.0,
     ) {}
 
     public static function isAnimatedMediaPath(string $path): bool
@@ -98,9 +99,17 @@ class ConvertWebsiteMediaToWebp implements ShouldQueue
 
         $fps = in_array($this->fps, [10, 20, 30], true) ? $this->fps : 30;
 
+        // The clip is always MAX_SOURCE_SECONDS long, starting at trimStart
+        // into the source. -ss before -i seeks in the (fast) input stream.
+        $seek = '';
+        if ($this->trimStart > 0 && self::isAnimatedMediaPath($this->path)) {
+            $seek = '-ss '.escapeshellarg(sprintf('%.3F', $this->trimStart)).' ';
+        }
+
         $command = self::isAnimatedMediaPath($this->path)
             ? sprintf(
-                'ffmpeg -y -v error -t %d -i %s -vf %s -c:v libwebp -q:v 75 -compression_level 6 -preset default -loop 0 -pix_fmt yuva420p -an %s 2>&1',
+                'ffmpeg -y -v error %s-t %d -i %s -vf %s -c:v libwebp -q:v 75 -compression_level 6 -preset default -loop 0 -pix_fmt yuva420p -an %s 2>&1',
+                $seek,
                 self::MAX_SOURCE_SECONDS,
                 escapeshellarg($source),
                 escapeshellarg("fps={$fps},scale=min(1920\\,iw):-2"),

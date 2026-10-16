@@ -249,6 +249,119 @@ class WebsiteMediaWebpConversionTest extends TestCase
         @unlink($short->getRealPath());
     }
 
+    public function test_trim_start_allows_a_longer_source_video(): void
+    {
+        $tenSeconds = new UploadedFile($this->makeVideo(10.0), 'ten.mp4', 'video/mp4', null, true);
+
+        $withoutTrim = Validator::make(
+            ['media' => [$tenSeconds]],
+            ['media.*' => [new MaxVideoDuration(8)]]
+        );
+        $withTrim = Validator::make(
+            ['media' => [$tenSeconds]],
+            ['media.*' => [new MaxVideoDuration(8, 2.0)]]
+        );
+
+        $this->assertTrue($withoutTrim->fails(), 'a 10-second video must be rejected without a trim start');
+        $this->assertTrue($withTrim->passes(), 'a 10-second video must be accepted when trim start 2 yields an 8-second clip');
+
+        @unlink($tenSeconds->getRealPath());
+    }
+
+    public function test_trim_start_still_rejects_videos_the_window_cannot_cover(): void
+    {
+        $tenSeconds = new UploadedFile($this->makeVideo(10.0), 'ten.mp4', 'video/mp4', null, true);
+
+        $result = Validator::make(
+            ['media' => [$tenSeconds]],
+            ['media.*' => [new MaxVideoDuration(8, 1.0)]]
+        );
+
+        $this->assertTrue($result->fails(), 'trim start 1 on a 10-second video needs 9 seconds — must be rejected');
+
+        @unlink($tenSeconds->getRealPath());
+    }
+
+    public function test_conversion_job_honours_trim_start(): void
+    {
+        $this->actingAsPlatformAdmin();
+
+        $disk = Storage::disk('public');
+        $path = 'platform/website/trim-clip-'.uniqid().'.mp4';
+        $disk->put($path, file_get_contents($this->makeVideo(10.0)));
+
+        $hero = PlatformSetting::firstOrCreate(
+            ['group' => 'marketing', 'key' => 'hero_image'],
+            ['value' => 'platform/website/before-trim.jpg']
+        );
+        $original = $hero->value;
+        PlatformSetting::updateOrCreate(
+            ['group' => 'marketing', 'key' => 'hero_image_source'],
+            ['value' => $path]
+        );
+
+        (new ConvertWebsiteMediaToWebp('marketing', 'hero_image', $path, 30, 'hero_image_source', null, 'image', 2.0))->handle();
+
+        $webp = preg_replace('/\.[^.]+$/', '.webp', $path);
+        $webpExists = $disk->exists($webp);
+        $animated = $webpExists && str_contains((string) $disk->get($webp), 'ANIM');
+        $hero->refresh();
+        $pointedAtWebp = $hero->value === $webp;
+        $sourceDeleted = ! $disk->exists($path);
+
+        // Restore the database and remove fixture files.
+        $hero->update(['value' => $original]);
+        PlatformSetting::where('group', 'marketing')->where('key', 'hero_image_source')->delete();
+        $disk->delete([$path, $webp]);
+
+        $this->assertTrue($webpExists, 'webp was not created from the trimmed window');
+        $this->assertTrue($animated, 'trimmed webp is not animated');
+        $this->assertTrue($pointedAtWebp, 'hero_image does not point at the trimmed webp');
+        $this->assertTrue($sourceDeleted, 'source video was not deleted after trimmed conversion');
+    }
+
+    public function test_save_passes_trim_start_to_queued_job_and_persists_it(): void
+    {
+        Queue::fake();
+        $this->actingAsPlatformAdmin();
+
+        $hero = PlatformSetting::firstOrCreate(
+            ['group' => 'marketing', 'key' => 'hero_image'],
+            ['value' => 'platform/website/trim-save-hero.jpg']
+        );
+        $original = $hero->value;
+        PlatformSetting::where('group', 'marketing')->where('key', 'hero_image_source')->delete();
+        PlatformSetting::where('group', 'marketing')->where('key', 'hero_image_trim_start')->delete();
+
+        Livewire::test(PlatformSettingsPage::class)
+            ->set('data.marketing_hero_image', [UploadedFile::fake()->create('trim-save-clip.mp4', 512, 'video/mp4')])
+            ->set('data.marketing_hero_image_trim_start', '2')
+            ->call('save');
+
+        $pending = PlatformSetting::where('group', 'marketing')->where('key', 'hero_image_source')->first();
+        $pendingPath = (string) ($pending?->value);
+        $trimPersisted = PlatformSetting::where('group', 'marketing')
+            ->where('key', 'hero_image_trim_start')
+            ->value('value');
+
+        Queue::assertPushed(
+            ConvertWebsiteMediaToWebp::class,
+            fn (ConvertWebsiteMediaToWebp $job) => $job->key === 'hero_image'
+                && str_ends_with($job->path, '.mp4')
+                && $job->trimStart === 2.0
+        );
+
+        // Restore the database and remove the upload this test created.
+        $hero->update(['value' => $original]);
+        $pending?->delete();
+        PlatformSetting::where('group', 'marketing')->where('key', 'hero_image_trim_start')->delete();
+        if ($pendingPath !== '') {
+            Storage::disk('public')->delete($pendingPath);
+        }
+
+        $this->assertSame('2', (string) $trimPersisted, 'trim start was not persisted as a setting');
+    }
+
     public function test_no_edit_save_does_not_requeue_and_pending_video_redisplays(): void
     {
         Queue::fake();
