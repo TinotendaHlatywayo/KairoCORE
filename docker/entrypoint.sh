@@ -27,9 +27,13 @@ if [ "$(id -u)" = "0" ]; then
 fi
 
 if [ "$1" = "apache2-foreground" ]; then
-    # Run as the current user (root): www-data cannot write to the root-owned
-    # public/ directory, so linking through art() would silently fail and every
-    # uploaded file (/storage/...) would 404.
+    # Ensure public/storage symlink exists so uploaded media (videos, images,
+    // school logos) are served at /storage/... . Remove any stale directory or
+    // broken symlink first so storage:link succeeds.
+    if [ -e public/storage ] && [ ! -L public/storage ]; then
+        rm -rf public/storage
+    fi
+    [ -L public/storage ] && unlink public/storage
     php artisan storage:link --force || echo "WARN: storage:link failed; uploaded files will 404" >&2
 
     if [ "${RUN_MIGRATIONS:-true}" = "true" ]; then
