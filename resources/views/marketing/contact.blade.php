@@ -81,33 +81,6 @@
         100% { opacity: 1; transform: translateY(0) scale(1); }
     }
 
-        background: #ECFDF5;
-        color: #065F46;
-        border-color: #A7F3D0;
-    }
-        background: rgba(16, 185, 129, 0.15);
-        color: #34D399;
-        border-color: rgba(16, 185, 129, 0.3);
-    }
-        background: #FFFBEB;
-        color: #92400E;
-        border-color: #FDE68A;
-    }
-        background: rgba(245, 158, 11, 0.15);
-        color: #FBBF24;
-        border-color: rgba(245, 158, 11, 0.3);
-    }
-        background: #FEF2F2;
-        color: #991B1B;
-        border-color: #FECACA;
-    }
-        background: rgba(239, 68, 68, 0.15);
-        color: #F87171;
-        border-color: rgba(239, 68, 68, 0.3);
-    }
-
-
-
     /* ==========================================================================
        Glowing Line Social Follow Cards
        ========================================================================== */
