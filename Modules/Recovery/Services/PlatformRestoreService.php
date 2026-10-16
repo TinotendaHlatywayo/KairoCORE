@@ -78,7 +78,7 @@ class PlatformRestoreService
             fclose($stream);
 
             $sql = preg_replace(
-                "/(TEXT|LONGTEXT|MEDIUMTEXT|TINYTEXT|BLOB|LONGBLOB|MEDIUMBLOB|TINYBLOB|JSON)\s+DEFAULT\s+(?:'[^']*'|[^,)]*)/i",
+                "/(TEXT|LONGTEXT|MEDIUMTEXT|TINYTEXT|BLOB|LONGBLOB|MEDIUMBLOB|TINYBLOB|JSON)\b[^,()]*?\s+DEFAULT\s+(?:'[^']*'|\"[^\"]*\"|[^,)]*)/i",
                 '$1',
                 $sql
             );
