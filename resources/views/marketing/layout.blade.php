@@ -584,8 +584,9 @@
                     <h3 class="text-sm font-semibold mb-3">{{ __('Product') }}</h3>
                     <ul class="space-y-2 text-sm text-slate-200">
                         <li><a href="{{ route('marketing.features') }}" class="hover:text-white">{{ __('Features') }}</a></li>
-                        <li><a href="{{ route('marketing.features') }}" class="hover:text-white">{{ __('Modules') }}</a></li>
-                        <li><a href="{{ route('marketing.home') }}" class="hover:text-white">{{ __('Solutions') }}</a></li>
+                        <li><a href="{{ route('marketing.school-fees') }}" class="hover:text-white">{{ __('Fees & Finance') }}</a></li>
+                        <li><a href="{{ route('marketing.admissions') }}" class="hover:text-white">{{ __('Admissions') }}</a></li>
+                        <li><a href="{{ route('marketing.security') }}" class="hover:text-white">{{ __('Security') }}</a></li>
                     </ul>
                 </div>
                 <div>
