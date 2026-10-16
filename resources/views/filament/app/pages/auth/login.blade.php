@@ -531,14 +531,13 @@
         width: 4rem;
         height: 4rem;
         flex: none;
-        border-radius: 1.125rem;
         display: flex;
         align-items: center;
         justify-content: center;
-        background-color: rgba(255, 255, 255, 0.95);
-        border: 1px solid rgba(0, 0, 0, 0.08);
+        background: transparent;
+        border: none;
         overflow: hidden;
-        box-shadow: 0 8px 28px -10px rgba(0, 0, 0, 0.15);
+        box-shadow: none;
         transition: transform 0.3s ease;
     }
     .sc-l2-logo:hover { transform: scale(1.04); }

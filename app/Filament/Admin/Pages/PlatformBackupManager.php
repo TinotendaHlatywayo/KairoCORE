@@ -277,17 +277,23 @@ class PlatformBackupManager extends Page implements HasForms
             'status' => 'pending',
         ]);
 
-        // Restores touch every table and can run for minutes, so they run on
-        // the queue worker too — never inside the web request.
-        RestorePlatformBackupJob::dispatch($log->id);
-
-        $this->refreshBackupsList();
-
-        Notification::make()
-            ->title(__('Restore started'))
-            ->body(__('It is running in the background. Watch the restore status below; the page refreshes automatically.'))
-            ->success()
-            ->send();
+        // Execute restore synchronously so it completes immediately and does not hang on queue
+        try {
+            RestorePlatformBackupJob::dispatchSync($log->id);
+            $this->refreshBackupsList();
+            Notification::make()
+                ->title(__('Restore completed successfully'))
+                ->body(__('The platform backup has been restored.'))
+                ->success()
+                ->send();
+        } catch (\Throwable $e) {
+            $this->refreshBackupsList();
+            Notification::make()
+                ->title(__('Restore failed'))
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
+        }
     }
 
     public function deleteBackupRecord(int $id): void
