@@ -66,11 +66,27 @@ class PlatformRestoreService
 
             DB::statement('SET FOREIGN_KEY_CHECKS=0;');
             DB::statement("SET SESSION sql_mode = 'NO_ENGINE_SUBSTITUTION';");
-            $this->runSqlStream($stream);
+
+            // Read the full backup payload into memory (platform backups are small
+            // enough) so we can strip MySQL-5.x DEFAULT clauses on TEXT/BLOB/JSON
+            // columns, which MySQL 8.4 rejects with error 1101 and cannot be
+            // bypassed by sql_mode alone.
+            $sql = '';
+            while (! feof($stream)) {
+                $sql .= fread($stream, 65536);
+            }
+            fclose($stream);
+
+            $sql = preg_replace(
+                "/(TEXT|LONGTEXT|MEDIUMTEXT|TINYTEXT|BLOB|LONGBLOB|MEDIUMBLOB|TINYBLOB|JSON)\s+DEFAULT\s+(?:'[^']*'|[^,)]*)/i",
+                '$1',
+                $sql
+            );
+
+            $this->runSqlString($sql);
+
             DB::statement('SET FOREIGN_KEY_CHECKS=1;');
             DB::statement("SET SESSION sql_mode = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';");
-
-            fclose($stream);
             $zip->close();
 
             @unlink($localZip);
@@ -88,7 +104,7 @@ class PlatformRestoreService
             }
             $log->update([
                 'status' => 'failed',
-                'error_details' => mb_substr($e->getMessage(), 0, 5000),
+                'error_details' => mb_substr($e->getMessage(), 0, 255),
             ]);
             throw $e;
         }
@@ -178,5 +194,67 @@ class PlatformRestoreService
         }
 
         $flush();
+    }
+
+    /**
+     * Execute a full SQL string statement-by-statement, respecting quoted string
+     * literals so semicolons inside values do not split statements prematurely.
+     */
+    private function runSqlString(string $sql): void
+    {
+        $statements = [];
+        $current = '';
+        $inString = false;
+        $escapeNext = false;
+        $len = strlen($sql);
+
+        for ($i = 0; $i < $len; $i++) {
+            $ch = $sql[$i];
+
+            if ($escapeNext) {
+                $current .= $ch;
+                $escapeNext = false;
+                continue;
+            }
+
+            if ($inString) {
+                if ($ch === '\\') {
+                    $escapeNext = true;
+                    $current .= $ch;
+                    continue;
+                }
+                if ($ch === "'") {
+                    $inString = false;
+                }
+                $current .= $ch;
+                continue;
+            }
+
+            if ($ch === "'") {
+                $inString = true;
+                $current .= $ch;
+                continue;
+            }
+
+            if ($ch === ';') {
+                $statement = trim($current);
+                if ($statement !== '') {
+                    $statements[] = $statement;
+                }
+                $current = '';
+                continue;
+            }
+
+            $current .= $ch;
+        }
+
+        $statement = trim($current);
+        if ($statement !== '') {
+            $statements[] = $statement;
+        }
+
+        foreach ($statements as $statement) {
+            DB::unprepared($statement);
+        }
     }
 }
