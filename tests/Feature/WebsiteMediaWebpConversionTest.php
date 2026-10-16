@@ -45,6 +45,43 @@ class WebsiteMediaWebpConversionTest extends TestCase
         return $user;
     }
 
+    /**
+     * Ensure a marketing hero_image row exists for the test to assert
+     * against, remembering whether it pre-existed. When it did not, the row
+     * is a placeholder this test owns and restoreHeroSetting() removes it —
+     * otherwise the fixture would leave a dangling pointer on the live site.
+     *
+     * @return array{0: PlatformSetting, 1: string|null} [row, original value or null if created here]
+     */
+    private function seedHeroSetting(): array
+    {
+        $existing = PlatformSetting::where('group', 'marketing')->where('key', 'hero_image')->first();
+
+        if ($existing !== null) {
+            return [$existing, (string) $existing->value];
+        }
+
+        $row = PlatformSetting::create([
+            'group' => 'marketing',
+            'key' => 'hero_image',
+            'value' => 'platform/website/original-hero.jpg',
+        ]);
+
+        return [$row, null];
+    }
+
+    /** Restore a pre-existing hero value, or delete a row this test created. */
+    private function restoreHeroSetting(PlatformSetting $hero, ?string $original): void
+    {
+        if ($original === null) {
+            $hero->delete();
+
+            return;
+        }
+
+        $hero->update(['value' => $original]);
+    }
+
     /** Render a real H.264 MP4 fixture of $seconds with ffmpeg. */
     private function makeVideo(float $seconds): string
     {
@@ -70,11 +107,8 @@ class WebsiteMediaWebpConversionTest extends TestCase
         Queue::fake();
         $this->actingAsPlatformAdmin();
 
-        $hero = PlatformSetting::firstOrCreate(
-            ['group' => 'marketing', 'key' => 'hero_image'],
-            ['value' => 'platform/website/original-hero.jpg']
-        );
-        $original = $hero->value;
+        [$hero, $original] = $this->seedHeroSetting();
+        $valueBefore = (string) $hero->value;
         PlatformSetting::where('group', 'marketing')->where('key', 'hero_image_source')->delete();
 
         Livewire::test(PlatformSettingsPage::class)
@@ -94,11 +128,11 @@ class WebsiteMediaWebpConversionTest extends TestCase
                 && $job->sourceKey === 'hero_image_source'
         );
 
-        $publicUntouched = $hero->value === $original;
+        $publicUntouched = $hero->value === $valueBefore;
         $pendingOk = $pending !== null && Storage::disk('public')->exists($pendingPath);
 
         // Restore the database and remove the upload this test created.
-        $hero->update(['value' => $original]);
+        $this->restoreHeroSetting($hero, $original);
         $pending?->delete();
         if ($pendingPath !== '') {
             Storage::disk('public')->delete($pendingPath);
@@ -116,11 +150,7 @@ class WebsiteMediaWebpConversionTest extends TestCase
         $path = 'platform/website/job-clip-'.uniqid().'.mp4';
         $disk->put($path, file_get_contents($this->makeVideo(2.0)));
 
-        $hero = PlatformSetting::firstOrCreate(
-            ['group' => 'marketing', 'key' => 'hero_image'],
-            ['value' => 'platform/website/before-video.jpg']
-        );
-        $original = $hero->value;
+        [$hero, $original] = $this->seedHeroSetting();
         PlatformSetting::updateOrCreate(
             ['group' => 'marketing', 'key' => 'hero_image_source'],
             ['value' => $path]
@@ -139,7 +169,7 @@ class WebsiteMediaWebpConversionTest extends TestCase
         $sourceDeleted = ! $disk->exists($path);
 
         // Restore the database and remove fixture files.
-        $hero->update(['value' => $original]);
+        $this->restoreHeroSetting($hero, $original);
         PlatformSetting::where('group', 'marketing')->where('key', 'hero_image_source')->delete();
         $disk->delete([$path, $webp]);
 
@@ -159,11 +189,7 @@ class WebsiteMediaWebpConversionTest extends TestCase
         $path = 'platform/website/job-still-'.uniqid().'.png';
         $disk->put($path, (string) file_get_contents($image->getRealPath()));
 
-        $hero = PlatformSetting::firstOrCreate(
-            ['group' => 'marketing', 'key' => 'hero_image'],
-            ['value' => 'platform/website/before-still.jpg']
-        );
-        $original = $hero->value;
+        [$hero, $original] = $this->seedHeroSetting();
         $hero->update(['value' => $path]);
 
         (new ConvertWebsiteMediaToWebp('marketing', 'hero_image', $path, 30))->handle();
@@ -176,7 +202,7 @@ class WebsiteMediaWebpConversionTest extends TestCase
         $sourceDeleted = ! $disk->exists($path);
 
         // Restore the database and remove fixture files.
-        $hero->update(['value' => $original]);
+        $this->restoreHeroSetting($hero, $original);
         $disk->delete([$path, $webp]);
 
         $this->assertTrue($webpExists, 'webp was not created from the still image');
@@ -194,11 +220,7 @@ class WebsiteMediaWebpConversionTest extends TestCase
         $fpsOriginal = $fpsRow?->value;
         PlatformSetting::set('media', 'video_fps', '10');
 
-        $hero = PlatformSetting::firstOrCreate(
-            ['group' => 'marketing', 'key' => 'hero_image'],
-            ['value' => 'platform/website/fps-hero.jpg']
-        );
-        $original = $hero->value;
+        [$hero, $original] = $this->seedHeroSetting();
         PlatformSetting::where('group', 'marketing')->where('key', 'hero_image_source')->delete();
 
         Livewire::test(PlatformSettingsPage::class)
@@ -219,7 +241,7 @@ class WebsiteMediaWebpConversionTest extends TestCase
         } else {
             PlatformSetting::where('group', 'media')->where('key', 'video_fps')->delete();
         }
-        $hero->update(['value' => $original]);
+        $this->restoreHeroSetting($hero, $original);
         $pending?->delete();
         if ($pendingPath !== '') {
             Storage::disk('public')->delete($pendingPath);
@@ -282,6 +304,94 @@ class WebsiteMediaWebpConversionTest extends TestCase
         @unlink($tenSeconds->getRealPath());
     }
 
+    public function test_trim_start_at_or_past_video_end_fails_validation(): void
+    {
+        $twoSeconds = new UploadedFile($this->makeVideo(2.0), 'two.mp4', 'video/mp4', null, true);
+
+        $atEnd = Validator::make(
+            ['media' => [$twoSeconds]],
+            ['media.*' => [new MaxVideoDuration(8, 2.0)]]
+        );
+        $pastEnd = Validator::make(
+            ['media' => [$twoSeconds]],
+            ['media.*' => [new MaxVideoDuration(8, 5.0)]]
+        );
+        $inside = Validator::make(
+            ['media' => [$twoSeconds]],
+            ['media.*' => [new MaxVideoDuration(8, 1.5)]]
+        );
+
+        $this->assertTrue($atEnd->fails(), 'trim start at the end of a 2-second video must be rejected');
+        $this->assertTrue($pastEnd->fails(), 'trim start past the end of a 2-second video must be rejected');
+        $this->assertTrue($inside->passes(), 'trim start 1.5 on a 2-second video must be accepted');
+
+        @unlink($twoSeconds->getRealPath());
+    }
+
+    public function test_conversion_job_clamps_out_of_range_trim_and_still_produces_animation(): void
+    {
+        $this->actingAsPlatformAdmin();
+
+        $disk = Storage::disk('public');
+        $path = 'platform/website/clamp-clip-'.uniqid().'.mp4';
+        $disk->put($path, file_get_contents($this->makeVideo(2.0)));
+
+        [$hero, $original] = $this->seedHeroSetting();
+        PlatformSetting::updateOrCreate(
+            ['group' => 'marketing', 'key' => 'hero_image_source'],
+            ['value' => $path]
+        );
+
+        // Trim start 5s on a 2-second video: the job must fall back to
+        // converting from the start rather than writing a blank WebP.
+        (new ConvertWebsiteMediaToWebp('marketing', 'hero_image', $path, 30, 'hero_image_source', null, 'image', 5.0))->handle();
+
+        $webp = preg_replace('/\.[^.]+$/', '.webp', $path);
+        $valid = ConvertWebsiteMediaToWebp::outputLooksLikeWebp($disk->path($webp), true);
+        $hero->refresh();
+        $pointedAtWebp = $hero->value === $webp;
+        $sourceDeleted = ! $disk->exists($path);
+
+        // Restore the database and remove fixture files.
+        $this->restoreHeroSetting($hero, $original);
+        PlatformSetting::where('group', 'marketing')->where('key', 'hero_image_source')->delete();
+        $disk->delete([$path, $webp]);
+
+        $this->assertTrue($valid, 'clamped conversion did not produce a real animated WebP');
+        $this->assertTrue($pointedAtWebp, 'hero_image does not point at the clamped webp');
+        $this->assertTrue($sourceDeleted, 'source video was not deleted after the clamped conversion');
+    }
+
+    public function test_output_validation_rejects_blank_and_still_files(): void
+    {
+        $disk = Storage::disk('public');
+
+        // The exact artifact ffmpeg leaves when it encodes zero frames.
+        $blank = 'platform/website/blank-'.uniqid().'.webp';
+        $disk->put($blank, hex2bin('00000000f8ffffff'));
+
+        $still = 'platform/website/still-'.uniqid().'.webp';
+        $source = 'platform/website/still-src-'.uniqid().'.png';
+        $image = UploadedFile::fake()->image('probe.png', 80, 60);
+        $disk->put($source, (string) file_get_contents($image->getRealPath()));
+        (new ConvertWebsiteMediaToWebp('marketing', 'validation_probe', $source, 30))->handle();
+        $stillPath = preg_replace('/\.[^.]+$/', '.webp', $source);
+
+        $blankRejected = ! ConvertWebsiteMediaToWebp::outputLooksLikeWebp($disk->path($blank), true);
+        $stillAccepted = ConvertWebsiteMediaToWebp::outputLooksLikeWebp($disk->path($stillPath), false);
+        $stillNotAnimated = ! ConvertWebsiteMediaToWebp::outputLooksLikeWebp($disk->path($stillPath), true);
+        $missingRejected = ! ConvertWebsiteMediaToWebp::outputLooksLikeWebp($disk->path('platform/website/nope.webp'), false);
+
+        // The still job persists its result under the probe key — remove it.
+        PlatformSetting::where('group', 'marketing')->where('key', 'validation_probe')->delete();
+        $disk->delete([$blank, $source, $stillPath]);
+
+        $this->assertTrue($blankRejected, 'the 8-byte blank artifact must be rejected');
+        $this->assertTrue($stillAccepted, 'a real still WebP must pass the non-animated check');
+        $this->assertTrue($stillNotAnimated, 'a still WebP must fail the animated check');
+        $this->assertTrue($missingRejected, 'a missing file must be rejected');
+    }
+
     public function test_conversion_job_honours_trim_start(): void
     {
         $this->actingAsPlatformAdmin();
@@ -290,11 +400,7 @@ class WebsiteMediaWebpConversionTest extends TestCase
         $path = 'platform/website/trim-clip-'.uniqid().'.mp4';
         $disk->put($path, file_get_contents($this->makeVideo(10.0)));
 
-        $hero = PlatformSetting::firstOrCreate(
-            ['group' => 'marketing', 'key' => 'hero_image'],
-            ['value' => 'platform/website/before-trim.jpg']
-        );
-        $original = $hero->value;
+        [$hero, $original] = $this->seedHeroSetting();
         PlatformSetting::updateOrCreate(
             ['group' => 'marketing', 'key' => 'hero_image_source'],
             ['value' => $path]
@@ -310,7 +416,7 @@ class WebsiteMediaWebpConversionTest extends TestCase
         $sourceDeleted = ! $disk->exists($path);
 
         // Restore the database and remove fixture files.
-        $hero->update(['value' => $original]);
+        $this->restoreHeroSetting($hero, $original);
         PlatformSetting::where('group', 'marketing')->where('key', 'hero_image_source')->delete();
         $disk->delete([$path, $webp]);
 
@@ -325,11 +431,7 @@ class WebsiteMediaWebpConversionTest extends TestCase
         Queue::fake();
         $this->actingAsPlatformAdmin();
 
-        $hero = PlatformSetting::firstOrCreate(
-            ['group' => 'marketing', 'key' => 'hero_image'],
-            ['value' => 'platform/website/trim-save-hero.jpg']
-        );
-        $original = $hero->value;
+        [$hero, $original] = $this->seedHeroSetting();
         PlatformSetting::where('group', 'marketing')->where('key', 'hero_image_source')->delete();
         PlatformSetting::where('group', 'marketing')->where('key', 'hero_image_trim_start')->delete();
 
@@ -352,7 +454,7 @@ class WebsiteMediaWebpConversionTest extends TestCase
         );
 
         // Restore the database and remove the upload this test created.
-        $hero->update(['value' => $original]);
+        $this->restoreHeroSetting($hero, $original);
         $pending?->delete();
         PlatformSetting::where('group', 'marketing')->where('key', 'hero_image_trim_start')->delete();
         if ($pendingPath !== '') {
@@ -367,11 +469,8 @@ class WebsiteMediaWebpConversionTest extends TestCase
         Queue::fake();
         $this->actingAsPlatformAdmin();
 
-        $hero = PlatformSetting::firstOrCreate(
-            ['group' => 'marketing', 'key' => 'hero_image'],
-            ['value' => 'platform/website/idempotent-hero.jpg']
-        );
-        $original = $hero->value;
+        [$hero, $original] = $this->seedHeroSetting();
+        $valueBefore = (string) $hero->value;
         PlatformSetting::where('group', 'marketing')->where('key', 'hero_image_source')->delete();
 
         Livewire::test(PlatformSettingsPage::class)
@@ -391,13 +490,13 @@ class WebsiteMediaWebpConversionTest extends TestCase
 
         Queue::assertPushed(ConvertWebsiteMediaToWebp::class, 1);
         $hero->refresh();
-        $publicUntouched = $hero->value === $original;
+        $publicUntouched = $hero->value === $valueBefore;
         $redisplaysPending = is_array($boxValue)
             && in_array($pendingPath, array_values($boxValue), true)
             && $pendingPath !== '';
 
         // Restore the database and remove the upload this test created.
-        $hero->update(['value' => $original]);
+        $this->restoreHeroSetting($hero, $original);
         $pending?->delete();
         if ($pendingPath !== '') {
             Storage::disk('public')->delete($pendingPath);
