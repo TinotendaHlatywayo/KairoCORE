@@ -65,26 +65,9 @@ class PlatformRestoreService
             }
 
             DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-            DB::statement("SET SESSION sql_mode = 'NO_ENGINE_SUBSTITUTION';");
-
-            // Read the full backup payload into memory (platform backups are small
-            // enough) so we can strip MySQL-5.x DEFAULT clauses on TEXT/BLOB/JSON
-            // columns, which MySQL 8.4 rejects with error 1101 and cannot be
-            // bypassed by sql_mode alone.
-            $sql = '';
-            while (! feof($stream)) {
-                $sql .= fread($stream, 65536);
-            }
+            DB::statement("SET SESSION sql_mode = '';");
+            $this->runSqlStream($stream);
             fclose($stream);
-
-            $sql = preg_replace(
-                "/(TEXT|LONGTEXT|MEDIUMTEXT|TINYTEXT|BLOB|LONGBLOB|MEDIUMBLOB|TINYBLOB|JSON)\b[^,()]*?\s+DEFAULT\s+(?:'[^']*'|\"[^\"]*\"|[^,)]*)/i",
-                '$1',
-                $sql
-            );
-
-            $this->runSqlString($sql);
-
             DB::statement('SET FOREIGN_KEY_CHECKS=1;');
             DB::statement("SET SESSION sql_mode = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';");
             $zip->close();
