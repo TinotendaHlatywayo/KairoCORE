@@ -739,6 +739,18 @@ class PlatformSettingsPage extends Page implements HasForms
                 continue;
             }
 
+            // Never persist a media path whose file is missing from the
+            // public disk (stale form state from before a reset, or an
+            // upload consumed elsewhere) — the site would render a blank
+            // slot pointing at nothing.
+            if ($this->isImageUploadKey($compoundKey)
+                && str_starts_with($compoundKey, 'marketing_')
+                && is_string($settingValue)
+                && ! str_contains($settingValue, '://')
+                && ! Storage::disk('public')->exists($settingValue)) {
+                continue;
+            }
+
             // Website media uploads convert to WebP in the background.
             // Videos keep the current public value until the job swaps in
             // the animated WebP, so their conversion can start right away;

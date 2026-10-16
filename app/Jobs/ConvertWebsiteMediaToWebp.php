@@ -74,6 +74,88 @@ class ConvertWebsiteMediaToWebp implements ShouldQueue
         return $ext !== '' ? $ext : null;
     }
 
+    /**
+     * Is $path a real WebP file (RIFF/WEBP header)? When $animated, it must
+     * also carry the ANIM chunk so a frame-less or still result can never be
+     * published as a video clip.
+     */
+    public static function outputLooksLikeWebp(string $path, bool $animated): bool
+    {
+        if (! is_file($path) || filesize($path) < 64) {
+            return false;
+        }
+
+        $header = (string) @file_get_contents($path, false, null, 0, 12);
+        if (strlen($header) < 12 || substr($header, 0, 4) !== 'RIFF' || substr($header, 8, 4) !== 'WEBP') {
+            return false;
+        }
+
+        if (! $animated) {
+            return true;
+        }
+
+        // Scan the RIFF chunks for the ANIM marker (animated WebP only).
+        $size = filesize($path);
+        $handle = @fopen($path, 'rb');
+        if ($handle === false) {
+            return false;
+        }
+
+        try {
+            fseek($handle, 12);
+            $found = false;
+
+            while (ftell($handle) + 8 <= $size) {
+                $chunkHeader = fread($handle, 8);
+                if (strlen($chunkHeader) < 8) {
+                    break;
+                }
+
+                $id = substr($chunkHeader, 0, 4);
+                $length = unpack('V', substr($chunkHeader, 4, 4))[1];
+
+                if ($id === 'ANIM') {
+                    $found = true;
+                    break;
+                }
+
+                // Chunks are padded to even sizes.
+                $skip = $length + ($length % 2);
+                if (fseek($handle, $skip, SEEK_CUR) !== 0) {
+                    break;
+                }
+            }
+
+            return $found;
+        } finally {
+            fclose($handle);
+        }
+    }
+
+    /** Container duration in seconds via ffprobe, or null when unavailable. */
+    protected static function probeDurationSeconds(string $path): ?float
+    {
+        $binary = trim((string) @shell_exec('command -v ffprobe 2>/dev/null'));
+        if ($binary === '') {
+            return null;
+        }
+
+        $output = @shell_exec(
+            escapeshellarg($binary)
+            .' -v error -show_entries format=duration -of default=nw=1:nk=1 '
+            .escapeshellarg($path)
+            .' 2>/dev/null'
+        );
+
+        if (! is_string($output)) {
+            return null;
+        }
+
+        $seconds = (float) trim($output);
+
+        return $seconds > 0 ? $seconds : null;
+    }
+
     public function handle(): void
     {
         $disk = Storage::disk('public');
@@ -101,12 +183,36 @@ class ConvertWebsiteMediaToWebp implements ShouldQueue
 
         // The clip is always MAX_SOURCE_SECONDS long, starting at trimStart
         // into the source. -ss before -i seeks in the (fast) input stream.
+        //
+        // A trim start at or past the end of the video makes ffmpeg emit zero
+        // frames while still exiting 0 and leaving a blank (frame-less) file —
+        // which renders as an empty image slot on the site. Clamp the seek into
+        // the source's real duration so a clip is always produced.
+        $animated = self::isAnimatedMediaPath($this->path);
         $seek = '';
-        if ($this->trimStart > 0 && self::isAnimatedMediaPath($this->path)) {
-            $seek = '-ss '.escapeshellarg(sprintf('%.3F', $this->trimStart)).' ';
+
+        if ($this->trimStart > 0 && $animated) {
+            $duration = self::probeDurationSeconds($source);
+            $maxStart = $duration !== null ? max(0.0, $duration - 0.5) : null;
+
+            if ($maxStart === null) {
+                // Cannot measure the source here; trust the validated upload
+                // and let the output check below catch an empty result.
+                $seek = '-ss '.escapeshellarg(sprintf('%.3F', $this->trimStart)).' ';
+            } elseif ($this->trimStart <= $maxStart) {
+                $seek = '-ss '.escapeshellarg(sprintf('%.3F', $this->trimStart)).' ';
+            } else {
+                Log::warning('WebP conversion: trim start is past the end of the video; converting from the start instead.', [
+                    'group' => $this->group,
+                    'key' => $this->key,
+                    'path' => $this->path,
+                    'trim_start' => $this->trimStart,
+                    'duration' => $duration,
+                ]);
+            }
         }
 
-        $command = self::isAnimatedMediaPath($this->path)
+        $command = $animated
             ? sprintf(
                 'ffmpeg -y -v error %s-t %d -i %s -vf %s -c:v libwebp -q:v 75 -compression_level 6 -preset default -loop 0 -pix_fmt yuva420p -an %s 2>&1',
                 $seek,
@@ -130,14 +236,24 @@ class ConvertWebsiteMediaToWebp implements ShouldQueue
             $output[] = $e->getMessage();
         }
 
-        if ($exitCode !== 0 || ! is_file($target) || filesize($target) === 0) {
+        // ffmpeg exits 0 even when it encoded nothing (e.g. a seek past the
+        // end of the source), leaving a blank, unrenderable file. Require a
+        // real WebP — RIFF/WEBP header, and the ANIM chunk for videos/GIF —
+        // before pointing the setting at the result and deleting the source.
+        if ($exitCode !== 0 || ! self::outputLooksLikeWebp($target, $animated)) {
             Log::error('WebP conversion failed; keeping the original upload.', [
                 'group' => $this->group,
                 'key' => $this->key,
                 'path' => $this->path,
                 'exit_code' => $exitCode,
+                'animated' => $animated,
                 'output' => implode("\n", $output),
             ]);
+
+            // Remove the blank/partial artifact so it cannot be served.
+            if (is_file($target)) {
+                @unlink($target);
+            }
 
             return;
         }
