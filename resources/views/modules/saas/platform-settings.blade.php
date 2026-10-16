@@ -24,4 +24,63 @@
             </div>
         </form>
     </div>
+
+    @script
+    <script>
+        const WEBSITE_MEDIA_MAX_MB = 50;
+
+        const describeWebsiteMediaSize = (bytes) => (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+
+        const notifyWebsiteMediaRejected = (title, body) => {
+            $wire.dispatch('websiteMediaRejected', { title, body });
+        };
+
+        const rejectWebsiteMediaInput = (input) => {
+            input.value = '';
+        };
+
+        // Guard rails that fire before or during the Livewire upload, where
+        // the server cannot yet explain itself. Duration is validated on save
+        // (trim-aware) — see MaxVideoDuration — so we only pre-check size and
+        // surface a useful reason when the transport itself rejects the file.
+        const checkWebsiteVideoSize = (file, input) => {
+            if (!file) {
+                return true;
+            }
+
+            if (file.size > WEBSITE_MEDIA_MAX_MB * 1024 * 1024) {
+                rejectWebsiteMediaInput(input);
+                notifyWebsiteMediaRejected(
+                    'Video too large',
+                    file.name + ' is ' + describeWebsiteMediaSize(file.size) + '. Videos may be at most ' + WEBSITE_MEDIA_MAX_MB + ' MB — compress it or upload a shorter clip.'
+                );
+                return false;
+            }
+
+            return true;
+        };
+
+        document.addEventListener('change', (event) => {
+            const input = event.target;
+            if (!input || input.type !== 'file' || !input.files || input.files.length === 0) {
+                return;
+            }
+
+            for (const file of input.files) {
+                if (!checkWebsiteVideoSize(file, input)) {
+                    break;
+                }
+            }
+        }, true);
+
+        document.addEventListener('livewire-upload-error', (event) => {
+            const detail = event.detail && event.detail.content ? String(event.detail.content) : '';
+            notifyWebsiteMediaRejected(
+                'Upload failed before finishing',
+                'The file could not be uploaded' + (detail ? ' (' + detail + ')' : '') +
+                    '. Common causes: the file is larger than the server allows (this site currently caps request bodies at a few megabytes — a super-admin must raise PHP\'s upload_max_filesize and post_max_size, and nginx\'s client_max_body_size, to accept ' + WEBSITE_MEDIA_MAX_MB + ' MB videos), or the connection dropped. Try a smaller or compressed video.'
+            );
+        });
+    </script>
+    @endscript
 </x-filament-panels::page>
