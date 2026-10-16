@@ -139,6 +139,16 @@ class CmsSeoService
             ."Allow: /\n"
             ."Disallow: /_cms-preview/\n"
             ."Disallow: /cms-render/\n"
+            ."\n"
+            ."User-agent: GPTBot\nAllow: /\n"
+            ."User-agent: ChatGPT-User\nAllow: /\n"
+            ."User-agent: OAI-SearchBot\nAllow: /\n"
+            ."User-agent: ClaudeBot\nAllow: /\n"
+            ."User-agent: anthropic-ai\nAllow: /\n"
+            ."User-agent: PerplexityBot\nAllow: /\n"
+            ."User-agent: Google-Extended\nAllow: /\n"
+            ."User-agent: CCBot\nAllow: /\n"
+            ."\n"
             ."Sitemap: {$domain}/sitemap.xml\n";
     }
 }

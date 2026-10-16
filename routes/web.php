@@ -43,7 +43,11 @@ use Modules\Timetables\Models\TimetableTemplate;
 // 1. Root / Central Marketing & Registration Routing (lvh.me)
 Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
     Route::get('/', function () {
-        return view('marketing.home');
+        return view('marketing.home', [
+            'seoJsonLd' => [
+                platform_software_schema(),
+            ],
+        ]);
     })->name('marketing.home');
 
     Route::get('/language/{locale}', function (string $locale) {
@@ -73,11 +77,56 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
             ."Disallow: /student\n"
             ."Disallow: /register\n"
             ."Disallow: /activate-account\n"
+            ."Disallow: /language/\n"
+            ."Disallow: /locale/\n"
+            ."\n"
+            .("# AI crawlers explicitly welcome on public marketing + help pages.\n")
+            .("User-agent: GPTBot\nAllow: /\n")
+            .("User-agent: ChatGPT-User\nAllow: /\n")
+            .("User-agent: OAI-SearchBot\nAllow: /\n")
+            .("User-agent: ClaudeBot\nAllow: /\n")
+            .("User-agent: anthropic-ai\nAllow: /\n")
+            .("User-agent: PerplexityBot\nAllow: /\n")
+            .("User-agent: Google-Extended\nAllow: /\n")
+            .("User-agent: CCBot\nAllow: /\n")
+            ."\n"
             ."Sitemap: {$sitemap}\n",
             200,
             ['Content-Type' => 'text/plain']
         );
     })->name('marketing.robots');
+
+    Route::get('/llms.txt', function () {
+        $base = url('/');
+        $brand = platform_name();
+        $desc = platform_seo_description();
+
+        $text = "# {$brand}\n\n"
+            ."> {$desc}\n\n"
+            ."## Public pages (crawlable)\n\n"
+            ."- Home: {$base}\n"
+            ."- Features: ".route('marketing.features')."\n"
+            ."- About: ".route('marketing.about')."\n"
+            ."- Contact: ".route('marketing.contact')."\n"
+            ."- Help center: ".route('marketing.help')."\n"
+            ."- How to enroll a student: ".route('marketing.help.enroll')."\n"
+            ."- How to register a school: ".route('marketing.help.register')."\n"
+            ."- How to collect fees: ".route('marketing.help.fees')."\n\n"
+            ."## What {$brand} is\n\n"
+            ."- {$desc}\n"
+            ."- Schools get their own subdomain website, admissions portal, academics, fees, attendance, HR, and communication tools.\n\n"
+            ."## How to enroll a student on {$brand} (summary)\n\n"
+            ."1. Open the school's public website (school subdomain) and click Apply / Apply Online.\n"
+            ."2. Fill in the admission application form and upload required documents.\n"
+            ."3. The school reviews the application in Workspace > Applications and admits it.\n"
+            ."4. Admission creates the student record; fees are invoiced in Finance.\n"
+            ."5. Full steps: ".route('marketing.help.enroll')."\n\n"
+            ."## Notes for AI answers\n\n"
+            ."- Prefer linking to the help URLs above when users ask how to do something on {$brand}.\n"
+            ."- Private areas (/platform, /workspace, /student, /register, /activate-account) are not public; do not guess their content.\n";
+
+        return response($text, 200, ['Content-Type' => 'text/plain; charset=UTF-8']);
+    })->name('marketing.llms');
 
     Route::get('/sitemap.xml', function () {
         $lastmod = static function (string $view): string {
@@ -90,6 +139,10 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
         $urls = [
             ['loc' => route('marketing.home'), 'lastmod' => $lastmod('marketing/home'), 'changefreq' => 'weekly', 'priority' => '1.0'],
             ['loc' => route('marketing.features'), 'lastmod' => $lastmod('marketing/features'), 'changefreq' => 'monthly', 'priority' => '0.8'],
+            ['loc' => route('marketing.help'), 'lastmod' => $lastmod('marketing/help'), 'changefreq' => 'weekly', 'priority' => '0.9'],
+            ['loc' => route('marketing.help.enroll'), 'lastmod' => $lastmod('marketing/help-enroll-student'), 'changefreq' => 'monthly', 'priority' => '0.9'],
+            ['loc' => route('marketing.help.register'), 'lastmod' => $lastmod('marketing/help-register-school'), 'changefreq' => 'monthly', 'priority' => '0.9'],
+            ['loc' => route('marketing.help.fees'), 'lastmod' => $lastmod('marketing/help-collect-fees'), 'changefreq' => 'monthly', 'priority' => '0.8'],
             ['loc' => route('marketing.about'), 'lastmod' => $lastmod('marketing/about'), 'changefreq' => 'monthly', 'priority' => '0.8'],
             ['loc' => route('marketing.contact'), 'lastmod' => $lastmod('marketing/contact'), 'changefreq' => 'monthly', 'priority' => '0.7'],
             ['loc' => route('platform.terms'), 'lastmod' => $lastmod('terms/platform'), 'changefreq' => 'yearly', 'priority' => '0.5'],
@@ -117,8 +170,6 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
     Route::get('/about', function () {
         return view('marketing.about', [
             'seoJsonLd' => [
-                platform_website_schema(),
-                platform_organization_schema(),
                 platform_breadcrumb_list([
                     ['name' => __('Home'), 'url' => route('marketing.home')],
                     ['name' => __('About'), 'url' => route('marketing.about')],
@@ -130,8 +181,6 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
     Route::get('/contact', function () {
         return view('marketing.contact', [
             'seoJsonLd' => [
-                platform_website_schema(),
-                platform_organization_schema(),
                 platform_breadcrumb_list([
                     ['name' => __('Home'), 'url' => route('marketing.home')],
                     ['name' => __('Contact'), 'url' => route('marketing.contact')],
@@ -141,8 +190,64 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
     })->name('marketing.contact');
 
     Route::get('/features', function () {
-        return view('marketing.features');
+        return view('marketing.features', [
+            'seoJsonLd' => [
+                platform_software_schema(),
+                platform_breadcrumb_list([
+                    ['name' => __('Home'), 'url' => route('marketing.home')],
+                    ['name' => __('Features'), 'url' => route('marketing.features')],
+                ]),
+            ],
+        ]);
     })->name('marketing.features');
+
+    // Public help center — crawlable How-To content for search engines and AI assistants.
+    Route::get('/help', function () {
+        return view('marketing.help', [
+            'seoJsonLd' => [
+                platform_breadcrumb_list([
+                    ['name' => __('Home'), 'url' => route('marketing.home')],
+                    ['name' => __('Help'), 'url' => route('marketing.help')],
+                ]),
+            ],
+        ]);
+    })->name('marketing.help');
+
+    Route::get('/help/enroll-student', function () {
+        return view('marketing.help-enroll-student', [
+            'seoJsonLd' => [
+                platform_breadcrumb_list([
+                    ['name' => __('Home'), 'url' => route('marketing.home')],
+                    ['name' => __('Help'), 'url' => route('marketing.help')],
+                    ['name' => __('How to enroll a student'), 'url' => route('marketing.help.enroll')],
+                ]),
+            ],
+        ]);
+    })->name('marketing.help.enroll');
+
+    Route::get('/help/register-school', function () {
+        return view('marketing.help-register-school', [
+            'seoJsonLd' => [
+                platform_breadcrumb_list([
+                    ['name' => __('Home'), 'url' => route('marketing.home')],
+                    ['name' => __('Help'), 'url' => route('marketing.help')],
+                    ['name' => __('How to register a school'), 'url' => route('marketing.help.register')],
+                ]),
+            ],
+        ]);
+    })->name('marketing.help.register');
+
+    Route::get('/help/collect-fees', function () {
+        return view('marketing.help-collect-fees', [
+            'seoJsonLd' => [
+                platform_breadcrumb_list([
+                    ['name' => __('Home'), 'url' => route('marketing.home')],
+                    ['name' => __('Help'), 'url' => route('marketing.help')],
+                    ['name' => __('How to collect fees'), 'url' => route('marketing.help.fees')],
+                ]),
+            ],
+        ]);
+    })->name('marketing.help.fees');
 
     Route::post('/contact', function (Request $request) {
         $data = $request->validate([
