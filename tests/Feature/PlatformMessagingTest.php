@@ -34,7 +34,24 @@ class PlatformMessagingTest extends TestCase
 
     private function schoolAdmin(): User
     {
-        $school = School::query()->firstOrFail();
+        // The workspace gates on the communication module switch before any
+        // role check, and suspended schools are redirected. Pick an active
+        // school that actually has the Communication module switched on.
+        $previousTenant = app()->bound('current_tenant') ? app('current_tenant') : null;
+
+        $school = School::query()->where('status', 'active')->get()->first(function (School $candidate) {
+            app()->instance('current_tenant', $candidate);
+
+            return \App\Services\ModuleVisibilityManager::isModuleVisible('communication');
+        });
+
+        if ($previousTenant) {
+            app()->instance('current_tenant', $previousTenant);
+        } else {
+            app()->forgetInstance('current_tenant');
+        }
+
+        $school ??= School::query()->where('status', 'active')->firstOrFail();
 
         $adminRole = CustomRole::where('school_id', $school->id)->where('role_key', 'administrator')->first();
 

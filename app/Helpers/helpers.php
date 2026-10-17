@@ -62,10 +62,49 @@ if (! function_exists('platform_email_name')) {
     }
 }
 
+if (! function_exists('platform_noreply_email')) {
+    /**
+     * From: address for automated platform mail — activation links, receipts,
+     * billing notices, registration alerts, system notifications.
+     */
+    function platform_noreply_email(): string
+    {
+        $address = (string) config('mail.platform.noreply', config('mail.platform.address'));
+
+        return filter_var(trim($address), FILTER_VALIDATE_EMAIL) ? trim($address) : 'noreply@kairocore.co.zw';
+    }
+}
+
+if (! function_exists('platform_support_email')) {
+    /**
+     * Human-replyable platform inbox — contact form, tenant messages,
+     * billing/subscription operations, reply-to on system mail.
+     */
+    function platform_support_email(): string
+    {
+        $address = (string) config('mail.platform.support');
+
+        return filter_var(trim($address), FILTER_VALIDATE_EMAIL) ? trim($address) : 'support@kairocore.co.zw';
+    }
+}
+
+if (! function_exists('platform_sales_email')) {
+    /**
+     * Commercial inbox — new-school registrations and sales enquiries.
+     */
+    function platform_sales_email(): string
+    {
+        $address = (string) config('mail.platform.sales');
+
+        return filter_var(trim($address), FILTER_VALIDATE_EMAIL) ? trim($address) : 'sales@kairocore.co.zw';
+    }
+}
+
 if (! function_exists('platform_notification_email')) {
     /**
      * Inbox that receives new-school-registration alerts. Editable under
-     * Platform → Settings → Notifications. Defaults to hlatwayne@gmail.com.
+     * Platform → Settings → Notifications. Defaults to the platform sales
+     * inbox (sales@kairocore.co.zw) — registrations are commercial leads.
      */
     function platform_notification_email(): string
     {
@@ -79,15 +118,15 @@ if (! function_exists('platform_notification_email')) {
             return trim($configured);
         }
 
-        return 'hlatwayne@gmail.com';
+        return platform_sales_email();
     }
 }
 
 if (! function_exists('platform_tenant_message_email')) {
     /**
      * Inbox that receives an alert whenever a tenant messages the platform.
-     * Editable under Platform → Settings → Notifications.
-     * Defaults to hlatwayne@gmail.com.
+     * Editable under Platform → Settings → Notifications. Defaults to the
+     * platform support inbox (support@kairocore.co.zw).
      */
     function platform_tenant_message_email(): string
     {
@@ -101,7 +140,7 @@ if (! function_exists('platform_tenant_message_email')) {
             return trim($configured);
         }
 
-        return 'hlatwayne@gmail.com';
+        return platform_support_email();
     }
 }
 
@@ -109,8 +148,8 @@ if (! function_exists('platform_system_from_email')) {
     /**
      * The address platform-generated mail is sent "from". Editable under
      * Platform → Settings → Notifications so the operator can switch the
-     * responsible sender without a redeploy. Falls back to the SMTP account
-     * (MAIL_FROM_ADDRESS) when unset.
+     * responsible sender without a redeploy. Falls back to the platform
+     * noreply@ address (MAIL_NOREPLY_ADDRESS) when unset.
      */
     function platform_system_from_email(): string
     {
@@ -124,7 +163,7 @@ if (! function_exists('platform_system_from_email')) {
             return trim($configured);
         }
 
-        return platform_email_address();
+        return platform_noreply_email();
     }
 }
 
@@ -597,10 +636,27 @@ if (! function_exists('marketing_resolve_image')) {
      * Turn a stored image value (absolute URL, "images/..." asset path or a
      * public-disk storage path from an upload) into a full URL. Falls back to
      * $fallback when empty.
+     *
+     * Editors sometimes persist an image as a structured array (or an empty
+     * array when nothing was picked) — resolve that to its usable entry
+     * instead of type-erroring on the rendered page.
      */
-    function marketing_resolve_image(?string $value, string $fallback = ''): string
+    function marketing_resolve_image(mixed $value, string $fallback = ''): string
     {
-        $value = trim((string) $value);
+        if (is_array($value)) {
+            foreach (['url', 'path', 'image', 'src'] as $key) {
+                if (isset($value[$key]) && is_string($value[$key])) {
+                    $value = $value[$key];
+                    break;
+                }
+            }
+
+            if (is_array($value)) {
+                $value = array_values(array_filter($value, 'is_string'))[0] ?? '';
+            }
+        }
+
+        $value = is_scalar($value) || $value === null ? trim((string) $value) : '';
 
         if ($value === '') {
             $value = trim($fallback);

@@ -63,17 +63,24 @@ class TempProofRegistrationEmailAndSubjectDeleteTest extends TestCase
 
     /**
      * PROOF 1 — the new-school registration alert resolves to the platform
-     * Gmail inbox, and the rendered alert names the registered school.
+     * sales inbox (sales@kairocore.co.zw, or the operator's configured
+     * override), and the rendered alert names the registered school.
      */
-    public function test_new_school_registration_alert_goes_to_the_platform_gmail_inbox(): void
+    public function test_new_school_registration_alert_goes_to_the_platform_sales_inbox(): void
     {
         $inbox = app(SchoolRegistrationService::class)->superAdminNotificationEmail();
 
         $this->assertNotFalse(filter_var($inbox, FILTER_VALIDATE_EMAIL));
-        $this->assertStringContainsString(
-            '@gmail.com',
-            mb_strtolower($inbox),
-            'The registration alert must be delivered to a Gmail inbox.'
+
+        $configured = \Modules\SaaS\Models\PlatformSetting::get('notifications', 'super_admin_email');
+        $expected = (is_string($configured) && filter_var(trim($configured), FILTER_VALIDATE_EMAIL))
+            ? trim($configured)
+            : platform_sales_email();
+
+        $this->assertSame(
+            $expected,
+            $inbox,
+            'The registration alert must go to the configured registration inbox, defaulting to the platform sales inbox.'
         );
 
         $notification = new SchoolRegisteredNotification($this->school, $this->contact, true);

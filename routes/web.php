@@ -350,18 +350,29 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
             'message' => ['required', 'string', 'max:2000'],
         ]);
 
+        // Support inbox: Platform → Settings → contact email, else support@.
         $recipient = \Modules\SaaS\Models\PlatformSetting::get('contact', 'email')
+            ?: config('mail.platform.support')
             ?: config('mail.platform.address')
             ?: config('mail.from.address');
 
-        Mail::raw(
-            "Name: {$data['name']}\nEmail: {$data['email']}\n\n{$data['message']}",
-            function ($message) use ($data, $recipient) {
-                $message->to($recipient)
-                    ->replyTo($data['email'], $data['name'])
-                    ->subject('Kairo CORE Contact: '.$data['name']);
-            }
-        );
+        try {
+            Mail::raw(
+                "Name: {$data['name']}\nEmail: {$data['email']}\n\n{$data['message']}",
+                function ($message) use ($data, $recipient) {
+                    $message->from(platform_system_from_email(), platform_email_name())
+                        ->to($recipient)
+                        ->replyTo($data['email'], $data['name'])
+                        ->subject('Kairo CORE Contact: '.$data['name']);
+                }
+            );
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()
+                ->withInput()
+                ->withErrors(['message' => __('We could not send your message right now. Please email us directly at :email.', ['email' => 'support@kairocore.co.zw'])]);
+        }
 
         return back()->with('success_message', __('Your message has been sent. We will get back to you shortly.'));
     })->name('marketing.contact.submit');

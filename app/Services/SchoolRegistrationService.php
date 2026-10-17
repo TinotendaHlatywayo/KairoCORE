@@ -19,9 +19,9 @@ class SchoolRegistrationService
      * Notify every platform super administrator about a new school registration.
      *
      * - In-app database notification is ALWAYS delivered to each super admin.
-     * - An email is sent to each super admin, plus to the configured platform
-     *   notification inbox (Platform Setting "notifications.super_admin_email",
-     *   falling back to the platform sender address, e.g. twaynehlatywayo09@gmail.com).
+     * - An email is sent to each super admin, plus to the registration inbox
+     *   (Platform Setting "notifications.super_admin_email", falling back to
+     *   the platform sales inbox, sales@kairocore.co.zw).
      */
     public function notifySuperAdmin(School $school, User $contact): array
     {

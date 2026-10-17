@@ -87,7 +87,7 @@ class PlatformRestoreService
             }
             $log->update([
                 'status' => 'failed',
-                'error_details' => mb_substr($e->getMessage(), 0, 255),
+                'error_details' => mb_substr($e->getMessage(), 0, 5000),
             ]);
             throw $e;
         }
@@ -157,6 +157,7 @@ class PlatformRestoreService
                     $sql = '';
 
                     if ($statement !== '') {
+                        $statement = $this->sanitizeStructureStatement($statement);
                         $batch[] = $statement."\n";
                         $batchBytes += strlen($statement);
 
@@ -173,10 +174,38 @@ class PlatformRestoreService
         }
 
         if (trim($sql) !== '') {
-            $batch[] = trim($sql);
+            $batch[] = $this->sanitizeStructureStatement(trim($sql));
         }
 
         $flush();
+    }
+
+    /**
+     * MariaDB emits DEFAULT clauses on TEXT/BLOB/JSON/GEOMETRY columns in
+     * SHOW CREATE TABLE output, but MySQL 8.x rejects them with error 1101
+     * ("can't have a default value") regardless of sql_mode. Backups produced
+     * on MariaDB therefore fail when restored into MySQL 8.4.
+     *
+     * Only CREATE TABLE statements are rewritten (never INSERTs), so data
+     * values that happen to contain the word "DEFAULT" are never corrupted.
+     */
+    private function sanitizeStructureStatement(string $statement): string
+    {
+        if (! preg_match('/^\s*CREATE\s+TABLE/i', $statement)) {
+            return $statement;
+        }
+
+        return preg_replace(
+            '/\b(TINYBLOB|MEDIUMBLOB|LONGBLOB|BLOB|TINYTEXT|MEDIUMTEXT|LONGTEXT|TEXT'
+            .'|JSON|GEOMETRYCOLLECTION|MULTIPOLYGON|MULTILINESTRING|MULTIPOINT'
+            .'|POLYGON|LINESTRING|POINT|GEOMETRY)\b'
+            .'((?:\s+(?:CHARACTER\s+SET|COLLATE)\s+[\w]+|\s+NOT\s+NULL|\s+NULL)*)'
+            .'\s+DEFAULT\s+'
+            .'(?:\'(?:[^\'\\\\]|\\\\.)*\'|"(?:[^"\\\\]|\\\\.)*"|\([^)]*\)|[^\s,)]+)'
+            .'/i',
+            '$1$2',
+            $statement
+        ) ?? $statement;
     }
 
     /**
