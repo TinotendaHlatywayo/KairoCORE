@@ -116,7 +116,9 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
             ."- Help center: ".route('marketing.help')."\n"
             ."- How to enroll a student: ".route('marketing.help.enroll')."\n"
             ."- How to register a school: ".route('marketing.help.register')."\n"
-            ."- How to collect fees: ".route('marketing.help.fees')."\n\n"
+            ."- How to collect fees: ".route('marketing.help.fees')."\n"
+            ."- How to record attendance: ".route('marketing.help.attendance')."\n"
+            ."- How to produce report cards: ".route('marketing.help.reports')."\n\n"
             ."## What {$brand} is\n\n"
             ."- {$desc}\n"
             ."- Schools get their own subdomain website, admissions portal, academics, fees, attendance, HR, and communication tools.\n\n"
@@ -153,6 +155,8 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
             ['loc' => route('marketing.help.enroll'), 'lastmod' => $lastmod('marketing/help-enroll-student'), 'changefreq' => 'monthly', 'priority' => '0.9'],
             ['loc' => route('marketing.help.register'), 'lastmod' => $lastmod('marketing/help-register-school'), 'changefreq' => 'monthly', 'priority' => '0.9'],
             ['loc' => route('marketing.help.fees'), 'lastmod' => $lastmod('marketing/help-collect-fees'), 'changefreq' => 'monthly', 'priority' => '0.8'],
+            ['loc' => route('marketing.help.attendance'), 'lastmod' => $lastmod('marketing/help-record-attendance'), 'changefreq' => 'monthly', 'priority' => '0.8'],
+            ['loc' => route('marketing.help.reports'), 'lastmod' => $lastmod('marketing/help-report-cards'), 'changefreq' => 'monthly', 'priority' => '0.8'],
             ['loc' => route('marketing.about'), 'lastmod' => $lastmod('marketing/about'), 'changefreq' => 'monthly', 'priority' => '0.8'],
             ['loc' => route('marketing.contact'), 'lastmod' => $lastmod('marketing/contact'), 'changefreq' => 'monthly', 'priority' => '0.7'],
             ['loc' => route('platform.terms'), 'lastmod' => $lastmod('terms/platform'), 'changefreq' => 'yearly', 'priority' => '0.5'],
@@ -314,6 +318,30 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
             ],
         ]);
     })->name('marketing.help.fees');
+
+    Route::get('/help/record-attendance', function () {
+        return view('marketing.help-record-attendance', [
+            'seoJsonLd' => [
+                platform_breadcrumb_list([
+                    ['name' => __('Home'), 'url' => route('marketing.home')],
+                    ['name' => __('Help'), 'url' => route('marketing.help')],
+                    ['name' => __('How to record attendance'), 'url' => route('marketing.help.attendance')],
+                ]),
+            ],
+        ]);
+    })->name('marketing.help.attendance');
+
+    Route::get('/help/report-cards', function () {
+        return view('marketing.help-report-cards', [
+            'seoJsonLd' => [
+                platform_breadcrumb_list([
+                    ['name' => __('Home'), 'url' => route('marketing.home')],
+                    ['name' => __('Help'), 'url' => route('marketing.help')],
+                    ['name' => __('How to produce report cards'), 'url' => route('marketing.help.reports')],
+                ]),
+            ],
+        ]);
+    })->name('marketing.help.reports');
 
     Route::post('/contact', function (Request $request) {
         $data = $request->validate([
