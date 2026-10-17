@@ -271,6 +271,13 @@ class PlatformBackupManager extends Page implements HasForms
 
     protected function performRestore(PlatformBackup $backup): void
     {
+        // Previous attempts that died mid-run (fatal/timeout) stay "processing"
+        // forever; clear them so the status list never lies about a restore.
+        PlatformRestoreLog::whereIn('status', ['pending', 'processing'])->update([
+            'status' => 'failed',
+            'error_details' => 'Interrupted: superseded by a newer restore attempt.',
+        ]);
+
         $log = PlatformRestoreLog::create([
             'backup_id' => $backup->id,
             'performed_by_id' => Auth::id(),
@@ -290,7 +297,7 @@ class PlatformBackupManager extends Page implements HasForms
             $this->refreshBackupsList();
             Notification::make()
                 ->title(__('Restore failed'))
-                ->body($e->getMessage())
+                ->body(\Illuminate\Support\Str::limit($e->getMessage(), 500, ' …'))
                 ->danger()
                 ->send();
         }

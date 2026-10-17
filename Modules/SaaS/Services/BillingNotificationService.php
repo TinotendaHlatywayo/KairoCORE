@@ -234,7 +234,7 @@ class BillingNotificationService
 
         if ($template->send_email) {
             $recipient = $isSuperAdminTemplate
-                ? ($settings->super_admin_billing_email ?: config('mail.platform.address'))
+                ? ($settings->super_admin_billing_email ?: platform_support_email())
                 : ($school->email_address ?: null);
 
             if ($recipient) {

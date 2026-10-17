@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\SeedSchoolDemoDataJob;
+use App\Mail\EmailNotFoundMail;
 use App\Models\User;
 use App\Services\AccountActivationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 use Modules\Academics\Services\AcademicPresetService;
 
@@ -135,7 +137,19 @@ class ActivationController extends Controller
             'email' => 'required|email:rfc|max:255',
         ]);
 
-        $user = User::where('email', mb_strtolower(trim($request->email)))->first();
+        $email = mb_strtolower(trim($request->email));
+        $user = User::where('email', $email)->first();
+
+        // The on-screen message stays generic for every branch (no account
+        // enumeration), but the mailbox owner deserves a clear answer: when no
+        // account matches at all, send them a branded "email not found" note.
+        if (! $user) {
+            try {
+                Mail::to($email)->send(new EmailNotFoundMail($email));
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        }
 
         // Never reveal whether an account exists: always show the generic message
         // for unknown users, suspended schools, or applications that have not yet

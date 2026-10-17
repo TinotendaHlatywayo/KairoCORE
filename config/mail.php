@@ -39,7 +39,9 @@ return [
 
         'smtp' => [
             'transport' => 'smtp',
-            'scheme' => env('MAIL_SCHEME'),
+            // MAIL_ENCRYPTION is the Laravel-documented name (.env templates
+            // set it); MAIL_SCHEME wins when present.
+            'scheme' => env('MAIL_SCHEME', env('MAIL_ENCRYPTION')),
             'url' => env('MAIL_URL'),
             'host' => env('MAIL_HOST', '127.0.0.1'),
             'port' => env('MAIL_PORT', 2525),
@@ -111,13 +113,13 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
+        'address' => env('MAIL_FROM_ADDRESS', 'noreply@kairocore.co.zw'),
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
     ],
 
     /*
     |--------------------------------------------------------------------------
-    | Platform Email Identity
+    | Platform Email Identity & Role Addresses
     |--------------------------------------------------------------------------
     |
     | This is the single platform-level sending account (used by the platform
@@ -126,11 +128,21 @@ return [
     | reuse this identity as their sender, otherwise emails would be flagged as
     | sent on behalf of the platform account.
     |
+    | The three role addresses below are the platform's public mailboxes:
+    |   noreply  — From: for all automated/system mail (activation, receipts,
+    |              billing notices, registration alerts).
+    |   support  — human-replyable inbox: contact form, tenant messages,
+    |              billing/subscription operations; reply-to on system mail.
+    |   sales    — new-school registrations and commercial enquiries.
+    |
     */
 
     'platform' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
+        'address' => env('MAIL_PLATFORM_ADDRESS', env('MAIL_FROM_ADDRESS', 'noreply@kairocore.co.zw')),
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
+        'noreply' => env('MAIL_NOREPLY_ADDRESS', 'noreply@kairocore.co.zw'),
+        'support' => env('MAIL_SUPPORT_ADDRESS', 'support@kairocore.co.zw'),
+        'sales' => env('MAIL_SALES_ADDRESS', 'sales@kairocore.co.zw'),
     ],
 
 ];

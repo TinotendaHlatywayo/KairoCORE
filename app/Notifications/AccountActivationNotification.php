@@ -37,9 +37,10 @@ class AccountActivationNotification extends Notification
 
         $branding = email_branding($school);
 
-        // Send from the school's own mailbox whenever possible. A configured
-        // tenant mailer (Communication category) wins; otherwise fall back to
-        // the school's recorded contact address.
+        // Sender priority: a configured tenant mailer (Communication category)
+        // wins — that school sends as itself. Otherwise the platform noreply@
+        // address signs all activation mail, with support@ as reply-to so the
+        // recipient has a real human inbox for problems.
         $emailConfig = app(TenantEmailConfigurationService::class);
 
         $message = (new MailMessage)
@@ -67,8 +68,15 @@ class AccountActivationNotification extends Notification
             ]));
 
         if ($school->email_address) {
-            $message->from($school->email_address, $school->name ?: null);
+            // Schools keep their own contact address as reply-to; the From:
+            // identity stays with the platform noreply unless a tenant mailer
+            // below overrides it.
+            $message->replyTo($school->email_address, $school->name ?: null);
+        } else {
+            $message->replyTo(platform_support_email());
         }
+
+        $message->from(platform_noreply_email(), platform_email_name());
 
         return $emailConfig->configureNotificationMailMessage(
             $message,

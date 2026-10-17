@@ -154,7 +154,12 @@ class SubscriptionManager
                     Mail::to($recipientEmail)->send(new SaaSReceiptMail($receipt));
                 }
             } catch (\Exception $e) {
-                // Fail silently to prevent database transaction rollbacks due to local mail server disconnects
+                // Do not roll back the payment transaction because of a mail
+                // failure — but never swallow it silently either.
+                \Illuminate\Support\Facades\Log::warning('SaaS receipt email failed', [
+                    'school_id' => $transaction->school_id,
+                    'error' => $e->getMessage(),
+                ]);
             }
 
             // Automatically register expense in school's finance ledger for SaaS subscription payment

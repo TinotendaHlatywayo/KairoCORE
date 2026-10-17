@@ -32,7 +32,10 @@ class RestorePlatformBackupJob implements ShouldQueue
     {
         PlatformRestoreLog::where('id', $this->restoreLogId)->update([
             'status' => 'failed',
-            'error_details' => $e->getMessage(),
+            // MySQL error messages can embed entire statements (including the
+            // batch that failed), so cap well below even a MEDIUMTEXT column
+            // to keep the row writable and the UI readable.
+            'error_details' => mb_substr($e->getMessage(), 0, 5000),
         ]);
     }
 }

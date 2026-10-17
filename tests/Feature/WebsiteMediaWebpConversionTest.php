@@ -39,7 +39,19 @@ class WebsiteMediaWebpConversionTest extends TestCase
 
     private function actingAsPlatformAdmin(): User
     {
-        $user = User::withoutTenantScope()->where('email', 'tinhlats09@gmail.com')->firstOrFail();
+        // The admin panel only accepts super administrators (school_id = null);
+        // database restores may re-home the fixture account under a school, so
+        // fall back to any active super administrator.
+        $user = User::withoutTenantScope()
+                ->where('email', 'tinhlats09@gmail.com')
+                ->whereNull('school_id')
+                ->first()
+            ?? User::withoutTenantScope()
+                ->whereNull('school_id')
+                ->where('account_status', 'active')
+                ->orderBy('id')
+                ->firstOrFail();
+
         $this->actingAs($user);
 
         return $user;
