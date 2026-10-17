@@ -49,7 +49,9 @@ class NavigablePagesHelpTest extends TestCase
      */
     private function actAsSchoolAdmin(): void
     {
-        $school = School::where('subdomain', 'rujeko')->first() ?? School::first();
+        $school = School::where('subdomain', 'rujeko')->where('status', 'active')->first()
+            ?? School::where('status', 'active')->first()
+            ?? School::first();
 
         $this->assertNotNull($school, 'A school record is required.');
 

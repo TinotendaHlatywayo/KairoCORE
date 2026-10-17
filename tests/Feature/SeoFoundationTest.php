@@ -28,6 +28,8 @@ class SeoFoundationTest extends TestCase
             'help.enroll' => route('marketing.help.enroll'),
             'help.register' => route('marketing.help.register'),
             'help.fees' => route('marketing.help.fees'),
+            'help.attendance' => route('marketing.help.attendance'),
+            'help.reports' => route('marketing.help.reports'),
             'terms' => route('platform.terms'),
         ];
     }
