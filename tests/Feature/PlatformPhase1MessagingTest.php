@@ -24,7 +24,8 @@ use Tests\TestCase;
 
 /**
  * Phase 1 platform messaging / notification guarantees:
- *  - address settings resolve to hlatwayne@gmail.com by default and are editable
+ *  - address settings resolve to the platform sales/support inboxes by
+ *    default (sales@ / support@kairocore.co.zw) and are editable
  *  - a tenant message emails the configured inbox AND lands in the platform
  *    notification centre
  *  - the platform can target specific users of a tenant (role/name filtered)
@@ -62,8 +63,8 @@ class PlatformPhase1MessagingTest extends TestCase
 
             PlatformSetting::whereIn('key', ['super_admin_email', 'tenant_message_email', 'system_from_email'])->delete();
 
-            $this->assertSame('hlatwayne@gmail.com', platform_notification_email());
-            $this->assertSame('hlatwayne@gmail.com', platform_tenant_message_email());
+            $this->assertSame(platform_sales_email(), platform_notification_email());
+            $this->assertSame(platform_support_email(), platform_tenant_message_email());
         } finally {
             DB::rollBack();
         }

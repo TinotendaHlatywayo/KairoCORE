@@ -255,6 +255,15 @@ class ConvertWebsiteMediaToWebp implements ShouldQueue
                 @unlink($target);
             }
 
+            // Retry under a real queue worker (e.g. ffmpeg not yet available,
+            // transient memory failure). Direct handle() and sync-queue runs
+            // have no worker to release to, so they stop here.
+            if ($this->job
+                && ! $this->job instanceof \Illuminate\Queue\Jobs\SyncJob
+                && $this->job->attempts() < $this->tries) {
+                $this->release(60);
+            }
+
             return;
         }
 

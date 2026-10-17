@@ -23,15 +23,20 @@
     'sc-login-card-admin' => $variant === 'admin',
 ])>
     <div class="sc-login-card-top">
-        <div class="sc-login-logo" @if ($logo) style="background-image:url('{{ $logo }}');" @endif>
-            @if (! $logo)
+        @if ($logo)
+            {{-- Transparent logo: no coloured tile behind it, contained like an <img>. --}}
+            <div class="sc-login-logo sc-login-logo--plain">
+                <img src="{{ $logo }}" alt="{{ $brand }}" />
+            </div>
+        @else
+            <div class="sc-login-logo">
                 <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                     <path d="M24 7 2 17.5 24 28 46 17.5 24 7Z" fill="currentColor"/>
                     <path d="M42 20.5v9" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
                     <circle cx="44" cy="31.5" r="2.6" fill="currentColor"/>
                 </svg>
-            @endif
-        </div>
+            </div>
+        @endif
 
         <span class="sc-login-badge">
             <span class="sc-login-badge-dot"></span>
@@ -161,6 +166,26 @@
     .sc-login-logo svg {
         width: 46%;
         height: 46%;
+    }
+
+    /* Real (often transparent) logo: no coloured tile, no decorative outline —
+       the image itself is contained inside the same footprint. */
+    .sc-login-logo--plain {
+        background-color: transparent;
+        background-image: none;
+        box-shadow: none;
+        outline: none;
+        padding: 0.15rem;
+    }
+    .sc-login-card-admin .sc-login-logo--plain {
+        background-color: transparent;
+        box-shadow: none;
+    }
+    .sc-login-logo--plain img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        display: block;
     }
 
     .sc-login-badge {

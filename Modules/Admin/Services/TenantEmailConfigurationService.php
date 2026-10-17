@@ -5,6 +5,7 @@ namespace Modules\Admin\Services;
 use App\Jobs\SendTenantEmailJob;
 use App\Models\School;
 use App\Models\User;
+use App\Security\RoleCatalogue;
 use Illuminate\Contracts\Mail\Mailable;
 use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Message;
@@ -396,7 +397,10 @@ class TenantEmailConfigurationService
 
     protected function roleCanManageEmailConfig(CustomRole $role): bool
     {
-        if ($role->name === 'Administrator') {
+        // The catalogue is the single source of "which name means the
+        // school's administrator", so legacy seeds that stored the role as
+        // 'System Administrator' are recognised alongside 'Administrator'.
+        if (RoleCatalogue::keyForRoleName($role->name) === 'administrator') {
             return true;
         }
 
