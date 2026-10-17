@@ -39,9 +39,14 @@ return [
 
         'smtp' => [
             'transport' => 'smtp',
-            // MAIL_ENCRYPTION is the Laravel-documented name (.env templates
-            // set it); MAIL_SCHEME wins when present.
-            'scheme' => env('MAIL_SCHEME', env('MAIL_ENCRYPTION')),
+            // MAIL_SCHEME wins when set and must be 'smtp' or 'smtps'
+            // (Symfony rejects anything else). MAIL_ENCRYPTION is the
+            // Laravel-documented name: 'ssl' means implicit TLS (smtps, the
+            // usual 465 setup); 'tls' means opportunistic STARTTLS on a
+            // plain connection, which Laravel applies automatically, so it
+            // maps to no scheme and lets the port decide (465 => smtps).
+            'scheme' => env('MAIL_SCHEME')
+                ?: (strtolower((string) env('MAIL_ENCRYPTION')) === 'ssl' ? 'smtps' : null),
             'url' => env('MAIL_URL'),
             'host' => env('MAIL_HOST', '127.0.0.1'),
             'port' => env('MAIL_PORT', 2525),
