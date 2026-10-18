@@ -1,15 +1,16 @@
 # =============================================================================
 # Kairo CORE — Kuber VPS stack
 #
-#   Nginx Proxy Manager (kuber-npm) ──► kairocore-web:80   (shared proxy network)
-#                                          │
-#                                          ├──► kairocore-db:3306    (private network)
-#                                          └──► kairocore-redis:6379 (private network)
+#   Caddy (host, TLS + wildcard LE certs) ──► kairocore-web:8080  (loopback only)
+#                                               │
+#                                               ├──► kairocore-db:3306    (private network)
+#                                               └──► kairocore-redis:6379 (private network)
 #
-# NOTHING is published on the host: no `ports:` anywhere. The database and
-# redis live on an `internal: true` network, so they can't be reached from
-# outside or from other stacks, and have no internet access. Only
-# `kairocore-web` joins the shared NPM network.
+# Only kairocore-web publishes a port, and only on 127.0.0.1:8080 so Caddy on
+# the host can reach it; nothing else is exposed. The database and redis live
+# on an `internal: true` network, so they can't be reached from outside or
+# from other stacks, and have no internet access. Only kairocore-web joins the
+# shared proxy network for outbound traffic.
 # =============================================================================
 name: kairocore
 
@@ -39,6 +40,9 @@ services:
   kairocore-web:
     <<: *app
     container_name: kairocore-web
+    ports:
+      # Caddy on the host terminates TLS and proxies to this loopback port.
+      - "127.0.0.1:8080:80"
     depends_on:
       kairocore-db:
         condition: service_healthy
