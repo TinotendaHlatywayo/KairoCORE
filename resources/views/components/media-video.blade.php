@@ -19,7 +19,7 @@
 
     {{-- Video element --}}
     <template x-if="loadVideo">
-        <video x-ref="video" class="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-700" :class="{ 'opacity-100': playing }" muted loop playsinline preload="metadata" aria-hidden="true" @canplaythrough="onCanPlay" @error="onError">
+        <video x-ref="video" class="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-700" :class="{ 'opacity-100': playing }" muted loop playsinline preload="metadata" aria-hidden="true" x-on:canplaythrough="onCanPlay" x-on:error="onError">
             <source :src="isMobile ? mobileSrc : desktopSrc" type="video/mp4">
         </video>
     </template>
