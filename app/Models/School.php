@@ -75,10 +75,21 @@ class School extends Model
             DB::statement('SET FOREIGN_KEY_CHECKS=0');
 
             try {
-                $tables = DB::table('information_schema.columns')
-                    ->where('table_schema', DB::connection()->getDatabaseName())
-                    ->where('column_name', 'school_id')
-                    ->pluck('table_name');
+                // information_schema columns come back with UPPERCASE names
+                // (TABLE_NAME) on production MySQL; plucking 'table_name'
+                // then reads an undefined property and throws outside the
+                // per-table catch, aborting the whole forceDelete. Select the
+                // alias explicitly so the row property is always lowercase.
+                $tables = array_map(
+                    static fn (object $row): string => (string) $row->table_name,
+                    DB::select(
+                        'SELECT TABLE_NAME AS table_name
+                           FROM information_schema.COLUMNS
+                          WHERE table_schema = DATABASE()
+                            AND column_name = ?',
+                        ['school_id']
+                    )
+                );
 
                 foreach ($tables as $table) {
                     try {

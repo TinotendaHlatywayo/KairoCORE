@@ -16,7 +16,9 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Modules\Admin\Models\SystemSetting;
+use Modules\SaaS\Models\SaaSPlan;
 use Modules\SaaS\Services\PlatformImpersonationService;
 
 class SchoolResource extends Resource
@@ -167,7 +169,7 @@ class SchoolResource extends Resource
                             ->label(__('Trial Expiration Date')),
                         Forms\Components\Select::make('subscription_plan_id')
                             ->label(__('Subscription Plan'))
-                            ->options(fn () => \Modules\SaaS\Models\SaaSPlan::query()
+                            ->options(fn () => SaaSPlan::query()
                                 ->where('is_active', true)
                                 ->orderBy('price_monthly')
                                 ->pluck('name', 'id'))
@@ -445,7 +447,11 @@ class SchoolResource extends Resource
                             Notification::make()
                                 ->danger()
                                 ->title(__('Could not delete this school'))
-                                ->body(__('Some records could not be removed. Details were written to the log.'))
+                                ->body(
+                                    __('Some records could not be removed. Details were written to the log.')
+                                    ."\n\n"
+                                    .Str::limit($e->getMessage(), 400)
+                                )
                                 ->persistent()
                                 ->send();
                         }

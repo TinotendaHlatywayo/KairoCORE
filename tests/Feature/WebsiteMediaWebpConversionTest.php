@@ -43,9 +43,9 @@ class WebsiteMediaWebpConversionTest extends TestCase
         // database restores may re-home the fixture account under a school, so
         // fall back to any active super administrator.
         $user = User::withoutTenantScope()
-                ->where('email', 'tinhlats09@gmail.com')
-                ->whereNull('school_id')
-                ->first()
+            ->where('email', 'tinhlats09@gmail.com')
+            ->whereNull('school_id')
+            ->first()
             ?? User::withoutTenantScope()
                 ->whereNull('school_id')
                 ->where('account_status', 'active')
@@ -648,5 +648,132 @@ class WebsiteMediaWebpConversionTest extends TestCase
 
         $this->assertTrue($pendingRecorded, 'pending feature video was not recorded under image_source');
         $this->assertTrue($publicImageKept, 'public feature image was not kept while the video converts');
+    }
+
+    /**
+     * The browser's real upload sequence: _startUpload → store → _finishUpload
+     * targeting `statePath.fileKey`, then the file-upload blade may ask the
+     * page for stored-file info (pond re-init / state watch) before the admin
+     * ever clicks Save. The pending temporary upload must survive that scan
+     * and still persist as a stored image on save — the production bug where
+     * the photo "uploaded to 100% then disappeared", leaving the temp file
+     * orphaned in livewire-tmp.
+     */
+    public function test_feature_image_temp_upload_survives_pre_save_file_scan_and_saves(): void
+    {
+        Queue::fake();
+        $this->actingAsPlatformAdmin();
+
+        $stored = PlatformSetting::where('group', 'marketing')->where('key', 'features_list')->first();
+        $originalList = $stored?->value;
+
+        $component = Livewire::test(PlatformSettingsPage::class);
+        $list = $component->get('data.marketing_features_list');
+        $this->assertIsArray($list);
+        $itemKey = array_key_first($list);
+        $statePath = 'data.marketing_features_list.'.$itemKey.'.image';
+
+        // 1. Browser upload: Filament targets `statePath.fileKey`.
+        $component->upload($statePath.'.filekey1', [
+            UploadedFile::fake()->image('Admission.jpg', 160, 120),
+        ]);
+
+        // 2. Pending state must hold the temporary upload (keyed array).
+        $pending = $component->get($statePath);
+        $this->assertIsArray($pending, 'expected keyed file state after _finishUpload');
+        $this->assertNotEmpty($pending, 'expected a pending upload after _finishUpload');
+
+        // 3. The blade's stored-file scan mid-flow must not wipe the state.
+        $tempFilename = is_array($pending) && isset($pending['filekey1'])
+            ? $pending['filekey1']?->getFilename()
+            : null;
+        $this->assertNotNull($tempFilename, 'pending upload lost its temporary file');
+
+        $component->call('getFormUploadedFiles', $statePath);
+        $afterScan = $component->get($statePath);
+        $this->assertIsArray($afterScan, 'pre-save file scan replaced the pending upload state');
+        $this->assertArrayHasKey('filekey1', $afterScan, 'pre-save file scan dropped the pending upload');
+        $this->assertSame(
+            $tempFilename,
+            $afterScan['filekey1']?->getFilename(),
+            'pre-save file scan swapped the pending upload'
+        );
+
+        // 4. Save must consume the temp upload and persist it.
+        $component->call('save');
+
+        $savedList = json_decode(
+            (string) PlatformSetting::where('group', 'marketing')->where('key', 'features_list')->value('value'),
+            true
+        );
+        $savedItem = $savedList[$itemKey] ?? $savedList[array_key_first($savedList)] ?? null;
+        $imagePath = is_array($savedItem) ? (string) ($savedItem['image'] ?? '') : '';
+
+        $storedOk = $imagePath !== '' && Storage::disk('public')->exists($imagePath);
+
+        // Restore the stored list and remove the upload this test created.
+        if ($stored) {
+            $stored->update(['value' => $originalList]);
+        }
+        if ($imagePath !== '') {
+            Storage::disk('public')->delete($imagePath);
+        }
+
+        $this->assertTrue($storedOk, 'pending feature image was not persisted on save');
+    }
+
+    /**
+     * Same real upload sequence, but an unrelated field update lands while the
+     * upload is still pending (admin edits the name/category) — a second
+     * Livewire request whose snapshot must echo the pending temp state back
+     * unchanged instead of dropping it.
+     */
+    public function test_feature_image_temp_upload_survives_unrelated_update_then_saves(): void
+    {
+        Queue::fake();
+        $this->actingAsPlatformAdmin();
+
+        $stored = PlatformSetting::where('group', 'marketing')->where('key', 'features_list')->first();
+        $originalList = $stored?->value;
+
+        $component = Livewire::test(PlatformSettingsPage::class);
+        $list = $component->get('data.marketing_features_list');
+        $itemKey = array_key_first($list);
+        $statePath = 'data.marketing_features_list.'.$itemKey.'.image';
+
+        $component->upload($statePath.'.filekey2', [
+            UploadedFile::fake()->image('clinic.jpg', 120, 90),
+        ]);
+
+        $pending = $component->get($statePath);
+        $this->assertIsArray($pending);
+        $this->assertNotEmpty($pending);
+
+        // Unrelated update lands while the upload is pending.
+        $component->set('data.marketing_features_list.'.$itemKey.'.name', 'Clinic');
+
+        $stillPending = $component->get($statePath);
+        $this->assertNotEmpty($stillPending, 'unrelated field update dropped the pending upload');
+
+        $component->call('save');
+
+        $savedList = json_decode(
+            (string) PlatformSetting::where('group', 'marketing')->where('key', 'features_list')->value('value'),
+            true
+        );
+        $savedItem = $savedList[$itemKey] ?? $savedList[array_key_first($savedList)] ?? null;
+        $imagePath = is_array($savedItem) ? (string) ($savedItem['image'] ?? '') : '';
+
+        $storedOk = $imagePath !== '' && Storage::disk('public')->exists($imagePath);
+
+        // Restore the stored list and remove the upload this test created.
+        if ($stored) {
+            $stored->update(['value' => $originalList]);
+        }
+        if ($imagePath !== '') {
+            Storage::disk('public')->delete($imagePath);
+        }
+
+        $this->assertTrue($storedOk, 'pending feature image was not persisted after an unrelated update');
     }
 }
