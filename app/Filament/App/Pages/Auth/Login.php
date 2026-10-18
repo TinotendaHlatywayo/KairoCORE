@@ -44,6 +44,8 @@ class Login extends BaseLogin
 
     public string $regSubmittedName = '';
 
+    public ?string $notice = null;
+
     public function mount(): void
     {
         parent::mount();
@@ -53,6 +55,11 @@ class Login extends BaseLogin
             'password' => '',
             'remember' => false,
         ]);
+
+        $this->notice = match (request()->query('notice')) {
+            'session_expired' => __('Your session has expired. Please sign in again.'),
+            default => null,
+        };
     }
 
     /**

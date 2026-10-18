@@ -3,12 +3,13 @@
 #
 #   Nginx Proxy Manager (kuber-npm) ──► kairocore-web:80   (shared proxy network)
 #                                          │
-#                                          └─► kairocore-db:3306  (private network)
+#                                          ├──► kairocore-db:3306    (private network)
+#                                          └──► kairocore-redis:6379 (private network)
 #
-# NOTHING is published on the host: no `ports:` anywhere. The database lives on
-# an `internal: true` network, so it can't be reached from outside or from other
-# stacks, and has no internet access. Only `kairocore-web` joins the shared
-# NPM network.
+# NOTHING is published on the host: no `ports:` anywhere. The database and
+# redis live on an `internal: true` network, so they can't be reached from
+# outside or from other stacks, and have no internet access. Only
+# `kairocore-web` joins the shared NPM network.
 # =============================================================================
 name: kairocore
 
@@ -27,6 +28,8 @@ x-app: &app
     DB_CONNECTION: mysql
     DB_HOST: kairocore-db
     DB_PORT: "3306"
+    REDIS_HOST: kairocore-redis
+    REDIS_PORT: "6379"
   volumes:
     - kairo_storage:/var/www/html/storage
 
@@ -38,6 +41,8 @@ services:
     container_name: kairocore-web
     depends_on:
       kairocore-db:
+        condition: service_healthy
+      kairocore-redis:
         condition: service_healthy
     networks:
       - internal      # talks to the database
@@ -57,10 +62,12 @@ services:
   kairocore-queue:
     <<: *app
     container_name: kairocore-queue
-    command: ["php", "artisan", "queue:work", "--sleep=3", "--tries=3", "--timeout=300", "--max-time=3600"]
+    command: ["php", "artisan", "queue:work", "--sleep=3", "--tries=3", "--timeout=3600", "--max-time=3600"]
     depends_on:
       kairocore-web:
         condition: service_healthy     # web runs migrations first
+      kairocore-redis:
+        condition: service_healthy
     networks:
       - internal
       - egress        # outbound only (SMTP, Paynow); not on the shared proxy network
@@ -76,12 +83,34 @@ services:
     depends_on:
       kairocore-web:
         condition: service_healthy
+      kairocore-redis:
+        condition: service_healthy
     networks:
       - internal
       - egress
     mem_limit: 256m
     cpus: "0.25"
     pids_limit: 100
+
+  # ── Redis (sessions + cache; appendonly so state survives restarts) ────────
+  kairocore-redis:
+    image: redis:7-alpine
+    container_name: kairocore-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - kairo_redisdata:/data
+    networks:
+      - internal      # ONLY the private network (no internet, not shared)
+    mem_limit: 256m
+    cpus: "0.25"
+    pids_limit: 100
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
 
   # ── MySQL ──────────────────────────────────────────────────────────────────
   kairocore-db:
@@ -110,6 +139,7 @@ services:
 
 volumes:
   kairo_dbdata:
+  kairo_redisdata:
   kairo_storage:
 
 networks:

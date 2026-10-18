@@ -4,7 +4,9 @@ namespace App\Filament\App\Pages;
 
 use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Concerns\ModulePermissionAccess;
+use App\Services\ImageConverter;
 use Filament\Pages\Page;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Livewire\WithFileUploads;
 use Modules\CMS\Models\CmsMedia;
@@ -199,18 +201,20 @@ class WebsiteContentManager extends Page
 
         $schoolId = app('current_tenant')->id ?? 0;
         $path = $this->tempImage->store("cms-media/{$schoolId}/images", 'public');
+        $path = ImageConverter::convert($path);
         $url = asset('storage/'.$path);
 
-        $dimensions = @getimagesize($this->tempImage->getRealPath()) ?: [null, null];
+        $storedImage = (string) Storage::disk('public')->get($path);
+        $dimensions = @getimagesizefromstring($storedImage) ?: [null, null];
 
         CmsMedia::create([
             'school_id' => $schoolId,
             'uuid' => (string) Str::uuid(),
             'filename' => basename($path),
             'original_filename' => $this->tempImage->getClientOriginalName(),
-            'mime_type' => $this->tempImage->getMimeType(),
-            'extension' => $this->tempImage->getClientOriginalExtension(),
-            'file_size' => $this->tempImage->getSize(),
+            'mime_type' => $dimensions['mime'] ?? $this->tempImage->getMimeType(),
+            'extension' => strtolower(pathinfo($path, PATHINFO_EXTENSION)) ?: $this->tempImage->getClientOriginalExtension(),
+            'file_size' => strlen($storedImage),
             'disk' => 'public',
             'path' => $path,
             'url' => $url,

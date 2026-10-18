@@ -115,7 +115,10 @@
                                     <input type="text" wire:model.live="selectedBlockData.{{ $field }}" placeholder="Image URL" class="wcm-input">
                                     <div class="flex items-center gap-2 mt-1">
                                         <input type="file" wire:model.live="tempImage" accept="image/*" class="wcm-input py-1 wcm-tiny" title="Upload a new photo">
-                                        <button type="button" wire:click="attachUploadedImage('{{ $field }}')" class="wcm-btn wcm-btn-secondary wcm-tiny">{{ __('Upload') }}</button>
+                                        <button type="button" wire:click="attachUploadedImage('{{ $field }}')" class="wcm-btn wcm-btn-secondary wcm-tiny" wire:loading.attr="disabled" wire:target="attachUploadedImage">
+                                            <span wire:loading.remove wire:target="attachUploadedImage">{{ __('Upload') }}</span>
+                                            <span wire:loading wire:target="attachUploadedImage">{{ __('Uploading…') }}</span>
+                                        </button>
                                     </div>
                                 @elseif($isText)
                                     @include('modules.cms.richtext', [
@@ -142,7 +145,10 @@
                                                     <label class="wcm-label block">{{ $label }}</label>
                                                     <input type="text" wire:model.live="selectedBlockData.{{ $collection }}.{{ $itemIdx }}.{{ $field }}" class="wcm-input">
                                                     <input type="file" wire:model.live="tempImage" accept="image/*" class="wcm-input py-1 wcm-tiny">
-                                                    <button type="button" wire:click="attachUploadedImage('{{ $collection }}.{{ $itemIdx }}.{{ $field }}')" class="wcm-btn wcm-btn-secondary wcm-tiny">{{ __('Upload photo') }}</button>
+                                                    <button type="button" wire:click="attachUploadedImage('{{ $collection }}.{{ $itemIdx }}.{{ $field }}')" class="wcm-btn wcm-btn-secondary wcm-tiny" wire:loading.attr="disabled" wire:target="attachUploadedImage">
+                                                        <span wire:loading.remove wire:target="attachUploadedImage">{{ __('Upload photo') }}</span>
+                                                        <span wire:loading wire:target="attachUploadedImage">{{ __('Uploading…') }}</span>
+                                                    </button>
                                                 </div>
                                             @elseif(in_array($field, ['desc', 'a', 'quote']))
                                                 <div class="space-y-1">

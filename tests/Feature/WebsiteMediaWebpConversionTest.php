@@ -154,7 +154,7 @@ class WebsiteMediaWebpConversionTest extends TestCase
         $this->assertTrue($pendingOk, 'pending-video marker missing or file not stored');
     }
 
-    public function test_conversion_job_produces_animated_webp_and_cleans_up(): void
+    public function test_conversion_job_produces_video_package_and_cleans_up(): void
     {
         $this->actingAsPlatformAdmin();
 
@@ -170,11 +170,18 @@ class WebsiteMediaWebpConversionTest extends TestCase
 
         (new ConvertWebsiteMediaToWebp('marketing', 'hero_image', $path, 30, 'hero_image_source'))->handle();
 
-        $webp = preg_replace('/\.[^.]+$/', '.webp', $path);
-        $webpExists = $disk->exists($webp);
-        $animated = $webpExists && str_contains((string) $disk->get($webp), 'ANIM');
+        $baseRel = preg_replace('/\.[^.]+$/', '', $path);
+        $desktopRel = $baseRel.'-720.mp4';
+        $mobileRel = $baseRel.'-480.mp4';
+        $posterRel = $baseRel.'-poster.webp';
+
+        $desktopExists = $disk->exists($desktopRel);
+        $mobileExists = $disk->exists($mobileRel);
+        $posterExists = $disk->exists($posterRel);
+
         $hero->refresh();
-        $pointedAtWebp = $hero->value === $webp;
+        $package = json_decode($hero->value, true);
+        $validPackage = is_array($package) && ($package['type'] ?? '') === 'video';
         $pendingGone = ! PlatformSetting::where('group', 'marketing')
             ->where('key', 'hero_image_source')
             ->exists();
@@ -183,11 +190,12 @@ class WebsiteMediaWebpConversionTest extends TestCase
         // Restore the database and remove fixture files.
         $this->restoreHeroSetting($hero, $original);
         PlatformSetting::where('group', 'marketing')->where('key', 'hero_image_source')->delete();
-        $disk->delete([$path, $webp]);
+        $disk->delete([$path, $desktopRel, $mobileRel, $posterRel]);
 
-        $this->assertTrue($webpExists, 'webp was not created');
-        $this->assertTrue($animated, 'webp is not animated (ANIM chunk missing)');
-        $this->assertTrue($pointedAtWebp, 'hero_image does not point at the webp');
+        $this->assertTrue($desktopExists, 'desktop mp4 was not created');
+        $this->assertTrue($mobileExists, 'mobile mp4 was not created');
+        $this->assertTrue($posterExists, 'poster webp was not created');
+        $this->assertTrue($validPackage, 'hero_image does not store a valid video package json');
         $this->assertTrue($pendingGone, 'pending-video marker row survived the job');
         $this->assertTrue($sourceDeleted, 'source video was not deleted');
     }
@@ -340,7 +348,7 @@ class WebsiteMediaWebpConversionTest extends TestCase
         @unlink($twoSeconds->getRealPath());
     }
 
-    public function test_conversion_job_clamps_out_of_range_trim_and_still_produces_animation(): void
+    public function test_conversion_job_clamps_out_of_range_trim_and_still_produces_video(): void
     {
         $this->actingAsPlatformAdmin();
 
@@ -355,22 +363,27 @@ class WebsiteMediaWebpConversionTest extends TestCase
         );
 
         // Trim start 5s on a 2-second video: the job must fall back to
-        // converting from the start rather than writing a blank WebP.
+        // converting from the start rather than failing.
         (new ConvertWebsiteMediaToWebp('marketing', 'hero_image', $path, 30, 'hero_image_source', null, 'image', 5.0))->handle();
 
-        $webp = preg_replace('/\.[^.]+$/', '.webp', $path);
-        $valid = ConvertWebsiteMediaToWebp::outputLooksLikeWebp($disk->path($webp), true);
+        $baseRel = preg_replace('/\.[^.]+$/', '', $path);
+        $desktopRel = $baseRel.'-720.mp4';
+        $mobileRel = $baseRel.'-480.mp4';
+        $posterRel = $baseRel.'-poster.webp';
+
+        $valid = $disk->exists($desktopRel) && $disk->exists($mobileRel) && $disk->exists($posterRel);
         $hero->refresh();
-        $pointedAtWebp = $hero->value === $webp;
+        $package = json_decode($hero->value, true);
+        $validPackage = is_array($package) && ($package['type'] ?? '') === 'video';
         $sourceDeleted = ! $disk->exists($path);
 
         // Restore the database and remove fixture files.
         $this->restoreHeroSetting($hero, $original);
         PlatformSetting::where('group', 'marketing')->where('key', 'hero_image_source')->delete();
-        $disk->delete([$path, $webp]);
+        $disk->delete([$path, $desktopRel, $mobileRel, $posterRel]);
 
-        $this->assertTrue($valid, 'clamped conversion did not produce a real animated WebP');
-        $this->assertTrue($pointedAtWebp, 'hero_image does not point at the clamped webp');
+        $this->assertTrue($valid, 'clamped conversion did not produce video package');
+        $this->assertTrue($validPackage, 'hero_image does not store valid video package json');
         $this->assertTrue($sourceDeleted, 'source video was not deleted after the clamped conversion');
     }
 
@@ -420,21 +433,24 @@ class WebsiteMediaWebpConversionTest extends TestCase
 
         (new ConvertWebsiteMediaToWebp('marketing', 'hero_image', $path, 30, 'hero_image_source', null, 'image', 2.0))->handle();
 
-        $webp = preg_replace('/\.[^.]+$/', '.webp', $path);
-        $webpExists = $disk->exists($webp);
-        $animated = $webpExists && str_contains((string) $disk->get($webp), 'ANIM');
+        $baseRel = preg_replace('/\.[^.]+$/', '', $path);
+        $desktopRel = $baseRel.'-720.mp4';
+        $mobileRel = $baseRel.'-480.mp4';
+        $posterRel = $baseRel.'-poster.webp';
+
+        $exists = $disk->exists($desktopRel) && $disk->exists($mobileRel) && $disk->exists($posterRel);
         $hero->refresh();
-        $pointedAtWebp = $hero->value === $webp;
+        $package = json_decode($hero->value, true);
+        $validPackage = is_array($package) && ($package['type'] ?? '') === 'video';
         $sourceDeleted = ! $disk->exists($path);
 
         // Restore the database and remove fixture files.
         $this->restoreHeroSetting($hero, $original);
         PlatformSetting::where('group', 'marketing')->where('key', 'hero_image_source')->delete();
-        $disk->delete([$path, $webp]);
+        $disk->delete([$path, $desktopRel, $mobileRel, $posterRel]);
 
-        $this->assertTrue($webpExists, 'webp was not created from the trimmed window');
-        $this->assertTrue($animated, 'trimmed webp is not animated');
-        $this->assertTrue($pointedAtWebp, 'hero_image does not point at the trimmed webp');
+        $this->assertTrue($exists, 'video package was not created from the trimmed window');
+        $this->assertTrue($validPackage, 'trimmed video package json is invalid');
         $this->assertTrue($sourceDeleted, 'source video was not deleted after trimmed conversion');
     }
 

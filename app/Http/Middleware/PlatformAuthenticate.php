@@ -43,4 +43,16 @@ class PlatformAuthenticate extends Authenticate
 
         return $next($request);
     }
+
+    /**
+     * Guests get the session_expired notice on the login page so the redirect
+     * is explained (Filament's stock redirectTo() returns the bare login URL).
+     * The school_user path above keeps its own explicit notice.
+     */
+    protected function redirectTo($request): ?string
+    {
+        $loginUrl = Filament::getLoginUrl();
+
+        return $loginUrl ? $loginUrl.'?notice=session_expired' : null;
+    }
 }

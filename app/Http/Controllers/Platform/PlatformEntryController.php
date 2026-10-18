@@ -34,9 +34,13 @@ class PlatformEntryController extends Controller
         try {
             $redeemed = $service->redeemTicket((string) $request->query('ticket'), $tenant);
         } catch (RuntimeException $e) {
+            // Land back on the PLATFORM, not on a tenant login page. The two
+            // hosts hold separate session cookies, so a flashed error would
+            // never render there; carry the reason in the query string so the
+            // schools page can show exactly why entry failed (expired link,
+            // wrong school, …) instead of silently bouncing to a login form.
             return redirect()
-                ->to(Filament::getLoginUrl())
-                ->withErrors(['platform' => $e->getMessage()]);
+                ->to($service->platformSchoolsUrl().'?notice=entry_failed&reason='.rawurlencode($e->getMessage()));
         }
 
         $as = $redeemed['user'];

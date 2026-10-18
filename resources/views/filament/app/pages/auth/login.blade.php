@@ -190,6 +190,12 @@
                 {{-- Symmetrical Forms Workspace --}}
                 <section class="sc-l2-forms">
 
+                    @if ($this->notice)
+                        <div class="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200">
+                            {{ $this->notice }}
+                        </div>
+                    @endif
+
                     {{-- FORM A: SIGN IN --}}
                     <div
                         class="sc-pane sc-pane-signin"
@@ -1282,6 +1288,7 @@
 <script>
     document.addEventListener('alpine:init', () => {
         Alpine.data('scRegValid', (initialRole) => ({
+            shake: false,
             regRole: initialRole || 'student',
             errors: {},
             msgs: {

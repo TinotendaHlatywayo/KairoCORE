@@ -173,6 +173,13 @@ class AppPanelProvider extends PanelProvider
                 fn () => view('modules.cms.dynamic-styles')
             )
 
+            // Hard-navigate to login when the session dies mid-use (see
+            // bootstrap/app.php renderables + the partial's own comment).
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn () => view('partials.session-expiry-fetch-patch')
+            )
+
             // Dynamic browser-tab favicon: the school's uploaded favicon when
             // set, otherwise the platform favicon.
             ->renderHook(
@@ -301,6 +308,14 @@ class AppPanelProvider extends PanelProvider
             ->renderHook(
                 PanelsRenderHook::BODY_END,
                 fn () => view('components.mobile-drawer-a11y')
+            )
+
+            // Global upload progress bar: listens (via window) for Livewire's
+            // livewire-upload-* events, so every wire:model file input in this
+            // panel shows a real percentage bar instead of looking frozen.
+            ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn () => new \Illuminate\Support\HtmlString('<x-upload-progress />')
             )
 
             // ──────────────────────────────────────────────────────────────

@@ -1,4 +1,22 @@
 <x-filament-panels::page>
+    @php
+        $activeRestore = collect($restoreLogsList)->first(
+            fn (array $log) => in_array($log['status'] ?? '', ['pending', 'processing'], true)
+        );
+    @endphp
+
+    @if ($activeRestore)
+        <div class="mb-6 flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200">
+            <x-filament::loading-indicator class="h-5 w-5 shrink-0" />
+            <div>
+                <p class="font-semibold">{{ __('A restore is running…') }}</p>
+                <p class="mt-0.5">
+                    {{ __('The list below refreshes every few seconds as the status moves from :from to completed.', ['from' => $activeRestore['status']]) }}
+                </p>
+            </div>
+        </div>
+    @endif
+
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3" wire:poll.5s="refreshBackupsList">
         <!-- Create & Upload panel -->
         <div class="space-y-6">
@@ -66,8 +84,16 @@
                         icon="heroicon-o-cloud-arrow-up"
                         size="lg"
                         class="w-full"
+                        wire:loading.attr="disabled"
+                        wire:target="triggerPlatformBackup"
                     >
-                        {{ $backupScope === 'tenant' ? __('Generate Tenant Backup') : ($backupScope === 'selected' ? __('Generate Selected Tenants Backup') : __('Generate Full Platform Backup')) }}
+                        <span wire:loading.remove wire:target="triggerPlatformBackup">
+                            {{ $backupScope === 'tenant' ? __('Generate Tenant Backup') : ($backupScope === 'selected' ? __('Generate Selected Tenants Backup') : __('Generate Full Platform Backup')) }}
+                        </span>
+                        <span wire:loading wire:target="triggerPlatformBackup" class="inline-flex items-center gap-2">
+                            <x-filament::loading-indicator class="h-4 w-4" />
+                            {{ __('Starting…') }}
+                        </span>
                     </x-filament::button>
 
                     <p class="text-xs text-gray-500">
@@ -83,11 +109,34 @@
                 <form wire:submit.prevent="restoreFromUploadedBackup" class="space-y-4">
                     {{ $this->form }}
                     <div class="grid grid-cols-2 gap-2">
-                        <x-filament::button type="submit" color="danger" icon="heroicon-o-arrow-path" class="w-full">
-                            {{ __('Import & Restore') }}
+                        <x-filament::button
+                            type="submit"
+                            color="danger"
+                            icon="heroicon-o-arrow-path"
+                            class="w-full"
+                            wire:loading.attr="disabled"
+                            wire:target="restoreFromUploadedBackup"
+                        >
+                            <span wire:loading.remove wire:target="restoreFromUploadedBackup">{{ __('Import & Restore') }}</span>
+                            <span wire:loading wire:target="restoreFromUploadedBackup" class="inline-flex items-center gap-2">
+                                <x-filament::loading-indicator class="h-4 w-4" />
+                                {{ __('Restoring…') }}
+                            </span>
                         </x-filament::button>
-                        <x-filament::button type="button" color="gray" wire:click="uploadExternalBackup" icon="heroicon-o-arrow-up-tray" class="w-full">
-                            {{ __('Import only') }}
+                        <x-filament::button
+                            type="button"
+                            color="gray"
+                            wire:click="uploadExternalBackup"
+                            icon="heroicon-o-arrow-up-tray"
+                            class="w-full"
+                            wire:loading.attr="disabled"
+                            wire:target="uploadExternalBackup"
+                        >
+                            <span wire:loading.remove wire:target="uploadExternalBackup">{{ __('Import only') }}</span>
+                            <span wire:loading wire:target="uploadExternalBackup" class="inline-flex items-center gap-2">
+                                <x-filament::loading-indicator class="h-4 w-4" />
+                                {{ __('Importing…') }}
+                            </span>
                         </x-filament::button>
                     </div>
                 </form>
@@ -120,8 +169,14 @@
                         icon="heroicon-o-arrow-path"
                         wire:click="restoreSelectedBackup"
                         wire:confirm="{{ __('WARNING: This will overwrite current data with the selected backup. Proceed?') }}"
+                        wire:loading.attr="disabled"
+                        wire:target="restoreSelectedBackup"
                     >
-                        {{ __('Restore selected') }}
+                        <span wire:loading.remove wire:target="restoreSelectedBackup">{{ __('Restore selected') }}</span>
+                        <span wire:loading wire:target="restoreSelectedBackup" class="inline-flex items-center gap-2">
+                            <x-filament::loading-indicator class="h-4 w-4" />
+                            {{ __('Starting…') }}
+                        </span>
                     </x-filament::button>
                 </div>
             </x-filament::section>
@@ -215,6 +270,8 @@
                                                         icon="heroicon-o-arrow-path"
                                                         color="danger"
                                                         tooltip="{{ __('Restore') }}"
+                                                        wire:loading.attr="disabled"
+                                                        wire:target="executePlatformRestore"
                                                     />
                                                 @endif
                                                 <x-filament::icon-button

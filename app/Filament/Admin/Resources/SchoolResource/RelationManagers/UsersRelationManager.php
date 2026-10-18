@@ -69,6 +69,10 @@ class UsersRelationManager extends RelationManager
             ->filters([
                 //
             ])
+            // The platform-managed shadow account (used by "Enter school") is
+            // machinery, not a real staff member — keep it out of every count
+            // and list on this tab, exactly as the tenant side already does.
+            ->modifyQueryUsing(fn ($query) => $query->notPlatformManaged())
             ->headerActions([
                 Tables\Actions\CreateAction::make()
                     ->label(__('Add New User'))

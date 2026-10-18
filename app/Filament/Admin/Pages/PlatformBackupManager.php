@@ -128,17 +128,20 @@ class PlatformBackupManager extends Page implements HasForms
                 default => null,
             };
 
-            // Create the vault row immediately, then generate synchronously so backups complete instantly and reliably.
+            // Create the vault row immediately, then queue generation: a full
+            // platform archive can take minutes and would otherwise blow past
+            // the browser/proxy request timeout (Cloudflare 520) and leave the
+            // button looking dead while PHP keeps running.
             $backup = $service->createRecord($schoolIds, $this->backupNotes ?: null);
 
-            GeneratePlatformBackupJob::dispatchSync($backup->id, $schoolIds);
+            GeneratePlatformBackupJob::dispatch($backup->id, $schoolIds);
 
             $this->refreshBackupsList();
             $this->backupNotes = '';
 
             Notification::make()
-                ->title(__('Backup generated successfully'))
-                ->body(__('The backup archive has been successfully created and added to the recovery vault.'))
+                ->title(__('Backup generation started'))
+                ->body(__('The archive is being built in the background. Its status updates in the recovery vault below.'))
                 ->success()
                 ->send();
         } catch (\Throwable $e) {
@@ -284,19 +287,28 @@ class PlatformBackupManager extends Page implements HasForms
             'status' => 'pending',
         ]);
 
-        // Execute restore synchronously so it completes immediately and does not hang on queue
+        // Queue the restore instead of running it inside the request: a full
+        // restore takes minutes, and a synchronous run both blocked the UI
+        // ("dead" button) and exceeded the Cloudflare/proxy origin timeout
+        // (520), killing the response while the work kept going. The list
+        // below polls every 5s, so the pending -> processing -> completed
+        // progression stays visible without holding the request open.
         try {
-            RestorePlatformBackupJob::dispatchSync($log->id);
+            RestorePlatformBackupJob::dispatch($log->id);
             $this->refreshBackupsList();
             Notification::make()
-                ->title(__('Restore completed successfully'))
-                ->body(__('The platform backup has been restored.'))
+                ->title(__('Restore started'))
+                ->body(__('The restore is running in the background. Follow its status under Recent restore activity.'))
                 ->success()
                 ->send();
         } catch (\Throwable $e) {
+            $log->update([
+                'status' => 'failed',
+                'error_details' => \Illuminate\Support\Str::limit($e->getMessage(), 5000),
+            ]);
             $this->refreshBackupsList();
             Notification::make()
-                ->title(__('Restore failed'))
+                ->title(__('Restore failed to start'))
                 ->body(\Illuminate\Support\Str::limit($e->getMessage(), 500, ' …'))
                 ->danger()
                 ->send();

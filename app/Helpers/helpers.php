@@ -643,8 +643,14 @@ if (! function_exists('marketing_resolve_image')) {
      */
     function marketing_resolve_image(mixed $value, string $fallback = ''): string
     {
+        if (is_string($value) && str_starts_with(trim($value), '{')) {
+            $decoded = json_decode($value, true);
+            if (is_array($decoded)) {
+                $value = $decoded['poster'] ?? ($decoded['desktop'] ?? ($decoded['url'] ?? ''));
+            }
+        }
         if (is_array($value)) {
-            foreach (['url', 'path', 'image', 'src'] as $key) {
+            foreach (['poster', 'desktop', 'url', 'path', 'image', 'src'] as $key) {
                 if (isset($value[$key]) && is_string($value[$key])) {
                     $value = $value[$key];
                     break;

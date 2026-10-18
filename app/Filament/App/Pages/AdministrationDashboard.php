@@ -184,6 +184,9 @@ class AdministrationDashboard extends Page
                 ],
             ],
             'recentLogs' => SystemAuditLog::where('school_id', $schoolId)
+                // Hide platform shadow-account activity (Enter school) from
+                // the tenant-facing trail.
+                ->whereDoesntHave('user', fn ($query) => $query->where('is_platform_managed', true))
                 ->with('user')
                 ->latest()
                 ->limit(5)
