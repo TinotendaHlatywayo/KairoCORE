@@ -30,6 +30,7 @@ class Login extends BaseLogin
 
         $this->notice = match (request()->query('notice')) {
             'school_user' => __('You were signed in as a school user. Please sign in below with your platform administrator credentials.'),
+            'session_expired' => __('Your session has expired. Please sign in again.'),
             default => null,
         };
     }

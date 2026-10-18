@@ -67,7 +67,7 @@ class TenantIsolationAndAuthRedirectTest extends TestCase
         $response = $this->get('https://iso-test-a.lvh.me/workspace/system-settings-page');
 
         $response->assertStatus(302);
-        $response->assertRedirect('https://iso-test-a.lvh.me/workspace/login');
+        $response->assertRedirect('https://iso-test-a.lvh.me/workspace/login?notice=session_expired');
     }
 
     public function test_guest_stays_on_their_own_subdomain_when_redirected(): void

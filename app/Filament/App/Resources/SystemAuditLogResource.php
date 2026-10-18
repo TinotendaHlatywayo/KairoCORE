@@ -41,6 +41,18 @@ class SystemAuditLogResource extends Resource
 
     protected static ?int $navigationSort = 15;
 
+    /**
+     * Platform-managed shadow actors (the "Enter school" impersonation) never
+     * show up in a tenant's audit trail — the hand-off is recorded in the
+     * platform-only audit log instead, and work done while impersonated is
+     * attributed to machinery, not to the school's staff.
+     */
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        return parent::getEloquentQuery()
+            ->whereDoesntHave('user', fn ($query) => $query->where('is_platform_managed', true));
+    }
+
     // Reached via the module contextual tabs, not the sidebar.
 
 

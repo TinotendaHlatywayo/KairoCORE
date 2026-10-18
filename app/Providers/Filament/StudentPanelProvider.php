@@ -85,6 +85,13 @@ class StudentPanelProvider extends PanelProvider
                 fn () => view('modules.cms.dynamic-styles')
             )
 
+            // Hard-navigate to login when the session dies mid-use (see
+            // bootstrap/app.php renderables + the partial's own comment).
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn () => view('partials.session-expiry-fetch-patch')
+            )
+
             // Dynamic browser-tab favicon: the school's uploaded favicon when
             // set, otherwise the platform favicon.
             ->renderHook(
@@ -148,6 +155,12 @@ class StudentPanelProvider extends PanelProvider
             ->renderHook(
                 PanelsRenderHook::BODY_END,
                 fn () => view('components.mobile-drawer-a11y')
+            )
+
+            // Global upload progress bar for wire:model file inputs.
+            ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn () => new \Illuminate\Support\HtmlString('<x-upload-progress />')
             )
 
             ->homeUrl(fn () => StudentDashboard::getUrl())

@@ -25,14 +25,19 @@ FROM php:8.3-apache
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         git unzip curl \
-        libzip-dev libpng-dev libjpeg62-turbo-dev libfreetype6-dev \
+        libzip-dev libpng-dev libjpeg62-turbo-dev libfreetype6-dev libwebp-dev \
         libonig-dev libxml2-dev libicu-dev \
         ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-install -j"$(nproc)" \
         pdo_mysql mbstring exif pcntl bcmath gd zip intl opcache
+
+# Redis: sessions + cache backend (queue stays on the database driver).
+RUN pecl install redis \
+    && docker-php-ext-enable redis \
+    && rm -rf /tmp/pear
 
 # Apache: rewrite for Laravel, serve /public, cap workers to fit the memory limit
 RUN a2enmod rewrite headers expires

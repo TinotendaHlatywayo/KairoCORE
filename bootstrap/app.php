@@ -22,6 +22,23 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
+/**
+ * Login URL for the panel the request was aimed at, carrying the
+ * session_expired notice so the login page can explain WHY the person is
+ * seeing it ("your session expired" vs a bare login form).
+ */
+$sessionExpiredLoginUrl = function ($request): string {
+    $path = trim($request->path(), '/');
+
+    $loginPath = match (true) {
+        $path === 'platform' || str_starts_with($path, 'platform/') => '/platform/login',
+        $path === 'student' || str_starts_with($path, 'student/') => '/student/login',
+        default => '/workspace/login',
+    };
+
+    return $request->getSchemeAndHttpHost().$loginPath.'?notice=session_expired';
+};
+
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
@@ -30,7 +47,7 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
-    ->withMiddleware(function (Middleware $middleware) {
+    ->withMiddleware(function (Middleware $middleware) use ($sessionExpiredLoginUrl) {
         // The app sits behind Nginx Proxy Manager, which terminates TLS and
         // forwards X-Forwarded-Proto/Host. Without this Laravel thinks every
         // request is plain http and generates http:// asset/redirect URLs
@@ -74,24 +91,16 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         // When auth middleware rejects a guest, send them to the LOGIN PAGE of
-        // the panel they were trying to reach. The URL must be ABSOLUTE
-        // (scheme + host): returning a bare "host/path" string makes Laravel
-        // treat it as a relative path and produce a broken 404 redirect.
-        // Panel-awareness matters because each portal owns its own login
-        // screen (workspace/staff, student, platform super-admin).
-        $middleware->redirectGuestsTo(function ($request) {
-            $path = trim($request->path(), '/');
-
-            $loginPath = match (true) {
-                $path === 'platform' || str_starts_with($path, 'platform/') => '/platform/login',
-                $path === 'student' || str_starts_with($path, 'student/') => '/student/login',
-                default => '/workspace/login',
-            };
-
-            return $request->getSchemeAndHttpHost().$loginPath;
-        });
+        // the panel they were trying to reach, carrying the session_expired
+        // notice so the page can greet them with "your session expired" instead
+        // of a bare login form. The URL must be ABSOLUTE (scheme + host):
+        // returning a bare "host/path" string makes Laravel treat it as a
+        // relative path and produce a broken 404 redirect. Panel-awareness
+        // matters because each portal owns its own login screen
+        // (workspace/staff, student, platform super-admin).
+        $middleware->redirectGuestsTo(fn ($request) => $sessionExpiredLoginUrl($request));
     })
-    ->withExceptions(function (Exceptions $exceptions) {
+    ->withExceptions(function (Exceptions $exceptions) use ($sessionExpiredLoginUrl) {
         $exceptions->renderable(function (NotFoundHttpException $e) {
             if (request()->expectsJson() || request()->is('api/*')) {
                 return response()->json(['message' => 'The requested resource was not found.'], 404);
@@ -134,9 +143,33 @@ return Application::configure(basePath: dirname(__DIR__))
             return response()->view('errors.403', [], 403);
         });
 
-        $exceptions->renderable(function (TokenMismatchException $e) {
+        // A Livewire/Filament XHR that loses its session mid-use (idle
+        // timeout) hits auth or CSRF and would normally get a redirect/HTML
+        // page the SPA cannot interpret - the UI just silently dies. Answer
+        // those with JSON carrying the login URL; the fetch patch rendered in
+        // every panel's <head> turns it into a hard navigation to the login
+        // page with the expiry notice.
+        $exceptions->renderable(function (AuthenticationException $e) use ($sessionExpiredLoginUrl) {
+            if (! request()->hasHeader('X-Livewire')) {
+                return null;
+            }
+
+            return response()->json([
+                'message' => 'Your session has expired. Please sign in again.',
+                'redirect' => $sessionExpiredLoginUrl(request()),
+            ], 401);
+        });
+
+        $exceptions->renderable(function (TokenMismatchException $e) use ($sessionExpiredLoginUrl) {
             if (request()->expectsJson() || request()->is('api/*')) {
                 return response()->json(['message' => 'Page expired. Please try again.'], 419);
+            }
+
+            if (request()->hasHeader('X-Livewire')) {
+                return response()->json([
+                    'message' => 'Your session has expired. Please sign in again.',
+                    'redirect' => $sessionExpiredLoginUrl(request()),
+                ], 419);
             }
 
             return response()->view('errors.419', [], 419);

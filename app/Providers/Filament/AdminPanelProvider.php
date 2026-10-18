@@ -92,10 +92,23 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::HEAD_END,
                 fn () => view('filament.admin.partials.platform-theme-styles')
             )
+            // Hard-navigate to login when the session dies mid-use (see
+            // bootstrap/app.php renderables + the partial's own comment).
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn () => view('partials.session-expiry-fetch-patch')
+            )
             // Private authenticated panel: keep every page out of search indexes.
             ->renderHook(
                 PanelsRenderHook::HEAD_START,
                 fn () => '<meta name="robots" content="noindex, nofollow"><meta name="csrf-token" content="'.csrf_token().'">'
+            )
+            // Cross-host hand-off feedback (e.g. a failed "Enter school" ticket
+            // redemption): the tenant host cannot flash into this session, so
+            // the reason travels as ?notice= and renders here.
+            ->renderHook(
+                PanelsRenderHook::PAGE_START,
+                fn () => view('filament.admin.partials.entry-notice')
             )
             ->pages([
                 Dashboard::class,
@@ -143,6 +156,12 @@ class AdminPanelProvider extends PanelProvider
             ->renderHook(
                 PanelsRenderHook::BODY_END,
                 fn () => view('components.mobile-drawer-a11y')
+            )
+            // Global upload progress bar for wire:model file inputs (branding,
+            // marketing media, backup archive, content assets).
+            ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn () => new \Illuminate\Support\HtmlString('<x-upload-progress />')
             )
             ->middleware([
                 EncryptCookies::class,

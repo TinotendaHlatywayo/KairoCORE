@@ -18,8 +18,12 @@
             {{ $this->form }}
 
             <div class="flex justify-end pt-4 border-t border-gray-100 dark:border-gray-800">
-                <x-filament::button type="submit" color="primary" size="md" icon="heroicon-o-check">
-                    {{ __('Save System Settings') }}
+                <x-filament::button type="submit" color="primary" size="md" icon="heroicon-o-check" wire:loading.attr="disabled" wire:target="save">
+                    <span wire:loading.remove wire:target="save">{{ __('Save System Settings') }}</span>
+                    <span wire:loading wire:target="save" class="inline-flex items-center gap-2">
+                        <x-filament::loading-indicator class="h-4 w-4" />
+                        {{ __('Saving…') }}
+                    </span>
                 </x-filament::button>
             </div>
         </form>

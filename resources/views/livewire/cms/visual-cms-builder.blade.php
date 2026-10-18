@@ -604,8 +604,9 @@
                     <span>{{ __('🚀') }}</span> {{ __('Make Live') }}
                 </button>
             @else
-                <button wire:click="publishPage" class="btn-success">
-                    <span>{{ __('🚀') }}</span> {{ __('Publish Changes') }}
+                <button wire:click="publishPage" class="btn-success" wire:loading.attr="disabled" wire:target="publishPage">
+                    <span wire:loading.remove wire:target="publishPage"><span>{{ __('🚀') }}</span> {{ __('Publish Changes') }}</span>
+                    <span wire:loading wire:target="publishPage">{{ __('Publishing…') }}</span>
                 </button>
             @endif
 
@@ -981,8 +982,9 @@
                         <div class="flex gap-2">
                             <input type="text" wire:model="schoolTemplateName" placeholder="Template name..."
                                    class="studio-input-field flex-1 text-xs">
-                            <button wire:click="saveAsSchoolTemplate" class="btn-primary !px-4">
-                                {{ __('Save') }}
+                            <button wire:click="saveAsSchoolTemplate" class="btn-primary !px-4" wire:loading.attr="disabled" wire:target="saveAsSchoolTemplate">
+                                <span wire:loading.remove wire:target="saveAsSchoolTemplate">{{ __('Save') }}</span>
+                                <span wire:loading wire:target="saveAsSchoolTemplate">{{ __('Saving…') }}</span>
                             </button>
                         </div>
 
@@ -1211,8 +1213,9 @@
                                                 <span class="text-[10px] font-bold text-[color:var(--sc-text-muted)] block mb-2">{{ __('📷 Upload photo from your computer') }}</span>
                                                 <div class="flex items-center gap-2">
                                                     <input type="file" wire:model="tempImage" accept="image/*" class="flex-1">
-                                                    <button type="button" wire:click="attachUploadedImage('image_url')" class="btn-primary !h-10 !px-4 !text-xs">
-                                                        {{ __('Attach') }}
+                                                    <button type="button" wire:click="attachUploadedImage('image_url')" class="btn-primary !h-10 !px-4 !text-xs" wire:loading.attr="disabled" wire:target="attachUploadedImage">
+                                                        <span wire:loading.remove wire:target="attachUploadedImage">{{ __('Attach') }}</span>
+                                                        <span wire:loading wire:target="attachUploadedImage">{{ __('Attaching…') }}</span>
                                                     </button>
                                                 </div>
                                             </div>
@@ -1235,7 +1238,7 @@
                                                         <div class="sc-dropzone !p-2 mt-1.5">
                                                             <div class="flex items-center gap-2">
                                                                 <input type="file" wire:model="tempImage" accept="image/*" class="flex-1 text-[11px]">
-                                                                <button type="button" wire:click="attachUploadedImage('images.{{ $imageIdx }}.image')" class="btn-primary !h-9 !px-3 !text-[11px]">{{ __('Attach') }}</button>
+                                                                <button type="button" wire:click="attachUploadedImage('images.{{ $imageIdx }}.image')" class="btn-primary !h-9 !px-3 !text-[11px]" wire:loading.attr="disabled" wire:target="attachUploadedImage">{{ __('Attach') }}<span wire:loading wire:target="attachUploadedImage"> …</span></button>
                                                             </div>
                                                         </div>
                                                     @else
@@ -1244,7 +1247,7 @@
                                                         <div class="sc-dropzone !p-2 mt-1.5">
                                                             <div class="flex items-center gap-2">
                                                                 <input type="file" wire:model="tempImage" accept="image/*" class="flex-1 text-[11px]">
-                                                                <button type="button" wire:click="attachUploadedImage('images.{{ $imageIdx }}.url')" class="btn-primary !h-9 !px-3 !text-[11px]">{{ __('Attach') }}</button>
+                                                                <button type="button" wire:click="attachUploadedImage('images.{{ $imageIdx }}.url')" class="btn-primary !h-9 !px-3 !text-[11px]" wire:loading.attr="disabled" wire:target="attachUploadedImage">{{ __('Attach') }}<span wire:loading wire:target="attachUploadedImage"> …</span></button>
                                                             </div>
                                                         </div>
                                                     @endif
@@ -1276,8 +1279,9 @@
                                                             @if($field === 'image')
                                                                 <div class="flex items-center gap-2">
                                                                     <input type="file" wire:model="tempImage" accept="image/*" class="flex-1 text-[11px]">
-                                                                    <button type="button" wire:click="attachUploadedImage('{{ $collection }}.{{ $itemIdx }}.image')" class="btn-primary !h-9 !px-3 !text-[11px]">
-                                                                        {{ __('Upload') }}
+                                                                    <button type="button" wire:click="attachUploadedImage('{{ $collection }}.{{ $itemIdx }}.image')" class="btn-primary !h-9 !px-3 !text-[11px]" wire:loading.attr="disabled" wire:target="attachUploadedImage">
+                                                                        <span wire:loading.remove wire:target="attachUploadedImage">{{ __('Upload') }}</span>
+                                                                        <span wire:loading wire:target="attachUploadedImage">{{ __('Uploading…') }}</span>
                                                                     </button>
                                                                 </div>
                                                             @endif
@@ -1432,8 +1436,9 @@
                                             <span class="text-[10px] font-bold text-[color:var(--sc-text-muted)] block mb-2">{{ __('📷 Upload background from your computer') }}</span>
                                             <div class="flex items-center gap-2">
                                                 <input type="file" wire:model="tempImage" accept="image/*" class="flex-1">
-                                                <button type="button" wire:click="attachUploadedImage('styles.bg_image_url')" class="btn-primary !h-10 !px-4 !text-xs">
-                                                    {{ __('Attach') }}
+                                                <button type="button" wire:click="attachUploadedImage('styles.bg_image_url')" class="btn-primary !h-10 !px-4 !text-xs" wire:loading.attr="disabled" wire:target="attachUploadedImage">
+                                                    <span wire:loading.remove wire:target="attachUploadedImage">{{ __('Attach') }}</span>
+                                                    <span wire:loading wire:target="attachUploadedImage">{{ __('Attaching…') }}</span>
                                                 </button>
                                             </div>
                                         </div>
@@ -1961,8 +1966,9 @@
                                 <div class="flex items-center gap-3">
                                     <input type="file" wire:model="tempImage" accept="image/*" class="flex-1">
                                     <button wire:click="uploadWebsiteLogo"
-                                            class="btn-primary !h-10 !px-4 !text-xs">
-                                        {{ __('Upload') }}
+                                            class="btn-primary !h-10 !px-4 !text-xs" wire:loading.attr="disabled" wire:target="uploadWebsiteLogo">
+                                        <span wire:loading.remove wire:target="uploadWebsiteLogo">{{ __('Upload') }}</span>
+                                        <span wire:loading wire:target="uploadWebsiteLogo">{{ __('Uploading…') }}</span>
                                     </button>
                                 </div>
                             </div>
@@ -2003,7 +2009,7 @@
                                             {{ __('Hide from navigation') }}
                                         </label>
                                         <div class="flex gap-2">
-                                            <button wire:click="savePageSettings" class="btn-primary flex-1 !h-9 !px-3 !text-xs">{{ __('Save') }}</button>
+                                            <button wire:click="savePageSettings" class="btn-primary flex-1 !h-9 !px-3 !text-xs" wire:loading.attr="disabled" wire:target="savePageSettings"><span wire:loading.remove wire:target="savePageSettings">{{ __('Save') }}</span><span wire:loading wire:target="savePageSettings">{{ __('Saving…') }}</span></button>
                                             <button wire:click="$set('editingPageId', null)" class="btn-secondary flex-1 !h-9 !px-3 !text-xs">{{ __('Cancel') }}</button>
                                         </div>
                                     </div>
@@ -2288,8 +2294,9 @@
                         {{ __('Cancel') }}
                     </button>
                     <button wire:click="saveSeoSettings"
-                            class="btn-primary">
-                        {{ __('Save Meta Data') }}
+                            class="btn-primary" wire:loading.attr="disabled" wire:target="saveSeoSettings">
+                        <span wire:loading.remove wire:target="saveSeoSettings">{{ __('Save Meta Data') }}</span>
+                        <span wire:loading wire:target="saveSeoSettings">{{ __('Saving…') }}</span>
                     </button>
                 </div>
             </div>

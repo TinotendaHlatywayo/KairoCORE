@@ -10,10 +10,40 @@ use Modules\Admin\Models\SystemAuditLog;
 class AuditLogger
 {
     /**
+     * >0 while platform-owned work is running that must stay invisible to the
+     * tenant (e.g. provisioning the shadow account during "Enter school").
+     * Counted, so nested mutes are safe.
+     */
+    private static int $muted = 0;
+
+    /**
+     * Run $callback with tenant audit logging suppressed.
+     *
+     * @template TReturn
+     *
+     * @param  callable(): TReturn  $callback
+     * @return TReturn
+     */
+    public static function mute(callable $callback): mixed
+    {
+        self::$muted++;
+
+        try {
+            return $callback();
+        } finally {
+            self::$muted--;
+        }
+    }
+
+    /**
      * Log administrative transactions instantly.
      */
     public static function log(string $action, string $module, ?array $oldValues = null, ?array $newValues = null, string $outcome = 'success'): void
     {
+        if (self::$muted > 0) {
+            return;
+        }
+
         $schoolId = session('current_tenant')?->id;
         if (! $schoolId && Auth::check()) {
             /** @var User|null $user */

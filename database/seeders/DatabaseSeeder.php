@@ -31,17 +31,24 @@ class DatabaseSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        // 2. Recreate or update the Central Founder User account
-        DB::table('users')->updateOrInsert(
-            ['id' => 1],
-            [
-                'school_id' => null,
-                'name' => 'System Founder',
-                'email' => 'twaynehlatywayo09@gmail.com',
-                'password' => Hash::make('securepassword'),
-                'updated_at' => now(),
-            ]
-        );
+        // 2. Recreate or update the Central Founder User account.
+        //    The password is only written when the account does not exist yet
+        //    (or has none): a re-seed must never clobber a password that was
+        //    changed since the first seeding.
+        $founder = DB::table('users')->where('id', 1)->first(['id', 'password']);
+
+        $founderPayload = [
+            'school_id' => null,
+            'name' => 'System Founder',
+            'email' => 'twaynehlatywayo09@gmail.com',
+            'updated_at' => now(),
+        ];
+
+        if ($founder === null || blank($founder->password)) {
+            $founderPayload['password'] = Hash::make('securepassword');
+        }
+
+        DB::table('users')->updateOrInsert(['id' => 1], $founderPayload);
 
         // 3. Assign the global 'super_admin' role to User ID 1 (System Founder)
         DB::table('model_has_roles')->insertOrIgnore([

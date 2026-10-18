@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Modules\Admin\Services\AuditLogger;
 use Modules\Admin\Services\SystemRolePresets;
 use Modules\SaaS\Models\PlatformAuditLog;
 use RuntimeException;
@@ -42,6 +43,15 @@ class PlatformImpersonationService
     public const SESSION_KEY = 'platform_impersonation';
 
     private const TICKET_PREFIX = 'platform_impersonation_ticket:';
+
+    /**
+     * After a successful redemption the payload is mirrored for this many
+     * seconds so a duplicate delivery of the SAME ticket (browser prefetch,
+     * a retried navigation, a double-fired request) still succeeds instead of
+     * failing a hand-off that already worked. Only the identical, already
+     * consumed ticket qualifies — an unknown token still misses.
+     */
+    public const REPLAY_GRACE_SECONDS = 30;
 
     /**
      * Build the URL that starts the hand-off, pinned to the school's OWN
@@ -97,6 +107,17 @@ class PlatformImpersonationService
     {
         $payload = $ticket !== '' ? Cache::pull($this->ticketKey($ticket)) : null;
 
+        if (is_array($payload) && ! blank($payload['school_id'] ?? null) && $ticket !== '') {
+            // Mirror the consumed payload briefly (see REPLAY_GRACE_SECONDS).
+            Cache::put(
+                $this->ticketKey($ticket).':redeemed',
+                $payload,
+                now()->addSeconds(self::REPLAY_GRACE_SECONDS)
+            );
+        } elseif ($ticket !== '') {
+            $payload = Cache::get($this->ticketKey($ticket).':redeemed');
+        }
+
         if (! is_array($payload) || blank($payload['school_id'] ?? null)) {
             throw new RuntimeException(__('This entry link has expired. Please ask for a new one.'));
         }
@@ -113,7 +134,10 @@ class PlatformImpersonationService
             throw new RuntimeException(__('This entry link is no longer valid.'));
         }
 
-        $user = $this->systemAdministrator($tenant);
+        // Provisioning (first entry creates the shadow user + role rows) must
+        // never surface in the school's audit log: this is platform machinery,
+        // not tenant activity. PlatformAuditLog still records the hand-off.
+        $user = AuditLogger::mute(fn () => $this->systemAdministrator($tenant));
 
         return ['payload' => $payload, 'user' => $user, 'platform_admin' => $platformAdmin];
     }

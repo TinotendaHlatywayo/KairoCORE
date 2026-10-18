@@ -436,7 +436,20 @@ class SchoolResource extends Resource
 
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make()
-                    ->using(fn (School $record) => $record->forceDelete())
+                    ->using(function (School $record): void {
+                        try {
+                            $record->forceDelete();
+                        } catch (\Throwable $e) {
+                            report($e);
+
+                            Notification::make()
+                                ->danger()
+                                ->title(__('Could not delete this school'))
+                                ->body(__('Some records could not be removed. Details were written to the log.'))
+                                ->persistent()
+                                ->send();
+                        }
+                    })
                     ->requiresConfirmation()
                     ->modalDescription('This permanently deletes the school and ALL of its data (users, students, records, files). This cannot be undone.')
                     ->modalIcon('heroicon-o-exclamation-triangle'),

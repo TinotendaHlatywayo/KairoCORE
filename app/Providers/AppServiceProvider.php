@@ -12,8 +12,10 @@ use App\Navigation\ModuleNavigationService;
 use App\Policies\CmsPagePolicy;
 use App\Policies\CmsWebsitePolicy;
 use App\Policies\SchoolPolicy;
+use App\Services\ImageConverter;
 use App\Support\PdfFonts;
 use Barryvdh\DomPDF\PDF;
+use Filament\Forms\Components\BaseFileUpload;
 use Filament\Navigation\NavigationManager;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
@@ -25,6 +27,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\Livewire;
 use Modules\Admin\Models\SystemAuditLog;
 use Modules\Admin\Services\AuditLogger;
@@ -173,6 +176,29 @@ class AppServiceProvider extends ServiceProvider
             });
         }
 
+        // Convert freshly uploaded images to WebP server-side (PHP GD) before they are persisted.
+        // Wrapping Filament's storage callback (important => registered after setUp's default) means
+        // only files uploaded in this request are touched; stored paths already in state pass through
+        // unchanged, and any conversion failure keeps the original file.
+        BaseFileUpload::configureUsing(function (BaseFileUpload $component): void {
+            $property = new \ReflectionProperty(BaseFileUpload::class, 'saveUploadedFileUsing');
+            $original = $property->getValue($component);
+
+            if (! $original instanceof \Closure) {
+                return;
+            }
+
+            $component->saveUploadedFileUsing(function (BaseFileUpload $component, TemporaryUploadedFile $file) use ($original): ?string {
+                $stored = $component->evaluate($original, ['file' => $file]);
+
+                if (! is_string($stored) || $stored === '') {
+                    return $stored;
+                }
+
+                return ImageConverter::convert($stored, $component->getDiskName());
+            });
+        }, isImportant: true);
+
         // Restrict system access for suspended or terminated staff
         \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Authenticated::class, function ($event) {
             $user = $event->user;
@@ -244,6 +270,19 @@ class AppServiceProvider extends ServiceProvider
 
             // Safeguard: Exclude audit log model itself to prevent infinite recursive loop crashes
             if ($model instanceof SystemAuditLog) {
+                return;
+            }
+
+            // The platform's own hand-off trail (Enter/Leave school) lives
+            // outside the tenant's audit scope by design.
+            if ($model instanceof \Modules\SaaS\Models\PlatformAuditLog) {
+                return;
+            }
+
+            // Shadow accounts created for platform impersonation are machinery,
+            // never tenant activity: their row writes (create/refresh during
+            // entry) must not appear in the school's audit log or user lists.
+            if ($model instanceof \App\Models\User && $model->is_platform_managed) {
                 return;
             }
 

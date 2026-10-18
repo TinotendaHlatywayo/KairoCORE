@@ -21,7 +21,8 @@ use Tests\TestCase;
  *
  * The security properties under test, in order of importance:
  *
- *  1. The ticket is single use and short lived, so a leaked URL is worthless.
+ *  1. The ticket is short lived - consumed on first use with only a brief
+ *     replay grace - so a leaked URL is worthless.
  *  2. The ticket is bound to ONE school and cannot be replayed on another
  *     school's subdomain.
  *  3. The actor recorded in the ticket must still be a platform administrator,
@@ -156,17 +157,22 @@ class PlatformAdminEntersSchoolTest extends TestCase
     // 2. Ticket integrity
     // ─────────────────────────────────────────────────────────────────────
 
-    public function test_a_ticket_cannot_be_replayed(): void
+    public function test_a_ticket_replays_within_the_grace_window_and_is_dead_after_it(): void
     {
         $ticket = $this->ticketFor($this->schoolA);
 
-        $this->get("https://enter-test-a.lvh.me/platform-entry?ticket={$ticket}")->assertRedirect();
+        $this->get("https://enter-test-a.lvh.me/platform-entry?ticket={$ticket}")
+            ->assertRedirect('https://enter-test-a.lvh.me/workspace');
 
-        // Same URL a second time must be worthless.
-        $replay = $this->get("https://enter-test-a.lvh.me/platform-entry?ticket={$ticket}");
+        // A short replay window keeps duplicate tabs / double clicks working.
+        $this->get("https://enter-test-a.lvh.me/platform-entry?ticket={$ticket}")
+            ->assertRedirect('https://enter-test-a.lvh.me/workspace');
 
-        $replay->assertRedirect('https://enter-test-a.lvh.me/workspace/login');
-        $replay->assertSessionHasErrors('platform');
+        // Once the grace passes, the consumed ticket stays consumed.
+        $this->travel(PlatformImpersonationService::REPLAY_GRACE_SECONDS + 1)->seconds();
+
+        $this->get("https://enter-test-a.lvh.me/platform-entry?ticket={$ticket}")
+            ->assertRedirect($this->entryFailedUrl('This entry link has expired. Please ask for a new one.'));
     }
 
     public function test_an_expired_ticket_is_rejected(): void
@@ -176,8 +182,7 @@ class PlatformAdminEntersSchoolTest extends TestCase
         $this->travel(61)->seconds();
 
         $this->get("https://enter-test-a.lvh.me/platform-entry?ticket={$ticket}")
-            ->assertRedirect('https://enter-test-a.lvh.me/workspace/login')
-            ->assertSessionHasErrors('platform');
+            ->assertRedirect($this->entryFailedUrl('This entry link has expired. Please ask for a new one.'));
 
         $this->assertGuest();
     }
@@ -189,8 +194,7 @@ class PlatformAdminEntersSchoolTest extends TestCase
         // Presented on school B's host, the ticket must be refused even though
         // it is perfectly valid for school A.
         $this->get("https://enter-test-b.lvh.me/platform-entry?ticket={$ticket}")
-            ->assertRedirect('https://enter-test-b.lvh.me/workspace/login')
-            ->assertSessionHasErrors('platform');
+            ->assertRedirect($this->entryFailedUrl('This entry link belongs to a different school.'));
 
         $this->assertGuest();
     }
@@ -218,8 +222,7 @@ class PlatformAdminEntersSchoolTest extends TestCase
         );
 
         $this->get("https://enter-test-a.lvh.me/platform-entry?ticket={$token}")
-            ->assertRedirect('https://enter-test-a.lvh.me/workspace/login')
-            ->assertSessionHasErrors('platform');
+            ->assertRedirect($this->entryFailedUrl('This entry link is no longer valid.'));
 
         $this->assertTrue(Auth::guest(), 'A tenant user must never be able to mint an entry.');
     }
@@ -227,8 +230,7 @@ class PlatformAdminEntersSchoolTest extends TestCase
     public function test_an_unknown_ticket_is_rejected(): void
     {
         $this->get('https://enter-test-a.lvh.me/platform-entry?ticket=total-nonsense')
-            ->assertRedirect('https://enter-test-a.lvh.me/workspace/login')
-            ->assertSessionHasErrors('platform');
+            ->assertRedirect($this->entryFailedUrl('This entry link has expired. Please ask for a new one.'));
     }
 
     // ─────────────────────────────────────────────────────────────────────
@@ -379,6 +381,16 @@ class PlatformAdminEntersSchoolTest extends TestCase
     private function ticketFor(School $school): string
     {
         return app(PlatformImpersonationService::class)->issueTicket($school, $this->platformAdmin);
+    }
+
+    /**
+     * Where a failed hand-off lands: back on the platform's schools page with
+     * the reason in the query string (the two hosts never share session
+     * cookies, so a flashed error could never render there).
+     */
+    private function entryFailedUrl(string $reason): string
+    {
+        return 'https://lvh.me/platform/schools?notice=entry_failed&reason='.rawurlencode($reason);
     }
 
     private function enterSchool(School $school)

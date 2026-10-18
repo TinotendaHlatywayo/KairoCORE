@@ -9,12 +9,9 @@ use Illuminate\Support\Facades\Storage;
 use Modules\SaaS\Models\PlatformSetting;
 
 /**
- * Converts a website upload (photo, GIF or short video) to WebP on the
- * public disk — GIFs and videos become animated WebPs at the configured
- * frame rate — then points the owning PlatformSetting at the result and
- * deletes the source file. Dispatched from Platform Settings → Website
- * Content and executed by the existing queue:work cron, so the admin
- * never waits on ffmpeg.
+   Converts website uploads (photos, GIFs or videos) to optimized web media.
+   Videos produce a Desktop MP4, Mobile MP4, and Poster WebP.
+   Stills convert to WebP. Preserves legacy animated WebP / still images.
  */
 class ConvertWebsiteMediaToWebp implements ShouldQueue
 {
@@ -24,18 +21,15 @@ class ConvertWebsiteMediaToWebp implements ShouldQueue
 
     public int $backoff = 15;
 
-    /** Extensions rendered as an animated WebP (videos + GIF). */
     public const ANIMATED_EXTENSIONS = [
         'mp4', 'mov', 'm4v', 'webm', 'avi', 'mpg', 'mpeg', 'mkv',
         '3gp', 'mts', 'wmv', 'flv', 'ogv', 'gif',
     ];
 
-    /** Extensions converted to a single (static) WebP image. */
     public const STILL_EXTENSIONS = [
         'jpg', 'jpeg', 'png', 'bmp', 'tif', 'tiff', 'avif', 'jfif',
     ];
 
-    /** Hard cap applied by ffmpeg even when validation could not run. */
     public const MAX_SOURCE_SECONDS = 8;
 
     public function __construct(
@@ -74,11 +68,6 @@ class ConvertWebsiteMediaToWebp implements ShouldQueue
         return $ext !== '' ? $ext : null;
     }
 
-    /**
-     * Is $path a real WebP file (RIFF/WEBP header)? When $animated, it must
-     * also carry the ANIM chunk so a frame-less or still result can never be
-     * published as a video clip.
-     */
     public static function outputLooksLikeWebp(string $path, bool $animated): bool
     {
         if (! is_file($path) || filesize($path) < 64) {
@@ -94,7 +83,6 @@ class ConvertWebsiteMediaToWebp implements ShouldQueue
             return true;
         }
 
-        // Scan the RIFF chunks for the ANIM marker (animated WebP only).
         $size = filesize($path);
         $handle = @fopen($path, 'rb');
         if ($handle === false) {
@@ -119,7 +107,6 @@ class ConvertWebsiteMediaToWebp implements ShouldQueue
                     break;
                 }
 
-                // Chunks are padded to even sizes.
                 $skip = $length + ($length % 2);
                 if (fseek($handle, $skip, SEEK_CUR) !== 0) {
                     break;
@@ -132,7 +119,26 @@ class ConvertWebsiteMediaToWebp implements ShouldQueue
         }
     }
 
-    /** Container duration in seconds via ffprobe, or null when unavailable. */
+    public static function outputLooksLikeValidVideo(string $path): bool
+    {
+        if (! is_file($path) || filesize($path) < 1024) {
+            return false;
+        }
+        $binary = trim((string) @shell_exec('command -v ffprobe 2>/dev/null'));
+        if ($binary === '') {
+            return true;
+        }
+
+        $output = @shell_exec(
+            escapeshellarg($binary)
+            .' -v error -select_streams v:0 -show_entries stream=duration,nb_frames -of default=nw=1:nk=1 '
+            .escapeshellarg($path)
+            .' 2>/dev/null'
+        );
+
+        return is_string($output) && trim($output) !== '';
+    }
+
     protected static function probeDurationSeconds(string $path): ?float
     {
         $binary = trim((string) @shell_exec('command -v ffprobe 2>/dev/null'));
@@ -161,7 +167,7 @@ class ConvertWebsiteMediaToWebp implements ShouldQueue
         $disk = Storage::disk('public');
 
         if (! $disk->exists($this->path)) {
-            Log::warning('WebP conversion skipped: source file missing.', [
+            Log::warning('Media conversion skipped: source file missing.', [
                 'group' => $this->group,
                 'key' => $this->key,
                 'path' => $this->path,
@@ -171,104 +177,149 @@ class ConvertWebsiteMediaToWebp implements ShouldQueue
             return;
         }
 
-        if (self::pathExtension($this->path) === 'webp') {
+        $ext = self::pathExtension($this->path);
+        if ($ext === 'webp') {
             return;
         }
 
         $source = $disk->path($this->path);
-        $webpRelative = preg_replace('/\.[^.]+$/', '', $this->path).'.webp';
-        $target = $disk->path($webpRelative);
+        $baseRel = preg_replace('/\.[^.]+$/', '', $this->path);
+        $isStill = self::isStillImagePath($this->path);
 
-        $fps = in_array($this->fps, [10, 20, 30], true) ? $this->fps : 30;
-
-        // The clip is always MAX_SOURCE_SECONDS long, starting at trimStart
-        // into the source. -ss before -i seeks in the (fast) input stream.
-        //
-        // A trim start at or past the end of the video makes ffmpeg emit zero
-        // frames while still exiting 0 and leaving a blank (frame-less) file —
-        // which renders as an empty image slot on the site. Clamp the seek into
-        // the source's real duration so a clip is always produced.
-        $animated = self::isAnimatedMediaPath($this->path);
         $seek = '';
-
-        if ($this->trimStart > 0 && $animated) {
+        if ($this->trimStart > 0) {
             $duration = self::probeDurationSeconds($source);
             $maxStart = $duration !== null ? max(0.0, $duration - 0.5) : null;
-
-            if ($maxStart === null) {
-                // Cannot measure the source here; trust the validated upload
-                // and let the output check below catch an empty result.
+            if ($maxStart === null || $this->trimStart <= $maxStart) {
                 $seek = '-ss '.escapeshellarg(sprintf('%.3F', $this->trimStart)).' ';
-            } elseif ($this->trimStart <= $maxStart) {
-                $seek = '-ss '.escapeshellarg(sprintf('%.3F', $this->trimStart)).' ';
-            } else {
-                Log::warning('WebP conversion: trim start is past the end of the video; converting from the start instead.', [
-                    'group' => $this->group,
-                    'key' => $this->key,
-                    'path' => $this->path,
-                    'trim_start' => $this->trimStart,
-                    'duration' => $duration,
-                ]);
             }
         }
 
-        $command = $animated
-            ? sprintf(
-                'ffmpeg -y -v error %s-t %d -i %s -vf %s -c:v libwebp -q:v 75 -compression_level 6 -preset default -loop 0 -pix_fmt yuva420p -an %s 2>&1',
+        if ($isStill) {
+            $targetRel = $baseRel.'.webp';
+            $target = $disk->path($targetRel);
+            $command = sprintf(
+                'nice -n 19 ffmpeg -y -v error -i %s -frames:v 1 -c:v libwebp -q:v 82 -compression_level 6 -pix_fmt yuva420p %s 2>&1',
+                escapeshellarg($source),
+                escapeshellarg($target)
+            );
+
+            $output = [];
+            $exitCode = 1;
+            try {
+                exec($command, $output, $exitCode);
+            } catch (\Throwable $e) {}
+
+            if ($exitCode !== 0 || ! self::outputLooksLikeWebp($target, false)) {
+                if (is_file($target)) { @unlink($target); }
+                return;
+            }
+
+            $this->persistResult($targetRel);
+            $disk->delete($this->path);
+            return;
+        }
+
+        // If GIF, treat as animated WebP for backward compatibility
+        if ($ext === 'gif') {
+            $targetRel = $baseRel.'.webp';
+            $target = $disk->path($targetRel);
+            $fps = in_array($this->fps, [10, 20, 30], true) ? $this->fps : 30;
+            $command = sprintf(
+                'nice -n 19 ffmpeg -y -v error %s-t %d -i %s -vf %s -c:v libwebp -q:v 75 -compression_level 6 -preset default -loop 0 -pix_fmt yuva420p -an %s 2>&1',
                 $seek,
                 self::MAX_SOURCE_SECONDS,
                 escapeshellarg($source),
                 escapeshellarg("fps={$fps},scale=min(1920\\,iw):-2"),
                 escapeshellarg($target)
-            )
-            : sprintf(
-                'ffmpeg -y -v error -i %s -frames:v 1 -c:v libwebp -q:v 82 -compression_level 6 -pix_fmt yuva420p %s 2>&1',
-                escapeshellarg($source),
-                escapeshellarg($target)
             );
+            $output = [];
+            $exitCode = 1;
+            try {
+                exec($command, $output, $exitCode);
+            } catch (\Throwable $e) {}
 
-        $output = [];
-        $exitCode = 1;
-
-        try {
-            exec($command, $output, $exitCode);
-        } catch (\Throwable $e) {
-            $output[] = $e->getMessage();
-        }
-
-        // ffmpeg exits 0 even when it encoded nothing (e.g. a seek past the
-        // end of the source), leaving a blank, unrenderable file. Require a
-        // real WebP — RIFF/WEBP header, and the ANIM chunk for videos/GIF —
-        // before pointing the setting at the result and deleting the source.
-        if ($exitCode !== 0 || ! self::outputLooksLikeWebp($target, $animated)) {
-            Log::error('WebP conversion failed; keeping the original upload.', [
-                'group' => $this->group,
-                'key' => $this->key,
-                'path' => $this->path,
-                'exit_code' => $exitCode,
-                'animated' => $animated,
-                'output' => implode("\n", $output),
-            ]);
-
-            // Remove the blank/partial artifact so it cannot be served.
-            if (is_file($target)) {
-                @unlink($target);
+            if ($exitCode !== 0 || ! self::outputLooksLikeWebp($target, true)) {
+                if (is_file($target)) { @unlink($target); }
+                return;
             }
 
-            // Retry under a real queue worker (e.g. ffmpeg not yet available,
-            // transient memory failure). Direct handle() and sync-queue runs
-            // have no worker to release to, so they stop here.
-            if ($this->job
-                && ! $this->job instanceof \Illuminate\Queue\Jobs\SyncJob
-                && $this->job->attempts() < $this->tries) {
-                $this->release(60);
-            }
-
+            $this->persistResult($targetRel);
+            $disk->delete($this->path);
             return;
         }
 
+        // Video upload pipeline: Desktop MP4, Mobile MP4, Poster WebP
+        $desktopRel = $baseRel.'-720.mp4';
+        $mobileRel = $baseRel.'-480.mp4';
+        $posterRel = $baseRel.'-poster.webp';
+
+        $desktopPath = $disk->path($desktopRel);
+        $mobilePath = $disk->path($mobileRel);
+        $posterPath = $disk->path($posterRel);
+
+        $fps = in_array($this->fps, [10, 20, 30], true) ? $this->fps : 30;
+
+        $cmdDesktop = sprintf(
+            'nice -n 19 ffmpeg -y -v error %s-t %d -i %s -an -vf "scale=\'min(1280,iw)\':-2,fps=%d" -c:v libx264 -profile:v high -pix_fmt yuv420p -crf 28 -preset slow -movflags +faststart %s 2>&1',
+            $seek,
+            self::MAX_SOURCE_SECONDS,
+            escapeshellarg($source),
+            $fps,
+            escapeshellarg($desktopPath)
+        );
+
+        $cmdMobile = sprintf(
+            'nice -n 19 ffmpeg -y -v error %s-t %d -i %s -an -vf "scale=\'min(720,iw)\':-2,fps=24" -c:v libx264 -profile:v high -pix_fmt yuv420p -crf 32 -preset slow -movflags +faststart %s 2>&1',
+            $seek,
+            self::MAX_SOURCE_SECONDS,
+            escapeshellarg($source),
+            escapeshellarg($mobilePath)
+        );
+
+        $cmdPoster = sprintf(
+            'nice -n 19 ffmpeg -y -v error %s-i %s -frames:v 1 -vf "scale=\'min(1280,iw)\':-2" -c:v libwebp -q:v 80 %s 2>&1',
+            $seek,
+            escapeshellarg($source),
+            escapeshellarg($posterPath)
+        );
+
+        $exitCode = 0;
+        foreach ([$cmdDesktop, $cmdMobile, $cmdPoster] as $cmd) {
+            $out = [];
+            $code = 0;
+            exec($cmd, $out, $code);
+            if ($code !== 0) {
+                $exitCode = $code;
+            }
+        }
+
+        if ($exitCode !== 0 || ! self::outputLooksLikeValidVideo($desktopPath) || ! self::outputLooksLikeValidVideo($mobilePath) || ! is_file($posterPath)) {
+            Log::error('Media conversion failed; keeping original.', ['group' => $this->group, 'key' => $this->key, 'path' => $this->path]);
+            foreach ([$desktopPath, $mobilePath, $posterPath] as $p) {
+                if (is_file($p)) { @unlink($p); }
+            }
+            if ($this->job && ! $this->job instanceof \Illuminate\Queue\Jobs\SyncJob && $this->job->attempts() < $this->tries) {
+                $this->release(60);
+            }
+            return;
+        }
+
+        $package = json_encode([
+            'type' => 'video',
+            'desktop' => $desktopRel,
+            'mobile' => $mobileRel,
+            'poster' => $posterRel,
+        ]);
+
+        $this->persistResult($package);
+        $disk->delete($this->path);
+    }
+
+    protected function persistResult(string $value): void
+    {
         if ($this->itemKey !== null && $this->itemKey !== '') {
-            $this->writeListItem($webpRelative);
+            $this->writeListItem($value);
         } else {
             PlatformSetting::updateOrCreate(
                 [
@@ -276,12 +327,10 @@ class ConvertWebsiteMediaToWebp implements ShouldQueue
                     'key' => $this->key,
                 ],
                 [
-                    'value' => $webpRelative,
+                    'value' => $value,
                 ]
             );
 
-            // Remove the pending-video marker only when it still points at
-            // the file this job consumed (a newer upload may have replaced it).
             if ($this->sourceKey !== null && $this->sourceKey !== '') {
                 PlatformSetting::where('group', $this->group)
                     ->where('key', $this->sourceKey)
@@ -289,19 +338,16 @@ class ConvertWebsiteMediaToWebp implements ShouldQueue
                     ->delete();
             }
         }
-
-        $disk->delete($this->path);
     }
 
-    /** Point a features-card image at the converted WebP inside its JSON list. */
-    protected function writeListItem(string $webpRelative): void
+    protected function writeListItem(string $value): void
     {
         $setting = PlatformSetting::where('group', $this->group)
             ->where('key', $this->key)
             ->first();
 
         if (! $setting) {
-            Log::warning('WebP conversion: settings row disappeared.', [
+            Log::warning('Media conversion: settings row disappeared.', [
                 'group' => $this->group,
                 'key' => $this->key,
             ]);
@@ -314,10 +360,6 @@ class ConvertWebsiteMediaToWebp implements ShouldQueue
             $list = [];
         }
 
-        // Match by the media this job consumed: pending videos live under
-        // "image_source", still photos under "image". (Hidden form fields
-        // never reach the persisted list, so structural item keys are not
-        // available here — the path itself identifies the card.)
         $target = null;
         foreach ($list as $i => $item) {
             if (! is_array($item)) {
@@ -332,7 +374,7 @@ class ConvertWebsiteMediaToWebp implements ShouldQueue
         }
 
         if ($target === null) {
-            Log::warning('WebP conversion: feature item not found in list.', [
+            Log::warning('Media conversion: feature item not found in list.', [
                 'group' => $this->group,
                 'key' => $this->key,
                 'path' => $this->path,
@@ -341,7 +383,7 @@ class ConvertWebsiteMediaToWebp implements ShouldQueue
             return;
         }
 
-        $list[$target][$this->field] = $webpRelative;
+        $list[$target][$this->field] = $value;
         unset($list[$target]['image_source']);
         $setting->update(['value' => json_encode($list)]);
     }

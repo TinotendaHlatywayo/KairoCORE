@@ -68,17 +68,27 @@ class School extends Model
             // Purge every row referencing this school across the whole schema,
             // so a permanently deleted school leaves no orphaned records
             // (users, students, finances, CMS content, etc.). [2.1]
-            $tables = DB::table('information_schema.columns')
-                ->where('table_schema', DB::connection()->getDatabaseName())
-                ->where('column_name', 'school_id')
-                ->pluck('table_name');
+            // FK checks are off for the purge: child rows can reference each
+            // other in chains that do not carry school_id, and one such chain
+            // used to abort the whole delete with a 500. Restored in `finally`
+            // so a failed purge cannot leave the connection unprotected.
+            DB::statement('SET FOREIGN_KEY_CHECKS=0');
 
-            foreach ($tables as $table) {
-                try {
-                    DB::table($table)->where('school_id', $school->id)->delete();
-                } catch (\Throwable $e) {
-                    report($e);
+            try {
+                $tables = DB::table('information_schema.columns')
+                    ->where('table_schema', DB::connection()->getDatabaseName())
+                    ->where('column_name', 'school_id')
+                    ->pluck('table_name');
+
+                foreach ($tables as $table) {
+                    try {
+                        DB::table($table)->where('school_id', $school->id)->delete();
+                    } catch (\Throwable $e) {
+                        report($e);
+                    }
                 }
+            } finally {
+                DB::statement('SET FOREIGN_KEY_CHECKS=1');
             }
         });
     }

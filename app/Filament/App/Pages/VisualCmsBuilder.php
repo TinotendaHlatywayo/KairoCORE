@@ -3,9 +3,11 @@
 namespace App\Filament\App\Pages;
 
 use App\Filament\App\Concerns\ModulePermissionAccess;
+use App\Services\ImageConverter;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
@@ -1219,18 +1221,20 @@ class VisualCmsBuilder extends Page
 
         $schoolId = app('current_tenant')->id ?? $this->page->school_id;
         $path = $this->tempImage->store("cms-media/{$schoolId}/images", 'public');
+        $path = ImageConverter::convert($path);
         $url = asset('storage/'.$path);
 
-        $dimensions = @getimagesize($this->tempImage->getRealPath()) ?: [null, null];
+        $storedImage = (string) Storage::disk('public')->get($path);
+        $dimensions = @getimagesizefromstring($storedImage) ?: [null, null];
 
         CmsMedia::create([
             'school_id' => $schoolId,
             'uuid' => (string) Str::uuid(),
             'filename' => basename($path),
             'original_filename' => $this->tempImage->getClientOriginalName(),
-            'mime_type' => $this->tempImage->getMimeType(),
-            'extension' => $this->tempImage->getClientOriginalExtension(),
-            'file_size' => $this->tempImage->getSize(),
+            'mime_type' => $dimensions['mime'] ?? $this->tempImage->getMimeType(),
+            'extension' => strtolower(pathinfo($path, PATHINFO_EXTENSION)) ?: $this->tempImage->getClientOriginalExtension(),
+            'file_size' => strlen($storedImage),
             'disk' => 'public',
             'path' => $path,
             'url' => $url,
@@ -1258,12 +1262,14 @@ class VisualCmsBuilder extends Page
         $this->validate(['tempImage' => 'required|image|max:4096']);
         $schoolId = $this->page->school_id;
         $path = $this->tempImage->store("cms-media/{$schoolId}/branding", 'public');
-        $dimensions = @getimagesize($this->tempImage->getRealPath()) ?: [null, null];
+        $path = ImageConverter::convert($path);
+        $storedImage = (string) Storage::disk('public')->get($path);
+        $dimensions = @getimagesizefromstring($storedImage) ?: [null, null];
 
         CmsMedia::create([
             'school_id' => $schoolId, 'uuid' => (string) Str::uuid(), 'filename' => basename($path),
-            'original_filename' => $this->tempImage->getClientOriginalName(), 'mime_type' => $this->tempImage->getMimeType(),
-            'extension' => $this->tempImage->getClientOriginalExtension(), 'file_size' => $this->tempImage->getSize(),
+            'original_filename' => $this->tempImage->getClientOriginalName(), 'mime_type' => $dimensions['mime'] ?? $this->tempImage->getMimeType(),
+            'extension' => strtolower(pathinfo($path, PATHINFO_EXTENSION)) ?: $this->tempImage->getClientOriginalExtension(), 'file_size' => strlen($storedImage),
             'disk' => 'public', 'path' => $path, 'url' => asset('storage/'.$path),
             'width' => $dimensions[0], 'height' => $dimensions[1],
             'alt_text' => $this->mediaAltText ?: $this->website->school->name.' logo', 'folder' => 'branding',

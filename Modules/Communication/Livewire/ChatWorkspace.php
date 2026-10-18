@@ -2,6 +2,7 @@
 
 namespace Modules\Communication\Livewire;
 
+use App\Services\ImageConverter;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
@@ -125,6 +126,7 @@ class ChatWorkspace extends Component
         $attachmentPath = null;
         if ($this->attachment) {
             $attachmentPath = $this->attachment->store('communication/chats', 'public');
+            $attachmentPath = ImageConverter::convert($attachmentPath);
         }
 
         $message = ChatMessage::create([

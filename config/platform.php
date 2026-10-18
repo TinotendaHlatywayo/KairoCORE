@@ -14,7 +14,10 @@ return [
     |
     */
 
-    'ticket_ttl_seconds' => (int) env('PLATFORM_TICKET_TTL_SECONDS', 60),
+    // Long enough to absorb slow hops (Cloudflare, a cold subdomain, a second
+    // tab) without the link dying mid-hand-off; still short-lived enough that
+    // a leaked URL is useless shortly after.
+    'ticket_ttl_seconds' => (int) env('PLATFORM_TICKET_TTL_SECONDS', 300),
 
     /*
     |---------------------------------------------------------------------------
