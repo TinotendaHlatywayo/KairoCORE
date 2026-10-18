@@ -25,7 +25,9 @@ x-app: &app
     # Force container-correct values regardless of what is in .env
     APP_ENV: production
     APP_DEBUG: "false"
-    LOG_CHANNEL: stderr
+    # daily → storage/logs/laravel-*.log inside the kairo_storage volume, so
+    # exception details survive container recreates (stderr died with them).
+    LOG_CHANNEL: daily
     DB_CONNECTION: mysql
     DB_HOST: kairocore-db
     DB_PORT: "3306"
