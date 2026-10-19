@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Modules\SaaS\Models\PlatformExpense;
 use Modules\SaaS\Models\PlatformExpenseReminder;
+use Modules\SaaS\Models\PlatformSetting;
 use Modules\SaaS\Services\PlatformExpenseReminderService;
 use Tests\TestCase;
 
@@ -99,6 +100,10 @@ class PlatformExpenseReminderTest extends TestCase
 
         try {
             Mail::fake();
+
+            // The command honours the Automation toggle — force it on for this
+            // test regardless of whatever the local settings table contains.
+            PlatformSetting::set('automation', 'send_expense_reminders', '1');
 
             $today = now()->startOfDay();
             $expense = $this->recurringExpense($today);
