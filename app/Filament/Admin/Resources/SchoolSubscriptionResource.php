@@ -81,6 +81,31 @@ class SchoolSubscriptionResource extends Resource
                             ])
                             ->default('monthly')
                             ->required(),
+                        Forms\Components\Section::make(__('Custom pricing (optional)'))
+                            ->description(__('Override the plan price for this school. Leave a field empty to keep the plan\'s default for that period. The amount billed is picked from the period above; the next payment date is maintained automatically.'))
+                            ->schema([
+                                Forms\Components\TextInput::make('custom_price_monthly')
+                                    ->label(__('Monthly price (USD)'))
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->prefix('$')
+                                    ->step(0.01)
+                                    ->helperText(fn (?SaaSSubscription $record) => __('Plan default: :price', [
+                                        'price' => '$'.number_format((float) ($record?->plan?->price_monthly ?? 0), 2),
+                                    ])),
+                                Forms\Components\TextInput::make('custom_price_quarterly')
+                                    ->label(__('Quarterly price (USD)'))
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->prefix('$')
+                                    ->step(0.01),
+                                Forms\Components\TextInput::make('custom_price_yearly')
+                                    ->label(__('Yearly price (USD)'))
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->prefix('$')
+                                    ->step(0.01),
+                            ])->columns(3),
                         Forms\Components\Select::make('status')
                             ->options([
                                 'trialing' => __('Trialing'),

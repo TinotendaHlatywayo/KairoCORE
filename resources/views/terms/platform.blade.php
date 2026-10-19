@@ -2,6 +2,7 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
+    <link rel="icon" href="{{ platform_favicon_url() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="{{ __('Platform Terms of Service and Terms of Use for :company.', ['company' => platform_name()]) }}">
     <link rel="canonical" href="{{ url()->current() }}">

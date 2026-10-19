@@ -21,10 +21,10 @@ use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\HtmlString;
+use Illuminate\Support\Str;
 use Livewire\Attributes\On;
 use Modules\SaaS\Models\PlatformSetting;
 
@@ -147,6 +147,7 @@ class PlatformSettingsPage extends Page implements HasForms
         foreach (array_keys($state) as $k) {
             if (is_string($k) && str_ends_with($k, '_upload')) {
                 unset($state[$k]);
+
                 continue;
             }
             // FileUpload state must be an array; wrap legacy string paths.
@@ -224,6 +225,10 @@ class PlatformSettingsPage extends Page implements HasForms
                                 Toggle::make('automation_auto_expire_trials')
                                     ->label(__('Enable Automatic Trial Expiration Checks'))
                                     ->helperText(__('Suspends schools whose free trial windows have expired.'))
+                                    ->default(true),
+                                Toggle::make('automation_auto_generate_invoices')
+                                    ->label(__('Auto-generate SaaS subscription invoices'))
+                                    ->helperText(__('Raises the upcoming invoice for every billable subscription daily at 05:00. Skips schools that already have an open invoice.'))
                                     ->default(true),
                                 Toggle::make('automation_auto_generate_recurring_expenses')
                                     ->label(__('Auto-generate recurring KairoCORE expenses'))
@@ -364,42 +369,42 @@ class PlatformSettingsPage extends Page implements HasForms
                                                 TextInput::make('marketing_announcement')
                                                     ->label(__('Announcement bar (optional)'))
                                                     ->maxLength(160),
-                                                 FileUpload::make('marketing_nav_logo')
-                                                     ->label(__('Navbar logo (light background)'))
-                                                     ->disk('public')
-                                                     ->directory('platform/website')
-                                                     ->acceptedFileTypes(self::WEBSITE_MEDIA_MIME_TYPES)
-                                                     ->maxSize(51200)
-                                                     ->rules(fn (Get $get) => [
-                                                         new MaxVideoDuration(8, (float) ($get('marketing_nav_logo_trim_start') ?? 0)),
-                                                     ])
-                                                     ->helperText(__('Image, GIF or a video — converted to WebP (animated for GIF/video) in the background. An 8-second clip is taken from the start point set below.'))
-                                                     ->columnSpanFull(),
-                                                 TextInput::make('marketing_nav_logo_trim_start')
-                                                     ->label(__('Navbar video trim start (seconds)'))
-                                                     ->numeric()
-                                                     ->minValue(0)
-                                                     ->default(0)
-                                                     ->helperText(__('Videos only: the animated clip is 8 seconds long, starting at this point. Ignored for photos.'))
-                                                     ->columnSpanFull(),
-                                                 FileUpload::make('marketing_footer_logo')
-                                                     ->label(__('Footer logo (dark background)'))
-                                                     ->disk('public')
-                                                     ->directory('platform/website')
-                                                     ->acceptedFileTypes(self::WEBSITE_MEDIA_MIME_TYPES)
-                                                     ->maxSize(51200)
-                                                     ->rules(fn (Get $get) => [
-                                                         new MaxVideoDuration(8, (float) ($get('marketing_footer_logo_trim_start') ?? 0)),
-                                                     ])
-                                                     ->helperText(__('Image, GIF or a video — converted to WebP (animated for GIF/video) in the background. An 8-second clip is taken from the start point set below.'))
-                                                     ->columnSpanFull(),
-                                                 TextInput::make('marketing_footer_logo_trim_start')
-                                                     ->label(__('Footer video trim start (seconds)'))
-                                                     ->numeric()
-                                                     ->minValue(0)
-                                                     ->default(0)
-                                                     ->helperText(__('Videos only: the animated clip is 8 seconds long, starting at this point. Ignored for photos.'))
-                                                     ->columnSpanFull(),
+                                                FileUpload::make('marketing_nav_logo')
+                                                    ->label(__('Navbar logo (light background)'))
+                                                    ->disk('public')
+                                                    ->directory('platform/website')
+                                                    ->acceptedFileTypes(self::WEBSITE_MEDIA_MIME_TYPES)
+                                                    ->maxSize(51200)
+                                                    ->rules(fn (Get $get) => [
+                                                        new MaxVideoDuration(8, (float) ($get('marketing_nav_logo_trim_start') ?? 0)),
+                                                    ])
+                                                    ->helperText(__('Image, GIF or a video — converted to WebP (animated for GIF/video) in the background. An 8-second clip is taken from the start point set below.'))
+                                                    ->columnSpanFull(),
+                                                TextInput::make('marketing_nav_logo_trim_start')
+                                                    ->label(__('Navbar video trim start (seconds)'))
+                                                    ->numeric()
+                                                    ->minValue(0)
+                                                    ->default(0)
+                                                    ->helperText(__('Videos only: the animated clip is 8 seconds long, starting at this point. Ignored for photos.'))
+                                                    ->columnSpanFull(),
+                                                FileUpload::make('marketing_footer_logo')
+                                                    ->label(__('Footer logo (dark background)'))
+                                                    ->disk('public')
+                                                    ->directory('platform/website')
+                                                    ->acceptedFileTypes(self::WEBSITE_MEDIA_MIME_TYPES)
+                                                    ->maxSize(51200)
+                                                    ->rules(fn (Get $get) => [
+                                                        new MaxVideoDuration(8, (float) ($get('marketing_footer_logo_trim_start') ?? 0)),
+                                                    ])
+                                                    ->helperText(__('Image, GIF or a video — converted to WebP (animated for GIF/video) in the background. An 8-second clip is taken from the start point set below.'))
+                                                    ->columnSpanFull(),
+                                                TextInput::make('marketing_footer_logo_trim_start')
+                                                    ->label(__('Footer video trim start (seconds)'))
+                                                    ->numeric()
+                                                    ->minValue(0)
+                                                    ->default(0)
+                                                    ->helperText(__('Videos only: the animated clip is 8 seconds long, starting at this point. Ignored for photos.'))
+                                                    ->columnSpanFull(),
 
                                                 $this->mText('hero_badge', __('Hero badge'), null, true),
                                                 $this->mText('hero_title', __('Hero title'), null, true),
@@ -508,27 +513,27 @@ class PlatformSettingsPage extends Page implements HasForms
                                                         TextInput::make('key')->label(__('Key'))->hidden(),
                                                         Textarea::make('desc')->label(__('Card summary'))->rows(2)->columnSpanFull(),
                                                         Textarea::make('detail')->label(__('Modal detail text'))->rows(3)->columnSpanFull(),
-                                                         TextInput::make('sub1')->label(__('Sub-feature 1')),
-                                                         TextInput::make('sub2')->label(__('Sub-feature 2')),
-                                                         TextInput::make('sub3')->label(__('Sub-feature 3')),
-                                                         TextInput::make('trim_start')
-                                                             ->label(__('Video trim start (seconds)'))
-                                                             ->numeric()
-                                                             ->minValue(0)
-                                                             ->default(0)
-                                                             ->helperText(__('Videos only: the animated clip is 8 seconds long, starting at this point. Ignored for photos.'))
-                                                             ->columnSpanFull(),
-                                                         FileUpload::make('image')
-                                                             ->label(__('Feature image'))
-                                                             ->disk('public')
-                                                             ->directory('platform/website')
-                                                             ->acceptedFileTypes(self::WEBSITE_MEDIA_MIME_TYPES)
-                                                             ->maxSize(51200)
-                                                             ->rules(fn (Get $get) => [
-                                                                 new MaxVideoDuration(8, (float) ($get('trim_start') ?? 0)),
-                                                             ])
-                                                             ->helperText(__('Image, GIF or a video — converted to WebP (animated for GIF/video) in the background. An 8-second clip is taken from the trim start set above.'))
-                                                             ->columnSpanFull(),
+                                                        TextInput::make('sub1')->label(__('Sub-feature 1')),
+                                                        TextInput::make('sub2')->label(__('Sub-feature 2')),
+                                                        TextInput::make('sub3')->label(__('Sub-feature 3')),
+                                                        TextInput::make('trim_start')
+                                                            ->label(__('Video trim start (seconds)'))
+                                                            ->numeric()
+                                                            ->minValue(0)
+                                                            ->default(0)
+                                                            ->helperText(__('Videos only: the animated clip is 8 seconds long, starting at this point. Ignored for photos.'))
+                                                            ->columnSpanFull(),
+                                                        FileUpload::make('image')
+                                                            ->label(__('Feature image'))
+                                                            ->disk('public')
+                                                            ->directory('platform/website')
+                                                            ->acceptedFileTypes(self::WEBSITE_MEDIA_MIME_TYPES)
+                                                            ->maxSize(51200)
+                                                            ->rules(fn (Get $get) => [
+                                                                new MaxVideoDuration(8, (float) ($get('trim_start') ?? 0)),
+                                                            ])
+                                                            ->helperText(__('Image, GIF or a video — converted to WebP (animated for GIF/video) in the background. An 8-second clip is taken from the trim start set above.'))
+                                                            ->columnSpanFull(),
                                                     ]),
 
                                                 $this->mText('features_cta_title', __('Bottom CTA title'), null, true),
@@ -908,6 +913,7 @@ class PlatformSettingsPage extends Page implements HasForms
         foreach ($items as $i => $item) {
             if (! is_array($item)) {
                 $position++;
+
                 continue;
             }
 
@@ -1256,6 +1262,7 @@ class PlatformSettingsPage extends Page implements HasForms
         foreach ($data as $k => &$v) {
             if (is_string($k) && str_ends_with($k, '_upload')) {
                 unset($data[$k]);
+
                 continue;
             }
             if (is_array($v)) {
@@ -1296,6 +1303,7 @@ class PlatformSettingsPage extends Page implements HasForms
         foreach ($data as $key => &$value) {
             if (is_array($value)) {
                 $this->normaliseFileUploadState($value);
+
                 continue;
             }
 

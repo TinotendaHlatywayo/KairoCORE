@@ -11,6 +11,7 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Modules\Recovery\Jobs\GeneratePlatformBackupJob;
 use Modules\Recovery\Jobs\RestorePlatformBackupJob;
 use Modules\Recovery\Models\PlatformBackup;
@@ -49,6 +50,16 @@ class PlatformBackupManager extends Page implements HasForms
 
     public ?int $restoreBackupId = null;
 
+    public string $vaultStatusFilter = '';
+
+    public ?string $vaultDateFrom = null;
+
+    public ?string $vaultDateTo = null;
+
+    public bool $showAllRestoreLogs = false;
+
+    public array $selectedBackupIds = [];
+
     public static function canAccess(): bool
     {
         return true;
@@ -63,7 +74,19 @@ class PlatformBackupManager extends Page implements HasForms
 
     public function refreshBackupsList(): void
     {
-        $this->backupsList = PlatformBackup::with('school')->latest()->get()
+        $query = PlatformBackup::with('school')->latest();
+
+        if ($this->vaultStatusFilter !== '') {
+            $query->where('status', $this->vaultStatusFilter);
+        }
+        if ($this->vaultDateFrom) {
+            $query->whereDate('created_at', '>=', $this->vaultDateFrom);
+        }
+        if ($this->vaultDateTo) {
+            $query->whereDate('created_at', '<=', $this->vaultDateTo);
+        }
+
+        $this->backupsList = $query->get()
             ->map(function (PlatformBackup $backup) {
                 $data = $backup->toArray();
                 $data['school_name'] = $backup->school?->name;
@@ -79,7 +102,14 @@ class PlatformBackupManager extends Page implements HasForms
             })
             ->all();
 
-        $this->restoreLogsList = PlatformRestoreLog::with('backup')->latest()->limit(8)->get()
+        // Deselect rows that no longer exist after a poll refresh.
+        $existingIds = array_column($this->backupsList, 'id');
+        $this->selectedBackupIds = array_values(array_intersect($this->selectedBackupIds, $existingIds));
+
+        $logsQuery = PlatformRestoreLog::with('backup')->latest();
+        $this->restoreLogsList = $logsQuery
+            ->limit($this->showAllRestoreLogs ? 50 : 3)
+            ->get()
             ->map(fn (PlatformRestoreLog $log) => [
                 'id' => $log->id,
                 'status' => $log->status,
@@ -304,12 +334,12 @@ class PlatformBackupManager extends Page implements HasForms
         } catch (\Throwable $e) {
             $log->update([
                 'status' => 'failed',
-                'error_details' => \Illuminate\Support\Str::limit($e->getMessage(), 5000),
+                'error_details' => Str::limit($e->getMessage(), 5000),
             ]);
             $this->refreshBackupsList();
             Notification::make()
                 ->title(__('Restore failed to start'))
-                ->body(\Illuminate\Support\Str::limit($e->getMessage(), 500, ' …'))
+                ->body(Str::limit($e->getMessage(), 500, ' …'))
                 ->danger()
                 ->send();
         }
@@ -325,5 +355,70 @@ class PlatformBackupManager extends Page implements HasForms
 
             Notification::make()->title(__('Backup file removed.'))->success()->send();
         }
+    }
+
+    public function clearVaultFilters(): void
+    {
+        $this->vaultStatusFilter = '';
+        $this->vaultDateFrom = null;
+        $this->vaultDateTo = null;
+        $this->refreshBackupsList();
+    }
+
+    public function toggleRestoreLogExpansion(): void
+    {
+        $this->showAllRestoreLogs = ! $this->showAllRestoreLogs;
+        $this->refreshBackupsList();
+    }
+
+    public function toggleSelectAllBackups(): void
+    {
+        // wire:model checkboxes produce string ids — normalise before comparing.
+        $all = array_map('intval', array_column($this->backupsList, 'id'));
+        $selected = array_map('intval', $this->selectedBackupIds);
+        sort($all);
+        sort($selected);
+
+        $this->selectedBackupIds = $all === $selected
+            ? []
+            : array_map('strval', array_column($this->backupsList, 'id'));
+    }
+
+    public function downloadSelectedBackups()
+    {
+        if ($this->selectedBackupIds === []) {
+            Notification::make()->title(__('Select at least one backup first'))->danger()->send();
+
+            return null;
+        }
+
+        return redirect()->away(
+            route('platform.backups.download-many', ['ids' => implode(',', $this->selectedBackupIds)])
+        );
+    }
+
+    public function deleteSelectedBackups(): void
+    {
+        if ($this->selectedBackupIds === []) {
+            Notification::make()->title(__('Select at least one backup first'))->danger()->send();
+
+            return;
+        }
+
+        $deleted = 0;
+        PlatformBackup::whereIn('id', array_map('intval', $this->selectedBackupIds))->get()
+            ->each(function (PlatformBackup $backup) use (&$deleted) {
+                Storage::disk($backup->disk ?: 'local')->delete("backups/{$backup->filename}");
+                $backup->delete();
+                $deleted++;
+            });
+
+        $this->selectedBackupIds = [];
+        $this->refreshBackupsList();
+
+        Notification::make()
+            ->title(__('Selected backups removed (:count)', ['count' => $deleted]))
+            ->success()
+            ->send();
     }
 }

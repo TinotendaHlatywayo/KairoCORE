@@ -763,6 +763,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/platform/backups/{backup}/download', [PlatformBackupDownloadController::class, 'download'])
         ->name('platform.backups.download');
 
+    Route::get('/platform/backups/download-many', [PlatformBackupDownloadController::class, 'downloadMany'])
+        ->name('platform.backups.download-many');
+
     // Sample document previews for the super admin document config screen.
     Route::get('/platform/documents/preview/{type}', [DocumentPreviewController::class, 'show'])
         ->middleware(EnsurePlatformAdmin::class)

@@ -202,19 +202,75 @@
                 @empty
                     <p class="py-2 text-sm text-gray-400">{{ __('No restores have been run yet.') }}</p>
                 @endforelse
+                <div class="mt-3">
+                    <x-filament::button size="sm" color="gray" wire:click="toggleRestoreLogExpansion">
+                        {{ $showAllRestoreLogs ? __('Show less') : __('Show more') }}
+                    </x-filament::button>
+                </div>
             </x-filament::section>
 
             <x-filament::section heading="{{ __('Platform Recovery Vault') }}">
-                @if (empty($backupsList))
+                @if (empty($backupsList) && $vaultStatusFilter === '' && ! $vaultDateFrom && ! $vaultDateTo)
                     <div class="py-12 text-center text-gray-400">
                         <x-heroicon-o-cloud-arrow-down class="mx-auto mb-3 h-12 w-12" />
                         <p class="text-sm">{{ __('No backups generated yet.') }}</p>
                     </div>
                 @else
+                    <div class="mb-3 flex flex-wrap items-end gap-3">
+                        <div>
+                            <label class="mb-1 block text-xs font-semibold uppercase tracking-wider text-gray-500">{{ __('Status') }}</label>
+                            <x-filament::input.wrapper class="w-40">
+                                <x-filament::input.select wire:model.live="vaultStatusFilter">
+                                    <option value="">{{ __('All statuses') }}</option>
+                                    <option value="completed">{{ __('completed') }}</option>
+                                    <option value="pending">{{ __('pending') }}</option>
+                                    <option value="failed">{{ __('failed') }}</option>
+                                </x-filament::input.select>
+                            </x-filament::input.wrapper>
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-xs font-semibold uppercase tracking-wider text-gray-500">{{ __('From date') }}</label>
+                            <x-filament::input.wrapper class="w-40">
+                                <x-filament::input type="date" wire:model.live="vaultDateFrom" />
+                            </x-filament::input.wrapper>
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-xs font-semibold uppercase tracking-wider text-gray-500">{{ __('To date') }}</label>
+                            <x-filament::input.wrapper class="w-40">
+                                <x-filament::input type="date" wire:model.live="vaultDateTo" />
+                            </x-filament::input.wrapper>
+                        </div>
+                        @if ($vaultStatusFilter !== '' || $vaultDateFrom || $vaultDateTo)
+                            <x-filament::button size="sm" color="gray" icon="heroicon-o-x-mark" wire:click="clearVaultFilters">
+                                {{ __('Clear filters') }}
+                            </x-filament::button>
+                        @endif
+                    </div>
+
+                    @if ($selectedBackupIds !== [])
+                        <div class="mb-3 flex flex-wrap items-center gap-2 rounded-lg bg-primary-50 p-3 dark:bg-primary-950/30">
+                            <span class="text-sm font-semibold text-primary-700 dark:text-primary-300">
+                                {{ trans_choice(':count backup selected|:count backups selected', count($selectedBackupIds), ['count' => count($selectedBackupIds)]) }}
+                            </span>
+                            <x-filament::button size="sm" icon="heroicon-o-arrow-down-tray" wire:click="downloadSelectedBackups">
+                                {{ __('Download selected') }}
+                            </x-filament::button>
+                            <x-filament::button size="sm" color="danger" icon="heroicon-o-trash" wire:click="deleteSelectedBackups" wire:confirm="{{ __('Delete all selected backup archives?') }}">
+                                {{ __('Delete selected') }}
+                            </x-filament::button>
+                        </div>
+                    @endif
+
                     <div class="overflow-x-auto">
                         <table class="w-full border-collapse text-left text-sm">
                             <thead>
                                 <tr class="border-b border-gray-200 text-gray-500 dark:border-gray-800">
+                                    <th class="px-2 py-3 w-10">
+                                        <input type="checkbox"
+                                               wire:click="toggleSelectAllBackups"
+                                               @checked(count($backupsList) > 0 && count($selectedBackupIds) === count($backupsList))
+                                               class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                                    </th>
                                     <th class="px-2 py-3">{{ __('Date / Comment') }}</th>
                                     <th class="py-3 px-2">{{ __('Scope') }}</th>
                                     <th class="py-3 px-2">{{ __('Size') }}</th>
@@ -224,7 +280,11 @@
                             </thead>
                             <tbody class="divide-y divide-gray-100 dark:divide-gray-800/60">
                                 @foreach ($backupsList as $bk)
-                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/30">
+                                    <tr @class(['hover:bg-gray-50 dark:hover:bg-gray-800/30', 'bg-primary-50/50 dark:bg-primary-950/20' => in_array($bk['id'], $selectedBackupIds) || in_array((string) $bk['id'], $selectedBackupIds)])>
+                                        <td class="px-2 py-3">
+                                            <input type="checkbox" wire:model="selectedBackupIds" value="{{ $bk['id'] }}"
+                                                   class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                                        </td>
                                         <td class="px-2 py-3">
                                             <div class="font-medium text-gray-800 dark:text-gray-200">
                                                 {{ \Modules\Recovery\Models\PlatformBackup::formatTimestamp($bk['created_at']) }}
@@ -253,17 +313,20 @@
                                                 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-400' => $status === 'pending',
                                                 'bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-400' => $status === 'failed',
                                             ])>{{ $status }}</span>
+                                            @if ($status === 'failed' && ! empty($bk['error_log']))
+                                                <div class="mt-1 max-w-[220px] text-[10px] text-rose-500">{{ \Illuminate\Support\Str::limit($bk['error_log'], 100) }}</div>
+                                            @endif
                                         </td>
                                         <td class="px-2 py-3 text-right">
                                             <div class="flex justify-end gap-1">
-                                                <x-filament::icon-button
-                                                    :href="route('platform.backups.download', $bk['id'])"
-                                                    tag="a"
-                                                    icon="heroicon-o-arrow-down-tray"
-                                                    color="primary"
-                                                    tooltip="{{ __('Download') }}"
-                                                />
                                                 @if ($status === 'completed')
+                                                    <x-filament::icon-button
+                                                        :href="route('platform.backups.download', $bk['id'])"
+                                                        tag="a"
+                                                        icon="heroicon-o-arrow-down-tray"
+                                                        color="primary"
+                                                        tooltip="{{ __('Download') }}"
+                                                    />
                                                     <x-filament::icon-button
                                                         wire:click="executePlatformRestore({{ $bk['id'] }})"
                                                         wire:confirm="{{ (($bk['scope'] ?? 'system') === 'tenant') ? __('WARNING: This will replace this tenant\'s current rows with the backup. Proceed?') : __('WARNING: This will overwrite and recreate all tables and data. Proceed?') }}"
@@ -273,6 +336,10 @@
                                                         wire:loading.attr="disabled"
                                                         wire:target="executePlatformRestore"
                                                     />
+                                                @else
+                                                    <span class="inline-block h-8 w-8 text-center leading-8 text-gray-300 dark:text-gray-600" title="{{ $status === 'pending' ? __('Backup is still being generated') : __('No archive to download — generation failed') }}">
+                                                        <x-heroicon-o-arrow-down-tray class="mx-auto h-4 w-4" />
+                                                    </span>
                                                 @endif
                                                 <x-filament::icon-button
                                                     wire:click="deleteBackupRecord({{ $bk['id'] }})"
@@ -285,6 +352,11 @@
                                         </td>
                                     </tr>
                                 @endforeach
+                                @if ($backupsList === [])
+                                    <tr>
+                                        <td colspan="6" class="py-8 text-center text-sm text-gray-400">{{ __('No backups match the selected filters.') }}</td>
+                                    </tr>
+                                @endif
                             </tbody>
                         </table>
                     </div>

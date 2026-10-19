@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     @php
-        $cfg = platform_document_config();
+        $cfg = platform_document_config(null, 'receipt');
         $brand = email_branding();
         $logoUri = document_logo_data_uri();
         $watermarkUri = document_watermark_data_uri();
@@ -53,6 +53,13 @@
             </td>
         </tr>
     </table>
+
+    @if(!empty($cfg['callout_title']) || !empty($cfg['callout_body']))
+        <div class="note-box">
+            @if(!empty($cfg['callout_title']))<div class="note-title">{{ $cfg['callout_title'] }}</div>@endif
+            {!! nl2br(e($cfg['callout_body'] ?? '')) !!}
+        </div>
+    @endif
 
     @include('modules.saas.pdf.partials.footer', [
         'cfg' => $cfg,

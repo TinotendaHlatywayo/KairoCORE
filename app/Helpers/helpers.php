@@ -1555,7 +1555,7 @@ if (! function_exists('platform_document_config')) {
      * $fallback lets callers requesting one key get a single value instead of
      * the whole merged array.
      */
-    function platform_document_config(?string $fallback = null): mixed
+    function platform_document_config(?string $fallback = null, ?string $documentType = null): mixed
     {
         $branding = (function (): array {
             try {
@@ -1596,11 +1596,33 @@ if (! function_exists('platform_document_config')) {
         try {
             $rows = PlatformSetting::query()->where('group', 'documents')->get();
             foreach ($rows as $row) {
+                // Keys prefixed with a document type (invoice_ / receipt_) are
+                // type-specific overrides — they only apply when that type is
+                // requested, layered on top of the shared values.
+                if ($documentType !== null && str_starts_with($row->key, $documentType.'_')) {
+                    continue;
+                }
+
                 $value = json_decode((string) $row->value, true);
                 if (json_last_error() !== JSON_ERROR_NONE) {
                     $value = $row->value;
                 }
                 $defaults[$row->key] = $value;
+            }
+
+            if ($documentType !== null) {
+                $prefix = $documentType.'_';
+                foreach ($rows as $row) {
+                    if (! str_starts_with($row->key, $prefix)) {
+                        continue;
+                    }
+
+                    $value = json_decode((string) $row->value, true);
+                    if (json_last_error() !== JSON_ERROR_NONE) {
+                        $value = $row->value;
+                    }
+                    $defaults[substr($row->key, strlen($prefix))] = $value;
+                }
             }
         } catch (Throwable) {
             // During migrations / first boot there is no settings table yet.

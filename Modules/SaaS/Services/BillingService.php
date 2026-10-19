@@ -3,6 +3,7 @@
 namespace Modules\SaaS\Services;
 
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Modules\SaaS\Models\SaaSInvoice;
 use Modules\SaaS\Models\SaaSInvoiceItem;
@@ -10,7 +11,32 @@ use Modules\SaaS\Models\SaaSSubscription;
 
 class BillingService
 {
+    /**
+     * Invoice numbers are unique at the database level. Two races can break
+     * that: soft-deleted invoices (invisible to Eloquent but still holding
+     * their number in the unique index) and two concurrent generates both
+     * reading the same latest sequence. Allocate numbers with trashed rows
+     * and a row lock, and retry once if the database still rejects us.
+     */
     public function generateUpcomingInvoice(SaaSSubscription $subscription): SaaSInvoice
+    {
+        $attempts = 0;
+
+        while (true) {
+            try {
+                return $this->allocateInvoice($subscription);
+            } catch (QueryException $e) {
+                // 1062 / 23000 = duplicate key (invoice_number race we lost).
+                if ($attempts++ < 3 && ((int) ($e->errorInfo[1] ?? 0)) === 1062) {
+                    continue;
+                }
+
+                throw $e;
+            }
+        }
+    }
+
+    private function allocateInvoice(SaaSSubscription $subscription): SaaSInvoice
     {
         return DB::transaction(function () use ($subscription) {
             $existingUnpaid = SaaSInvoice::where('school_id', $subscription->school_id)
@@ -46,11 +72,15 @@ class BillingService
                 ? Carbon::parse($subscription->next_payment_date)->startOfDay()
                 : $periodStart->copy();
 
-            // Invoice numbers must be globally unique (there is a unique index
-            // on the column), so the tenant id and year are embedded and the
-            // per-tenant sequence is read back from its own latest invoice.
-            $latestInvoice = SaaSInvoice::where('school_id', $subscription->school_id)
+            // Invoice numbers must be globally unique (unique index), so the
+            // tenant id and year are embedded and the per-tenant sequence is
+            // read from the latest invoice INCLUDING trashed ones (their
+            // numbers are still taken in the index). The row lock serialises
+            // concurrent generators on the same school.
+            $latestInvoice = SaaSInvoice::withTrashed()
+                ->where('school_id', $subscription->school_id)
                 ->orderBy('id', 'DESC')
+                ->lockForUpdate()
                 ->first();
 
             $nextSequence = 1;
@@ -65,7 +95,7 @@ class BillingService
             do {
                 $invoiceNumber = 'INV-SAAS-'.$subscription->school_id.'-'.Carbon::now()->year.'-'.str_pad((string) $nextSequence, 5, '0', STR_PAD_LEFT);
                 $nextSequence++;
-            } while (SaaSInvoice::where('invoice_number', $invoiceNumber)->exists());
+            } while (SaaSInvoice::withTrashed()->where('invoice_number', $invoiceNumber)->exists());
 
             $invoice = SaaSInvoice::create([
                 'school_id' => $subscription->school_id,

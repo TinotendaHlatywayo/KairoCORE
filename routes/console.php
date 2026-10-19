@@ -13,6 +13,11 @@ Schedule::command('schedule:send-reminders')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/schedule-reminders.log'));
 
+Schedule::command('saas:generate-invoices')
+    ->dailyAt('05:00')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/saas-generate-invoices.log'));
+
 Schedule::command('saas:run-billing-notifications')
     ->dailyAt('07:00')
     ->withoutOverlapping()
