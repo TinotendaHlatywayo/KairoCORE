@@ -124,6 +124,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Markdown Mail Views
+    |--------------------------------------------------------------------------
+    |
+    | Published, restyled copies of Laravel's stock mail templates live here
+    | and take precedence over the framework originals (the first path wins).
+    |
+    */
+
+    'markdown' => [
+        'theme' => 'default',
+        'paths' => [resource_path('views/vendor/mail')],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Platform Email Identity & Role Addresses
     |--------------------------------------------------------------------------
     |

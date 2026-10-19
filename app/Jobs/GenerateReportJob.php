@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\School;
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -45,7 +46,7 @@ class GenerateReportJob implements ShouldQueue
         // Apply the school's (or requesting user's) locale so report output is
         // generated in the correct language, not the queue worker's default 'en'.
         $locale = $school->locale;
-        if ($this->userId && ($user = \App\Models\User::find($this->userId))) {
+        if ($this->userId && ($user = User::find($this->userId))) {
             $locale = $user->locale ?: $locale;
         }
         app()->setLocale(in_array($locale, ['en', 'sn', 'sw', 'fr', 'pt', 'es'], true) ? $locale : 'en');
@@ -94,8 +95,12 @@ class GenerateReportJob implements ShouldQueue
         $attach = Storage::disk('public')->path($filePath);
         $extension = $this->schedule->output_format ?? 'pdf';
 
-        Mail::raw(
-            "Greetings,\n\nPlease find attached the scheduled enterprise report [{$this->schedule->template?->name}] generated on ".now()->format('Y-m-d H:i').".\n\nBest Regards,\nKairo CORE Automated Distribution Service",
+        Mail::send(
+            'emails.report-delivery',
+            [
+                'reportName' => $this->schedule->template?->name ?? 'Report',
+                'generatedAt' => now()->format('Y-m-d H:i'),
+            ],
             function ($message) use ($recipients, $attach, $extension) {
                 $message->to($recipients)
                     ->subject('Scheduled Enterprise Report: ['.($this->schedule->template?->name ?? 'Report').']')

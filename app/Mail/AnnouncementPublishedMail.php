@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Models\School;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
@@ -17,11 +18,15 @@ class AnnouncementPublishedMail extends Mailable
         public string $content,
         public string $schoolName,
         public array $attachmentPaths = [],
+        public ?School $school = null,
     ) {}
 
     public function build(): self
     {
-        $mail = $this->subject('New Notice: '.$this->title)->view('emails.announcement-published');
+        $school = $this->school ?? current_tenant();
+        $mail = $this->subject('New Notice: '.$this->title)->view('emails.announcement-published', [
+            'school' => $school,
+        ]);
 
         // Mailable owns `$attachments`; the parent class appends to it. Adding
         // our own typed `$attachments` would redeclare the inherited property

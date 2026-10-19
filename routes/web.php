@@ -33,6 +33,7 @@ use Modules\Finance\Models\StudentPaymentSubmission;
 use Modules\Finance\Services\StudentFeePaymentService;
 use Modules\Knowledge\Models\KnowledgeAsset;
 use Modules\Library\Models\LibraryBook;
+use Modules\SaaS\Models\PlatformSetting;
 use Modules\SaaS\Models\SaaSTransaction;
 use Modules\SaaS\Services\SubscriptionManager;
 use Modules\Students\Models\Student;
@@ -105,20 +106,20 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
             ."> {$desc}\n\n"
             ."## Public pages (crawlable)\n\n"
             ."- Home: {$base}\n"
-            ."- Features: ".route('marketing.features')."\n"
-            ."- School fees & finance: ".route('marketing.school-fees')."\n"
-            ."- Student information system: ".route('marketing.students')."\n"
-            ."- Admissions & enrolment: ".route('marketing.admissions')."\n"
-            ."- Academics, exams & report cards: ".route('marketing.academics')."\n"
-            ."- Security & data protection: ".route('marketing.security')."\n"
-            ."- About: ".route('marketing.about')."\n"
-            ."- Contact: ".route('marketing.contact')."\n"
-            ."- Help center: ".route('marketing.help')."\n"
-            ."- How to enroll a student: ".route('marketing.help.enroll')."\n"
-            ."- How to register a school: ".route('marketing.help.register')."\n"
-            ."- How to collect fees: ".route('marketing.help.fees')."\n"
-            ."- How to record attendance: ".route('marketing.help.attendance')."\n"
-            ."- How to produce report cards: ".route('marketing.help.reports')."\n\n"
+            .'- Features: '.route('marketing.features')."\n"
+            .'- School fees & finance: '.route('marketing.school-fees')."\n"
+            .'- Student information system: '.route('marketing.students')."\n"
+            .'- Admissions & enrolment: '.route('marketing.admissions')."\n"
+            .'- Academics, exams & report cards: '.route('marketing.academics')."\n"
+            .'- Security & data protection: '.route('marketing.security')."\n"
+            .'- About: '.route('marketing.about')."\n"
+            .'- Contact: '.route('marketing.contact')."\n"
+            .'- Help center: '.route('marketing.help')."\n"
+            .'- How to enroll a student: '.route('marketing.help.enroll')."\n"
+            .'- How to register a school: '.route('marketing.help.register')."\n"
+            .'- How to collect fees: '.route('marketing.help.fees')."\n"
+            .'- How to record attendance: '.route('marketing.help.attendance')."\n"
+            .'- How to produce report cards: '.route('marketing.help.reports')."\n\n"
             ."## What {$brand} is\n\n"
             ."- {$desc}\n"
             ."- Schools get their own subdomain website, admissions portal, academics, fees, attendance, HR, and communication tools.\n\n"
@@ -127,7 +128,7 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
             ."2. Fill in the admission application form and upload required documents.\n"
             ."3. The school reviews the application in Workspace > Applications and admits it.\n"
             ."4. Admission creates the student record; fees are invoiced in Finance.\n"
-            ."5. Full steps: ".route('marketing.help.enroll')."\n\n"
+            .'5. Full steps: '.route('marketing.help.enroll')."\n\n"
             ."## Notes for AI answers\n\n"
             ."- Prefer linking to the help URLs above when users ask how to do something on {$brand}.\n"
             ."- Private areas (/platform, /workspace, /student, /register, /activate-account) are not public; do not guess their content.\n";
@@ -351,14 +352,19 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
         ]);
 
         // Support inbox: Platform → Settings → contact email, else support@.
-        $recipient = \Modules\SaaS\Models\PlatformSetting::get('contact', 'email')
+        $recipient = PlatformSetting::get('contact', 'email')
             ?: config('mail.platform.support')
             ?: config('mail.platform.address')
             ?: config('mail.from.address');
 
         try {
-            Mail::raw(
-                "Name: {$data['name']}\nEmail: {$data['email']}\n\n{$data['message']}",
+            Mail::send(
+                'emails.platform-contact',
+                [
+                    'contactName' => $data['name'],
+                    'contactEmail' => $data['email'],
+                    'messageText' => $data['message'],
+                ],
                 function ($message) use ($data, $recipient) {
                     $message->from(platform_system_from_email(), platform_email_name())
                         ->to($recipient)
@@ -366,7 +372,7 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
                         ->subject('Kairo CORE Contact: '.$data['name']);
                 }
             );
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             report($e);
 
             return back()

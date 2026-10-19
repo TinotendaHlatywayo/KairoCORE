@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Models\School;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
@@ -26,7 +27,9 @@ class AdmissionConfirmation extends Mailable
     {
         $mail = $this->to($this->recipientEmail)
             ->subject($this->emailSubject)
-            ->view('emails.admission-confirmation');
+            ->view('emails.admission-confirmation', [
+                'school' => School::find($this->student->school_id),
+            ]);
 
         if (! empty($this->fromEmail)) {
             $mail->from($this->fromEmail, $this->schoolName);

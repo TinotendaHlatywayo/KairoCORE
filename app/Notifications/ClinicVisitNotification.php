@@ -30,16 +30,24 @@ class ClinicVisitNotification extends Notification implements ShouldQueue
 
     public function toMail($notifiable): MailMessage
     {
+        $school = School::find($this->visit->school_id);
+
+        $student = $this->visit->student->first_name.' '.$this->visit->student->last_name;
+
         $message = (new MailMessage)
             ->subject('Student Health & Wellness Update')
-            ->line('Your child, '.$this->visit->student->first_name.' '.$this->visit->student->last_name.', was seen at the school clinic today.')
-            ->line('Arrival Time: '.$this->visit->visit_time)
-            ->line('Symptoms Reported: '.$this->visit->symptoms)
-            ->line('Treatment Prescribed: '.($this->visit->treatment_given ?? 'Under Observation'))
-            ->line('Discharge Status: '.ucfirst($this->visit->status))
-            ->line('If you require additional medical details, please contact school health services.');
+            ->view('emails.clinic-visit', [
+                'school' => $school,
+                'lines' => [
+                    __('Your child, :student, was seen at the school clinic today.', ['student' => $student]),
+                    __('Arrival Time: :time', ['time' => $this->visit->visit_time]),
+                    __('Symptoms Reported: :symptoms', ['symptoms' => $this->visit->symptoms]),
+                    __('Treatment Prescribed: :treatment', ['treatment' => $this->visit->treatment_given ?? __('Under Observation')]),
+                    __('Discharge Status: :status', ['status' => ucfirst($this->visit->status)]),
+                    __('If you require additional medical details, please contact school health services.'),
+                ],
+            ]);
 
-        $school = School::find($this->visit->school_id);
         if ($school) {
             return app(TenantEmailConfigurationService::class)
                 ->configureNotificationMailMessage($message, EmailCategory::Communication, $school);
