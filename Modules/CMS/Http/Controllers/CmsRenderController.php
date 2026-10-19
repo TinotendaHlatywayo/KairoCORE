@@ -458,7 +458,7 @@ class CmsRenderController extends Controller
         ]);
 
         $sent = app(TenantEmailConfigurationService::class)->queueSend(
-            new ContactFormMessage($recipient, $validated, $school->name),
+            new ContactFormMessage($recipient, $validated, $school->name, $school),
             EmailCategory::Communication,
             $school,
         );

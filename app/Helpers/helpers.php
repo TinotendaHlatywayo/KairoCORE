@@ -1504,11 +1504,11 @@ if (! function_exists('email_branding')) {
         $logoUrl = $normalizeLogo($logo);
 
         if ($school !== null) {
-            $readSchoolSetting = function (string $key) use ($school): mixed {
+            $readSchoolSetting = function (string $group, string $key) use ($school): mixed {
                 try {
                     $row = SystemSetting::query()
                         ->where('school_id', $school->id)
-                        ->where('group', 'email')
+                        ->where('group', $group)
                         ->where('key', $key)
                         ->value('value');
 
@@ -1522,13 +1522,17 @@ if (! function_exists('email_branding')) {
                 }
             };
 
-            $logoUrl = $normalizeLogo($readSchoolSetting('logo_path'))
+            // Tenant logo chain: dedicated email logo → workspace School Logo
+            // (Workspace → System Settings → branding) → platform-uploaded
+            // school logo → platform logo (final fallback below).
+            $logoUrl = $normalizeLogo($readSchoolSetting('email', 'logo_path'))
+                ?? $normalizeLogo($readSchoolSetting('branding', 'logo_path'))
                 ?? $normalizeLogo($school->logo_path)
                 ?? $logoUrl;
-            $name = $readSchoolSetting('company_name') ?: ($school->name ?: $name);
-            $address = $readSchoolSetting('company_address') ?: ($school->physical_address ?: $address);
-            $phone = $readSchoolSetting('company_phone') ?: ($school->phone_number ?: $phone);
-            $email = $readSchoolSetting('company_email') ?: ($school->email_address ?: $email);
+            $name = $readSchoolSetting('email', 'company_name') ?: ($school->name ?: $name);
+            $address = $readSchoolSetting('email', 'company_address') ?: ($school->physical_address ?: $address);
+            $phone = $readSchoolSetting('email', 'company_phone') ?: ($school->phone_number ?: $phone);
+            $email = $readSchoolSetting('email', 'company_email') ?: ($school->email_address ?: $email);
         }
 
         return [
@@ -1864,9 +1868,10 @@ if (! function_exists('brand_email_view_data')) {
      * Merge resolved branding with per-email content into a ready-to-render
      * payload for resources/views/emails/brand.blade.php.
      */
-    function brand_email_view_data(array $overrides = []): array
+    function brand_email_view_data(array $overrides = [], $school = null): array
     {
         return array_merge([
+            'school' => $school,
             'logoUrl' => null,
             'companyName' => config('app.name'),
             'companyAddress' => null,

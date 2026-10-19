@@ -65,7 +65,7 @@ class AccountActivationNotification extends Notification
                 ],
                 'signature' => __('The :name Team', ['name' => $branding['company_name']]),
                 'footerNote' => __('You received this email because an account was created for you at :school.', ['school' => $school->name ?: $branding['company_name']]),
-            ]));
+            ], $school));
 
         if ($school->email_address) {
             // Schools keep their own contact address as reply-to; the From:

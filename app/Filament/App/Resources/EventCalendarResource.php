@@ -4,18 +4,21 @@ namespace App\Filament\App\Resources;
 
 use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Concerns\ModulePermissionAccess;
+use App\Mail\AnnouncementPublishedMail;
 use App\Models\User;
+use App\Security\RoleCatalogue;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Mail;
 use Modules\Communication\Models\EventCalendar;
-use App\Security\RoleCatalogue;
 
 class EventCalendarResource extends Resource
 {
@@ -79,6 +82,7 @@ class EventCalendarResource extends Resource
                                 ->options(function (): array {
                                     $options = RoleCatalogue::audienceRoleOptions();
                                     $options['all'] = __('All Roles');
+
                                     return $options;
                                 })
                                 ->preload(),
@@ -128,7 +132,7 @@ class EventCalendarResource extends Resource
 
     public static function broadcastToAudience(EventCalendar $record)
     {
-        $usersQuery = \App\Models\User::query()->where('school_id', $record->school_id);
+        $usersQuery = User::query()->where('school_id', $record->school_id);
 
         $visibility = $record->target_roles ?? [];
         $targetUserIds = $record->target_user_ids ?? [];
@@ -167,7 +171,7 @@ class EventCalendarResource extends Resource
 
         foreach ($notifiedUsers as $user) {
             if ($notifyInApp) {
-                \Filament\Notifications\Notification::make()
+                Notification::make()
                     ->title(__('New Event'))
                     ->body(__('Event: ').$record->title)
                     ->success()
@@ -178,11 +182,12 @@ class EventCalendarResource extends Resource
         if ($notifyByEmail && ! empty($notifiedUsers->whereNotNull('email')->count())) {
             try {
                 foreach ($notifiedUsers->whereNotNull('email') as $user) {
-                    \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\AnnouncementPublishedMail(
+                    Mail::to($user->email)->send(new AnnouncementPublishedMail(
                         title: $record->title,
                         content: str_replace('&nbsp;', ' ', (string) preg_replace('/<p[^>]*>|<\/p>/i', '', (string) $record->description)),
                         schoolName: $record->school?->name ?? '',
                         attachmentPaths: [],
+                        school: $record->school,
                     ));
                 }
             } catch (\Throwable $e) {

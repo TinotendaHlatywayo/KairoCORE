@@ -117,6 +117,7 @@ class AnnouncementResource extends Resource
                                 ->options(function (): array {
                                     $options = RoleCatalogue::audienceRoleOptions();
                                     $options['all'] = __('All Roles');
+
                                     return $options;
                                 })
                                 ->preload(),
@@ -324,6 +325,7 @@ class AnnouncementResource extends Resource
                         content: str_replace('&nbsp;', ' ', (string) preg_replace('/<p[^>]*>|<\/p>/i', '', (string) $record->content)),
                         schoolName: $record->school?->name ?? '',
                         attachmentPaths: $record->attachments ?? [],
+                        school: $record->school,
                     ));
                 }
             } catch (\Throwable $e) {

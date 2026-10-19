@@ -30,16 +30,24 @@ class HostelOutPassOtpNotification extends Notification implements ShouldQueue
 
     public function toMail($notifiable): MailMessage
     {
+        $school = School::find($this->outPass->school_id);
+
+        $student = $this->outPass->student->first_name.' '.$this->outPass->student->last_name;
+
         $message = (new MailMessage)
             ->subject('Boarding Exit OTP Authorization Request')
-            ->line('An out-pass has been requested for your child: '.$this->outPass->student->first_name.' '.$this->outPass->student->last_name)
-            ->line('Destination Reason: '.$this->outPass->reason)
-            ->line('Planned Return: '.$this->outPass->expected_return)
-            ->line('Please provide the validation code below to complete authorization:')
-            ->line('Verification Code: **'.$this->outPass->parent_otp.'**')
-            ->line('If you did not authorize this request, please contact school operations.');
+            ->view('emails.hostel-outpass', [
+                'school' => $school,
+                'lines' => [
+                    __('An out-pass has been requested for your child: :student', ['student' => $student]),
+                    __('Destination Reason: :reason', ['reason' => $this->outPass->reason]),
+                    __('Planned Return: :return', ['return' => $this->outPass->expected_return]),
+                    __('Please provide the validation code below to complete authorization:'),
+                ],
+                'code' => $this->outPass->parent_otp,
+                'closingLine' => __('If you did not authorize this request, please contact school operations.'),
+            ]);
 
-        $school = School::find($this->outPass->school_id);
         if ($school) {
             return app(TenantEmailConfigurationService::class)
                 ->configureNotificationMailMessage($message, EmailCategory::Communication, $school);

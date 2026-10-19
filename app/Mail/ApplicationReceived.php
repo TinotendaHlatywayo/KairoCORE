@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Models\School;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
@@ -22,6 +23,8 @@ class ApplicationReceived extends Mailable
     {
         return $this->to($this->recipientEmail)
             ->subject('New Admission Application: '.$this->application->application_number)
-            ->view('emails.application-received');
+            ->view('emails.application-received', [
+                'school' => School::find($this->application->school_id),
+            ]);
     }
 }

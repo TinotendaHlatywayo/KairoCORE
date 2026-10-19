@@ -4,9 +4,7 @@ namespace App\Mail;
 
 use App\Models\School;
 use App\Models\User;
-use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
-use Illuminate\Queue\SerializesModels;
 
 /** Notifies an authorized approver that a new account registration awaits review. */
 class UserRegistrationPending extends Mailable
@@ -46,6 +44,6 @@ class UserRegistrationPending extends Mailable
                 ],
                 'signature' => __('The :name Team', ['name' => $this->schoolName]),
                 'footerNote' => __('You received this email because you are authorised to approve account registrations.'),
-            ]));
+            ], $this->school));
     }
 }

@@ -73,8 +73,12 @@ class ProcessScheduledReportJob implements ShouldQueue
 
         $filePath = Storage::disk('public')->path($report->file_path);
 
-        Mail::raw(
-            "Greetings,\n\nPlease find attached the scheduled enterprise report [{$template->name}] generated on ".now()->format('Y-m-d H:i').".\n\nBest Regards,\nKairo CORE Automated Distribution Service",
+        Mail::send(
+            'emails.report-delivery',
+            [
+                'reportName' => $template->name,
+                'generatedAt' => now()->format('Y-m-d H:i'),
+            ],
             function ($message) use ($recipients, $template, $filePath) {
                 $message->to($recipients)
                     ->subject("Scheduled Enterprise Report: [{$template->name}]")
