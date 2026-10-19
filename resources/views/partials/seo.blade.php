@@ -9,6 +9,7 @@
 @endphp
 <title>{{ $seoTitle }}</title>
 <meta name="description" content="{{ $seoDescription }}">
+<meta name="keywords" content="{{ implode(', ', $seoKeywords ?? platform_seo_keywords()) }}">
 <link rel="canonical" href="{{ $seoCanonical }}">
 <meta name="robots" content="{{ $seoRobots }}">
 <meta property="og:type" content="{{ $seoType }}">
