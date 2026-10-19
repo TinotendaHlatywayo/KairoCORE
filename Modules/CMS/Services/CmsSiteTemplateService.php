@@ -355,7 +355,7 @@ class CmsSiteTemplateService
     public static function ensurePremadeTemplates(?int $schoolId = null): array
     {
         $schoolId = $schoolId ?? app('current_tenant')->id ?? 0;
-        $presets = CmsTemplateService::getTemplates();
+        $presets = CmsTemplateService::selectableTemplates();
         $seeded = [];
 
         foreach ($presets as $key => $preset) {
@@ -380,7 +380,7 @@ class CmsSiteTemplateService
     public static function premade(?int $schoolId = null): array
     {
         $schoolId = $schoolId ?? app('current_tenant')->id ?? 0;
-        $presets = CmsTemplateService::getTemplates();
+        $presets = CmsTemplateService::selectableTemplates();
         $rows = CmsSiteTemplate::query()
             ->where('school_id', $schoolId)
             ->get()

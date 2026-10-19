@@ -855,8 +855,9 @@ class VisualCmsBuilder extends Page
             ];
         }
 
-        // 2. The five system templates from SiteTemplateCatalog (same page
+        // 2. The system templates from SiteTemplateCatalog (same page
         //    kind) — borrow fully-styled components across any template.
+        //    Retired templates are hidden from the importer.
         $catalogPageSlug = match ($kind) {
             'home' => 'home',
             'admission' => 'apply-online',
@@ -864,11 +865,14 @@ class VisualCmsBuilder extends Page
             'contact' => 'contact',
             default => 'about',
         };
-        $templateNames = collect(CmsTemplateService::getTemplates())
+        $templateNames = collect(CmsTemplateService::selectableTemplates())
             ->map(fn (array $t) => $t['name'])
             ->all();
 
         foreach (SiteTemplateCatalog::catalog() as $catalogKey => $catalogPages) {
+            if (CmsTemplateService::isRetired($catalogKey)) {
+                continue;
+            }
             $catalogPage = $catalogPages[$catalogPageSlug] ?? $catalogPages[$this->page->slug] ?? null;
             if (! $catalogPage) {
                 continue;

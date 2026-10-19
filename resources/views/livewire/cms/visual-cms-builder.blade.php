@@ -514,7 +514,7 @@
                     <select wire:change="switchPageTemplate($event.target.value)"
                             class="hidden sm:block text-xs rounded-lg border border-slate-200 bg-white/90 text-slate-700 focus:ring-2 focus:ring-[color:var(--sc-accent)] focus:outline-none px-2.5 py-1.5"
                             title="{{ $pageHasThemeOverride ? 'Page theme override active' : 'Using site-wide theme' }}">
-                        @foreach(\Modules\CMS\Services\CmsTemplateService::getTemplates() as $key => $tpl)
+                        @foreach(\Modules\CMS\Services\CmsTemplateService::selectableTemplates() as $key => $tpl)
                             <option value="{{ $key }}" {{ ($pageTemplate === $key) ? 'selected' : '' }}>{{ $tpl['name'] }}</option>
                         @endforeach
                     </select>
@@ -786,7 +786,7 @@
                         <h4 class="text-[10px] font-black uppercase tracking-wider text-[color:var(--sc-primary)]">{{ __('Create New Template') }}</h4>
                         <div class="space-y-2">
                             <select wire:model="newSiteTemplatePreset" class="studio-select-field w-full text-xs">
-                                @foreach(\Modules\CMS\Services\CmsTemplateService::getTemplates() as $key => $preset)
+                                @foreach(\Modules\CMS\Services\CmsTemplateService::selectableTemplates() as $key => $preset)
                                     <option value="{{ $key }}">{{ $preset['name'] }} — start from this design</option>
                                 @endforeach
                             </select>
@@ -822,7 +822,7 @@
                     <div class="space-y-2">
                         <h4 class="text-[10px] font-black uppercase tracking-wider text-[color:var(--sc-primary)]">{{ __('Theme Presets') }}</h4>
                         <div class="space-y-3">
-                            @foreach(\Modules\CMS\Services\CmsTemplateService::getTemplates() as $key => $tpl)
+                            @foreach(\Modules\CMS\Services\CmsTemplateService::selectableTemplates() as $key => $tpl)
                                 <div wire:click="setActiveTemplate('{{ $key }}')"
                                      class="glow-clickable p-5 rounded-2xl bg-white border transition shadow-sm hover:shadow-md {{ $activeTemplate === $key ? 'sc-preset-active' : 'border-[color:var(--sc-border)]' }}">
                                     <div class="flex items-center justify-between gap-2">
@@ -952,7 +952,7 @@
                         <div class="space-y-1">
                             <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Source Template') }}</label>
                             <select wire:model="aspectSourceTemplate" class="studio-select-field w-full text-xs">
-                                @foreach(\Modules\CMS\Services\CmsTemplateService::getTemplates() as $key => $tpl)
+                                @foreach(\Modules\CMS\Services\CmsTemplateService::selectableTemplates() as $key => $tpl)
                                     @continue($key === $activeTemplate)
                                     <option value="{{ $key }}">{{ $tpl['name'] }}</option>
                                 @endforeach
