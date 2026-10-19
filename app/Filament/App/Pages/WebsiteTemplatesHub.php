@@ -69,7 +69,7 @@ class WebsiteTemplatesHub extends Page
 
     public function mount(): void
     {
-        $this->themePresets = collect(CmsTemplateService::getTemplates())
+        $this->themePresets = collect(CmsTemplateService::selectableTemplates())
             ->mapWithKeys(fn (array $template, string $key) => [$key => $template['name']])
             ->all();
 

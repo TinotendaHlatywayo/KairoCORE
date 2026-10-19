@@ -177,6 +177,13 @@ class ComponentRegistry
         ],
     ];
 
+    /**
+     * Templates retired from new selection (no longer offered in pickers or
+     * seeded for new schools). Existing websites already using them keep
+     * resolving and rendering through SYSTEM_TEMPLATES as before.
+     */
+    public const RETIRED_TEMPLATE_KEYS = ['neon-frontier'];
+
     /** @var array<string, array{name: string, category: string, ...}> */
     private static ?array $catalog = null;
 

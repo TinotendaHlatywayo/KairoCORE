@@ -2,7 +2,6 @@
 
 namespace Modules\CMS\Services;
 
-use Modules\CMS\Models\CmsWebsite;
 use Modules\Communication\Models\Announcement;
 use Modules\Communication\Models\EventCalendar;
 use Modules\HR\Models\Employee;
@@ -233,6 +232,27 @@ class CmsTemplateService
         }
 
         return $templates;
+    }
+
+    /**
+     * Templates offered for NEW selection (pickers, premade seeding, importers).
+     * Retired templates are hidden here but keep rendering via getTemplates().
+     *
+     * @return array<string, array{name: string, subtitle: string, description: string, fonts: array, palette: array, design: array}>
+     */
+    public static function selectableTemplates(): array
+    {
+        return array_filter(
+            self::getTemplates(),
+            fn (array $tpl, string $key) => ! self::isRetired($key),
+            ARRAY_FILTER_USE_BOTH
+        );
+    }
+
+    /** True when a template is no longer offered for new selection. */
+    public static function isRetired(string $key): bool
+    {
+        return in_array($key, ComponentRegistry::RETIRED_TEMPLATE_KEYS, true);
     }
 
     /**

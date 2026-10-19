@@ -73,7 +73,7 @@ class CmsWebsiteResource extends Resource
                 ViewField::make('template_gallery')
                     ->label(__('Choose your website foundation'))
                     ->view('filament.forms.components.cms-template-picker')
-                    ->viewData(['templates' => CmsTemplateService::getTemplates()])
+                    ->viewData(['templates' => CmsTemplateService::selectableTemplates()])
                     ->dehydrated(false)
                     ->columnSpanFull(),
                 Select::make('active_template')
