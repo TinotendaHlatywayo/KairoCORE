@@ -1050,6 +1050,15 @@ class SiteTemplateCatalog
                         'image_url' => self::img('students-outdoor'),
                         'layout' => 'image-left',
                     ]),
+                    self::blk('testimonials', [
+                        'variant' => 'image-led',
+                        'title' => 'Kind Words',
+                        'testimonials' => [
+                            ['quote' => 'Greenleaf raised our children better than we could have asked. The teachers know them, and they know us.', 'name' => 'The Ndlovu Family', 'role' => 'Parents of three'],
+                            ['quote' => 'My shy boy became a confident one here. That is the whole review.', 'name' => 'Mr. T. Banda', 'role' => 'Parent, Year 5'],
+                            ['quote' => 'It feels less like a school and more like the village it takes to raise a child.', 'name' => 'Ms. R. Zhou', 'role' => 'Grandparent'],
+                        ],
+                    ]),
                     self::blk('statistics', [
                         'variant' => 'large-number',
                         'title' => 'Our Family in Numbers',
@@ -1085,15 +1094,6 @@ class SiteTemplateCatalog
                         'principal_title' => 'Principal & Founder',
                         'description' => 'I started Greenleaf with eleven children in my own garden. Today we are a school of six hundred, and the garden has grown with us. What has not changed is the rule we live by: every child, known; every family, welcome.',
                         'image_url' => self::img('staff-silhouette'),
-                    ]),
-                    self::blk('testimonials', [
-                        'variant' => 'image-led',
-                        'title' => 'Kind Words',
-                        'testimonials' => [
-                            ['quote' => 'Greenleaf raised our children better than we could have asked. The teachers know them, and they know us.', 'name' => 'The Ndlovu Family', 'role' => 'Parents of three'],
-                            ['quote' => 'My shy boy became a confident one here. That is the whole review.', 'name' => 'Mr. T. Banda', 'role' => 'Parent, Year 5'],
-                            ['quote' => 'It feels less like a school and more like the village it takes to raise a child.', 'name' => 'Ms. R. Zhou', 'role' => 'Grandparent'],
-                        ],
                     ]),
                     self::blk('gallery', [
                         'variant' => 'masonry',
@@ -1307,6 +1307,20 @@ class SiteTemplateCatalog
                         'image_url' => self::img('campus-exterior'),
                         'layout' => 'image-right',
                     ]),
+                    self::blk('orbit_gallery', [
+                        'variant' => 'circle',
+                        'title' => 'A Round Tour of Campus',
+                        'subtitle' => 'Our signature circular carousel — spin it yourself.',
+                        'center_label' => 'Seabreeze',
+                        'images' => [
+                            ['image' => self::img('library'), 'label' => 'The Tidewater Library'],
+                            ['image' => self::img('science-lab'), 'label' => 'Marine Science Lab'],
+                            ['image' => self::img('sports-field'), 'label' => 'The Long Lawn'],
+                            ['image' => self::img('cafeteria'), 'label' => 'The Boathouse Canteen'],
+                            ['image' => self::img('arts-studio'), 'label' => 'Dune Art Studio'],
+                            ['image' => self::img('assembly-hall'), 'label' => 'The Pier Auditorium'],
+                        ],
+                    ]),
                     self::blk('marquee_ticker', [
                         'variant' => 'single-row',
                         'items' => [
@@ -1329,20 +1343,6 @@ class SiteTemplateCatalog
                         'variant' => 'minimal-editorial',
                         'title' => 'Seabreeze in Numbers',
                         'subtitle' => 'A snapshot from the headmaster\'s termly report.',
-                    ]),
-                    self::blk('orbit_gallery', [
-                        'variant' => 'circle',
-                        'title' => 'A Round Tour of Campus',
-                        'subtitle' => 'Our signature circular carousel — spin it yourself.',
-                        'center_label' => 'Seabreeze',
-                        'images' => [
-                            ['image' => self::img('library'), 'label' => 'The Tidewater Library'],
-                            ['image' => self::img('science-lab'), 'label' => 'Marine Science Lab'],
-                            ['image' => self::img('sports-field'), 'label' => 'The Long Lawn'],
-                            ['image' => self::img('cafeteria'), 'label' => 'The Boathouse Canteen'],
-                            ['image' => self::img('arts-studio'), 'label' => 'Dune Art Studio'],
-                            ['image' => self::img('assembly-hall'), 'label' => 'The Pier Auditorium'],
-                        ],
                     ]),
                     self::blk('features_grid', [
                         'variant' => 'cards',
@@ -1562,17 +1562,6 @@ class SiteTemplateCatalog
                         'image_url' => self::img('campus-quad'),
                         'layout' => 'image-right',
                     ]),
-                    self::blk('marquee_ticker', [
-                        'variant' => 'two-row',
-                        'items' => [
-                            ['label' => 'Every Child Is Known'],
-                            ['label' => 'Learn Through Play'],
-                            ['label' => 'Garden To Table'],
-                            ['label' => 'Music, Art & Dance'],
-                            ['label' => 'From Age 3 To 12'],
-                            ['label' => 'Big Hearts, Big Dreams'],
-                        ],
-                    ]),
                     self::blk('gallery', [
                         'variant' => 'immersive-grid',
                         'title' => 'A Colourful Week',
@@ -1584,6 +1573,17 @@ class SiteTemplateCatalog
                             ['image' => self::img('library'), 'caption' => 'Story circle'],
                             ['image' => self::img('campus-quad'), 'caption' => 'The veggie patch'],
                             ['image' => self::img('sports-field'), 'caption' => 'Obstacle day'],
+                        ],
+                    ]),
+                    self::blk('marquee_ticker', [
+                        'variant' => 'two-row',
+                        'items' => [
+                            ['label' => 'Every Child Is Known'],
+                            ['label' => 'Learn Through Play'],
+                            ['label' => 'Garden To Table'],
+                            ['label' => 'Music, Art & Dance'],
+                            ['label' => 'From Age 3 To 12'],
+                            ['label' => 'Big Hearts, Big Dreams'],
                         ],
                     ]),
                     self::blk('features_grid', [
