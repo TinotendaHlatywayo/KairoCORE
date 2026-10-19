@@ -781,7 +781,8 @@
                         @endforelse
                     </div>
 
-                    {{-- Create new template --}}
+                    {{-- Create new template (advanced) --}}
+                    @if($editingMode === 'advanced')
                     <div class="border-t border-[color:var(--sc-border)] pt-4 space-y-3">
                         <h4 class="text-[10px] font-black uppercase tracking-wider text-[color:var(--sc-primary)]">{{ __('Create New Template') }}</h4>
                         <div class="space-y-2">
@@ -809,6 +810,7 @@
                             @endif
                         </div>
                     </div>
+                    @endif
                 </div>
 
                 <!-- 2. GLOBAL STYLES TAB -->
@@ -944,7 +946,8 @@
                         </div>
                     </div>
 
-                    <!-- Mix & Match: Import a Single Aspect From Another Template -->
+                    <!-- Mix & Match: Import a Single Aspect From Another Template (advanced) -->
+                    @if($editingMode === 'advanced')
                     <div class="border-t border-[color:var(--sc-border)] pt-4 space-y-3">
                         <h4 class="text-[10px] font-black uppercase tracking-wider text-[color:var(--sc-primary)]">{{ __('Mix &amp; Match') }}</h4>
                         <p class="text-xs text-[color:var(--sc-text-muted)] leading-relaxed">{{ __('Pull one design aspect from another template into this website without switching everything.') }}</p>
@@ -974,6 +977,7 @@
                             </button>
                         </div>
                     </div>
+                    @endif
 
                     <!-- Save as Template -->
                     <div class="border-t border-[color:var(--sc-border)] pt-4 space-y-3">
@@ -1015,6 +1019,7 @@
                         @endif
                     </div>
 
+                    @if($editingMode === 'advanced')
                     <div class="border-t border-[color:var(--sc-border)] pt-4 space-y-2">
                         <h4 class="text-[10px] font-black uppercase tracking-wider text-[color:var(--sc-primary)]">{{ __('Page Structures') }}</h4>
                         @foreach(\Modules\CMS\Services\CmsTemplateService::pageLayoutsFor($page->slug, $page->is_homepage) as $layoutKey => $layout)
@@ -1026,6 +1031,7 @@
                             </button>
                         @endforeach
                     </div>
+                    @endif
                 </div>
 
                 <!-- 2. INSERT BLOCKS TAB -->
@@ -1474,6 +1480,7 @@
                                         </div>
                                     </div>
 
+                                    @if($editingMode === 'advanced')
                                     <!-- Position Nudging -->
                                     <div class="border-t border-slate-100 pt-3 space-y-2">
                                         <div class="flex items-center justify-between">
@@ -1498,6 +1505,7 @@
                                             <button wire:click="resetBlockOffset" class="btn-secondary !h-8 !px-3 !text-[11px] justify-center">{{ __('Reset') }}</button>
                                         </div>
                                     </div>
+                                    @endif
 
                                     <button wire:click="resetBlockStyle('background')" class="btn-secondary !h-8 !px-3 !text-[11px] justify-center w-full">
                                         {{ __('↺ Reset Background to Site Default') }}
@@ -2174,10 +2182,12 @@
                                         class="sc-toolbox-btn">
                                     {{ __('Clone') }}
                                 </button>
+                                @if($editingMode === 'advanced')
                                 <button wire:click.stop="openBlockImporter({{ $index }})"
                                         class="sc-toolbox-btn sc-toolbox-btn-cyan">
                                     {{ __('Swap') }}
                                 </button>
+                                @endif
                                 <button wire:click.stop="moveBlockUp({{ $index }})"
                                         class="sc-toolbox-btn" @if($index === 0) disabled @endif>
                                     {{ __('↑') }}
