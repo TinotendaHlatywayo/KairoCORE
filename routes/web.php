@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Communication\CommunicationAttachmentController;
 use App\Http\Controllers\DocumentDownloadController;
 use App\Http\Controllers\FinanceDocumentController;
+use App\Http\Controllers\HelpCentreController;
 use App\Http\Controllers\Platform\PlatformBackupDownloadController;
 use App\Http\Controllers\Platform\PlatformEntryController;
 use App\Http\Controllers\SaaS\DocumentPreviewController;
@@ -17,6 +18,7 @@ use App\Http\Controllers\StudentFeeCheckoutController;
 use App\Http\Middleware\EnsurePlatformAdmin;
 use App\Http\Middleware\SetUserLocale;
 use App\Livewire\RegistrationWizard;
+use App\Support\HelpCentre\HelpCentreRepository;
 use App\Support\TeacherInitials;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Http\Request;
@@ -116,7 +118,8 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
             .'- [Security & data protection]('.route('marketing.security').")\n"
             .'- [About]('.route('marketing.about').")\n"
             .'- [Contact]('.route('marketing.contact').")\n"
-            .'- [Help center]('.route('marketing.help').")\n"
+            .'- [Help Center]('.route('marketing.help').")\n"
+            .'- [Help Centre (full guides)]('.route('help.index').")\n"
             .'- [How to enroll a student]('.route('marketing.help.enroll').")\n"
             .'- [How to register a school]('.route('marketing.help.register').")\n"
             .'- [How to collect fees]('.route('marketing.help.fees').")\n"
@@ -126,6 +129,12 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
             ."- {$desc}\n"
             ."- Schools get their own subdomain website, admissions portal, academics, fees, attendance, HR, and communication tools.\n"
             ."- Serving schools in Zimbabwe, Southern Africa and worldwide.\n\n"
+            ."## Help Centre guides (full library)\n\n"
+            .'- [Help Centre index]('.route('help.index').")\n";
+        foreach (app(HelpCentreRepository::class)->all() as $helpArticle) {
+            $text .= '- ['.str_replace(']', '', $helpArticle->title).']('.$helpArticle->url().")\n";
+        }
+        $text .= "\n"
             ."## Key capabilities\n\n"
             ."- Admissions and online student enrolment with document uploads\n"
             ."- Student records, ID cards and class management\n"
@@ -165,6 +174,7 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
             ['loc' => route('marketing.academics'), 'lastmod' => $lastmod('marketing/academics'), 'changefreq' => 'monthly', 'priority' => '0.8'],
             ['loc' => route('marketing.security'), 'lastmod' => $lastmod('marketing/security'), 'changefreq' => 'yearly', 'priority' => '0.5'],
             ['loc' => route('marketing.help'), 'lastmod' => $lastmod('marketing/help'), 'changefreq' => 'weekly', 'priority' => '0.9'],
+            ['loc' => route('help.index'), 'lastmod' => date('c', max(array_map('filemtime', glob(resource_path('docs/*/*.md')) ?: [__FILE__]))), 'changefreq' => 'weekly', 'priority' => '0.9'],
             ['loc' => route('marketing.help.enroll'), 'lastmod' => $lastmod('marketing/help-enroll-student'), 'changefreq' => 'monthly', 'priority' => '0.9'],
             ['loc' => route('marketing.help.register'), 'lastmod' => $lastmod('marketing/help-register-school'), 'changefreq' => 'monthly', 'priority' => '0.9'],
             ['loc' => route('marketing.help.fees'), 'lastmod' => $lastmod('marketing/help-collect-fees'), 'changefreq' => 'monthly', 'priority' => '0.8'],
@@ -174,6 +184,18 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
             ['loc' => route('marketing.contact'), 'lastmod' => $lastmod('marketing/contact'), 'changefreq' => 'monthly', 'priority' => '0.7'],
             ['loc' => route('platform.terms'), 'lastmod' => $lastmod('terms/platform'), 'changefreq' => 'yearly', 'priority' => '0.5'],
         ];
+
+        // Every published Help Centre article gets its own sitemap entry.
+        foreach (app(HelpCentreRepository::class)->all() as $helpArticle) {
+            $urls[] = [
+                'loc' => $helpArticle->url(),
+                'lastmod' => $helpArticle->updatedAt
+                    ? date('c', strtotime($helpArticle->updatedAt))
+                    : date('c', filemtime($helpArticle->filePath)),
+                'changefreq' => 'monthly',
+                'priority' => '0.8',
+            ];
+        }
 
         $xml = '<?xml version="1.0" encoding="UTF-8"?>';
         $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
@@ -355,6 +377,20 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
             ],
         ]);
     })->name('marketing.help.reports');
+
+    // ── Public Help Centre (/docs) ───────────────────────────────────
+    // Version-controlled Markdown under resources/docs, rendered without
+    // authentication. Search results are noindex; articles are indexed.
+    Route::get('/docs', [HelpCentreController::class, 'index'])
+        ->name('help.index');
+    Route::get('/docs/search', [HelpCentreController::class, 'search'])
+        ->name('help.search');
+    Route::get('/docs/{category}', [HelpCentreController::class, 'category'])
+        ->where('category', '[a-z0-9\-]+')
+        ->name('help.category');
+    Route::get('/docs/{category}/{slug}', [HelpCentreController::class, 'article'])
+        ->where('category', '[a-z0-9\-]+')->where('slug', '[a-z0-9\-]+')
+        ->name('help.article');
 
     Route::post('/contact', function (Request $request) {
         $data = $request->validate([
