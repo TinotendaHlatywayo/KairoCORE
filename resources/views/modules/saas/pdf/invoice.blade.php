@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     @php
-        $cfg = platform_document_config();
+        $cfg = platform_document_config(null, 'invoice');
         $brand = email_branding();
         $school = $invoice->school;
 
@@ -10,7 +10,10 @@
         $watermarkUri = document_watermark_data_uri();
 
         $discount = (float) ($invoice->discount ?? 0);
-        $calloutBody = $invoice->payment_instructions ?: ($cfg['callout_body'] ?? null);
+        // The configured callout always prints; the invoice's own payment
+        // note (if any) prints as a separate line above it.
+        $calloutBody = $cfg['callout_body'] ?? null;
+        $paymentNote = $invoice->payment_instructions ?: null;
 
         // Outstanding balance from the school's other unpaid invoices. Shown as
         // its own line and folded into the grand total (presentation only).
@@ -52,11 +55,14 @@
         'cfg' => $cfg,
         'logoUri' => $logoUri,
         'documentTitle' => __('Invoice'),
-        'documentMeta' => [
+        'documentMeta' => array_filter([
             __('Invoice No:') => $invoice->invoice_number,
             __('Date:') => document_date($invoice->issue_date),
             __('Due Date:') => document_date($invoice->due_date),
-        ],
+            __('Billing Period:') => ($invoice->period_start && $invoice->period_end)
+                ? document_date($invoice->period_start).' — '.document_date($invoice->period_end)
+                : null,
+        ]),
     ])
 
     @include('modules.saas.pdf.partials.parties', [
@@ -89,7 +95,12 @@
         ],
     ])
 
-    {{-- Callout box --}}
+    {{-- Payment note (invoice-specific) + configured callout box --}}
+    @if(!empty($paymentNote))
+        <div class="note-box">
+            {!! nl2br(e($paymentNote)) !!}
+        </div>
+    @endif
     @if(!empty($cfg['callout_title']) || !empty($calloutBody))
         <div class="note-box">
             @if(!empty($cfg['callout_title']))<div class="note-title">{{ $cfg['callout_title'] }}</div>@endif

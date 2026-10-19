@@ -10,6 +10,7 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\Tabs\Tab;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
@@ -27,6 +28,13 @@ use Modules\SaaS\Models\PlatformSetting;
 class PlatformDocumentConfigPage extends Page
 {
     public ?array $data = [];
+
+    /**
+     * Which document the content edits apply to. 'all' writes the shared
+     * keys; 'invoice' / 'receipt' write prefixed overrides (invoice_*, *)
+     * that only that document type reads.
+     */
+    public string $docScope = 'all';
 
     protected static ?string $navigationIcon = 'heroicon-o-document-chart-bar';
 
@@ -51,9 +59,25 @@ class PlatformDocumentConfigPage extends Page
 
     public function mount(): void
     {
+        $this->fillFromStorage();
+    }
+
+    /**
+     * Reload the form with the values effective for the chosen document scope.
+     */
+    public function updatedDocScope(): void
+    {
+        $this->fillFromStorage();
+    }
+
+    private function fillFromStorage(): void
+    {
         $state = [];
         foreach (array_keys($this->schemaDefaults()) as $defaultKey) {
-            $state['documents_'.$defaultKey] = platform_document_config($defaultKey);
+            $state['documents_'.$defaultKey] = platform_document_config(
+                $defaultKey,
+                $this->docScope === 'all' ? null : $this->docScope
+            );
         }
         $this->form->fill($state);
     }
@@ -140,7 +164,10 @@ class PlatformDocumentConfigPage extends Page
                             ->icon('heroicon-o-chat-bubble-bottom-center')
                             ->schema([
                                 TextInput::make('documents_callout_title')->label(__('Callout Title'))->default('Payment Details'),
-                                TextInput::make('documents_callout_body')->label(__('Callout Body')),
+                                Textarea::make('documents_callout_body')
+                                    ->label(__('Callout Body'))
+                                    ->rows(3)
+                                    ->helperText(__('Printed in the note box on the document. Changes here appear on the next generated invoice/receipt.')),
                                 TextInput::make('documents_cross_border_notice')
                                     ->label(__('Cross-Border Notice'))
                                     ->default('All international invoices can be settled via multi-currency or cross-border payment rails.'),
@@ -183,12 +210,16 @@ class PlatformDocumentConfigPage extends Page
     {
         $state = $this->form->getState();
 
+        // Invoice / Receipt scope prefixes every saved key so each document
+        // type can carry its own content while sharing the global fallbacks.
+        $prefix = $this->docScope === 'all' ? '' : $this->docScope.'_';
+
         foreach ($state as $compoundKey => $value) {
             if (! str_starts_with($compoundKey, 'documents_')) {
                 continue;
             }
 
-            $key = substr($compoundKey, strlen('documents_'));
+            $key = $prefix.substr($compoundKey, strlen('documents_'));
 
             PlatformSetting::updateOrCreate(
                 [
@@ -202,7 +233,9 @@ class PlatformDocumentConfigPage extends Page
         }
 
         Notification::make()
-            ->title(__('Document configuration updated'))
+            ->title($this->docScope === 'all'
+                ? __('Document configuration updated')
+                : __('Configuration updated for :scope documents', ['scope' => ucfirst($this->docScope)]))
             ->success()
             ->send();
     }

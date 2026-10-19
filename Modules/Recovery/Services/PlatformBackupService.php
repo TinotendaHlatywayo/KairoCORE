@@ -237,11 +237,14 @@ class PlatformBackupService
      */
     private function tenantTables(): array
     {
-        return DB::table('information_schema.columns')
-            ->where('table_schema', DB::getDatabaseName())
-            ->where('column_name', 'school_id')
-            ->pluck('table_name')
-            ->all();
+        // information_schema columns come back with UPPERCASE names (TABLE_NAME)
+        // on MySQL 8+, so always alias explicitly.
+        return array_column(DB::select(
+            'SELECT TABLE_NAME AS table_name
+             FROM information_schema.columns
+             WHERE table_schema = ? AND column_name = ?',
+            [DB::getDatabaseName(), 'school_id']
+        ), 'table_name');
     }
 
     /**
@@ -249,11 +252,12 @@ class PlatformBackupService
      */
     private function allTables(): array
     {
-        return DB::table('information_schema.tables')
-            ->where('table_schema', DB::getDatabaseName())
-            ->where('table_type', 'BASE TABLE')
-            ->pluck('table_name')
-            ->all();
+        return array_column(DB::select(
+            'SELECT TABLE_NAME AS table_name
+             FROM information_schema.tables
+             WHERE table_schema = ? AND table_type = ?',
+            [DB::getDatabaseName(), 'BASE TABLE']
+        ), 'table_name');
     }
 
     private function insertRow(string $table, array $row): string
