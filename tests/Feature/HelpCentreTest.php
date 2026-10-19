@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Support\HelpCentre\HelpCentreRepository;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -163,5 +164,32 @@ class HelpCentreTest extends TestCase
             $response->assertOk();
             $response->assertSee($article->title, false);
         }
+    }
+
+    public function test_articles_survive_a_serialising_cache_store(): void
+    {
+        // HelpArticle has readonly properties; caching objects breaks
+        // file/redis stores on unserialize (production 500s on /docs).
+        // The repo must cache plain arrays and re-hydrate.
+        app(HelpCentreRepository::class)->flush();
+        Config::set('cache.default', 'file');
+
+        $repo = app(HelpCentreRepository::class);
+        $this->get('/docs')->assertOk(); // warms the file cache
+
+        // Raw entry must be arrays, not serialized objects.
+        $cached = Cache::store('file')->get('help-centre.articles');
+        $this->assertIsArray($cached);
+        $this->assertIsArray($cached[0] ?? null);
+
+        // A fresh hydration from the cache must still yield real articles.
+        app()->forgetInstance(HelpCentreRepository::class);
+        $articles = app(HelpCentreRepository::class)->all();
+        $this->assertNotEmpty($articles);
+        $this->assertIsString($articles[0]->title);
+        $this->assertNotEmpty($articles[0]->category);
+
+        $this->get('/docs/finance')->assertOk();
+        $this->get('/llms.txt')->assertOk();
     }
 }

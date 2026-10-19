@@ -57,7 +57,9 @@ final class HelpCentreRepository
      */
     public function all(): array
     {
-        return Cache::remember('help-centre.articles', 600, function (): array {
+        // Cache plain arrays, not objects: HelpArticle uses readonly
+        // properties, which PHP cannot unserialize from file/redis stores.
+        $rows = Cache::remember('help-centre.articles', 600, function (): array {
             $articles = [];
             $base = resource_path('docs');
 
@@ -78,8 +80,30 @@ final class HelpCentreRepository
                 return $cat !== 0 ? $cat : $a->order <=> $b->order;
             });
 
-            return $articles;
+            return array_map(fn (HelpArticle $a) => [
+                'slug' => $a->slug,
+                'category' => $a->category,
+                'title' => $a->title,
+                'summary' => $a->summary,
+                'markdown' => $a->markdown,
+                'order' => $a->order,
+                'published' => $a->published,
+                'file_path' => $a->filePath,
+                'updated_at' => $a->updatedAt,
+            ], $articles);
         });
+
+        return array_map(fn (array $row) => new HelpArticle(
+            slug: $row['slug'],
+            category: $row['category'],
+            title: $row['title'],
+            summary: $row['summary'],
+            markdown: $row['markdown'],
+            order: $row['order'],
+            published: $row['published'],
+            filePath: $row['file_path'],
+            updatedAt: $row['updated_at'],
+        ), $rows);
     }
 
     /**
