@@ -243,7 +243,50 @@ if (! function_exists('platform_seo_description')) {
      */
     function platform_seo_description(): string
     {
-        return (string) __(platform_name().' is a multi-tenant school management platform with admissions, academics, fees, attendance, communication, and a customizable public website for every school.');
+        return (string) __(platform_name().' is the best school management software for schools in Zimbabwe, Southern Africa and worldwide: admissions, student records, fees invoicing and payments, attendance, assessments, report cards, staff permissions, announcements and a customizable school website — all in one secure cloud platform.');
+    }
+}
+
+if (! function_exists('platform_seo_keywords')) {
+    /**
+     * Meta keywords for the public marketing pages. Kept focused on phrases
+     * people actually search for; duplicated stuffing hurts more than helps.
+     *
+     * @return array<int, string>
+     */
+    function platform_seo_keywords(): array
+    {
+        $brand = platform_name();
+
+        return [
+            $brand,
+            $brand.' school management system',
+            $brand.' Zimbabwe',
+            'school management software',
+            'school management system',
+            'best school management software Zimbabwe',
+            'school management system Zimbabwe',
+            'school management software Southern Africa',
+            'school management system South Africa',
+            'school management software Africa',
+            'school ERP Zimbabwe',
+            'school administration software',
+            'student information system',
+            'SIS Zimbabwe',
+            'school fees invoicing software',
+            'school fees management system',
+            'student records system',
+            'online student admission system',
+            'school report cards software',
+            'ZIMSEC report card software',
+            'Cambridge school software',
+            'school attendance system',
+            'school accounting software',
+            'multi-tenant school platform',
+            'cloud school management',
+            'school website builder',
+            'digital school platform',
+        ];
     }
 }
 
