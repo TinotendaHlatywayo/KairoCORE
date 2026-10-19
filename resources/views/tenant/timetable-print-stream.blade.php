@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    @include('partials.favicon')
     <meta charset="UTF-8">
     <title>Official Timetable - {{ $course->name }} ({{ $sections->pluck('name')->implode(', ') }})</title>
     <style>

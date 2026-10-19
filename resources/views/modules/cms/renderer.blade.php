@@ -64,10 +64,10 @@
     }
     $ogImage = $ogImage ?: asset('images/School_repository_cover.jpeg');
 
-    $favicon = $website->favicon_path ?: ($school->logo_path ?? null);
+    $favicon = $website->favicon_path;
     $faviconHref = $favicon
         ? (preg_match('~^https?://~i', $favicon) ? $favicon : asset('storage/' . $favicon))
-        : 'data:image/svg+xml,' . rawurlencode('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="22" fill="' . $primary . '"/><text x="50" y="68" font-size="52" font-family="Arial, sans-serif" font-weight="700" text-anchor="middle" fill="' . $onPrimary . '">' . e(mb_substr($school->name, 0, 1)) . '</text></svg>');
+        : school_favicon_url();
 
     // ── Fonts: active pair + dedicated heading font + EVERY per-block font
     //      chosen in the section inspector, so live matches the studio
