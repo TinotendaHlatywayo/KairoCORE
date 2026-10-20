@@ -76,6 +76,25 @@ class SchoolResource extends Resource
                             ->alphaDash()
                             ->unique(ignoreRecord: true)
                             ->suffix('.'.parse_url(config('app.url'), PHP_URL_HOST)),
+                        Forms\Components\TextInput::make('login_code')
+                            ->label(__('Login Code'))
+                            ->helperText(__('Short memorable code people use to reach this school’s login page (e.g. TINWAY-PRI).'))
+                            ->maxLength(24)
+                            ->unique(ignoreRecord: true)
+                            ->prefix('/school-login?code=')
+                            ->updateStateUsing(function ($state, $record) {
+                                $value = strtoupper(trim((string) $state));
+
+                                if ($value === '') {
+                                    return School::generateLoginCode(
+                                        $record?->name ?? '',
+                                        $record?->institution_type,
+                                        $record?->id
+                                    );
+                                }
+
+                                return preg_replace('/[^A-Z0-9\-]/', '', $value);
+                            }),
                         Forms\Components\TextInput::make('country')
                             ->label(__('Country'))
                             ->maxLength(255),

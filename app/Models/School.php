@@ -15,6 +15,7 @@ class School extends Model
     protected $fillable = [
         'name',
         'subdomain',
+        'login_code',
         'status',
         'region',
         'country',
@@ -48,6 +49,15 @@ class School extends Model
 
     protected static function booted(): void
     {
+        static::creating(function (self $school): void {
+            if (! $school->login_code) {
+                $school->login_code = static::generateLoginCode(
+                    $school->name,
+                    $school->institution_type
+                );
+            }
+        });
+
         static::deleting(function (self $school) {
             $school->users()->get()->each->delete();
         });
@@ -102,6 +112,72 @@ class School extends Model
                 DB::statement('SET FOREIGN_KEY_CHECKS=1');
             }
         });
+    }
+
+    /**
+     * A short, memorable login code derived from the school's name and
+     * institution type — e.g. "TINWAY-SEC". Unique across all schools;
+     * retries with a numeric suffix on collision.
+     */
+    public static function generateLoginCode(?string $name, ?string $institutionType, ?int $excludeId = null): string
+    {
+        $firstWord = explode(' ', trim((string) $name))[0] ?? '';
+        $word = strtoupper(preg_replace('/[^A-Za-z]/', '', $firstWord) ?: 'SCHOOL');
+        $segment = substr($word, 0, 7);
+        if (strlen($segment) < 3) {
+            $segment = substr($word, 0, 7).'SCH';
+        }
+
+        $typeMap = [
+            'primary' => 'PRI',
+            'secondary' => 'SEC',
+            'college' => 'COL',
+            'university' => 'UNI',
+            'academy' => 'ACA',
+            'nursery' => 'NUR',
+            'international' => 'INT',
+        ];
+        $typeCode = $typeMap[strtolower(trim((string) $institutionType))] ?? 'SCH';
+
+        $base = substr($segment.'-'.$typeCode, 0, 24);
+        $code = $base;
+        $n = 2;
+
+        while (! static::isLoginCodeFree($code, $excludeId)) {
+            $code = substr($base, 0, 22).$n;
+            $n++;
+        }
+
+        return $code;
+    }
+
+    protected static function isLoginCodeFree(string $code, ?int $excludeId = null): bool
+    {
+        $query = static::withTrashed()->where('login_code', $code);
+
+        if ($excludeId !== null) {
+            $query->where('id', '!=', $excludeId);
+        }
+
+        return ! $query->exists();
+    }
+
+    /**
+     * The staff login URL on this school's own subdomain.
+     */
+    public function loginUrl(): string
+    {
+        $base = parse_url(config('app.url'), PHP_URL_HOST);
+
+        return 'https://'.$this->subdomain.'.'.$base.'/workspace/login';
+    }
+
+    /** Find a school by its short login code (case-insensitive). */
+    public static function findByLoginCode(string $code): ?self
+    {
+        $code = strtoupper(trim($code));
+
+        return static::withTrashed()->where('login_code', $code)->first();
     }
 
     public function domains()

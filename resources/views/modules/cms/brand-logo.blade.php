@@ -1,10 +1,12 @@
 @php
     use Modules\Admin\Models\SystemSetting;
 
-    $schoolId = session('current_tenant')?->id ?? (auth()->check() ? auth()->user()->school_id : null);
+    $tenant = session('current_tenant');
+    $schoolId = $tenant?->id ?? (auth()->check() ? auth()->user()->school_id : null);
     $profileSchoolName = $schoolId ? SystemSetting::get('profile', 'school_name') : null;
-    $schoolName = $profileSchoolName ?: (session('current_tenant')?->name ?? ($schoolId ? \App\Models\School::find($schoolId)?->name : null) ?: 'Kairo CORE');
-    
+    $schoolName = $profileSchoolName ?: ($tenant?->name ?? ($schoolId ? \App\Models\School::find($schoolId)?->name : null) ?: 'Kairo CORE');
+    $loginCode = $tenant?->login_code ?? ($schoolId ? \App\Models\School::withTrashed()->find($schoolId)?->login_code : null);
+
     // Default logo is the Super Admin Console Logo (platform logo)
     $logoUrl = platform_logo_url();
 
@@ -35,7 +37,15 @@
              class="w-auto object-contain rounded-md" 
              {!! $inlineStyles !!} />
     </div>
-    <span class="font-bold text-sm tracking-tight text-gray-900 dark:text-white truncate max-w-[180px]" x-text="schoolName">
-        {{ $schoolName }}
-    </span>
+    <div class="min-w-0">
+        <span class="font-bold text-sm tracking-tight text-gray-900 dark:text-white truncate max-w-[180px] block" x-text="schoolName">
+            {{ $schoolName }}
+        </span>
+        @if(!empty($loginCode))
+            <span class="block text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500"
+                  title="{{ __('School login code — share it so people can find your login page at kairo.co.zw/school-login') }}">
+                ({{ $loginCode }})
+            </span>
+        @endif
+    </div>
 </div>

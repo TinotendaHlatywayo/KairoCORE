@@ -18,6 +18,7 @@ use App\Http\Controllers\StudentFeeCheckoutController;
 use App\Http\Middleware\EnsurePlatformAdmin;
 use App\Http\Middleware\SetUserLocale;
 use App\Livewire\RegistrationWizard;
+use App\Models\School;
 use App\Support\HelpCentre\HelpCentreRepository;
 use App\Support\TeacherInitials;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
@@ -237,6 +238,51 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
             ],
         ]);
     })->name('marketing.contact');
+
+    /*
+    |----------------------------------------------------------------------
+    | School login by short code
+    |----------------------------------------------------------------------
+    | Every school gets a memorable login code (e.g. TINWAY-PRI). The visitor
+    | types it in, or follows /go/{code}, and lands on that school's own
+    | staff login page on its subdomain.
+    */
+    Route::get('/school-login', function () {
+        $code = strtoupper(trim((string) request('code')));
+        $error = null;
+        $school = null;
+
+        if ($code !== '') {
+            $school = School::findByLoginCode($code);
+
+            if ($school && $school->subdomain) {
+                return redirect()->away($school->loginUrl());
+            }
+
+            $error = $school
+                ? __('That school has no web address configured yet.')
+                : __('No school matches that code. Check the code and try again.');
+        }
+
+        return view('marketing.school-login', [
+            'code' => $code,
+            'error' => $error,
+            'seoJsonLd' => [
+                platform_breadcrumb_list([
+                    ['name' => __('Home'), 'url' => route('marketing.home')],
+                    ['name' => __('School Login'), 'url' => route('school.login')],
+                ]),
+            ],
+        ]);
+    })->name('school.login');
+
+    Route::get('/go/{code}', function (string $code) {
+        $school = School::findByLoginCode($code);
+
+        abort_unless($school !== null && $school->subdomain !== null, 404);
+
+        return redirect()->away($school->loginUrl());
+    })->where('code', '[A-Za-z0-9\-]+')->name('school.go');
 
     Route::get('/features', function () {
         return view('marketing.features', [
