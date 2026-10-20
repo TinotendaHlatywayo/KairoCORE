@@ -213,7 +213,7 @@ class VisualCmsBuilder extends Page
         $this->pageTemplate = CmsTemplateService::resolvePageTheme($this->page->page_theme, $this->page->page_template, $this->activeTemplate);
         $this->pageLayout = $this->page->page_layout ?? '';
         $this->pageHasThemeOverride = ! empty($this->page->page_theme);
-        $this->editingMode = data_get($this->website->theme_overrides, 'editor_mode', 'simple');
+        $this->editingMode = $this->website->cms_mode ?: data_get($this->website->theme_overrides, 'editor_mode', 'simple');
         $this->color_primary = CmsTemplateService::safeHex($this->website->color_primary, '#1e3a8a');
         $this->color_secondary = CmsTemplateService::safeHex($this->website->color_secondary, '#0284c7');
         $this->color_accent = CmsTemplateService::safeHex($this->website->color_accent, '#f59e0b');
@@ -1441,6 +1441,7 @@ class VisualCmsBuilder extends Page
 
         $this->editingMode = $mode;
         $this->website->update([
+            'cms_mode' => $mode,
             'theme_overrides' => array_merge($this->website->theme_overrides ?? [], ['editor_mode' => $mode]),
         ]);
         $this->dispatch('notify', ['message' => $mode === 'simple' ? 'Simple customization enabled.' : 'Advanced customization enabled.', 'type' => 'success']);

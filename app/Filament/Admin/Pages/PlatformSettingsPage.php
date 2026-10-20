@@ -293,6 +293,10 @@ class PlatformSettingsPage extends Page implements HasForms
                                         .'Leave a channel blank to hide it on the site.'
                                     ))
                                     ->columnSpanFull(),
+                                TextInput::make('contact_location_url')
+                                    ->label(__('Office location URL'))
+                                    ->url()
+                                    ->helperText(__('Google Maps link for the office, e.g. https://maps.google.com/?q=... — shown on the contact page location card. Falls back to a Google Maps search for the office location text when blank.')),
                                 TextInput::make('contact_email')
                                     ->label(__('Contact email address'))
                                     ->email()

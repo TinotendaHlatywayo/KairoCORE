@@ -586,7 +586,7 @@
 
         <!-- Right: Actions -->
         <div class="flex items-center space-x-3">
-            <div class="hidden xl:flex items-center rounded-xl border border-white/10 bg-white/[0.06] p-1 text-sm font-bold">
+            <div class="flex items-center rounded-xl border border-white/10 bg-white/[0.06] p-1 text-sm font-bold">
                 <button x-on:click="editingMode = 'simple'; $wire.setEditingMode('simple')"
                         :class="editingMode === 'simple' ? 'active' : ''"
                         class="sc-seg-btn">{{ __('Simple') }}</button>
@@ -618,6 +618,14 @@
                     <span wire:loading wire:target="publishPage">{{ __('Publishing…') }}</span>
                 </button>
             @endif
+
+            <!-- Content Manager link (Simple CMS) -->
+            <a href="{{ \App\Filament\App\Pages\WebsiteContentManager::getUrl() }}"
+               class="px-4 py-2.5 bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 hover:text-white font-extrabold text-sm rounded-xl border border-white/10 transition duration-200 flex items-center gap-2 whitespace-nowrap"
+               title="{{ __('Switch to the simple Content Manager') }}">
+                <span>{{ __('✏️') }}</span>
+                <span>{{ __('Content Manager') }}</span>
+            </a>
 
             <!-- Live Website Globe Button -->
             <a href="{{ route('tenant.home') }}" target="_blank"

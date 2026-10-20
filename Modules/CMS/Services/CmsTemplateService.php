@@ -249,6 +249,33 @@ class CmsTemplateService
         );
     }
 
+    /**
+     * Template keys curated for the Simple CMS (content-only editing).
+     * All five are non-dark, photo-forward and distinct in palette/typography.
+     */
+    public const SIMPLE_TEMPLATE_KEYS = [
+        'nordic-light',
+        'savanna-gold',
+        'botanical-green',
+        'mediterranean-blue',
+        'urban-creative',
+    ];
+
+    /** Templates offered in the Simple CMS picker. */
+    public static function simpleTemplates(): array
+    {
+        return array_intersect_key(
+            self::getTemplates(),
+            array_flip(self::SIMPLE_TEMPLATE_KEYS)
+        );
+    }
+
+    /** True when a template key belongs to the Simple CMS set. */
+    public static function isSimpleTemplate(string $key): bool
+    {
+        return in_array($key, self::SIMPLE_TEMPLATE_KEYS, true);
+    }
+
     /** True when a template is no longer offered for new selection. */
     public static function isRetired(string $key): bool
     {

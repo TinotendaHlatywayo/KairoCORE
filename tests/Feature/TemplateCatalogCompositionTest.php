@@ -8,19 +8,40 @@ use Tests\TestCase;
 /**
  * Home-page seed compositions differentiate the templates at a glance.
  * Community Warm leads with family voices, Playful Garden with photos,
- * Coastal Fresh with the round campus tour. All ten catalogs stay intact.
+ * Coastal Fresh with the round campus tour. All fifteen catalogs stay
+ * intact — the original ten plus the five Simple CMS sets.
  */
 class TemplateCatalogCompositionTest extends TestCase
 {
-    public function test_all_ten_template_catalogs_stay_intact(): void
+    public function test_all_template_catalogs_stay_intact(): void
     {
         $catalog = SiteTemplateCatalog::catalog();
 
-        $this->assertCount(10, $catalog);
+        $this->assertCount(15, $catalog);
 
         foreach ($catalog as $key => $pages) {
             $this->assertArrayHasKey('home', $pages, $key);
             $this->assertNotEmpty($pages['home']['blocks'], $key);
+        }
+    }
+
+    public function test_simple_cms_templates_ship_all_six_pages(): void
+    {
+        $simple = [
+            'nordic-light',
+            'savanna-gold',
+            'botanical-green',
+            'mediterranean-blue',
+            'urban-creative',
+        ];
+
+        foreach ($simple as $key) {
+            $pages = SiteTemplateCatalog::pages($key);
+
+            foreach (['home', 'about', 'admissions', 'news-events', 'contact', 'student-life'] as $slug) {
+                $this->assertArrayHasKey($slug, $pages, "{$key} is missing page {$slug}");
+                $this->assertNotEmpty($pages[$slug]['blocks'], "{$key}/{$slug} has no blocks");
+            }
         }
     }
 

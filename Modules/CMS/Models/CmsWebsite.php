@@ -32,6 +32,7 @@ class CmsWebsite extends Model
         'is_template_site',
         'active_site_template_id',
         'active_template',
+        'cms_mode',
         'font_primary',
         'font_secondary',
         'font_heading',

@@ -54,8 +54,12 @@ class RetiredCmsTemplateTest extends TestCase
             $this->assertNotEmpty($tpl['design']['radius'], $key);
         }
 
-        $this->assertCount(9, CmsTemplateService::selectableTemplates());
-        $this->assertCount(10, CmsTemplateService::getTemplates());
+        // 14 selectable: 9 original + 5 Simple CMS (nordic-light, savanna-gold,
+        // botanical-green, mediterranean-blue, urban-creative). 15 total including
+        // retired neon-frontier.
+        $this->assertCount(14, CmsTemplateService::selectableTemplates());
+        $this->assertCount(15, CmsTemplateService::getTemplates());
+        $this->assertCount(5, CmsTemplateService::simpleTemplates());
     }
 
     public function test_builder_pickers_offer_only_selectable_templates(): void
