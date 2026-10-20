@@ -501,8 +501,43 @@
                         </div>
                     </div>
 
-                    {{-- Platform Login --}}
-                    <a href="{{ url('/platform') }}" class="hidden sm:inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition active:scale-95">{{ __('Platform Login') }}</a>
+                    {{-- Login: School or Platform --}}
+                    <div class="relative hidden sm:block" x-data="{ loginOpen: false }" @click.outside="loginOpen = false">
+                        <button type="button"
+                                @click="loginOpen = !loginOpen"
+                                :aria-expanded="loginOpen"
+                                class="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition active:scale-95">
+                            {{ __('Login') }}
+                            <svg class="h-3.5 w-3.5 transition-transform duration-200" :class="loginOpen ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+                        </button>
+                        <div x-show="loginOpen" x-cloak
+                             x-transition:enter="transition ease-out duration-150"
+                             x-transition:enter-start="opacity-0 -translate-y-1"
+                             x-transition:enter-end="opacity-100 translate-y-0"
+                             x-transition:leave="transition ease-in duration-100"
+                             x-transition:leave-start="opacity-100"
+                             x-transition:leave-end="opacity-0 -translate-y-1"
+                             class="absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0F172A] shadow-xl shadow-slate-900/10">
+                            <a href="{{ route('school.login') }}" class="flex items-start gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
+                                <span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#D94B39]/10 text-[#D94B39] dark:text-[#EF5F4D]">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75"/></svg>
+                                </span>
+                                <span>
+                                    <span class="block text-sm font-bold text-slate-900 dark:text-white">{{ __('School Login') }}</span>
+                                    <span class="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">{{ __('Use your school’s short code') }}</span>
+                                </span>
+                            </a>
+                            <a href="{{ url('/platform/login') }}" class="flex items-start gap-3 border-t border-slate-100 dark:border-slate-800 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
+                                <span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#1F2E43] dark:bg-slate-700 text-white">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
+                                </span>
+                                <span>
+                                    <span class="block text-sm font-bold text-slate-900 dark:text-white">{{ __('Platform Login') }}</span>
+                                    <span class="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">{{ __('Kairo CORE administrators') }}</span>
+                                </span>
+                            </a>
+                        </div>
+                    </div>
 
                     {{-- Register School CTA --}}
                     <a href="{{ route('register') }}" class="btn-magnetic inline-flex items-center gap-1.5 rounded-xl bg-[#D94B39] hover:bg-[#c14332] px-4 py-2 text-sm font-bold text-white shadow-md shadow-[#D94B39]/25 transition active:scale-95">
@@ -565,7 +600,13 @@
                     </button>
                 </div>
 
-                <a href="{{ url('/platform') }}" class="block rounded-xl px-3.5 py-2.5 text-base font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800">{{ __('Platform Login') }}</a>
+                <a href="{{ route('school.login') }}" class="flex items-center justify-between rounded-xl px-3.5 py-2.5 text-base font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60">
+                    <span>{{ __('School Login') }}</span>
+                    <span class="text-xs font-medium text-slate-400">{{ __('Short code') }}</span>
+                </a>
+                <a href="{{ url('/platform/login') }}" class="flex items-center justify-between rounded-xl px-3.5 py-2.5 text-base font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60">
+                    <span>{{ __('Platform Login') }}</span>
+                </a>
                 <a href="{{ route('register') }}" class="mt-2 block rounded-xl bg-[#D94B39] px-4 py-3 text-center text-base font-bold text-white shadow-md shadow-[#D94B39]/25">{{ __('Register School') }}</a>
             </div>
         </div>
