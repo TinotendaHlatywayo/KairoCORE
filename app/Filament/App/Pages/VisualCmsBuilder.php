@@ -308,6 +308,8 @@ class VisualCmsBuilder extends Page
         $live = CmsSiteTemplateService::liveWebsite($schoolId);
 
         if (! $live) {
+            $this->dispatch('notify', ['message' => 'No live website found — changes saved to draft only.', 'type' => 'warning']);
+
             return;
         }
 
@@ -355,6 +357,9 @@ class VisualCmsBuilder extends Page
             'page_layout' => $this->page->page_layout,
             'page_theme' => $this->page->page_theme,
             'page_settings' => $this->page->page_settings ?? [],
+            'seo_title' => $this->page->seo_title,
+            'seo_description' => $this->page->seo_description,
+            'seo_keywords' => $this->page->seo_keywords,
             'blocks' => $blocks,
             'draft_blocks' => $blocks,
         ];
@@ -407,10 +412,13 @@ class VisualCmsBuilder extends Page
     {
         if (in_array($name, [
             'color_primary', 'color_secondary', 'color_accent', 'color_background', 'color_text',
-            'color_card_bg', 'font_primary', 'font_secondary', 'design_radius', 'design_shadow',
-            'design_container', 'design_button_style',
+            'color_card_bg', 'font_primary', 'font_secondary', 'font_heading',
+            'design_radius', 'design_shadow', 'design_container', 'design_button_style',
         ], true)) {
             $this->hasUnpublishedChanges = true;
+            // Global Styles edits save immediately so the preview and the
+            // live site stay in step without a separate Publish click.
+            $this->saveWebsiteStyles();
         }
 
         // Let blocks that were still inheriting the old site background / text color
@@ -1011,11 +1019,12 @@ class VisualCmsBuilder extends Page
         $this->blockImportSources = [];
 
         $this->syncDraft();
+        $this->syncPageToLive();
         $this->pushToHistory();
 
         $this->dispatch('notify', [
             'message' => $mode === 'replace'
-                ? 'Block replaced from '.$source['title'].'.'
+                ? 'Block replaced from '.$source['title'].' and published to live.'
                 : 'Styles copied from '.$source['title'].'.',
             'type' => 'success',
         ]);
@@ -1059,12 +1068,14 @@ class VisualCmsBuilder extends Page
             $this->blocks[] = CmsTemplateService::starterBlock($type);
         }
 
+        $this->pageLayout = $layout;
         $this->page->update(['page_layout' => $layout]);
         $this->syncDraft();
+        $this->syncPageToLive();
         $this->selectedBlockIndex = null;
         $this->selectedBlockData = [];
         $this->pushToHistory();
-        $this->dispatch('notify', ['message' => "{$layouts[$layout]['name']} applied. Replace the starter text and images to make it yours.", 'type' => 'success']);
+        $this->dispatch('notify', ['message' => "{$layouts[$layout]['name']} applied and published to your live site.", 'type' => 'success']);
     }
 
     /** Clear the per-page layout — page keeps its current blocks. */
@@ -1271,8 +1282,9 @@ class VisualCmsBuilder extends Page
         $this->tempImage = null;
         $this->mediaAltText = '';
         $this->pushToHistory();
+        $this->syncPageToLive();
 
-        $this->dispatch('notify', ['message' => '📷 Image uploaded and applied successfully!', 'type' => 'success']);
+        $this->dispatch('notify', ['message' => '📷 Image uploaded and published to your live site!', 'type' => 'success']);
     }
 
     public function uploadWebsiteLogo(): void
@@ -1417,7 +1429,8 @@ class VisualCmsBuilder extends Page
         $this->blocks = $version->blocks ?? [];
         $this->selectedBlockIndex = null;
         $this->pushToHistory();
-        $this->dispatch('notify', ['message' => "Version {$version->version_number} restored to your draft. Apply changes when ready.", 'type' => 'success']);
+        $this->syncPageToLive();
+        $this->dispatch('notify', ['message' => "Version {$version->version_number} restored and published to your live site.", 'type' => 'success']);
     }
 
     public function setEditingMode(string $mode): void
@@ -1492,7 +1505,8 @@ class VisualCmsBuilder extends Page
         $this->selectedBlockIndex = null;
         $this->selectedBlockData = [];
         $this->pushToHistory();
-        $this->dispatch('notify', ['message' => 'School template applied — content is ready to edit, styling carried over.', 'type' => 'success']);
+        $this->syncPageToLive();
+        $this->dispatch('notify', ['message' => 'School template applied and published to your live site.', 'type' => 'success']);
     }
 
     public function duplicateSchoolTemplate(int $templateId): void
