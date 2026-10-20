@@ -56,6 +56,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Platform (central) URL
+    |--------------------------------------------------------------------------
+    |
+    | The platform's own domain, e.g. https://kairo.co.zw. Unlike 'url', this
+    | is never rewritten per-request by the tenant middleware, so tenant
+    | pages can link back to central routes (/docs, marketing pages) with
+    | the correct host.
+    |
+    */
+
+    'platform_url' => env('PLATFORM_URL', env('APP_URL', 'http://localhost')),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |
