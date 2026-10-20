@@ -11,6 +11,7 @@
     <x-filament-actions::modals />
 
     @include('modules.cms.studio-base')
+    @include('modules.cms.site.design-system')
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -195,25 +196,69 @@
                         <button wire:click="$set('previewSize', 'mobile')" class="wcm-chip" :class="{{ json_encode($previewSize) }}==='mobile' ? 'is-active' : ''">{{ __('Mobile') }}</button>
                     </div>
                 </div>
+                @php
+                    $scSiteStyle = sprintf(
+                        '--sc-primary:%s;--sc-secondary:%s;--sc-accent:%s;--sc-bg:%s;--sc-surface:%s;--sc-text:%s;--sc-ink:%s;--sc-border:rgba(15,23,42,0.1);--sc-radius:%s;--sc-radius-btn:%s;--sc-shadow:%s;--sc-container:%s;--sc-font-sans:\'%s\',ui-sans-serif,system-ui,sans-serif;--sc-font-display:\'%s\',ui-sans-serif,system-ui,sans-serif;--sc-font-heading:\'%s\',ui-sans-serif,system-ui,sans-serif;',
+                        $theme['primary'] ?? '#1e3a8a',
+                        $theme['secondary'] ?? '#0284c7',
+                        $theme['accent'] ?? '#f59e0b',
+                        $theme['background'] ?? '#ffffff',
+                        $theme['cardBg'] ?? '#f8fafc',
+                        $theme['text'] ?? '#0f172a',
+                        \Modules\CMS\Services\CmsTemplateService::getAdaptiveTextColor($theme['primary'] ?? '#1e3a8a', '#ffffff', '#0f172a'),
+                        $theme['radius'] ?? '20px',
+                        $theme['buttonStyle'] ?? '9999px',
+                        $theme['shadow'] ?? '0 10px 30px -5px rgba(15,23,42,0.08)',
+                        $theme['container'] ?? '80rem',
+                        $theme['fontPrimary'] ?? 'Inter',
+                        $theme['fontSecondary'] ?? 'Outfit',
+                        $theme['fontSecondary'] ?? 'Outfit'
+                    );
+                    $scTemplate = $theme['template'] ?? 'heritage-editorial';
+                @endphp
                 <div class="flex-1 overflow-auto p-4 wcm-preview-stage" x-show="previewTab !== 'split'" x-cloak>
                     <div class="mx-auto wcm-preview-{{ $previewSize }} transition-all duration-300">
-                        <div style="{{ $this->previewVars() }}" class="wcm-device">
-                            @foreach($blocks as $block)
-                                @include('modules.cms.sections.preview-block', ['block' => $block, 'theme' => $theme, 'stats' => $stats, 'news' => $news, 'events' => $events, 'staff' => $staff])
-                            @endforeach
+                        <div class="wcm-device">
+                            <div class="sc-site" data-sc-template="{{ $scTemplate }}" data-sc-motion="off" style="{{ $scSiteStyle }}">
+                                @foreach($blocks as $block)
+                                    @continue($block['styles']['hidden'] ?? false)
+                                    @include('modules.cms.sections.preview-block', ['block' => $block, 'theme' => $theme, 'stats' => $stats, 'news' => $news, 'events' => $events, 'staff' => $staff, 'isStudioPreview' => true])
+                                @endforeach
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="flex-1 overflow-auto p-4 wcm-preview-stage" x-show="previewTab === 'split'" x-cloak>
                     <div class="mx-auto wcm-preview-{{ $previewSize }} transition-all duration-300">
-                        <div style="{{ $this->previewVars() }}" class="wcm-device">
-                            @foreach($blocks as $block)
-                                @include('modules.cms.sections.preview-block', ['block' => $block, 'theme' => $theme, 'stats' => $stats, 'news' => $news, 'events' => $events, 'staff' => $staff])
-                            @endforeach
+                        <div class="wcm-device">
+                            <div class="sc-site" data-sc-template="{{ $scTemplate }}" data-sc-motion="off" style="{{ $scSiteStyle }}">
+                                @foreach($blocks as $block)
+                                    @continue($block['styles']['hidden'] ?? false)
+                                    @include('modules.cms.sections.preview-block', ['block' => $block, 'theme' => $theme, 'stats' => $stats, 'news' => $news, 'events' => $events, 'staff' => $staff, 'isStudioPreview' => true])
+                                @endforeach
+                            </div>
                         </div>
                     </div>
                 </div>
             </section>
         </div>
     @endif
+
+    {{-- Preview hardening: Livewire morph re-adds x-cloak to hidden panes,
+         which Alpine never clears again — force-remove after every update. --}}
+    <script>
+        (function () {
+            function fixPreview() {
+                document.querySelectorAll('.wcm-preview-stage[x-cloak]').forEach(function (el) {
+                    el.removeAttribute('x-cloak');
+                });
+                document.querySelectorAll('.sc-site [data-sc-reveal]').forEach(function (el) {
+                    el.classList.add('is-in');
+                });
+            }
+            window.addEventListener('livewire:morph', fixPreview);
+            window.addEventListener('livewire:morphed', fixPreview);
+            document.addEventListener('DOMContentLoaded', fixPreview);
+        })();
+    </script>
 </div>
