@@ -8,7 +8,7 @@
         <span class="sc-eyebrow">{{ __('Our Institutional Identity') }}</span>
         <h2 {!! 'style="' . $v['titleStyle'] . '"' !!}>{{ $title }}</h2>
         <div class="sc-muted" style="font-size: 1.02rem; line-height: 1.7;">
-            {!! $rich($block['description']) ?: __('Founded with a clear commitment to academic rigor and moral integrity.') !!}
+            {!! $rich($block['description'] ?? '') ?: __('Founded with a clear commitment to academic rigor and moral integrity.') !!}
         </div>
 
         @if(!empty($block['mission']) || !empty($block['vision']))

@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
+use Modules\CMS\Models\CmsWebsite;
 use Modules\CMS\Services\CmsNavigationService;
 
 /**
@@ -104,31 +105,42 @@ class CmsPage extends Model
      */
     public static function consolidateAdmissionsAlias(int $cmsWebsiteId): ?self
     {
-        // Older sites can contain both alias rows. Keep the page most recently
-        // edited, rather than blindly keeping `apply-online` and throwing away
-        // the admission page content a user has just changed in the builder.
-        $canonical = self::query()
+        // Older sites can contain both alias rows — and past races have left
+        // several `apply-online` copies behind. Keep the page most recently
+        // edited, rather than blindly keeping the first `apply-online` and
+        // throwing away the admission page content a user has just changed.
+        $pages = self::query()
             ->where('cms_website_id', $cmsWebsiteId)
             ->whereIn('slug', ['apply-online', 'admissions'])
             ->orderByDesc('updated_at')
             ->orderByRaw("FIELD(slug, 'apply-online', 'admissions')")
-            ->first();
+            ->get();
 
+        $canonical = $pages->first();
         if (! $canonical) {
             return null;
         }
 
-        if ($canonical->slug === 'admissions') {
-            $canonical->update(['slug' => 'apply-online']);
+        // Delete every other alias copy (either slug) in one pass.
+        $pages->except($canonical->id)->each->delete();
 
-            return $canonical;
+        if ($canonical->slug !== 'apply-online') {
+            $canonical->update(['slug' => 'apply-online']);
         }
 
-        self::query()
-            ->where('cms_website_id', $cmsWebsiteId)
-            ->where('slug', 'admissions')
-            ->where('id', '!=', $canonical->id)
-            ->delete();
+        // Deleting pages bypasses the `saved` hook that keeps the stored
+        // navigation menu in step — rebuild it so stale Admissions links
+        // disappear immediately. Best-effort: route() needs a tenant context
+        // that console/tests may not have, and a nav hiccup must never break
+        // consolidation.
+        try {
+            $website = CmsWebsite::withoutGlobalScopes()->find($cmsWebsiteId);
+            if ($website) {
+                CmsNavigationService::sync($website);
+            }
+        } catch (\Throwable) {
+            // Stored menu stays stale until the next page save re-syncs it.
+        }
 
         return $canonical;
     }

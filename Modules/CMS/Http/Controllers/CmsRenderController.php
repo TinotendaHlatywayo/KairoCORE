@@ -134,20 +134,32 @@ class CmsRenderController extends Controller
                         $layout['blocks']
                     ) : [];
 
-                    $page = CmsPage::create([
-                        'school_id' => $school->id,
-                        'cms_website_id' => $website->id,
-                        'title' => __('Admissions'),
-                        'slug' => 'apply-online',
-                        'is_homepage' => false,
-                        'is_published' => true,
-                        'hide_from_nav' => false,
-                        'sort_order' => 4,
-                        'page_template' => $website->active_template,
-                        'page_theme' => $website->active_template,
-                        'blocks' => $blocks,
-                        'draft_blocks' => $blocks,
-                    ]);
+                    try {
+                        $page = CmsPage::create([
+                            'school_id' => $school->id,
+                            'cms_website_id' => $website->id,
+                            'title' => __('Admissions'),
+                            'slug' => 'apply-online',
+                            'is_homepage' => false,
+                            'is_published' => true,
+                            'hide_from_nav' => false,
+                            'sort_order' => 4,
+                            'page_template' => $website->active_template,
+                            'page_theme' => $website->active_template,
+                            'blocks' => $blocks,
+                            'draft_blocks' => $blocks,
+                        ]);
+                    } catch (\Illuminate\Database\QueryException $e) {
+                        // A concurrent request won the race and created the page
+                        // (enforced by the unique website+slug index) — use it.
+                        $page = CmsPage::withoutGlobalScopes()
+                            ->where('cms_website_id', $website->id)
+                            ->whereIn('slug', ['apply-online', 'admissions'])
+                            ->first();
+                        if (! $page) {
+                            throw $e;
+                        }
+                    }
                 }
             }
 
