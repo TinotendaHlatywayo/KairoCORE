@@ -90,7 +90,15 @@
     .sc-section .sc-feature-media img { object-fit: var(--sc-img-fit, cover); object-position: var(--sc-img-pos, center); }
     .sc-section .sc-media,
     .sc-section .sc-hero-frame,
-    .sc-section .sc-feature-media { max-width: var(--sc-img-maxw, none); }
+    .sc-section .sc-feature-media { max-width: 100%; }
+    .sc-section .sc-media img,
+    .sc-section .sc-hero-frame img,
+    .sc-section .sc-feature-media img {
+        width: var(--sc-img-w, 100%);
+        max-width: 100%;
+        margin-inline: auto;
+        display: block;
+    }
     .sc-section .sc-gallery-item img { object-fit: var(--sc-gallery-fit, cover); object-position: var(--sc-gallery-pos, center); }
     .sc-section .sc-tile-media { position: relative; display: block; overflow: hidden; margin-bottom: 0.9rem; border-radius: var(--sc-radius); background: color-mix(in srgb, var(--sc-text) 8%, transparent); aspect-ratio: var(--sc-card-ratio, 4 / 3); }
     .sc-section .sc-tile-media img { width: 100%; height: 100%; object-fit: var(--sc-card-fit, cover); object-position: var(--sc-card-pos, center); }
@@ -543,7 +551,7 @@
         box-shadow: var(--sc-shadow-lg);
         background: color-mix(in srgb, var(--sc-text) 8%, transparent);
     }
-    .sc-hero-frame img { width: 100%; height: 100%; object-fit: cover; }
+    .sc-hero-frame img { width: var(--sc-img-w, 100%); height: 100%; object-fit: cover; }
     .sc-hero-frame-ring {
         position: absolute;
         inset: -1rem;
@@ -621,7 +629,7 @@
         background: color-mix(in srgb, var(--sc-text) 8%, transparent);
         box-shadow: var(--sc-shadow-lg);
     }
-    .sc-media img { width: 100%; height: 100%; object-fit: cover; }
+    .sc-media img { width: var(--sc-img-w, 100%); height: 100%; object-fit: cover; }
     .sc-media-arch { border-radius: calc(var(--sc-radius) * 2) calc(var(--sc-radius) * 2) var(--sc-radius) var(--sc-radius); }
 
     .sc-fact { padding: 1.1rem 1.25rem; }
@@ -1259,7 +1267,7 @@
     }
     .sc-feature-split { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(1.5rem, 4vw, 3rem); align-items: center; }
     .sc-feature-split .sc-feature-media { border-radius: var(--sc-radius); overflow: hidden; }
-    .sc-feature-split .sc-feature-media img { width: 100%; height: 100%; object-fit: cover; aspect-ratio: 4 / 3; }
+    .sc-feature-split .sc-feature-media img { width: var(--sc-img-w, 100%); height: 100%; object-fit: cover; aspect-ratio: 4 / 3; }
 
     /* 24g. Living Aurora Hero (replaces legacy frame-sequence scrub) */
     .sc-aurora-hero {

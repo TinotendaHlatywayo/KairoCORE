@@ -1564,6 +1564,8 @@
                                                     <option value="90%">{{ __('Wide (90%)') }}</option>
                                                     <option value="80%">{{ __('Standard (80%)') }}</option>
                                                     <option value="70%">{{ __('Compact (70%)') }}</option>
+                                                    <option value="60%">{{ __('Narrow (60%)') }}</option>
+                                                    <option value="50%">{{ __('Half (50%)') }}</option>
                                                     <option value="720px">{{ __('Extra Large') }}</option>
                                                     <option value="640px">{{ __('Large') }}</option>
                                                     <option value="560px">{{ __('Medium') }}</option>
