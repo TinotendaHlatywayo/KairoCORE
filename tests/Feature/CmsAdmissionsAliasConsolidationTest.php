@@ -143,4 +143,27 @@ class CmsAdmissionsAliasConsolidationTest extends TestCase
 
         $this->assertSame(2, CmsPage::withoutGlobalScopes()->where('slug', 'apply-online')->whereIn('cms_website_id', [$one->id, $two->id])->count());
     }
+
+    public function test_ensure_all_standard_pages_does_not_recreate_admissions_duplicate(): void
+    {
+        $website = $this->makeWebsite();
+        // The canonical page already exists as apply-online; the catalog key
+        // for some templates is 'admissions'. ensureAllStandardPages must
+        // recognise the alias and not create a second nav entry.
+        $this->makePage($website, 'apply-online');
+
+        \Modules\CMS\Http\Controllers\CmsRenderController::ensureAllStandardPages($website, $this->schoolId);
+
+        $this->assertSame(1, CmsPage::withoutGlobalScopes()->where('cms_website_id', $website->id)->whereIn('slug', ['admissions', 'apply-online'])->count());
+    }
+
+    public function test_ensure_all_standard_pages_creates_canonical_apply_online_slug(): void
+    {
+        $website = $this->makeWebsite();
+
+        \Modules\CMS\Http\Controllers\CmsRenderController::ensureAllStandardPages($website, $this->schoolId);
+
+        $this->assertSame(1, CmsPage::withoutGlobalScopes()->where('cms_website_id', $website->id)->where('slug', 'apply-online')->count());
+        $this->assertSame(0, CmsPage::withoutGlobalScopes()->where('cms_website_id', $website->id)->where('slug', 'admissions')->count());
+    }
 }

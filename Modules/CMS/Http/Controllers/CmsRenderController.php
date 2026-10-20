@@ -514,8 +514,16 @@ class CmsRenderController extends Controller
         $pages = SiteTemplateCatalog::pages($activeTemplate);
 
         foreach ($pages as $slug => $sp) {
+            // 'admissions' and 'apply-online' are aliases for one page. The
+            // catalog key varies by template, so accept either slug before
+            // creating, and always store the canonical 'apply-online'.
+            $isAdmissionsAlias = in_array($slug, ['admissions', 'apply-online'], true);
+            $canonicalSlug = $isAdmissionsAlias ? 'apply-online' : $slug;
+
             $exists = CmsPage::where('cms_website_id', $website->id)
-                ->where(fn ($q) => $q->where('slug', $slug)->orWhere('slug', $slug === 'apply-online' ? 'admissions' : ''))
+                ->where(fn ($q) => $isAdmissionsAlias
+                    ? $q->whereIn('slug', ['admissions', 'apply-online'])
+                    : $q->where('slug', $slug))
                 ->exists();
 
             if (! $exists) {
@@ -523,8 +531,8 @@ class CmsRenderController extends Controller
                     'school_id' => $schoolId,
                     'cms_website_id' => $website->id,
                     'title' => $sp['title'],
-                    'slug' => $slug,
-                    'is_homepage' => $slug === 'home',
+                    'slug' => $canonicalSlug,
+                    'is_homepage' => $canonicalSlug === 'home',
                     'is_published' => true,
                     'page_template' => $activeTemplate,
                     'page_theme' => $activeTemplate,
