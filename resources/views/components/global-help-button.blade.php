@@ -87,7 +87,11 @@
                 <!-- Modal Footer -->
                 <div class="flex items-center justify-between gap-3 pt-4 border-t border-gray-200 dark:border-gray-800">
                     @php
-                        $docsUrl = 'https://' . parse_url(config('app.url'), PHP_URL_HOST) . '/docs';
+                        // The docs live on the platform's central domain. On a
+                        // tenant subdomain config('app.url') is rewritten to the
+                        // school root for the request, so derive the host from
+                        // the never-rewritten platform_url instead.
+                        $docsUrl = rtrim(config('app.platform_url'), '/') . '/docs';
                     @endphp
                     <a href="{{ $docsUrl }}" target="_blank" rel="noopener"
                        class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-950/40 rounded-xl transition">
