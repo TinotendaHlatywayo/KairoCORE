@@ -497,6 +497,8 @@ class VisualCmsBuilder extends Page
     {
         $val = CmsTemplateService::canonicalTemplate($val);
         if (! in_array($val, array_keys(CmsTemplateService::getTemplates()))) {
+            $this->dispatch('notify', ['message' => __('That template is not available.'), 'type' => 'warning']);
+
             return;
         }
 
@@ -543,9 +545,19 @@ class VisualCmsBuilder extends Page
         // and the studio preview render. Pages still pinned to the previous
         // site-wide template follow the switch; pages with an explicit per-page
         // theme override keep their own template.
-        CmsPage::where('cms_website_id', $this->website->id)
-            ->where(fn ($q) => $q->whereNull('page_theme')->orWhere('page_theme', '')->orWhere('page_theme', $previousTemplate))
-            ->update(['page_theme' => $val, 'page_template' => $val]);
+        //
+        // Legacy keys (e.g. "modern_international") may sit in page_theme from
+        // an old back-fill and resolve to the same template as $previousTemplate,
+        // so we match on the *resolved* theme, not the raw column value.
+        $pageIdsToSwitch = CmsPage::where('cms_website_id', $this->website->id)
+            ->get(['id', 'page_theme', 'page_template'])
+            ->filter(fn ($p) => CmsTemplateService::resolvePageTheme($p->page_theme, $p->page_template, $this->website->active_template) === $previousTemplate)
+            ->pluck('id');
+
+        if ($pageIdsToSwitch->isNotEmpty()) {
+            CmsPage::whereIn('id', $pageIdsToSwitch)
+                ->update(['page_theme' => $val, 'page_template' => $val]);
+        }
         $this->page = $this->page->fresh() ?? $this->page;
         $this->pageTemplate = CmsTemplateService::resolvePageTheme($this->page->page_theme, $this->page->page_template, $val);
         $this->loadSitePages();
