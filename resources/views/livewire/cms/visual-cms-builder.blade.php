@@ -4,9 +4,18 @@
         library: 'foundations', 
         editingMode: @js($editingMode), 
         sidebarOpen: true, 
-        selectedBlock: @entangle('selectedBlockIndex')
+        selectedBlock: @entangle('selectedBlockIndex'),
+        toast: null,
+        toastType: 'success',
+        showToast(message, type) {
+            this.toast = message;
+            this.toastType = type || 'success';
+            clearTimeout(this._toastTimer);
+            this._toastTimer = setTimeout(() => { this.toast = null; }, 3500);
+        }
      }" 
-     x-on:cms-block-selected.window="tab = 'inspector'; sidebarOpen = true">
+     x-on:cms-inspector-open.window="tab = 'inspector'; sidebarOpen = true"
+     x-on:notify.window="showToast($event.detail?.message || $event.detail, $event.detail?.type)">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -954,7 +963,7 @@
 
                         <div class="space-y-1">
                             <label class="text-xs font-bold text-[color:var(--sc-text-muted)] block">{{ __('Source Template') }}</label>
-                            <select wire:model="aspectSourceTemplate" class="studio-select-field w-full text-xs">
+                            <select wire:model.live="aspectSourceTemplate" class="studio-select-field w-full text-xs">
                                 @foreach(\Modules\CMS\Services\CmsTemplateService::selectableTemplates() as $key => $tpl)
                                     @continue($key === $activeTemplate)
                                     <option value="{{ $key }}">{{ $tpl['name'] }}</option>
@@ -1102,9 +1111,17 @@
                                     <span class="h-2 w-2 rounded-full bg-[color:var(--sc-primary)]"></span>
                                     Editing: {{ str_replace('_', ' ', $blocks[$selectedBlockIndex]['type']) }}
                                 </span>
-                                <button wire:click="$set('selectedBlockIndex', null)" class="text-xs text-[color:var(--sc-danger-dark)] hover:text-[color:var(--sc-danger)] font-bold">
-                                    {{ __('✕ Close') }}
-                                </button>
+                                <div class="flex items-center gap-3">
+                                    <label class="flex items-center gap-1.5 text-xs font-bold text-[color:var(--sc-text-muted)] cursor-pointer select-none">
+                                        <input type="checkbox"
+                                               wire:model.live="selectedBlockData.styles.hidden"
+                                               class="rounded border-gray-300 text-[color:var(--sc-primary)] focus:ring-[color:var(--sc-primary)]">
+                                        {{ __('Hidden') }}
+                                    </label>
+                                    <button wire:click="$set('selectedBlockIndex', null)" class="text-xs text-[color:var(--sc-danger-dark)] hover:text-[color:var(--sc-danger)] font-bold">
+                                        {{ __('✕ Close') }}
+                                    </button>
+                                </div>
                             </div>
 
                             <!-- Content, Typography & Style merged into a single flow -->
@@ -2159,17 +2176,23 @@
                 <div id="sc-canvas" class="relative min-h-[600px] flex-1" x-data="blockSorter(@js(array_values($blocks)))"
                      x-on:dragover.prevent x-on:drop="dropOnCanvas($event)">
                     @forelse($blocks as $index => $block)
-                        @continue($block['styles']['hidden'] ?? false)
+                        @php $isHiddenBlock = $block['styles']['hidden'] ?? false; @endphp
 
                         <!-- Click Shield Mask wrapper ensures exact selection click bindings and avoids event bubbling -->
                         <div wire:key="canvas-block-{{ $block['id'] }}-{{ $index }}"
-                             class="group relative border-2 border-transparent transition-all rounded-2xl"
+                             class="group relative border-2 border-transparent transition-all rounded-2xl {{ $isHiddenBlock ? 'opacity-40 pointer-events-auto' : '' }}"
                              x-bind:class="selectedBlock === {{ $index }} ? 'active-canvas-block' : 'hover:border-[var(--sc-primary-500)]/40 hover:bg-[var(--sc-primary-500)]/[0.03]'"
                              draggable="true" data-id="{{ $block['id'] }}"
                              x-on:dragstart="dragStart($event, '{{ $block['id'] }}')"
                              x-on:dragover.prevent
                              x-on:drop.stop="drop($event, '{{ $block['id'] }}')"
                              x-on:click="selectedBlock = {{ $index }}; $wire.selectBlock({{ $index }})">
+
+                            @if($isHiddenBlock)
+                                <span class="absolute top-2 left-2 z-10 inline-flex items-center gap-1 rounded-full bg-amber-500/90 px-2 py-0.5 text-[10px] font-bold text-white shadow">
+                                    {{ __('Hidden — click to edit & unhide') }}
+                                </span>
+                            @endif
 
                             <!-- Hover Actions Tool Box -->
                             <div class="sc-toolbox select-none">
@@ -2363,6 +2386,27 @@
             </div>
         </div>
     @endif
+
+    {{-- Global toast for all builder notifications --}}
+    <template x-teleport="body">
+        <div x-show="toast !== null"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 translate-y-2"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0 translate-y-2"
+             class="fixed bottom-6 right-6 z-[9999] max-w-sm rounded-xl px-4 py-3 text-sm font-semibold shadow-2xl text-white"
+             :class="{
+                 'bg-emerald-600': toastType === 'success',
+                 'bg-amber-600': toastType === 'warning',
+                 'bg-red-600': toastType === 'error',
+                 'bg-slate-700': toastType === 'info'
+             }"
+             style="display:none;">
+            <span x-text="toast"></span>
+        </div>
+    </template>
 </div>
 
 <script>

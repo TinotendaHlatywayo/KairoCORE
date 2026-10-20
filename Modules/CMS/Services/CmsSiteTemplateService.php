@@ -279,6 +279,9 @@ class CmsSiteTemplateService
                 'page_layout' => $page->page_layout,
                 'page_theme' => $page->page_theme,
                 'page_settings' => $page->page_settings ?? [],
+                'seo_title' => $page->seo_title,
+                'seo_description' => $page->seo_description,
+                'seo_keywords' => $page->seo_keywords,
                 'blocks' => $page->blocks ?? [],
                 'draft_blocks' => $page->draft_blocks ?? ($page->blocks ?? []),
             ];
