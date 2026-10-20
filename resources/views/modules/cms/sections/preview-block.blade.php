@@ -97,7 +97,6 @@
     $imgFits    = ['cover' => 'cover', 'contain' => 'contain'];
     $imgPositions = ['center' => 'center', 'top' => 'top', 'bottom' => 'bottom', 'left' => 'left', 'right' => 'right'];
     $imgRatios  = ['auto' => 'auto', '16 / 9' => '16 / 9', '4 / 3' => '4 / 3', '1 / 1' => '1 / 1', '3 / 4' => '3 / 4'];
-    $imgWidths  = ['none' => 'none', '90%' => '90%', '80%' => '80%', '70%' => '70%', '560px' => '560px', '640px' => '640px', '720px' => '720px'];
     $imgRadii   = ['0px' => '0px', '12px' => '12px', '24px' => '24px', '999px' => '999px'];
 
     $imgVars = '';
@@ -110,8 +109,11 @@
     if (isset($block['styles']['image_ratio'], $imgRatios[$block['styles']['image_ratio']])) {
         $imgVars .= ' --sc-img-ratio: '.$imgRatios[$block['styles']['image_ratio']].';';
     }
-    if (isset($block['styles']['image_width'], $imgWidths[$block['styles']['image_width']])) {
-        $imgVars .= ' --sc-img-maxw: '.$imgWidths[$block['styles']['image_width']].';';
+    // Accept any valid CSS width (percentage or px) so the builder's choice
+    // always reaches the live site — not just a hard-coded whitelist.
+    $rawImgWidth = trim((string) ($block['styles']['image_width'] ?? ''));
+    if ($rawImgWidth !== '' && preg_match('/^(none|\d{1,2}%|\d{2,4}px)$/', $rawImgWidth)) {
+        $imgVars .= ' --sc-img-w: '.$rawImgWidth.';';
     }
     $imgRadius = isset($block['styles']['image_radius'], $imgRadii[$block['styles']['image_radius']])
         ? $imgRadii[$block['styles']['image_radius']]

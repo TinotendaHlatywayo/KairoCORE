@@ -779,6 +779,7 @@ class VisualCmsBuilder extends Page
         if (! is_null($this->selectedBlockIndex)) {
             $this->blocks[$this->selectedBlockIndex] = $this->selectedBlockData;
             $this->pushToHistory();
+            $this->syncPageToLive();
             $this->dispatch('notify', ['message' => 'Section details saved.', 'type' => 'success']);
         }
     }
@@ -1196,6 +1197,7 @@ class VisualCmsBuilder extends Page
         $this->blocks[$this->selectedBlockIndex]['styles'] = $styles;
         $this->selectedBlockData = $this->blocks[$this->selectedBlockIndex];
         $this->syncDraft();
+        $this->syncPageToLive();
         $this->dispatch('notify', ['message' => 'Block style reset to site defaults.', 'type' => 'info']);
     }
 
