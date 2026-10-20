@@ -432,7 +432,10 @@
                     <p class="mt-3 text-xs leading-5 text-slate-300">{{ marketing_content('contact_office_hours') }}</p>
                     @php
                         $officeLocation = trim((string) marketing_content('contact_office_location'));
-                        $mapsSearchUrl = 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($officeLocation !== '' ? $officeLocation : 'Harare, Zimbabwe');
+                        $locationUrl = trim((string) \Modules\SaaS\Models\PlatformSetting::get('contact', 'location_url'));
+                        $mapsSearchUrl = $locationUrl !== ''
+                            ? $locationUrl
+                            : 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($officeLocation !== '' ? $officeLocation : 'Harare, Zimbabwe');
                     @endphp
                     @if($officeLocation !== '')
                         <a href="{{ $mapsSearchUrl }}" target="_blank" rel="noopener" class="mt-1 inline-flex items-center gap-1 text-xs leading-5 text-slate-300 font-medium underline decoration-white/30 underline-offset-2 hover:text-white hover:decoration-white transition-colors">

@@ -159,7 +159,6 @@
             <p class="reveal reveal-d2 mt-4 text-lg text-slate-600">{{ marketing_content('steps_subtitle') }}</p>
         </div>
         <div class="relative mt-16">
-            <div class="absolute left-1/2 top-0 hidden h-full w-0.5 step-line opacity-20 md:block" aria-hidden="true"></div>
             <div class="grid gap-10 md:grid-cols-3">
                 @php
                     $steps = marketing_merged_list('home_steps');

@@ -5,6 +5,7 @@
         $mediaData = ['type' => 'legacy', 'desktop' => $src, 'mobile' => $src, 'poster' => $poster];
     }
     $type = $mediaData['type'] ?? 'legacy';
+    $isVideo = in_array($type, ['video', 'mp4'], true);
     $desktopUrl = marketing_resolve_image($mediaData['desktop'] ?? ($mediaData['url'] ?? $src));
     $mobileUrl = marketing_resolve_image($mediaData['mobile'] ?? $desktopUrl);
     $posterUrl = marketing_resolve_image($mediaData['poster'] ?? $poster);
@@ -13,10 +14,11 @@
     }
 @endphp
 
-<div class="relative overflow-hidden rounded-3xl border border-slate-200 bg-slate-100 shadow-xl {{ $class }}" style="aspect-ratio: {{ $aspectRatio }};" x-data="mediaVideoPlayer({ desktop: '{{ $desktopUrl }}', mobile: '{{ $mobileUrl }}', type: '{{ $type }}' })" x-init="init()">
+<div class="relative overflow-hidden rounded-3xl border border-slate-200 bg-slate-100 shadow-xl {{ $class }}" style="aspect-ratio: {{ $aspectRatio }};" @if($isVideo) x-data="mediaVideoPlayer({ desktop: '{{ $desktopUrl }}', mobile: '{{ $mobileUrl }}', type: '{{ $type }}' })" x-init="init()" @endif>
     {{-- Poster LCP image --}}
-    <img src="{{ $posterUrl }}" alt="{{ $alt }}" class="absolute inset-0 h-full w-full object-cover transition-opacity duration-500" :class="{ 'opacity-0': playing }" fetchpriority="high" loading="eager" width="1280" height="720">
+    <img src="{{ $posterUrl }}" alt="{{ $alt }}" class="absolute inset-0 h-full w-full object-cover transition-opacity duration-500" @if($isVideo) :class="{ 'opacity-0': playing }" @endif fetchpriority="high" loading="eager" width="1280" height="720">
 
+    @if($isVideo)
     {{-- Video element --}}
     <template x-if="loadVideo">
         <video x-ref="video" class="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-700" :class="{ 'opacity-100': playing }" muted loop playsinline preload="metadata" aria-hidden="true" x-on:canplaythrough="onCanPlay" x-on:error="onError">
@@ -26,9 +28,10 @@
 
     <div class="absolute inset-0 bg-gradient-to-t from-slate-900/25 via-transparent to-transparent pointer-events-none"></div>
 
-    <button type="button" x-show="showPlayButton" @click="manualPlay()" class="absolute inset-0 m-auto flex h-16 w-16 items-center justify-center rounded-full bg-slate-900/70 text-white shadow-2xl backdrop-blur-sm transition-transform hover:scale-110 focus:outline-none" aria-label="{{ __('Play video') }}">
+    <button type="button" x-show="showPlayButton" x-cloak @click="manualPlay()" class="absolute inset-0 m-auto flex h-16 w-16 items-center justify-center rounded-full bg-slate-900/70 text-white shadow-2xl backdrop-blur-sm transition-transform hover:scale-110 focus:outline-none" aria-label="{{ __('Play video') }}">
         <svg class="h-8 w-8 translate-x-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
     </button>
+    @endif
 </div>
 
 @once

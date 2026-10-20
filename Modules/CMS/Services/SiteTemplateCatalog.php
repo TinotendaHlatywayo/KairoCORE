@@ -27,6 +27,36 @@ class SiteTemplateCatalog
     }
 
     /**
+     * Curated school-relevant photo pool (Pexels, hotlink-friendly). Seeds map
+     * deterministically onto this pool so the same block always gets the same
+     * real photo — classrooms, campus, students, sports, arts, science — which
+     * a school then replaces with its own pictures through the studio.
+     */
+    protected const SIMPLE_PHOTO_POOL = [
+        // Campus & exterior
+        8613089, 8613312, 8471835, 256541, 207691, 289740, 1205651, 267885,
+        // Classrooms & teaching
+        34211744, 5905554, 8926553, 8423394, 6238120, 8535214, 8363036, 8088495,
+        // Students & learning
+        14909652, 8617542, 8926634, 8423397, 5905709, 8422135, 3747505, 8363775,
+        // Science, library, arts
+        8872369, 3966555, 11025019, 32719717, 256455, 1181406, 2079246, 3184291,
+        // Sports, outdoor & community
+        8550496, 19982406, 33613739, 5212703, 5212345, 8197544, 34162709, 3894376,
+    ];
+
+    /**
+     * Real school photo for a Simple CMS block. Deterministic: the same seed
+     * always resolves to the same photo from the curated pool.
+     */
+    protected static function photo(string $seed, int $w = 1200, int $h = 800): string
+    {
+        $id = self::SIMPLE_PHOTO_POOL[abs(crc32($seed)) % count(self::SIMPLE_PHOTO_POOL)];
+
+        return "https://images.pexels.com/photos/{$id}/pexels-photo-{$id}.jpeg?auto=compress&cs=tinysrgb&w={$w}&h={$h}&fit=crop";
+    }
+
+    /**
      * Build a block skeleton with unique id.
      */
     protected static function blk(string $type, array $data = []): array
@@ -56,6 +86,12 @@ class SiteTemplateCatalog
             'emerald-heritage' => self::emerald(),
             'neon-frontier' => self::neon(),
             'sunset-international' => self::sunset(),
+            // Simple CMS set
+            'nordic-light' => self::nordic(),
+            'savanna-gold' => self::savanna(),
+            'botanical-green' => self::botanical(),
+            'mediterranean-blue' => self::mediterranean(),
+            'urban-creative' => self::urban(),
         ];
     }
 
@@ -84,7 +120,7 @@ class SiteTemplateCatalog
     /* ────────────────────────────────────────────────────────────────
        1. HERITAGE EDITORIAL — navy / cream / gold, serif editorial
        Masthead-worthy, symmetric, generous, formal. Feels like a
-       centuries-old establishment's prospectus.
+       centuries-old establishment\'s prospectus.
        ──────────────────────────────────────────────────────────────── */
 
     protected static function heritage(): array
@@ -2522,6 +2558,1058 @@ class SiteTemplateCatalog
                     self::blk('video_embed', [
                         'title' => 'A Day at Meridian',
                         'video_url' => '',
+                    ]),
+                ],
+            ],
+        ];
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       SIMPLE CMS SET — five distinct non-dark directions
+       ═══════════════════════════════════════════════════════════════ */
+
+    /** NORDIC LIGHT — Scandinavian clean: white, pale wood, soft blue. */
+    protected static function nordic(): array
+    {
+        return [
+            'home' => [
+                'title' => 'Home',
+                'blocks' => [
+                    self::blk('hero', [
+                        'variant' => 'hero-editorial',
+                        'title' => 'Where Clarity Meets Curiosity',
+                        'description' => 'Fjordview Academy offers a calm, focused learning environment where every student discovers their potential through inquiry, creativity and community.',
+                        'cta_text' => 'Explore Admissions',
+                        'cta_url' => '/admissions',
+                        'secondary_cta_text' => 'Book a Tour',
+                        'secondary_cta_url' => '/contact',
+                        'image_url' => self::photo('nordic-campus'),
+                        'layout' => 'image-right',
+                    ]),
+                    self::blk('about_section', [
+                        'title' => 'A Philosophy of Light',
+                        'description' => 'Inspired by Scandinavian educational traditions, we believe that learning thrives in spaces of simplicity, trust and natural beauty.',
+                        'mission' => 'To nurture independent thinkers who approach the world with empathy, curiosity and quiet confidence.',
+                        'vision' => 'A community where every child feels seen, challenged and inspired to grow.',
+                        'image_url' => self::photo('nordic-classroom'),
+                    ]),
+                    self::blk('statistics', [
+                        'variant' => 'minimal-editorial',
+                        'title' => 'Fjordview in Numbers',
+                        'subtitle' => 'A small school with an outsized impact.',
+                    ]),
+                    self::blk('features_grid', [
+                        'variant' => 'cards',
+                        'title' => 'What Makes Us Different',
+                        'subtitle' => 'Programmes designed for depth, not breadth.',
+                        'features' => [
+                            ['title' => 'Inquiry-Based Learning', 'desc' => 'Students lead their own investigations with teacher mentorship.', 'image' => self::photo('nordic-inquiry')],
+                            ['title' => 'Nature Classroom', 'desc' => 'Weekly outdoor education in our forest campus and fjord shoreline.', 'image' => self::photo('nordic-nature')],
+                            ['title' => 'Design & Making', 'desc' => 'A fully equipped workshop where ideas become prototypes.', 'image' => self::photo('nordic-makerspace')],
+                            ['title' => 'Global Exchange', 'desc' => 'Partner schools in Norway, Japan and Kenya for cultural immersion.', 'image' => self::photo('nordic-exchange')],
+                        ],
+                    ]),
+                    self::blk('testimonials', [
+                        'title' => 'Voices from Our Community',
+                        'items' => [
+                            ['quote' => 'The calm atmosphere helps my son focus like never before. He comes home excited about what he discovered.', 'name' => 'Anna Bergström', 'role' => 'Parent, Grade 7'],
+                            ['quote' => 'I love that we learn outside as much as inside. The forest classroom is my favourite place.', 'name' => 'Lars Nyberg', 'role' => 'Student, Grade 5'],
+                        ],
+                    ]),
+                    self::blk('cta_banner', [
+                        'title' => 'Ready to See Fjordview for Yourself?',
+                        'description' => 'Join us for an open morning or schedule a personal tour.',
+                        'cta_text' => 'Get in Touch',
+                        'cta_url' => '/contact',
+                    ]),
+                ],
+            ],
+            'about' => [
+                'title' => 'About Us',
+                'blocks' => [
+                    self::blk('hero', [
+                        'variant' => 'hero-editorial',
+                        'title' => 'Our Story',
+                        'description' => 'Founded in 2010, Fjordview Academy was built on the belief that education should be as beautiful and intentional as the landscape that surrounds it.',
+                        'image_url' => self::photo('nordic-history'),
+                        'layout' => 'image-right',
+                    ]),
+                    self::blk('about_section', [
+                        'title' => 'Mission & Values',
+                        'description' => 'Every decision at Fjordview is guided by three principles: simplicity, sustainability and student agency.',
+                        'mission' => 'To empower learners to think independently, act responsibly and live curiously.',
+                        'vision' => 'To be the benchmark for student-centred education in East Africa.',
+                        'image_url' => self::photo('nordic-values'),
+                    ]),
+                    self::blk('principal_welcome', [
+                        'title' => 'A Word from Our Principal',
+                        'principal_name' => 'Ingrid Solberg',
+                        'principal_title' => 'Principal',
+                        'description' => 'At Fjordview, we don\'t rush childhood. We give students the time, space and support to become thoughtful, capable young people.',
+                        'image_url' => self::photo('nordic-principal'),
+                    ]),
+                    self::blk('team_directory', [
+                        'title' => 'Our Leadership Team',
+                        'subtitle' => 'Experienced educators who know every student by name.',
+                        'members' => [
+                            ['name' => 'Ingrid Solberg', 'role' => 'Principal', 'image' => self::photo('nordic-team1')],
+                            ['name' => 'David Ochieng', 'role' => 'Deputy Principal', 'image' => self::photo('nordic-team2')],
+                            ['name' => 'Maria Santos', 'role' => 'Head of Primary', 'image' => self::photo('nordic-team3')],
+                        ],
+                    ]),
+                    self::blk('cta_banner', [
+                        'title' => 'Join Our Community',
+                        'description' => 'Applications for the next academic year are now open.',
+                        'cta_text' => 'Apply Now',
+                        'cta_url' => '/admissions',
+                    ]),
+                ],
+            ],
+            'admissions' => [
+                'title' => 'Admissions',
+                'blocks' => [
+                    self::blk('hero', [
+                        'variant' => 'hero-editorial',
+                        'title' => 'Begin Your Journey',
+                        'description' => 'We welcome families who value deep learning, kindness and community. Here is how to join Fjordview.',
+                        'cta_text' => 'Start Application',
+                        'cta_url' => '/apply',
+                        'image_url' => self::photo('nordic-admissions'),
+                        'layout' => 'image-right',
+                    ]),
+                    self::blk('features_grid', [
+                        'variant' => 'cards',
+                        'title' => 'Three Simple Steps',
+                        'subtitle' => 'Our admissions process is designed to be transparent and stress-free.',
+                        'features' => [
+                            ['title' => '1. Enquire', 'desc' => 'Fill in the enquiry form or visit us on an open morning.', 'image' => self::photo('nordic-step1')],
+                            ['title' => '2. Visit & Assess', 'desc' => 'A friendly classroom visit and informal assessment day.', 'image' => self::photo('nordic-step2')],
+                            ['title' => '3. Offer & Enrol', 'desc' => 'Receive your offer letter and complete enrolment online.', 'image' => self::photo('nordic-step3')],
+                        ],
+                    ]),
+                    self::blk('faq_accordion', [
+                        'title' => 'Frequently Asked Questions',
+                        'faqs' => [
+                            ['q' => 'What ages do you accept?', 'a' => 'We welcome students from Age 3 (Pre-Nursery) through Grade 12.'],
+                            ['q' => 'Do you offer boarding?', 'a' => 'Yes, boarding is available for Grades 6-12 in our purpose-built residence.'],
+                            ['q' => 'What curriculum do you follow?', 'a' => 'We offer the Cambridge International curriculum alongside a rich local studies programme.'],
+                        ],
+                    ]),
+                    self::blk('cta_banner', [
+                        'title' => 'Have Questions?',
+                        'description' => 'Our admissions team is here to help you every step of the way.',
+                        'cta_text' => 'Contact Admissions',
+                        'cta_url' => '/contact',
+                    ]),
+                ],
+            ],
+            'news-events' => [
+                'title' => 'News & Events',
+                'blocks' => [
+                    self::blk('hero', [
+                        'variant' => 'hero-editorial',
+                        'title' => 'What\'s Happening at Fjordview',
+                        'description' => 'Stories, celebrations and upcoming events from our school community.',
+                        'image_url' => self::photo('nordic-news'),
+                        'layout' => 'image-right',
+                    ]),
+                    self::blk('dynamic_news', [
+                        'title' => 'Latest News',
+                        'subtitle' => 'Updates from the classroom and beyond.',
+                    ]),
+                    self::blk('events_calendar', [
+                        'title' => 'Upcoming Events',
+                        'subtitle' => 'Mark your calendar.',
+                    ]),
+                    self::blk('cta_banner', [
+                        'title' => 'Stay Connected',
+                        'description' => 'Subscribe to our termly newsletter for stories from campus.',
+                        'cta_text' => 'Contact Us',
+                        'cta_url' => '/contact',
+                    ]),
+                ],
+            ],
+            'contact' => [
+                'title' => 'Contact Us',
+                'blocks' => [
+                    self::blk('hero', [
+                        'variant' => 'hero-editorial',
+                        'title' => 'We\'d Love to Hear from You',
+                        'description' => 'Whether you have a question about admissions or just want to say hello, our team is ready to help.',
+                        'image_url' => self::photo('nordic-contact'),
+                        'layout' => 'image-right',
+                    ]),
+                    self::blk('contact_map', [
+                        'title' => 'Find Us',
+                        'address' => '12 Lakeside Drive, Fjordview, Harare',
+                        'phone' => '+263 77 123 4567',
+                        'email' => 'hello@fjordview.ac.zw',
+                    ]),
+                ],
+            ],
+            'student-life' => [
+                'title' => 'Student Life',
+                'blocks' => [
+                    self::blk('hero', [
+                        'variant' => 'hero-editorial',
+                        'title' => 'Life Beyond the Classroom',
+                        'description' => 'From forest expeditions to design challenges, student life at Fjordview is rich, active and full of discovery.',
+                        'image_url' => self::photo('nordic-studentlife'),
+                        'layout' => 'image-right',
+                    ]),
+                    self::blk('gallery', [
+                        'title' => 'A Glimpse of Our World',
+                        'subtitle' => 'Moments from campus life.',
+                        'columns' => 3,
+                        'images' => [
+                            ['url' => self::photo('nordic-gal1'), 'caption' => 'Morning circle in the forest'],
+                            ['url' => self::photo('nordic-gal2'), 'caption' => 'Science fair preparations'],
+                            ['url' => self::photo('nordic-gal3'), 'caption' => 'Inter-house sports day'],
+                            ['url' => self::photo('nordic-gal4'), 'caption' => 'Art exhibition opening'],
+                            ['url' => self::photo('nordic-gal5'), 'caption' => 'Community service day'],
+                            ['url' => self::photo('nordic-gal6'), 'caption' => 'Graduation celebration'],
+                        ],
+                    ]),
+                    self::blk('features_grid', [
+                        'variant' => 'cards',
+                        'title' => 'Clubs & Activities',
+                        'subtitle' => 'Something for every interest.',
+                        'features' => [
+                            ['title' => 'Eco Warriors', 'desc' => 'Environmental club managing our campus garden and recycling programme.', 'image' => self::photo('nordic-eco')],
+                            ['title' => 'Robotics Lab', 'desc' => 'Build, code and compete in regional robotics challenges.', 'image' => self::photo('nordic-robotics')],
+                            ['title' => 'Drama Society', 'desc' => 'Two major productions per year plus improvisation evenings.', 'image' => self::photo('nordic-drama')],
+                            ['title' => 'Outdoor Adventure', 'desc' => 'Hiking, kayaking and camping in the nearby mountains.', 'image' => self::photo('nordic-adventure')],
+                        ],
+                    ]),
+                    self::blk('cta_banner', [
+                        'title' => 'Experience Fjordview',
+                        'description' => 'The best way to understand our school is to visit.',
+                        'cta_text' => 'Book a Visit',
+                        'cta_url' => '/contact',
+                    ]),
+                ],
+            ],
+        ];
+    }
+
+    /** SAVANNA GOLD — African contemporary: terracotta, gold, bold geometric. */
+    protected static function savanna(): array
+    {
+        return [
+            'home' => [
+                'title' => 'Home',
+                'blocks' => [
+                    self::blk('hero', [
+                        'variant' => 'hero-editorial',
+                        'title' => 'Rooted in Heritage, Ready for the World',
+                        'description' => 'Baobab International School blends the warmth of African hospitality with world-class Cambridge education, preparing confident global citizens from a proud local foundation.',
+                        'cta_text' => 'Discover Baobab',
+                        'cta_url' => '/about',
+                        'secondary_cta_text' => 'Apply Now',
+                        'secondary_cta_url' => '/admissions',
+                        'image_url' => self::photo('savanna-campus'),
+                        'layout' => 'image-right',
+                    ]),
+                    self::blk('marquee_ticker', [
+                        'variant' => 'single-row',
+                        'items' => [
+                            ['label' => 'Cambridge International School'],
+                            ['label' => 'Founded 2005'],
+                            ['label' => 'Ages 3-18'],
+                            ['label' => 'Day & Boarding'],
+                            ['label' => '32 Nationalities'],
+                        ],
+                    ]),
+                    self::blk('about_section', [
+                        'title' => 'The Baobab Philosophy',
+                        'description' => 'Like the great baobab tree, our school is a place of shelter, nourishment and deep roots. We grow strong learners who stand tall in any soil.',
+                        'mission' => 'To provide an education that honours African identity while opening doors to global opportunity.',
+                        'vision' => 'To be the leading international school in Southern Africa, known for academic excellence and cultural pride.',
+                        'image_url' => self::photo('savanna-philosophy'),
+                    ]),
+                    self::blk('statistics', [
+                        'variant' => 'minimal-editorial',
+                        'title' => 'Baobab by the Numbers',
+                        'subtitle' => 'Growing stronger every year.',
+                    ]),
+                    self::blk('features_grid', [
+                        'variant' => 'cards',
+                        'title' => 'Our Pillars of Excellence',
+                        'subtitle' => 'Four cornerstones of the Baobab experience.',
+                        'features' => [
+                            ['title' => 'Academic Rigour', 'desc' => 'Cambridge curriculum with a 98% pass rate at IGCSE and A-Level.', 'image' => self::photo('savanna-academic')],
+                            ['title' => 'Cultural Pride', 'desc' => 'Shona, Ndebele, French and Mandarin language programmes.', 'image' => self::photo('savanna-culture')],
+                            ['title' => 'Sporting Excellence', 'desc' => 'Championship-winning rugby, netball, athletics and swimming.', 'image' => self::photo('savanna-sport')],
+                            ['title' => 'Community Service', 'desc' => 'Every student contributes 40 hours of service per year.', 'image' => self::photo('savanna-service')],
+                        ],
+                    ]),
+                    self::blk('principal_welcome', [
+                        'title' => 'A Word from the Head of School',
+                        'principal_name' => 'Dr. Tendai Moyo',
+                        'principal_title' => 'Head of School',
+                        'description' => 'We are raising a generation that is proud of where they come from and prepared for where they are going. That is the Baobab promise.',
+                        'image_url' => self::photo('savanna-principal'),
+                    ]),
+                    self::blk('cta_banner', [
+                        'title' => 'Join the Baobab Family',
+                        'description' => 'Applications for 2027 are now open. Limited places available.',
+                        'cta_text' => 'Apply Now',
+                        'cta_url' => '/admissions',
+                    ]),
+                ],
+            ],
+            'about' => [
+                'title' => 'About Us',
+                'blocks' => [
+                    self::blk('hero', [
+                        'variant' => 'hero-editorial',
+                        'title' => 'Twenty Years of Growing Minds',
+                        'description' => 'From a single classroom in 2005 to a thriving campus of 800 students, Baobab International School has become a beacon of excellence in the region.',
+                        'image_url' => self::photo('savanna-history'),
+                        'layout' => 'image-right',
+                    ]),
+                    self::blk('about_section', [
+                        'title' => 'Our Story',
+                        'description' => 'Founded by a group of passionate educators who believed that African children deserved both world-class academics and cultural grounding.',
+                        'mission' => 'To nurture proud, capable and compassionate young people.',
+                        'vision' => 'A future where every African child can compete on the global stage.',
+                        'image_url' => self::photo('savanna-story'),
+                    ]),
+                    self::blk('principal_welcome', [
+                        'title' => 'From the Head of School',
+                        'principal_name' => 'Dr. Tendai Moyo',
+                        'principal_title' => 'Head of School',
+                        'description' => 'Every child who walks through our gates carries the potential to change the world. Our job is to give them the tools and the confidence to do it.',
+                        'image_url' => self::photo('savanna-head'),
+                    ]),
+                    self::blk('team_directory', [
+                        'title' => 'Leadership Team',
+                        'subtitle' => 'Dedicated educators leading with vision.',
+                        'members' => [
+                            ['name' => 'Dr. Tendai Moyo', 'role' => 'Head of School', 'image' => self::photo('savanna-t1')],
+                            ['name' => 'Sarah Chen', 'role' => 'Deputy Head (Academic)', 'image' => self::photo('savanna-t2')],
+                            ['name' => 'James Ochieng', 'role' => 'Head of Pastoral Care', 'image' => self::photo('savanna-t3')],
+                        ],
+                    ]),
+                    self::blk('cta_banner', [
+                        'title' => 'See Our Campus',
+                        'description' => 'We would love to show you around.',
+                        'cta_text' => 'Book a Tour',
+                        'cta_url' => '/contact',
+                    ]),
+                ],
+            ],
+            'admissions' => [
+                'title' => 'Admissions',
+                'blocks' => [
+                    self::blk('hero', [
+                        'variant' => 'hero-editorial',
+                        'title' => 'Your Baobab Journey Starts Here',
+                        'description' => 'Join a community that celebrates heritage, excellence and ambition. Our admissions process is straightforward and welcoming.',
+                        'cta_text' => 'Start Application',
+                        'cta_url' => '/apply',
+                        'image_url' => self::photo('savanna-admissions'),
+                        'layout' => 'image-right',
+                    ]),
+                    self::blk('features_grid', [
+                        'variant' => 'cards',
+                        'title' => 'How to Apply',
+                        'subtitle' => 'Four steps to becoming a Baobab student.',
+                        'features' => [
+                            ['title' => '1. Enquire', 'desc' => 'Submit an online enquiry or visit us at an open day.', 'image' => self::photo('savanna-s1')],
+                            ['title' => '2. Assessment', 'desc' => 'English, Maths and a friendly interview.', 'image' => self::photo('savanna-s2')],
+                            ['title' => '3. Offer', 'desc' => 'Receive your offer letter within two weeks.', 'image' => self::photo('savanna-s3')],
+                            ['title' => '4. Enrol', 'desc' => 'Complete registration and join the Baobab family.', 'image' => self::photo('savanna-s4')],
+                        ],
+                    ]),
+                    self::blk('faq_accordion', [
+                        'title' => 'Admissions FAQ',
+                        'faqs' => [
+                            ['q' => 'What are the fees?', 'a' => 'Tuition ranges from $2,400 (Pre-School) to $4,800 (A-Level) per term. Boarding additional.'],
+                            ['q' => 'Do you offer scholarships?', 'a' => 'Yes, we offer merit and needs-based scholarships covering up to 100% of tuition.'],
+                            ['q' => 'What is the student-teacher ratio?', 'a' => 'We maintain a maximum 18:1 ratio across all year groups.'],
+                        ],
+                    ]),
+                    self::blk('cta_banner', [
+                        'title' => 'Ready to Apply?',
+                        'description' => 'Our admissions team will guide you through every step.',
+                        'cta_text' => 'Contact Admissions',
+                        'cta_url' => '/contact',
+                    ]),
+                ],
+            ],
+            'news-events' => [
+                'title' => 'News & Events',
+                'blocks' => [
+                    self::blk('hero', [
+                        'variant' => 'hero-editorial',
+                        'title' => 'The Baobab Bulletin',
+                        'description' => 'Celebrating achievements, sharing stories and keeping you informed.',
+                        'image_url' => self::photo('savanna-news'),
+                        'layout' => 'image-right',
+                    ]),
+                    self::blk('dynamic_news', [
+                        'title' => 'Latest News',
+                        'subtitle' => 'From the Baobab campus.',
+                    ]),
+                    self::blk('events_calendar', [
+                        'title' => 'What\'s On',
+                        'subtitle' => 'Upcoming events and term dates.',
+                    ]),
+                    self::blk('cta_banner', [
+                        'title' => 'Never Miss a Story',
+                        'description' => 'Follow us on social media or subscribe to our newsletter.',
+                        'cta_text' => 'Get in Touch',
+                        'cta_url' => '/contact',
+                    ]),
+                ],
+            ],
+            'contact' => [
+                'title' => 'Contact Us',
+                'blocks' => [
+                    self::blk('hero', [
+                        'variant' => 'hero-editorial',
+                        'title' => 'Karibu! Welcome.',
+                        'description' => 'We would love to hear from you. Reach out with any question about Baobab International School.',
+                        'image_url' => self::photo('savanna-contact'),
+                        'layout' => 'image-right',
+                    ]),
+                    self::blk('contact_map', [
+                        'title' => 'Find Us',
+                        'address' => '45 Acacia Avenue, Harare',
+                        'phone' => '+263 77 987 6543',
+                        'email' => 'info@baobabacademy.co.zw',
+                    ]),
+                ],
+            ],
+            'student-life' => [
+                'title' => 'Student Life',
+                'blocks' => [
+                    self::blk('hero', [
+                        'variant' => 'hero-editorial',
+                        'title' => 'Vibrant, Colourful, Unforgettable',
+                        'description' => 'Life at Baobab is a celebration of talent, friendship and adventure. Every day brings new opportunities to shine.',
+                        'image_url' => self::photo('savanna-life'),
+                        'layout' => 'image-right',
+                    ]),
+                    self::blk('gallery', [
+                        'title' => 'Campus Moments',
+                        'subtitle' => 'A snapshot of life at Baobab.',
+                        'columns' => 3,
+                        'images' => [
+                            ['url' => self::photo('savanna-g1'), 'caption' => 'Annual arts festival'],
+                            ['url' => self::photo('savanna-g2'), 'caption' => 'Inter-house cooking competition'],
+                            ['url' => self::photo('savanna-g3'), 'caption' => 'Science and innovation fair'],
+                            ['url' => self::photo('savanna-g4'), 'caption' => 'Cultural dress day'],
+                            ['url' => self::photo('savanna-g5'), 'caption' => 'Community outreach programme'],
+                            ['url' => self::photo('savanna-g6'), 'caption' => 'Prize-giving ceremony'],
+                        ],
+                    ]),
+                    self::blk('coverflow_carousel', [
+                        'title' => 'Clubs & Societies',
+                        'subtitle' => 'Find your passion at Baobab.',
+                        'slides' => [
+                            ['title' => 'Debate Society', 'description' => 'National champions three years running.', 'image' => self::photo('savanna-c1')],
+                            ['title' => 'Music & Choir', 'desc' => 'From mbira to marimba, our ensemble performs across the region.', 'image' => self::photo('savanna-c2')],
+                            ['title' => 'Basketball Academy', 'desc' => 'Train with former national team coaches.', 'image' => self::photo('savanna-c3')],
+                        ],
+                    ]),
+                    self::blk('cta_banner', [
+                        'title' => 'Experience Baobab Life',
+                        'description' => 'Visit us during an open day to feel the energy for yourself.',
+                        'cta_text' => 'Book a Visit',
+                        'cta_url' => '/contact',
+                    ]),
+                ],
+            ],
+        ];
+    }
+
+    /** BOTANICAL GREEN — nature-inspired: forest green, sage, cream, organic. */
+    protected static function botanical(): array
+    {
+        return [
+            'home' => [
+                'title' => 'Home',
+                'blocks' => [
+                    self::blk('hero', [
+                        'variant' => 'hero-editorial',
+                        'title' => 'Growing Minds, Rooted in Nature',
+                        'description' => 'Greenwood Montessori School nurtures the whole child through hands-on learning, outdoor exploration and a deep respect for the natural world.',
+                        'cta_text' => 'Explore Greenwood',
+                        'cta_url' => '/about',
+                        'secondary_cta_text' => 'Enrol Now',
+                        'secondary_cta_url' => '/admissions',
+                        'image_url' => self::photo('botanical-campus'),
+                        'layout' => 'image-right',
+                    ]),
+                    self::blk('about_section', [
+                        'title' => 'The Greenwood Way',
+                        'description' => 'Our campus is a living classroom. From the vegetable garden to the nature trail, every corner invites curiosity and discovery.',
+                        'mission' => 'To foster independent, compassionate learners who feel connected to the earth and their community.',
+                        'vision' => 'A school where education and nature grow together.',
+                        'image_url' => self::photo('botanical-about'),
+                    ]),
+                    self::blk('statistics', [
+                        'variant' => 'minimal-editorial',
+                        'title' => 'Greenwood Grows',
+                        'subtitle' => 'Nurturing growth since 2012.',
+                    ]),
+                    self::blk('features_grid', [
+                        'variant' => 'cards',
+                        'title' => 'Learning in Full Bloom',
+                        'subtitle' => 'Programmes that connect children with the natural world.',
+                        'features' => [
+                            ['title' => 'Montessori Method', 'desc' => 'Child-led learning with mixed-age classrooms and hands-on materials.', 'image' => self::photo('botanical-montessori')],
+                            ['title' => 'Forest School', 'desc' => 'Weekly sessions in our indigenous forest classroom.', 'image' => self::photo('botanical-forest')],
+                            ['title' => 'Garden to Table', 'desc' => 'Students grow, harvest and cook their own food.', 'image' => self::photo('botanical-garden')],
+                            ['title' => 'Animal Care', 'desc' => 'Our school farm is home to rabbits, chickens and a small dairy herd.', 'image' => self::photo('botanical-animals')],
+                        ],
+                    ]),
+                    self::blk('testimonials', [
+                        'title' => 'What Families Say',
+                        'items' => [
+                            ['quote' => 'Greenwood gave my daughter a love of learning that no classroom could. She comes home full of stories about the garden and the forest.', 'name' => 'Grace Mutasa', 'role' => 'Parent'],
+                            ['quote' => 'The teachers truly see each child. My son has blossomed since joining Greenwood.', 'name' => 'Peter Chikafu', 'role' => 'Parent'],
+                        ],
+                    ]),
+                    self::blk('cta_banner', [
+                        'title' => 'Come and See Greenwood',
+                        'description' => 'We host open mornings every first Saturday of the month.',
+                        'cta_text' => 'Book a Visit',
+                        'cta_url' => '/contact',
+                    ]),
+                ],
+            ],
+            'about' => [
+                'title' => 'About Us',
+                'blocks' => [
+                    self::blk('hero', [
+                        'variant' => 'hero-editorial',
+                        'title' => 'Our Roots Run Deep',
+                        'description' => 'Greenwood was founded by a group of parents and educators who believed that children learn best when they are free to explore.',
+                        'image_url' => self::photo('botanical-history'),
+                        'layout' => 'image-right',
+                    ]),
+                    self::blk('about_section', [
+                        'title' => 'Philosophy & Approach',
+                        'description' => 'We follow the Montessori philosophy, adapted for our African context, with a strong emphasis on outdoor learning and environmental stewardship.',
+                        'mission' => 'To educate the whole child: mind, body and spirit.',
+                        'vision' => 'To raise a generation of environmentally conscious, confident learners.',
+                        'image_url' => self::photo('botanical-philosophy'),
+                    ]),
+                    self::blk('principal_welcome', [
+                        'title' => 'From Our Director',
+                        'principal_name' => 'Ruth Ncube',
+                        'principal_title' => 'School Director',
+                        'description' => 'Every child is a seed. Our job is to provide the soil, the sunlight and the water — and then watch them grow in their own unique way.',
+                        'image_url' => self::photo('botanical-director'),
+                    ]),
+                    self::blk('cta_banner', [
+                        'title' => 'Join Our Community',
+                        'description' => 'Applications are open for all year groups.',
+                        'cta_text' => 'Apply Now',
+                        'cta_url' => '/admissions',
+                    ]),
+                ],
+            ],
+            'admissions' => [
+                'title' => 'Admissions',
+                'blocks' => [
+                    self::blk('hero', [
+                        'variant' => 'hero-editorial',
+                        'title' => 'Plant the Seed',
+                        'description' => 'Ready to give your child the gift of nature-based education? Here is how to join Greenwood.',
+                        'cta_text' => 'Start Application',
+                        'cta_url' => '/apply',
+                        'image_url' => self::photo('botanical-admissions'),
+                        'layout' => 'image-right',
+                    ]),
+                    self::blk('features_grid', [
+                        'variant' => 'cards',
+                        'title' => 'Your Greenwood Journey',
+                        'subtitle' => 'Simple steps to enrolment.',
+                        'features' => [
+                            ['title' => 'Visit', 'desc' => 'Come to an open morning or schedule a personal tour.', 'image' => self::photo('botanical-visit')],
+                            ['title' => 'Apply', 'desc' => 'Complete the online application form.', 'image' => self::photo('botanical-apply')],
+                            ['title' => 'Meet', 'desc' => 'A friendly meeting with your child and our teachers.', 'image' => self::photo('botanical-meet')],
+                        ],
+                    ]),
+                    self::blk('faq_accordion', [
+                        'title' => 'Common Questions',
+                        'faqs' => [
+                            ['q' => 'What ages do you accept?', 'a' => 'Ages 3 to 11 (Pre-School through Grade 6).'],
+                            ['q' => 'Is this a full Montessori school?', 'a' => 'Yes, we are an accredited Montessori school with trained guides in every classroom.'],
+                            ['q' => 'Do you have a waiting list?', 'a' => 'Some year groups have waiting lists. We recommend applying early.'],
+                        ],
+                    ]),
+                    self::blk('cta_banner', [
+                        'title' => 'Questions About Admissions?',
+                        'description' => 'We are happy to help.',
+                        'cta_text' => 'Contact Us',
+                        'cta_url' => '/contact',
+                    ]),
+                ],
+            ],
+            'news-events' => [
+                'title' => 'News & Events',
+                'blocks' => [
+                    self::blk('hero', [
+                        'variant' => 'hero-editorial',
+                        'title' => 'Growing Together',
+                        'description' => 'News, updates and celebrations from the Greenwood community.',
+                        'image_url' => self::photo('botanical-news'),
+                        'layout' => 'image-right',
+                    ]),
+                    self::blk('dynamic_news', [
+                        'title' => 'Latest News',
+                    ]),
+                    self::blk('events_calendar', [
+                        'title' => 'Upcoming Events',
+                    ]),
+                    self::blk('cta_banner', [
+                        'title' => 'Stay in the Loop',
+                        'description' => 'Follow our journey on social media.',
+                        'cta_text' => 'Get in Touch',
+                        'cta_url' => '/contact',
+                    ]),
+                ],
+            ],
+            'contact' => [
+                'title' => 'Contact Us',
+                'blocks' => [
+                    self::blk('hero', [
+                        'variant' => 'hero-editorial',
+                        'title' => 'Let\'s Talk',
+                        'description' => 'We would love to hear from you. Whether you have a question or just want to say hello.',
+                        'image_url' => self::photo('botanical-contact'),
+                        'layout' => 'image-right',
+                    ]),
+                    self::blk('contact_map', [
+                        'title' => 'Our Location',
+                        'address' => '78 Greenhill Road, Harare',
+                        'phone' => '+263 77 456 7890',
+                        'email' => 'hello@greenwoodmontessori.co.zw',
+                    ]),
+                ],
+            ],
+            'student-life' => [
+                'title' => 'Student Life',
+                'blocks' => [
+                    self::blk('hero', [
+                        'variant' => 'hero-editorial',
+                        'title' => 'Every Day is an Adventure',
+                        'description' => 'From mud kitchens to music circles, life at Greenwood is joyful, active and full of wonder.',
+                        'image_url' => self::photo('botanical-life'),
+                        'layout' => 'image-right',
+                    ]),
+                    self::blk('gallery', [
+                        'title' => 'Moments from Campus',
+                        'columns' => 3,
+                        'images' => [
+                            ['url' => self::photo('botanical-g1'), 'caption' => 'Harvesting vegetables'],
+                            ['url' => self::photo('botanical-g2'), 'caption' => 'Forest school session'],
+                            ['url' => self::photo('botanical-g3'), 'caption' => 'Music and movement'],
+                            ['url' => self::photo('botanical-g4'), 'caption' => 'Animal feeding time'],
+                            ['url' => self::photo('botanical-g5'), 'caption' => 'Art in the garden'],
+                            ['url' => self::photo('botanical-g6'), 'caption' => 'End-of-term celebration'],
+                        ],
+                    ]),
+                    self::blk('cta_banner', [
+                        'title' => 'See Greenwood in Action',
+                        'description' => 'Nothing compares to visiting in person.',
+                        'cta_text' => 'Book a Tour',
+                        'cta_url' => '/contact',
+                    ]),
+                ],
+            ],
+        ];
+    }
+
+    /** MEDITERRANEAN BLUE — coastal: cobalt, white, terracotta, sun-drenched. */
+    protected static function mediterranean(): array
+    {
+        return [
+            'home' => [
+                'title' => 'Home',
+                'blocks' => [
+                    self::blk('hero', [
+                        'variant' => 'hero-editorial',
+                        'title' => 'Bright Futures Start Here',
+                        'description' => 'Azure International School brings the warmth of Mediterranean hospitality to a world-class education, where every student shines.',
+                        'cta_text' => 'Discover Azure',
+                        'cta_url' => '/about',
+                        'secondary_cta_text' => 'Book a Tour',
+                        'secondary_cta_url' => '/contact',
+                        'image_url' => self::photo('mediterranean-campus'),
+                        'layout' => 'image-right',
+                    ]),
+                    self::blk('about_section', [
+                        'title' => 'The Azure Spirit',
+                        'description' => 'Like the Mediterranean coast, our school is a meeting place — of cultures, ideas and dreams. We celebrate diversity and academic ambition in equal measure.',
+                        'mission' => 'To provide a joyful, rigorous education that prepares students for a connected world.',
+                        'vision' => 'A school community as bright, warm and welcoming as the coast that inspires us.',
+                        'image_url' => self::photo('mediterranean-spirit'),
+                    ]),
+                    self::blk('statistics', [
+                        'variant' => 'minimal-editorial',
+                        'title' => 'Azure by the Numbers',
+                    ]),
+                    self::blk('features_grid', [
+                        'variant' => 'cards',
+                        'title' => 'Why Families Choose Azure',
+                        'features' => [
+                            ['title' => 'Bilingual Programme', 'desc' => 'English and French from age 5, with Spanish option in secondary.', 'image' => self::photo('mediterranean-language')],
+                            ['title' => 'STEM Innovation Hub', 'desc' => 'Robotics, coding and engineering in our purpose-built maker space.', 'image' => self::photo('mediterranean-stem')],
+                            ['title' => 'Performing Arts', 'desc' => 'A 400-seat auditorium and programmes in music, drama and dance.', 'image' => self::photo('mediterranean-arts')],
+                            ['title' => 'Mediterranean Kitchen', 'desc' => 'Our cooking programme teaches nutrition and cultural cuisine.', 'image' => self::photo('mediterranean-kitchen')],
+                        ],
+                    ]),
+                    self::blk('principal_welcome', [
+                        'title' => 'Welcome from Our Principal',
+                        'principal_name' => 'Elena Papadopoulos',
+                        'principal_title' => 'Principal',
+                        'description' => 'At Azure, we believe that a bright education should be as joyful as it is rigorous. Every day, I see our students proving that those two things go together beautifully.',
+                        'image_url' => self::photo('mediterranean-principal'),
+                    ]),
+                    self::blk('cta_banner', [
+                        'title' => 'Join the Azure Family',
+                        'description' => 'Come and see what makes our school special.',
+                        'cta_text' => 'Apply Now',
+                        'cta_url' => '/admissions',
+                    ]),
+                ],
+            ],
+            'about' => [
+                'title' => 'About Us',
+                'blocks' => [
+                    self::blk('hero', [
+                        'variant' => 'hero-editorial',
+                        'title' => 'Our Story',
+                        'description' => 'Azure International School was founded in 2015 by a group of educators who wanted to create something different — a school that was both academically excellent and genuinely warm.',
+                        'image_url' => self::photo('mediterranean-story'),
+                        'layout' => 'image-right',
+                    ]),
+                    self::blk('about_section', [
+                        'title' => 'Mission & Values',
+                        'description' => 'We are guided by three values: kindness, curiosity and courage.',
+                        'mission' => 'To educate the whole child — academically, socially and emotionally.',
+                        'vision' => 'To be the most joyful and effective international school in the region.',
+                        'image_url' => self::photo('mediterranean-values'),
+                    ]),
+                    self::blk('principal_welcome', [
+                        'title' => 'A Personal Welcome',
+                        'principal_name' => 'Elena Papadopoulos',
+                        'principal_title' => 'Principal',
+                        'description' => 'I chose to lead Azure because I believe in its vision: that school should be a place where children feel safe enough to take risks, and challenged enough to grow.',
+                        'image_url' => self::photo('mediterranean-welcome'),
+                    ]),
+                    self::blk('cta_banner', [
+                        'title' => 'Come Meet Us',
+                        'description' => 'We would love to welcome you to campus.',
+                        'cta_text' => 'Book a Visit',
+                        'cta_url' => '/contact',
+                    ]),
+                ],
+            ],
+            'admissions' => [
+                'title' => 'Admissions',
+                'blocks' => [
+                    self::blk('hero', [
+                        'variant' => 'hero-editorial',
+                        'title' => 'Your Azure Journey',
+                        'description' => 'Joining Azure is simple. We welcome applications from all backgrounds and are here to guide you.',
+                        'cta_text' => 'Apply Now',
+                        'cta_url' => '/apply',
+                        'image_url' => self::photo('mediterranean-admissions'),
+                        'layout' => 'image-right',
+                    ]),
+                    self::blk('features_grid', [
+                        'variant' => 'cards',
+                        'title' => 'Application Steps',
+                        'features' => [
+                            ['title' => 'Enquire', 'desc' => 'Fill in the enquiry form or visit us.', 'image' => self::photo('mediterranean-s1')],
+                            ['title' => 'Assess', 'desc' => 'A friendly assessment day for your child.', 'image' => self::photo('mediterranean-s2')],
+                            ['title' => 'Offer', 'desc' => 'Receive your offer and complete enrolment.', 'image' => self::photo('mediterranean-s3')],
+                        ],
+                    ]),
+                    self::blk('faq_accordion', [
+                        'title' => 'Frequently Asked Questions',
+                        'faqs' => [
+                            ['q' => 'What curriculum do you follow?', 'a' => 'Cambridge International with a strong bilingual programme.'],
+                            ['q' => 'Do you offer transport?', 'a' => 'Yes, we have bus routes covering all major suburbs.'],
+                            ['q' => 'What sports do you offer?', 'a' => 'Swimming, tennis, football, basketball, athletics and more.'],
+                        ],
+                    ]),
+                    self::blk('cta_banner', [
+                        'title' => 'Have Questions?',
+                        'cta_text' => 'Contact Admissions',
+                        'cta_url' => '/contact',
+                    ]),
+                ],
+            ],
+            'news-events' => [
+                'title' => 'News & Events',
+                'blocks' => [
+                    self::blk('hero', [
+                        'variant' => 'hero-editorial',
+                        'title' => 'Azure News',
+                        'description' => 'The latest stories and events from our bright community.',
+                        'image_url' => self::photo('mediterranean-news'),
+                        'layout' => 'image-right',
+                    ]),
+                    self::blk('dynamic_news', [
+                        'title' => 'Latest News',
+                    ]),
+                    self::blk('events_calendar', [
+                        'title' => 'Events Calendar',
+                    ]),
+                    self::blk('cta_banner', [
+                        'title' => 'Stay Connected',
+                        'cta_text' => 'Contact Us',
+                        'cta_url' => '/contact',
+                    ]),
+                ],
+            ],
+            'contact' => [
+                'title' => 'Contact Us',
+                'blocks' => [
+                    self::blk('hero', [
+                        'variant' => 'hero-editorial',
+                        'title' => 'Say Hello',
+                        'description' => 'We would love to hear from you. Reach out anytime.',
+                        'image_url' => self::photo('mediterranean-contact'),
+                        'layout' => 'image-right',
+                    ]),
+                    self::blk('contact_map', [
+                        'title' => 'Find Us',
+                        'address' => '12 Coast Road, Harare',
+                        'phone' => '+263 77 111 2233',
+                        'email' => 'hello@azureinternational.co.zw',
+                    ]),
+                ],
+            ],
+            'student-life' => [
+                'title' => 'Student Life',
+                'blocks' => [
+                    self::blk('hero', [
+                        'variant' => 'hero-editorial',
+                        'title' => 'Life at Azure',
+                        'description' => 'Bright, busy and full of energy — student life at Azure is an adventure.',
+                        'image_url' => self::photo('mediterranean-life'),
+                        'layout' => 'image-right',
+                    ]),
+                    self::blk('gallery', [
+                        'title' => 'Azure Moments',
+                        'columns' => 3,
+                        'images' => [
+                            ['url' => self::photo('mediterranean-g1'), 'caption' => 'Annual arts showcase'],
+                            ['url' => self::photo('mediterranean-g2'), 'caption' => 'Sports day'],
+                            ['url' => self::photo('mediterranean-g3'), 'caption' => 'Science exhibition'],
+                            ['url' => self::photo('mediterranean-g4'), 'caption' => 'Cultural festival'],
+                            ['url' => self::photo('mediterranean-g5'), 'caption' => 'Graduation day'],
+                            ['url' => self::photo('mediterranean-g6'), 'caption' => 'Community picnic'],
+                        ],
+                    ]),
+                    self::blk('cta_banner', [
+                        'title' => 'Experience Azure',
+                        'cta_text' => 'Book a Visit',
+                        'cta_url' => '/contact',
+                    ]),
+                ],
+            ],
+        ];
+    }
+
+    /** URBAN CREATIVE — modern arts: charcoal, coral, mustard, asymmetric. */
+    protected static function urban(): array
+    {
+        return [
+            'home' => [
+                'title' => 'Home',
+                'blocks' => [
+                    self::blk('hero', [
+                        'variant' => 'hero-editorial',
+                        'title' => 'Think Different. Create Boldly.',
+                        'description' => 'Metropolis Academy is where creative minds come to thrive. We combine academic excellence with a passion for design, technology and the arts.',
+                        'cta_text' => 'Explore Metropolis',
+                        'cta_url' => '/about',
+                        'secondary_cta_text' => 'Apply Now',
+                        'secondary_cta_url' => '/admissions',
+                        'image_url' => self::photo('urban-campus'),
+                        'layout' => 'image-right',
+                    ]),
+                    self::blk('about_section', [
+                        'title' => 'The Metropolis Approach',
+                        'description' => 'We believe the best learning happens when students are trusted to create, experiment and lead. Our studios, labs and stages are always open.',
+                        'mission' => 'To develop innovative thinkers and confident creators who shape the world around them.',
+                        'vision' => 'A school where every student finds their creative voice.',
+                        'image_url' => self::photo('urban-approach'),
+                    ]),
+                    self::blk('statistics', [
+                        'variant' => 'minimal-editorial',
+                        'title' => 'Metropolis in Focus',
+                    ]),
+                    self::blk('features_grid', [
+                        'variant' => 'cards',
+                        'title' => 'Where Creativity Meets Rigour',
+                        'features' => [
+                            ['title' => 'Design Studio', 'desc' => 'Graphic design, architecture and product design with industry mentors.', 'image' => self::photo('urban-design')],
+                            ['title' => 'Tech Lab', 'desc' => 'Coding, AI and digital fabrication in our innovation hub.', 'image' => self::photo('urban-tech')],
+                            ['title' => 'Performance Wing', 'desc' => 'A professional-grade theatre, recording studio and dance hall.', 'image' => self::photo('urban-performance')],
+                            ['title' => 'Entrepreneurship', 'desc' => 'Students launch real businesses through our venture programme.', 'image' => self::photo('urban-entrepreneur')],
+                        ],
+                    ]),
+                    self::blk('testimonials', [
+                        'title' => 'Student & Parent Voices',
+                        'items' => [
+                            ['quote' => 'Metropolis gave me the confidence to start my own design studio at 16. The teachers believed in my vision before I did.', 'name' => 'Zara Ndlovu', 'role' => 'Alumna, Class of 2024'],
+                            ['quote' => 'This school sees the whole child — not just grades. My son has found his passion here.', 'name' => 'Michael Chen', 'role' => 'Parent'],
+                        ],
+                    ]),
+                    self::blk('cta_banner', [
+                        'title' => 'Ready to Create?',
+                        'description' => 'Join a community that celebrates bold ideas.',
+                        'cta_text' => 'Apply Now',
+                        'cta_url' => '/admissions',
+                    ]),
+                ],
+            ],
+            'about' => [
+                'title' => 'About Us',
+                'blocks' => [
+                    self::blk('hero', [
+                        'variant' => 'hero-editorial',
+                        'title' => 'Built for Bold Thinkers',
+                        'description' => 'Metropolis Academy was founded in 2018 by a collective of designers, educators and entrepreneurs who wanted a school that matched their ambition.',
+                        'image_url' => self::photo('urban-history'),
+                        'layout' => 'image-right',
+                    ]),
+                    self::blk('about_section', [
+                        'title' => 'Our Vision',
+                        'description' => 'We are building a school that looks and feels like the future — flexible spaces, project-based learning and genuine industry connections.',
+                        'mission' => 'To empower the next generation of African creatives and innovators.',
+                        'vision' => 'To be the most creative school on the continent.',
+                        'image_url' => self::photo('urban-vision'),
+                    ]),
+                    self::blk('principal_welcome', [
+                        'title' => 'From the Founder',
+                        'principal_name' => 'Kofi Mensah',
+                        'principal_title' => 'Founder & Head of School',
+                        'description' => 'I started Metropolis because I wished a school like this existed when I was young. Every student who walks through our doors deserves to be told: your ideas matter.',
+                        'image_url' => self::photo('urban-founder'),
+                    ]),
+                    self::blk('cta_banner', [
+                        'title' => 'Come See Our Space',
+                        'description' => 'Our campus is unlike any other school.',
+                        'cta_text' => 'Book a Tour',
+                        'cta_url' => '/contact',
+                    ]),
+                ],
+            ],
+            'admissions' => [
+                'title' => 'Admissions',
+                'blocks' => [
+                    self::blk('hero', [
+                        'variant' => 'hero-editorial',
+                        'title' => 'Your Creative Journey Starts Here',
+                        'description' => 'We look for curious, driven students who are excited to create. Here is how to join Metropolis.',
+                        'cta_text' => 'Start Application',
+                        'cta_url' => '/apply',
+                        'image_url' => self::photo('urban-admissions'),
+                        'layout' => 'image-right',
+                    ]),
+                    self::blk('features_grid', [
+                        'variant' => 'cards',
+                        'title' => 'Application Process',
+                        'features' => [
+                            ['title' => '1. Portfolio', 'desc' => 'Share your creative work (any medium).', 'image' => self::photo('urban-s1')],
+                            ['title' => '2. Workshop Day', 'desc' => 'Join a hands-on workshop with our teachers.', 'image' => self::photo('urban-s2')],
+                            ['title' => '3. Interview', 'desc' => 'A conversation about your goals and interests.', 'image' => self::photo('urban-s3')],
+                        ],
+                    ]),
+                    self::blk('faq_accordion', [
+                        'title' => 'FAQ',
+                        'faqs' => [
+                            ['q' => 'Do I need a portfolio to apply?', 'a' => 'Yes, but it can be anything — drawings, code, music, writing, photographs. We want to see how you think.'],
+                            ['q' => 'What ages do you accept?', 'a' => 'Grades 7-12 (ages 12-18).'],
+                            ['q' => 'Do you offer financial aid?', 'a' => 'Yes, we have a generous bursary programme.'],
+                        ],
+                    ]),
+                    self::blk('cta_banner', [
+                        'title' => 'Ready to Apply?',
+                        'cta_text' => 'Contact Admissions',
+                        'cta_url' => '/contact',
+                    ]),
+                ],
+            ],
+            'news-events' => [
+                'title' => 'News & Events',
+                'blocks' => [
+                    self::blk('hero', [
+                        'variant' => 'hero-editorial',
+                        'title' => 'The Metropolis Edit',
+                        'description' => 'Stories, showcases and events from the most creative school in the city.',
+                        'image_url' => self::photo('urban-news'),
+                        'layout' => 'image-right',
+                    ]),
+                    self::blk('dynamic_news', [
+                        'title' => 'Latest Stories',
+                    ]),
+                    self::blk('events_calendar', [
+                        'title' => 'What\'s On',
+                    ]),
+                    self::blk('cta_banner', [
+                        'title' => 'Follow the Action',
+                        'cta_text' => 'Get in Touch',
+                        'cta_url' => '/contact',
+                    ]),
+                ],
+            ],
+            'contact' => [
+                'title' => 'Contact Us',
+                'blocks' => [
+                    self::blk('hero', [
+                        'variant' => 'hero-editorial',
+                        'title' => 'Let\'s Create Together',
+                        'description' => 'Have a question? Want to visit? We are here.',
+                        'image_url' => self::photo('urban-contact'),
+                        'layout' => 'image-right',
+                    ]),
+                    self::blk('contact_map', [
+                        'title' => 'Find Us',
+                        'address' => '30 Innovation Drive, Harare',
+                        'phone' => '+263 77 555 6677',
+                        'email' => 'hello@metropolisacademy.co.zw',
+                    ]),
+                ],
+            ],
+            'student-life' => [
+                'title' => 'Student Life',
+                'blocks' => [
+                    self::blk('hero', [
+                        'variant' => 'hero-editorial',
+                        'title' => 'Always Something Happening',
+                        'description' => 'Exhibitions, hackathons, performances, pop-ups — life at Metropolis never stands still.',
+                        'image_url' => self::photo('urban-life'),
+                        'layout' => 'image-right',
+                    ]),
+                    self::blk('gallery', [
+                        'title' => 'The Metropolis Gallery',
+                        'columns' => 3,
+                        'images' => [
+                            ['url' => self::photo('urban-g1'), 'caption' => 'Annual design exhibition'],
+                            ['url' => self::photo('urban-g2'), 'caption' => 'Hackathon weekend'],
+                            ['url' => self::photo('urban-g3'), 'caption' => 'Fashion show'],
+                            ['url' => self::photo('urban-g4'), 'caption' => 'Film festival'],
+                            ['url' => self::photo('urban-g5'), 'caption' => 'Startup pitch day'],
+                            ['url' => self::photo('urban-g6'), 'caption' => 'Graduation showcase'],
+                        ],
+                    ]),
+                    self::blk('cta_banner', [
+                        'title' => 'See It for Yourself',
+                        'cta_text' => 'Book a Visit',
+                        'cta_url' => '/contact',
                     ]),
                 ],
             ],

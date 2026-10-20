@@ -175,6 +175,63 @@ class ComponentRegistry
             ],
             'design' => ['radius' => 'lg', 'shadow' => 'md', 'container' => 'wide', 'button_style' => 'pill'],
         ],
+
+        // ── Simple CMS set (five distinct non-dark directions) ──────────
+        'nordic-light' => [
+            'name' => 'Nordic Light',
+            'subtitle' => 'Scandinavian • Clean • Airy',
+            'description' => 'Bright whites, pale wood tones and a soft sky-blue accent. Generous whitespace, thin-line icons and calm fade-in motion.',
+            'fonts' => ['primary' => 'Outfit', 'secondary' => 'Cormorant Garamond'],
+            'palette' => [
+                'primary' => '#1e5f8a', 'secondary' => '#4a9cc7', 'accent' => '#c8a96e',
+                'background' => '#fafcfe', 'text' => '#1a2a3a', 'card_bg' => '#ffffff',
+            ],
+            'design' => ['radius' => 'md', 'shadow' => 'sm', 'container' => 'wide', 'button_style' => 'rounded'],
+        ],
+        'savanna-gold' => [
+            'name' => 'Savanna Gold',
+            'subtitle' => 'African Contemporary • Warm • Bold',
+            'description' => 'Rich terracotta, burnished gold and deep chocolate with bold geometric patterns and confident, warm typography.',
+            'fonts' => ['primary' => 'Rubik', 'secondary' => 'Playfair Display'],
+            'palette' => [
+                'primary' => '#92400e', 'secondary' => '#b45309', 'accent' => '#d97706',
+                'background' => '#fefce8', 'text' => '#292524', 'card_bg' => '#ffffff',
+            ],
+            'design' => ['radius' => 'lg', 'shadow' => 'md', 'container' => 'wide', 'button_style' => 'pill'],
+        ],
+        'botanical-green' => [
+            'name' => 'Botanical Green',
+            'subtitle' => 'Nature-inspired • Organic • Calm',
+            'description' => 'Deep forest green, sage and warm cream with organic rounded shapes, leaf motifs and gentle scroll reveals.',
+            'fonts' => ['primary' => 'Nunito', 'secondary' => 'Lora'],
+            'palette' => [
+                'primary' => '#166534', 'secondary' => '#4d7c0f', 'accent' => '#ca8a04',
+                'background' => '#f7faf4', 'text' => '#1a2e1a', 'card_bg' => '#ffffff',
+            ],
+            'design' => ['radius' => 'xl', 'shadow' => 'md', 'container' => 'wide', 'button_style' => 'pill'],
+        ],
+        'mediterranean-blue' => [
+            'name' => 'Mediterranean Blue',
+            'subtitle' => 'Coastal • Bright • Inviting',
+            'description' => 'Cobalt blue and crisp white with warm terracotta accents. Sun-drenched photography, ceramic-tile patterns and buoyant motion.',
+            'fonts' => ['primary' => 'Poppins', 'secondary' => 'DM Serif Display'],
+            'palette' => [
+                'primary' => '#1d4ed8', 'secondary' => '#3b82f6', 'accent' => '#ea580c',
+                'background' => '#f0f7ff', 'text' => '#1e3a5f', 'card_bg' => '#ffffff',
+            ],
+            'design' => ['radius' => 'md', 'shadow' => 'md', 'container' => 'wide', 'button_style' => 'rounded'],
+        ],
+        'urban-creative' => [
+            'name' => 'Urban Creative',
+            'subtitle' => 'Modern Arts • Bold • Asymmetric',
+            'description' => 'Charcoal, coral and mustard with asymmetric layouts, oversized display type and kinetic scroll-driven highlights.',
+            'fonts' => ['primary' => 'Space Grotesk', 'secondary' => 'Libre Baskerville'],
+            'palette' => [
+                'primary' => '#1e293b', 'secondary' => '#e11d48', 'accent' => '#ea580c',
+                'background' => '#ffffff', 'text' => '#0f172a', 'card_bg' => '#f8fafc',
+            ],
+            'design' => ['radius' => 'sm', 'shadow' => 'lg', 'container' => 'wide', 'button_style' => 'square'],
+        ],
     ];
 
     /**

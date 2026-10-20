@@ -5,6 +5,7 @@ namespace App\Filament\App\Pages;
 use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Concerns\ModulePermissionAccess;
 use App\Services\ImageConverter;
+use Filament\Actions\Action;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -363,6 +364,23 @@ class WebsiteContentManager extends Page
     {
         return [
             $this->getHelpAction(),
+            Action::make('openAdvancedBuilder')
+                ->label(__('Design Studio (Advanced)'))
+                ->icon('heroicon-o-squares-2x2')
+                ->color('gray')
+                ->url(function () {
+                    if (! $this->activeWebsiteId) {
+                        return null;
+                    }
+                    $home = CmsPage::query()
+                        ->where('cms_website_id', $this->activeWebsiteId)
+                        ->orderByDesc('is_homepage')
+                        ->orderBy('sort_order')
+                        ->first();
+
+                    return $home ? VisualCmsBuilder::getUrl(['pageId' => $home->id]) : null;
+                })
+                ->visible(fn () => (bool) $this->activeWebsiteId),
         ];
     }
 }
