@@ -7,7 +7,7 @@
     <div class="sc-section-head is-center">
         <span class="sc-eyebrow">{{ __('Academic Pathways') }}</span>
         <h2 {!! 'style="' . $v['titleStyle'] . '"' !!} class="sc-section-title">{{ $title }}</h2>
-        <p class="sc-section-lead">{!! $rich($block['description']) ?: __('Comprehensive learning pathways designed for intellectual excellence.') !!}</p>
+        <p class="sc-section-lead">{!! $rich($block['description'] ?? '') ?: __('Comprehensive learning pathways designed for intellectual excellence.') !!}</p>
     </div>
 
     <div class="sc-grid sc-grid-3">

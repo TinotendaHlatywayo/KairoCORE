@@ -11,7 +11,7 @@
         <div>
             <span class="sc-eyebrow">{{ __('Contact') }}</span>
             <h2 {!! 'style="' . $v['titleStyle'] . '"' !!}>{{ $title }}</h2>
-            <p class="sc-muted" style="margin-top: 0.7rem; max-width: 30rem;">{!! $rich($block['description']) ?: __('Our administration office is open Monday through Friday for parent inquiries.') !!}</p>
+            <p class="sc-muted" style="margin-top: 0.7rem; max-width: 30rem;">{!! $rich($block['description'] ?? '') ?: __('Our administration office is open Monday through Friday for parent inquiries.') !!}</p>
         </div>
 
         <div class="sc-contact-list">

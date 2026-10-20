@@ -40,7 +40,7 @@
             <h1 class="sc-hero-title" {!! 'style="' . $v['titleStyle'] . '"' !!}>{{ $title }}</h1>
         @endif
 
-        <p class="sc-hero-lead">{!! $rich($block['description']) ?: 'A premier educational institution guiding next-generation achievements.' !!}</p>
+        <p class="sc-hero-lead">{!! $rich($block['description'] ?? '') ?: 'A premier educational institution guiding next-generation achievements.' !!}</p>
 
         @if(!empty($block['cta_text']) || !empty($block['secondary_cta_text']))
             <div class="sc-hero-actions">

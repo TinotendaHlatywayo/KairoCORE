@@ -3343,6 +3343,7 @@ class SiteTemplateCatalog
                     ]),
                     self::blk('cta_banner', [
                         'title' => 'Have Questions?',
+                        'description' => 'Our admissions team is happy to help with entry requirements, fees and visits.',
                         'cta_text' => 'Contact Admissions',
                         'cta_url' => '/contact',
                     ]),
@@ -3366,6 +3367,7 @@ class SiteTemplateCatalog
                     ]),
                     self::blk('cta_banner', [
                         'title' => 'Stay Connected',
+                        'description' => 'Follow our stories and reach out — we would love to hear from you.',
                         'cta_text' => 'Contact Us',
                         'cta_url' => '/contact',
                     ]),
@@ -3413,6 +3415,7 @@ class SiteTemplateCatalog
                     ]),
                     self::blk('cta_banner', [
                         'title' => 'Experience Azure',
+                        'description' => 'Book a campus visit and see our classrooms, grounds and community for yourself.',
                         'cta_text' => 'Book a Visit',
                         'cta_url' => '/contact',
                     ]),
@@ -3538,6 +3541,7 @@ class SiteTemplateCatalog
                     ]),
                     self::blk('cta_banner', [
                         'title' => 'Ready to Apply?',
+                        'description' => 'Applications are open. Our admissions team will guide you through every step.',
                         'cta_text' => 'Contact Admissions',
                         'cta_url' => '/contact',
                     ]),
@@ -3561,6 +3565,7 @@ class SiteTemplateCatalog
                     ]),
                     self::blk('cta_banner', [
                         'title' => 'Follow the Action',
+                        'description' => 'See what our students are building, performing and competing in this term.',
                         'cta_text' => 'Get in Touch',
                         'cta_url' => '/contact',
                     ]),
@@ -3608,6 +3613,7 @@ class SiteTemplateCatalog
                     ]),
                     self::blk('cta_banner', [
                         'title' => 'See It for Yourself',
+                        'description' => 'The best way to understand Metropolis is to walk the halls. Book a visit today.',
                         'cta_text' => 'Book a Visit',
                         'cta_url' => '/contact',
                     ]),

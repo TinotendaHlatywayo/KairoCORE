@@ -19,7 +19,7 @@
             {{ $title }}
         </h2>
         <div class="sc-muted" style="margin-top: 0.9rem; font-size: 1.02rem; line-height: 1.7;">
-            {!! $rich($block['description']) ?: __('Our vision is to deliver rigorous, holistic education.') !!}
+            {!! $rich($block['description'] ?? '') ?: __('Our vision is to deliver rigorous, holistic education.') !!}
         </div>
     </div>
 </div>
