@@ -294,10 +294,12 @@ class WebsiteContentManager extends Page
             return;
         }
 
+        $templateKey = CmsTemplateService::canonicalTemplate($website->active_template);
         $presets = CmsTemplateService::getTemplates();
-        $preset = $presets[CmsTemplateService::canonicalTemplate($website->active_template)] ?? $presets['heritage-editorial'];
+        $preset = $presets[$templateKey] ?? $presets['heritage-editorial'];
 
         $this->theme = [
+            'template' => $templateKey,
             'primary' => CmsTemplateService::safeHex($website->color_primary, $preset['palette']['primary']),
             'secondary' => CmsTemplateService::safeHex($website->color_secondary, $preset['palette']['secondary']),
             'accent' => CmsTemplateService::safeHex($website->color_accent, $preset['palette']['accent']),
@@ -306,6 +308,15 @@ class WebsiteContentManager extends Page
             'cardBg' => CmsTemplateService::safeHex($website->color_card_bg, '#f8fafc'),
             'fontPrimary' => $website->font_primary ?: $preset['fonts']['primary'],
             'fontSecondary' => $website->font_secondary ?: $preset['fonts']['secondary'],
+            'radius' => CmsTemplateService::RADIUS_SCALE[
+                CmsTemplateService::safeToken($website->design_radius, CmsTemplateService::RADIUS_SCALE, 'lg')
+            ],
+            'shadow' => CmsTemplateService::SHADOW_SCALE[
+                CmsTemplateService::safeToken($website->design_shadow, CmsTemplateService::SHADOW_SCALE, 'md')
+            ],
+            'buttonStyle' => CmsTemplateService::BUTTON_STYLES[
+                CmsTemplateService::safeToken($website->design_button_style, CmsTemplateService::BUTTON_STYLES, 'pill')
+            ],
             'container' => CmsTemplateService::CONTAINER_SCALE[
                 CmsTemplateService::safeToken($website->design_container, CmsTemplateService::CONTAINER_SCALE, 'wide')
             ],
