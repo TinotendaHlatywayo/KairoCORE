@@ -55,7 +55,15 @@
     }
 
     .sc-site p { margin: 0; }
-    .sc-site img { max-width: 100%; display: block; }
+    .sc-site img {
+        max-width: 100%;
+        display: block;
+        background-color: color-mix(in srgb, var(--sc-text) 5%, var(--sc-bg));
+        transition: opacity 0.3s var(--sc-ease);
+    }
+    .sc-site img[loading="lazy"] { opacity: 0; }
+    .sc-site img[loading="lazy"].is-loaded,
+    .sc-site img:not([loading="lazy"]) { opacity: 1; }
     .sc-site a { color: var(--sc-primary); text-decoration: none; }
     .sc-site button { font-family: inherit; }
     .sc-site ul, .sc-site ol { margin: 0; padding: 0; }
