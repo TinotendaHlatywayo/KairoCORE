@@ -391,5 +391,12 @@
 @if($website->custom_js)
     <script>{!! $website->custom_js !!}</script>
 @endif
+<script>
+    // Fade in lazy-loaded images once they arrive (prevents layout shift flash).
+    document.querySelectorAll('img[loading="lazy"]').forEach(function (img) {
+        if (img.complete) { img.classList.add('is-loaded'); return; }
+        img.addEventListener('load', function () { img.classList.add('is-loaded'); }, { once: true });
+    });
+</script>
 </body>
 </html>
