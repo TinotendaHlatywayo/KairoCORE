@@ -1317,6 +1317,14 @@ class SystemSettingsPage extends Page implements HasForms
         }
     }
 
+    /**
+     * In-view save button label — the blade is shared with the platform pages.
+     */
+    public function getSaveButtonLabel(): string
+    {
+        return __('Save System Settings');
+    }
+
     public function save(): void
     {
         $state = $this->form->getState();

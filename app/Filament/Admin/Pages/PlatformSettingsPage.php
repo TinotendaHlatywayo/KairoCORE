@@ -321,326 +321,6 @@ class PlatformSettingsPage extends Page implements HasForms
                                     ->default('https://tiktok.com'),
                             ])->columns(2),
 
-                        Tab::make('Website Content')
-                            ->icon('heroicon-o-globe-alt')
-                            ->schema([
-                                Placeholder::make('marketing_intro')
-                                    ->label(__('Public website content'))
-                                    ->content(new HtmlString(
-                                        'Every text and image on the public <strong>Home</strong>, <strong>Features</strong>, '
-                                        .'<strong>About</strong> and <strong>Contact</strong> pages is edited here. Pick a language first: fields show '
-                                        .'what the site currently renders in that language, and <strong>Save writes only the fields you changed</strong> '
-                                        .'for that language. Leave a field unchanged (or blank) to keep following the shipped, translated copy. '
-                                        .'Button links accept a full URL or a site-relative path such as <strong>/platform</strong>.'
-                                    ))
-                                    ->columnSpanFull(),
-
-                                Select::make('marketing_language')
-                                    ->label(__('Edit language'))
-                                    ->options([
-                                        'en' => __('English (default)'),
-                                        'sn' => 'Shona',
-                                        'sw' => 'Swahili',
-                                        'fr' => 'Français',
-                                        'pt' => 'Português',
-                                        'es' => 'Español',
-                                    ])
-                                    ->default('en')
-                                    ->live()
-                                    ->helperText(__('Switching language discards unsaved edits for the current language.'))
-                                    ->afterStateUpdated(fn ($state) => $this->switchMarketingLocale((string) $state))
-                                    ->columnSpanFull(),
-
-                                Select::make('media_video_fps')
-                                    ->label(__('Animation frame rate'))
-                                    ->options([
-                                        '10' => __('10 fps (smallest files)'),
-                                        '20' => __('20 fps (balanced)'),
-                                        '30' => __('30 fps (smoothest, default)'),
-                                    ])
-                                    ->default('30')
-                                    ->helperText(__('Frame rate used when a website video or GIF is converted to an animated WebP in the background. Photos are converted to WebP automatically on save; the source video is deleted afterwards.'))
-                                    ->columnSpanFull(),
-
-                                Tabs::make('marketingSections')
-                                    ->columnSpanFull()
-                                    ->tabs([
-
-                                        Tab::make('Home')
-                                            ->icon('heroicon-o-home')
-                                            ->columns(2)
-                                            ->schema([
-                                                TextInput::make('marketing_announcement')
-                                                    ->label(__('Announcement bar (optional)'))
-                                                    ->maxLength(160),
-                                                FileUpload::make('marketing_nav_logo')
-                                                    ->label(__('Navbar logo (light background)'))
-                                                    ->disk('public')
-                                                    ->directory('platform/website')
-                                                    ->acceptedFileTypes(self::WEBSITE_MEDIA_MIME_TYPES)
-                                                    ->maxSize(51200)
-                                                    ->rules(fn (Get $get) => [
-                                                        new MaxVideoDuration(8, (float) ($get('marketing_nav_logo_trim_start') ?? 0)),
-                                                    ])
-                                                    ->helperText(__('Image, GIF or a video — converted to WebP (animated for GIF/video) in the background. An 8-second clip is taken from the start point set below.'))
-                                                    ->columnSpanFull(),
-                                                TextInput::make('marketing_nav_logo_trim_start')
-                                                    ->label(__('Navbar video trim start (seconds)'))
-                                                    ->numeric()
-                                                    ->minValue(0)
-                                                    ->default(0)
-                                                    ->helperText(__('Videos only: the animated clip is 8 seconds long, starting at this point. Ignored for photos.'))
-                                                    ->columnSpanFull(),
-                                                FileUpload::make('marketing_footer_logo')
-                                                    ->label(__('Footer logo (dark background)'))
-                                                    ->disk('public')
-                                                    ->directory('platform/website')
-                                                    ->acceptedFileTypes(self::WEBSITE_MEDIA_MIME_TYPES)
-                                                    ->maxSize(51200)
-                                                    ->rules(fn (Get $get) => [
-                                                        new MaxVideoDuration(8, (float) ($get('marketing_footer_logo_trim_start') ?? 0)),
-                                                    ])
-                                                    ->helperText(__('Image, GIF or a video — converted to WebP (animated for GIF/video) in the background. An 8-second clip is taken from the start point set below.'))
-                                                    ->columnSpanFull(),
-                                                TextInput::make('marketing_footer_logo_trim_start')
-                                                    ->label(__('Footer video trim start (seconds)'))
-                                                    ->numeric()
-                                                    ->minValue(0)
-                                                    ->default(0)
-                                                    ->helperText(__('Videos only: the animated clip is 8 seconds long, starting at this point. Ignored for photos.'))
-                                                    ->columnSpanFull(),
-
-                                                $this->mText('hero_badge', __('Hero badge'), null, true),
-                                                $this->mText('hero_title', __('Hero title'), null, true),
-                                                $this->mText('hero_subtitle', __('Hero subtitle'), null, true),
-                                                ...$this->mImage('hero_image', __('Hero image')),
-                                                $this->mText('hero_primary_label', __('Hero primary button label')),
-                                                $this->mText('hero_primary_url', __('Hero primary button link'), __('Defaults to the registration page when blank.')),
-                                                $this->mText('hero_secondary_label', __('Hero secondary button label')),
-                                                $this->mText('hero_secondary_url', __('Hero secondary button link'), __('Defaults to the features page when blank.')),
-                                                $this->mText('hero_trust_1', __('Hero trust point 1')),
-                                                $this->mText('hero_trust_2', __('Hero trust point 2')),
-                                                $this->mText('hero_trust_3', __('Hero trust point 3')),
-                                                $this->mText('hero_stat_1_label', __('Hero floating card 1 label')),
-                                                $this->mText('hero_stat_1_value', __('Hero floating card 1 value')),
-                                                $this->mText('hero_stat_2_label', __('Hero floating card 2 label')),
-                                                $this->mText('hero_stat_2_value', __('Hero floating card 2 value')),
-
-                                                Repeater::make('marketing_home_stats')
-                                                    ->label(__('Stats marquee'))
-                                                    ->collapsible()
-                                                    ->itemLabel(fn (array $state) => $state['label'] ?? '#')
-                                                    ->columns(3)
-                                                    ->columnSpanFull()
-                                                    ->schema([
-                                                        TextInput::make('value')->label(__('Number')),
-                                                        TextInput::make('suffix')->label(__('Suffix'))->helperText(__('e.g. +, %')),
-                                                        TextInput::make('label')->label(__('Label')),
-                                                    ]),
-
-                                                $this->mText('modules_title', __('Modules section title'), null, true),
-                                                $this->mText('modules_subtitle', __('Modules section subtitle'), null, true),
-                                                $this->mText('modules_cta_label', __('Modules section button label')),
-
-                                                Repeater::make('marketing_home_modules')
-                                                    ->label(__('Module cards (Home)'))
-                                                    ->collapsible()
-                                                    ->itemLabel(fn (array $state) => $state['name'] ?? '#')
-                                                    ->columns(2)
-                                                    ->columnSpanFull()
-                                                    ->schema([
-                                                        TextInput::make('name')->label(__('Name')),
-                                                        TextInput::make('icon')->label(__('Icon path'))->hidden(),
-                                                        Textarea::make('desc')->label(__('Description'))->rows(2)->columnSpanFull(),
-                                                    ]),
-
-                                                $this->mText('benefits_title', __('Benefits section title'), null, true),
-                                                $this->mText('benefits_subtitle', __('Benefits section subtitle'), null, true),
-
-                                                Repeater::make('marketing_home_benefits')
-                                                    ->label(__('Benefit cards (Home, dark section)'))
-                                                    ->collapsible()
-                                                    ->itemLabel(fn (array $state) => $state['name'] ?? '#')
-                                                    ->columns(2)
-                                                    ->columnSpanFull()
-                                                    ->schema([
-                                                        TextInput::make('name')->label(__('Name')),
-                                                        TextInput::make('icon')->label(__('Icon path'))->hidden(),
-                                                        Textarea::make('desc')->label(__('Description'))->rows(2)->columnSpanFull(),
-                                                    ]),
-
-                                                $this->mText('steps_title', __('How-it-works section title'), null, true),
-                                                $this->mText('steps_subtitle', __('How-it-works section subtitle'), null, true),
-
-                                                Repeater::make('marketing_home_steps')
-                                                    ->label(__('How-it-works steps'))
-                                                    ->collapsible()
-                                                    ->itemLabel(fn (array $state) => $state['title'] ?? '#')
-                                                    ->columns(2)
-                                                    ->columnSpanFull()
-                                                    ->schema([
-                                                        TextInput::make('title')->label(__('Title')),
-                                                        Textarea::make('desc')->label(__('Description'))->rows(2),
-                                                    ]),
-
-                                                $this->mText('cta_title', __('Closing CTA title'), null, true),
-                                                $this->mText('cta_subtitle', __('Closing CTA subtitle'), null, true),
-                                                $this->mText('cta_primary_label', __('Closing CTA primary label')),
-                                                $this->mText('cta_primary_url', __('Closing CTA primary link'), __('Defaults to the registration page when blank.')),
-                                                $this->mText('cta_secondary_label', __('Closing CTA secondary label')),
-                                                $this->mText('cta_secondary_url', __('Closing CTA secondary link'), __('Defaults to the features page when blank.')),
-                                            ]),
-
-                                        Tab::make('Features')
-                                            ->icon('heroicon-o-squares-2x2')
-                                            ->columns(2)
-                                            ->schema([
-                                                $this->mText('features_badge', __('Page badge'), null, true),
-                                                $this->mText('features_title', __('Page title'), null, true),
-                                                $this->mText('features_subtitle', __('Page subtitle'), null, true),
-
-                                                Repeater::make('marketing_features_list')
-                                                    ->label(__('Feature cards'))
-                                                    ->collapsible()
-                                                    ->itemLabel(fn (array $state) => $state['name'] ?? ($state['key'] ?? '#'))
-                                                    ->columns(2)
-                                                    ->columnSpanFull()
-                                                    ->schema([
-                                                        TextInput::make('name')->label(__('Name'))->columnSpanFull(),
-                                                        Select::make('cat')
-                                                            ->label(__('Filter category'))
-                                                            ->options([
-                                                                'academic' => __('Academic'),
-                                                                'admin' => __('Administration'),
-                                                                'campus' => __('Campus life'),
-                                                            ]),
-                                                        TextInput::make('key')->label(__('Key'))->hidden(),
-                                                        Textarea::make('desc')->label(__('Card summary'))->rows(2)->columnSpanFull(),
-                                                        Textarea::make('detail')->label(__('Modal detail text'))->rows(3)->columnSpanFull(),
-                                                        TextInput::make('sub1')->label(__('Sub-feature 1')),
-                                                        TextInput::make('sub2')->label(__('Sub-feature 2')),
-                                                        TextInput::make('sub3')->label(__('Sub-feature 3')),
-                                                        TextInput::make('trim_start')
-                                                            ->label(__('Video trim start (seconds)'))
-                                                            ->numeric()
-                                                            ->minValue(0)
-                                                            ->default(0)
-                                                            ->helperText(__('Videos only: the animated clip is 8 seconds long, starting at this point. Ignored for photos.'))
-                                                            ->columnSpanFull(),
-                                                        FileUpload::make('image')
-                                                            ->label(__('Feature image'))
-                                                            ->disk('public')
-                                                            ->directory('platform/website')
-                                                            ->acceptedFileTypes(self::WEBSITE_MEDIA_MIME_TYPES)
-                                                            ->maxSize(51200)
-                                                            ->rules(fn (Get $get) => [
-                                                                new MaxVideoDuration(8, (float) ($get('trim_start') ?? 0)),
-                                                            ])
-                                                            ->helperText(__('Image, GIF or a video — converted to WebP (animated for GIF/video) in the background. An 8-second clip is taken from the trim start set above.'))
-                                                            ->columnSpanFull(),
-                                                    ]),
-
-                                                $this->mText('features_cta_title', __('Bottom CTA title'), null, true),
-                                                $this->mText('features_cta_subtitle', __('Bottom CTA subtitle'), null, true),
-                                                $this->mText('features_cta_primary_label', __('Bottom CTA primary label')),
-                                                $this->mText('features_cta_secondary_label', __('Bottom CTA secondary label')),
-                                            ]),
-
-                                        Tab::make('About')
-                                            ->icon('heroicon-o-building-office-2')
-                                            ->columns(2)
-                                            ->schema([
-                                                $this->mText('about_badge', __('Page badge'), null, true),
-                                                $this->mText('about_title', __('Page title'), null, true),
-                                                $this->mText('about_intro', __('Page intro paragraph'), null, true),
-                                                ...$this->mImage('about_image', __('Hero image')),
-                                                $this->mText('about_founded_label', __('Founded card label')),
-                                                $this->mText('about_founded_value', __('Founded card value')),
-
-                                                Repeater::make('marketing_about_pillars')
-                                                    ->label(__('Mission / vision / how-we-build cards'))
-                                                    ->collapsible()
-                                                    ->itemLabel(fn (array $state) => $state['title'] ?? '#')
-                                                    ->columns(2)
-                                                    ->columnSpanFull()
-                                                    ->schema([
-                                                        TextInput::make('title')->label(__('Title')),
-                                                        TextInput::make('icon')->label(__('Icon path'))->hidden(),
-                                                        Textarea::make('desc')->label(__('Description'))->rows(3)->columnSpanFull(),
-                                                    ]),
-
-                                                $this->mText('about_why_badge', __('Why section badge'), null, true),
-                                                $this->mText('about_why_title', __('Why section title'), null, true),
-
-                                                Repeater::make('marketing_about_why_points')
-                                                    ->label(__('Why-choose-us checklist'))
-                                                    ->collapsible()
-                                                    ->itemLabel(fn (array $state) => mb_substr((string) ($state['text'] ?? '#'), 0, 50))
-                                                    ->columnSpanFull()
-                                                    ->schema([
-                                                        Textarea::make('text')->label(__('Point'))->rows(2)->columnSpanFull(),
-                                                    ]),
-
-                                                $this->mText('about_story_badge', __('Story badge'), null, true),
-                                                $this->mText('about_story_title', __('Story title'), null, true),
-                                                $this->mText('about_story_p1', __('Story paragraph 1'), null, true),
-                                                $this->mText('about_story_p2', __('Story paragraph 2'), null, true),
-
-                                                Repeater::make('marketing_about_stats')
-                                                    ->label(__('Story numbers'))
-                                                    ->collapsible()
-                                                    ->itemLabel(fn (array $state) => $state['label'] ?? '#')
-                                                    ->columns(3)
-                                                    ->columnSpanFull()
-                                                    ->schema([
-                                                        TextInput::make('value')->label(__('Number')),
-                                                        TextInput::make('suffix')->label(__('Suffix')),
-                                                        TextInput::make('label')->label(__('Label')),
-                                                    ]),
-
-                                                $this->mText('about_cta_title', __('Closing CTA title'), null, true),
-                                                $this->mText('about_cta_subtitle', __('Closing CTA subtitle'), null, true),
-                                            ]),
-
-                                        Tab::make('Contact')
-                                            ->icon('heroicon-o-envelope')
-                                            ->columns(2)
-                                            ->schema([
-                                                $this->mText('contact_badge', __('Page badge'), null, true),
-                                                $this->mText('contact_title', __('Page title'), null, true),
-                                                $this->mText('contact_intro', __('Page intro paragraph'), null, true),
-                                                $this->mText('contact_form_title', __('Form title'), null, true),
-                                                $this->mText('contact_form_name_label', __('Form: name label')),
-                                                $this->mText('contact_form_email_label', __('Form: email label')),
-                                                $this->mText('contact_form_message_label', __('Form: message label')),
-                                                $this->mText('contact_form_placeholder_name', __('Form: name placeholder')),
-                                                $this->mText('contact_form_placeholder_message', __('Form: message placeholder'), null, true),
-                                                $this->mText('contact_form_submit_label', __('Form: submit button')),
-                                                $this->mText('contact_whatsapp_title', __('WhatsApp card title')),
-                                                $this->mText('contact_whatsapp_note', __('WhatsApp card note')),
-                                                $this->mText('contact_email_title', __('Email card title')),
-                                                $this->mText('contact_email_note', __('Email card note')),
-                                                $this->mText('contact_office_title', __('Office hours card title')),
-                                                $this->mText('contact_office_hours', __('Office hours')),
-                                                $this->mText('contact_office_location', __('Office location')),
-                                                $this->mText('contact_follow_label', __('Social label')),
-                                                ...$this->mImage('contact_image', __('Side image')),
-                                                $this->mText('contact_card_title', __('Side card title'), null, true),
-                                                $this->mText('contact_card_text', __('Side card text'), null, true),
-                                            ]),
-
-                                        Tab::make('Global & SEO')
-                                            ->icon('heroicon-o-magnifying-glass')
-                                            ->columns(2)
-                                            ->schema([
-                                                $this->mText('footer_tagline', __('Footer tagline'), null, true),
-                                                $this->mText('meta_title', __('SEO title'), __('Leave blank to use the page default.'), true),
-                                                $this->mText('meta_description', __('SEO description'), __('Leave blank to use the default platform description.'), true),
-                                            ]),
-
-                                    ]),
-                            ]),
-
                         Tab::make('Email Branding')
                             ->icon('heroicon-o-envelope-open')
                             ->schema([
@@ -678,6 +358,350 @@ class PlatformSettingsPage extends Page implements HasForms
                     ]),
             ])
             ->statePath('data');
+    }
+
+    /**
+     * Fields that sit above the page-section tabs on the Website Content
+     * page: the intro copy, the edit-language picker and the animation
+     * frame rate. Extracted from the old Platform Settings tab so the
+     * standalone sidebar page and the settings class share one definition.
+     *
+     * @return array<int, mixed>
+     */
+    protected function websiteContentPrelude(): array
+    {
+        return [
+            Placeholder::make('marketing_intro')
+                ->label(__('Public website content'))
+                ->content(new HtmlString(
+                    'Every text and image on the public <strong>Home</strong>, <strong>Features</strong>, '
+                    .'<strong>About</strong> and <strong>Contact</strong> pages is edited here. Pick a language first: fields show '
+                    .'what the site currently renders in that language, and <strong>Save writes only the fields you changed</strong> '
+                    .'for that language. Leave a field unchanged (or blank) to keep following the shipped, translated copy. '
+                    .'Button links accept a full URL or a site-relative path such as <strong>/platform</strong>.'
+                ))
+                ->columnSpanFull(),
+
+            Select::make('marketing_language')
+                ->label(__('Edit language'))
+                ->options([
+                    'en' => __('English (default)'),
+                    'sn' => 'Shona',
+                    'sw' => 'Swahili',
+                    'fr' => 'Français',
+                    'pt' => 'Português',
+                    'es' => 'Español',
+                ])
+                ->default('en')
+                ->live()
+                ->helperText(__('Switching language discards unsaved edits for the current language.'))
+                ->afterStateUpdated(fn ($state) => $this->switchMarketingLocale((string) $state))
+                ->columnSpanFull(),
+
+            Select::make('media_video_fps')
+                ->label(__('Animation frame rate'))
+                ->options([
+                    '10' => __('10 fps (smallest files)'),
+                    '20' => __('20 fps (balanced)'),
+                    '30' => __('30 fps (smoothest, default)'),
+                ])
+                ->default('30')
+                ->helperText(__('Frame rate used when a website video or GIF is converted to an animated WebP in the background. Photos are converted to WebP automatically on save; the source video is deleted afterwards.'))
+                ->columnSpanFull(),
+        ];
+    }
+
+    /**
+     * The public site's page-section tabs: Home, Features, About, Contact
+     * and Global & SEO. Rendered by the standalone Website Content sidebar
+     * page (Platform Settings no longer hosts website copy).
+     *
+     * @return array<int, mixed>
+     */
+    protected function marketingSectionTabs(): array
+    {
+        return [
+            Tab::make('Home')
+                ->icon('heroicon-o-home')
+                ->columns(2)
+                ->schema([
+                    TextInput::make('marketing_announcement')
+                        ->label(__('Announcement bar (optional)'))
+                        ->maxLength(160),
+                    FileUpload::make('marketing_nav_logo')
+                        ->label(__('Navbar logo (light background)'))
+                        ->disk('public')
+                        ->directory('platform/website')
+                        ->acceptedFileTypes(self::WEBSITE_MEDIA_MIME_TYPES)
+                        ->maxSize(51200)
+                        ->rules(fn (Get $get) => [
+                            new MaxVideoDuration(8, (float) ($get('marketing_nav_logo_trim_start') ?? 0)),
+                        ])
+                        ->helperText(__('Image, GIF or a video — converted to WebP (animated for GIF/video) in the background. An 8-second clip is taken from the start point set below.'))
+                        ->columnSpanFull(),
+                    TextInput::make('marketing_nav_logo_trim_start')
+                        ->label(__('Navbar video trim start (seconds)'))
+                        ->numeric()
+                        ->minValue(0)
+                        ->default(0)
+                        ->helperText(__('Videos only: the animated clip is 8 seconds long, starting at this point. Ignored for photos.'))
+                        ->columnSpanFull(),
+                    FileUpload::make('marketing_footer_logo')
+                        ->label(__('Footer logo (dark background)'))
+                        ->disk('public')
+                        ->directory('platform/website')
+                        ->acceptedFileTypes(self::WEBSITE_MEDIA_MIME_TYPES)
+                        ->maxSize(51200)
+                        ->rules(fn (Get $get) => [
+                            new MaxVideoDuration(8, (float) ($get('marketing_footer_logo_trim_start') ?? 0)),
+                        ])
+                        ->helperText(__('Image, GIF or a video — converted to WebP (animated for GIF/video) in the background. An 8-second clip is taken from the start point set below.'))
+                        ->columnSpanFull(),
+                    TextInput::make('marketing_footer_logo_trim_start')
+                        ->label(__('Footer video trim start (seconds)'))
+                        ->numeric()
+                        ->minValue(0)
+                        ->default(0)
+                        ->helperText(__('Videos only: the animated clip is 8 seconds long, starting at this point. Ignored for photos.'))
+                        ->columnSpanFull(),
+
+                    $this->mText('hero_badge', __('Hero badge'), null, true),
+                    $this->mText('hero_title', __('Hero title'), null, true),
+                    $this->mText('hero_subtitle', __('Hero subtitle'), null, true),
+                    ...$this->mImage('hero_image', __('Hero image')),
+                    $this->mText('hero_primary_label', __('Hero primary button label')),
+                    $this->mText('hero_primary_url', __('Hero primary button link'), __('Defaults to the registration page when blank.')),
+                    $this->mText('hero_secondary_label', __('Hero secondary button label')),
+                    $this->mText('hero_secondary_url', __('Hero secondary button link'), __('Defaults to the features page when blank.')),
+                    $this->mText('hero_trust_1', __('Hero trust point 1')),
+                    $this->mText('hero_trust_2', __('Hero trust point 2')),
+                    $this->mText('hero_trust_3', __('Hero trust point 3')),
+                    $this->mText('hero_stat_1_label', __('Hero floating card 1 label')),
+                    $this->mText('hero_stat_1_value', __('Hero floating card 1 value')),
+                    $this->mText('hero_stat_2_label', __('Hero floating card 2 label')),
+                    $this->mText('hero_stat_2_value', __('Hero floating card 2 value')),
+
+                    Repeater::make('marketing_home_stats')
+                        ->label(__('Stats marquee'))
+                        ->collapsible()
+                        ->itemLabel(fn (array $state) => $state['label'] ?? '#')
+                        ->columns(3)
+                        ->columnSpanFull()
+                        ->schema([
+                            TextInput::make('value')->label(__('Number')),
+                            TextInput::make('suffix')->label(__('Suffix'))->helperText(__('e.g. +, %')),
+                            TextInput::make('label')->label(__('Label')),
+                        ]),
+
+                    $this->mText('modules_title', __('Modules section title'), null, true),
+                    $this->mText('modules_subtitle', __('Modules section subtitle'), null, true),
+                    $this->mText('modules_cta_label', __('Modules section button label')),
+
+                    Repeater::make('marketing_home_modules')
+                        ->label(__('Module cards (Home)'))
+                        ->collapsible()
+                        ->itemLabel(fn (array $state) => $state['name'] ?? '#')
+                        ->columns(2)
+                        ->columnSpanFull()
+                        ->schema([
+                            TextInput::make('name')->label(__('Name')),
+                            TextInput::make('icon')->label(__('Icon path'))->hidden(),
+                            Textarea::make('desc')->label(__('Description'))->rows(2)->columnSpanFull(),
+                        ]),
+
+                    $this->mText('benefits_title', __('Benefits section title'), null, true),
+                    $this->mText('benefits_subtitle', __('Benefits section subtitle'), null, true),
+
+                    Repeater::make('marketing_home_benefits')
+                        ->label(__('Benefit cards (Home, dark section)'))
+                        ->collapsible()
+                        ->itemLabel(fn (array $state) => $state['name'] ?? '#')
+                        ->columns(2)
+                        ->columnSpanFull()
+                        ->schema([
+                            TextInput::make('name')->label(__('Name')),
+                            TextInput::make('icon')->label(__('Icon path'))->hidden(),
+                            Textarea::make('desc')->label(__('Description'))->rows(2)->columnSpanFull(),
+                        ]),
+
+                    $this->mText('steps_title', __('How-it-works section title'), null, true),
+                    $this->mText('steps_subtitle', __('How-it-works section subtitle'), null, true),
+
+                    Repeater::make('marketing_home_steps')
+                        ->label(__('How-it-works steps'))
+                        ->collapsible()
+                        ->itemLabel(fn (array $state) => $state['title'] ?? '#')
+                        ->columns(2)
+                        ->columnSpanFull()
+                        ->schema([
+                            TextInput::make('title')->label(__('Title')),
+                            Textarea::make('desc')->label(__('Description'))->rows(2),
+                        ]),
+
+                    $this->mText('cta_title', __('Closing CTA title'), null, true),
+                    $this->mText('cta_subtitle', __('Closing CTA subtitle'), null, true),
+                    $this->mText('cta_primary_label', __('Closing CTA primary label')),
+                    $this->mText('cta_primary_url', __('Closing CTA primary link'), __('Defaults to the registration page when blank.')),
+                    $this->mText('cta_secondary_label', __('Closing CTA secondary label')),
+                    $this->mText('cta_secondary_url', __('Closing CTA secondary link'), __('Defaults to the features page when blank.')),
+                ]),
+
+            Tab::make('Features')
+                ->icon('heroicon-o-squares-2x2')
+                ->columns(2)
+                ->schema([
+                    $this->mText('features_badge', __('Page badge'), null, true),
+                    $this->mText('features_title', __('Page title'), null, true),
+                    $this->mText('features_subtitle', __('Page subtitle'), null, true),
+
+                    Repeater::make('marketing_features_list')
+                        ->label(__('Feature cards'))
+                        ->collapsible()
+                        ->itemLabel(fn (array $state) => $state['name'] ?? ($state['key'] ?? '#'))
+                        ->columns(2)
+                        ->columnSpanFull()
+                        ->schema([
+                            TextInput::make('name')->label(__('Name'))->columnSpanFull(),
+                            Select::make('cat')
+                                ->label(__('Filter category'))
+                                ->options([
+                                    'academic' => __('Academic'),
+                                    'admin' => __('Administration'),
+                                    'campus' => __('Campus life'),
+                                ]),
+                            TextInput::make('key')->label(__('Key'))->hidden(),
+                            Textarea::make('desc')->label(__('Card summary'))->rows(2)->columnSpanFull(),
+                            Textarea::make('detail')->label(__('Modal detail text'))->rows(3)->columnSpanFull(),
+                            TextInput::make('sub1')->label(__('Sub-feature 1')),
+                            TextInput::make('sub2')->label(__('Sub-feature 2')),
+                            TextInput::make('sub3')->label(__('Sub-feature 3')),
+                            TextInput::make('trim_start')
+                                ->label(__('Video trim start (seconds)'))
+                                ->numeric()
+                                ->minValue(0)
+                                ->default(0)
+                                ->helperText(__('Videos only: the animated clip is 8 seconds long, starting at this point. Ignored for photos.'))
+                                ->columnSpanFull(),
+                            FileUpload::make('image')
+                                ->label(__('Feature image'))
+                                ->disk('public')
+                                ->directory('platform/website')
+                                ->acceptedFileTypes(self::WEBSITE_MEDIA_MIME_TYPES)
+                                ->maxSize(51200)
+                                ->rules(fn (Get $get) => [
+                                    new MaxVideoDuration(8, (float) ($get('trim_start') ?? 0)),
+                                ])
+                                ->helperText(__('Image, GIF or a video — converted to WebP (animated for GIF/video) in the background. An 8-second clip is taken from the trim start set above.'))
+                                ->columnSpanFull(),
+                        ]),
+
+                    $this->mText('features_cta_title', __('Bottom CTA title'), null, true),
+                    $this->mText('features_cta_subtitle', __('Bottom CTA subtitle'), null, true),
+                    $this->mText('features_cta_primary_label', __('Bottom CTA primary label')),
+                    $this->mText('features_cta_secondary_label', __('Bottom CTA secondary label')),
+                ]),
+
+            Tab::make('About')
+                ->icon('heroicon-o-building-office-2')
+                ->columns(2)
+                ->schema([
+                    $this->mText('about_badge', __('Page badge'), null, true),
+                    $this->mText('about_title', __('Page title'), null, true),
+                    $this->mText('about_intro', __('Page intro paragraph'), null, true),
+                    ...$this->mImage('about_image', __('Hero image')),
+                    $this->mText('about_founded_label', __('Founded card label')),
+                    $this->mText('about_founded_value', __('Founded card value')),
+
+                    Repeater::make('marketing_about_pillars')
+                        ->label(__('Mission / vision / how-we-build cards'))
+                        ->collapsible()
+                        ->itemLabel(fn (array $state) => $state['title'] ?? '#')
+                        ->columns(2)
+                        ->columnSpanFull()
+                        ->schema([
+                            TextInput::make('title')->label(__('Title')),
+                            TextInput::make('icon')->label(__('Icon path'))->hidden(),
+                            Textarea::make('desc')->label(__('Description'))->rows(3)->columnSpanFull(),
+                        ]),
+
+                    $this->mText('about_why_badge', __('Why section badge'), null, true),
+                    $this->mText('about_why_title', __('Why section title'), null, true),
+
+                    Repeater::make('marketing_about_why_points')
+                        ->label(__('Why-choose-us checklist'))
+                        ->collapsible()
+                        ->itemLabel(fn (array $state) => mb_substr((string) ($state['text'] ?? '#'), 0, 50))
+                        ->columnSpanFull()
+                        ->schema([
+                            Textarea::make('text')->label(__('Point'))->rows(2)->columnSpanFull(),
+                        ]),
+
+                    $this->mText('about_story_badge', __('Story badge'), null, true),
+                    $this->mText('about_story_title', __('Story title'), null, true),
+                    $this->mText('about_story_p1', __('Story paragraph 1'), null, true),
+                    $this->mText('about_story_p2', __('Story paragraph 2'), null, true),
+
+                    Repeater::make('marketing_about_stats')
+                        ->label(__('Story numbers'))
+                        ->collapsible()
+                        ->itemLabel(fn (array $state) => $state['label'] ?? '#')
+                        ->columns(3)
+                        ->columnSpanFull()
+                        ->schema([
+                            TextInput::make('value')->label(__('Number')),
+                            TextInput::make('suffix')->label(__('Suffix')),
+                            TextInput::make('label')->label(__('Label')),
+                        ]),
+
+                    $this->mText('about_cta_title', __('Closing CTA title'), null, true),
+                    $this->mText('about_cta_subtitle', __('Closing CTA subtitle'), null, true),
+                ]),
+
+            Tab::make('Contact')
+                ->icon('heroicon-o-envelope')
+                ->columns(2)
+                ->schema([
+                    $this->mText('contact_badge', __('Page badge'), null, true),
+                    $this->mText('contact_title', __('Page title'), null, true),
+                    $this->mText('contact_intro', __('Page intro paragraph'), null, true),
+                    $this->mText('contact_form_title', __('Form title'), null, true),
+                    $this->mText('contact_form_name_label', __('Form: name label')),
+                    $this->mText('contact_form_email_label', __('Form: email label')),
+                    $this->mText('contact_form_message_label', __('Form: message label')),
+                    $this->mText('contact_form_placeholder_name', __('Form: name placeholder')),
+                    $this->mText('contact_form_placeholder_message', __('Form: message placeholder'), null, true),
+                    $this->mText('contact_form_submit_label', __('Form: submit button')),
+                    $this->mText('contact_whatsapp_title', __('WhatsApp card title')),
+                    $this->mText('contact_whatsapp_note', __('WhatsApp card note')),
+                    $this->mText('contact_email_title', __('Email card title')),
+                    $this->mText('contact_email_note', __('Email card note')),
+                    $this->mText('contact_office_title', __('Office hours card title')),
+                    $this->mText('contact_office_hours', __('Office hours')),
+                    $this->mText('contact_office_location', __('Office location')),
+                    $this->mText('contact_follow_label', __('Social label')),
+                    ...$this->mImage('contact_image', __('Side image')),
+                    $this->mText('contact_card_title', __('Side card title'), null, true),
+                    $this->mText('contact_card_text', __('Side card text'), null, true),
+                ]),
+
+            Tab::make('Global & SEO')
+                ->icon('heroicon-o-magnifying-glass')
+                ->columns(2)
+                ->schema([
+                    $this->mText('footer_tagline', __('Footer tagline'), null, true),
+                    $this->mText('meta_title', __('SEO title'), __('Leave blank to use the page default.'), true),
+                    $this->mText('meta_description', __('SEO description'), __('Leave blank to use the default platform description.'), true),
+                ]),
+        ];
+    }
+
+    /**
+     * In-view save button label — the blade is shared with the standalone
+     * Website Content page, which saves a different scope of settings.
+     */
+    public function getSaveButtonLabel(): string
+    {
+        return __('Save System Settings');
     }
 
     public function save(): void

@@ -109,4 +109,27 @@ class BlogPost extends Model
             $html
         );
     }
+
+    /**
+     * Normalise raw form state into attributes safe for create/update.
+     * Shared by the resource pages and the Website Content page so every
+     * entry point applies the same slug / publish-date / attachment rules.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    public static function prepareAttributes(array $data, ?\DateTimeInterface $existingPublishedAt = null): array
+    {
+        if (blank($data['slug'] ?? null)) {
+            $data['slug'] = Str::slug((string) ($data['title'] ?? ''));
+        }
+
+        if (($data['status'] ?? null) === self::STATUS_PUBLISHED && empty($data['published_at'])) {
+            $data['published_at'] = $existingPublishedAt ?? now();
+        }
+
+        $data['content'] = self::resolveAttachments((string) ($data['content'] ?? ''));
+
+        return $data;
+    }
 }
