@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="msvalidate.01" content="73BA1442529B66591DF90CB78368BC43">
     @php
         $metaTitle = trim((string) $__env->yieldContent('meta_title'));
         if ($metaTitle === '') {
@@ -435,6 +436,16 @@
                             </div>
                         </div>
 
+                        {{-- Blog --}}
+                        <a href="{{ route('marketing.blog') }}"
+                           class="nav-interactive {{ request()->routeIs('marketing.blog*') ? 'active-page' : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60' }}"
+                           @if(request()->routeIs('marketing.blog*')) aria-current="page" @endif>
+                            <span>{{ __('Blog') }}</span>
+                            @if(request()->routeIs('marketing.blog*'))
+                                <span class="current-dot" aria-hidden="true"></span>
+                            @endif
+                        </a>
+
                         {{-- About --}}
                         <a href="{{ route('marketing.about') }}"
                            class="nav-interactive {{ request()->routeIs('marketing.about') ? 'active-page' : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60' }}"
@@ -577,6 +588,13 @@
                         <span class="current-dot"></span>
                     @endif
                 </a>
+                <a href="{{ route('marketing.blog') }}"
+                   class="flex items-center justify-between rounded-xl px-3.5 py-2.5 text-base font-semibold transition active:scale-95 {{ request()->routeIs('marketing.blog*') ? 'bg-[#D94B39]/10 text-[#D94B39] dark:text-[#EF5F4D] border-l-4 border-[#D94B39]' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60' }}">
+                    <span>{{ __('Blog') }}</span>
+                    @if(request()->routeIs('marketing.blog*'))
+                        <span class="current-dot"></span>
+                    @endif
+                </a>
                 <a href="{{ route('marketing.about') }}"
                    class="flex items-center justify-between rounded-xl px-3.5 py-2.5 text-base font-semibold transition active:scale-95 {{ request()->routeIs('marketing.about') ? 'bg-[#D94B39]/10 text-[#D94B39] dark:text-[#EF5F4D] border-l-4 border-[#D94B39]' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60' }}">
                     <span>{{ __('About') }}</span>
@@ -634,6 +652,7 @@
                     <h3 class="text-sm font-semibold mb-3">{{ __('Company') }}</h3>
                     <ul class="space-y-2 text-sm text-slate-200">
                         <li><a href="{{ route('marketing.about') }}" class="hover:text-white">{{ __('About') }}</a></li>
+                        <li><a href="{{ route('marketing.blog') }}" class="hover:text-white">{{ __('Blog') }}</a></li>
                         <li><a href="{{ route('marketing.contact') }}" class="hover:text-white">{{ __('Contact') }}</a></li>
                         <li><a href="{{ route('platform.terms') }}" class="hover:text-white">{{ __('Terms') }}</a></li>
                     </ul>

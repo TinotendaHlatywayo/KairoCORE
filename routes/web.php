@@ -18,6 +18,7 @@ use App\Http\Controllers\StudentFeeCheckoutController;
 use App\Http\Middleware\EnsurePlatformAdmin;
 use App\Http\Middleware\SetUserLocale;
 use App\Livewire\RegistrationWizard;
+use App\Models\BlogPost;
 use App\Models\School;
 use App\Support\HelpCentre\HelpCentreRepository;
 use App\Support\TeacherInitials;
@@ -118,6 +119,7 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
             .'- [Academics, exams & report cards]('.route('marketing.academics').")\n"
             .'- [Security & data protection]('.route('marketing.security').")\n"
             .'- [About]('.route('marketing.about').")\n"
+            .'- [Blog]('.route('marketing.blog').")\n"
             .'- [Contact]('.route('marketing.contact').")\n"
             .'- [Help Center]('.route('marketing.help').")\n"
             .'- [Help Centre (full guides)]('.route('help.index').")\n"
@@ -182,6 +184,7 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
             ['loc' => route('marketing.help.attendance'), 'lastmod' => $lastmod('marketing/help-record-attendance'), 'changefreq' => 'monthly', 'priority' => '0.8'],
             ['loc' => route('marketing.help.reports'), 'lastmod' => $lastmod('marketing/help-report-cards'), 'changefreq' => 'monthly', 'priority' => '0.8'],
             ['loc' => route('marketing.about'), 'lastmod' => $lastmod('marketing/about'), 'changefreq' => 'monthly', 'priority' => '0.8'],
+            ['loc' => route('marketing.blog'), 'lastmod' => $lastmod('marketing/blog'), 'changefreq' => 'weekly', 'priority' => '0.8'],
             ['loc' => route('marketing.contact'), 'lastmod' => $lastmod('marketing/contact'), 'changefreq' => 'monthly', 'priority' => '0.7'],
             ['loc' => route('platform.terms'), 'lastmod' => $lastmod('terms/platform'), 'changefreq' => 'yearly', 'priority' => '0.5'],
         ];
@@ -196,6 +199,21 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
                 'changefreq' => 'monthly',
                 'priority' => '0.8',
             ];
+        }
+
+        // Every published blog post gets its own sitemap entry. Degrade
+        // gracefully: an unreachable blog table must never 500 the sitemap.
+        try {
+            foreach (BlogPost::published()->get(['slug', 'updated_at']) as $blogPost) {
+                $urls[] = [
+                    'loc' => route('marketing.blog.show', ['slug' => $blogPost->slug]),
+                    'lastmod' => date('c', $blogPost->updated_at->getTimestamp()),
+                    'changefreq' => 'monthly',
+                    'priority' => '0.7',
+                ];
+            }
+        } catch (\Throwable) {
+            // Blog table unavailable — serve the rest of the sitemap.
         }
 
         $xml = '<?xml version="1.0" encoding="UTF-8"?>';
@@ -216,6 +234,33 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
 
         return response($xml, 200, ['Content-Type' => 'application/xml']);
     })->name('marketing.sitemap');
+
+    // ── Blog (platform-wide) ─────────────────────────────────────────
+    Route::get('/blog', function () {
+        $posts = BlogPost::published()->paginate(9);
+
+        return view('marketing.blog', [
+            'posts' => $posts,
+            'breadcrumbs' => [
+                ['name' => __('Home'), 'url' => route('marketing.home')],
+                ['name' => __('Blog'), 'url' => route('marketing.blog')],
+            ],
+        ]);
+    })->name('marketing.blog');
+
+    Route::get('/blog/{slug}', function (string $slug) {
+        $post = BlogPost::published()->where('slug', $slug)->firstOrFail();
+
+        return view('marketing.blog-post', [
+            'post' => $post,
+            'content' => $post->renderContent(),
+            'breadcrumbs' => [
+                ['name' => __('Home'), 'url' => route('marketing.home')],
+                ['name' => __('Blog'), 'url' => route('marketing.blog')],
+                ['name' => $post->title, 'url' => route('marketing.blog.show', ['slug' => $post->slug])],
+            ],
+        ]);
+    })->where('slug', '[a-z0-9\-]+')->name('marketing.blog.show');
 
     Route::get('/about', function () {
         return view('marketing.about', [

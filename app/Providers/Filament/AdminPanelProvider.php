@@ -12,6 +12,7 @@ use App\Filament\Admin\Pages\PlatformFinance;
 use App\Filament\Admin\Pages\PlatformIntelligenceDashboard;
 use App\Filament\Admin\Pages\PlatformMaintenancePage;
 use App\Filament\Admin\Pages\PlatformSettingsPage;
+use App\Filament\Admin\Resources\BlogPostResource;
 use App\Filament\Admin\Resources\PendingPaymentResource;
 use App\Filament\Admin\Resources\PlatformAnnouncementResource;
 use App\Filament\Admin\Resources\PlatformAuditLogResource;
@@ -193,6 +194,7 @@ class AdminPanelProvider extends PanelProvider
                 PlatformMessageResource::class,
                 PlatformBillingMessageResource::class,
                 PlatformExpenseResource::class,
+                BlogPostResource::class,
             ]);
     }
 }
