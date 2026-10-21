@@ -204,6 +204,30 @@ class PlatformBlogTest extends TestCase
         );
     }
 
+    public function test_cover_image_disk_paths_resolve_to_public_storage_urls(): void
+    {
+        $post = $this->makePost(['cover_image' => 'platform/blog/covers/example.webp']);
+
+        $this->assertSame('/storage/platform/blog/covers/example.webp', $post->coverUrl());
+
+        $this->get(route('marketing.blog'))
+            ->assertOk()
+            ->assertSee('/storage/platform/blog/covers/example.webp', false);
+
+        $this->get(route('marketing.blog.show', ['slug' => $post->slug]))
+            ->assertOk()
+            ->assertSee('/storage/platform/blog/covers/example.webp', false);
+
+        // Absolute paths and full URLs are used as-is.
+        $absolute = new BlogPost(['cover_image' => 'https://cdn.example.com/x.jpg']);
+        $this->assertSame('https://cdn.example.com/x.jpg', $absolute->coverUrl());
+
+        $this->assertSame(
+            '/images/placeholders/news-cover.svg',
+            (new BlogPost(['cover_image' => null]))->coverUrl()
+        );
+    }
+
     public function test_admin_list_and_create_pages_render_for_platform_admin(): void
     {
         config()->set('app.env', 'local');

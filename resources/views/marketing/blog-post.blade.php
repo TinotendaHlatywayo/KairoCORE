@@ -65,7 +65,7 @@
 
         @if($post->cover_image)
             <div class="reveal reveal-d2 mt-8 overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-800">
-                <img src="{{ $post->cover_image }}" alt="{{ $post->title }}" class="h-auto w-full object-cover" width="1200" height="675" loading="eager" decoding="async">
+                <img src="{{ $post->coverUrl() }}" alt="{{ $post->title }}" class="h-auto w-full object-cover" width="1200" height="675" loading="eager" decoding="async">
             </div>
         @endif
 
