@@ -200,11 +200,11 @@ if (! function_exists('platform_logo_url')) {
 if (! function_exists('platform_favicon_url')) {
     /**
      * The platform favicon uploaded under Platform → Settings → SaaS Branding.
-     * Falls back to the bundled favicon.
+     * Falls back to the bundled icon.
      */
     function platform_favicon_url(): string
     {
-        return platform_branding_asset_url('platform_favicon', 'favicon.ico');
+        return platform_branding_asset_url('platform_favicon', 'images/kairocore-icon.png');
     }
 }
 
@@ -233,7 +233,16 @@ if (! function_exists('platform_branding_asset_url')) {
             return asset('storage/'.$path);
         }
 
-        return asset($fallback);
+        // Version the bundled asset by content hash so browsers, Google and
+        // chat apps re-fetch it after the file is replaced in the repo.
+        $fallbackUrl = asset($fallback);
+        $fallbackFile = public_path($fallback);
+
+        if (is_file($fallbackFile)) {
+            $fallbackUrl .= '?v='.substr(sha1_file($fallbackFile), 0, 10);
+        }
+
+        return $fallbackUrl;
     }
 }
 

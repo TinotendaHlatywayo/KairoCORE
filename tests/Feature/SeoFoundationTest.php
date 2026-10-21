@@ -45,12 +45,25 @@ class SeoFoundationTest extends TestCase
     {
         $image = platform_og_image_url();
 
-        $this->assertStringEndsWith('images/kairocore-link-preview.jpg', $image);
+        $this->assertStringContainsString('images/kairocore-link-preview.jpg', $image);
+        $this->assertMatchesRegularExpression('/\?v=[0-9a-f]{10}$/', $image);
 
         $home = $this->get(route('marketing.home'))->assertOk();
         $home->assertSee('<meta property="og:image" content="'.$image.'"', false);
         $home->assertSee('<meta name="twitter:image" content="'.$image.'"', false);
         $home->assertSee('<meta name="twitter:card" content="summary_large_image"', false);
+    }
+
+    public function test_favicon_uses_the_square_platform_icon(): void
+    {
+        $favicon = platform_favicon_url();
+
+        $this->assertStringContainsString('images/kairocore-icon.png', $favicon);
+        $this->assertMatchesRegularExpression('/\?v=[0-9a-f]{10}$/', $favicon);
+
+        $this->get(route('marketing.home'))
+            ->assertOk()
+            ->assertSee('<link rel="icon" href="'.e($favicon).'"', false);
     }
 
     public function test_every_public_page_has_a_unique_title_and_description(): void
