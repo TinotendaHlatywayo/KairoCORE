@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Modules\CMS\Services\CmsTemplateService;
 
@@ -75,9 +76,24 @@ class BlogPost extends Model
         return CmsTemplateService::sanitizeRichText($this->content, self::CONTENT_ALLOWED_TAGS);
     }
 
+    /**
+     * Public URL for the cover image. The editor stores disk-relative paths
+     * (platform/blog/covers/xxx.webp), so they must be resolved against the
+     * public disk before rendering; absolute paths/URLs pass through.
+     */
     public function coverUrl(): string
     {
-        return $this->cover_image ?: '/images/placeholders/news-cover.svg';
+        if (blank($this->cover_image)) {
+            return '/images/placeholders/news-cover.svg';
+        }
+
+        $path = (string) $this->cover_image;
+
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://') || str_starts_with($path, '/')) {
+            return $path;
+        }
+
+        return Storage::disk('public')->url($path);
     }
 
     /**
