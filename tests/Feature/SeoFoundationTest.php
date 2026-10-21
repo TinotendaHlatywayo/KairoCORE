@@ -45,7 +45,7 @@ class SeoFoundationTest extends TestCase
     {
         $image = platform_og_image_url();
 
-        $this->assertStringEndsWith('images/kairocore-link-preview.png', $image);
+        $this->assertStringEndsWith('images/kairocore-link-preview.jpg', $image);
 
         $home = $this->get(route('marketing.home'))->assertOk();
         $home->assertSee('<meta property="og:image" content="'.$image.'"', false);
