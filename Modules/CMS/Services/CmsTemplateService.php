@@ -667,7 +667,7 @@ class CmsTemplateService
      * all other text is escaped. Defense-in-depth on output, so no editor or
      * storage path can introduce active markup.
      */
-    public static function sanitizeRichText(?string $html): string
+    public static function sanitizeRichText(?string $html, ?array $allowed = null): string
     {
         if ($html === null || $html === '') {
             return '';
@@ -689,7 +689,9 @@ class CmsTemplateService
         $html = preg_replace('#<!--.*?-->#s', '', $html);
         $html = preg_replace('#\son\w+\s*=\s*("[^"]*"|\'[^\']*\'|[^\s>]+)#i', '', $html);
 
-        $allowed = [
+        // Callers (e.g. the platform blog) may widen the tag set; the default
+        // stays the narrow CMS allowlist so existing editor output is unchanged.
+        $allowed ??= [
             'p', 'div', 'br', 'b', 'strong', 'i', 'em', 'u', 's', 'strike',
             'sub', 'sup', 'span', 'font', 'ul', 'ol', 'li', 'a', 'blockquote',
             'code', 'h3', 'h4', 'h5',
@@ -734,6 +736,24 @@ class CmsTemplateService
                     $attrs .= ' target="_blank" rel="noopener noreferrer"';
                 }
             }
+        }
+
+        // <img> only survives when the caller's allowlist includes it (e.g. the
+        // platform blog). Requires a safe src; keeps a plain-text alt.
+        if ($name === 'img') {
+            if (! preg_match('#\bsrc\s*=\s*("([^"]*)"|\'([^\']*)\'|([^\s>]+))#i', $tag, $im)) {
+                return '';
+            }
+            $src = trim($im[2] ?? $im[3] ?? $im[4] ?? '', '"\'');
+            if ($src === '' || ! self::isSafeRichUrl($src)) {
+                return '';
+            }
+            $attrs = ' src="'.e($src).'" loading="lazy"';
+            if (preg_match('#\balt\s*=\s*("([^"]*)"|\'([^\']*)\'|([^\s>]+))#i', $tag, $am)) {
+                $attrs .= ' alt="'.e(trim($am[2] ?? $am[3] ?? $am[4] ?? '', '"\'')).'"';
+            }
+
+            return '<img'.$attrs.'>';
         }
 
         // Inline style on span / p / div — rebuilt from a CSS-property allowlist.
