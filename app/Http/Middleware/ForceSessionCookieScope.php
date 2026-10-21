@@ -22,6 +22,17 @@ class ForceSessionCookieScope
 {
     public function handle(Request $request, Closure $next): Response
     {
+        // TRUSTED_PROXIES=* makes Symfony read X-Forwarded-Port/Host for every
+        // request. A malformed client (scanners, some bots) sending an EMPTY
+        // value crashed getPort() with "Uninitialized string offset 0" → 500.
+        // Drop empty forwarded headers before TrustProxies consumes them.
+        foreach (['X-Forwarded-Port', 'X-Forwarded-Host', 'X-Forwarded-Proto', 'X-Forwarded-For'] as $header) {
+            $value = $request->headers->get($header);
+            if ($value !== null && trim((string) $value) === '') {
+                $request->headers->remove($header);
+            }
+        }
+
         $sessionName = config('session.cookie');
         $sessionDomain = config('session.domain');
 
