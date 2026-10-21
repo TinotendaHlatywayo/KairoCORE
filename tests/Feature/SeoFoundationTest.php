@@ -41,6 +41,18 @@ class SeoFoundationTest extends TestCase
         return trim(html_entity_decode($m[1] ?? '', ENT_QUOTES | ENT_HTML5));
     }
 
+    public function test_link_preview_uses_the_platform_og_image(): void
+    {
+        $image = platform_og_image_url();
+
+        $this->assertStringEndsWith('images/kairocore-link-preview.png', $image);
+
+        $home = $this->get(route('marketing.home'))->assertOk();
+        $home->assertSee('<meta property="og:image" content="'.$image.'"', false);
+        $home->assertSee('<meta name="twitter:image" content="'.$image.'"', false);
+        $home->assertSee('<meta name="twitter:card" content="summary_large_image"', false);
+    }
+
     public function test_every_public_page_has_a_unique_title_and_description(): void
     {
         $titles = [];
