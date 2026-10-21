@@ -24,6 +24,16 @@ class BlogPostResource extends Resource
 
     protected static ?int $navigationSort = 3;
 
+    /**
+     * Blog management now lives in the Website Content sidebar page's tab
+     * strip. The resource stays registered (deep links, forms, actions) but
+     * must not add its own "Website → Blog" sidebar entry.
+     */
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
+    }
+
     public static function getNavigationLabel(): string
     {
         return __(static::$navigationLabel);

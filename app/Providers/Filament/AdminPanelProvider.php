@@ -12,6 +12,7 @@ use App\Filament\Admin\Pages\PlatformFinance;
 use App\Filament\Admin\Pages\PlatformIntelligenceDashboard;
 use App\Filament\Admin\Pages\PlatformMaintenancePage;
 use App\Filament\Admin\Pages\PlatformSettingsPage;
+use App\Filament\Admin\Pages\WebsiteContentPage;
 use App\Filament\Admin\Resources\BlogPostResource;
 use App\Filament\Admin\Resources\PendingPaymentResource;
 use App\Filament\Admin\Resources\PlatformAnnouncementResource;
@@ -117,6 +118,7 @@ class AdminPanelProvider extends PanelProvider
                 PlatformBackupManager::class,
                 PlatformMaintenancePage::class,
                 PlatformSettingsPage::class,
+                WebsiteContentPage::class,
                 PlatformBillingSettingsPage::class,
                 PlatformDocumentConfigPage::class,
                 PlatformFinance::class,
@@ -135,6 +137,7 @@ class AdminPanelProvider extends PanelProvider
                 NavigationGroup::make('Operations')->collapsible(),
                 NavigationGroup::make('Communication')->collapsible(),
                 NavigationGroup::make('Platform Control')->collapsible(),
+                NavigationGroup::make('Website Content')->collapsible(),
             ])
             ->renderHook(
                 PanelsRenderHook::TOPBAR_START,

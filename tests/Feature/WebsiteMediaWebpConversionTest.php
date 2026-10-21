@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Filament\Admin\Pages\PlatformSettingsPage;
+use App\Filament\Admin\Pages\WebsiteContentPage;
 use App\Jobs\ConvertWebsiteMediaToWebp;
 use App\Models\User;
 use App\Rules\MaxVideoDuration;
@@ -123,7 +123,7 @@ class WebsiteMediaWebpConversionTest extends TestCase
         $valueBefore = (string) $hero->value;
         PlatformSetting::where('group', 'marketing')->where('key', 'hero_image_source')->delete();
 
-        Livewire::test(PlatformSettingsPage::class)
+        Livewire::test(WebsiteContentPage::class)
             ->set('data.marketing_hero_image', [UploadedFile::fake()->create('hero-clip.mp4', 512, 'video/mp4')])
             ->call('save');
 
@@ -243,7 +243,7 @@ class WebsiteMediaWebpConversionTest extends TestCase
         [$hero, $original] = $this->seedHeroSetting();
         PlatformSetting::where('group', 'marketing')->where('key', 'hero_image_source')->delete();
 
-        Livewire::test(PlatformSettingsPage::class)
+        Livewire::test(WebsiteContentPage::class)
             ->set('data.marketing_hero_image', [UploadedFile::fake()->create('fps-clip.mp4', 256, 'video/mp4')])
             ->call('save');
 
@@ -463,7 +463,7 @@ class WebsiteMediaWebpConversionTest extends TestCase
         PlatformSetting::where('group', 'marketing')->where('key', 'hero_image_source')->delete();
         PlatformSetting::where('group', 'marketing')->where('key', 'hero_image_trim_start')->delete();
 
-        Livewire::test(PlatformSettingsPage::class)
+        Livewire::test(WebsiteContentPage::class)
             ->set('data.marketing_hero_image', [UploadedFile::fake()->create('trim-save-clip.mp4', 512, 'video/mp4')])
             ->set('data.marketing_hero_image_trim_start', '2')
             ->call('save');
@@ -501,7 +501,7 @@ class WebsiteMediaWebpConversionTest extends TestCase
         $valueBefore = (string) $hero->value;
         PlatformSetting::where('group', 'marketing')->where('key', 'hero_image_source')->delete();
 
-        Livewire::test(PlatformSettingsPage::class)
+        Livewire::test(WebsiteContentPage::class)
             ->set('data.marketing_hero_image', [UploadedFile::fake()->create('once-clip.mp4', 256, 'video/mp4')])
             ->call('save');
 
@@ -512,7 +512,7 @@ class WebsiteMediaWebpConversionTest extends TestCase
 
         // A fresh page load must re-display the pending video, and saving
         // it again unchanged must not queue a second conversion.
-        $reloaded = Livewire::test(PlatformSettingsPage::class);
+        $reloaded = Livewire::test(WebsiteContentPage::class);
         $boxValue = $reloaded->get('data.marketing_hero_image');
         $reloaded->call('save');
 
@@ -550,7 +550,7 @@ class WebsiteMediaWebpConversionTest extends TestCase
         $stored = PlatformSetting::where('group', 'marketing')->where('key', 'features_list')->first();
         $originalList = $stored?->value;
 
-        $component = Livewire::test(PlatformSettingsPage::class);
+        $component = Livewire::test(WebsiteContentPage::class);
 
         $list = $component->get('data.marketing_features_list');
         $this->assertIsArray($list);
@@ -606,7 +606,7 @@ class WebsiteMediaWebpConversionTest extends TestCase
         $stored = PlatformSetting::where('group', 'marketing')->where('key', 'features_list')->first();
         $originalList = $stored?->value;
 
-        $component = Livewire::test(PlatformSettingsPage::class);
+        $component = Livewire::test(WebsiteContentPage::class);
         $list = $component->get('data.marketing_features_list');
         $itemKey = array_key_first($list);
         $statePath = 'data.marketing_features_list.'.$itemKey.'.image';
@@ -667,7 +667,7 @@ class WebsiteMediaWebpConversionTest extends TestCase
         $stored = PlatformSetting::where('group', 'marketing')->where('key', 'features_list')->first();
         $originalList = $stored?->value;
 
-        $component = Livewire::test(PlatformSettingsPage::class);
+        $component = Livewire::test(WebsiteContentPage::class);
         $list = $component->get('data.marketing_features_list');
         $this->assertIsArray($list);
         $itemKey = array_key_first($list);
@@ -736,7 +736,7 @@ class WebsiteMediaWebpConversionTest extends TestCase
         $stored = PlatformSetting::where('group', 'marketing')->where('key', 'features_list')->first();
         $originalList = $stored?->value;
 
-        $component = Livewire::test(PlatformSettingsPage::class);
+        $component = Livewire::test(WebsiteContentPage::class);
         $list = $component->get('data.marketing_features_list');
         $itemKey = array_key_first($list);
         $statePath = 'data.marketing_features_list.'.$itemKey.'.image';

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Filament\Admin\Pages\PlatformSettingsPage;
+use App\Filament\Admin\Pages\WebsiteContentPage;
 use App\Filament\App\Pages\SystemSettingsPage;
 use App\Models\School;
 use App\Models\User;
@@ -80,7 +81,7 @@ class TempPlatformSettingsRenderTest extends TestCase
         $original = $setting->value;
         $disk = Storage::disk('public');
 
-        Livewire::test(PlatformSettingsPage::class)
+        Livewire::test(WebsiteContentPage::class)
             ->set('data.marketing_hero_image', [UploadedFile::fake()->image('hero.jpg', 640, 480)])
             ->call('save');
 
@@ -115,7 +116,7 @@ class TempPlatformSettingsRenderTest extends TestCase
         $faviconBefore = $favicon->value;
 
         // A fresh page load + Save with no edits must not blank any image.
-        Livewire::test(PlatformSettingsPage::class)->call('save');
+        Livewire::test(WebsiteContentPage::class)->call('save');
 
         $hero->refresh();
         $logo->refresh();
@@ -212,7 +213,7 @@ class TempPlatformSettingsRenderTest extends TestCase
         $original = $setting->value;
         $disk = Storage::disk('public');
 
-        $page = Livewire::test(PlatformSettingsPage::class);
+        $page = Livewire::test(WebsiteContentPage::class);
         $list = $page->get('data.marketing_features_list');
 
         if (! is_array($list) || $list === []) {
