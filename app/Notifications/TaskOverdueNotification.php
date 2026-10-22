@@ -2,7 +2,6 @@
 
 namespace App\Notifications;
 
-use App\Filament\App\Pages\MyDay;
 use App\Models\UserTask;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
@@ -26,7 +25,12 @@ class TaskOverdueNotification extends Notification
             'task_id' => $this->task->id,
             'task_title' => $this->task->title,
             'due_date' => $this->task->due_date?->toDateString(),
-            'url' => MyDay::getUrl(),
+            'page' => 'my-day',
+            // The link is resolved when the notification is read, against the
+            // reader's own school. Resolving it here would bake in the host
+            // that happened to be current when the notice was written — and
+            // notices are written by the scheduler, where that host is the
+            // platform, which would drop a tenant on the platform panel.
         ];
     }
 }

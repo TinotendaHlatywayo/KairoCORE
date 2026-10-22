@@ -5,6 +5,12 @@ namespace App\Filament\App\Pages;
 use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Filament\App\Concerns\ModulePermissionAccess;
+use App\Filament\App\Resources\AnnouncementResource;
+use App\Filament\App\Resources\CampusResourceResource;
+use App\Filament\App\Resources\ChatThreadResource;
+use App\Filament\App\Resources\EventCalendarResource;
+use App\Filament\App\Resources\HelpdeskTicketResource;
+use App\Filament\App\Resources\PollResource;
 use Filament\Pages\Page;
 use Modules\Communication\Models\Announcement;
 use Modules\Communication\Models\CampusResource;
@@ -61,30 +67,35 @@ class CommunicationCenter extends Page
                         ->count(),
                     'icon' => 'heroicon-o-megaphone',
                     'tint' => 'emerald',
+                    'link' => AnnouncementResource::getUrl('index'),
                 ],
                 [
                     'label' => 'Upcoming Events',
                     'value' => EventCalendar::where('start_time', '>=', $now)->count(),
                     'icon' => 'heroicon-o-calendar-days',
                     'tint' => 'blue',
+                    'link' => EventCalendarResource::getUrl('index'),
                 ],
                 [
                     'label' => 'Open Helpdesk Tickets',
                     'value' => HelpdeskTicket::whereNotIn('status', ['resolved', 'closed'])->count(),
                     'icon' => 'heroicon-o-lifebuoy',
                     'tint' => 'amber',
+                    'link' => HelpdeskTicketResource::getUrl('index'),
                 ],
                 [
                     'label' => 'Active Chat Threads',
                     'value' => ChatThread::count(),
                     'icon' => 'heroicon-o-chat-bubble-oval-left-ellipsis',
                     'tint' => 'violet',
+                    'link' => ChatThreadResource::getUrl('index'),
                 ],
                 [
                     'label' => 'Campus Resources',
                     'value' => CampusResource::count(),
                     'icon' => 'heroicon-o-folder',
                     'tint' => 'slate',
+                    'link' => CampusResourceResource::getUrl('index'),
                 ],
                 [
                     'label' => 'Active Polls',
@@ -93,6 +104,7 @@ class CommunicationCenter extends Page
                     })->count(),
                     'icon' => 'heroicon-o-chart-bar-square',
                     'tint' => 'rose',
+                    'link' => PollResource::getUrl('index'),
                 ],
             ],
             'recentAnnouncements' => Announcement::latest('published_at')->limit(5)->get(),

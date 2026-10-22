@@ -3071,6 +3071,14 @@ class DummyDataSeeder
             ->whereIn('user_id', $doomed)
             ->delete();
 
+        // The notices these accounts received (task assigned, overdue, event
+        // reminders) are part of the demo too. Left behind they would keep a
+        // bell badge alive for an account that no longer exists.
+        DB::table('notifications')
+            ->where('notifiable_type', 'App\\Models\\User')
+            ->whereIn('notifiable_id', $doomed)
+            ->delete();
+
         DB::table('users')->whereIn('id', $doomed)->delete();
     }
 

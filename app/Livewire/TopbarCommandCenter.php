@@ -686,6 +686,29 @@ class TopbarCommandCenter extends Component
             ->update(['read_at' => now()]);
     }
 
+    /**
+     * Mark one notification as read.
+     *
+     * Opening a notice is a decision to deal with it, so it leaves the bell
+     * for good: the sweeper never announces the same overdue task twice, and
+     * a read notice is not repeated.
+     */
+    public function markNotificationRead(string $notificationId): void
+    {
+        $user = $this->user();
+        if (! $user) {
+            return;
+        }
+
+        $notification = $user->notifications()->whereKey($notificationId)->first();
+
+        if (! $notification || $notification->read_at !== null) {
+            return;
+        }
+
+        $notification->markAsRead();
+    }
+
     public function clearNotifications(): void
     {
         $user = $this->user();
@@ -753,8 +776,31 @@ class TopbarCommandCenter extends Component
      */
     public function notificationUrl($notification): ?string
     {
-        if ($url = data_get($notification->data, 'url')) {
-            return $url;
+        $user = $this->user();
+
+        // Task and event notices point at the reader's OWN workspace. They
+        // used to carry a URL that was resolved when the notice was written,
+        // and the scheduler writes them — so the stored link pointed at the
+        // platform panel and dropped a tenant on it. The page is now resolved
+        // here, against the reader's own school.
+        $page = data_get($notification->data, 'page');
+
+        if ($page === null) {
+            $page = match (data_get($notification->data, 'format')) {
+                'task_overdue', 'task_reminder', 'task_assigned' => 'my-day',
+                'event_reminder' => 'schedule',
+                default => null,
+            };
+        }
+
+        if ($page !== null) {
+            $url = match ($page) {
+                'my-day' => $this->myDayUrl(),
+                'schedule' => $this->scheduleUrl(),
+                default => null,
+            };
+
+            return $this->isOwnHostUrl($url) ? $url : null;
         }
 
         $isChat = ($notification->data['category'] ?? null) === 'chat'
@@ -763,8 +809,6 @@ class TopbarCommandCenter extends Component
         if (! $isChat) {
             return null;
         }
-
-        $user = $this->user();
 
         try {
             if ($user && $user->school_id === null) {
@@ -792,7 +836,39 @@ class TopbarCommandCenter extends Component
         return null;
     }
 
-    // ── Task assignee colour coding ────────────────────────────────────────
+    /**
+     * Whether the link stays on the reader's own host.
+     *
+     * A tenant must never be dropped on the platform panel, and a platform
+     * account must never be dropped on a tenant's site. A link to a different
+     * host is refused rather than followed.
+     */
+    protected function isOwnHostUrl(?string $url): bool
+    {
+        if (blank($url)) {
+            return false;
+        }
+
+        $user = $this->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        $host = parse_url($url, PHP_URL_HOST);
+
+        // A relative link cannot leave the host it was rendered on.
+        if (! $host) {
+            return true;
+        }
+
+        $ownHosts = array_filter([
+            request()->getHost(),
+            $user->school?->website_url ? parse_url((string) $user->school->website_url, PHP_URL_HOST) : null,
+        ]);
+
+        return in_array($host, $ownHosts, true);
+    }
 
     /**
      * Category used to colour-code a task by its assignee: self, student,

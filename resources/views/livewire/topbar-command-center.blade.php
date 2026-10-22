@@ -108,18 +108,18 @@
                 x-transition:leave="sc-cc-leave"
                 x-transition:leave-start="sc-cc-leave-start"
                 x-transition:leave-end="sc-cc-leave-end"
-                class="sc-cc-panel"
+                class="sc-cc-panel w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-6"
                 @click.outside="open = false; $wire.close()"
             >
-        <div class="sc-cc-pane sc-cc-pane-tasks">
+        <div class="sc-cc-pane sc-cc-pane-tasks lg:col-span-7 max-h-[70vh] overflow-y-auto">
             {{-- Task Manager header --}}
             <div class="sc-cc-pane-head">
-                <div>
+                <div class="sc-cc-pane-head-main min-w-0">
                     <h3 class="sc-cc-pane-title">{{ __('Task Manager') }}</h3>
                     <p class="sc-cc-pane-sub" x-show="! dnd">{{ $this->openTaskCount }} open task(s)</p>
                     <p class="sc-cc-pane-sub" x-cloak x-show="dnd">{{ __('Do Not Disturb is on') }}</p>
                 </div>
-                <span class="sc-cc-chip sc-cc-chip-muted">{{ str(optional($this->user())->name ?? 'Me')->explode(' ')->first() ?: 'Me' }}</span>
+                <span class="sc-cc-chip sc-cc-chip-muted min-w-0">{{ str(optional($this->user())->name ?? 'Me')->explode(' ')->first() ?: 'Me' }}</span>
             </div>
 
             {{-- Quick range presets --}}
@@ -135,7 +135,7 @@
             </div>
 
             {{-- Bulk actions --}}
-            <div class="sc-cc-actions">
+            <div class="sc-cc-actions flex flex-wrap items-center gap-2">
                 <label class="sc-cc-dnd" title="Do Not Disturb">
                     <span>
                         <svg class="sc-cc-dnd-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M4.25 2A2.25 2.25 0 0 0 2 4.25v2.882c0 .597.237 1.17.659 1.591l.98.98v.87a2.25 2.25 0 0 1-.659 1.591l-.98.98A2.25 2.25 0 0 0 2 16.74v.51c0 .414.336.75.75.75h16.5a.75.75 0 0 0 .75-.75v-.51a2.25 2.25 0 0 0-.659-1.591l-.98-.98a2.25 2.25 0 0 1-.659-1.591v-.87l.98-.98a2.25 2.25 0 0 0 .659-1.591V4.25A2.25 2.25 0 0 0 17.75 2H4.25Zm3 4.25a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5Zm0 4a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5Z" clip-rule="evenodd"/></svg>
@@ -150,20 +150,20 @@
                     ><span class="sc-cc-switch-knob"></span></span>
                 </label>
 
-                <div class="sc-cc-action-btns">
+                <div class="sc-cc-action-btns flex flex-wrap items-center gap-2">
                     @if ($this->canClear)
-                        <button type="button" class="sc-cc-btn sc-cc-btn-ghost" x-on:click="$wire.clearAllTasks()">
+                        <button type="button" class="sc-cc-btn sc-cc-btn-ghost whitespace-nowrap" x-on:click="$wire.clearAllTasks()">
                             <svg class="sc-cc-btn-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482 41.03 41.03 0 0 0-2.365-.298V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4Z" clip-rule="evenodd"/></svg>
                             {{ __('Clear All') }}
                         </button>
                     @endif
-                    <button type="button" class="sc-cc-btn sc-cc-btn-ghost" x-on:click="$wire.clearNotifications()">
+                    <button type="button" class="sc-cc-btn sc-cc-btn-ghost whitespace-nowrap" x-on:click="$wire.clearNotifications()">
                         <svg class="sc-cc-btn-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a6 6 0 0 0-6 6v3.586l-.707.707A1 1 0 0 0 4 14h12a1 1 0 0 0 .707-1.707L16 11.586V8a6 6 0 0 0-6-6ZM10 18a3 3 0 0 1-3-3h6a3 3 0 0 1-3 3Z"/></svg>
                         {{ __('Clear Notifications') }}
                     </button>
                     <button
                         type="button"
-                        class="sc-cc-btn sc-cc-btn-ghost"
+                        class="sc-cc-btn sc-cc-btn-ghost whitespace-nowrap"
                         :class="{ 'sc-cc-btn-active': $wire.showNotificationHistory }"
                         x-on:click="$wire.toggleNotificationHistory()"
                         title="{{ __('View notification history for the past 30 days') }}"
@@ -262,7 +262,7 @@
                 <div class="sc-cc-list sc-cc-list-notif">
                     @if ($this->showNotificationHistory)
                         {{-- History filters: category + age window --}}
-                        <div class="sc-cc-filter-bar">
+                        <div class="sc-cc-filter-bar flex flex-wrap sm:flex-nowrap items-center gap-2 w-full">
                             <select wire:model.change="historyCategory" class="sc-cc-filter-select" aria-label="{{ __('Filter by type') }}">
                                 <option value="all">{{ __('All types') }}</option>
                                 <option value="chat">{{ __('Chat messages') }}</option>
@@ -341,6 +341,7 @@
                             <a
                                 href="{{ $nUrl ?? '#' }}"
                                 class="sc-cc-notif {{ $this->showNotificationHistory && $notification->read_at ? 'sc-cc-notif-read' : '' }} {{ $nClass }}"
+                                x-on:click="$wire.markNotificationRead('{{ $notification->id }}')"
                             >
                                 <span class="sc-cc-notif-chat-icon" aria-hidden="true">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z"/></svg>
@@ -359,6 +360,7 @@
                                 href="{{ $nUrl ?? '#' }}"
                                 class="sc-cc-notif {{ $this->showNotificationHistory && $notification->read_at ? 'sc-cc-notif-read' : '' }}"
                                 :class="'{{ $nClass }}'"
+                                x-on:click="$wire.markNotificationRead('{{ $notification->id }}')"
                             >
                                 <span class="sc-cc-notif-dot"></span>
                                 <span class="sc-cc-notif-body">
@@ -376,7 +378,7 @@
             @endif
         </div>
 
-        <div class="sc-cc-pane sc-cc-pane-cal">
+        <div class="sc-cc-pane sc-cc-pane-cal lg:col-span-5 max-h-[70vh] overflow-y-auto">
             {{-- Calendar header + nav --}}
             <div class="sc-cc-cal-head">
                 <h3 class="sc-cc-pane-title" x-text="'{{ $currentMonth->format('F Y') }}'">{{ $currentMonth->format('F Y') }}</h3>
@@ -582,7 +584,7 @@
                     <div class="sc-cc-add-actions">
                         <button
                             type="button"
-                            class="sc-cc-btn sc-cc-btn-ghost"
+                            class="sc-cc-btn sc-cc-btn-ghost whitespace-nowrap"
                             x-on:click="selectedDate = null; $wire.closeAddTask()"
                         >{{ __('Cancel') }}</button>
                         <button type="submit" class="sc-cc-btn sc-cc-btn-primary">
@@ -625,7 +627,7 @@
                     <div class="sc-cc-add-actions">
                         <button
                             type="button"
-                            class="sc-cc-btn sc-cc-btn-ghost"
+                            class="sc-cc-btn sc-cc-btn-ghost whitespace-nowrap"
                             x-on:click="selectedDate = null; $wire.closeAddTask()"
                         >{{ __('Cancel') }}</button>
                         <button type="submit" class="sc-cc-btn sc-cc-btn-primary sc-cc-btn-event">

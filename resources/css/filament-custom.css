@@ -1236,20 +1236,39 @@ body.sidebar-right.dark .fi-sidebar {
     left: 50%;
     top: 4.5rem;
     transform: translateX(-50%);
-    width: 56rem;
-    max-width: calc(100vw - 2rem);
+    width: 100%;
+    max-width: 64rem;
     background: #fff;
     border-radius: 1.5rem;
     border: 1px solid #e2e8f0;
     box-shadow: 0 25px 60px rgba(15,23,42,0.28), 0 8px 24px rgba(15,23,42,0.1);
     overflow: hidden;
     display: grid;
-    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    /*
+     * Doubled class on purpose. Filament ships its own compiled app.css and
+     * it loads after this file, so a plain `.grid-cols-1` from the panel
+     * utilities would win over `lg:grid-cols-12` on source order alone and
+     * the twelve columns would never appear. Two classes beat one.
+     */
+    grid-template-columns: minmax(0, 1fr);
     z-index: 9010;
 }
 .dark .sc-cc-panel {
     background: #0f172a;
     border-color: #334155;
+}
+
+/*
+ * Two columns on large screens: the Task Manager takes seven of the twelve
+ * columns and the Calendar takes five, so the task list gets the room it
+ * needs while the calendar stays beside it.
+ */
+@media (min-width: 1024px) {
+    .sc-cc-panel.sc-cc-panel {
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+    }
+    .sc-cc-pane-tasks { grid-column: span 7; }
+    .sc-cc-pane-cal { grid-column: span 5; }
 }
 
 /* Pane layout + scroll areas */
@@ -1261,11 +1280,14 @@ body.sidebar-right.dark .fi-sidebar {
 .sc-cc-pane-tasks {
     border-right: 1px solid #f1f5f9;
     background: #fafbfd;
-    max-height: 34rem;
+    /* One scrollbar per pane: the pane scrolls, its sections do not. */
+    max-height: 70vh;
+    overflow-y: auto;
 }
 .sc-cc-pane-cal {
     background: #fff;
-    max-height: 34rem;
+    max-height: 70vh;
+    overflow-y: auto;
 }
 .dark .sc-cc-pane-tasks { border-right-color: #1e293b; background: #0b1220; }
 .dark .sc-cc-pane-cal { background: #0f172a; }
@@ -1277,6 +1299,15 @@ body.sidebar-right.dark .fi-sidebar {
     justify-content: space-between;
     gap: 0.75rem;
     padding: 1.1rem 1.25rem 0.75rem;
+}
+/* The title block may shrink, so the name chip keeps its own space and the
+   heading is not clipped into an ellipsis before it has to be. */
+.sc-cc-pane-head-main {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+.sc-cc-pane-head > .sc-cc-chip {
+    flex: 0 0 auto;
 }
 .sc-cc-pane-title {
     margin: 0;
@@ -1331,6 +1362,7 @@ body.sidebar-right.dark .fi-sidebar {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
     gap: 0.5rem;
     padding: 0.35rem 1.25rem 0.75rem;
 }
@@ -1365,11 +1397,14 @@ body.sidebar-right.dark .fi-sidebar {
 .sc-cc-switch-on { background: linear-gradient(135deg, var(--sc-primary-500), var(--sc-primary-600)); }
 .sc-cc-switch-on .sc-cc-switch-knob { transform: translateX(13px); }
 .sc-cc-action-btns {
-    display: inline-flex;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
     gap: 0.35rem;
 }
 .sc-cc-btn {
     display: inline-flex;
+    white-space: nowrap;
     align-items: center;
     gap: 0.35rem;
     font-size: 0.66rem;
@@ -1434,8 +1469,10 @@ body.sidebar-right.dark .fi-sidebar {
 
 /* Task list / empty state */
 .sc-cc-list {
-    flex: 1;
-    overflow-y: auto;
+    /* The pane scrolls, not the list: two scrollbars inside one pane is a
+       trap for the mouse wheel. */
+    flex: 0 0 auto;
+    overflow: visible;
     padding: 0.2rem 0.75rem 0.9rem;
     scrollbar-width: thin;
 }
@@ -1604,7 +1641,6 @@ body.sidebar-right.dark .fi-sidebar {
     justify-content: center;
 }
 .sc-cc-list-notif {
-    max-height: 11.5rem;
     padding-top: 0.15rem;
 }
 .sc-cc-notif {
@@ -1873,6 +1909,20 @@ body.sidebar-right.dark .fi-sidebar {
 .sc-cc-add-leave-end { transform: translateX(90%); }
 
 /* Responsive: stacked panes + full-screen sheet on small screens */
+
+/*
+ * Below the large breakpoint the panel keeps its gutter instead of running
+ * edge to edge. The width utilities on the panel are `!important` here
+ * because the panel utilities are emitted after this stylesheet.
+ */
+@media (max-width: 1023px) {
+    .sc-cc-panel,
+    .sc-cc-panel.sc-cc-panel {
+        width: calc(100vw - 2rem) !important;
+        max-width: calc(100vw - 2rem) !important;
+    }
+}
+
 @media (max-width: 900px) {
     .sc-cc-root { position: static; transform: none; }
     .sc-cc-trigger { padding: 0.38rem 0.65rem; }
@@ -1883,16 +1933,24 @@ body.sidebar-right.dark .fi-sidebar {
         left: 0.5rem;
         right: 0.5rem;
         transform: none;
-        width: auto;
+        width: auto !important;
+        max-width: none !important;
         grid-template-columns: 1fr;
         grid-template-rows: minmax(0, 1fr) auto;
         border-radius: 1.25rem;
         max-height: calc(100vh - 1rem);
         overflow-y: auto;
     }
-    .sc-cc-pane { max-height: none; }
-    .sc-cc-pane-tasks { border-right: none; border-bottom: 1px solid #f1f5f9; max-height: 18rem; }
-    .sc-cc-pane-cal { max-height: none; }
+    /* The pane height utilities on the markup are emitted after this
+       stylesheet, so the sheet layout has to state its sizes firmly. */
+    .sc-cc-pane { max-height: none !important; overflow: visible !important; }
+    .sc-cc-pane-tasks {
+        border-right: none;
+        border-bottom: 1px solid #f1f5f9;
+        max-height: 18rem !important;
+        overflow-y: auto !important;
+    }
+    .sc-cc-pane-cal { max-height: none !important; overflow: visible !important; }
     .sc-cc-enter-start { transform: translateY(-6px) scale(0.98); }
     .sc-cc-enter-end { transform: translateY(0) scale(1); }
     .sc-cc-leave-start { transform: translateY(0) scale(1); }
@@ -2816,7 +2874,14 @@ select.sc-input {
 .dark .sc-cc-notif-chat-icon { color: #38bdf8; }
 
 /* History filter bar */
-.sc-cc-filter-bar { display: flex; gap: 0.5rem; padding: 0.25rem 0.5rem 0.5rem; }
+.sc-cc-filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.25rem 0.5rem 0.5rem;
+}
 .sc-cc-filter-select {
     flex: 1;
     font-size: 0.72rem;
@@ -2824,11 +2889,31 @@ select.sc-input {
     padding: 0.35rem 0.5rem;
     border-radius: 0.55rem;
     border: 1px solid #e2e8f0;
-    background: #f8fafc;
+    background-color: #f8fafc;
     color: #334155;
     cursor: pointer;
 }
-.dark .sc-cc-filter-select { background: #1e293b; border-color: #334155; color: #cbd5e1; }
+
+/*
+ * No custom arrow on the filter dropdowns.
+ *
+ * Filament's stylesheet gives every <select> a chevron background image, and
+ * the `background` shorthand above used to wipe out the "no-repeat" and the
+ * position that came with it — so the chevron was tiled across the whole
+ * control and sat on top of the label. The control keeps the browser's own
+ * caret instead, and the class is doubled so it outranks Filament's global
+ * `select` rule.
+ */
+select.sc-cc-filter-select.sc-cc-filter-select {
+    appearance: auto;
+    -webkit-appearance: auto;
+    background-image: none;
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    padding-right: 1.75rem;
+}
+
+.dark .sc-cc-filter-select { background-color: #1e293b; border-color: #334155; color: #cbd5e1; }
 
 /* ── Navigation step control ─────────────────────────────── */
 .sc-sched-stepwrap { display: flex; gap: 2px; padding: 0.18rem; border-radius: 0.6rem; background: #f1f5f9; }

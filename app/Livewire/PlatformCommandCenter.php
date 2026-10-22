@@ -485,6 +485,17 @@ class PlatformCommandCenter extends Component
 
     public function notificationUrl($notification): ?string
     {
+        // Task and event notices belong to a tenant workspace — a platform
+        // account has no My Day page, so there is nothing to link to.
+        if (in_array(data_get($notification->data, 'format'), [
+            'task_overdue',
+            'task_reminder',
+            'task_assigned',
+            'event_reminder',
+        ], true)) {
+            return null;
+        }
+
         return data_get($notification->data, 'url') ?: null;
     }
 
