@@ -54,4 +54,14 @@ else
     art config:cache
 fi
 
+# The shared storage volume is written by all three containers, so a file that
+# was created by a root process (a `docker compose exec php artisan ...` run
+# as root, for instance) would leave the Apache workers unable to touch it —
+# and Blade touches a compiled view whenever its source is newer, which turns
+# into a 500 on every page that uses that view. Hand the volume back to
+# www-data so the workers keep the last word on their own files.
+if [ "$(id -u)" = "0" ]; then
+    chown -R www-data:www-data storage bootstrap/cache
+fi
+
 exec "$@"
