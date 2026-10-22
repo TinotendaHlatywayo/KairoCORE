@@ -20,6 +20,20 @@
 @if ($seoImage)
     <meta property="og:image" content="{{ $seoImage }}">
     <meta property="og:image:alt" content="{{ $seoImageAlt }}">
+    @php
+        // The size and type of the preview image, so a search engine sizes
+        // its thumbnail from the artwork instead of measuring it afterwards.
+        $ogImageMeta = platform_og_image_dimensions($seoImage);
+    @endphp
+    @if ($ogImageMeta['width'])
+        <meta property="og:image:width" content="{{ $ogImageMeta['width'] }}">
+    @endif
+    @if ($ogImageMeta['height'])
+        <meta property="og:image:height" content="{{ $ogImageMeta['height'] }}">
+    @endif
+    @if ($ogImageMeta['type'])
+        <meta property="og:image:type" content="{{ $ogImageMeta['type'] }}">
+    @endif
     @if (str_starts_with($seoImage, 'https://'))
         <meta property="og:image:secure_url" content="{{ $seoImage }}">
     @endif
