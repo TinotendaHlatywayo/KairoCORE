@@ -82,18 +82,28 @@ class SchoolResource extends Resource
                             ->maxLength(24)
                             ->unique(ignoreRecord: true)
                             ->prefix('/school-login?code=')
-                            ->updateStateUsing(function ($state, $record) {
-                                $value = strtoupper(trim((string) $state));
+                            // Normalise on the way in so the field shows the
+                            // code exactly as it will be stored.
+                            ->formatStateUsing(fn (?string $state): string => self::normaliseLoginCode($state))
+                            // Normalise before validation too, otherwise the
+                            // `unique` rule would compare the raw (unfiltered)
+                            // input against the stored, normalised code and
+                            // let a duplicate through.
+                            ->mutateStateForValidationUsing(fn (?string $state): string => self::normaliseLoginCode($state))
+                            // Generate a code when the field is left blank,
+                            // on both create and edit.
+                            ->dehydrateStateUsing(function (?string $state, $record, Forms\Get $get): string {
+                                $value = self::normaliseLoginCode($state);
 
-                                if ($value === '') {
-                                    return School::generateLoginCode(
-                                        $record?->name ?? '',
-                                        $record?->institution_type,
-                                        $record?->id
-                                    );
+                                if ($value !== '') {
+                                    return $value;
                                 }
 
-                                return preg_replace('/[^A-Z0-9\-]/', '', $value);
+                                return School::generateLoginCode(
+                                    (string) ($get('name') ?? $record?->name ?? ''),
+                                    (string) ($get('institution_type') ?? $record?->institution_type),
+                                    $record?->id !== null ? (int) $record->id : null
+                                );
                             }),
                         Forms\Components\TextInput::make('country')
                             ->label(__('Country'))
@@ -151,12 +161,16 @@ class SchoolResource extends Resource
                     ->schema([
                         Forms\Components\Placeholder::make('registered_contact_name')
                             ->label(__('Registered Contact'))
-                            ->content(fn (School $record): string => $record->exists && $record->users()->exists()
+                            // The record is null on the create form, so the
+                            // type hint has to be nullable — a non-null
+                            // `School $record` blew up with a 500 whenever
+                            // the platform admin opened /platform/schools/create.
+                            ->content(fn (?School $record): string => $record && $record->exists && $record->users()->exists()
                                 ? $record->users()->orderBy('id')->value('name')
                                 : __('—')),
                         Forms\Components\Placeholder::make('registered_contact_email')
                             ->label(__('Contact Email'))
-                            ->content(fn (School $record): string => $record->exists && $record->users()->exists()
+                            ->content(fn (?School $record): string => $record && $record->exists && $record->users()->exists()
                                 ? $record->users()->orderBy('id')->value('email')
                                 : __('—')),
                     ])->columns(2),
@@ -523,6 +537,25 @@ class SchoolResource extends Resource
             Arr::except($data, ['modules']),
             array_map(fn ($enabled) => (bool) $enabled, $data['modules']),
         ];
+    }
+
+    /**
+     * Normalise a school login code to its stored shape: upper case, and
+     * stripped of every character that is not a letter, a digit or a dash.
+     *
+     * Used in three places so the value shown in the form, the value that is
+     * validated against the `unique` rule, and the value that is persisted
+     * are always identical.
+     */
+    public static function normaliseLoginCode(?string $state): string
+    {
+        $value = strtoupper(trim((string) $state));
+
+        if ($value === '') {
+            return '';
+        }
+
+        return (string) preg_replace('/[^A-Z0-9\-]/', '', $value);
     }
 
     /**

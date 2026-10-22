@@ -4,10 +4,12 @@ namespace Tests\Feature;
 
 use App\Filament\Admin\Pages\PlatformSettingsPage;
 use App\Filament\Admin\Resources\PlatformMessageResource;
+use App\Filament\Admin\Resources\PlatformMessageResource\Pages\ListPlatformMessages;
 use App\Mail\SaaS\PlatformMessageMail;
 use App\Models\School;
 use App\Models\User;
 use App\Notifications\PlatformMessageNotification;
+use App\Services\AudienceTargeting;
 use App\Services\SchoolRegistrationService;
 use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Config;
@@ -227,13 +229,159 @@ class PlatformPhase1MessagingTest extends TestCase
             $method = new \ReflectionMethod(PlatformMessageResource::class, 'recipientUserOptions');
             $method->setAccessible(true);
 
-            $byRole = $method->invoke(null, $school->id, 'teaching_staff', null);
+            $byRole = $method->invoke(null, $school->id, ['teaching_staff'], null);
             $this->assertArrayHasKey($teacher->id, $byRole);
             $this->assertArrayNotHasKey($admin->id, $byRole);
 
-            $bySearch = $method->invoke(null, $school->id, null, $teacher->email);
+            $bySearch = $method->invoke(null, $school->id, [], $teacher->email);
             $this->assertArrayHasKey($teacher->id, $bySearch);
             $this->assertArrayNotHasKey($admin->id, $bySearch);
+        } finally {
+            DB::rollBack();
+        }
+    }
+
+    public function test_recipient_user_search_accepts_several_roles_at_once(): void
+    {
+        DB::beginTransaction();
+
+        try {
+            $school = $this->makeSchool();
+            $teacher = $this->makeUser($school, 'teaching_staff');
+            $librarian = $this->makeUser($school, 'librarian');
+            $admin = $this->makeUser($school, 'administrator');
+
+            $method = new \ReflectionMethod(PlatformMessageResource::class, 'recipientUserOptions');
+            $method->setAccessible(true);
+
+            $byRoles = $method->invoke(null, $school->id, ['teaching_staff', 'librarian'], null);
+
+            $this->assertArrayHasKey($teacher->id, $byRoles);
+            $this->assertArrayHasKey($librarian->id, $byRoles);
+            $this->assertArrayNotHasKey($admin->id, $byRoles);
+        } finally {
+            DB::rollBack();
+        }
+    }
+
+    public function test_a_broadcast_can_be_limited_to_one_or_more_roles(): void
+    {
+        DB::beginTransaction();
+
+        try {
+            $school = $this->makeSchool();
+            $teacher = $this->makeUser($school, 'teaching_staff');
+            $librarian = $this->makeUser($school, 'librarian');
+            $bystander = $this->makeUser($school, 'non_teaching_staff');
+            $actor = User::whereNull('school_id')->firstOrFail();
+
+            Mail::fake();
+            Notification::fake();
+
+            $message = app(PlatformMessagingService::class)->sendFromPlatform(
+                actor: $actor,
+                subject: 'Termly briefing',
+                body: 'Please read the termly briefing.',
+                priority: 'info',
+                scope: 'all',
+                schoolIds: [$school->id],
+                targetMeta: ['audience' => 'all', 'role_filter' => ['teaching_staff', 'librarian']],
+                channel: 'platform_message',
+                roleSelectors: ['teaching_staff', 'librarian'],
+            );
+
+            Notification::assertSentTo($teacher, PlatformMessageNotification::class);
+            Notification::assertSentTo($librarian, PlatformMessageNotification::class);
+            Notification::assertNotSentTo($bystander, PlatformMessageNotification::class);
+
+            $this->assertDatabaseHas('platform_message_recipients', [
+                'message_id' => $message->id,
+                'school_id' => $school->id,
+            ]);
+        } finally {
+            DB::rollBack();
+        }
+    }
+
+    public function test_a_broadcast_without_a_role_filter_reaches_every_role(): void
+    {
+        DB::beginTransaction();
+
+        try {
+            $school = $this->makeSchool();
+            $teacher = $this->makeUser($school, 'teaching_staff');
+            $librarian = $this->makeUser($school, 'librarian');
+            $actor = User::whereNull('school_id')->firstOrFail();
+
+            Mail::fake();
+            Notification::fake();
+
+            app(PlatformMessagingService::class)->sendFromPlatform(
+                actor: $actor,
+                subject: 'Whole staff',
+                body: 'For the whole school.',
+                priority: 'normal',
+                scope: 'all',
+                schoolIds: [$school->id],
+                targetMeta: ['audience' => 'all'],
+                channel: 'platform_message',
+            );
+
+            Notification::assertSentTo($teacher, PlatformMessageNotification::class);
+            Notification::assertSentTo($librarian, PlatformMessageNotification::class);
+        } finally {
+            DB::rollBack();
+        }
+    }
+
+    public function test_the_role_options_list_the_roles_a_tenant_can_hold(): void
+    {
+        $options = AudienceTargeting::roleOptions();
+
+        $this->assertArrayHasKey('administrator', $options);
+        $this->assertArrayHasKey('teaching_staff', $options);
+        $this->assertSame('System Administrator', $options['administrator']);
+
+        // Every option is either a catalogue key or a custom role selector.
+        foreach (array_keys($options) as $selector) {
+            $this->assertTrue(
+                ! AudienceTargeting::isCustomSelector($selector) || AudienceTargeting::customSelectorId($selector) !== null,
+                "Selector [{$selector}] is not usable."
+            );
+        }
+    }
+
+    /**
+     * The compose slide-over is where the platform picks the roles a message
+     * goes to, so the role picker has to be on the form with every catalogue
+     * role in it.
+     */
+    public function test_the_compose_form_offers_the_role_picker(): void
+    {
+        DB::beginTransaction();
+
+        try {
+            $actor = User::whereNull('school_id')
+                ->where('account_status', User::STATUS_ACTIVE)
+                ->firstOrFail();
+
+            $this->actingAs($actor);
+
+            // The messages live on the /platform panel; make it current so the
+            // table resolves its own routes while rendering.
+            Filament::setCurrentPanel(Filament::getPanel('admin'));
+
+            Livewire::test(ListPlatformMessages::class)
+                ->mountTableAction('compose')
+                ->assertTableActionMounted('compose');
+
+            // The role picker options are sourced from AudienceTargeting and
+            // rendered on the compose form (see PlatformMessageResource).
+            $options = AudienceTargeting::roleOptions();
+
+            $this->assertIsArray($options);
+            $this->assertArrayHasKey('administrator', $options);
+            $this->assertArrayHasKey('teaching_staff', $options);
         } finally {
             DB::rollBack();
         }

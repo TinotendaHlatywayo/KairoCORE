@@ -211,6 +211,54 @@ class ModuleNavigationLivewireRequestTest extends TestCase
     }
 
     /**
+     * A normal page load must never borrow the referring page's module.
+     *
+     * The browser sends the previous page as the Referer on every navigation,
+     * so the dashboard arrived carrying a Referer of the Student Directory.
+     * The module header then resolved to the "students" module and the
+     * Student Directory's tab strip stayed on screen on the dashboard.
+     */
+    public function test_a_page_load_does_not_inherit_the_referring_pages_module(): void
+    {
+        $this->bindRequest('/workspace', 'GET', [
+            'Referer' => 'https://school.test/workspace/students',
+        ]);
+
+        $this->assertNull($this->service()->currentModule());
+    }
+
+    /**
+     * The same must hold for every page that belongs to no module, whichever
+     * page the user came from.
+     */
+    public function test_no_module_page_never_inherits_a_module_from_the_referer(): void
+    {
+        foreach (['/workspace', '/workspace/notifications'] as $uri) {
+            $this->bindRequest($uri, 'GET', [
+                'Referer' => 'https://school.test/workspace/students',
+            ]);
+
+            $this->assertNull(
+                $this->service()->currentModule(),
+                "{$uri} must not render a module header"
+            );
+        }
+    }
+
+    /**
+     * A page that DOES belong to a module keeps its own module even when the
+     * user arrived from a different module.
+     */
+    public function test_a_module_page_resolves_to_its_own_module_not_the_referers(): void
+    {
+        $this->bindRequest('/workspace/user-accounts', 'GET', [
+            'Referer' => 'https://school.test/workspace/students',
+        ]);
+
+        $this->assertSame('administration', $this->service()->currentModule()['slug'] ?? null);
+    }
+
+    /**
      * @return array<int, string>
      */
     private function tabsOf(ModuleNavigationService $service, string $moduleSlug): array

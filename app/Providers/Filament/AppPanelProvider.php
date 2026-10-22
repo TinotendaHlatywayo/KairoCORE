@@ -86,7 +86,9 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Vite;
+use Illuminate\Support\HtmlString;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Livewire\Livewire;
 use Modules\Admin\Models\SystemSetting;
 use Modules\Inventory\Filament\Resources\AssetMaintenanceResource;
 use Modules\Inventory\Filament\Resources\GoodsReceivedResource;
@@ -291,6 +293,17 @@ class AppPanelProvider extends PanelProvider
             )
 
             // ──────────────────────────────────────────────────────────────
+            // 📣 PLATFORM BULLETIN BANNER
+            // The newest platform announcement addressed to the signed-in
+            // account, shown only when the platform asked for it to appear as
+            // a banner. Readers can hide it for the rest of their session.
+            // ──────────────────────────────────────────────────────────────
+            ->renderHook(
+                PanelsRenderHook::BODY_START,
+                fn () => Livewire::mount('platform-announcement-banner')
+            )
+
+            // ──────────────────────────────────────────────────────────────
             // 🦶 STANDARD FOOTER – low-profile, "Powered by Tinway Technologies"
             // ──────────────────────────────────────────────────────────────
             ->renderHook(
@@ -315,7 +328,7 @@ class AppPanelProvider extends PanelProvider
             // panel shows a real percentage bar instead of looking frozen.
             ->renderHook(
                 PanelsRenderHook::BODY_END,
-                fn () => new \Illuminate\Support\HtmlString('<x-upload-progress />')
+                fn () => new HtmlString('<x-upload-progress />')
             )
 
             // ──────────────────────────────────────────────────────────────

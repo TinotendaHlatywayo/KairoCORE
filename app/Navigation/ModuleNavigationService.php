@@ -89,44 +89,69 @@ class ModuleNavigationService
      * so the whole header disappeared until a full page load.
      *
      * Livewire keeps the real page path in the component snapshot and exposes it
-     * through originalPath(), so that is the authoritative candidate. The referer
-     * is a fallback for endpoints that carry no snapshot. Each candidate is only
-     * accepted when it really resolves to a module, so a page that belongs to no
-     * module (the dashboard, for example) never inherits a stale header.
+     * through originalPath(), so that is the authoritative candidate for those
+     * requests.
+     *
+     * The referer is a last-resort fallback and is ONLY consulted during a
+     * Livewire request. On a normal page load the current path is the truth: if
+     * it belongs to no module (the dashboard, for example) then no module header
+     * may be shown. Consulting the referer there made every page inherit the
+     * previous page's module header, so the Student Directory's tab strip kept
+     * showing up on the dashboard.
      */
     public function currentPath(): string
     {
-        foreach ($this->pagePathCandidates() as $candidate) {
+        $candidates = $this->pagePathCandidates();
+
+        // The live path wins whenever it resolves to a module.
+        foreach (['live', 'snapshot'] as $key) {
+            $candidate = $candidates[$key] ?? '';
+
             if ($candidate !== '' && $this->moduleSlugForTabPath($candidate) !== null) {
                 return $candidate;
             }
         }
 
-        return trim((string) request()->path(), '/');
+        // Only a Livewire re-render may borrow the referer, because there the
+        // request path ("livewire/update") says nothing about the page.
+        if (($candidates['livewire'] ?? false) === true) {
+            $referer = $candidates['referer'] ?? '';
+
+            if ($referer !== '' && $this->moduleSlugForTabPath($referer) !== null) {
+                return $referer;
+            }
+        }
+
+        return $candidates['live'] ?? trim((string) request()->path(), '/');
     }
 
     /**
-     * @return array<int, string>
+     * The candidate paths the current request could correspond to.
+     *
+     * @return array{live: string, snapshot: string, referer: string, livewire: bool}
      */
     protected function pagePathCandidates(): array
     {
-        $paths = [
-            trim((string) request()->path(), '/'),
-            trim((string) Livewire::originalPath(), '/'),
-        ];
+        $live = trim((string) request()->path(), '/');
+
+        // Livewire::originalPath() returns the request path for a normal page
+        // load and the snapshot's memo.path for a Livewire re-render.
+        $snapshot = trim((string) Livewire::originalPath(), '/');
 
         // "POST" is Livewire's placeholder when a snapshot carries no path.
-        if (end($paths) === 'POST') {
-            array_pop($paths);
+        if ($snapshot === 'POST') {
+            $snapshot = '';
         }
 
         $referer = parse_url((string) request()->header('referer'), PHP_URL_PATH);
+        $referer = is_string($referer) ? trim($referer, '/') : '';
 
-        if (is_string($referer)) {
-            $paths[] = trim($referer, '/');
-        }
-
-        return array_values(array_unique(array_filter($paths)));
+        return [
+            'live' => $live,
+            'snapshot' => $snapshot,
+            'referer' => $referer,
+            'livewire' => (bool) Livewire::isLivewireRequest(),
+        ];
     }
 
     /**
