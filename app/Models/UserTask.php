@@ -67,6 +67,7 @@ class UserTask extends Model
         'completed_at',
         'reminder_at',
         'reminder_sent_at',
+        'overdue_notified_at',
         'recurrence',
         'cleared_at',
     ];
@@ -77,6 +78,7 @@ class UserTask extends Model
         'completed_at' => 'datetime',
         'reminder_at' => 'datetime',
         'reminder_sent_at' => 'datetime',
+        'overdue_notified_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -207,6 +209,11 @@ class UserTask extends Model
     {
         $this->status = self::STATUS_OPEN;
         $this->completed_at = null;
+
+        // Reopening a task is a fresh start: if it goes overdue again, the
+        // assignee is told again.
+        $this->overdue_notified_at = null;
+
         $this->save();
     }
 }

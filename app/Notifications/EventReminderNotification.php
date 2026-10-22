@@ -2,7 +2,6 @@
 
 namespace App\Notifications;
 
-use App\Filament\App\Pages\Schedule;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Modules\Communication\Models\EventCalendar;
@@ -27,7 +26,12 @@ class EventReminderNotification extends Notification
             'event_title' => $this->event->title,
             'start_time' => $this->event->start_time?->toIso8601String(),
             'location' => $this->event->location,
-            'url' => Schedule::getUrl(),
+            'page' => 'schedule',
+            // The link is resolved when the notification is read, against the
+            // reader's own school. Resolving it here would bake in the host
+            // that happened to be current when the notice was written — and
+            // notices are written by the scheduler, where that host is the
+            // platform, which would drop a tenant on the platform panel.
         ];
     }
 }
