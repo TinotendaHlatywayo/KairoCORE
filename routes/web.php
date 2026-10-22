@@ -161,15 +161,24 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
     })->name('marketing.llms');
 
     Route::get('/sitemap.xml', function () {
-        $lastmod = static function (string $view): string {
+        /*
+         * The preview image is part of every public page's metadata, so
+         * replacing it has to mark those pages as changed. A search engine
+         * that trusts lastmod would otherwise keep the thumbnail it indexed
+         * and never look at the new artwork.
+         */
+        $previewFile = public_path('images/kairocore-link-preview.jpg');
+        $previewMtime = is_file($previewFile) ? (int) filemtime($previewFile) : 0;
+
+        $lastmod = static function (string $view) use ($previewMtime): string {
             $path = resource_path("views/{$view}.blade.php");
             $time = is_file($path) ? filemtime($path) : false;
 
-            return date('c', $time ?: time());
+            return date('c', max($time ?: time(), $previewMtime));
         };
 
         $urls = [
-            ['loc' => route('marketing.home'), 'lastmod' => $lastmod('marketing/home'), 'changefreq' => 'weekly', 'priority' => '1.0'],
+            ['loc' => route('marketing.home'), 'lastmod' => $lastmod('marketing/home'), 'changefreq' => 'weekly', 'priority' => '1.0', 'image' => platform_og_image_url()],
             ['loc' => route('marketing.features'), 'lastmod' => $lastmod('marketing/features'), 'changefreq' => 'monthly', 'priority' => '0.8'],
             ['loc' => route('marketing.school-fees'), 'lastmod' => $lastmod('marketing/school-fees'), 'changefreq' => 'monthly', 'priority' => '0.8'],
             ['loc' => route('marketing.students'), 'lastmod' => $lastmod('marketing/students'), 'changefreq' => 'monthly', 'priority' => '0.8'],
@@ -212,12 +221,12 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
                     'priority' => '0.7',
                 ];
             }
-        } catch (\Throwable) {
+        } catch (Throwable) {
             // Blog table unavailable — serve the rest of the sitemap.
         }
 
         $xml = '<?xml version="1.0" encoding="UTF-8"?>';
-        $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
+        $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">';
 
         foreach ($urls as $url) {
             $xml .= '<url>';
@@ -227,6 +236,12 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
             }
             $xml .= '<changefreq>'.$url['changefreq'].'</changefreq>';
             $xml .= '<priority>'.$url['priority'].'</priority>';
+            if (! empty($url['image'])) {
+                $xml .= '<image:image>';
+                $xml .= '<image:loc>'.htmlspecialchars($url['image']).'</image:loc>';
+                $xml .= '<image:title>'.htmlspecialchars(platform_name()).'</image:title>';
+                $xml .= '</image:image>';
+            }
             $xml .= '</url>';
         }
 
