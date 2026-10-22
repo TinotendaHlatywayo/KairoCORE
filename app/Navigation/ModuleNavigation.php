@@ -42,6 +42,7 @@ use App\Filament\App\Pages\Knowledge\KnowledgeHub;
 use App\Filament\App\Pages\Library\CatalogueHub;
 use App\Filament\App\Pages\Library\CirculationHub;
 use App\Filament\App\Pages\Lms\LmsHub;
+use App\Filament\App\Pages\MyDay;
 use App\Filament\App\Pages\ReportGeneratorPage;
 use App\Filament\App\Pages\ReportingDashboard;
 use App\Filament\App\Pages\Reports\ReportsHub;
@@ -344,13 +345,15 @@ class ModuleNavigation
                 'landing' => CommunicationCenter::class,
                 'tabs' => [
                     ['label' => __('Overview'), 'page' => CommunicationCenter::class, 'group' => __('Overview'), 'icon' => 'heroicon-o-squares-2x2'],
-                    // Points at the Schedule page itself rather than at a
-                    // category hub. Schedule lives in the 'universal' module, so
-                    // ScheduleTasksHub — which looks for pages grouped inside
-                    // 'communication' — found none and redirected nowhere,
-                    // leaving every user on a spinner reading "Opening
-                    // category…" with no way forward.
-                    ['label' => __('Schedule & Tasks'), 'page' => Schedule::class, 'group' => __('Schedule & Tasks')],
+                    // My Day and the Schedule sit next to Overview so both are one
+                    // click away from the Communication Center. They point at the
+                    // pages themselves rather than at a category hub: both live in
+                    // the 'universal' capability module, so a hub that looks for
+                    // pages grouped inside 'communication' would find none and
+                    // redirect nowhere, leaving the user on a spinner reading
+                    // "Opening category…" with no way forward.
+                    ['label' => __('My Day'), 'page' => MyDay::class, 'group' => __('Overview'), 'icon' => 'heroicon-o-check-circle'],
+                    ['label' => __('Schedule'), 'page' => Schedule::class, 'group' => __('Overview'), 'icon' => 'heroicon-o-calendar-days'],
                     ['label' => __('Community & Engagement'), 'page' => CommunityHub::class, 'group' => __('Community & Engagement'), 'hub' => true],
                     ['label' => __('Announcements'), 'resource' => AnnouncementResource::class, 'group' => __('Community & Engagement')],
                     ['label' => __('Events'), 'resource' => EventCalendarResource::class, 'group' => __('Community & Engagement')],

@@ -2881,6 +2881,19 @@ class DummyDataSeeder
         $manifest = $this->loadManifest($schoolId);
 
         DB::transaction(function () use ($manifest, $schoolId): void {
+            // Every demo employee is created with a linked portal login, and
+            // Employee::deleted() would cascade that login away. The wipe
+            // removes the employee rows with a query builder, which fires no
+            // model events, so the logins would survive as orphaned accounts
+            // on the User Accounts page. Collect them before the rows go.
+            $demoStaffUserIds = DB::table('employees')
+                ->where('school_id', $schoolId)
+                ->where('email', 'LIKE', '%@demo.schoolcore.test')
+                ->pluck('user_id')
+                ->filter()
+                ->map(fn ($id) => (int) $id)
+                ->all();
+
             // Older demo datasets seeded hostel rooms/beds/allocations before
             // the manifest existed, so the manifest may only track the rooms.
             $roomIds = array_map('intval', $manifest['hostel_rooms'] ?? []);
@@ -2993,12 +3006,72 @@ class DummyDataSeeder
                 ->where('requested_role', 'student')
                 ->where('username', 'LIKE', 'TEST-STU-%')
                 ->delete();
+
+            // Demo staff portal accounts (created for every seeded employee).
+            // The employees are gone by now, so these logins are orphans that
+            // would otherwise sit on the User Accounts page for good.
+            $this->deleteDemoStaffAccounts($schoolId, $demoStaffUserIds);
         });
 
         // Clear the manifest — everything it described is gone.
         self::forgetManifestRow($schoolId);
 
         return count($manifest['students'] ?? []);
+    }
+
+    /**
+     * Removes the portal logins that belonged to the demo staff.
+     *
+     * The demo staff all share the reserved demo email domain, so the logins
+     * are recognisable even when the employee rows were removed by an earlier
+     * wipe. A login that still belongs to a live student or a live employee is
+     * left alone.
+     *
+     * @param  array<int, int>  $userIds  The logins linked to the employees
+     *                                    that this wipe removed.
+     */
+    protected function deleteDemoStaffAccounts(int $schoolId, array $userIds = []): void
+    {
+        $demoUserIds = DB::table('users')
+            ->where('school_id', $schoolId)
+            ->where('email', 'LIKE', '%@demo.schoolcore.test')
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        // The employees this wipe removed are known by their linked login too,
+        // which still catches an account whose email was edited away from the
+        // demo domain after it was created.
+        $candidates = array_values(array_unique(array_merge($demoUserIds, array_map('intval', $userIds))));
+
+        if ($candidates === []) {
+            return;
+        }
+
+        // A login that is still in use by a student or by an employee that
+        // survived the wipe must not be removed.
+        $stillInUse = DB::table('students')
+            ->whereIn('user_id', $candidates)
+            ->pluck('user_id')
+            ->merge(DB::table('employees')->whereIn('user_id', $candidates)->pluck('user_id'))
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        $doomed = array_values(array_diff($candidates, $stillInUse));
+
+        if ($doomed === []) {
+            return;
+        }
+
+        // The workflow history of a demo employee belongs to the demo, and
+        // the table refuses the deletion of an account that still has history
+        // (its foreign key is restrictive), so the history goes first.
+        DB::table('academic_workflow_history')
+            ->where('school_id', $schoolId)
+            ->whereIn('user_id', $doomed)
+            ->delete();
+
+        DB::table('users')->whereIn('id', $doomed)->delete();
     }
 
     /**

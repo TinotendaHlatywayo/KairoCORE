@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Pages;
 
+use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Concerns\ManagesTasks;
 use App\Models\UserTask;
 use Filament\Pages\Page;
@@ -19,6 +20,7 @@ use Modules\Communication\Models\EventCalendar;
  */
 class MyDay extends Page
 {
+    use HasPageHelp;
     use ManagesTasks;
 
     protected static ?string $navigationIcon = 'heroicon-o-check-circle';
@@ -192,5 +194,12 @@ class MyDay extends Page
     public function toggleShowCompleted(): void
     {
         $this->showCompleted = ! $this->showCompleted;
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->getHelpAction(),
+        ];
     }
 }

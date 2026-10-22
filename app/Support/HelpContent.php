@@ -1343,6 +1343,21 @@ class HelpContent
                     'Relationship' => 'Calendar entries can originate from the Events page in the Communication Center, so publishing an event with your role targeted is what puts it on this schedule.',
                 ],
             ],
+            'App\Filament\App\Pages\MyDay' => [
+                'title' => 'My Day',
+                'summary' => 'A personal view of today: the tasks you owe, the tasks assigned to you and what is overdue, so the working day can be planned in one place.',
+                'workflow' => [
+                    '1. Start with today: open My Day to see everything due today, with overdue items called out at the top.',
+                    '2. Work the list: tick a task off as you finish it, and use the star to flag anything that matters.',
+                    '3. Add what is missing: create a task with a clear title and due date so nothing depends on memory.',
+                    '4. Switch views: use Important, Assigned to Me or My Tasks to narrow the list to the work you actually own.',
+                    '5. Review progress: the Completed view keeps a record of what has been finished.',
+                ],
+                'details' => [
+                    'Shared Tasks' => 'Tasks can be assigned to other people. Assignment is visible on the task, so it is clear who is responsible for each item.',
+                    'Relationship' => 'My Day sits beside the Schedule in the Communication Center. The Schedule shows the shared school calendar, while My Day focuses on personal tasks, so both can be checked in sequence.',
+                ],
+            ],
             'App\Filament\App\Pages\Communication\CommunityHub' => [
                 'title' => 'Community & Engagement',
                 'summary' => 'Landing page for engagement with students, parents and staff: notices, events, conversation, resources and surveys.',

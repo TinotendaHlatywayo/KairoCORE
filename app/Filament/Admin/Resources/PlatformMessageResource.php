@@ -5,6 +5,7 @@ namespace App\Filament\Admin\Resources;
 use App\Filament\Admin\Resources\PlatformMessageResource\Pages\ListPlatformMessages;
 use App\Models\School;
 use App\Models\User;
+use App\Services\AudienceTargeting;
 use Filament\Forms;
 use Filament\Forms\Get;
 use Filament\Notifications\Notification;
@@ -171,19 +172,20 @@ class PlatformMessageResource extends Resource
                             ->visible(fn (Get $get): bool => in_array($get('audience'), ['single', 'users'], true))
                             ->required(fn (Get $get): bool => in_array($get('audience'), ['single', 'users'], true)),
                         Forms\Components\Select::make('role_filter')
-                            ->label(__('Filter by role'))
-                            ->options(User::REGISTRATION_ROLES)
-                            ->live()
-                            ->visible(fn (Get $get): bool => $get('audience') === 'users')
-                            ->helperText(__('Optional — narrow the recipient list before searching by name.')),
+                            ->label(__('Roles'))
+                            ->options(fn (): array => AudienceTargeting::roleOptions())
+                            ->multiple()
+                            ->searchable()
+                            ->preload()
+                            ->helperText(__('Optional — narrow the recipients to one or more of the roles a school sees on its Roles page. Leave empty to reach every role.')),
                         Forms\Components\Select::make('user_ids')
                             ->label(__('Recipients'))
                             ->multiple()
                             ->searchable()
                             ->visible(fn (Get $get): bool => $get('audience') === 'users')
                             ->required(fn (Get $get): bool => $get('audience') === 'users')
-                            ->options(fn (Get $get): array => self::recipientUserOptions((int) $get('school_id'), $get('role_filter')))
-                            ->getSearchResultsUsing(fn (string $search, Get $get): array => self::recipientUserOptions((int) $get('school_id'), $get('role_filter'), $search))
+                            ->options(fn (Get $get): array => self::recipientUserOptions((int) $get('school_id'), (array) $get('role_filter')))
+                            ->getSearchResultsUsing(fn (string $search, Get $get): array => self::recipientUserOptions((int) $get('school_id'), (array) $get('role_filter'), $search))
                             ->getOptionLabelsUsing(fn (array $values): array => User::withoutTenantScope()->whereIn('id', $values)->pluck('name', 'id')->all()),
                         Forms\Components\Select::make('status_filter')
                             ->label(__('Status is one of'))
@@ -236,6 +238,7 @@ class PlatformMessageResource extends Resource
                     ->action(function (array $data, $action) {
                         $actor = Auth::user();
                         $userIds = [];
+                        $roleSelectors = array_values(array_filter((array) ($data['role_filter'] ?? [])));
 
                         if (($data['audience'] ?? null) === 'users') {
                             $userIds = array_values(array_unique(array_filter(array_map('intval', $data['user_ids'] ?? []))));
@@ -275,11 +278,12 @@ class PlatformMessageResource extends Resource
                                 'status_filter' => $data['status_filter'] ?? null,
                                 'plan_filter' => $data['plan_filter'] ?? null,
                                 'region_filter' => $data['region_filter'] ?? null,
-                                'role_filter' => $data['role_filter'] ?? null,
+                                'role_filter' => $roleSelectors ?: null,
                                 'user_ids' => $userIds ?: null,
                             ],
                             channel: $data['channel'] ?? 'platform_message',
                             userIds: $userIds,
+                            roleSelectors: $roleSelectors,
                         );
                     }),
             ])
@@ -369,9 +373,11 @@ class PlatformMessageResource extends Resource
      * non-platform-managed users of one school, optionally narrowed by role
      * and/or a name/email search term.
      *
+     * @param  array<int, string>  $roles  Role selectors, as offered by the
+     *                                     Roles filter.
      * @return array<int, string>
      */
-    protected static function recipientUserOptions(int $schoolId, ?string $role = null, ?string $search = null): array
+    protected static function recipientUserOptions(int $schoolId, array $roles = [], ?string $search = null): array
     {
         if ($schoolId <= 0) {
             return [];
@@ -383,8 +389,8 @@ class PlatformMessageResource extends Resource
             ->notPlatformManaged()
             ->orderBy('name');
 
-        if (filled($role)) {
-            $query->where('requested_role', $role);
+        if ($roles !== []) {
+            AudienceTargeting::scopeToRoles($query, $roles);
         }
 
         if (filled($search)) {

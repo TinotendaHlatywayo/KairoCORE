@@ -6,6 +6,7 @@ use App\Mail\SaaS\PlatformMessageMail;
 use App\Models\School;
 use App\Models\User;
 use App\Notifications\PlatformMessageNotification;
+use App\Services\AudienceTargeting;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -29,6 +30,8 @@ class PlatformMessagingService
      *                            (e.g. automated billing notices).
      * @param  array<int>  $schoolIds  Explicit target school ids (for 'single'/'selected').
      * @param  array|null  $targetMeta  Snapshot of the criteria used for targeting (for audit).
+     * @param  array<int>  $roleSelectors  Roles the message is limited to. Empty
+     *                                     means every role of the target tenants.
      */
     public function sendFromPlatform(
         ?User $actor,
@@ -40,8 +43,9 @@ class PlatformMessagingService
         ?array $targetMeta = null,
         string $channel = 'platform_message',
         array $userIds = [],
+        array $roleSelectors = [],
     ): PlatformMessage {
-        return DB::transaction(function () use ($actor, $subject, $body, $priority, $scope, $schoolIds, $targetMeta, $channel, $userIds) {
+        return DB::transaction(function () use ($actor, $subject, $body, $priority, $scope, $schoolIds, $targetMeta, $channel, $userIds, $roleSelectors) {
             $message = PlatformMessage::create([
                 'sender_type' => 'platform',
                 'sender_user_id' => $actor?->id,
@@ -55,7 +59,7 @@ class PlatformMessagingService
                 'channel' => $channel,
             ]);
 
-            $this->createRecipients($message, $schoolIds, $channel, $userIds);
+            $this->createRecipients($message, $schoolIds, $channel, $userIds, $roleSelectors);
 
             return $message;
         });
@@ -176,11 +180,17 @@ class PlatformMessagingService
      * users only: tracking rows are still recorded per school (so the tenant
      * inbox threads correctly) but only the selected users are notified.
      *
+     * When $roleSelectors is non-empty the notification is limited to the
+     * accounts holding one of those roles, so a message can be addressed to
+     * "every librarian" without being built by name.
+     *
      * @param  array<int>  $userIds
+     * @param  array<int, string>  $roleSelectors
      */
-    protected function createRecipients(PlatformMessage $message, array $schoolIds, string $channel = 'platform_message', array $userIds = []): void
+    protected function createRecipients(PlatformMessage $message, array $schoolIds, string $channel = 'platform_message', array $userIds = [], array $roleSelectors = []): void
     {
         $userIds = array_values(array_unique(array_filter(array_map('intval', $userIds))));
+        $roleSelectors = array_values(array_filter(array_map('strval', $roleSelectors)));
 
         $targetUsers = collect();
         if (! empty($userIds)) {
@@ -227,9 +237,14 @@ class PlatformMessagingService
             } else {
                 $schoolIdChunks = array_chunk($schoolIds, 100);
                 foreach ($schoolIdChunks as $chunk) {
-                    User::query()
-                        ->whereIn('school_id', $chunk)
-                        ->get()
+                    $query = User::withoutTenantScope()
+                        ->whereIn('school_id', $chunk);
+
+                    if ($roleSelectors !== []) {
+                        AudienceTargeting::scopeToRoles($query, $roleSelectors);
+                    }
+
+                    $query->get()
                         ->each(fn (User $user) => $user->notify(new PlatformMessageNotification($message)));
                 }
             }
@@ -238,10 +253,34 @@ class PlatformMessagingService
         if (in_array($channel, ['email', 'both'], true)) {
             if ($targetUsers->isNotEmpty()) {
                 $this->emailUsers($message, $targetUsers);
+            } elseif ($roleSelectors !== []) {
+                $this->emailUsers($message, $this->usersHoldingRoles($schoolIds, $roleSelectors));
             } else {
                 $this->emailSchools($message, $schoolIds);
             }
         }
+    }
+
+    /**
+     * The accounts of the given schools that hold one of the given roles.
+     *
+     * @param  array<int>  $schoolIds
+     * @param  array<int, string>  $roleSelectors
+     * @return Collection<int, User>
+     */
+    protected function usersHoldingRoles(array $schoolIds, array $roleSelectors): Collection
+    {
+        if ($schoolIds === [] || $roleSelectors === []) {
+            return collect();
+        }
+
+        $query = User::withoutTenantScope()
+            ->whereIn('school_id', $schoolIds)
+            ->whereNotNull('email');
+
+        AudienceTargeting::scopeToRoles($query, $roleSelectors);
+
+        return $query->get();
     }
 
     /**
@@ -332,8 +371,10 @@ class PlatformMessagingService
         }
 
         // In-app notification center: every platform super admin sees the
-        // tenant's message in their notification centre.
-        User::query()
+        // tenant's message in their notification centre. The tenant scope is
+        // dropped on purpose — the platform accounts belong to no school, so a
+        // scoped query could never find them.
+        User::withoutTenantScope()
             ->whereNull('school_id')
             ->get()
             ->each(fn (User $user) => $user->notify(new PlatformMessageNotification($message)));
