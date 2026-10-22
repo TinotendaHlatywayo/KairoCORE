@@ -214,7 +214,9 @@
             box-shadow: 0 0 0 2px var(--gray-50, #f8fafc);
         }
         .dark .pcc-badge { box-shadow: 0 0 0 2px #0f172a; }
-        .pcc-overlay { position: fixed; inset: 0; z-index: 60; background: rgba(15,23,42,.35); backdrop-filter: blur(2px); }
+        /* Above Filament's dropdown layer (99999), so a page dropdown cannot
+           float on top of the open Command Center. */
+        .pcc-overlay { position: fixed; inset: 0; z-index: 100000; background: rgba(15,23,42,.35); backdrop-filter: blur(2px); }
         .dark .pcc-overlay { background: rgba(0,0,0,.55); }
         .pcc-panel {
             position: absolute; top: 3.5rem; left: 50%; transform: translateX(-50%);

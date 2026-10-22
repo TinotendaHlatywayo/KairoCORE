@@ -360,12 +360,16 @@ body {
     backdrop-filter: blur(8px);
 }
 
-/* Keep Filament/Choices menus above sticky preview and form sections. */
+/*
+ * Keep Filament/Choices menus above sticky preview and form sections — and
+ * above the Command Center, whose overlay now sits at 100000. A dropdown
+ * opened from inside the Command Center has to land on top of it.
+ */
 .fi-select-options,
 .fi-select-dropdown,
 .choices__list--dropdown,
 [data-floating-ui-portal] {
-    z-index: 10000 !important;
+    z-index: 100100 !important;
 }
 
 /* Prevent preview panel from capturing clicks that should go to dropdowns */
@@ -397,7 +401,7 @@ body {
 
 /* Prevent livewire morph from closing dropdowns */
 [data-floating-ui-portal] {
-    z-index: 10000 !important;
+    z-index: 100100 !important;
     pointer-events: auto !important;
 }
 
@@ -1207,7 +1211,14 @@ body.sidebar-right.dark .fi-sidebar {
 .sc-cc-overlay {
     position: fixed;
     inset: 0;
-    z-index: 9000;
+    /*
+     * Above Filament's dropdown layer (99999). Filament renders table
+     * actions — "Export All" on the Student Directory, for one — inside a
+     * dropdown panel pinned at that height, so a panel at 9000 was quietly
+     * overtaken by the page underneath it and its buttons floated on top of
+     * the open Command Center.
+     */
+    z-index: 100000;
 }
 .sc-cc-overlay-enter { transition: opacity 0.22s ease; }
 .sc-cc-overlay-enter-start { opacity: 0; }
@@ -1251,7 +1262,7 @@ body.sidebar-right.dark .fi-sidebar {
      * the twelve columns would never appear. Two classes beat one.
      */
     grid-template-columns: minmax(0, 1fr);
-    z-index: 9010;
+    z-index: 100010;
 }
 .dark .sc-cc-panel {
     background: #0f172a;
