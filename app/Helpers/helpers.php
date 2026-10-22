@@ -755,6 +755,53 @@ if (! function_exists('platform_og_image_url')) {
     }
 }
 
+if (! function_exists('platform_og_image_dimensions')) {
+    /**
+     * The pixel size and MIME type of a social preview image.
+     *
+     * Search engines size their thumbnail from these tags, so the artwork is
+     * described exactly instead of being measured after the fact. A remote
+     * image that is not on this server is described by nothing rather than by
+     * a guess.
+     *
+     * @return array{width: int|null, height: int|null, type: string|null}
+     */
+    function platform_og_image_dimensions(?string $url = null): array
+    {
+        $candidates = [];
+
+        if (filled($url)) {
+            $path = parse_url($url, PHP_URL_PATH);
+
+            if (is_string($path) && $path !== '') {
+                $candidates[] = public_path(ltrim($path, '/'));
+            }
+        }
+
+        $candidates[] = public_path('images/kairocore-link-preview.jpg');
+
+        foreach ($candidates as $candidate) {
+            if (! is_file($candidate)) {
+                continue;
+            }
+
+            $size = @getimagesize($candidate);
+
+            if ($size === false) {
+                continue;
+            }
+
+            return [
+                'width' => (int) $size[0],
+                'height' => (int) $size[1],
+                'type' => $size['mime'] ?? null,
+            ];
+        }
+
+        return ['width' => null, 'height' => null, 'type' => null];
+    }
+}
+
 if (! function_exists('platform_website_schema')) {
     /**
      * schema.org WebSite node for the platform marketing site.

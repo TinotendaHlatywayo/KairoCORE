@@ -54,6 +54,44 @@ class SeoFoundationTest extends TestCase
         $home->assertSee('<meta name="twitter:card" content="summary_large_image"', false);
     }
 
+    /**
+     * A search engine sizes its thumbnail from the declared dimensions, so
+     * the preview image has to say how big it is.
+     */
+    public function test_the_preview_image_declares_its_size_and_type(): void
+    {
+        $meta = platform_og_image_dimensions(platform_og_image_url());
+
+        $this->assertSame(1200, $meta['width']);
+        $this->assertSame(900, $meta['height']);
+        $this->assertSame('image/jpeg', $meta['type']);
+
+        $home = $this->get(route('marketing.home'))->assertOk();
+        $home->assertSee('<meta property="og:image:width" content="1200">', false);
+        $home->assertSee('<meta property="og:image:height" content="900">', false);
+        $home->assertSee('<meta property="og:image:type" content="image/jpeg">', false);
+    }
+
+    /**
+     * The sitemap has to carry the preview image, and the pages have to look
+     * changed when the artwork is replaced — otherwise a search engine keeps
+     * the thumbnail it indexed and never fetches the new one.
+     */
+    public function test_the_sitemap_carries_the_preview_image_and_a_fresh_lastmod(): void
+    {
+        $sitemap = $this->get('/sitemap.xml')->assertOk()->getContent();
+
+        $this->assertStringContainsString('xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"', $sitemap);
+        $this->assertStringContainsString('<image:loc>'.htmlspecialchars(platform_og_image_url()).'</image:loc>', $sitemap);
+
+        $previewMtime = filemtime(public_path('images/kairocore-link-preview.jpg'));
+
+        preg_match('#<url><loc>'.preg_quote(route('marketing.home'), '#').'</loc><lastmod>([^<]+)</lastmod>#', $sitemap, $m);
+
+        $this->assertNotEmpty($m, 'The homepage must be in the sitemap.');
+        $this->assertGreaterThanOrEqual($previewMtime, strtotime($m[1]));
+    }
+
     public function test_favicon_uses_the_square_platform_icon(): void
     {
         $favicon = platform_favicon_url();
