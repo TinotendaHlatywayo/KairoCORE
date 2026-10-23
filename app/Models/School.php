@@ -216,48 +216,6 @@ class School extends Model
         return $query->orderBy('name')->limit($limit)->get();
     }
 
-    /**
-     * A handful of schools whose codes are worth offering as examples.
-     *
-     * The familiar ones come first — but only while they are open for
-     * business, because an example that leads to a suspended school is worse
-     * than no example at all. The rest are filled in from the schools that
-     * can actually be signed in to.
-     *
-     * @return Collection<int, self>
-     */
-    public static function loginCodeExamples(int $limit = 3)
-    {
-        $examples = collect();
-
-        foreach (['TINWAY-PRI', 'RUJEKO-SEC', 'CHIWARI-PRI'] as $code) {
-            $school = static::findByLoginCode($code);
-
-            if ($school && $school->status === 'active' && $school->subdomain) {
-                $examples->push($school);
-            }
-
-            if ($examples->count() >= $limit) {
-                return $examples->values();
-            }
-        }
-
-        $taken = $examples->pluck('id')->all();
-
-        $fill = static::query()
-            ->where('status', 'active')
-            ->whereNotNull('login_code')
-            ->where('login_code', '!=', '')
-            ->whereNotNull('subdomain')
-            ->where('subdomain', '!=', '')
-            ->when($taken !== [], fn ($q) => $q->whereNotIn('id', $taken))
-            ->orderBy('name')
-            ->limit($limit - $examples->count())
-            ->get();
-
-        return $examples->concat($fill)->values();
-    }
-
     public function domains()
     {
         return $this->hasMany(Domain::class);

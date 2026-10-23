@@ -39,32 +39,6 @@
     html.dark .sl-input:focus {
         border-color: #EF5F4D;
     }
-    .sl-chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.35rem;
-        border-radius: 999px;
-        border: 1px solid #E2E8F0;
-        background: #F8FAFC;
-        padding: 0.3rem 0.7rem;
-        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-        font-size: 0.78rem;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        color: #475569;
-        cursor: pointer;
-        transition: all 0.15s ease;
-    }
-    .sl-chip:hover {
-        border-color: #D94B39;
-        color: #D94B39;
-        transform: translateY(-1px);
-    }
-    html.dark .sl-chip {
-        border-color: #334155;
-        background: #16213a;
-        color: #94A3B8;
-    }
     .sl-result {
         display: flex;
         align-items: center;
@@ -160,7 +134,7 @@
                 </div>
 
                 <p id="sl-help" class="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                    {{ __('Type your school’s short code, or any part of its name — letters in order are enough.') }}
+                    {{ __('Type your school’s short code or name.') }}
                 </p>
 
                 @if(!empty($error))
@@ -219,19 +193,6 @@
                 </button>
             </form>
 
-            @if($examples->isNotEmpty())
-                <div class="mt-5 border-t border-slate-100 dark:border-slate-800 pt-4">
-                    <p class="text-xs font-semibold text-slate-500 dark:text-slate-400">{{ __('Try an example code') }}:</p>
-                    <div class="mt-2 flex flex-wrap gap-2">
-                        @foreach($examples as $example)
-                            <button type="button" class="sl-chip" onclick="var i=document.getElementById('sl-code'); i.value='{{ $example->login_code }}'; i.form.submit();">
-                                <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12l-7.5 7.5M3 12h17.25"/></svg>
-                                {{ $example->login_code }}
-                            </button>
-                        @endforeach
-                    </div>
-                </div>
-            @endif
         </div>
 
         <div class="reveal reveal-d4 mx-auto mt-8 grid max-w-xl gap-3 sm:grid-cols-2">

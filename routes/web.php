@@ -338,7 +338,6 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
         return view('marketing.school-login', [
             'term' => $term,
             'results' => $results,
-            'examples' => School::loginCodeExamples(),
             'error' => $error,
             'seoJsonLd' => [
                 platform_breadcrumb_list([
