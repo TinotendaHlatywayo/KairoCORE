@@ -69,12 +69,13 @@ class SchoolLoginCodeTest extends TestCase
         $response->assertOk();
         $response->assertSee('School Login', false);
         $response->assertSee('Platform Login', false);
-        $response->assertSee('name="code"', false);
+        // One field for both: a short code, or a name to search for.
+        $response->assertSee('name="q"', false);
     }
 
     public function test_valid_code_redirects_to_the_school_workspace_login(): void
     {
-        $school = School::whereNotNull('login_code')->whereNotNull('subdomain')->firstOrFail();
+        $school = School::where('status', 'active')->whereNotNull('login_code')->whereNotNull('subdomain')->firstOrFail();
 
         $response = $this->get('/go/'.$school->login_code);
 
@@ -84,7 +85,7 @@ class SchoolLoginCodeTest extends TestCase
 
     public function test_school_login_form_redirects_on_valid_code(): void
     {
-        $school = School::whereNotNull('login_code')->whereNotNull('subdomain')->firstOrFail();
+        $school = School::where('status', 'active')->whereNotNull('login_code')->whereNotNull('subdomain')->firstOrFail();
 
         $response = $this->get('/school-login?code='.strtolower($school->login_code));
 
@@ -115,5 +116,108 @@ class SchoolLoginCodeTest extends TestCase
         $home->assertSee('/platform/login', false);
         // Old single link is gone.
         $home->assertDontSee('>Platform Login</a>', false);
+    }
+
+    /**
+     * Nobody types a school's name exactly. Any ordered run of its letters
+     * has to find it — "mhofu chrstn" finds "Mhofu Christian Academy".
+     */
+    public function test_a_school_is_found_by_any_ordered_run_of_its_letters(): void
+    {
+        DB::beginTransaction();
+
+        try {
+            $school = School::create([
+                'name' => 'Mhofu Christian Academy',
+                'subdomain' => 'mhofu-'.substr(uniqid(), -6),
+                'status' => 'active',
+                'institution_type' => 'secondary',
+            ]);
+
+            $response = $this->get('/school-login?q='.urlencode('mhofu chrstn'));
+
+            $response->assertOk();
+            $response->assertSee('Mhofu Christian Academy');
+            $response->assertSee($school->login_code);
+            // The result links to the school's own login page.
+            $response->assertSee(route('school.go', ['code' => $school->login_code]), false);
+        } finally {
+            DB::rollBack();
+        }
+    }
+
+    public function test_the_suggestions_list_the_matching_schools(): void
+    {
+        DB::beginTransaction();
+
+        try {
+            $school = School::create([
+                'name' => 'Mhofu Christian Academy',
+                'subdomain' => 'mhofu-'.substr(uniqid(), -6),
+                'status' => 'active',
+                'institution_type' => 'secondary',
+            ]);
+
+            $response = $this->getJson('/school-login/suggest?q='.urlencode('mhofu chrstn'));
+
+            $response->assertOk();
+
+            $names = array_column($response->json('results'), 'name');
+            $this->assertContains('Mhofu Christian Academy', $names);
+
+            $codes = array_column($response->json('results'), 'code');
+            $this->assertContains($school->login_code, $codes);
+        } finally {
+            DB::rollBack();
+        }
+    }
+
+    public function test_a_suspended_school_is_not_offered(): void
+    {
+        DB::beginTransaction();
+
+        try {
+            $school = School::create([
+                'name' => 'Mhofu Christian Academy',
+                'subdomain' => 'mhofu-'.substr(uniqid(), -6),
+                'status' => 'suspended',
+                'institution_type' => 'secondary',
+            ]);
+
+            $response = $this->get('/school-login?q='.urlencode('Mhofu Christian Academy'));
+
+            $response->assertOk();
+            // The school is not offered as a result.
+            $response->assertDontSee($school->login_code);
+            $response->assertSee('No school matches', false);
+        } finally {
+            DB::rollBack();
+        }
+    }
+
+    public function test_a_suspended_school_cannot_be_signed_in_to_by_its_code(): void
+    {
+        DB::beginTransaction();
+
+        try {
+            $school = School::create([
+                'name' => 'Mhofu Christian Academy',
+                'subdomain' => 'mhofu-'.substr(uniqid(), -6),
+                'status' => 'suspended',
+                'institution_type' => 'secondary',
+            ]);
+
+            // The code is recognised, but the school cannot be signed in to,
+            // so the visitor is told why instead of being sent to a page that
+            // would only refuse them.
+            $page = $this->get('/school-login?q='.urlencode($school->login_code));
+
+            $page->assertOk();
+            $page->assertSee('cannot be signed in to', false);
+
+            $this->get('/go/'.$school->login_code)->assertRedirect(route('school.login', ['code' => $school->login_code]));
+        } finally {
+            DB::rollBack();
+        }
     }
 }

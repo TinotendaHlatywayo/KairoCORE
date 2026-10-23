@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Modules\SaaS\Models\SaaSSubscription;
@@ -178,6 +179,83 @@ class School extends Model
         $code = strtoupper(trim($code));
 
         return static::withTrashed()->where('login_code', $code)->first();
+    }
+
+    /**
+     * The schools a visitor may sign in to.
+     *
+     * A school can be found by its short code, by the start of its name, or
+     * by any ordered run of its letters — nobody types a school's name
+     * exactly, so "chwarira" has to find "Chiwarira Primary School". Only
+     * schools that are open for business are offered: a suspended school
+     * cannot be signed in to, and a school that is still waiting to be
+     * approved has nobody to sign in yet.
+     *
+     * @return Collection<int, self>
+     */
+    public static function findForLoginSearch(?string $term, int $limit = 12)
+    {
+        $term = trim((string) $term);
+
+        $query = static::query()
+            ->where('status', 'active')
+            ->whereNotNull('subdomain')
+            ->where('subdomain', '!=', '');
+
+        if ($term !== '') {
+            $pattern = fuzzy_regex($term);
+
+            $query->where(function ($q) use ($term, $pattern) {
+                $q->where('login_code', 'LIKE', strtoupper($term).'%')
+                    ->orWhere('name', 'LIKE', $term.'%')
+                    ->orWhereRaw('name REGEXP ?', [$pattern])
+                    ->orWhereRaw('login_code REGEXP ?', [$pattern]);
+            });
+        }
+
+        return $query->orderBy('name')->limit($limit)->get();
+    }
+
+    /**
+     * A handful of schools whose codes are worth offering as examples.
+     *
+     * The familiar ones come first — but only while they are open for
+     * business, because an example that leads to a suspended school is worse
+     * than no example at all. The rest are filled in from the schools that
+     * can actually be signed in to.
+     *
+     * @return Collection<int, self>
+     */
+    public static function loginCodeExamples(int $limit = 3)
+    {
+        $examples = collect();
+
+        foreach (['TINWAY-PRI', 'RUJEKO-SEC', 'CHIWARI-PRI'] as $code) {
+            $school = static::findByLoginCode($code);
+
+            if ($school && $school->status === 'active' && $school->subdomain) {
+                $examples->push($school);
+            }
+
+            if ($examples->count() >= $limit) {
+                return $examples->values();
+            }
+        }
+
+        $taken = $examples->pluck('id')->all();
+
+        $fill = static::query()
+            ->where('status', 'active')
+            ->whereNotNull('login_code')
+            ->where('login_code', '!=', '')
+            ->whereNotNull('subdomain')
+            ->where('subdomain', '!=', '')
+            ->when($taken !== [], fn ($q) => $q->whereNotIn('id', $taken))
+            ->orderBy('name')
+            ->limit($limit - $examples->count())
+            ->get();
+
+        return $examples->concat($fill)->values();
     }
 
     public function domains()
