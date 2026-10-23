@@ -17,6 +17,7 @@ class PlatformBackup extends Model
         'scope',
         'school_id',
         'notes',
+        'include_files',
         'size_bytes',
         'checksum',
         'disk',
@@ -26,6 +27,7 @@ class PlatformBackup extends Model
     ];
 
     protected $casts = [
+        'include_files' => 'boolean',
         'is_verified' => 'boolean',
         'size_bytes' => 'integer',
     ];

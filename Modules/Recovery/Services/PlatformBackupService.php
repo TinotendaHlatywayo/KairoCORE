@@ -56,8 +56,9 @@ class PlatformBackupService
 
     /**
      * @param  array<int,int>|null  $schoolIds
+     * @param  bool|null  $includeFiles  null = whatever the vault row recorded
      */
-    public function generate(PlatformBackup $backupRecord, ?array $schoolIds): PlatformBackup
+    public function generate(PlatformBackup $backupRecord, ?array $schoolIds, ?bool $includeFiles = null): PlatformBackup
     {
         // Streaming the dump keeps memory flat regardless of table size, but a
         // large platform can still take a while — never let PHP kill it midway.
@@ -65,6 +66,7 @@ class PlatformBackupService
             @set_time_limit(0);
         }
 
+        $includeFiles ??= (bool) ($backupRecord->include_files ?? true);
         $fileName = $backupRecord->filename;
         $scope = $backupRecord->scope;
 
@@ -84,15 +86,33 @@ class PlatformBackupService
             }
 
             $zip->addFile($sqlFile, 'backup_payload.sql');
+
+            // The SQL alone only brings the rows back. Everything the school
+            // actually uploads (logos, favicons, student photos, library scans,
+            // website media) lives on disk, so it has to travel in the archive
+            // too or a restore hands back an empty media library.
+            $fileStats = ['files' => 0, 'bytes' => 0, 'skipped' => 0];
+            if ($includeFiles) {
+                $fileStats = $this->addFilesToZip($zip);
+            }
+
             $zip->addFromString('backup_meta.json', json_encode([
                 'scope' => $scope,
                 'school_id' => $backupRecord->school_id,
                 'school_ids' => $schoolIds,
                 'notes' => $backupRecord->notes,
+                'include_files' => $includeFiles,
+                'file_count' => $fileStats['files'],
+                'file_bytes' => $fileStats['bytes'],
                 'generated_at' => now()->toIso8601String(),
                 'app_version' => config('app.version', 'unknown'),
             ], JSON_PRETTY_PRINT));
-            $zip->close();
+
+            // close() is where the archive actually gets written: a file that
+            // vanished mid-run surfaces here, never as a silently short zip.
+            if ($zip->close() === false) {
+                throw new Exception('Unable to finish writing the backup archive: '.$zip->getStatusString());
+            }
 
             $size = filesize($zipFile);
             $checksum = hash_file('sha256', $zipFile);
@@ -105,6 +125,7 @@ class PlatformBackupService
             $backupRecord->update([
                 'size_bytes' => $size,
                 'checksum' => $checksum,
+                'include_files' => $includeFiles,
                 'status' => 'completed',
                 'is_verified' => true,
                 'error_log' => null,
@@ -121,6 +142,177 @@ class PlatformBackupService
 
             throw $e;
         }
+    }
+
+    /**
+     * Every file the platform cannot rebuild from the database, as entries
+     * prefixed with `files/` so a restore can tell them apart from the dump.
+     *
+     * Each entry's own path (relative to base_path()) doubles as its identity:
+     * public/images/logo.png and storage/app/public/logo.png share a basename
+     * but never a full path, so nothing can collide inside the archive.
+     *
+     * @return array{path: string, type: 'dir'|'file'}[]
+     */
+    public function archiveSources(): array
+    {
+        $sources = [
+            ['path' => storage_path('app'), 'type' => 'dir'],
+            ['path' => public_path('images'), 'type' => 'dir'],
+            ['path' => public_path('img'), 'type' => 'dir'],
+        ];
+
+        // Top-level public files only: site icons, verification tokens, the
+        // og:image cards. Directories are code or a symlink to storage, and
+        // index.php / .htaccess are deploy artefacts, never restorable data.
+        foreach (glob(public_path('*')) ?: [] as $item) {
+            if (is_dir($item) || is_link($item)) {
+                continue;
+            }
+
+            if (in_array(basename($item), ['index.php', '.htaccess', 'hot', 'mix-manifest.json'], true)) {
+                continue;
+            }
+
+            $sources[] = ['path' => $item, 'type' => 'file'];
+        }
+
+        return $sources;
+    }
+
+    /**
+     * @param  array{path: string, type: 'dir'|'file'}[]|null  $sources
+     * @return array{files: int, bytes: int, skipped: int}
+     */
+    public function addFilesToZip(ZipArchive $zip, ?array $sources = null): array
+    {
+        $files = 0;
+        $bytes = 0;
+        $skipped = 0;
+
+        foreach ($sources ?? $this->archiveSources() as $source) {
+            $root = $this->relativeToBase($source['path']);
+
+            if ($root === null) {
+                $skipped++;
+
+                continue;
+            }
+
+            if ($source['type'] === 'file') {
+                if ($zip->addFile($source['path'], "files/{$root}")) {
+                    $files++;
+                    $bytes += (int) @filesize($source['path']);
+                } else {
+                    $skipped++;
+                }
+
+                continue;
+            }
+
+            if (! is_dir($source['path'])) {
+                continue;
+            }
+
+            foreach ($this->walkFiles($source['path'], $root) as [$path, $relative]) {
+                if ($zip->addFile($path, "files/{$relative}")) {
+                    $files++;
+                    $bytes += (int) @filesize($path);
+                } else {
+                    $skipped++;
+                }
+            }
+        }
+
+        return ['files' => $files, 'bytes' => $bytes, 'skipped' => $skipped];
+    }
+
+    /**
+     * @return array{string, string}[]  [absolute path, path relative to base_path()]
+     */
+    public function walkFiles(string $absolute, string $relative): \Generator
+    {
+        $excluded = $this->excludedDirectories();
+        $excludedPrefixes = $this->excludedDirectoryPrefixes();
+
+        foreach (new \FilesystemIterator($absolute, \FilesystemIterator::SKIP_DOTS) as $item) {
+            $path = $item->getPathname();
+            $child = $relative.'/'.$item->getFilename();
+
+            // Symlinks would be followed straight out of the backup set (public/storage
+            // points at storage/app/public, which is already archived on its own).
+            if (is_link($path)) {
+                continue;
+            }
+
+            if ($item->isDir()) {
+                if (in_array($child, $excluded, true)) {
+                    continue;
+                }
+
+                foreach ($excludedPrefixes as $prefix) {
+                    if (str_starts_with($child, $prefix)) {
+                        continue 2;
+                    }
+                }
+
+                foreach ($this->walkFiles($path, $child) as $entry) {
+                    yield $entry;
+                }
+
+                continue;
+            }
+
+            if (! $item->isFile()) {
+                continue;
+            }
+
+            yield [$path, $child];
+        }
+    }
+
+    /**
+     * Directories that are vault archives, in-flight work or pure scratch —
+     * archiving them would nest a backup inside a backup, or capture a restore
+     * while it is still writing.
+     *
+     * @return array<int, string>
+     */
+    public function excludedDirectories(): array
+    {
+        return [
+            'storage/app/private/backups',
+            'storage/app/private/tmp',
+            'storage/app/private/tmp-csv-tests',
+            'storage/app/livewire-tmp',
+            'storage/app/private/livewire-tmp',
+            'storage/app/livewire-tmp-tests',
+            'storage/app/platform_temp_snapshots',
+        ];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function excludedDirectoryPrefixes(): array
+    {
+        return ['storage/app/restore_platform_temp_'];
+    }
+
+    /**
+     * Path of an absolute file/dir relative to the app root, or null when it
+     * lives outside the app (nothing outside the app belongs in an archive).
+     */
+    public function relativeToBase(string $absolute): ?string
+    {
+        $path = str_replace('\\', '/', $absolute);
+        $base = rtrim(str_replace('\\', '/', base_path()), '/').'/';
+
+        if (! str_starts_with($path, $base)) {
+            return null;
+        }
+
+        return trim(substr($path, strlen($base)), '/');
     }
 
     /**
