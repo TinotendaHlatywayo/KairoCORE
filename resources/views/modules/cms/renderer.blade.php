@@ -50,12 +50,19 @@
     ];
 
     // ── SEO / meta chain ──
-    $pageTitle = $page->seo_title ?: $page->title;
+    $pageTitle = $page->seo_title ?: ($page->is_homepage ? $school->name : $page->title);
     $titleSuffix = trim((string) $website->seo_title_suffix);
-    $fullTitle = $titleSuffix !== '' ? $pageTitle . ' ' . $titleSuffix : $pageTitle . ' | ' . $school->name;
+    $fullTitle = $titleSuffix !== ''
+        ? $pageTitle . ' ' . $titleSuffix
+        : ($pageTitle === $school->name ? $school->name : $pageTitle . ' | ' . $school->name);
     $metaDescription = trim((string) ($page->seo_description ?: $website->seo_global_description));
     if ($metaDescription === '' && $school->motto) {
         $metaDescription = trim((string) $school->motto);
+    }
+    if ($metaDescription === '') {
+        $metaDescription = $page->is_homepage
+            ? __(':school — official school website. Admissions, news, events and contact details.', ['school' => $school->name])
+            : __(':school — :page.', ['school' => $school->name, 'page' => $pageTitle]);
     }
     $canonical = $page->canonical_url ?: url()->current();
     $ogImage = $website->seo_og_image ?: ($school->logo_path ?? null);
@@ -63,6 +70,7 @@
         $ogImage = asset('storage/' . $ogImage);
     }
     $ogImage = $ogImage ?: asset('images/School_repository_cover.jpeg');
+    $ogImageDimensions = platform_og_image_dimensions($ogImage);
 
     $favicon = $website->favicon_path;
     $faviconHref = $favicon
@@ -110,11 +118,12 @@
         $robots = collect();
         if (! empty($page->noindex)) $robots->push('noindex');
         if (! empty($page->nofollow)) $robots->push('nofollow');
-        $robotsMeta = $robots->isNotEmpty() ? $robots->implode(', ') : '';
+        if ($robots->isEmpty()) {
+            $robots->push('index', 'follow', 'max-image-preview:large', 'max-snippet:-1', 'max-video-preview:-1');
+        }
+        $robotsMeta = $robots->implode(', ');
     @endphp
-    @if($robotsMeta !== '')
-        <meta name="robots" content="{{ $robotsMeta }}">
-    @endif
+    <meta name="robots" content="{{ $robotsMeta }}">
     <link rel="icon" href="{{ $faviconHref }}">
 
     @if($metaDescription !== '')
@@ -125,10 +134,20 @@
     <meta property="og:title" content="{{ $fullTitle }}">
     <meta property="og:url" content="{{ $canonical }}">
     <meta property="og:image" content="{{ $ogImage }}">
+    @if($ogImageDimensions['width'])
+        <meta property="og:image:width" content="{{ $ogImageDimensions['width'] }}">
+    @endif
+    @if($ogImageDimensions['height'])
+        <meta property="og:image:height" content="{{ $ogImageDimensions['height'] }}">
+    @endif
+    @if($ogImageDimensions['type'])
+        <meta property="og:image:type" content="{{ $ogImageDimensions['type'] }}">
+    @endif
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{{ $fullTitle }}">
     <meta name="twitter:description" content="{{ $metaDescription }}">
     <meta name="twitter:image" content="{{ $ogImage }}">
+    <meta name="twitter:image:alt" content="{{ $school->name }}">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

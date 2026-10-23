@@ -776,9 +776,9 @@ if (! function_exists('platform_og_image_dimensions')) {
             if (is_string($path) && $path !== '') {
                 $candidates[] = public_path(ltrim($path, '/'));
             }
+        } else {
+            $candidates[] = public_path('images/kairocore-link-preview.jpg');
         }
-
-        $candidates[] = public_path('images/kairocore-link-preview.jpg');
 
         foreach ($candidates as $candidate) {
             if (! is_file($candidate)) {
@@ -829,6 +829,56 @@ if (! function_exists('platform_organization_schema')) {
             'name' => platform_name(),
             'url' => url('/'),
             'logo' => platform_logo_url(),
+            'image' => platform_og_image_url() ?: null,
+        ];
+    }
+}
+
+if (! function_exists('platform_webpage_schema')) {
+    /**
+     * schema.org WebPage node for a public marketing page.
+     *
+     * `primaryImageOfPage` points search engines at the same artwork used for
+     * the Open Graph / WhatsApp preview, so rich results and Discover can use
+     * that image instead of guessing from the page body.
+     */
+    function platform_webpage_schema(?string $url = null, ?string $title = null, ?string $description = null): array
+    {
+        $url = $url ?: url()->current();
+        $imageUrl = platform_og_image_url();
+        $dimensions = platform_og_image_dimensions($imageUrl);
+
+        $image = null;
+
+        if ($imageUrl !== '') {
+            $image = [
+                '@type' => 'ImageObject',
+                'url' => $imageUrl,
+                'contentUrl' => $imageUrl,
+            ];
+
+            if ($dimensions['width']) {
+                $image['width'] = $dimensions['width'];
+            }
+
+            if ($dimensions['height']) {
+                $image['height'] = $dimensions['height'];
+            }
+        }
+
+        return [
+            '@context' => 'https://schema.org',
+            '@type' => 'WebPage',
+            '@id' => $url.'#webpage',
+            'url' => $url,
+            'name' => $title ?: platform_name(),
+            'description' => $description ?: platform_seo_description(),
+            'isPartOf' => [
+                '@type' => 'WebSite',
+                'url' => url('/'),
+            ],
+            'primaryImageOfPage' => $image,
+            'inLanguage' => str_replace('_', '-', app()->getLocale() ?: 'en'),
         ];
     }
 }

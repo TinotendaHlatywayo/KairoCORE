@@ -26,6 +26,11 @@ class CmsSeoService
             ->all();
 
         $logo = $school->logo_path ? asset('storage/'.$school->logo_path) : null;
+        $ogImage = $website->seo_og_image ?: null;
+        if ($ogImage && ! preg_match('~^https?://~i', $ogImage)) {
+            $ogImage = asset('storage/'.$ogImage);
+        }
+        $image = $logo ?: $ogImage;
 
         $organization = [
             '@type' => 'EducationalOrganization',
@@ -35,7 +40,7 @@ class CmsSeoService
             'description' => trim((string) ($website->seo_global_description ?: $school->motto)),
             'telephone' => $school->phone_number ?: null,
             'email' => $school->email_address ?: null,
-            'image' => $logo,
+            'image' => $image,
             'logo' => $logo,
             'address' => [
                 '@type' => 'PostalAddress',
@@ -66,6 +71,7 @@ class CmsSeoService
                 'description' => $page->seo_description ?: null,
                 'isPartOf' => ['@id' => $domain.'/#website'],
                 'about' => ['@id' => $domain.'/#organization'],
+                'primaryImageOfPage' => $image ? ['@type' => 'ImageObject', 'url' => $image] : null,
                 'inLanguage' => app()->getLocale() ?: 'en',
             ];
 
