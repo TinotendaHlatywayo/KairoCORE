@@ -11,11 +11,12 @@ class PlatformRestoreLog extends Model
     protected $table = 'platform_restore_logs';
 
     protected $fillable = [
-'backup_id',
-            'scope',
-            'performed_by_id',
+        'backup_id',
+        'scope',
+        'performed_by_id',
         'status',
         'error_details',
+        'summary',
     ];
 
     public function backup(): BelongsTo
