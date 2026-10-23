@@ -2,6 +2,7 @@
 
 @section('title', marketing_content('meta_title') ?: platform_name().' - Features')
 @section('meta_description', marketing_content('meta_description') ?: __('Explore all features of the school management system - admissions, academics, finance, HR, communications, attendance, library and more.'))
+@section('seo_image', asset('images/Features_thumbnail.jpg'))
 
 @push('styles')
 @include('marketing.partials.animations')
