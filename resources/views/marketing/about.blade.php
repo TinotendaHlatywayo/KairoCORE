@@ -2,6 +2,7 @@
 
 @section('title', marketing_content('meta_title') ?: platform_name().' - About')
 @section('meta_description', marketing_content('meta_description') ?: __('KairoCORE is a modern, all-in-one school management system built for African schools, admissions, academics, finance, HR and communication in one platform.'))
+@section('seo_image', asset('images/About_thumbnail.jpg'))
 
 @push('styles')
 @include('marketing.partials.animations')

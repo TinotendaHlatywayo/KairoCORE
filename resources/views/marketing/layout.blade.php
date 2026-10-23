@@ -19,6 +19,7 @@
             $metaDescription = $seoDescriptionOverride;
         }
         $canonicalUrl = url()->current();
+        $seoImageOverride = trim((string) $__env->yieldContent('seo_image'));
         $schemas = [
             platform_website_schema(),
             platform_organization_schema(),
@@ -28,12 +29,18 @@
             $schemas = array_merge($schemas, $seoJsonLd);
         }
     @endphp
+    @php
+        $seoRobots = trim((string) $__env->yieldContent('seo_robots'));
+        if ($seoRobots === '') {
+            $seoRobots = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
+        }
+    @endphp
     @include('partials.seo', [
         'seoTitle' => $metaTitle,
         'seoDescription' => $metaDescription,
         'seoCanonical' => $canonicalUrl,
-        'seoImage' => platform_og_image_url(),
-        'seoRobots' => trim((string) $__env->yieldContent('seo_robots', 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1')),
+        'seoImage' => $seoImageOverride !== '' ? $seoImageOverride : platform_og_image_url(),
+        'seoRobots' => $seoRobots,
         'seoType' => 'website',
         'seoJsonLd' => $schemas,
     ])
