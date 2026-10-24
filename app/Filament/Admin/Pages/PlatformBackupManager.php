@@ -17,6 +17,7 @@ use Modules\Recovery\Jobs\RestorePlatformBackupJob;
 use Modules\Recovery\Models\PlatformBackup;
 use Modules\Recovery\Models\PlatformRestoreLog;
 use Modules\Recovery\Services\PlatformBackupService;
+use Modules\Recovery\Services\PlatformRestoreService;
 
 class PlatformBackupManager extends Page implements HasForms
 {
@@ -47,6 +48,13 @@ class PlatformBackupManager extends Page implements HasForms
     public string $backupNotes = '';
 
     public string $backupDestination = 'server'; // server | download | both
+
+    /**
+     * Whether a system-scope archive should also carry the uploaded files.
+     * Files are not partitioned per tenant, so a tenant backup that restored
+     * them would overwrite the media of every other school.
+     */
+    public bool $includeFiles = true;
 
     public ?int $restoreBackupId = null;
 
@@ -115,6 +123,7 @@ class PlatformBackupManager extends Page implements HasForms
                 'status' => $log->status,
                 'backup' => $log->backup?->filename,
                 'error' => $log->error_details,
+                'summary' => $log->summary,
                 'created_at' => optional($log->created_at)->diffForHumans(),
             ])
             ->all();
@@ -162,16 +171,19 @@ class PlatformBackupManager extends Page implements HasForms
             // platform archive can take minutes and would otherwise blow past
             // the browser/proxy request timeout (Cloudflare 520) and leave the
             // button looking dead while PHP keeps running.
-            $backup = $service->createRecord($schoolIds, $this->backupNotes ?: null);
+            $includeFiles = $this->backupScope === 'system' && $this->includeFiles;
+            $backup = $service->createRecord($schoolIds, $this->backupNotes ?: null, $includeFiles);
 
-            GeneratePlatformBackupJob::dispatch($backup->id, $schoolIds);
+            GeneratePlatformBackupJob::dispatch($backup->id, $schoolIds, $includeFiles);
 
             $this->refreshBackupsList();
             $this->backupNotes = '';
 
             Notification::make()
                 ->title(__('Backup generation started'))
-                ->body(__('The archive is being built in the background. Its status updates in the recovery vault below.'))
+                ->body($includeFiles
+                    ? __('The archive (database + every uploaded file) is being built in the background. Its status updates in the recovery vault below.')
+                    : __('The archive is being built in the background. Its status updates in the recovery vault below.'))
                 ->success()
                 ->send();
         } catch (\Throwable $e) {
@@ -243,6 +255,9 @@ class PlatformBackupManager extends Page implements HasForms
         $scope = 'system';
         $schoolId = null;
         $notes = null;
+        // Archives written before files were tracked have no flag at all, and
+        // are honest about carrying only the dump.
+        $includeFiles = false;
 
         $zip = new \ZipArchive;
         if ($zip->open($filePath) === true) {
@@ -252,6 +267,7 @@ class PlatformBackupManager extends Page implements HasForms
                 $scope = $decoded['scope'] ?? 'system';
                 $schoolId = $decoded['school_id'] ?? null;
                 $notes = $decoded['notes'] ?? null;
+                $includeFiles = (bool) ($decoded['include_files'] ?? false);
             }
             $zip->close();
         }
@@ -261,6 +277,7 @@ class PlatformBackupManager extends Page implements HasForms
             'scope' => $scope,
             'school_id' => $schoolId,
             'notes' => $notes,
+            'include_files' => $includeFiles,
             'size_bytes' => filesize($filePath),
             'checksum' => hash_file('sha256', $filePath),
             'disk' => 'local',
@@ -317,6 +334,8 @@ class PlatformBackupManager extends Page implements HasForms
             'status' => 'pending',
         ]);
 
+        ['ok' => $assetsReplaced] = $this->replaceWebsiteAssets($log, $backup);
+
         // Queue the restore instead of running it inside the request: a full
         // restore takes minutes, and a synchronous run both blocked the UI
         // ("dead" button) and exceeded the Cloudflare/proxy origin timeout
@@ -328,7 +347,9 @@ class PlatformBackupManager extends Page implements HasForms
             $this->refreshBackupsList();
             Notification::make()
                 ->title(__('Restore started'))
-                ->body(__('The restore is running in the background. Follow its status under Recent restore activity.'))
+                ->body($assetsReplaced
+                    ? __('The website assets were put back first, and the database is restoring now. Follow its status under Recent restore activity.')
+                    : __('The restore is running in the background. Follow its status under Recent restore activity.'))
                 ->success()
                 ->send();
         } catch (\Throwable $e) {
@@ -343,6 +364,51 @@ class PlatformBackupManager extends Page implements HasForms
                 ->danger()
                 ->send();
         }
+    }
+
+    /**
+     * Replace the web-root assets (favicons, og images, logos, website photos)
+     * straight from the archive.
+     *
+     * This has to happen here: only the web container serves public/, and the
+     * worker writing into its own copy would never reach Apache. Returns a
+     * short human-readable note so the restore log records what was put back
+     * before the queued database phase runs.
+     *
+     * @return array{summary: string, ok: bool}
+     */
+    protected function replaceWebsiteAssets(PlatformRestoreLog $log, PlatformBackup $backup): array
+    {
+        $service = app(PlatformRestoreService::class);
+
+        try {
+            $stats = $service->restorePublicAssets($backup);
+        } catch (\Throwable $e) {
+            report($e);
+            $note = __('Website assets: not restored (:reason)', [
+                'reason' => Str::limit($e->getMessage(), 80, ' …'),
+            ]);
+            $log->update(['summary' => $note]);
+
+            return ['summary' => $note, 'ok' => false];
+        }
+
+        if ($stats['files'] === 0) {
+            return ['summary' => '', 'ok' => true];
+        }
+
+        $note = __('Website assets: :count files (:size) restored', [
+            'count' => $stats['files'],
+            'size' => $service->formatBytes($stats['bytes']),
+        ]);
+
+        if ($stats['skipped'] > 0) {
+            $note .= ' · '.__(':count skipped', ['count' => $stats['skipped']]);
+        }
+
+        $log->update(['summary' => $note]);
+
+        return ['summary' => $note, 'ok' => true];
     }
 
     public function deleteBackupRecord(int $id): void

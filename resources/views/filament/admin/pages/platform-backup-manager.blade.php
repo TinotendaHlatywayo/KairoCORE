@@ -79,6 +79,18 @@
                         </x-filament::input.wrapper>
                     </div>
 
+                    @if ($backupScope === 'system')
+                        <label class="flex cursor-pointer items-start gap-2 rounded-lg border border-gray-200 p-3 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800">
+                            <input type="checkbox" wire:model="includeFiles" class="mt-0.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                            <span class="text-sm">
+                                <span class="font-medium text-gray-800 dark:text-gray-200">{{ __('Include uploaded files') }}</span>
+                                <span class="mt-0.5 block text-xs text-gray-500">{{ __('Adds every photo, logo, favicon, website image and library document to the archive, so a restore brings back the files as well as the data.') }}</span>
+                            </span>
+                        </label>
+                    @else
+                        <p class="text-xs text-gray-500">{{ __('Files are stored once for the whole platform, so tenant archives cover the data only.') }}</p>
+                    @endif
+
                     <x-filament::button
                         wire:click="triggerPlatformBackup"
                         icon="heroicon-o-cloud-arrow-up"
@@ -98,6 +110,8 @@
 
                     <p class="text-xs text-gray-500">
                         {{ __('Every archive is saved to the recovery vault below, where you can download it to your PC or restore it.') }}
+                        {{ __('Archives with files included carry the photos, logos and documents too, so a restore brings those back as well.') }}
+                        {{ __('The .env file is never backed up — keep your secrets out of the archive.') }}
                     </p>
                 </div>
             </x-filament::section>
@@ -159,6 +173,7 @@
                                         {{ \Modules\Recovery\Models\PlatformBackup::formatTimestamp($bk['created_at'], 'Y-m-d H:i') }}
                                         — {{ $bk['scope'] === 'tenant' ? ($bk['school_name'] ?? __('Tenant')) : __('System') }}
                                         @if (! empty($bk['notes'])) — {{ $bk['notes'] }} @endif
+                                        @if ($bk['status'] === 'completed') — {{ ($bk['include_files'] ?? false) ? __('data + files') : __('data only') }} @endif
                                     </option>
                                 @endforeach
                             </x-filament::input.select>
@@ -189,6 +204,8 @@
                             <div class="text-xs text-gray-400">{{ $log['created_at'] ?? '' }}</div>
                             @if (! empty($log['error']))
                                 <div class="text-xs text-rose-500">{{ \Illuminate\Support\Str::limit($log['error'], 120) }}</div>
+                            @elseif (! empty($log['summary']))
+                                <div class="text-xs text-emerald-600 dark:text-emerald-400">{{ \Illuminate\Support\Str::limit($log['summary'], 140) }}</div>
                             @endif
                         </div>
                         @php $st = $log['status']; @endphp
@@ -293,6 +310,14 @@
                                                 <div class="text-xs text-gray-500">{{ $bk['notes'] }}</div>
                                             @endif
                                             <div class="text-[10px] text-gray-400">{{ $bk['filename'] }}</div>
+                                            @if (($bk['status'] ?? '') === 'completed')
+                                                @php $withFiles = (bool) ($bk['include_files'] ?? false); @endphp
+                                                <div @class([
+                                                    'text-[10px] font-semibold',
+                                                    'text-emerald-600 dark:text-emerald-400' => $withFiles,
+                                                    'text-gray-400' => ! $withFiles,
+                                                ])>{{ $withFiles ? __('Database + files') : __('Database only') }}</div>
+                                            @endif
                                         </td>
                                         <td class="px-2 py-3">
                                             @if (($bk['scope'] ?? 'system') === 'tenant')
@@ -320,6 +345,14 @@
                                         <td class="px-2 py-3 text-right">
                                             <div class="flex justify-end gap-1">
                                                 @if ($status === 'completed')
+                                                    @php
+                                                        $withFiles = (bool) ($bk['include_files'] ?? false);
+                                                        $confirmRestore = match (true) {
+                                                            ($bk['scope'] ?? 'system') === 'tenant' => __('WARNING: This will replace this tenant\'s current rows with the backup. Uploaded files are shared across the platform and are not part of a tenant backup. Proceed?'),
+                                                            $withFiles => __('WARNING: This will overwrite all tables and data, and replace every uploaded file and website asset with the copies held in this backup. Proceed?'),
+                                                            default => __('WARNING: This will overwrite and recreate all tables and data. This archive holds no files, so uploads are left untouched. Proceed?'),
+                                                        };
+                                                    @endphp
                                                     <x-filament::icon-button
                                                         :href="route('platform.backups.download', $bk['id'])"
                                                         tag="a"
@@ -329,7 +362,7 @@
                                                     />
                                                     <x-filament::icon-button
                                                         wire:click="executePlatformRestore({{ $bk['id'] }})"
-                                                        wire:confirm="{{ (($bk['scope'] ?? 'system') === 'tenant') ? __('WARNING: This will replace this tenant\'s current rows with the backup. Proceed?') : __('WARNING: This will overwrite and recreate all tables and data. Proceed?') }}"
+                                                        wire:confirm="{{ $confirmRestore }}"
                                                         icon="heroicon-o-arrow-path"
                                                         color="danger"
                                                         tooltip="{{ __('Restore') }}"

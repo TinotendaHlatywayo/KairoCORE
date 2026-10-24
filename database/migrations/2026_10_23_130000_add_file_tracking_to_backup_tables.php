@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -21,6 +22,11 @@ return new class extends Migration
                 $table->boolean('include_files')->default(true)->after('notes');
             }
         });
+
+        // Every archive that already exists was written when the dump was the
+        // whole payload, so claiming otherwise would put a "files included"
+        // badge on a SQL-only zip.
+        DB::table('platform_backups')->update(['include_files' => false]);
 
         Schema::table('platform_restore_logs', function (Blueprint $table) {
             if (! Schema::hasColumn('platform_restore_logs', 'summary')) {

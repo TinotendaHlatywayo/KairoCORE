@@ -8,7 +8,6 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Modules\Recovery\Models\PlatformBackup;
-use Modules\Recovery\Models\PlatformRestoreLog;
 use Modules\Recovery\Services\PlatformBackupService;
 
 /**
@@ -28,8 +27,13 @@ class GeneratePlatformBackupJob implements ShouldQueue
 
     /**
      * @param  array<int,int>|null  $schoolIds  null = whole platform
+     * @param  bool  $includeFiles  Archive the uploaded files alongside the SQL dump
      */
-    public function __construct(public int $backupId, public ?array $schoolIds = null) {}
+    public function __construct(
+        public int $backupId,
+        public ?array $schoolIds = null,
+        public bool $includeFiles = true,
+    ) {}
 
     public function handle(PlatformBackupService $service): void
     {
@@ -39,7 +43,7 @@ class GeneratePlatformBackupJob implements ShouldQueue
             return;
         }
 
-        $service->generate($record, $this->schoolIds);
+        $service->generate($record, $this->schoolIds, $this->includeFiles);
     }
 
     public function failed(\Throwable $e): void
