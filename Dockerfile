@@ -86,9 +86,18 @@ RUN git config --global --add safe.directory /var/www/html \
 # to "localhost" and every real host returns 404. It would also bake in the wrong
 # DB_HOST and APP_KEY. The entrypoint builds these caches at start-up instead.
 
+# www-data must own everything a restore writes back: the shared storage
+# volume, and the web root assets (favicons, og:image cards, logos, website
+# photos) that only the Apache container can reach. index.php and .htaccess
+# stay root-owned — they are deploy artefacts, never restorable data.
 RUN mkdir -p storage/framework/{cache/data,sessions,views} storage/logs bootstrap/cache \
-    && chown -R www-data:www-data storage bootstrap/cache \
-    && chmod -R ug+rwX storage bootstrap/cache
+    && chown -R www-data:www-data storage bootstrap/cache public/images public/img \
+    && chmod -R ug+rwX storage bootstrap/cache public/images public/img \
+    && chown www-data public \
+    && find public -maxdepth 1 -type f \
+        \( -name '*.txt' -o -name '*.ico' -o -name '*.png' -o -name '*.jpg' -o -name '*.jpeg' \
+           -o -name '*.webp' -o -name '*.svg' -o -name '*.xml' \) \
+        -exec chown www-data:www-data {} +
 
 COPY docker/entrypoint.sh /usr/local/bin/kairo-entrypoint
 RUN chmod +x /usr/local/bin/kairo-entrypoint
