@@ -55,6 +55,65 @@ class PlatformBackupService
     }
 
     /**
+     * Record an archive that already sits in the vault directory as a vault row.
+     *
+     * Used by the chunked upload endpoint once the browser's pieces have been
+     * reassembled on disk. Reads the archive's own backup_meta.json (when it
+     * has one) so scope, comment and the include-files flag match what built
+     * it. Safe to call twice for the same file: the existing row is returned.
+     *
+     * @throws \RuntimeException when the file is missing or not a readable ZIP
+     */
+    public function importArchive(string $absolutePath, string $fileName): PlatformBackup
+    {
+        $fileName = basename($fileName);
+
+        $existing = PlatformBackup::where('filename', $fileName)->first();
+        if ($existing) {
+            return $existing;
+        }
+
+        if (! is_file($absolutePath)) {
+            throw new \RuntimeException("The archive file is no longer on the server ({$fileName}).");
+        }
+
+        $scope = 'system';
+        $schoolId = null;
+        $notes = null;
+        // Archives written before files were tracked have no flag at all, and
+        // are honest about carrying only the dump.
+        $includeFiles = false;
+
+        $zip = new ZipArchive;
+        if ($zip->open($absolutePath, ZipArchive::RDONLY) !== true) {
+            throw new \RuntimeException("{$fileName} is not a readable ZIP archive.");
+        }
+
+        $meta = $zip->getFromName('backup_meta.json');
+        if ($meta) {
+            $decoded = json_decode($meta, true) ?: [];
+            $scope = $decoded['scope'] ?? 'system';
+            $schoolId = $decoded['school_id'] ?? null;
+            $notes = $decoded['notes'] ?? null;
+            $includeFiles = (bool) ($decoded['include_files'] ?? false);
+        }
+        $zip->close();
+
+        return PlatformBackup::create([
+            'filename' => $fileName,
+            'scope' => $scope,
+            'school_id' => $schoolId,
+            'notes' => $notes,
+            'include_files' => $includeFiles,
+            'size_bytes' => filesize($absolutePath),
+            'checksum' => hash_file('sha256', $absolutePath),
+            'disk' => 'local',
+            'is_verified' => true,
+            'status' => 'completed',
+        ]);
+    }
+
+    /**
      * @param  array<int,int>|null  $schoolIds
      * @param  bool|null  $includeFiles  null = whatever the vault row recorded
      */
@@ -228,7 +287,7 @@ class PlatformBackupService
     }
 
     /**
-     * @return array{string, string}[]  [absolute path, path relative to base_path()]
+     * @return array{string, string}[] [absolute path, path relative to base_path()]
      */
     public function walkFiles(string $absolute, string $relative): \Generator
     {
@@ -282,6 +341,7 @@ class PlatformBackupService
     {
         return [
             'storage/app/private/backups',
+            'storage/app/private/chunked-uploads',
             'storage/app/private/tmp',
             'storage/app/private/tmp-csv-tests',
             'storage/app/livewire-tmp',

@@ -120,40 +120,92 @@
                 heading="{{ __('Restore from a file') }}"
                 description="{{ __('Restore a recovery archive you are holding locally (.zip).') }}"
             >
-                <form wire:submit.prevent="restoreFromUploadedBackup" class="space-y-4">
-                    {{ $this->form }}
-                    <div class="grid grid-cols-2 gap-2">
+                <div class="space-y-4"
+                     x-data="backupChunkUploader({
+                         endpoint: @js(route('platform.backups.chunk')),
+                         maxBytes: {{ (int) config('uploads.backup_max_bytes') }},
+                         chunkBytes: {{ (int) config('uploads.backup_chunk_bytes') }},
+                         messages: {
+                             notZip: @js(__('Choose a .zip archive.')),
+                             empty: @js(__('That file is empty — pick the recovery archive again.')),
+                             tooLarge: @js(__(':name is :size. Archives up to :max can be uploaded through the browser.')),
+                             sending: @js(__('Sending piece :index of :total…')),
+                             sent: @js(__('Sent :sent of :total')),
+                             retrying: @js(__('Piece :index did not go through — retrying (:attempt of :max)…')),
+                             verifying: @js(__('Checking the assembled archive…')),
+                             done: @js(__('Uploaded — added to the recovery vault')),
+                             stopped: @js(__('Upload stopped at piece :index')),
+                             lost: @js(__('The server did not confirm the assembled archive — reload the page and upload again.')),
+                             sizeMismatch: @js(__('The assembled copy is :server but the browser sent :expected — reload the page and upload again.')),
+                             failed: @js(__('The upload failed — check your connection and press Retry.')),
+                             expired: @js(__('Your session expired — reload the page and upload again.')),
+                             pieceTooLarge: @js(__('The server refused a piece because it was too large — reload the page and upload again.')),
+                             serverRefused: @js(__('The server refused piece :index (HTTP :status).')),
+                         },
+                     })"
+                >
+                    <input
+                        type="file"
+                        accept=".zip,application/zip,application/x-zip-compressed"
+                        class="block w-full cursor-pointer rounded-lg border border-dashed border-gray-300 bg-gray-50 px-3 py-3 text-sm text-gray-600 file:mr-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-white file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-gray-700 hover:border-gray-400 focus:border-primary-400 dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-400 dark:file:bg-gray-800 dark:file:text-gray-200"
+                        x-on:change="pick($event)"
+                    >
+
+                    <p class="text-xs text-gray-500">
+                        {{ __('The archive travels in :chunk pieces, so it can be up to :max even where one big request would be refused or dropped on the way.', [
+                            'chunk' => max(1, (int) ceil((int) config('uploads.backup_chunk_bytes') / 1048576)).' MB',
+                            'max' => max(1, (int) ceil((int) config('uploads.backup_max_bytes') / 1048576)).' MB',
+                        ]) }}
+                    </p>
+
+                    <div x-show="state === 'uploading' || state === 'error'" x-cloak class="rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+                        <div class="flex items-center justify-between gap-3 text-xs">
+                            <span class="min-w-0 truncate font-medium text-gray-700 dark:text-gray-200" x-text="label"></span>
+                            <span class="shrink-0 text-gray-500" x-text="status"></span>
+                        </div>
+                        <div class="mt-2 h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+                            <div class="h-full rounded-full bg-primary-600 transition-all duration-300" :style="'width: ' + progress + '%'"></div>
+                        </div>
+                        <p x-show="error" x-cloak class="mt-2 text-xs text-rose-600 dark:text-rose-400" x-text="error"></p>
                         <x-filament::button
-                            type="submit"
+                            x-show="state === 'error' && canResume"
+                            x-on:click="resume()"
+                            size="sm"
+                            color="gray"
+                            icon="heroicon-o-arrow-path"
+                            class="mt-3"
+                        >
+                            {{ __('Retry upload') }}
+                        </x-filament::button>
+                    </div>
+
+                    @if ($pendingArchive)
+                        <div class="rounded-lg border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-900 dark:border-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200">
+                            <p class="font-semibold">{{ __(':name is in the recovery vault.', ['name' => $pendingArchive]) }}</p>
+                            <p class="mt-0.5 text-xs">
+                                {{ __('Restore it right away with the button below, or leave it — it stays in the vault either way.') }}
+                            </p>
+                        </div>
+                        <x-filament::button
                             color="danger"
                             icon="heroicon-o-arrow-path"
                             class="w-full"
+                            wire:click="restorePendingArchive"
                             wire:loading.attr="disabled"
-                            wire:target="restoreFromUploadedBackup"
+                            wire:target="restorePendingArchive"
                         >
-                            <span wire:loading.remove wire:target="restoreFromUploadedBackup">{{ __('Import & Restore') }}</span>
-                            <span wire:loading wire:target="restoreFromUploadedBackup" class="inline-flex items-center gap-2">
+                            <span wire:loading.remove wire:target="restorePendingArchive">{{ __('Import & Restore') }}</span>
+                            <span wire:loading wire:target="restorePendingArchive" class="inline-flex items-center gap-2">
                                 <x-filament::loading-indicator class="h-4 w-4" />
                                 {{ __('Restoring…') }}
                             </span>
                         </x-filament::button>
-                        <x-filament::button
-                            type="button"
-                            color="gray"
-                            wire:click="uploadExternalBackup"
-                            icon="heroicon-o-arrow-up-tray"
-                            class="w-full"
-                            wire:loading.attr="disabled"
-                            wire:target="uploadExternalBackup"
-                        >
-                            <span wire:loading.remove wire:target="uploadExternalBackup">{{ __('Import only') }}</span>
-                            <span wire:loading wire:target="uploadExternalBackup" class="inline-flex items-center gap-2">
-                                <x-filament::loading-indicator class="h-4 w-4" />
-                                {{ __('Importing…') }}
-                            </span>
-                        </x-filament::button>
-                    </div>
-                </form>
+                    @else
+                        <p class="text-xs text-gray-400">
+                            {{ __('Pick a .zip above — once it finishes uploading it lands in the recovery vault below, and the Import & Restore button appears here.') }}
+                        </p>
+                    @endif
+                </div>
             </x-filament::section>
         </div>
 
@@ -397,4 +449,301 @@
             </x-filament::section>
         </div>
     </div>
+
+    @script
+    <script>
+        if (! window.backupChunkUploaderRegistered) {
+            window.backupChunkUploaderRegistered = true;
+
+            const fillTemplate = (template, vars) =>
+                template.replace(/:(\w+)/g, (match, key) => (vars[key] !== undefined ? vars[key] : match));
+
+            const formatMb = (bytes) => (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+
+            const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+            // Splits the picked .zip and streams it to the chunk endpoint one
+            // piece at a time, then hands the assembled archive to Livewire.
+            window.__backupChunkUploaderFactory = (config) => ({
+                state: 'idle', // idle | uploading | error | done
+                label: '',
+                status: '',
+                progress: 0,
+                error: '',
+                canResume: false,
+                busy: false,
+                file: null,
+                uploadId: null,
+                nextIndex: 0,
+                totalChunks: 0,
+                finalResult: null,
+
+                async pick(event) {
+                    const input = event.target;
+                    const file = input.files && input.files[0];
+
+                    this.reset();
+                    if (! file) return;
+
+                    // Cleared so the very same file can be chosen again after a failure.
+                    input.value = '';
+
+                    if (! /\.zip$/i.test(file.name)) {
+                        this.reject(config.messages.notZip);
+                        return;
+                    }
+                    if (file.size < 1) {
+                        this.reject(config.messages.empty);
+                        return;
+                    }
+                    if (file.size > config.maxBytes) {
+                        this.reject(fillTemplate(config.messages.tooLarge, {
+                            name: file.name,
+                            size: formatMb(file.size),
+                            max: formatMb(config.maxBytes),
+                        }));
+                        return;
+                    }
+
+                    this.file = file;
+                    this.label = file.name;
+                    this.uploadId = (window.crypto && crypto.randomUUID)
+                        ? crypto.randomUUID()
+                        : 'upload-' + Date.now() + '-' + Math.random().toString(36).slice(2, 12);
+                    this.totalChunks = Math.ceil(file.size / config.chunkBytes);
+                    this.nextIndex = 0;
+                    this.finalResult = null;
+                    this.state = 'uploading';
+                    this.status = fillTemplate(config.messages.sending, { index: 1, total: this.totalChunks });
+
+                    await this.run();
+                },
+
+                reject(message) {
+                    this.state = 'error';
+                    this.error = message;
+                    this.canResume = false;
+                },
+
+                reset() {
+                    this.state = 'idle';
+                    this.label = '';
+                    this.status = '';
+                    this.progress = 0;
+                    this.error = '';
+                    this.canResume = false;
+                    this.busy = false;
+                    this.file = null;
+                    this.uploadId = null;
+                    this.nextIndex = 0;
+                    this.totalChunks = 0;
+                    this.finalResult = null;
+                },
+
+                async run() {
+                    if (this.busy || ! this.file) return;
+
+                    this.busy = true;
+                    this.error = '';
+                    this.canResume = false;
+                    this.state = 'uploading';
+
+                    try {
+                        while (this.nextIndex < this.totalChunks) {
+                            const index = this.nextIndex;
+                            const start = index * config.chunkBytes;
+                            const end = Math.min(start + config.chunkBytes, this.file.size);
+                            const piece = this.file.slice(start, end);
+
+                            this.status = fillTemplate(config.messages.sending, {
+                                index: index + 1,
+                                total: this.totalChunks,
+                            });
+
+                            const response = await this.send(index, piece);
+
+                            this.nextIndex = index + 1;
+                            this.progress = Math.min(100, Math.round((end / this.file.size) * 100));
+                            this.status = fillTemplate(config.messages.sent, {
+                                sent: formatMb(end),
+                                total: formatMb(this.file.size),
+                            });
+
+                            if (response && response.done) {
+                                this.finalResult = response;
+                            }
+                        }
+
+                        await this.finish();
+                    } catch (err) {
+                        this.state = 'error';
+                        this.error = (err && err.message) || config.messages.failed;
+                        this.canResume = ! (err && err.fatal) && this.nextIndex < this.totalChunks;
+                        this.status = this.nextIndex < this.totalChunks
+                            ? fillTemplate(config.messages.stopped, { index: this.nextIndex + 1 })
+                            : this.status;
+                    } finally {
+                        this.busy = false;
+                    }
+                },
+
+                // Every piece is stored: make sure the server's copy matches
+                // the file byte for byte, then let the page record it.
+                async finish() {
+                    this.status = config.messages.verifying;
+                    this.progress = 100;
+
+                    const result = this.finalResult;
+
+                    if (! result || ! result.filename) {
+                        const err = new Error(config.messages.lost);
+                        err.fatal = true;
+                        throw err;
+                    }
+
+                    if (Number(result.size) !== this.file.size) {
+                        const err = new Error(fillTemplate(config.messages.sizeMismatch, {
+                            server: formatMb(Number(result.size)),
+                            expected: formatMb(this.file.size),
+                        }));
+                        err.fatal = true;
+                        throw err;
+                    }
+
+                    const wire = this.$wire || $wire;
+                    await wire.call('onArchiveUploaded', result.filename, result.id || null);
+
+                    this.state = 'done';
+                    this.status = config.messages.done;
+                },
+
+                async resume() {
+                    if (this.busy || ! this.file || this.nextIndex >= this.totalChunks) return;
+
+                    await this.run();
+                },
+
+                async send(index, piece) {
+                    const maxAttempts = 4;
+                    let sha = null;
+
+                    // Each piece carries its own checksum so the server can
+                    // detect a mangled transfer and ask for that piece again.
+                    try {
+                        if (window.crypto && crypto.subtle) {
+                            const digest = await crypto.subtle.digest('SHA-256', await piece.arrayBuffer());
+                            sha = Array.from(new Uint8Array(digest))
+                                .map((byte) => byte.toString(16).padStart(2, '0'))
+                                .join('');
+                        }
+                    } catch (e) {
+                        sha = null;
+                    }
+
+                    for (let attempt = 1; ; attempt++) {
+                        try {
+                            return await this.post(index, piece, sha);
+                        } catch (err) {
+                            if (err && err.fatal) throw err;
+                            if (attempt >= maxAttempts) throw err;
+
+                            this.status = fillTemplate(config.messages.retrying, {
+                                index: index + 1,
+                                attempt,
+                                max: maxAttempts,
+                            });
+                            await sleep(700 * attempt);
+                        }
+                    }
+                },
+
+                async post(index, piece, sha) {
+                    const form = new FormData();
+                    form.append('upload_id', this.uploadId);
+                    form.append('index', String(index));
+                    form.append('total', String(this.totalChunks));
+                    form.append('total_size', String(this.file.size));
+                    form.append('filename', this.file.name);
+                    if (sha) form.append('chunk_sha256', sha);
+                    form.append('chunk', piece, 'piece-' + index);
+
+                    const csrf = document.querySelector('meta[name="csrf-token"]');
+                    const response = await fetch(config.endpoint, {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: {
+                            Accept: 'application/json',
+                            'X-CSRF-TOKEN': csrf ? csrf.content : '',
+                        },
+                        body: form,
+                    });
+
+                    if (response.ok) {
+                        const body = await response.json();
+
+                        if (! body.done && typeof body.received === 'number') {
+                            const expected = Math.min((index + 1) * config.chunkBytes, this.file.size);
+                            if (body.received !== expected) {
+                                const err = new Error(fillTemplate(config.messages.sizeMismatch, {
+                                    server: formatMb(body.received),
+                                    expected: formatMb(expected),
+                                }));
+                                err.fatal = true;
+                                throw err;
+                            }
+                        }
+
+                        return body;
+                    }
+
+                    const err = new Error('HTTP ' + response.status);
+                    err.status = response.status;
+
+                    let body = null;
+                    try {
+                        body = await response.json();
+                    } catch (e) {
+                        body = null;
+                    }
+
+                    if (response.status === 419) {
+                        err.message = config.messages.expired;
+                        err.fatal = true;
+                    } else if (response.status === 413) {
+                        err.message = config.messages.pieceTooLarge;
+                        err.fatal = true;
+                    } else if (response.status >= 400 && response.status < 500
+                        && response.status !== 408 && response.status !== 429) {
+                        err.message = (body && body.message) || fillTemplate(config.messages.serverRefused, {
+                            index: index + 1,
+                            status: response.status,
+                        });
+                        err.fatal = ! (body && body.retryable === true);
+                    } else {
+                        err.message = (body && body.message) || config.messages.failed;
+                        err.fatal = false;
+                    }
+
+                    throw err;
+                },
+            });
+
+            const registerUploader = () => {
+                if (window.Alpine && typeof window.Alpine.data === 'function') {
+                    try {
+                        window.Alpine.data('backupChunkUploader', window.__backupChunkUploaderFactory);
+                    } catch (e) {
+                        // Already registered — one page only needs it once.
+                    }
+                }
+            };
+
+            if (window.Alpine && typeof window.Alpine.data === 'function') {
+                registerUploader();
+            } else {
+                document.addEventListener('alpine:init', registerUploader);
+            }
+        }
+    </script>
+    @endscript
 </x-filament-panels::page>
