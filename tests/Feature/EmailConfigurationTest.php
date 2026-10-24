@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\Concerns\InteractsWithDatabase;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Modules\Admin\Enums\EmailCategory;
 use Modules\Admin\Models\EmailConfiguration;
 use Modules\Admin\Notifications\EmailConfigurationMissingNotification;
@@ -209,5 +210,23 @@ class EmailConfigurationTest extends TestCase
         $this->assertTrue(is_platform_email(platform_email_address()));
         $this->assertFalse(is_platform_email('admissions@school.edu'));
         $this->assertFalse(is_platform_email(''));
+    }
+
+    public function test_send_test_email_delivers_without_a_transport_error()
+    {
+        Mail::fake();
+
+        $school = $this->makeSchool();
+        $service = app(TenantEmailConfigurationService::class);
+
+        [$ok, $message] = $service->sendTestEmail($school, EmailCategory::Admissions, [
+            'mailer' => 'platform',
+            'from_name' => 'Admissions Office',
+            'from_email' => 'admissions@school.edu',
+            'is_enabled' => true,
+        ], 'ops@school.edu');
+
+        $this->assertTrue($ok, 'Expected the test email to send, got: '.$message);
+        $this->assertSame('Test email sent successfully.', $message);
     }
 }

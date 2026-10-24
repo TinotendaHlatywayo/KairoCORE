@@ -312,11 +312,13 @@ class TenantEmailConfigurationService
             $mailer = $this->resolveMailer($config);
             $identity = $this->identity($config);
 
-            Mail::mailer($mailer)->send(function (Message $message) use ($identity, $to) {
+            // A closure given as the "view" is invoked with the view data, not
+            // the message — build the message through the callback slot instead.
+            Mail::mailer($mailer)->send([], [], function (Message $message) use ($identity, $to) {
                 $message->to($to)
                     ->subject('Test email from '.($identity['from']->name ?: 'your school'))
-                    ->from($identity['from']->address, $identity['from']->name)
-                    ->html('<p>This is a test email to confirm your school\'s email configuration is working correctly.</p>');
+                    ->from($identity['from']->address, $identity['from']->name);
+                $message->html('<p>This is a test email to confirm your school\'s email configuration is working correctly.</p>');
             });
 
             $this->markVerified($school, $category);
