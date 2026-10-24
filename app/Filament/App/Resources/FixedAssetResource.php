@@ -15,6 +15,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 use Modules\Inventory\Models\DepreciationMethod;
 use Modules\Inventory\Models\FixedAsset;
@@ -76,15 +77,20 @@ class FixedAssetResource extends Resource
                 Forms\Components\Section::make(__('Acquisition & Valuation'))
                     ->schema([
                         Forms\Components\DatePicker::make('acquisition_date')
-                            ->required(),
+                            ->required()
+                            ->helperText(__('The day the asset was bought — every depreciation schedule is counted from this date.')),
                         Forms\Components\TextInput::make('purchase_cost')
+                            ->label(__('Purchase Cost'))
                             ->numeric()
                             ->required()
-                            ->prefix('$'),
+                            ->prefix('$')
+                            ->helperText(__('What the school paid for the asset, and the value depreciation starts from.')),
                         Forms\Components\TextInput::make('salvage_value')
+                            ->label(__('Salvage Value'))
                             ->numeric()
                             ->default(0.00)
-                            ->prefix('$'),
+                            ->prefix('$')
+                            ->helperText(__('What the asset is expected to be worth once its useful life ends.')),
                         Forms\Components\TextInput::make('current_value')
                             ->label(__('Current Value'))
                             ->numeric()
@@ -144,9 +150,10 @@ class FixedAssetResource extends Resource
                             ->createOptionUsing(fn (array $data): int => self::createLocation($data)),
                         Forms\Components\Select::make('custodian_id')
                             ->label(__('Custodian'))
-                            ->relationship('custodian', 'name')
+                            ->relationship('custodian', 'name', fn (Builder $query): Builder => self::applyCustodianScope($query))
                             ->searchable()
                             ->preload()
+                            ->helperText(__('Only registered staff members are listed — start typing a name to filter.'))
                             ->createOptionForm([
                                 Forms\Components\TextInput::make('name')
                                     ->label(__('Custodian Name'))
@@ -166,12 +173,7 @@ class FixedAssetResource extends Resource
                             ->createOptionUsing(fn (array $data): int => self::createCustodian($data)),
                         Forms\Components\Select::make('funding_source')
                             ->label(__('Funding Source'))
-                            ->options([
-                                'school_funds' => __('School Funds'),
-                                'government' => __('Government Grant'),
-                                'donor' => __('Donor Funded'),
-                                'pta' => __('PTA Contribution'),
-                            ])
+                            ->options(fn (): array => self::fundingSourceOptions())
                             ->searchable()
                             ->createOptionForm([
                                 Forms\Components\TextInput::make('name')
@@ -190,6 +192,62 @@ class FixedAssetResource extends Resource
     protected static function currentSchoolId(): int
     {
         return (int) (current_tenant()?->id ?? auth()->user()?->school_id ?? 0);
+    }
+
+    /**
+     * Narrow the custodian list to people who can actually hold an asset:
+     * users linked to an HR employee record, users registered under a staff
+     * role, and anyone already responsible for an asset so an existing
+     * assignment never renders as a blank field. Students, parents and
+     * platform accounts stay out of the list.
+     */
+    protected static function applyCustodianScope(Builder $query): Builder
+    {
+        $schoolId = self::currentSchoolId();
+
+        return $query
+            ->where(function (Builder $query) use ($schoolId): void {
+                $query->whereHas('employee')
+                    ->orWhereIn('users.requested_role', ['administrator', 'teaching_staff', 'non_teaching_staff'])
+                    ->orWhereIn('users.id', FixedAsset::withoutTenantScope()
+                        ->where('school_id', $schoolId)
+                        ->whereNotNull('custodian_id')
+                        ->select('custodian_id'));
+            })
+            ->orderBy('users.name');
+    }
+
+    /**
+     * The shipped funding sources plus any source a school typed in through
+     * the create form or the Excel import, so a custom value still renders as
+     * a label instead of a blank field when the asset is reopened.
+     *
+     * @return array<string, string>
+     */
+    protected static function fundingSourceOptions(): array
+    {
+        $options = [
+            'school_funds' => __('School Funds'),
+            'government' => __('Government Grant'),
+            'donor' => __('Donor Funded'),
+            'pta' => __('PTA Contribution'),
+        ];
+
+        $used = FixedAsset::withoutTenantScope()
+            ->where('school_id', self::currentSchoolId())
+            ->whereNotNull('funding_source')
+            ->distinct()
+            ->pluck('funding_source');
+
+        foreach ($used as $value) {
+            $value = trim((string) $value);
+
+            if ($value !== '' && ! isset($options[$value])) {
+                $options[$value] = Str::headline($value);
+            }
+        }
+
+        return $options;
     }
 
     /**

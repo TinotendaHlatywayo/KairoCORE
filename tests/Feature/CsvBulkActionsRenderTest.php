@@ -8,9 +8,11 @@ use App\Filament\App\Resources\SupplierResource\Pages\ListSuppliers;
 use App\Filament\App\Resources\ViewEmployee;
 use App\Models\School;
 use App\Models\User;
+use App\Services\Csv\FixedAssetCsvService;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Livewire\Livewire;
 use Modules\Admin\Models\CustomRole;
 use Modules\HR\Models\Employee;
@@ -82,6 +84,37 @@ class CsvBulkActionsRenderTest extends TestCase
         $component->assertOk();
         $component->assertSee('Import Fixed Assets (Excel/CSV)', false);
         $component->assertSee('Export All', false);
+    }
+
+    /**
+     * Uploading a file whose Asset Name / Location values do not exist yet
+     * makes the wizard render a create-or-skip card for each of them. That
+     * used to call Fieldset::description(), which does not exist in Filament 3
+     * and blew the whole request up with a 500 the moment a file was chosen.
+     */
+    public function test_fixed_assets_import_wizard_offers_create_or_skip_for_unknown_references(): void
+    {
+        [, $user] = $this->tenantUser();
+        $this->actingAs($user);
+
+        $relativePath = 'csv-imports/fixed-asset-import-regression.csv';
+        $absolutePath = storage_path('app/public/'.$relativePath);
+
+        File::ensureDirectoryExists(dirname($absolutePath));
+        File::put($absolutePath, implode(',', FixedAssetCsvService::templateHeaders())."\n"
+            .'"SC-TEST-FA-90001","Totally Unknown Regression Asset","Regression fixture","SN-TEST-90001",'
+            .'"2026-01-15","100.00","0","5","straight_line","100.00","","school_funds","",'
+            .'"Totally Unknown Regression Location","","active"'."\n");
+
+        try {
+            Livewire::test(ListFixedAssets::class)
+                ->mountAction('import_csv')
+                ->set('mountedActionsData.0.csv_file', [$relativePath])
+                ->assertSee('Create or skip missing Asset Name', false)
+                ->assertSee('Create or skip missing Current Room / Location', false);
+        } finally {
+            File::delete($absolutePath);
+        }
     }
 
     public function test_suppliers_list_renders_import_and_export_actions(): void

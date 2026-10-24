@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;
 use Modules\Admin\Models\CustomRole;
+use Modules\Inventory\Filament\Resources\AssetMaintenanceResource\Pages\CreateAssetMaintenance;
 use Modules\Inventory\Filament\Resources\ProcurementRequestResource;
 use Modules\Inventory\Models\DepreciationMethod;
 use Modules\Inventory\Models\DepreciationSchedule;
@@ -588,6 +589,65 @@ class InventoryProcurementInputFlowTest extends TestCase
 
         $this->assertSame($this->school->id, (int) $user->school_id);
         $this->assertNotEmpty($user->email, 'A generated email is required because email is unique.');
+    }
+
+    /**
+     * The custodian is a person who physically holds an asset, so the field
+     * must offer staff accounts only — never a student or parent login.
+     */
+    public function test_the_custodian_list_only_offers_registered_staff(): void
+    {
+        $suffix = uniqid();
+
+        $student = User::create([
+            'school_id' => $this->school->id,
+            'name' => 'Student Custodian Probe '.$suffix,
+            'email' => 'student-probe-'.$suffix.'@schoolcore.test',
+            'password' => Hash::make('Password@1'),
+            'requested_role' => 'student',
+            'account_status' => 'active',
+        ]);
+        $this->track(fn () => $student->forceDelete());
+
+        $staff = User::create([
+            'school_id' => $this->school->id,
+            'name' => 'Bursar Custodian Probe '.$suffix,
+            'email' => 'staff-probe-'.$suffix.'@schoolcore.test',
+            'password' => Hash::make('Password@1'),
+            'requested_role' => 'non_teaching_staff',
+            'account_status' => 'active',
+        ]);
+        $this->track(fn () => $staff->forceDelete());
+
+        $options = array_map(
+            'intval',
+            array_keys($this->assetFormSelects()['custodian_id']->getOptions())
+        );
+
+        $this->assertContains($staff->id, $options, 'Registered staff must be offered as a custodian.');
+        $this->assertNotContains($student->id, $options, 'A student account must never be offered as a custodian.');
+    }
+
+    /**
+     * The asset field on a service log searches as you type (an asset list is
+     * long, so nothing is preloaded) and never suggests more than ten rows.
+     */
+    public function test_the_maintenance_asset_field_is_a_live_search_capped_at_ten_suggestions(): void
+    {
+        $page = Livewire::test(CreateAssetMaintenance::class)->instance();
+        $field = $this->collectSelects($page->getForm('form')->getComponents())['fixed_asset_id'];
+
+        $this->assertTrue($field->isSearchable(), 'The asset field must be searchable.');
+        $this->assertFalse(
+            $field->isPreloaded(),
+            'The asset field must search the database as you type instead of loading every asset up front.'
+        );
+        $this->assertSame(10, $field->getOptionsLimit(), 'At most ten assets may be suggested at a time.');
+        $this->assertSame(
+            ['asset_number', 'asset_name', 'serial_number'],
+            $field->getSearchColumns(),
+            'Typing an asset name or serial number must suggest matching assets.'
+        );
     }
 
     public function test_creating_a_depreciation_method_from_the_asset_form_assigns_it_to_the_current_school(): void

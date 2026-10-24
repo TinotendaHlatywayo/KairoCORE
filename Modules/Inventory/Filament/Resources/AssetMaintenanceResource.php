@@ -10,8 +10,10 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Modules\Inventory\Filament\Resources\AssetMaintenanceResource\Pages;
 use Modules\Inventory\Models\AssetMaintenanceLog;
+use Modules\Inventory\Models\FixedAsset;
 
 class AssetMaintenanceResource extends Resource
 {
@@ -45,10 +47,23 @@ class AssetMaintenanceResource extends Resource
                 Forms\Components\Section::make(__('Service Log Details'))
                     ->schema([
                         Forms\Components\Select::make('fixed_asset_id')
-                            ->relationship('fixedAsset', 'asset_number')
-                            ->searchable()
-                            ->preload()
-                            ->required(),
+                            ->label(__('Fixed Asset'))
+                            ->relationship(
+                                'fixedAsset',
+                                'asset_number',
+                                fn (Builder $query): Builder => $query
+                                    ->where('status', '!=', 'disposed')
+                                    ->orderBy('fixed_assets.asset_number'),
+                            )
+                            ->getOptionLabelFromRecordUsing(
+                                fn (FixedAsset $record): string => trim($record->asset_number.' — '.$record->displayName(), ' —')
+                            )
+                            ->searchable(['asset_number', 'asset_name', 'serial_number'])
+                            ->searchDebounce(300)
+                            ->optionsLimit(10)
+                            ->required()
+                            ->helperText(__('Start typing an asset number, name or serial number — up to 10 matching assets are suggested as you type.'))
+                            ->placeholder(__('Search for an asset...')),
                         Forms\Components\TextInput::make('title')
                             ->required()
                             ->placeholder(__('e.g., 10,000 KM Engine Oil Change')),

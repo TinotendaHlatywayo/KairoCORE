@@ -402,7 +402,10 @@ trait HasCsvBulkActions
                     ->required();
             }
 
-            $fieldsets[] = Forms\Components\Fieldset::make(
+            // A Section, not a Fieldset: Fieldset has no description() in
+            // Filament 3, and calling one threw a 500 the moment an uploaded
+            // file contained a not-yet-known reference value.
+            $fieldsets[] = Forms\Components\Section::make(
                 __('Create or skip missing :label', ['label' => $reference['label']])
             )
                 ->description(__(':label values in your file are not in the system yet. Choose whether each one is created automatically during the import, or skipped (its field is left blank).', ['label' => $reference['label']]))
