@@ -10,7 +10,9 @@ use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Pages\Auth\EditProfile as BaseEditProfile;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Unique;
 use Modules\Admin\Services\PermissionRegistry;
 
 /**
@@ -37,7 +39,7 @@ class EditProfile extends BaseEditProfile
             ->maxLength(255)
             ->unique(
                 ignoreRecord: true,
-                modifyRuleUsing: function (\Illuminate\Validation\Rules\Unique $rule) use ($tenant) {
+                modifyRuleUsing: function (Unique $rule) use ($tenant) {
                     return $rule->where('school_id', $tenant?->id);
                 }
             );
@@ -176,7 +178,9 @@ class EditProfile extends BaseEditProfile
 
         if ($error) {
             Notification::make()
-                ->title(__('Upload Failed'))
+                // Lead with the reason itself (the service already explains
+                // exactly what was wrong: size, format, crop, …).
+                ->title(Str::before(trim($error), '.'))
                 ->body($error)
                 ->danger()
                 ->send();

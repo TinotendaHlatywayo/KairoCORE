@@ -3,6 +3,7 @@
 namespace App\Livewire\Assessment;
 
 use App\Filament\Student\Resources\StudentAssessmentResource;
+use App\Support\UploadReason;
 use Filament\Notifications\Notification;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -310,7 +311,7 @@ class TakeAssessment extends Component
             'file' => 'required|file|max:51200',
         ], [
             'file.required' => 'Please select a file to upload.',
-            'file.max' => 'File size must not exceed 50MB.',
+            'file.max' => "That file is larger than this question's 50 MB limit — try something smaller than 50 MB.",
         ]);
 
         $this->fileUploading = true;
@@ -329,7 +330,11 @@ class TakeAssessment extends Component
 
             $this->dispatch('file-uploaded');
         } catch (\Exception $e) {
-            session()->flash('error', 'Upload failed: '.$e->getMessage());
+            Notification::make()
+                ->title(__('Upload rejected'))
+                ->body(UploadReason::forThrowable($e))
+                ->danger()
+                ->send();
         } finally {
             $this->fileUploading = false;
         }

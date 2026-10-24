@@ -3,6 +3,7 @@
 namespace App\Filament\Admin\Pages;
 
 use App\Models\School;
+use App\Support\UploadReason;
 use Filament\Forms;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
@@ -138,6 +139,11 @@ class PlatformBackupManager extends Page implements HasForms
                     ->disk('local')
                     ->directory('backups')
                     ->acceptedFileTypes(['application/zip', 'application/x-zip-compressed'])
+                    // Same ceiling the server enforces, so an oversized pick is
+                    // reported here (with the real number) instead of only
+                    // failing somewhere in the upload pipeline.
+                    ->maxSize(UploadReason::limitMegabytes() * 1024)
+                    ->helperText(__('Archives up to :limit can be uploaded. Larger ones cannot travel through a browser — copy them onto the server under storage/app/backups and they will appear in the vault below.', ['limit' => UploadReason::limitPhrase()]))
                     ->preserveFilenames()
                     ->required(),
             ])
@@ -245,7 +251,11 @@ class PlatformBackupManager extends Page implements HasForms
         $relative = "backups/{$fileName}";
 
         if (! $disk->exists($relative)) {
-            Notification::make()->title(__('Upload read error.'))->danger()->send();
+            Notification::make()
+                ->title(__('The uploaded archive never reached the server'))
+                ->body(__('The transfer stopped before the file was stored — usually because the archive is larger than this site accepts (:limit), or because the connection dropped halfway. Try again, or copy the archive onto the server under storage/app/backups and refresh this page.', ['limit' => UploadReason::limitPhrase()]))
+                ->danger()
+                ->send();
 
             return null;
         }
@@ -260,17 +270,29 @@ class PlatformBackupManager extends Page implements HasForms
         $includeFiles = false;
 
         $zip = new \ZipArchive;
-        if ($zip->open($filePath) === true) {
-            $meta = $zip->getFromName('backup_meta.json');
-            if ($meta) {
-                $decoded = json_decode($meta, true) ?: [];
-                $scope = $decoded['scope'] ?? 'system';
-                $schoolId = $decoded['school_id'] ?? null;
-                $notes = $decoded['notes'] ?? null;
-                $includeFiles = (bool) ($decoded['include_files'] ?? false);
-            }
-            $zip->close();
+        if ($zip->open($filePath) !== true) {
+            // Truncated bytes: the body was cut off in transit (proxy body
+            // limit, dropped connection) or the upload was never complete.
+            $disk->delete($relative);
+
+            Notification::make()
+                ->title(__('The uploaded archive is damaged'))
+                ->body(__('The file is not a readable ZIP archive, which means the upload stopped part-way through — the archive is larger than this site accepts (:limit), or the connection dropped. Re-upload it, or copy the intact archive onto the server under storage/app/backups.', ['limit' => UploadReason::limitPhrase()]))
+                ->danger()
+                ->send();
+
+            return null;
         }
+
+        $meta = $zip->getFromName('backup_meta.json');
+        if ($meta) {
+            $decoded = json_decode($meta, true) ?: [];
+            $scope = $decoded['scope'] ?? 'system';
+            $schoolId = $decoded['school_id'] ?? null;
+            $notes = $decoded['notes'] ?? null;
+            $includeFiles = (bool) ($decoded['include_files'] ?? false);
+        }
+        $zip->close();
 
         return PlatformBackup::create([
             'filename' => $fileName,

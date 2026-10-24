@@ -152,7 +152,9 @@ return [
     'timezone'               => 'The :attribute field must be a valid timezone.',
     'ulid'                   => 'The :attribute field must be a valid ULID.',
     'unique'                 => 'The :attribute has already been taken.',
-    'uploaded'               => 'The :attribute failed to upload.',
+    // Fallback only: App\Support\UploadReason::register() swaps in a runtime
+    // line that also quotes the real limit in MB.
+    'uploaded'               => 'The :attribute could not be uploaded — almost always because it is larger than this site allows, or the connection dropped before it finished. Try a smaller file.',
     'uppercase'              => 'The :attribute field must be uppercase.',
     'url'                    => 'The :attribute field must be a valid URL.',
     'uuid'                   => 'The :attribute field must be a valid UUID.',

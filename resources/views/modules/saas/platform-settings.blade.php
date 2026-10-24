@@ -79,10 +79,15 @@
 
         document.addEventListener('livewire-upload-error', (event) => {
             const detail = event.detail && event.detail.content ? String(event.detail.content) : '';
+            const serverLimit = Number(window.KAIRO_UPLOAD_MAX_MB) || 0;
+
             notifyWebsiteMediaRejected(
-                'Upload failed before finishing',
+                'Upload rejected',
                 'The file could not be uploaded' + (detail ? ' (' + detail + ')' : '') +
-                    '. Common causes: the file is larger than the server allows (this site currently caps request bodies at a few megabytes — a super-admin must raise PHP\'s upload_max_filesize and post_max_size, and nginx\'s client_max_body_size, to accept ' + WEBSITE_MEDIA_MAX_MB + ' MB videos), or the connection dropped. Try a smaller or compressed video.'
+                    (serverLimit
+                        ? ' — this site accepts files up to ' + serverLimit + ' MB (the limit PHP, Livewire and the CDN in front of them will each accept). '
+                        : ' — it was larger than this site accepts, or the connection dropped before it finished. ') +
+                    'Try a smaller or compressed file' + (serverLimit ? ' — under ' + serverLimit + ' MB' : '') + '.'
             );
         });
     </script>

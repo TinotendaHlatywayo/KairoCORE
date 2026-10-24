@@ -5,8 +5,12 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Http\Middleware\ResolveTenant;
+use App\Livewire\Assessment\MarkingQueue;
+use App\Livewire\Assessment\TakeAssessment;
+use App\Livewire\Exams\PortalReportsPublisher;
 use App\Livewire\TopbarCommandCenter;
 use App\Models\School;
+use App\Models\User;
 use App\Navigation\ModuleAwareNavigationManager;
 use App\Navigation\ModuleNavigationService;
 use App\Policies\CmsPagePolicy;
@@ -14,12 +18,17 @@ use App\Policies\CmsWebsitePolicy;
 use App\Policies\SchoolPolicy;
 use App\Services\ImageConverter;
 use App\Support\PdfFonts;
+use App\Support\UploadReason;
 use Barryvdh\DomPDF\PDF;
 use Filament\Forms\Components\BaseFileUpload;
 use Filament\Navigation\NavigationManager;
+use Filament\Tables\Table;
+use Illuminate\Auth\Events\Authenticated;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\LazyLoadingViolationException;
 use Illuminate\Session\DatabaseSessionHandler;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
@@ -34,8 +43,14 @@ use Modules\Admin\Services\AuditLogger;
 use Modules\Admin\Services\TenantEmailConfigurationService;
 use Modules\CMS\Models\CmsPage;
 use Modules\CMS\Models\CmsWebsite;
-use Modules\Reports\Services\DatasetRegistry;
 use Modules\Communication\Livewire\ChatWorkspace;
+use Modules\DigitalAssessment\Models\DigitalAssessment;
+use Modules\DigitalAssessment\Models\QuestionBank;
+use Modules\DigitalAssessment\Policies\DigitalAssessmentPolicy;
+use Modules\DigitalAssessment\Policies\QuestionBankPolicy;
+use Modules\HR\Models\Employee;
+use Modules\Reports\Services\DatasetRegistry;
+use Modules\SaaS\Models\PlatformAuditLog;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -87,7 +102,7 @@ class AppServiceProvider extends ServiceProvider
             // non-fillable input) remain fatal because they indicate real
             // data-integrity bugs.
             Model::handleLazyLoadingViolationUsing(function ($model, string $key): void {
-                report(new \Illuminate\Database\LazyLoadingViolationException($model, $key));
+                report(new LazyLoadingViolationException($model, $key));
             });
         }
 
@@ -101,6 +116,11 @@ class AppServiceProvider extends ServiceProvider
                 // Fonts are a progressive enhancement; never block the app on them.
             }
         }
+
+        // 0. Explain failed uploads with the reason and the real limit
+        //    ("larger than this site's 64 MB limit — try something smaller")
+        //    instead of the framework's bare "failed to upload".
+        UploadReason::register();
 
         // 0. Register application-wide rate limiters
         RateLimiter::for('rate_limit:password_reset', function ($request) {
@@ -170,8 +190,8 @@ class AppServiceProvider extends ServiceProvider
         Livewire::component('topbar-command-center', TopbarCommandCenter::class);
 
         // Globally disable row-click record navigation across all Filament tables so clicking a record does nothing
-        if (class_exists(\Filament\Tables\Table::class)) {
-            \Filament\Tables\Table::configureUsing(function (\Filament\Tables\Table $table): void {
+        if (class_exists(Table::class)) {
+            Table::configureUsing(function (Table $table): void {
                 $table->recordUrl(null);
             });
         }
@@ -200,12 +220,12 @@ class AppServiceProvider extends ServiceProvider
         }, isImportant: true);
 
         // Restrict system access for suspended or terminated staff
-        \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Authenticated::class, function ($event) {
+        Event::listen(Authenticated::class, function ($event) {
             $user = $event->user;
             if ($user) {
-                $employee = \Modules\HR\Models\Employee::where('user_id', $user->id)->first();
+                $employee = Employee::where('user_id', $user->id)->first();
                 if ($employee && in_array($employee->status, ['suspended', 'terminated'], true)) {
-                    \Illuminate\Support\Facades\Auth::logout();
+                    Auth::logout();
                     if (request()->hasSession()) {
                         request()->session()->invalidate();
                         request()->session()->regenerateToken();
@@ -221,9 +241,9 @@ class AppServiceProvider extends ServiceProvider
         // reverse-map its name back to a class on subsequent update requests,
         // which throws LivewireReleaseTokenMismatchException and 419s the send.
         Livewire::component('communication.chat-workspace', ChatWorkspace::class);
-        Livewire::component('assessment.take-assessment', \App\Livewire\Assessment\TakeAssessment::class);
-        Livewire::component('assessment.marking-queue', \App\Livewire\Assessment\MarkingQueue::class);
-        Livewire::component('exams.portal-reports-publisher', \App\Livewire\Exams\PortalReportsPublisher::class);
+        Livewire::component('assessment.take-assessment', TakeAssessment::class);
+        Livewire::component('assessment.marking-queue', MarkingQueue::class);
+        Livewire::component('exams.portal-reports-publisher', PortalReportsPublisher::class);
 
         // Same failure mode, generalized: Filament renders page header/footer
         // widgets by CLASS (@livewire($widgetClass)), so the first render
@@ -258,8 +278,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(School::class, SchoolPolicy::class);
         Gate::policy(CmsPage::class, CmsPagePolicy::class);
         Gate::policy(CmsWebsite::class, CmsWebsitePolicy::class);
-        Gate::policy(\Modules\DigitalAssessment\Models\QuestionBank::class, \Modules\DigitalAssessment\Policies\QuestionBankPolicy::class);
-        Gate::policy(\Modules\DigitalAssessment\Models\DigitalAssessment::class, \Modules\DigitalAssessment\Policies\DigitalAssessmentPolicy::class);
+        Gate::policy(QuestionBank::class, QuestionBankPolicy::class);
+        Gate::policy(DigitalAssessment::class, DigitalAssessmentPolicy::class);
 
         // 4. Global Autonomic Auditing Engine: Intercepts all database changes globally
         Event::listen('eloquent.*', function ($event, array $models) {
@@ -275,14 +295,14 @@ class AppServiceProvider extends ServiceProvider
 
             // The platform's own hand-off trail (Enter/Leave school) lives
             // outside the tenant's audit scope by design.
-            if ($model instanceof \Modules\SaaS\Models\PlatformAuditLog) {
+            if ($model instanceof PlatformAuditLog) {
                 return;
             }
 
             // Shadow accounts created for platform impersonation are machinery,
             // never tenant activity: their row writes (create/refresh during
             // entry) must not appear in the school's audit log or user lists.
-            if ($model instanceof \App\Models\User && $model->is_platform_managed) {
+            if ($model instanceof User && $model->is_platform_managed) {
                 return;
             }
 
