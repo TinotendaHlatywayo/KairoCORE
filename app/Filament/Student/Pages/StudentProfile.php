@@ -7,6 +7,7 @@ use App\Services\ProfilePhotoService;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class StudentProfile extends Page
 {
@@ -66,7 +67,9 @@ class StudentProfile extends Page
 
         if ($error) {
             Notification::make()
-                ->title(__('Upload Failed'))
+                // Lead with the reason itself (the service already explains
+                // exactly what was wrong: size, format, crop, …).
+                ->title(Str::before(trim($error), '.'))
                 ->body($error)
                 ->danger()
                 ->send();

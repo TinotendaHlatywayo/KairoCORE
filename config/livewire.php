@@ -63,20 +63,22 @@ return [
     |
     */
 
-    // config/livewire.php
-
     'temporary_file_upload' => [
         'disk' => null,
 
-        // CHANGE THIS LINE:
-        'rules' => ['required', 'file', 'max:307200'], // Sets the global Livewire limit to 300MB
+        // Global per-upload ceiling in kilobytes (512 MB). Recovery archives
+        // are the big ones — a database-plus-every-file zip runs past 100 MB —
+        // so keep this in step with docker/php/uploads.ini. The smallest of
+        // this, PHP's upload_max_filesize and UPLOAD_MAX_MB is what
+        // App\Support\UploadReason quotes back to the user on a rejection.
+        'rules' => ['required', 'file', 'max:524288'],
 
         'directory' => null,
         'middleware' => null,
         'preview_mimes' => [
             'png', 'gif', 'bmp', 'svg', 'wav', 'mp4', 'mov', 'avi', 'wmv', 'mp3', 'm4a', 'jpg', 'jpeg', 'mpga', 'webp', 'wma', 'pdf', 'epub',
         ],
-        'max_upload_time' => 15, // Increased upload window to 15 minutes for slow connections
+        'max_upload_time' => 30, // minutes: enough for a large archive over a slow connection
     ],
 
     /*

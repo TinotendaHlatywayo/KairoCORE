@@ -27,7 +27,14 @@
                         <span class="tabular-nums" x-text="percent + '%'"></span>
                     </p>
                     <div class="mt-1.5 h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
-                        <div
+{{-- Rendered in BODY_END on every panel: the global upload progress bar,
+     plus the smallest live upload ceiling (PHP / Livewire / CDN) so page
+     scripts can quote a real number when an upload is rejected. --}}
+<script>
+    window.KAIRO_UPLOAD_MAX_MB = {{ (int) \App\Support\UploadReason::limitMegabytes() }};
+</script>
+
+<div
                             class="h-full rounded-full bg-primary-600 transition-[width] duration-200 ease-out"
                             :style="'width: ' + percent + '%'"
                         ></div>

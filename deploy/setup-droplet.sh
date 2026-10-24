@@ -51,6 +51,25 @@ apt-get install -y \
     php${PHP_VERSION}-opcache \
     php${PHP_VERSION}-readline
 
+# ── Upload limits ────────────────────────────────────────────────────────
+# Ubuntu ships 2M/8M, which rejects anything bigger than a photo before the
+# app can explain why. Recovery archives (database + every uploaded file) run
+# past 100 MB, so raise the ceiling through a drop-in file: it loads after
+# php.ini and beats its defaults for both FPM and CLI. post_max_size must
+# exceed upload_max_filesize (form fields need headroom), and max_input_time
+# must cover receiving a large body on a slow link.
+for sapi in fpm cli; do
+    conf_dir="/etc/php/${PHP_VERSION}/${sapi}/conf.d"
+    mkdir -p "$conf_dir"
+    cat > "${conf_dir}/99-kairocore-uploads.ini" << 'INI'
+; Upload ceiling — kept at or below nginx's client_max_body_size (540M).
+upload_max_filesize = 512M
+post_max_size = 540M
+max_input_time = 900
+INI
+done
+systemctl restart php${PHP_VERSION}-fpm 2>/dev/null || true
+
 # ── 3. Install MySQL 8 ───────────────────────────────────────────────
 echo "[3/12] Installing MySQL 8..."
 apt-get install -y mysql-server
@@ -187,7 +206,9 @@ server {
     index index.php;
 
     charset utf-8;
-    client_max_body_size 20M;
+    # At or above PHP's post_max_size (540M) so an oversized body is rejected
+    # by PHP with a real validation message instead of a bare nginx 413 page.
+    client_max_body_size 540M;
 
     add_header X-Frame-Options "SAMEORIGIN";
     add_header X-Content-Type-Options "nosniff";
@@ -201,7 +222,7 @@ server {
         fastcgi_pass unix:/var/run/php/php${PHP_VERSION}-fpm.sock;
         fastcgi_param SCRIPT_FILENAME \$realpath_root\$fastcgi_script_name;
         include fastcgi_params;
-        fastcgi_read_timeout 60;
+        fastcgi_read_timeout 300;
         fastcgi_buffering off;
     }
 

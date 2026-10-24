@@ -102,7 +102,7 @@ class ProfilePhotoService
         imagedestroy($canvas);
 
         if ($jpeg === false || $jpeg === '') {
-            return [null, __('The image could not be processed.')];
+            return [null, __('The image could not be re-encoded as a JPEG — the upload may be corrupt. Re-save it as a JPG and try again.')];
         }
 
         $filename = $directory.'/'.Str::uuid().'.jpg';
