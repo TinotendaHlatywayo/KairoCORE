@@ -27,6 +27,7 @@ use Illuminate\Auth\Events\Authenticated;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\LazyLoadingViolationException;
+use Illuminate\Mail\Events\MessageSending;
 use Illuminate\Session\DatabaseSessionHandler;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
@@ -218,6 +219,27 @@ class AppServiceProvider extends ServiceProvider
                 return ImageConverter::convert($stored, $component->getDiskName());
             });
         }, isImportant: true);
+
+        // Align the SMTP envelope sender (MAIL FROM) with the account used to
+        // authenticate the transport. Gmail rejects an envelope that differs
+        // from the authenticated user (553 "Sender address rejected"), which
+        // would otherwise block every tenant email whose display From is a
+        // school-specific address. The display From stays untouched.
+        Event::listen(MessageSending::class, function (MessageSending $event) {
+            $mailer = $event->data['mailer'] ?? null;
+            if (! is_string($mailer) || $mailer === '') {
+                return;
+            }
+
+            if ($event->message->getReturnPath() || $event->message->getSender()) {
+                return;
+            }
+
+            $username = config("mail.mailers.{$mailer}.username");
+            if (is_string($username) && filter_var($username, FILTER_VALIDATE_EMAIL)) {
+                $event->message->returnPath($username);
+            }
+        });
 
         // Restrict system access for suspended or terminated staff
         Event::listen(Authenticated::class, function ($event) {
