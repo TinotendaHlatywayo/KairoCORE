@@ -4,6 +4,7 @@ namespace App\Filament\App\Resources;
 
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Filament\App\Resources\ApplicationResource\Pages;
+use App\Models\User;
 use App\Notifications\NewEnrollmentNotification;
 use App\Services\AdmissionNotificationService;
 use App\Services\EnrollmentClassBalancer;
@@ -346,6 +347,7 @@ class ApplicationResource extends Resource
                         Forms\Components\Select::make('academic_year_id')
                             ->label(__('Active Academic Year'))
                             ->options(AcademicYear::pluck('name', 'id'))
+                            ->default(fn () => AcademicYear::where('is_active', true)->first()?->id)
                             ->required(),
                         Forms\Components\Select::make('course_id')
                             ->label(__('Form / Grade (Level)'))
@@ -376,11 +378,6 @@ class ApplicationResource extends Resource
 
                             return;
                         }
-
-                        $record->update([
-                            'status' => 'enrolled',
-                            'course_id' => $data['course_id'],
-                        ]);
 
                         $studentUser = static::resolveOrCreateStudentUser($record);
 
@@ -416,6 +413,17 @@ class ApplicationResource extends Resource
                         // Copy submitted application documents onto the student record.
                         static::copyApplicationDocuments($record, $student);
 
+                        // Mark the application enrolled only once the student and
+                        // enrollment rows exist, so a failure part-way through can
+                        // never leave an application claiming enrollment with no
+                        // student behind it.
+                        $record->update([
+                            'status' => 'enrolled',
+                            'course_id' => $data['course_id'],
+                        ]);
+
+                        $sectionName = Section::find($sectionId)?->name ?? '';
+
                         // Send the admission confirmation email to the parent (or
                         // the student email when no parent email was supplied).
                         app(AdmissionNotificationService::class)->send($student, $record->email ?: $record->parent_email, $record->school_id);
@@ -430,16 +438,18 @@ class ApplicationResource extends Resource
 
                         // Provision the portal account (created above) and deliver the
                         // activation email so the student can set their own password.
-                        $activatedUser = $studentUser
-                            ? app(RosterAccountProvisioningService::class)->provisionStudent($student)
-                            : null;
+                        if ($studentUser) {
+                            app(RosterAccountProvisioningService::class)->provisionStudent($student);
+                        }
 
                         Notification::make()
                             ->title(__('Student Enrolled Successfully!'))
-                            ->body($activatedUser
-                                ? __('Portal account created for')." {$activatedUser->name} — ".__('activation email sent').'.'
-                                : __('No portal account created — add an email address to the application to send the activation link.'))
+                            ->body(__('This student :name has been successfully enrolled to :class.', [
+                                'name' => $student->full_name,
+                                'class' => $sectionName,
+                            ]))
                             ->success()
+                            ->persistent()
                             ->send();
                     }),
             ])
@@ -454,6 +464,7 @@ class ApplicationResource extends Resource
                             Forms\Components\Select::make('academic_year_id')
                                 ->label(__('Active Academic Year'))
                                 ->options(AcademicYear::pluck('name', 'id'))
+                                ->default(fn () => AcademicYear::where('is_active', true)->first()?->id)
                                 ->required(),
                             Forms\Components\Select::make('course_id')
                                 ->label(__('Default Form / Grade (Level)'))
@@ -495,6 +506,7 @@ class ApplicationResource extends Resource
                                     'last_name' => $record->last_name,
                                     'gender' => $record->gender,
                                     'date_of_birth' => $record->date_of_birth,
+                                    'boarding_status' => $record->boarding_status ?? 'day_scholar',
                                     'admission_date' => now(),
                                     'status' => 'active',
                                     'photo_path' => $record->photo_path,

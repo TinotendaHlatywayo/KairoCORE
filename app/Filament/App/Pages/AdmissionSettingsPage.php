@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Auth;
 use Modules\Admin\Enums\EmailCategory;
 use Modules\Admin\Models\SystemSetting;
 use Modules\Admin\Services\PermissionRegistry;
+use Modules\Admin\Services\TenantEmailConfigurationService;
 use App\Filament\App\Concerns\ModulePermissionAccess;
 use App\Filament\App\Concerns\HasPageHelp;
 
@@ -220,6 +221,17 @@ class AdmissionSettingsPage extends Page implements HasForms
         // Mirror the enabled flag into the legacy setting key so existing
         // consumers (e.g. admissions service) keep working without divergence.
         $emailCfg = data_get($state, 'emailcfg.'.EmailCategory::Admissions->value) ?? [];
+
+        // "Email the Admission Contact Address on New Applications" is the
+        // switch admins actually flip — saving it ON must be enough for
+        // admission emails to flow, so keep the admissions channel enabled
+        // in sync with it instead of requiring a second, hidden toggle.
+        $notifyEnabled = filter_var($state['notify_email_enabled'] ?? false, FILTER_VALIDATE_BOOL);
+        if ($notifyEnabled && ! ($emailCfg['is_enabled'] ?? false) && ($school = current_tenant())) {
+            app(TenantEmailConfigurationService::class)->upsert($school, EmailCategory::Admissions, ['is_enabled' => true]);
+            $emailCfg['is_enabled'] = true;
+        }
+
         if (array_key_exists('is_enabled', $emailCfg)) {
             SystemSetting::updateOrCreate(
                 ['school_id' => $schoolId, 'group' => 'admission', 'key' => 'email_enabled'],
