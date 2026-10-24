@@ -38,8 +38,13 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rules\Unique;
+use Illuminate\Validation\ValidationException;
 use Modules\Admin\Models\Department;
 use Modules\HR\Models\Employee;
 use Modules\HR\Models\EmployeeAsset;
@@ -77,7 +82,19 @@ class EmployeeResource extends Resource
                             Forms\Components\TextInput::make('national_id')
                                 ->required()
                                 ->placeholder(__('e.g. 63-2541524C25'))
-                                ->label(__('National ID / Passport')),
+                                ->label(__('National ID / Passport'))
+                                // The database enforces (school_id, national_id)
+                                // uniquely — without this rule a clash surfaced
+                                // as a raw 500 instead of a form error. Scoped
+                                // to the tenant because two schools may hold the
+                                // same national ID holder.
+                                ->unique(
+                                    ignoreRecord: true,
+                                    modifyRuleUsing: fn (Unique $rule) => $rule->where(
+                                        'school_id',
+                                        current_tenant()?->id ?? 0,
+                                    ),
+                                ),
                             Forms\Components\Select::make('gender')
                                 ->options(['male' => __('Male'), 'female' => __('Female')])
                                 ->required(),
@@ -128,6 +145,7 @@ class EmployeeResource extends Resource
                         ])->columns(2),
 
                     FormWizard\Step::make('Grade & Salary Assignment')
+                        ->description(__('Optional — click Next to skip'))
                         ->schema([
                             Forms\Components\Select::make('current_grade_id')
                                 ->label(__('Salary Grade Scale'))
@@ -136,6 +154,7 @@ class EmployeeResource extends Resource
                                 ->nullable(),
                             Forms\Components\Repeater::make('individual_allowances')
                                 ->label(__('Specific Individual Allowances (For this employee only)'))
+                                ->defaultItems(0)
                                 ->schema([
                                     Forms\Components\TextInput::make('name')->label(__('Allowance Name')),
                                     Forms\Components\TextInput::make('amount')->numeric()->prefix('$')->label(__('Amount')),
@@ -143,6 +162,7 @@ class EmployeeResource extends Resource
                         ]),
 
                     FormWizard\Step::make('Family & Medical')
+                        ->description(__('Optional — click Next to skip'))
                         ->schema([
                             Forms\Components\KeyValue::make('spouse_details'),
                             Forms\Components\KeyValue::make('dependents'),
@@ -153,6 +173,7 @@ class EmployeeResource extends Resource
                         ])->columns(2),
 
                     FormWizard\Step::make('Documents')
+                        ->description(__('Optional — click Next to skip'))
                         ->schema([
                             Forms\Components\FileUpload::make('avatar_path')
                                 ->label(__('Passport Photograph'))
@@ -185,22 +206,24 @@ class EmployeeResource extends Resource
                                 ->acceptedFileTypes(['application/pdf'])
                                 ->maxSize(5120),
 
-                             Forms\Components\FileUpload::make('document_professional')
-                                 ->label(__('Professional Certifications (PDF)'))
-                                 ->disk('public')
-                                 ->directory('hr/documents')
-                                 ->placeholder(__('Drag & drop or Click to select Professional Certifications'))
-                                 ->acceptedFileTypes(['application/pdf'])
-                                 ->maxSize(5120),
-                         ])->columns(2),
+                            Forms\Components\FileUpload::make('document_professional')
+                                ->label(__('Professional Certifications (PDF)'))
+                                ->disk('public')
+                                ->directory('hr/documents')
+                                ->placeholder(__('Drag & drop or Click to select Professional Certifications'))
+                                ->acceptedFileTypes(['application/pdf'])
+                                ->maxSize(5120),
+                        ])->columns(2),
 
                     FormWizard\Step::make('Custom Fields')
+                        ->description(__('Optional — click Next to skip'))
                         ->schema([
                             Forms\Components\Section::make(__('Custom Fields'))
                                 ->description(__('Add any additional custom data fields for this staff member (e.g., certification number, office room, etc.)'))
                                 ->schema([
                                     Forms\Components\Repeater::make('custom_fields')
                                         ->label(__('Custom Fields'))
+                                        ->defaultItems(0)
                                         ->schema([
                                             Forms\Components\TextInput::make('key')->label(__('Field Name'))->required(),
                                             Forms\Components\TextInput::make('value')->label(__('Field Value'))->required(),
@@ -378,6 +401,33 @@ class EmployeeResource extends Resource
                                                             ->weight('bold')
                                                             ->icon('heroicon-o-document-arrow-down'),
                                                     ]),
+                                            ]),
+
+                                        Tab::make('Custom Fields')
+                                            ->schema([
+                                                KeyValueEntry::make('custom_fields')
+                                                    ->label(__('Custom Fields'))
+                                                    ->keyLabel(__('Field'))
+                                                    ->valueLabel(__('Value'))
+                                                    ->state(fn ($record) => collect($record->custom_fields ?? [])->reduce(
+                                                        function (array $carry, $item) {
+                                                            $key = is_array($item) ? ($item['key'] ?? null) : null;
+                                                            $value = is_array($item) ? ($item['value'] ?? null) : null;
+
+                                                            if (filled($key)) {
+                                                                $carry[(string) $key] = $value ?? '';
+                                                            }
+
+                                                            return $carry;
+                                                        },
+                                                        [],
+                                                    ))
+                                                    ->placeholder(__('No custom fields recorded for this staff member.'))
+                                                    ->visible(fn ($record) => ! empty(array_filter($record->custom_fields ?? []))),
+                                                TextEntry::make('custom_fields_placeholder')
+                                                    ->label(__('Custom Fields'))
+                                                    ->state(__('No custom fields recorded for this staff member.'))
+                                                    ->visible(fn ($record) => empty(array_filter($record->custom_fields ?? []))),
                                             ]),
                                     ]),
                             ]),
@@ -646,6 +696,29 @@ class EmployeeResource extends Resource
             'view' => ViewEmployee::route('/{record}'),
         ];
     }
+
+    /**
+     * Drop repeater rows the user opened and then left completely blank
+     * (e.g. [{"name":null,"amount":null}]) so they are never persisted.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    public static function stripEmptyRepeaterRows(array $data): array
+    {
+        foreach (['individual_allowances', 'custom_fields'] as $key) {
+            if (! isset($data[$key]) || ! is_array($data[$key])) {
+                continue;
+            }
+
+            $data[$key] = array_values(array_filter(
+                $data[$key],
+                fn ($row) => is_array($row) && array_filter($row, fn ($value) => filled($value)) !== [],
+            ));
+        }
+
+        return $data;
+    }
 }
 
 class ListEmployees extends ListRecords
@@ -694,28 +767,121 @@ class CreateEmployee extends CreateRecord
 {
     protected static string $resource = EmployeeResource::class;
 
+    /**
+     * The wizard repeaters default to no rows, but a partially-filled row
+     * (e.g. one empty allowance the user added then abandoned) must not be
+     * persisted as an entry with null name/amount.
+     */
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        return EmployeeResource::stripEmptyRepeaterRows($data);
+    }
+
+    /**
+     * The (school_id, national_id) unique index is enforced by MySQL. The
+     * field-level rule catches it first, but a race or an unvalidated path
+     * would otherwise surface as a raw HTTP 500 — translate it into the same
+     * friendly validation error instead. The surrounding transaction rolls
+     * back the portal User the Employee's creating-hook commits before the
+     * INSERT, so a rejected create never strands an orphaned account.
+     */
+    protected function handleRecordCreation(array $data): Model
+    {
+        DB::beginTransaction();
+
+        try {
+            $record = parent::handleRecordCreation($data);
+        } catch (UniqueConstraintViolationException $exception) {
+            DB::rollBack();
+
+            $message = strtolower($exception->getMessage());
+
+            if (str_contains($message, 'uq_emp_nat_id') || str_contains($message, 'national_id')) {
+                throw ValidationException::withMessages([
+                    'data.national_id' => __('An employee with this National ID / Passport already exists in this school.'),
+                ]);
+            }
+
+            if (str_contains($message, 'uq_emp_num') || str_contains($message, 'employee_number')) {
+                throw ValidationException::withMessages([
+                    'data.employee_number' => __('This Employee ID is already taken.'),
+                ]);
+            }
+
+            throw ValidationException::withMessages([
+                'data' => __('This staff member could not be saved because some details already exist.'),
+            ]);
+        } catch (\Throwable $exception) {
+            DB::rollBack();
+
+            throw $exception;
+        }
+
+        DB::commit();
+
+        return $record;
+    }
+
+    /**
+     * Provisioning / activation mail runs after the record is saved. A mailer
+     * or catalogue failure must never blow up the request with a 500 (the
+     * employee was already created) — degrade to an accurate warning.
+     */
     protected function afterCreate(): void
     {
-        $user = app(RosterAccountProvisioningService::class)->provisionEmployee($this->record);
+        $user = null;
 
-        if ($user) {
-            Notification::make()
-                ->title(__('Portal account ready'))
-                ->body(__('An activation email was sent to').' '.$user->email.'.')
-                ->success()
-                ->send();
-        } elseif (blank($this->record->email)) {
+        try {
+            $user = app(RosterAccountProvisioningService::class)->provisionEmployee($this->record);
+
+            if ($user && $user->activated_at) {
+                Notification::make()
+                    ->title(__('Portal account linked'))
+                    ->body(__('The staff portal account for').' '.$user->email.' '.__('is already active.'))
+                    ->success()
+                    ->send();
+
+                return;
+            }
+
+            if ($user) {
+                Notification::make()
+                    ->title(__('Portal account ready'))
+                    ->body(__('An activation email was sent to').' '.$user->email.'.')
+                    ->success()
+                    ->send();
+
+                return;
+            }
+        } catch (\Throwable $exception) {
+            report($exception);
+        }
+
+        if (blank($this->record->email)) {
             Notification::make()
                 ->title(__('No portal account created'))
                 ->body(__('Add an email address to this employee to create their portal account and send the activation email.'))
                 ->warning()
                 ->send();
+
+            return;
         }
+
+        Notification::make()
+            ->title(__('Staff member saved'))
+            ->body(__('The employee was created, but the portal account or activation email could not be prepared. Use the "Send Activation Email" action on the Employees list to retry.'))
+            ->warning()
+            ->send();
     }
 }
 class EditEmployee extends EditRecord
 {
     protected static string $resource = EmployeeResource::class;
+
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        return EmployeeResource::stripEmptyRepeaterRows($data);
+    }
 
     public function getHeaderActions(): array
     {
