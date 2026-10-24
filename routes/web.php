@@ -7,6 +7,7 @@ use App\Http\Controllers\Communication\CommunicationAttachmentController;
 use App\Http\Controllers\DocumentDownloadController;
 use App\Http\Controllers\FinanceDocumentController;
 use App\Http\Controllers\HelpCentreController;
+use App\Http\Controllers\Platform\PlatformBackupChunkController;
 use App\Http\Controllers\Platform\PlatformBackupDownloadController;
 use App\Http\Controllers\Platform\PlatformEntryController;
 use App\Http\Controllers\SaaS\DocumentPreviewController;
@@ -1021,6 +1022,10 @@ Route::middleware(['tenant', 'auth', 'throttle:rate_limit:exports'])->group(func
 
 // Platform recovery archive download (super admin only, central host)
 Route::middleware(['auth'])->group(function () {
+    // One 10 MB piece of a chunked archive upload (see PlatformBackupChunkController).
+    Route::post('/platform/backups/chunk', [PlatformBackupChunkController::class, 'append'])
+        ->name('platform.backups.chunk');
+
     Route::get('/platform/backups/{backup}/download', [PlatformBackupDownloadController::class, 'download'])
         ->name('platform.backups.download');
 

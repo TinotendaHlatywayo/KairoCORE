@@ -3,11 +3,6 @@
 namespace App\Filament\Admin\Pages;
 
 use App\Models\School;
-use App\Support\UploadReason;
-use Filament\Forms;
-use Filament\Forms\Concerns\InteractsWithForms;
-use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Auth;
@@ -20,10 +15,8 @@ use Modules\Recovery\Models\PlatformRestoreLog;
 use Modules\Recovery\Services\PlatformBackupService;
 use Modules\Recovery\Services\PlatformRestoreService;
 
-class PlatformBackupManager extends Page implements HasForms
+class PlatformBackupManager extends Page
 {
-    use InteractsWithForms;
-
     protected static ?string $navigationGroup = 'Operations';
 
     protected static ?string $navigationIcon = 'heroicon-o-cpu-chip';
@@ -31,8 +24,6 @@ class PlatformBackupManager extends Page implements HasForms
     protected static string $view = 'filament.admin.pages.platform-backup-manager';
 
     protected static ?int $navigationSort = 1;
-
-    public ?array $uploadData = [];
 
     public array $backupsList = [];
 
@@ -69,6 +60,14 @@ class PlatformBackupManager extends Page implements HasForms
 
     public array $selectedBackupIds = [];
 
+    /**
+     * The archive the chunked uploader finished assembling: once set it sits
+     * in the vault already, and the restore button acts on it.
+     */
+    public ?string $pendingArchive = null;
+
+    public ?int $pendingBackupId = null;
+
     public static function canAccess(): bool
     {
         return true;
@@ -76,7 +75,6 @@ class PlatformBackupManager extends Page implements HasForms
 
     public function mount(): void
     {
-        $this->form->fill();
         $this->tenantOptions = School::query()->orderBy('name')->pluck('name', 'id')->all();
         $this->refreshBackupsList();
     }
@@ -128,26 +126,6 @@ class PlatformBackupManager extends Page implements HasForms
                 'created_at' => optional($log->created_at)->diffForHumans(),
             ])
             ->all();
-    }
-
-    public function form(Form $form): Form
-    {
-        return $form
-            ->schema([
-                Forms\Components\FileUpload::make('backup_zip')
-                    ->label(__('Recovery archive (.zip)'))
-                    ->disk('local')
-                    ->directory('backups')
-                    ->acceptedFileTypes(['application/zip', 'application/x-zip-compressed'])
-                    // Same ceiling the server enforces, so an oversized pick is
-                    // reported here (with the real number) instead of only
-                    // failing somewhere in the upload pipeline.
-                    ->maxSize(UploadReason::limitMegabytes() * 1024)
-                    ->helperText(__('Archives up to :limit can be uploaded. Larger ones cannot travel through a browser — copy them onto the server under storage/app/backups and they will appear in the vault below.', ['limit' => UploadReason::limitPhrase()]))
-                    ->preserveFilenames()
-                    ->required(),
-            ])
-            ->statePath('uploadData');
     }
 
     public function triggerPlatformBackup(): void
@@ -202,110 +180,59 @@ class PlatformBackupManager extends Page implements HasForms
     }
 
     /**
-     * Import a locally-held archive into the vault without restoring it.
+     * The chunked uploader finished reassembling an archive on the server —
+     * the endpoint already moved it into the vault directory and recorded it,
+     * so this only pins it as the restore target and refreshes the lists.
      */
-    public function uploadExternalBackup(): void
+    public function onArchiveUploaded(string $fileName, ?int $backupId = null): void
     {
-        $backup = $this->registerUploadedArchive();
+        $fileName = basename($fileName);
+
+        $backup = $backupId ? PlatformBackup::find($backupId) : null;
+
+        if (! $backup || $backup->filename !== $fileName) {
+            $backup = PlatformBackup::where('filename', $fileName)->latest()->first();
+        }
 
         if (! $backup) {
+            Notification::make()
+                ->title(__('The upload finished but the archive could not be added to the vault'))
+                ->body(__('Its bytes reached the server — refresh this page to check the vault, or upload the file again.'))
+                ->danger()
+                ->send();
+
             return;
         }
 
-        $this->form->fill();
+        $this->pendingArchive = $backup->filename;
+        $this->pendingBackupId = $backup->id;
+
         $this->refreshBackupsList();
 
         Notification::make()
-            ->title(__('Backup archive imported successfully'))
+            ->title(__('Archive added to the recovery vault'))
+            ->body(__(':name (:size MB) is ready — restore it right away with the button below, or leave it in the vault.', [
+                'name' => $backup->filename,
+                'size' => round(($backup->size_bytes ?? 0) / 1048576, 1),
+            ]))
             ->success()
             ->send();
     }
 
     /**
-     * Import a locally-held archive and immediately restore it.
+     * Restore the archive the chunked uploader just finished uploading.
      */
-    public function restoreFromUploadedBackup(): void
+    public function restorePendingArchive(): void
     {
-        $backup = $this->registerUploadedArchive();
+        $backup = $this->pendingBackupId ? PlatformBackup::find($this->pendingBackupId) : null;
 
         if (! $backup) {
+            Notification::make()->title(__('Upload an archive first.'))->danger()->send();
+
             return;
         }
 
-        $this->form->fill();
         $this->performRestore($backup);
-    }
-
-    protected function registerUploadedArchive(): ?PlatformBackup
-    {
-        $data = $this->form->getState();
-        $fileName = basename($data['backup_zip'] ?? '');
-
-        if (! $fileName) {
-            Notification::make()->title(__('Please choose an archive to upload.'))->danger()->send();
-
-            return null;
-        }
-
-        $disk = Storage::disk('local');
-        $relative = "backups/{$fileName}";
-
-        if (! $disk->exists($relative)) {
-            Notification::make()
-                ->title(__('The uploaded archive never reached the server'))
-                ->body(__('The transfer stopped before the file was stored — usually because the archive is larger than this site accepts (:limit), or because the connection dropped halfway. Try again, or copy the archive onto the server under storage/app/backups and refresh this page.', ['limit' => UploadReason::limitPhrase()]))
-                ->danger()
-                ->send();
-
-            return null;
-        }
-
-        $filePath = $disk->path($relative);
-
-        $scope = 'system';
-        $schoolId = null;
-        $notes = null;
-        // Archives written before files were tracked have no flag at all, and
-        // are honest about carrying only the dump.
-        $includeFiles = false;
-
-        $zip = new \ZipArchive;
-        if ($zip->open($filePath) !== true) {
-            // Truncated bytes: the body was cut off in transit (proxy body
-            // limit, dropped connection) or the upload was never complete.
-            $disk->delete($relative);
-
-            Notification::make()
-                ->title(__('The uploaded archive is damaged'))
-                ->body(__('The file is not a readable ZIP archive, which means the upload stopped part-way through — the archive is larger than this site accepts (:limit), or the connection dropped. Re-upload it, or copy the intact archive onto the server under storage/app/backups.', ['limit' => UploadReason::limitPhrase()]))
-                ->danger()
-                ->send();
-
-            return null;
-        }
-
-        $meta = $zip->getFromName('backup_meta.json');
-        if ($meta) {
-            $decoded = json_decode($meta, true) ?: [];
-            $scope = $decoded['scope'] ?? 'system';
-            $schoolId = $decoded['school_id'] ?? null;
-            $notes = $decoded['notes'] ?? null;
-            $includeFiles = (bool) ($decoded['include_files'] ?? false);
-        }
-        $zip->close();
-
-        return PlatformBackup::create([
-            'filename' => $fileName,
-            'scope' => $scope,
-            'school_id' => $schoolId,
-            'notes' => $notes,
-            'include_files' => $includeFiles,
-            'size_bytes' => filesize($filePath),
-            'checksum' => hash_file('sha256', $filePath),
-            'disk' => 'local',
-            'is_verified' => true,
-            'status' => 'completed',
-        ]);
     }
 
     public function downloadBackup(int $id)

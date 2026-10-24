@@ -91,10 +91,15 @@ for sapi in fpm cli; do
     conf_dir="/etc/php/${PHP_VERSION}/${sapi}/conf.d"
     mkdir -p "$conf_dir"
     cat > "${conf_dir}/99-kairocore-uploads.ini" << 'INI'
-; Upload ceiling — kept at or below nginx's client_max_body_size (540M).
+; Upload ceiling — kept at or below nginx's client_max_body_size (520M).
+; Recovery archives arrive as 10 MB chunks, so the numbers here are the
+; safety net around them; max_execution_time and memory_limit cover hashing
+; and opening a 500 MB archive as a ZIP inside a single request.
 upload_max_filesize = 512M
-post_max_size = 540M
+post_max_size = 520M
 max_input_time = 900
+max_execution_time = 600
+memory_limit = 1024M
 INI
 done
 systemctl restart php${PHP_VERSION}-fpm 2>/dev/null || true
@@ -263,9 +268,9 @@ server {
     index index.php;
 
     charset utf-8;
-    # At or above PHP's post_max_size (540M) so an oversized body is rejected
+    # At or above PHP's post_max_size (520M) so an oversized body is rejected
     # by PHP with a real validation message instead of a bare nginx 413 page.
-    client_max_body_size 540M;
+    client_max_body_size 520M;
 
     add_header X-Frame-Options "SAMEORIGIN";
     add_header X-Content-Type-Options "nosniff";
