@@ -26,6 +26,23 @@ class DisciplinaryCase extends Model
         'incident_date' => 'date',
     ];
 
+    protected static function booted(): void
+    {
+        static::saved(function (DisciplinaryCase $case): void {
+            if (! $case->wasChanged('status')) {
+                return;
+            }
+
+            $lockStatuses = ['suspended', 'terminated'];
+            if (in_array($case->status, $lockStatuses, true)) {
+                $case->employee->update([
+                    'status' => $case->status,
+                    'suspension_reason' => $case->resolution_notes,
+                ]);
+            }
+        });
+    }
+
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);

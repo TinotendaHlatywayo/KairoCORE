@@ -104,6 +104,22 @@ class EmployeeCsvService extends CsvBulkService
         ];
     }
 
+    public static function referenceFields(): array
+    {
+        return [
+            'department' => [
+                'label' => __('Department'),
+                'model' => \Modules\Admin\Models\Department::class,
+                'column' => 'name',
+            ],
+            'salary_grade' => [
+                'label' => __('Salary Grade'),
+                'model' => \Modules\HR\Models\SalaryGrade::class,
+                'column' => 'name',
+            ],
+        ];
+    }
+
     /**
      * Example rows written under the template header.
      *

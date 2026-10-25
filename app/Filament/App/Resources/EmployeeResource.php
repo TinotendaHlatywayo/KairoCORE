@@ -225,11 +225,17 @@ class EmployeeResource extends Resource
                                         ->label(__('Custom Fields'))
                                         ->defaultItems(0)
                                         ->schema([
-                                            Forms\Components\TextInput::make('key')->label(__('Field Name'))->required(),
-                                            Forms\Components\TextInput::make('value')->label(__('Field Value'))->required(),
+                                            Forms\Components\TextInput::make('key')
+                                                ->label(__('Field Name'))
+                                                ->required(false),
+                                            Forms\Components\TextInput::make('value')
+                                                ->label(__('Field Value'))
+                                                ->required(false),
                                         ])
                                         ->columns(2)
-                                        ->columnSpanFull(),
+                                        ->columnSpanFull()
+                                        ->collapsible()
+                                        ->itemLabel(fn (array $state): ?string => $state['key'] ?? null),
                                 ]),
                         ]),
                 ])->columnSpanFull(),

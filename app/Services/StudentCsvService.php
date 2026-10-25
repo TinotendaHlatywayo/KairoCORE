@@ -170,6 +170,27 @@ class StudentCsvService extends CsvBulkService
         ];
     }
 
+    public static function referenceFields(): array
+    {
+        return [
+            'course' => [
+                'label' => __('Form / Grade'),
+                'model' => \Modules\Academics\Models\Course::class,
+                'column' => 'name',
+            ],
+            'section' => [
+                'label' => __('Stream / Class'),
+                'model' => \Modules\Academics\Models\Section::class,
+                'column' => 'name',
+            ],
+            'academic_year' => [
+                'label' => __('Academic Year'),
+                'model' => \Modules\Academics\Models\AcademicYear::class,
+                'column' => 'name',
+            ],
+        ];
+    }
+
     public static function templateHeaders(): array
     {
         $schoolType = self::currentSchoolType();

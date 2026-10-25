@@ -80,7 +80,7 @@ class RosterAccountProvisioningService
             'name' => trim("{$employee->first_name} {$employee->last_name}"),
             'username' => trim("{$employee->first_name} {$employee->last_name}"),
             'requested_role' => $role,
-        ], User::STATUS_ACTIVE);
+        ], User::STATUS_PENDING);
 
         if ($employee->user_id !== $user->id) {
             $employee->user_id = $user->id;

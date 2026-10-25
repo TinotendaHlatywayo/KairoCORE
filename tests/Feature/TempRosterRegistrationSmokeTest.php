@@ -250,7 +250,7 @@ class TempRosterRegistrationSmokeTest extends TestCase
 
         $user = User::withoutGlobalScopes()->find($employee->user_id);
         $this->assertNotNull($user);
-        $this->assertSame(User::STATUS_ACTIVE, $user->account_status, 'Imported staff accounts are approved on import because an administrator added them.');
+        $this->assertSame(User::STATUS_PENDING, $user->account_status, 'Imported staff accounts are created as pending so they receive an activation email to set their password.');
         $this->assertNotNull($user->activation_token, 'First-time import must issue an activation email.');
 
         // Re-import same email: the email is already in use, so the row is
