@@ -58,6 +58,23 @@ class DepartmentCsvService extends CsvBulkService
         return ['Department Name', 'Department Code', 'Type', 'Head', 'Budget Code', 'Status'];
     }
 
+    /**
+     * Example rows that import as-is: department names and codes are unique
+     * within the file, and the Head column names a real member of staff (or is
+     * left blank when the school has none yet) instead of a fictional person.
+     *
+     * @return array<int, array<string, string>>
+     */
+    protected static function templateRows(): array
+    {
+        return static::exampleRows(5, ['name', 'code'], [
+            'head' => static::exampleSchoolValue(
+                Employee::class,
+                fn (Employee $employee): string => trim($employee->first_name.' '.$employee->last_name)
+            ),
+        ]);
+    }
+
     public static function exportRows(int $schoolId): iterable
     {
         $query = Department::withoutTenantScope()

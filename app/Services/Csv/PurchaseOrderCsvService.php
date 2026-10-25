@@ -61,6 +61,24 @@ class PurchaseOrderCsvService extends CsvBulkService
         ];
     }
 
+    /**
+     * Example rows referencing this school's real procurement request and
+     * supplier (blank when they do not exist yet) with a unique order number
+     * per row, so the template imports in one pass.
+     *
+     * @return array<int, array<string, string>>
+     */
+    protected static function templateRows(): array
+    {
+        return static::exampleRows(5, ['order_number'], [
+            'request' => static::exampleSchoolValue(
+                ProcurementRequest::class,
+                fn (ProcurementRequest $request): string => (string) $request->request_number
+            ),
+            'supplier' => static::exampleSchoolValue(InventorySupplier::class),
+        ]);
+    }
+
     public static function exportHeaders(): array
     {
         return [

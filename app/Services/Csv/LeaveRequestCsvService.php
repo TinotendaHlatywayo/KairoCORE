@@ -61,6 +61,21 @@ class LeaveRequestCsvService extends CsvBulkService
         ];
     }
 
+    /**
+     * Example rows referencing this school's own staff member and leave type
+     * (blank when they have not been configured yet), so the template never
+     * points at fictional people or leave types.
+     *
+     * @return array<int, array<string, string>>
+     */
+    protected static function templateRows(): array
+    {
+        return static::exampleRows(5, ['start_date', 'end_date'], [
+            'employee' => static::exampleEmployee(),
+            'leave_type' => static::exampleSchoolValue(\Modules\HR\Models\LeaveType::class),
+        ]);
+    }
+
     public static function exportHeaders(): array
     {
         return [

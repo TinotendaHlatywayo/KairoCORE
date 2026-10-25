@@ -102,6 +102,31 @@ class LibraryBookCsvService extends CsvBulkService
         ];
     }
 
+    /**
+     * Example rows pointing at this school's real library category and format
+     * (blank when they have not been configured yet) with unique titles, so a
+     * freshly downloaded template imports without "not found" rejections.
+     *
+     * @return array<int, array<string, string>>
+     */
+    protected static function templateRows(): array
+    {
+        $schoolId = current_tenant()?->id;
+
+        $format = $schoolId
+            ? (string) (LibraryFormat::withoutTenantScope()
+                ->where('school_id', $schoolId)
+                ->where('media_type', 'physical')
+                ->orderBy('id')
+                ->value('name') ?? '')
+            : '';
+
+        return static::exampleRows(5, ['title', 'isbn'], [
+            'category' => static::exampleSchoolValue(LibraryCategory::class),
+            'format' => $format,
+        ]);
+    }
+
     public static function exportHeaders(): array
     {
         return [

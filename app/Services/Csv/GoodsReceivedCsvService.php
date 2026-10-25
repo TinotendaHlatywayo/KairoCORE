@@ -51,6 +51,48 @@ class GoodsReceivedCsvService extends CsvBulkService
         ];
     }
 
+    /**
+     * Example rows referencing this school's own purchase orders and a real
+     * user account, one row per available order so a template import never
+     * collides on "this order already has a GRN".
+     *
+     * @return array<int, array<string, string>>
+     */
+    protected static function templateRows(): array
+    {
+        $sample = array_map(fn (array $column): string => (string) ($column['example'] ?? ''), static::columns());
+        $sample['received_by'] = static::exampleSchoolUser();
+
+        $schoolId = current_tenant()?->id;
+
+        $orders = $schoolId
+            ? ProcurementOrder::withoutTenantScope()
+                ->where('school_id', $schoolId)
+                ->orderBy('id')
+                ->pluck('order_number')
+            : collect();
+
+        if ($orders->isEmpty()) {
+            $sample['purchase_order'] = '';
+
+            return [$sample];
+        }
+
+        $rows = [];
+
+        foreach ($orders->take(5) as $index => $orderNumber) {
+            $row = $sample;
+            $row['purchase_order'] = (string) $orderNumber;
+            $row['grn_number'] = $index === 0
+                ? $sample['grn_number']
+                : static::varySample($sample['grn_number'], $index + 1);
+
+            $rows[] = $row;
+        }
+
+        return $rows;
+    }
+
     public static function exportHeaders(): array
     {
         return [

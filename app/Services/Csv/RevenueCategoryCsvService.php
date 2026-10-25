@@ -39,6 +39,19 @@ class RevenueCategoryCsvService extends CsvBulkService
         ];
     }
 
+    /**
+     * Example rows with unique category names and a real revenue GL account
+     * from this school's chart of accounts (blank when none is configured yet).
+     *
+     * @return array<int, array<string, string>>
+     */
+    protected static function templateRows(): array
+    {
+        return static::exampleRows(5, ['name'], [
+            'account' => static::exampleFinanceAccount('revenue'),
+        ]);
+    }
+
     public static function exportHeaders(): array
     {
         return ['Category Name', 'GL Account', 'Is Active', 'Description'];

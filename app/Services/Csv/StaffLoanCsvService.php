@@ -54,6 +54,19 @@ class StaffLoanCsvService extends CsvBulkService
         ];
     }
 
+    /**
+     * Example rows referencing a real member of this school's staff (blank
+     * when the school has no employees yet) instead of a fictional person.
+     *
+     * @return array<int, array<string, string>>
+     */
+    protected static function templateRows(): array
+    {
+        return static::exampleRows(5, [], [
+            'employee' => static::exampleEmployee(),
+        ]);
+    }
+
     public static function exportHeaders(): array
     {
         return [

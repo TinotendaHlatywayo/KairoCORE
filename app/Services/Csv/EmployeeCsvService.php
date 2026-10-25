@@ -104,6 +104,74 @@ class EmployeeCsvService extends CsvBulkService
         ];
     }
 
+    /**
+     * Example rows written under the template header.
+     *
+     * Every row carries a real salary grade from the tenant school (or none at
+     * all when the school has not configured grades yet) and a distinct name,
+     * email and national ID, so the downloaded template imports end-to-end as
+     * written instead of being rejected as duplicates or unknown references.
+     *
+     * @return array<int, array<string, string>>
+     */
+    protected static function templateRows(): array
+    {
+        $people = [
+            ['Matipa', 'Maphosa'],
+            ['Rutendo', 'Ndlovu'],
+            ['Tariro', 'Sithole'],
+            ['Farai', 'Moyo'],
+            ['Chipo', 'Dube'],
+        ];
+
+        $grade = static::exampleSalaryGrade();
+
+        $rows = [];
+
+        foreach ($people as $index => [$firstName, $lastName]) {
+            $row = array_map(fn (array $column): string => (string) ($column['example'] ?? ''), static::columns());
+
+            if ($index > 0) {
+                foreach ($row as $key => $value) {
+                    if (in_array($key, ['first_name', 'last_name', 'email', 'salary_grade'], true)) {
+                        continue;
+                    }
+
+                    $row[$key] = static::varySample($value, $index + 1);
+                }
+            }
+
+            $row['first_name'] = $firstName;
+            $row['last_name'] = $lastName;
+            $row['email'] = strtolower($firstName.'.'.$lastName.'@schoolcore.test');
+            $row['salary_grade'] = $grade;
+
+            $rows[] = $row;
+        }
+
+        return $rows;
+    }
+
+    /**
+     * A salary grade name that really exists in the tenant school, so the
+     * example row is never rejected with "does not match any configured grade".
+     * Blank when the school has no grades yet — the importer then falls back
+     * to the first configured grade, or imports without one.
+     */
+    protected static function exampleSalaryGrade(): string
+    {
+        $schoolId = current_tenant()?->id;
+
+        if (! $schoolId) {
+            return '';
+        }
+
+        return (string) SalaryGrade::withoutTenantScope()
+            ->where('school_id', $schoolId)
+            ->orderBy('id')
+            ->value('name');
+    }
+
     public static function exportHeaders(): array
     {
         return [
@@ -243,7 +311,7 @@ class EmployeeCsvService extends CsvBulkService
                         'date_of_birth' => $data['date_of_birth'] !== '' ? $data['date_of_birth'] : '1990-01-01',
                         'department' => $data['department'],
                         'designation' => $data['designation'],
-                        'current_grade_id' => $data['_grade']->id,
+                        'current_grade_id' => $data['_grade']?->id,
                         'employment_type' => $data['employment_type'] !== '' ? $data['employment_type'] : 'Permanent',
                         'date_joined' => $data['date_joined'] !== '' ? $data['date_joined'] : now()->toDateString(),
                         'status' => $data['status'] !== '' ? $data['status'] : 'active',

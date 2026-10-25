@@ -67,6 +67,62 @@ class FeeStructureCsvService extends CsvBulkService
         return ['Fee Category', 'Scope', 'Course', 'Academic Year', 'Term', 'Currency', 'Amount'];
     }
 
+    /**
+     * Example rows pointing at this school's real fee category, academic year,
+     * term and course, with a distinct scope per row so all five rows are
+     * importable in one pass (a fee structure is unique per
+     * category + scope + year + term).
+     *
+     * @return array<int, array<string, string>>
+     */
+    protected static function templateRows(): array
+    {
+        $sample = array_map(fn (array $column): string => (string) ($column['example'] ?? ''), static::columns());
+
+        $year = static::exampleAcademicYear();
+
+        $sample['fee_category'] = static::exampleSchoolValue(FeeCategory::class);
+        $sample['academic_year'] = $year?->name ?? '';
+        $sample['course'] = static::exampleSchoolValue(Course::class);
+        $sample['term'] = $year
+            ? (string) (Term::withoutTenantScope()
+                ->where('school_id', $year->school_id)
+                ->where('academic_year_id', $year->id)
+                ->orderBy('id')
+                ->value('name') ?? '')
+            : '';
+
+        $rows = [];
+
+        foreach (['single', 'all', 'form_1_4', 'form_5_6', 'grade_1_7'] as $scope) {
+            $row = $sample;
+            $row['scope_type'] = $scope;
+            $row['course'] = $scope === 'single' ? $sample['course'] : '';
+            $rows[] = $row;
+        }
+
+        return $rows;
+    }
+
+    /**
+     * The tenant school's active academic year (falling back to the first one
+     * created), so example year/term pairs always belong to each other.
+     */
+    protected static function exampleAcademicYear(): ?AcademicYear
+    {
+        $schoolId = current_tenant()?->id;
+
+        if (! $schoolId) {
+            return null;
+        }
+
+        return AcademicYear::withoutTenantScope()
+            ->where('school_id', $schoolId)
+            ->orderByDesc('is_active')
+            ->orderBy('id')
+            ->first();
+    }
+
     public static function exportRows(int $schoolId): iterable
     {
         $query = FeeStructure::withoutTenantScope()

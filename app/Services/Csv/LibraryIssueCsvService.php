@@ -83,6 +83,51 @@ class LibraryIssueCsvService extends CsvBulkService
         ];
     }
 
+    /**
+     * Example rows issued against this school's own book copies and students.
+     *
+     * A row may name a student OR a staff borrower (never both), so the staff
+     * column stays blank while the example follows a student. One row is
+     * emitted per available copy (up to five) so re-importing the template
+     * never collides with a copy that is already on loan.
+     *
+     * @return array<int, array<string, string>>
+     */
+    protected static function templateRows(): array
+    {
+        $sample = array_map(fn (array $column): string => (string) ($column['example'] ?? ''), static::columns());
+        $sample['staff'] = '';
+        $sample['student'] = static::exampleSchoolValue(
+            Student::class,
+            fn (Student $student): string => (string) $student->student_id_number
+        );
+
+        $schoolId = current_tenant()?->id;
+
+        $barcodes = $schoolId
+            ? LibraryBookCopy::withoutTenantScope()
+                ->where('school_id', $schoolId)
+                ->orderBy('id')
+                ->pluck('barcode')
+            : collect();
+
+        if ($barcodes->isEmpty()) {
+            $sample['copy_barcode'] = '';
+
+            return [$sample];
+        }
+
+        $rows = [];
+
+        foreach ($barcodes->take(5) as $barcode) {
+            $row = $sample;
+            $row['copy_barcode'] = (string) $barcode;
+            $rows[] = $row;
+        }
+
+        return $rows;
+    }
+
     public static function exportHeaders(): array
     {
         return [

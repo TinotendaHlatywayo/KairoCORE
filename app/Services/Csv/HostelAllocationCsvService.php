@@ -90,6 +90,67 @@ class HostelAllocationCsvService extends CsvBulkService
         ];
     }
 
+    /**
+     * Example rows pointing at this school's own students, active academic
+     * year and a real hostel bed chain (hostel / floor / wing / room / bed),
+     * one row per available bed so the template imports without "not found"
+     * rejections. Everything is blank when the school has no beds configured
+     * yet — the importer then reports exactly what to set up first.
+     *
+     * @return array<int, array<string, string>>
+     */
+    protected static function templateRows(): array
+    {
+        $sample = array_map(fn (array $column): string => (string) ($column['example'] ?? ''), static::columns());
+
+        $schoolId = current_tenant()?->id;
+
+        $sample['student'] = static::exampleSchoolValue(
+            Student::class,
+            fn (Student $student): string => (string) $student->student_id_number
+        );
+
+        $sample['academic_year'] = $schoolId
+            ? (string) (AcademicYear::withoutTenantScope()
+                ->where('school_id', $schoolId)
+                ->orderByDesc('is_active')
+                ->orderBy('id')
+                ->value('name') ?? '')
+            : '';
+
+        $beds = $schoolId
+            ? HostelBed::withoutTenantScope()
+                ->where('school_id', $schoolId)
+                ->with('room.hostel', 'room.floor', 'room.wing')
+                ->orderBy('id')
+                ->limit(5)
+                ->get()
+            : collect();
+
+        if ($beds->isEmpty()) {
+            foreach (['hostel', 'floor_number', 'wing', 'room_number', 'bed_number'] as $key) {
+                $sample[$key] = '';
+            }
+
+            return [$sample];
+        }
+
+        $rows = [];
+
+        foreach ($beds as $bed) {
+            $row = $sample;
+            $row['hostel'] = (string) ($bed->room?->hostel?->name ?? '');
+            $row['floor_number'] = (string) ($bed->room?->floor?->floor_number ?? '');
+            $row['wing'] = (string) ($bed->room?->wing?->name ?? '');
+            $row['room_number'] = (string) ($bed->room?->room_number ?? '');
+            $row['bed_number'] = (string) $bed->bed_number;
+
+            $rows[] = $row;
+        }
+
+        return $rows;
+    }
+
     public static function exportHeaders(): array
     {
         return [
@@ -309,7 +370,7 @@ class HostelAllocationCsvService extends CsvBulkService
             }
         }
 
-        if ($data['_bed']) {
+        if (! empty($data['_bed'])) {
             $isOccupied = $lookups['occupiedBeds'][$data['_bed']->id] ?? false;
             if (! in_array($data['status'], ['completed', 'cancelled'], true) && $isOccupied) {
                 $errors[] = 'Bed ['.$data['bed_number'].'] in Room ['.$data['room_number'].'] is already occupied.';

@@ -2,6 +2,7 @@
 
 namespace App\Services\Csv;
 
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Modules\Admin\Models\Department;
@@ -164,6 +165,25 @@ class ProcurementRequestCsvService extends CsvBulkService
         return array_values(array_filter(array_map('trim', $parts ?: []), fn (string $part): bool => $part !== ''));
     }
 
+    /**
+     * The user a request is attributed to when no signed-in user is available
+     * (queued or CLI imports): the school's administrator, otherwise any of
+     * its user accounts. `requester_id` is a required foreign key, so it can
+     * never fall back to 0.
+     */
+    protected static function fallbackRequesterId(int $schoolId): int
+    {
+        $users = User::withoutTenantScope()->where('school_id', $schoolId);
+
+        $id = (clone $users)
+            ->where('requested_role', 'administrator')
+            ->orderBy('id')
+            ->value('id')
+            ?? (clone $users)->orderBy('id')->value('id');
+
+        return (int) $id;
+    }
+
     public static function import(string $filePath, int $schoolId, array $columnMap, ?callable $onProgress = null, array $options = []): array
     {
         $missingRefs = $options['missingRefs'] ?? [];
@@ -185,7 +205,7 @@ class ProcurementRequestCsvService extends CsvBulkService
             'departmentIndex' => $departmentIndex,
             'existingCodes' => $existingCodes,
             'missingRefs' => $missingRefs,
-            'requesterId' => (int) ($options['requester_id'] ?? Auth::id()),
+            'requesterId' => (int) ($options['requester_id'] ?? Auth::id() ?? static::fallbackRequesterId($schoolId)),
             'seq' => static::currentRequestSequence($schoolId),
             // Ordered list of department values in the file that do not
             // exist yet — mirrors the create-or-skip prompt from step 2.

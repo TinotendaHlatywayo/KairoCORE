@@ -47,6 +47,21 @@ class StockAdjustmentCsvService extends CsvBulkService
         ];
     }
 
+    /**
+     * Example rows using this school's real storage location and a real user
+     * account (blank when they do not exist yet) with a unique adjustment
+     * number per row.
+     *
+     * @return array<int, array<string, string>>
+     */
+    protected static function templateRows(): array
+    {
+        return static::exampleRows(5, ['adjustment_number'], [
+            'location' => static::exampleSchoolValue(InventoryLocation::class),
+            'conducted_by' => static::exampleSchoolUser(),
+        ]);
+    }
+
     public static function exportHeaders(): array
     {
         return [

@@ -89,6 +89,20 @@ class InventoryItemCsvService extends CsvBulkService
         ];
     }
 
+    /**
+     * Example rows using this school's own item category (or a blank category
+     * when none is configured yet) with unique names and SKUs, so the template
+     * imports without "category not found" or duplicate-code rejections.
+     *
+     * @return array<int, array<string, string>>
+     */
+    protected static function templateRows(): array
+    {
+        return static::exampleRows(5, ['name', 'sku'], [
+            'category' => static::exampleSchoolValue(InventoryCategory::class),
+        ]);
+    }
+
     public static function exportHeaders(): array
     {
         return [

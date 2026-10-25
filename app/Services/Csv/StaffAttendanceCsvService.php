@@ -60,6 +60,21 @@ class StaffAttendanceCsvService extends CsvBulkService
         ];
     }
 
+    /**
+     * Example rows naming real user accounts of this school for the Staff Name
+     * and Marked By columns (blank when the school has none yet), with a
+     * distinct date per row so the template imports without duplicates.
+     *
+     * @return array<int, array<string, string>>
+     */
+    protected static function templateRows(): array
+    {
+        return static::exampleRows(5, ['date'], [
+            'staff' => static::exampleSchoolUser(),
+            'marked_by' => static::exampleSchoolUser(),
+        ]);
+    }
+
     public static function exportHeaders(): array
     {
         return [

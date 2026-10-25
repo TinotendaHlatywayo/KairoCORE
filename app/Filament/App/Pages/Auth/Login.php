@@ -76,6 +76,22 @@ class Login extends BaseLogin
         // 3-Tiered login security check
         LoginSecurityService::ensureNotRateLimited($email, $ip);
 
+        // Suspended or terminated staff must not be able to sign in. Refuse
+        // them BEFORE authenticating: the Authenticated listener would abort
+        // the request with a bare 403 page that never says why. The password
+        // still has to check out first, so this can never be used to probe
+        // which addresses belong to suspended staff.
+        $blockedReason = $this->blockedStaffReason((string) $email, (string) ($data['password'] ?? ''));
+
+        if ($blockedReason !== null) {
+            // The password was correct, so this is not a failed attempt.
+            LoginSecurityService::clear($email, $ip);
+
+            throw ValidationException::withMessages([
+                'data.email' => $blockedReason,
+            ]);
+        }
+
         if (! Filament::auth()->attempt($this->getCredentialsFromFormData($data), $data['remember'] ?? false)) {
             LoginSecurityService::hit($email, $ip);
             $remaining = LoginSecurityService::getRemainingAttempts($email);
@@ -351,6 +367,58 @@ class Login extends BaseLogin
         $this->reset('regName', 'regIdentifier', 'regEmail', 'regPhone');
         $this->regRole = 'student';
         $this->regSubmitted = true;
+    }
+
+    /**
+     * Why this person may not enter the workspace, or null when they may.
+     *
+     * Only called with a password that has already been proven correct, so the
+     * answer is never handed to a stranger:
+     *
+     *  - the employment record is authoritative for staff: an employee who has
+     *    been suspended or terminated is locked out of their portal account
+     *    even though the account row itself is still marked active;
+     *  - accounts suspended directly (from the user accounts screen) are
+     *    refused too. Pending accounts are left alone — activation owns them.
+     */
+    protected function blockedStaffReason(string $email, string $password): ?string
+    {
+        $email = mb_strtolower(trim($email));
+        $schoolId = current_tenant()?->id;
+
+        if ($email === '' || $password === '' || ! $schoolId) {
+            return null;
+        }
+
+        $user = User::withoutTenantScope()
+            ->where('school_id', $schoolId)
+            ->where('email', $email)
+            ->first();
+
+        if (! $user || $user->trashed()) {
+            return null;
+        }
+
+        if (! Hash::check($password, (string) $user->password)) {
+            return null;
+        }
+
+        $employee = Employee::withoutTenantScope()
+            ->where('school_id', $schoolId)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if ($employee) {
+            return match ($employee->status) {
+                'suspended' => __('Your staff account has been suspended. Contact the school administrator if you believe this is a mistake.'),
+                'terminated' => __('Your staff account has been terminated. Contact the school administrator if you believe this is a mistake.'),
+                default => null,
+            };
+        }
+
+        return $user->account_status === User::STATUS_SUSPENDED
+            ? __('Your account has been suspended. Contact the school administrator if you believe this is a mistake.')
+            : null;
     }
 
     /**

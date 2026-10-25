@@ -60,6 +60,34 @@ class HostelRoomCsvService extends CsvBulkService
         ];
     }
 
+    /**
+     * Example rows built from a hostel, floor and wing that really exist in
+     * this school (so the reference columns resolve), with a distinct room
+     * number per row. Everything is blank when the school has no hostels yet —
+     * the importer then reports exactly what to configure first.
+     *
+     * @return array<int, array<string, string>>
+     */
+    protected static function templateRows(): array
+    {
+        $schoolId = current_tenant()?->id;
+        $wing = null;
+
+        if ($schoolId) {
+            $wing = HostelWing::withoutTenantScope()
+                ->where('school_id', $schoolId)
+                ->with('floor.hostel')
+                ->orderBy('id')
+                ->first();
+        }
+
+        return static::exampleRows(5, ['room_number'], [
+            'hostel' => (string) ($wing?->floor?->hostel?->name ?? ''),
+            'floor_number' => (string) ($wing?->floor?->floor_number ?? ''),
+            'wing' => (string) ($wing?->name ?? ''),
+        ]);
+    }
+
     public static function exportHeaders(): array
     {
         return [

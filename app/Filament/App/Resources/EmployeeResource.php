@@ -272,9 +272,9 @@ class EmployeeResource extends Resource
                                     ->alignCenter()
                                     ->colors([
                                         'success' => 'active',
-                                        'danger' => 'suspended',
-                                        'warning' => 'on_leave',
-                                        'info' => 'terminated',
+                                        'warning' => 'suspended',
+                                        'danger' => 'terminated',
+                                        'info' => 'on_leave',
                                     ]),
                             ]),
                         InfolistSection::make('Employment Snapshot')
@@ -448,8 +448,9 @@ class EmployeeResource extends Resource
                 Tables\Columns\BadgeColumn::make('status')
                     ->colors([
                         'success' => 'active',
-                        'danger' => 'suspended',
-                        'warning' => 'on_leave',
+                        'warning' => 'suspended',
+                        'danger' => 'terminated',
+                        'info' => 'on_leave',
                     ]),
             ])
             ->filters([
@@ -486,6 +487,7 @@ class EmployeeResource extends Resource
                     ->options([
                         'active' => 'Active',
                         'suspended' => 'Suspended',
+                        'terminated' => 'Terminated',
                         'on_leave' => 'On Leave',
                     ]),
             ])
@@ -665,6 +667,7 @@ class EmployeeResource extends Resource
                                 ->options([
                                     'active' => 'Active',
                                     'suspended' => 'Suspended',
+                                    'terminated' => 'Terminated',
                                     'on_leave' => 'On Leave',
                                 ])->required(),
                         ])

@@ -174,6 +174,154 @@ abstract class CsvBulkService
     }
 
     /**
+     * The documented example row repeated $count times so a freshly downloaded
+     * template imports end-to-end as written:
+     *
+     * - $vary columns get a numeric suffix per row ("Academics", "Academics 2",
+     *   ...) so columns with unique constraints never collide inside one file;
+     * - $fixed columns are overwritten on every row with a tenant-aware value
+     *   resolved from the school's own records (see exampleSchoolValue()).
+     *
+     * @param  array<int, string>  $vary  column keys that must be unique per row
+     * @param  array<string, string>  $fixed  column keys => value applied to every row
+     * @return array<int, array<string, string>>
+     */
+    protected static function exampleRows(int $count = 5, array $vary = [], array $fixed = []): array
+    {
+        $sample = array_map(fn (array $column): string => (string) ($column['example'] ?? ''), static::columns());
+
+        $rows = [];
+
+        for ($i = 1; $i <= $count; $i++) {
+            $row = array_merge($sample, $fixed);
+
+            foreach ($vary as $key) {
+                $value = (string) ($row[$key] ?? '');
+
+                if ($i <= 1 || $value === '') {
+                    continue;
+                }
+
+                $varied = static::varySample($value, $i);
+
+                if ($varied !== $value) {
+                    $row[$key] = $varied;
+                } elseif (! is_numeric($value)) {
+                    // varySample only rewrites values ending in digits
+                    // ("SKU-2024-1" -> "SKU-2024-2"); plain names get a
+                    // numeric suffix. Numeric cells are left alone so a
+                    // formatted amount can never become "500.00 2".
+                    $row[$key] = $value.' '.$i;
+                }
+            }
+
+            $rows[] = $row;
+        }
+
+        return $rows;
+    }
+
+    /**
+     * A real example value for a template column that references existing
+     * school data (salary grades, categories, staff names, ...). Uses the
+     * tenant school's own records so the downloaded template never points at
+     * fictional references that the importer would then reject.
+     *
+     * Returns an empty string when the school has no matching record yet —
+     * callers leave such optional columns blank for the user to fill in.
+     *
+     * @param  class-string<\Illuminate\Database\Eloquent\Model>  $modelClass
+     * @param  callable(\Illuminate\Database\Eloquent\Model): string  $format
+     */
+    protected static function exampleSchoolValue(string $modelClass, ?callable $format = null): string
+    {
+        $schoolId = current_tenant()?->id;
+
+        if (! $schoolId || ! class_exists($modelClass) || ! method_exists($modelClass, 'withoutTenantScope')) {
+            return '';
+        }
+
+        try {
+            $record = $modelClass::withoutTenantScope()
+                ->where('school_id', $schoolId)
+                ->orderBy('id')
+                ->first();
+        } catch (\Throwable) {
+            return '';
+        }
+
+        if (! $record) {
+            return '';
+        }
+
+        return $format ? $format($record) : (string) ($record->name ?? '');
+    }
+
+    /**
+     * A real member of this school's staff in the "Name (EMP-NUMBER)" format
+     * used by the leave request and staff loan templates, or an empty string
+     * when the school has no employees yet.
+     */
+    protected static function exampleEmployee(): string
+    {
+        $value = static::exampleSchoolValue(
+            \Modules\HR\Models\Employee::class,
+            fn (\Modules\HR\Models\Employee $employee): string => trim($employee->first_name.' '.$employee->last_name)
+        );
+
+        if ($value === '') {
+            return '';
+        }
+
+        $number = current_tenant()
+            ? (string) (\Modules\HR\Models\Employee::withoutTenantScope()
+                ->where('school_id', current_tenant()->id)
+                ->orderBy('id')
+                ->value('employee_number') ?? '')
+            : '';
+
+        return $number !== '' ? $value.' ('.$number.')' : $value;
+    }
+
+    /**
+     * A real user account of this school (staff names in the staff attendance,
+     * stock adjustment and goods received templates resolve against users),
+     * or an empty string when the school has none yet.
+     */
+    protected static function exampleSchoolUser(): string
+    {
+        return static::exampleSchoolValue(
+            \App\Models\User::class,
+            fn (\App\Models\User $user): string => trim((string) $user->name)
+        );
+    }
+
+    /**
+     * A real general-ledger account of the given type ("revenue" / "expense")
+     * for the finance templates, or an empty string when the school's chart of
+     * accounts has none yet.
+     */
+    protected static function exampleFinanceAccount(string $type): string
+    {
+        $modelClass = \Modules\Finance\Models\Account::class;
+        $schoolId = current_tenant()?->id;
+
+        if (! $schoolId || ! method_exists($modelClass, 'withoutTenantScope')) {
+            return '';
+        }
+
+        try {
+            return (string) ($modelClass::withoutTenantScope()
+                ->where('school_id', $schoolId)
+                ->where('type', $type)
+                ->orderBy('id')
+                ->value('name') ?? '');
+        } catch (\Throwable) {
+            return '';
+        }
+    }
+
+    /**
      * Hook for bulk services to append extra workbook sheets (e.g. change
      * logs or reconciled summaries) AFTER the single import data sheet. The
      * data sheet must remain the first and active sheet so the importer reads
@@ -544,7 +692,20 @@ abstract class CsvBulkService
                 continue;
             }
 
-            $errors = $validate($data, $lookups);
+            try {
+                $errors = $validate($data, $lookups);
+            } catch (\Throwable $e) {
+                // A single bad row (or a lookup the school has not set up yet)
+                // must never abort the whole import: report it and keep going.
+                $failures[] = [
+                    'row' => $rowNumber,
+                    'errors' => ['Could not validate this row: '.$e->getMessage()],
+                    'data' => $data,
+                ];
+                $onProgress !== null && $onProgress($processed, $total, true, ['Could not validate this row']);
+
+                continue;
+            }
 
             if (! empty($errors)) {
                 $failures[] = ['row' => $rowNumber, 'errors' => $errors, 'data' => $data];

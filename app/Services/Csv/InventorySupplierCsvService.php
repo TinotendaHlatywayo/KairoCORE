@@ -53,6 +53,17 @@ class InventorySupplierCsvService extends CsvBulkService
         ];
     }
 
+    /**
+     * Example rows with a unique supplier name per row, so the whole template
+     * imports in one pass without duplicate-name rejections.
+     *
+     * @return array<int, array<string, string>>
+     */
+    protected static function templateRows(): array
+    {
+        return static::exampleRows(5, ['name']);
+    }
+
     public static function exportHeaders(): array
     {
         return [

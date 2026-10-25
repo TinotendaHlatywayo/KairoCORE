@@ -53,6 +53,24 @@ class RevenueStreamCsvService extends CsvBulkService
         ];
     }
 
+    /**
+     * Example rows pointing at this school's real revenue category and bank
+     * account (blank when they have not been configured yet) with a unique
+     * stream name per row.
+     *
+     * @return array<int, array<string, string>>
+     */
+    protected static function templateRows(): array
+    {
+        return static::exampleRows(5, ['name'], [
+            'revenue_category' => static::exampleSchoolValue(RevenueCategory::class),
+            'account' => static::exampleSchoolValue(
+                SchoolBankAccount::class,
+                fn (SchoolBankAccount $account): string => (string) $account->bank_name
+            ),
+        ]);
+    }
+
     public static function exportHeaders(): array
     {
         return ['Revenue Category', 'Stream Name', 'Default Amount', 'Bank Account', 'Notes', 'Is Active'];

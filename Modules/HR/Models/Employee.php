@@ -68,6 +68,50 @@ class Employee extends Model
         'photo_rejected_at' => 'datetime',
     ];
 
+    protected static function booted(): void
+    {
+        static::saved(function (Employee $employee): void {
+            // Only employment STATUS changes move the account — an unrelated
+            // edit (phone number, photo, ...) must never unlock an account an
+            // administrator suspended on purpose.
+            if (! $employee->wasChanged('status')) {
+                return;
+            }
+
+            static::syncPortalAccess($employee);
+        });
+    }
+
+    /**
+     * Keep the linked portal account in step with the employment status so a
+     * suspended or terminated member of staff can never sign in: the login
+     * page and the EnsureUserActive middleware both read account_status.
+     *
+     * Reactivating the employee lifts the lock. Accounts that were never
+     * activated (still "pending") are left exactly as they are — the
+     * provisioning flow owns those until the person activates.
+     */
+    protected static function syncPortalAccess(Employee $employee): void
+    {
+        if (! $employee->user_id) {
+            return;
+        }
+
+        $user = User::withoutTenantScope()->find($employee->user_id);
+
+        if (! $user) {
+            return;
+        }
+
+        $lockedOut = in_array($employee->status, ['suspended', 'terminated'], true);
+
+        if ($lockedOut && $user->account_status !== User::STATUS_SUSPENDED) {
+            $user->forceFill(['account_status' => User::STATUS_SUSPENDED])->saveQuietly();
+        } elseif (! $lockedOut && $user->account_status === User::STATUS_SUSPENDED) {
+            $user->forceFill(['account_status' => User::STATUS_ACTIVE])->saveQuietly();
+        }
+    }
+
     public function currentGrade(): BelongsTo
     {
         return $this->belongsTo(SalaryGrade::class, 'current_grade_id');

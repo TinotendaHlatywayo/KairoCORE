@@ -32,6 +32,21 @@ class ExpenseTypeCsvService extends CsvBulkService
         ];
     }
 
+    /**
+     * Example rows pointing at this school's real expense category and a real
+     * expense GL account (blank when they have not been configured yet) with
+     * unique expense type names.
+     *
+     * @return array<int, array<string, string>>
+     */
+    protected static function templateRows(): array
+    {
+        return static::exampleRows(5, ['name'], [
+            'expense_category' => static::exampleSchoolValue(ExpenseCategory::class),
+            'account' => static::exampleFinanceAccount('expense'),
+        ]);
+    }
+
     public static function exportHeaders(): array
     {
         return ['Expense Category', 'Expense Type Name', 'GL Account'];
