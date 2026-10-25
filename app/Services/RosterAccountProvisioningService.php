@@ -128,8 +128,8 @@ class RosterAccountProvisioningService
             // Check if this user is already linked to a DIFFERENT roster record
             // (student or employee). If so, we cannot reuse this user — it would
             // violate the unique school_id+email constraint when we try to update.
-            $linkedStudent = $user->student_id ? Student::withoutTenantScope()->where('user_id', $user->id)->first() : null;
-            $linkedEmployee = $user->employee_id ? Employee::withoutTenantScope()->where('user_id', $user->id)->first() : null;
+            $linkedStudent = Student::withoutTenantScope()->where('user_id', $user->id)->first();
+            $linkedEmployee = Employee::withoutTenantScope()->where('user_id', $user->id)->first();
 
             $isSameRecord = false;
             if ($modelType === 'student' && $linkedStudent && $linkedStudent->id === $modelId) {
