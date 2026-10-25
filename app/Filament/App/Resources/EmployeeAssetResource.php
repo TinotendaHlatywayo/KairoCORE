@@ -57,7 +57,7 @@ class EmployeeAssetResource extends Resource
                 Forms\Components\Select::make('fixed_asset_selector')
                     ->label(__('Select Asset from System'))
                     ->options(fn () => FixedAsset::with('inventoryItem')->get()->mapWithKeys(function ($asset) {
-                        $itemName = optional($asset->inventoryItem)->name ?? 'Asset';
+                        $itemName = $asset->displayName();
 
                         return [$asset->id => "{$asset->asset_number} — {$itemName} (Serial: {$asset->serial_number})"];
                     }))
