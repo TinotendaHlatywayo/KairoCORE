@@ -6,14 +6,13 @@ use App\Models\User;
 use App\Traits\BelongsToTenant;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Academics\Models\Course;
 use Modules\Admissions\Models\Application;
 use Modules\Finance\Models\FeeWaiver;
 
 class Student extends Model
 {
-    use BelongsToTenant, SoftDeletes;
+    use BelongsToTenant;
 
     protected $fillable = [
         'school_id',
