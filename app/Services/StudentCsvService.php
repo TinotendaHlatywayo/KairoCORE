@@ -449,6 +449,8 @@ class StudentCsvService extends CsvBulkService
         $success = 0;
         $failures = [];
         $processed = 0;
+        $activationSent = 0;
+        $activationFailed = 0;
         $rowNumber = 1; // row 1 is the header
 
         while (($row = fgetcsv($handle, 0, ',', escape: '\\')) !== false) {
@@ -478,7 +480,7 @@ class StudentCsvService extends CsvBulkService
             }
 
             try {
-                DB::transaction(function () use (&$existingNationalIds, &$existingStudentIds, $data, $schoolId) {
+                DB::transaction(function () use (&$existingNationalIds, &$existingStudentIds, $data, $schoolId, &$activationSent, &$activationFailed) {
                     $course = $data['_course'];
                     $section = $data['_section'];
                     $year = $data['_academic_year'];
@@ -530,7 +532,13 @@ class StudentCsvService extends CsvBulkService
                     }
 
                     // Provision portal account and send activation email for the new student
-                    app(RosterAccountProvisioningService::class)->provisionStudent($student);
+                    $user = app(RosterAccountProvisioningService::class)->provisionStudent($student);
+                    if ($user) {
+                        $activationSent++;
+                    } elseif (filled($student->email)) {
+                        // Student has email but provisioning failed
+                        $activationFailed++;
+                    }
                 });
 
                 $success++;
@@ -546,6 +554,23 @@ class StudentCsvService extends CsvBulkService
         }
 
         fclose($handle);
+
+        // Notify about activation emails sent/failed
+        if ($activationSent > 0 || $activationFailed > 0) {
+            try {
+                Notification::make()
+                    ->title(__('Activation e-mails'))
+                    ->body(
+                        ($activationSent > 0 ? __(':count activation e-mail(s) sent', ['count' => $activationSent]) : __(':count activation e-mail(s) sent', ['count' => 0]))
+                        . ($activationFailed > 0 ? ' | ' . __(':count student(s) had email but activation failed', ['count' => $activationFailed]) : '')
+                    )
+                    ->icon($activationFailed > 0 ? 'heroicon-o-exclamation-triangle' : 'heroicon-o-check-circle')
+                    ->color($activationFailed > 0 ? 'warning' : 'success')
+                    ->send();
+            } catch (\Throwable) {
+                // Ignore notification failures (e.g., in test environment)
+            }
+        }
 
         return compact('success', 'total', 'failures');
     }

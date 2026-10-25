@@ -25,7 +25,7 @@ class RosterAccountProvisioningService
      */
     public function provisionStudent(Student $student, string $requestedRole = 'student'): ?User
     {
-        $email = mb_strtolower(trim((string) $student->getRawOriginal('email')));
+        $email = mb_strtolower(trim((string) $student->email));
 
         if ($email === '') {
             return null;
