@@ -31,7 +31,7 @@ class RosterAccountProvisioningService
             return null;
         }
 
-        $user = $this->resolveUser($student->school_id, $student->user_id, $email, $student->full_name);
+        $user = $this->resolveUser($student->school_id, $student->user_id, $email, $student->full_name, 'student', $student->id);
 
         if (! $user) {
             return null;
@@ -66,7 +66,7 @@ class RosterAccountProvisioningService
             return null;
         }
 
-        $user = $this->resolveUser($employee->school_id, $employee->user_id, $email, trim("{$employee->first_name} {$employee->last_name}"));
+        $user = $this->resolveUser($employee->school_id, $employee->user_id, $email, trim("{$employee->first_name} {$employee->last_name}"), 'employee', $employee->id);
 
         if (! $user) {
             return null;
@@ -97,8 +97,11 @@ class RosterAccountProvisioningService
      * already owns the email for this school. A soft-deleted account is
      * restored (it still occupies the unique school+email index). When nothing
      * exists, a new locked pending account is created.
+     *
+     * Ensures we never link a roster record to a user that is already linked
+     * to a DIFFERENT roster record (would violate unique email constraint).
      */
-    protected function resolveUser(int $schoolId, ?int $linkedUserId, string $email, string $name): ?User
+    protected function resolveUser(int $schoolId, ?int $linkedUserId, string $email, string $name, ?string $modelType = null, ?int $modelId = null): ?User
     {
         if ($linkedUserId) {
             $user = User::withTrashed()->find($linkedUserId);
@@ -120,6 +123,24 @@ class RosterAccountProvisioningService
         if ($user) {
             if ($user->trashed()) {
                 $user->restore();
+            }
+
+            // Check if this user is already linked to a DIFFERENT roster record
+            // (student or employee). If so, we cannot reuse this user — it would
+            // violate the unique school_id+email constraint when we try to update.
+            $linkedStudent = $user->student_id ? Student::withoutTenantScope()->where('user_id', $user->id)->first() : null;
+            $linkedEmployee = $user->employee_id ? Employee::withoutTenantScope()->where('user_id', $user->id)->first() : null;
+
+            $isSameRecord = false;
+            if ($modelType === 'student' && $linkedStudent && $linkedStudent->id === $modelId) {
+                $isSameRecord = true;
+            } elseif ($modelType === 'employee' && $linkedEmployee && $linkedEmployee->id === $modelId) {
+                $isSameRecord = true;
+            }
+
+            if (! $isSameRecord && ($linkedStudent || $linkedEmployee)) {
+                // User is linked to a different record — cannot reuse.
+                return null;
             }
 
             return $user;
