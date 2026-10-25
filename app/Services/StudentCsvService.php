@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\School;
 use App\Services\Csv\CsvBulkService;
+use App\Services\RosterAccountProvisioningService;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -527,6 +528,9 @@ class StudentCsvService extends CsvBulkService
                     if (filled($student->student_id_number)) {
                         $existingStudentIds[strtolower(trim($student->student_id_number))] = true;
                     }
+
+                    // Provision portal account and send activation email for the new student
+                    app(RosterAccountProvisioningService::class)->provisionStudent($student);
                 });
 
                 $success++;
