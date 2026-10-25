@@ -67,7 +67,7 @@ class EmployeeAssetResource extends Resource
                     ->afterStateUpdated(function ($state, callable $set) {
                         $asset = FixedAsset::with('inventoryItem')->find($state);
                         if ($asset) {
-                            $itemName = optional($asset->inventoryItem)->name ?? $asset->asset_number;
+                            $itemName = $asset->displayName();
                             $set('asset_name', $itemName);
                             $set('serial_number', $asset->serial_number ?? '');
                         }
