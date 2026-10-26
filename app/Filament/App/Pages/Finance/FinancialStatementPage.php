@@ -6,7 +6,6 @@ use App\Filament\App\Concerns\HasCsvBulkActions;
 use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Concerns\ModulePermissionAccess;
 use Carbon\Carbon;
-use Filament\Actions\Action;
 use Filament\Pages\Page;
 use Modules\Academics\Models\Term;
 use Modules\Finance\Models\Expense;
@@ -16,7 +15,6 @@ use Modules\Finance\Models\SchoolBankAccount;
 use Modules\Finance\Services\FinancialAnalyticsEngine;
 use Modules\Finance\Services\FinancialStatementCsvService;
 use Modules\HR\Services\PayrollCalculationService;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class FinancialStatementPage extends Page
 {
@@ -365,12 +363,6 @@ class FinancialStatementPage extends Page
     protected function getHeaderActions(): array
     {
         return [
-            Action::make('download_statement_import_template')
-                ->label(__('Download Import Template'))
-                ->icon('heroicon-o-arrow-down-tray')
-                ->color('gray')
-                ->visible(fn (): bool => static::canPerform('import'))
-                ->action(fn (): StreamedResponse => $this->downloadCsvTemplate(FinancialStatementCsvService::class)),
             $this->makeImportAction()
                 ->label(__('Import Financial Statement'))
                 ->modalHeading(__('Import Historic Financial Statement Data'))

@@ -147,6 +147,17 @@ class FinancialStatementImportTest extends TestCase
         $this->assertContains('export', $page['actions']);
     }
 
+    public function test_header_offers_the_import_wizard_without_a_separate_template_button(): void
+    {
+        $page = app()->make(FinancialStatementPage::class);
+        $actions = (new \ReflectionMethod($page, 'getHeaderActions'))->invoke($page);
+
+        $labels = collect($actions)->map(fn ($action) => $action->getLabel());
+
+        $this->assertContains('Import Financial Statement', $labels->all());
+        $this->assertNotContains('Download Import Template', $labels->all());
+    }
+
     public function test_statement_pdf_uses_the_bundled_logo_when_the_school_has_none(): void
     {
         $this->assertSame(public_path('img/kairo-core-logo.png'), finance_document_logo_path([], []));
