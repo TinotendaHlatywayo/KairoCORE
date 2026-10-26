@@ -5,6 +5,7 @@ namespace Modules\Finance\Services;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Modules\Finance\Models\Expense;
+use Modules\Finance\Models\FinancialStatementEntry;
 use Modules\Finance\Models\Invoice;
 use Modules\Finance\Models\Payment;
 use Modules\Finance\Models\RevenueStream;
@@ -114,7 +115,7 @@ class FinancialAnalyticsEngine
      */
     public function getRevenueStreamsForPeriod(int $schoolId, ?string $startDate, ?string $endDate, ?int $bankAccountId = null): array
     {
-        return DB::table('revenue_streams')
+        $rows = DB::table('revenue_streams')
             ->leftJoin('revenue_categories', 'revenue_streams.revenue_category_id', '=', 'revenue_categories.id')
             ->leftJoin('school_bank_accounts', 'revenue_streams.account_id', '=', 'school_bank_accounts.id')
             ->where('revenue_streams.school_id', $schoolId)
@@ -142,6 +143,17 @@ class FinancialAnalyticsEngine
                 'date' => $row->created_at ? Carbon::parse($row->created_at)->format('Y-m-d') : null,
             ])
             ->toArray();
+
+        return array_merge(
+            $rows,
+            $this->getImportedStatementItems(
+                $schoolId,
+                FinancialStatementEntry::TYPE_OTHER_INCOME,
+                $startDate,
+                $endDate,
+                $bankAccountId,
+            ),
+        );
     }
 
     /**
@@ -150,7 +162,7 @@ class FinancialAnalyticsEngine
      */
     public function getRefundsForPeriod(int $schoolId, ?string $startDate, ?string $endDate, ?int $bankAccountId = null): array
     {
-        return Payment::where('school_id', $schoolId)
+        $rows = Payment::where('school_id', $schoolId)
             ->where('is_refund', true)
             ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId))
             ->when($startDate, fn ($q) => $q->where('created_at', '>=', $startDate.' 00:00:00'))
@@ -166,6 +178,17 @@ class FinancialAnalyticsEngine
                 'method' => $payment->payment_method,
             ])
             ->toArray();
+
+        return array_merge(
+            $rows,
+            $this->getImportedStatementItems(
+                $schoolId,
+                FinancialStatementEntry::TYPE_REFUND,
+                $startDate,
+                $endDate,
+                $bankAccountId,
+            ),
+        );
     }
 
     /**
@@ -174,7 +197,7 @@ class FinancialAnalyticsEngine
      */
     public function getExpensesForPeriod(int $schoolId, ?string $startDate, ?string $endDate, ?int $bankAccountId = null): array
     {
-        return DB::table('expenses')
+        $rows = DB::table('expenses')
             ->leftJoin('expense_types', 'expenses.expense_type_id', '=', 'expense_types.id')
             ->leftJoin('expense_categories', 'expenses.expense_category_id', '=', 'expense_categories.id')
             ->leftJoin('expense_categories as type_categories', 'expense_types.expense_category_id', '=', 'type_categories.id')
@@ -207,6 +230,17 @@ class FinancialAnalyticsEngine
                 'account' => $row->bank,
             ])
             ->toArray();
+
+        return array_merge(
+            $rows,
+            $this->getImportedStatementItems(
+                $schoolId,
+                FinancialStatementEntry::TYPE_EXPENSE,
+                $startDate,
+                $endDate,
+                $bankAccountId,
+            ),
+        );
     }
 
     /**
@@ -216,7 +250,7 @@ class FinancialAnalyticsEngine
      */
     public function getFeeCollectionsForPeriod(int $schoolId, ?string $startDate, ?string $endDate, ?int $bankAccountId = null): array
     {
-        return Payment::where('school_id', $schoolId)
+        $rows = Payment::where('school_id', $schoolId)
             ->where('is_refund', false)
             ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId))
             ->when($startDate, fn ($q) => $q->where('created_at', '>=', $startDate.' 00:00:00'))
@@ -232,6 +266,68 @@ class FinancialAnalyticsEngine
                 'method' => $payment->payment_method,
             ])
             ->toArray();
+
+        return array_merge(
+            $rows,
+            $this->getImportedStatementItems(
+                $schoolId,
+                FinancialStatementEntry::TYPE_FEE_INCOME,
+                $startDate,
+                $endDate,
+                $bankAccountId,
+            ),
+        );
+    }
+
+    /**
+     * Total of imported historic statement entries of one type in a period.
+     * Used by the statement page/export because their headline totals are
+     * summed separately from the line-item lists.
+     */
+    public function getStatementEntryTotal(int $schoolId, string $type, ?string $startDate, ?string $endDate, ?int $bankAccountId = null): float
+    {
+        return (float) FinancialStatementEntry::withoutTenantScope()
+            ->where('school_id', $schoolId)
+            ->where('type', $type)
+            ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId))
+            ->when($startDate, fn ($q) => $q->whereDate('entry_date', '>=', $startDate))
+            ->when($endDate, fn ($q) => $q->whereDate('entry_date', '<=', $endDate))
+            ->sum('amount');
+    }
+
+    /**
+     * Imported historic entries shaped like the live transaction rows so the
+     * page, PDF and Excel writers can treat both sources identically.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    protected function getImportedStatementItems(int $schoolId, string $type, ?string $startDate, ?string $endDate, ?int $bankAccountId = null): array
+    {
+        return FinancialStatementEntry::withoutTenantScope()
+            ->where('school_id', $schoolId)
+            ->where('type', $type)
+            ->when($bankAccountId, SchoolBankAccount::filterClosure($bankAccountId, $schoolId))
+            ->when($startDate, fn ($q) => $q->whereDate('entry_date', '>=', $startDate))
+            ->when($endDate, fn ($q) => $q->whereDate('entry_date', '<=', $endDate))
+            ->with('bankAccount')
+            ->orderByDesc('entry_date')
+            ->orderByDesc('id')
+            ->get()
+            ->map(fn (FinancialStatementEntry $entry) => [
+                'id' => 'history-'.$entry->id,
+                'name' => $entry->description,
+                'reference' => $entry->reference ?: $entry->description,
+                'amount' => (float) $entry->amount,
+                'category' => $entry->category ?: (FinancialStatementEntry::typeLabels()[$entry->type] ?? __('Historic entry')),
+                'date' => $entry->entry_date?->format('Y-m-d'),
+                'account_id' => $entry->bank_account_id,
+                'account' => $entry->bankAccount?->bank_name,
+                'bank' => $entry->bankAccount?->bank_name,
+                'method' => null,
+                'status' => 'paid',
+                'source' => 'imported',
+            ])
+            ->all();
     }
 
     /**

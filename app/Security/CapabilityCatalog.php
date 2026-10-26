@@ -325,7 +325,7 @@ final class CapabilityCatalog
     {
         return [
             // Read-only reporting pages never offer create/edit/delete.
-            'App\Filament\App\Pages\Finance\FinancialStatementPage' => ['actions' => ['view', 'export']],
+            'App\Filament\App\Pages\Finance\FinancialStatementPage' => ['actions' => ['view', 'export', 'import']],
             'App\Filament\App\Pages\Exams\PerformanceAnalyticsPage' => ['actions' => ['view', 'export']],
             'App\Filament\App\Pages\AssessmentAnalyticsPage' => ['actions' => ['view', 'export']],
             'App\Filament\App\Pages\AnalyticsExplorer' => ['actions' => ['view', 'export', 'run']],

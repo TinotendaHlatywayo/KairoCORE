@@ -2,11 +2,15 @@
 
 namespace App\Services\Csv;
 
+use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Modules\Finance\Models\Account;
+use Modules\HR\Models\Employee;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Reader\Xlsx as XlsxReader;
@@ -230,8 +234,8 @@ abstract class CsvBulkService
      * Returns an empty string when the school has no matching record yet —
      * callers leave such optional columns blank for the user to fill in.
      *
-     * @param  class-string<\Illuminate\Database\Eloquent\Model>  $modelClass
-     * @param  callable(\Illuminate\Database\Eloquent\Model): string  $format
+     * @param  class-string<Model>  $modelClass
+     * @param  callable(Model): string  $format
      */
     protected static function exampleSchoolValue(string $modelClass, ?callable $format = null): string
     {
@@ -265,8 +269,8 @@ abstract class CsvBulkService
     protected static function exampleEmployee(): string
     {
         $value = static::exampleSchoolValue(
-            \Modules\HR\Models\Employee::class,
-            fn (\Modules\HR\Models\Employee $employee): string => trim($employee->first_name.' '.$employee->last_name)
+            Employee::class,
+            fn (Employee $employee): string => trim($employee->first_name.' '.$employee->last_name)
         );
 
         if ($value === '') {
@@ -274,7 +278,7 @@ abstract class CsvBulkService
         }
 
         $number = current_tenant()
-            ? (string) (\Modules\HR\Models\Employee::withoutTenantScope()
+            ? (string) (Employee::withoutTenantScope()
                 ->where('school_id', current_tenant()->id)
                 ->orderBy('id')
                 ->value('employee_number') ?? '')
@@ -291,8 +295,8 @@ abstract class CsvBulkService
     protected static function exampleSchoolUser(): string
     {
         return static::exampleSchoolValue(
-            \App\Models\User::class,
-            fn (\App\Models\User $user): string => trim((string) $user->name)
+            User::class,
+            fn (User $user): string => trim((string) $user->name)
         );
     }
 
@@ -303,7 +307,7 @@ abstract class CsvBulkService
      */
     protected static function exampleFinanceAccount(string $type): string
     {
-        $modelClass = \Modules\Finance\Models\Account::class;
+        $modelClass = Account::class;
         $schoolId = current_tenant()?->id;
 
         if (! $schoolId || ! method_exists($modelClass, 'withoutTenantScope')) {
@@ -330,12 +334,38 @@ abstract class CsvBulkService
     protected static function appendTemplateSheets(Spreadsheet $spreadsheet): void {}
 
     /**
+     * Template rows for a given download context. Services whose template
+     * depends on the page's current selection (e.g. a reporting period) can
+     * override this while keeping templateRows() as their default.
+     *
+     * @param  array<string, mixed>  $context
+     * @return array<int, array<int, string>>
+     */
+    protected static function templateRowsFor(array $context = []): array
+    {
+        return static::templateRows();
+    }
+
+    /**
+     * Hook for services to append context-specific workbook sheets. Defaults
+     * to the standard appendTemplateSheets() docs tabs.
+     *
+     * @param  array<string, mixed>  $context
+     */
+    protected static function appendTemplateSheetsFor(Spreadsheet $spreadsheet, array $context = []): void
+    {
+        static::appendTemplateSheets($spreadsheet);
+    }
+
+    /**
      * Generate the downloadable import template as an .xlsx workbook. Headers
      * of the required columns are written in bold so users can tell at a glance
      * which columns are mandatory. Falls back to the CSV template if Excel
      * generation is unavailable.
+     *
+     * @param  array<string, mixed>  $context  Optional page context (scope, period, ...)
      */
-    public static function templateXlsx(): string
+    public static function templateXlsx(array $context = []): string
     {
         $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
@@ -358,7 +388,7 @@ abstract class CsvBulkService
             }
         }
 
-        foreach (static::templateRows() as $r => $row) {
+        foreach (static::templateRowsFor($context) as $r => $row) {
             // Re-index positionally: templateRows() may return rows keyed by
             // column name, so ignoring the keys keeps cells in header order.
             foreach (array_values($row) as $c => $value) {
@@ -372,7 +402,7 @@ abstract class CsvBulkService
 
         $sheet->freezePane('A2');
 
-        static::appendTemplateSheets($spreadsheet);
+        static::appendTemplateSheetsFor($spreadsheet, $context);
 
         $writer = new XlsxWriter($spreadsheet);
         ob_start();

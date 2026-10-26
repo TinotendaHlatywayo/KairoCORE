@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Filament\Widgets\Widget;
 use Modules\Finance\Models\Expense;
 use Modules\Finance\Models\FinanceDocumentTemplate;
+use Modules\Finance\Models\FinancialStatementEntry;
 use Modules\Finance\Models\Payment;
 use Modules\Finance\Models\SchoolBankAccount;
 use Modules\Finance\Services\BillingDocumentSettingsService;
@@ -119,6 +120,31 @@ class FinancialStatementDownloadWidget extends Widget
         $engine = app(FinancialAnalyticsEngine::class);
         $startStr = $startDate->toDateString();
         $endStr = $endDate->toDateString();
+
+        // Imported historic statement entries are part of the same period
+        // totals as live transactions, so exports match the on-screen report.
+        $totalRevenue += $engine->getStatementEntryTotal(
+            $schoolId,
+            FinancialStatementEntry::TYPE_FEE_INCOME,
+            $startStr,
+            $endStr,
+            $bankAccountId,
+        );
+        $totalRefunds += $engine->getStatementEntryTotal(
+            $schoolId,
+            FinancialStatementEntry::TYPE_REFUND,
+            $startStr,
+            $endStr,
+            $bankAccountId,
+        );
+        $totalExpenses += $engine->getStatementEntryTotal(
+            $schoolId,
+            FinancialStatementEntry::TYPE_EXPENSE,
+            $startStr,
+            $endStr,
+            $bankAccountId,
+        );
+
         $revenueStreams = $engine->getRevenueStreamsForPeriod($schoolId, $startStr, $endStr, $bankAccountId);
         $revenueStreamTotal = array_sum(array_column($revenueStreams, 'amount'));
         $refundItems = $engine->getRefundsForPeriod($schoolId, $startStr, $endStr, $bankAccountId);

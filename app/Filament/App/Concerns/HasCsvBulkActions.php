@@ -12,11 +12,11 @@ use Filament\Notifications\Notification;
 use Filament\Support\Enums\MaxWidth;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
-use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -248,7 +248,7 @@ trait HasCsvBulkActions
         $headers = $service::exportHeaders();
         $rows = $service::exportRows($schoolId);
 
-        $spreadsheet = new Spreadsheet();
+        $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
 
         // Header Row
@@ -316,10 +316,22 @@ trait HasCsvBulkActions
         );
     }
 
+    /**
+     * Context passed to the template generator. Pages whose template depends
+     * on the current selection (e.g. the financial history period scope)
+     * override this.
+     *
+     * @return array<string, mixed>
+     */
+    protected function csvTemplateContext(): array
+    {
+        return [];
+    }
+
     protected function downloadCsvTemplate(string $service): StreamedResponse
     {
         return response()->streamDownload(
-            fn () => print ($service::templateXlsx()),
+            fn () => print ($service::templateXlsx($this->csvTemplateContext())),
             'import-template.xlsx',
             ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
         );

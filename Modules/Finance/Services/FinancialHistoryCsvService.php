@@ -288,6 +288,232 @@ class FinancialHistoryCsvService extends CsvBulkService
     }
 
     /**
+     * Pick the template rows that match the scope the user currently has
+     * selected on the page. With no context (or "full"), the complete
+     * multi-year example is used.
+     *
+     * @param  array<string, mixed>  $context
+     * @return array<int, array<int, string>>
+     */
+    protected static function templateRowsFor(array $context = []): array
+    {
+        if (($context['scope'] ?? 'full') === 'full') {
+            return static::templateRows();
+        }
+
+        return static::scopedTemplateRows($context);
+    }
+
+    /**
+     * Example rows limited to the selected academic year, term or custom date
+     * range. The three sample learners still demonstrate every transaction
+     * type in the first period, while later periods contain the usual
+     * charge/payment pair.
+     *
+     * @param  array<string, mixed>  $context
+     * @return array<int, array<int, string>>
+     */
+    protected static function scopedTemplateRows(array $context): array
+    {
+        $schoolId = current_tenant()?->id;
+        $start = filled($context['start'] ?? null) ? Carbon::parse($context['start'])->startOfDay() : null;
+        $end = filled($context['end'] ?? null) ? Carbon::parse($context['end'])->endOfDay() : null;
+
+        $year = ! empty($context['year_id'])
+            ? AcademicYear::withoutTenantScope()
+                ->when($schoolId, fn ($query) => $query->where('school_id', $schoolId))
+                ->find((int) $context['year_id'])
+            : null;
+
+        $term = ! empty($context['term_id'])
+            ? Term::withoutTenantScope()
+                ->when($schoolId, fn ($query) => $query->where('school_id', $schoolId))
+                ->with('academicYear')
+                ->find((int) $context['term_id'])
+            : null;
+
+        if (! $year && $term) {
+            $year = $term->academicYear;
+        }
+
+        if (! $start || ! $end) {
+            if (! $year) {
+                return static::templateRows();
+            }
+
+            $start = $year->start_date?->copy()->startOfDay()
+                ?? Carbon::create((int) $year->name, 1, 1)->startOfDay();
+            $end = $year->end_date?->copy()->endOfDay()
+                ?? Carbon::create((int) $year->name, 12, 31)->endOfDay();
+        }
+
+        if ($start->gt($end)) {
+            [$start, $end] = [$end->copy()->startOfDay(), $start->copy()->endOfDay()];
+        }
+
+        $periods = static::templatePeriods($schoolId, $year, $term, $start, $end);
+
+        $rows = [];
+        $receipt = 0;
+        $nextReceipt = function (Carbon $date) use (&$receipt): string {
+            return 'RCP-'.$date->format('Y').'-'.str_pad((string) (++$receipt), 4, '0', STR_PAD_LEFT);
+        };
+
+        foreach ($periods as $periodIndex => $period) {
+            $periodStart = $period['start'];
+            $periodEnd = $period['end'];
+            $chargeDate = $periodStart->toDateString();
+            $paymentDate = $periodEnd->toDateString();
+            $yearName = $period['year'];
+            $termName = $period['term'];
+            $fee = 100.00 + ($periodIndex * 10);
+
+            $row = fn (string $id, string $type, string $date, string $description, float $amount, array $opts = []): array => [
+                $id,
+                $type,
+                $date,
+                $description,
+                number_format($amount, 2, '.', ''),
+                $opts['receipt'] ?? '',
+                $opts['reference'] ?? '',
+                $opts['method'] ?? '',
+                $opts['invoice'] ?? '',
+                $yearName,
+                $termName,
+                $opts['notes'] ?? '',
+            ];
+
+            // Learner A: brought-forward debit cleared alongside the term fee.
+            if ($periodIndex === 0) {
+                $rows[] = $row(self::EXAMPLE_A, self::TYPE_DEBIT_CARRY_FORWARD, $chargeDate, 'Balance Brought Forward', 15.00, [
+                    'notes' => 'Example opening balance brought forward from an earlier register',
+                ]);
+            }
+            $rows[] = $row(self::EXAMPLE_A, self::TYPE_CHARGE, $chargeDate, 'Tuition Fees', $fee);
+            if ($periodIndex === 0) {
+                $rows[] = $row(self::EXAMPLE_A, self::TYPE_PAYMENT, $paymentDate, '', 15.00, [
+                    'receipt' => $nextReceipt($periodStart),
+                    'method' => 'cash',
+                    'notes' => 'Clears the brought-forward balance',
+                ]);
+            }
+            $rows[] = $row(self::EXAMPLE_A, self::TYPE_PAYMENT, $paymentDate, '', $fee, [
+                'receipt' => $nextReceipt($periodStart),
+                'method' => 'cash',
+            ]);
+
+            // Learner B: a 10% bursary on the term fee.
+            $rows[] = $row(self::EXAMPLE_B, self::TYPE_CHARGE, $chargeDate, 'Tuition Fees', $fee);
+            $waiver = round($fee * 0.10, 2);
+            if ($periodIndex === 0) {
+                $rows[] = $row(self::EXAMPLE_B, self::TYPE_WAIVER, $chargeDate, 'Community Bursary (10%)', $waiver, [
+                    'notes' => 'Waiver of exactly 10% of the term fee',
+                ]);
+            }
+            $rows[] = $row(self::EXAMPLE_B, self::TYPE_PAYMENT, $paymentDate, '', $fee - ($periodIndex === 0 ? $waiver : 0), [
+                'receipt' => $nextReceipt($periodStart),
+                'method' => 'mobile_money',
+            ]);
+
+            // Learner C: an existing overpayment credit applied to the term fee.
+            $rows[] = $row(self::EXAMPLE_C, self::TYPE_CHARGE, $chargeDate, 'Tuition Fees', $fee);
+            if ($periodIndex === 0) {
+                $rows[] = $row(self::EXAMPLE_C, self::TYPE_CREDIT_CARRY_FORWARD, $chargeDate, 'Overpayment Credit Brought Forward', 15.00, [
+                    'notes' => 'Example prior overpayment applied against this term',
+                ]);
+            }
+            $rows[] = $row(self::EXAMPLE_C, self::TYPE_PAYMENT, $paymentDate, '', $fee - ($periodIndex === 0 ? 15.00 : 0), [
+                'receipt' => $nextReceipt($periodStart),
+                'method' => 'bank_transfer',
+            ]);
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Resolve the billing periods that fall inside the selected scope. Terms
+     * from the tenant are preferred; when none cover the range the whole range
+     * is used as one period.
+     *
+     * @return array<int, array{year: string, term: string, start: Carbon, end: Carbon}>
+     */
+    protected static function templatePeriods(?int $schoolId, ?AcademicYear $year, ?Term $term, Carbon $start, Carbon $end): array
+    {
+        if ($term) {
+            $termStart = $term->start_date?->copy()->startOfDay() ?? $start->copy();
+            $termEnd = $term->end_date?->copy()->endOfDay() ?? $end->copy();
+
+            return [[
+                'year' => $term->academicYear?->name ?? $year?->name ?? (string) $termStart->year,
+                'term' => ucwords(strtolower((string) $term->name)),
+                'start' => $termStart->lt($start) ? $start->copy() : $termStart,
+                'end' => $termEnd->gt($end) ? $end->copy() : $termEnd,
+            ]];
+        }
+
+        if ($schoolId) {
+            $terms = Term::withoutTenantScope()
+                ->where('school_id', $schoolId)
+                ->when($year, fn ($query) => $query->where('academic_year_id', $year->id))
+                ->whereDate('start_date', '<=', $end->toDateString())
+                ->whereDate('end_date', '>=', $start->toDateString())
+                ->with('academicYear')
+                ->orderBy('start_date')
+                ->get();
+
+            if ($terms->isNotEmpty()) {
+                return $terms->map(function (Term $term) use ($start, $end): array {
+                    $termStart = $term->start_date?->copy()->startOfDay() ?? $start->copy();
+                    $termEnd = $term->end_date?->copy()->endOfDay() ?? $end->copy();
+
+                    return [
+                        'year' => $term->academicYear?->name ?? (string) $termStart->year,
+                        'term' => ucwords(strtolower((string) $term->name)),
+                        'start' => $termStart->lt($start) ? $start->copy() : $termStart,
+                        'end' => $termEnd->gt($end) ? $end->copy() : $termEnd,
+                    ];
+                })->all();
+            }
+        }
+
+        return [[
+            'year' => $year?->name ?? (string) $start->year,
+            'term' => '',
+            'start' => $start->copy(),
+            'end' => $end->copy(),
+        ]];
+    }
+
+    /**
+     * Scoped templates carry a short scope guide instead of the full-history
+     * balance summary/change log sheets, whose figures only apply to the
+     * complete example.
+     *
+     * @param  array<string, mixed>  $context
+     */
+    protected static function appendTemplateSheetsFor(Spreadsheet $spreadsheet, array $context = []): void
+    {
+        if (($context['scope'] ?? 'full') === 'full') {
+            static::appendTemplateSheets($spreadsheet);
+
+            return;
+        }
+
+        $sheet = $spreadsheet->createSheet();
+        $sheet->setTitle('Template Scope');
+        static::writeSheetRows($sheet, [
+            ['Selected Scope', (string) ($context['label'] ?? '')],
+            ['Period Start', (string) ($context['start'] ?? '')],
+            ['Period End', (string) ($context['end'] ?? '')],
+            ['Template Basis', 'Examples in the Import Data sheet are limited to this period. Replace the sample learner IDs, amounts and dates with your own records before importing.'],
+        ]);
+
+        $spreadsheet->getSheet(0)->setTitle('Import Data');
+        $spreadsheet->setActiveSheetIndex(0);
+    }
+
+    /**
      * Append two reference sheets to the downloadable template AFTER the
      * import data sheet: a balance summary proving every example ledger ties
      * out, and a change log recording the corrections made after the template

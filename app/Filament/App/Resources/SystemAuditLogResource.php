@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Resources;
 
+use App\Filament\App\Concerns\ModulePermissionAccess;
 use App\Filament\App\Resources\SystemAuditLogResource\Pages;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\TextInput;
@@ -13,9 +14,8 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Modules\Admin\Models\SystemAuditLog;
-use Modules\Admin\Services\PermissionRegistry;
-use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class SystemAuditLogResource extends Resource
 {
@@ -47,15 +47,13 @@ class SystemAuditLogResource extends Resource
      * platform-only audit log instead, and work done while impersonated is
      * attributed to machinery, not to the school's staff.
      */
-    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
             ->whereDoesntHave('user', fn ($query) => $query->where('is_platform_managed', true));
     }
 
     // Reached via the module contextual tabs, not the sidebar.
-
-
 
     /**
      * Beautiful structured Infolist detail panel (Fixes empty/blank View modals) [1]
@@ -76,10 +74,64 @@ class SystemAuditLogResource extends Resource
 
                 Section::make('JSON Structural Changes')
                     ->schema([
-                        KeyValueEntry::make('old_values')->label(__('Original Database State'))->columnSpan(1),
-                        KeyValueEntry::make('new_values')->label(__('Updated / Changes Saved'))->columnSpan(1),
+                        KeyValueEntry::make('old_values')
+                            ->label(__('Original Database State'))
+                            ->getStateUsing(fn (?SystemAuditLog $record): array => self::flattenAuditValues($record?->old_values))
+                            ->columnSpan(1),
+                        KeyValueEntry::make('new_values')
+                            ->label(__('Updated / Changes Saved'))
+                            ->getStateUsing(fn (?SystemAuditLog $record): array => self::flattenAuditValues($record?->new_values))
+                            ->columnSpan(1),
                     ])->columns(2),
             ]);
+    }
+
+    /**
+     * Flatten nested audit values into scalar key/value rows.
+     *
+     * Audit entries are often whole model snapshots (for example a custom role
+     * with a nested permissions array). KeyValueEntry prints every value with
+     * Blade's escaped output, which throws a 500 when a value is still an
+     * array. Flattening keeps nested data readable while guaranteeing every
+     * cell is a string.
+     *
+     * @param  array<string|int, mixed>|null  $values
+     * @return array<string, string>
+     */
+    protected static function flattenAuditValues(?array $values, string $prefix = ''): array
+    {
+        if (empty($values)) {
+            return [];
+        }
+
+        $rows = [];
+
+        foreach ($values as $key => $value) {
+            $label = $prefix === '' ? (string) $key : $prefix.'.'.$key;
+
+            if (is_array($value)) {
+                $rows += self::flattenAuditValues($value, $label);
+
+                continue;
+            }
+
+            if (is_object($value)) {
+                $value = method_exists($value, 'toArray') ? $value->toArray() : (array) $value;
+                $rows += self::flattenAuditValues($value, $label);
+
+                continue;
+            }
+
+            if (is_bool($value)) {
+                $value = $value ? 'true' : 'false';
+            } elseif ($value === null) {
+                $value = '—';
+            }
+
+            $rows[$label] = (string) $value;
+        }
+
+        return $rows;
     }
 
     public static function table(Table $table): Table

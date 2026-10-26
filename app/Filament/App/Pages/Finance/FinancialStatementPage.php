@@ -2,19 +2,25 @@
 
 namespace App\Filament\App\Pages\Finance;
 
+use App\Filament\App\Concerns\HasCsvBulkActions;
 use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Concerns\ModulePermissionAccess;
 use Carbon\Carbon;
+use Filament\Actions\Action;
 use Filament\Pages\Page;
 use Modules\Academics\Models\Term;
 use Modules\Finance\Models\Expense;
+use Modules\Finance\Models\FinancialStatementEntry;
 use Modules\Finance\Models\Payment;
 use Modules\Finance\Models\SchoolBankAccount;
 use Modules\Finance\Services\FinancialAnalyticsEngine;
+use Modules\Finance\Services\FinancialStatementCsvService;
 use Modules\HR\Services\PayrollCalculationService;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class FinancialStatementPage extends Page
 {
+    use HasCsvBulkActions;
     use HasPageHelp;
     use ModulePermissionAccess;
 
@@ -179,6 +185,31 @@ class FinancialStatementPage extends Page
             );
 
         $engine = app(FinancialAnalyticsEngine::class);
+
+        // Historic entries imported from the school's old records are folded
+        // into the same period totals as live invoices, payments and expenses.
+        $feeRevenue += $engine->getStatementEntryTotal(
+            $schoolId,
+            FinancialStatementEntry::TYPE_FEE_INCOME,
+            $startDate->toDateString(),
+            $endDate->toDateString(),
+            $bankAccountId,
+        );
+        $totalRefunds += $engine->getStatementEntryTotal(
+            $schoolId,
+            FinancialStatementEntry::TYPE_REFUND,
+            $startDate->toDateString(),
+            $endDate->toDateString(),
+            $bankAccountId,
+        );
+        $totalExpenses += $engine->getStatementEntryTotal(
+            $schoolId,
+            FinancialStatementEntry::TYPE_EXPENSE,
+            $startDate->toDateString(),
+            $endDate->toDateString(),
+            $bankAccountId,
+        );
+
         $revenueStreams = $engine->getRevenueStreamsForPeriod(
             $schoolId,
             $startDate->toDateString(),
@@ -326,9 +357,26 @@ class FinancialStatementPage extends Page
         ])));
     }
 
+    protected static function csvService(): string
+    {
+        return FinancialStatementCsvService::class;
+    }
+
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('download_statement_import_template')
+                ->label(__('Download Import Template'))
+                ->icon('heroicon-o-arrow-down-tray')
+                ->color('gray')
+                ->visible(fn (): bool => static::canPerform('import'))
+                ->action(fn (): StreamedResponse => $this->downloadCsvTemplate(FinancialStatementCsvService::class)),
+            $this->makeImportAction()
+                ->label(__('Import Financial Statement'))
+                ->modalHeading(__('Import Historic Financial Statement Data'))
+                ->modalDescription(__('Upload the template filled with your school’s historic income, refunds and expenses. The example rows cover the last three years.'))
+                ->modalSubmitActionLabel(__('Import Financial Statement'))
+                ->visible(fn (): bool => static::canPerform('import')),
             $this->getHelpAction(),
         ];
     }

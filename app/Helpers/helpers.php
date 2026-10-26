@@ -1115,7 +1115,9 @@ if (! function_exists('finance_document_logo_path')) {
             return public_path('storage/'.$config['logo_path']);
         }
 
-        return null;
+        // A school that has not uploaded a logo still gets a branded document:
+        // use the platform document logo (or the bundled Kairo CORE logo).
+        return document_logo_local_path();
     }
 }
 

@@ -92,20 +92,49 @@ class StudentFinancialHistoryPage extends Page implements HasForms
     }
 
     /**
-     * Header actions shown by the blade template. Only the bulk import wizard
-     * lives here — the manual entry/row actions are built on demand by their
-     * `*_*Action()` methods (resolved by Filament's `mountAction('name')`
-     * fallback), so they never clutter the header yet stay mountable.
+     * The bulk import wizard is mounted from the page body buttons. It is
+     * resolved on demand through Filament's `mountAction('import_csv')`
+     * fallback, which keeps it out of the header (which only carries Help)
+     * while still letting the blade template open it.
      */
-    protected function getActions(): array
+    protected function import_csvAction(): Action
     {
+        return $this->makeImportAction()
+            ->label(__('Import Financial History (Excel/CSV)'))
+            ->modalHeading(__('Import Financial History from Excel or CSV'))
+            ->modalSubmitActionLabel(__('Import Financial History'))
+            ->visible(fn (): bool => static::canEditFinancialHistory())
+            ->disabled(fn (): bool => ! static::canEditFinancialHistory());
+    }
+
+    /**
+     * The import template follows the reporting scope currently selected on
+     * the page: active year, term, custom date range or the whole history.
+     */
+    protected function csvTemplateContext(): array
+    {
+        $scope = $this->scopeDates();
+        $effectiveScope = $this->scope;
+
+        if ($effectiveScope !== 'full' && ! $scope['start'] && ! $scope['end']) {
+            $effectiveScope = 'full';
+        }
+
         return [
-            $this->makeImportAction()
-                ->label(__('Import Financial History (Excel/CSV)'))
-                ->modalHeading(__('Import Financial History from Excel or CSV'))
-                ->modalSubmitActionLabel(__('Import Financial History'))
-                ->visible(fn (): bool => static::canEditFinancialHistory()),
+            'scope' => $effectiveScope,
+            'year_id' => in_array($effectiveScope, ['active_year', 'term'], true) ? $this->year_id : null,
+            'term_id' => $effectiveScope === 'term' ? $this->term_id : null,
+            'start' => $scope['start']?->toDateString(),
+            'end' => $scope['end']?->toDateString(),
+            'label' => $scope['label'],
         ];
+    }
+
+    protected function csvUploadHelperText(): ?string
+    {
+        return __('The template above matches :scope and contains the exact system columns. Replace the example rows with your own financial history records.', [
+            'scope' => $this->scopeDates()['label'],
+        ]);
     }
 
     /**
