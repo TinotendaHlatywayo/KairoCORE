@@ -120,7 +120,6 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
             .'- [Academics, exams & report cards]('.route('marketing.academics').")\n"
             .'- [Security & data protection]('.route('marketing.security').")\n"
             .'- [About]('.route('marketing.about').")\n"
-            .'- [Schools]('.route('marketing.schools').")\n"
             .'- [Blog]('.route('marketing.blog').")\n"
             .'- [Contact]('.route('marketing.contact').")\n"
             .'- [Help Center]('.route('marketing.help').")\n"
@@ -205,7 +204,6 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
             ['loc' => route('marketing.help.attendance'), 'lastmod' => $lastmod('marketing/help-record-attendance'), 'changefreq' => 'monthly', 'priority' => '0.8'],
             ['loc' => route('marketing.help.reports'), 'lastmod' => $lastmod('marketing/help-report-cards'), 'changefreq' => 'monthly', 'priority' => '0.8'],
             ['loc' => route('marketing.about'), 'lastmod' => $lastmod('marketing/about'), 'changefreq' => 'monthly', 'priority' => '0.8'],
-            ['loc' => route('marketing.schools'), 'lastmod' => $lastmod('marketing/schools'), 'changefreq' => 'weekly', 'priority' => '0.9'],
             ['loc' => route('marketing.blog'), 'lastmod' => $lastmod('marketing/blog'), 'changefreq' => 'weekly', 'priority' => '0.8'],
             ['loc' => route('marketing.contact'), 'lastmod' => $lastmod('marketing/contact'), 'changefreq' => 'monthly', 'priority' => '0.7'],
             ['loc' => route('platform.terms'), 'lastmod' => $lastmod('terms/platform'), 'changefreq' => 'yearly', 'priority' => '0.5'],
@@ -311,60 +309,6 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
             ],
         ]);
     })->name('marketing.contact');
-
-    Route::get('/schools', function () {
-        $schools = School::query()
-            ->where('status', 'active')
-            ->whereNotNull('subdomain')
-            ->where('subdomain', '!=', '')
-            ->orderBy('name')
-            ->get();
-
-        $listing = $schools->map(function (School $school): array {
-            return [
-                'school' => $school,
-                'url' => school_website_url($school),
-                'logo' => $school->logo_path ? asset('storage/'.$school->logo_path) : null,
-            ];
-        });
-
-        $itemList = [
-            '@context' => 'https://schema.org',
-            '@type' => 'ItemList',
-            'name' => __('Schools using :platform', ['platform' => platform_name()]),
-            'itemListElement' => $listing->values()->map(function (array $entry, int $index): array {
-                $school = $entry['school'];
-
-                return [
-                    '@type' => 'ListItem',
-                    'position' => $index + 1,
-                    'item' => array_filter([
-                        '@type' => 'EducationalOrganization',
-                        'name' => $school->name,
-                        'url' => $entry['url'],
-                        'logo' => $entry['logo'],
-                        'description' => $school->motto,
-                        'address' => trim(implode(', ', array_filter([
-                            $school->physical_address,
-                            $school->region,
-                            $school->country,
-                        ]))) ?: null,
-                    ], static fn ($value): bool => $value !== null && $value !== ''),
-                ];
-            })->all(),
-        ];
-
-        return view('marketing.schools', [
-            'schools' => $listing,
-            'seoJsonLd' => [
-                platform_breadcrumb_list([
-                    ['name' => __('Home'), 'url' => route('marketing.home')],
-                    ['name' => __('Schools'), 'url' => route('marketing.schools')],
-                ]),
-                $itemList,
-            ],
-        ]);
-    })->name('marketing.schools');
 
     /*
     |----------------------------------------------------------------------

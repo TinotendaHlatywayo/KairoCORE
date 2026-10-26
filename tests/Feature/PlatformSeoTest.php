@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 /**
@@ -49,6 +50,13 @@ class PlatformSeoTest extends TestCase
         $response->assertSee(route('marketing.home'), false);
         $response->assertSee(route('marketing.about'), false);
         $response->assertSee(route('marketing.contact'), false);
+    }
+
+    public function test_public_school_directory_is_not_available(): void
+    {
+        $this->assertFalse(Route::has('marketing.schools'));
+
+        $this->get('/schools')->assertNotFound();
     }
 
     public function test_robots_references_sitemap_and_blocks_private_areas(): void
