@@ -1,7 +1,7 @@
 @extends('help-centre.layout')
 
 @section('title', $label.' — '.__('Help').' — '.platform_name())
-@section('meta_description', $description !== '' ? $description : __('Guides about '.$label.' in '.platform_name().'.'))
+@section('meta_description', $description !== '' ? $description : __('Guides about :category in :platform.', ['category' => $label, 'platform' => platform_name()]))
 
 @section('breadcrumbs')
     <li aria-hidden="true">/</li>

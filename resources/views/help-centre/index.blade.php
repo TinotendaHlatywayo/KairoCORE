@@ -1,7 +1,7 @@
 @extends('help-centre.layout')
 
 @section('title', __('Help Centre').' — '.platform_name())
-@section('meta_description', __('Step-by-step guides for '.platform_name().': getting started, academics, students, admissions, fees, HR, report cards, permissions and troubleshooting.'))
+@section('meta_description', __('Step-by-step guides for :platform: getting started, academics, students, admissions, fees, HR, report cards, permissions and troubleshooting.', ['platform' => platform_name()]))
 
 @section('help-body')
 <header class="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-white to-[#EF5F4D]/[0.06] p-6 sm:p-8">
@@ -9,7 +9,7 @@
         <div>
             <p class="text-xs font-bold uppercase tracking-[0.2em] text-[#D94B39]">{{ __('Help Centre') }}</p>
             <h1 class="mt-2 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">{{ __('How can we help?') }}</h1>
-            <p class="mt-3 max-w-2xl text-slate-600">{{ __('Verified, step-by-step guides for every part of '.platform_name().' — written from the product itself, so every button and menu we mention really exists.') }}</p>
+            <p class="mt-3 max-w-2xl text-slate-600">{{ __('Verified, step-by-step guides for every part of :platform — written from the product itself, so every button and menu we mention really exists.', ['platform' => platform_name()]) }}</p>
 
             <form action="{{ route('help.search') }}" method="GET" role="search" class="mt-6 max-w-xl">
                 <label for="hero-search" class="sr-only">{{ __('Search help articles') }}</label>
@@ -91,7 +91,7 @@
                 <div class="flex shrink-0 items-center gap-3 text-xs font-medium text-slate-400">
                     <span>{{ $article->readMinutes() }} {{ __('min read') }}</span>
                     <span class="rounded-full bg-slate-100 px-2 py-0.5 text-slate-500">
-                        {{ \App\Support\HelpCentre\HelpCentreRepository::CATEGORY_LABELS[$article->category] ?? $article->category }}
+                        {{ \App\Support\HelpCentre\HelpCentreRepository::labelFor($article->category) }}
                     </span>
                 </div>
             </a>

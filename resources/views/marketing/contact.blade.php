@@ -298,7 +298,7 @@
                                 <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300" for="cf-name">
                                     {{ marketing_content('contact_form_name_label') }} <span class="text-[#D94B39]">*</span>
                                 </label>
-                                <span class="text-[11px] font-semibold text-slate-400" id="name-counter">0/100 letters</span>
+                                <span class="text-[11px] font-semibold text-slate-400" id="name-counter">{{ __(':count/100 letters', ['count' => 0]) }}</span>
                             </div>
                             <input id="cf-name"
                                    type="text"
@@ -352,7 +352,7 @@
                                 <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300" for="cf-message">
                                     {{ marketing_content('contact_form_message_label') }} <span class="text-[#D94B39]">*</span>
                                 </label>
-                                <span class="text-[11px] font-semibold text-slate-400" id="message-char-limit">0 / 2,000 chars</span>
+                                <span class="text-[11px] font-semibold text-slate-400" id="message-char-limit">{{ __(':count / 2,000 chars', ['count' => 0]) }}</span>
                             </div>
                             <textarea id="cf-message"
                                       name="message"
@@ -578,6 +578,23 @@
     var messageHint = document.getElementById('message-hint');
     var messageHintText = document.getElementById('message-hint-text');
 
+    var i18n = {
+        nameAttack: @js(__('Script tags or HTML injection detected in name!')),
+        nameInvalid: @js(__('Name should contain letters, spaces or hyphens only (min 2 chars).')),
+        nameRequired: @js(__('Please fill in this field with your name.')),
+        nameFullRequired: @js(__('Please fill in this field with your full name.')),
+        emailAttack: @js(__('Malicious code detected in email address!')),
+        emailInvalid: @js(__('Please enter a valid email address (e.g., sales@kairocore.co.zw).')),
+        emailRequired: @js(__('Please fill in this field with your email address.')),
+        emailFullRequired: @js(__('Please fill in this field with your email (e.g. sales@kairocore.co.zw).')),
+        messageAttack: @js(__('Script tags, HTML tags, or executable code detected in your message!')),
+        messageInvalid: @js(__('Please provide a message with at least 3 words.')),
+        messageRequired: @js(__('Please fill in this field with your message.')),
+        sending: @js(__('Sending message...')),
+        nameCounter: @js(__(':count/100 letters', ['count' => '__COUNT__'])),
+        messageCounter: @js(__(':count / 2,000 chars', ['count' => '__COUNT__'])),
+    };
+
     // Dangerous patterns that represent script injection or XSS attacks
     var scriptPatterns = [
         /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
@@ -612,13 +629,13 @@
 
     function validateName() {
         var val = (nameInput.value || '').trim();
-        nameCounter.textContent = val.length + '/100 letters';
+        nameCounter.textContent = i18n.nameCounter.replace('__COUNT__', val.length);
 
         if (detectScriptAttack(val)) {
             nameInput.classList.add('is-invalid');
             nameInput.classList.remove('is-valid');
             nameHint.classList.add('show');
-            nameHintText.textContent = 'Script tags or HTML injection detected in name!';
+            nameHintText.textContent = i18n.nameAttack;
             return false;
         }
 
@@ -633,7 +650,7 @@
             nameInput.classList.add('is-invalid');
             nameInput.classList.remove('is-valid');
             nameHint.classList.add('show');
-            nameHintText.textContent = 'Name should contain letters, spaces or hyphens only (min 2 chars).';
+            nameHintText.textContent = i18n.nameInvalid;
             return false;
         }
 
@@ -650,7 +667,7 @@
             emailInput.classList.add('is-invalid');
             emailInput.classList.remove('is-valid');
             emailHint.classList.add('show');
-            emailHintText.textContent = 'Malicious code detected in email address!';
+            emailHintText.textContent = i18n.emailAttack;
             return false;
         }
 
@@ -663,7 +680,7 @@
             emailInput.classList.add('is-invalid');
             emailInput.classList.remove('is-valid');
             emailHint.classList.add('show');
-            emailHintText.textContent = 'Please enter a valid email address (e.g., sales@kairocore.co.zw).';
+            emailHintText.textContent = i18n.emailInvalid;
             return false;
         }
 
@@ -676,7 +693,7 @@
     function validateMessage() {
         var val = (messageInput.value || '').trim();
         var charCount = val.length;
-        messageCharLimit.textContent = charCount + ' / 2,000 chars';
+        messageCharLimit.textContent = i18n.messageCounter.replace('__COUNT__', charCount);
 
         // Word count for validation
         var wordCount = val.length ? val.split(/\s+/).filter(Boolean).length : 0;
@@ -686,7 +703,7 @@
             messageInput.classList.add('is-invalid');
             messageInput.classList.remove('is-valid');
             messageHint.classList.add('show');
-            messageHintText.textContent = 'Script tags, HTML tags, or executable code detected in your message!';
+            messageHintText.textContent = i18n.messageAttack;
             return false;
         } else {
         }
@@ -700,7 +717,7 @@
             messageInput.classList.add('is-invalid');
             messageInput.classList.remove('is-valid');
             messageHint.classList.add('show');
-            messageHintText.textContent = 'Please provide a message with at least 3 words.';
+            messageHintText.textContent = i18n.messageInvalid;
             return false;
         }
 
@@ -716,7 +733,7 @@
         if (!nameInput.value.trim()) {
             nameInput.classList.add('is-invalid');
             nameHint.classList.add('show');
-            nameHintText.textContent = 'Please fill in this field with your name.';
+            nameHintText.textContent = i18n.nameRequired;
         } else {
             validateName();
         }
@@ -727,7 +744,7 @@
         if (!emailInput.value.trim()) {
             emailInput.classList.add('is-invalid');
             emailHint.classList.add('show');
-            emailHintText.textContent = 'Please fill in this field with your email address.';
+            emailHintText.textContent = i18n.emailRequired;
         } else {
             validateEmail();
         }
@@ -738,15 +755,15 @@
         if (!messageInput.value.trim()) {
             messageInput.classList.add('is-invalid');
             messageHint.classList.add('show');
-            messageHintText.textContent = 'Please fill in this field with your message.';
+            messageHintText.textContent = i18n.messageRequired;
         } else {
             validateMessage();
         }
     });
 
     // Sync counters with pre-filled values (e.g. after a failed submit with old())
-    nameCounter.textContent = (nameInput.value || '').trim().length + '/100 letters';
-    messageCharLimit.textContent = (messageInput.value || '').trim().length + ' / 2,000 chars';
+    nameCounter.textContent = i18n.nameCounter.replace('__COUNT__', (nameInput.value || '').trim().length);
+    messageCharLimit.textContent = i18n.messageCounter.replace('__COUNT__', (messageInput.value || '').trim().length);
 
     // Form Submission Interception
     form.addEventListener('submit', function(e) {
@@ -761,7 +778,7 @@
             nameInput.classList.add('is-invalid');
             nameHint.classList.add('show');
             if (!nameInput.value.trim()) {
-                nameHintText.textContent = 'Please fill in this field with your full name.';
+                nameHintText.textContent = i18n.nameFullRequired;
             }
             hasError = true;
             if (!firstErrorField) firstErrorField = nameInput;
@@ -771,7 +788,7 @@
             emailInput.classList.add('is-invalid');
             emailHint.classList.add('show');
             if (!emailInput.value.trim()) {
-                emailHintText.textContent = 'Please fill in this field with your email (e.g. sales@kairocore.co.zw).';
+                emailHintText.textContent = i18n.emailFullRequired;
             }
             hasError = true;
             if (!firstErrorField) firstErrorField = emailInput;
@@ -781,7 +798,7 @@
             messageInput.classList.add('is-invalid');
             messageHint.classList.add('show');
             if (!messageInput.value.trim()) {
-                messageHintText.textContent = 'Please fill in this field with your message.';
+                messageHintText.textContent = i18n.messageRequired;
             }
             hasError = true;
             if (!firstErrorField) firstErrorField = messageInput;
@@ -806,7 +823,7 @@
         // Disable button to prevent double-submit
         submitBtn.disabled = true;
         var btnText = document.getElementById('btn-text');
-        if (btnText) btnText.textContent = 'Sending message...';
+        if (btnText) btnText.textContent = i18n.sending;
     });
 })();
 </script>

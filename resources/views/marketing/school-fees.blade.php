@@ -102,7 +102,7 @@
             </div>
             <div>
                 <h3 class="text-base font-bold text-slate-900">{{ __('Is our financial data private?') }}</h3>
-                <p class="mt-2 text-sm leading-6 text-slate-600">{{ __('Yes. Every school runs in its own isolated workspace, access is role-based, and financial pages are never exposed to search engines or public links. See our ') }}<a href="{{ route('marketing.security') }}" class="font-semibold text-[#B93A2B] hover:underline">{{ __('security overview') }}</a>{{ __('.') }}</p>
+                <p class="mt-2 text-sm leading-6 text-slate-600">{{ __('Yes. Every school runs in its own isolated workspace, access is role-based, and financial pages are never exposed to search engines or public links. See our ') }}<a href="{{ route('marketing.security') }}" class="font-semibold text-[#B93A2B] hover:underline">{{ __('security overview') }}</a>.</p>
             </div>
         </div>
         <div class="mt-10 flex flex-wrap gap-x-8 gap-y-3 text-sm font-semibold text-slate-700">

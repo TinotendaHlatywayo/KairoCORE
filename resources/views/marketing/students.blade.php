@@ -84,7 +84,7 @@
             </div>
             <div>
                 <h3 class="text-base font-bold text-slate-900">{{ __('Who can see student information?') }}</h3>
-                <p class="mt-2 text-sm leading-6 text-slate-600">{{ __('Access is role-based and every school’s data is isolated in its own workspace. A teacher sees their class; finance sees fee data; sensitive documents require the right permission. Details on our ') }}<a href="{{ route('marketing.security') }}" class="font-semibold text-[#B93A2B] hover:underline">{{ __('security page') }}</a>{{ __('.') }}</p>
+                <p class="mt-2 text-sm leading-6 text-slate-600">{{ __('Access is role-based and every school’s data is isolated in its own workspace. A teacher sees their class; finance sees fee data; sensitive documents require the right permission. Details on our ') }}<a href="{{ route('marketing.security') }}" class="font-semibold text-[#B93A2B] hover:underline">{{ __('security page') }}</a>.</p>
             </div>
             <div>
                 <h3 class="text-base font-bold text-slate-900">{{ __('Does a student record carry across grades?') }}</h3>

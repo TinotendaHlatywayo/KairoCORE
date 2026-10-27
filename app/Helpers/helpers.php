@@ -596,37 +596,69 @@ if (! function_exists('marketing_settings_map')) {
     }
 }
 
+if (! function_exists('marketing_key_is_shared')) {
+    /**
+     * Keys whose stored base value is language-neutral and should be reused by
+     * every locale unless that locale has its own override.
+     */
+    function marketing_key_is_shared(string $key): bool
+    {
+        return $key === 'contact_office_location'
+            || (bool) preg_match('/(?:_url|_image|_logo|_value)$/', $key);
+    }
+}
+
 if (! function_exists('marketing_content')) {
     /**
      * Read an editable marketing-site scalar, falling back to the shipped copy.
      *
      * Resolution order:
      *   1. "{key}@{locale}" — a per-language override saved from the editor
-     *   2. "{key}"          — the base (default-language) override
+     *   2. "{key}"          — the base override, for English or shared values
      *   3. the shipped default, which is __()-translated at runtime
+     *   4. "{key}"          — the base override when no translated copy exists
      */
     function marketing_content(string $key, ?string $default = null): string
     {
         $map = marketing_settings_map();
         $locale = app()->getLocale();
+        $shared = marketing_key_is_shared($key);
+        $isDefaultLocale = $locale === config('app.fallback_locale', 'en');
 
-        $value = $map[$key.'@'.$locale] ?? null;
-        if (is_array($value)) {
-            $value = null;
+        $localeValue = $map[$key.'@'.$locale] ?? null;
+        if (is_array($localeValue)) {
+            $localeValue = null;
+        }
+        if ($localeValue !== null && $localeValue !== '') {
+            return (string) $localeValue;
         }
 
-        if ($value === null || $value === '') {
-            $value = $map[$key] ?? null;
-            if (is_array($value)) {
-                $value = null;
-            }
+        $baseValue = $map[$key] ?? null;
+        if (is_array($baseValue)) {
+            $baseValue = null;
         }
 
-        if ($value === null || $value === '') {
-            $value = marketing_content_defaults()[$key] ?? $default;
+        if (($isDefaultLocale || $shared) && $baseValue !== null && $baseValue !== '') {
+            return (string) $baseValue;
         }
 
-        return (string) ($value ?? '');
+        $shipped = marketing_content_defaults()[$key] ?? null;
+        if ($shipped === null) {
+            $shipped = $default;
+        }
+        if ($shipped !== null && $shipped !== '') {
+            return (string) $shipped;
+        }
+
+        if (! $isDefaultLocale
+            && ! $shared
+            && ! in_array($key, ['meta_title', 'meta_description'], true)
+            && $baseValue !== null
+            && $baseValue !== '') {
+            return (string) $baseValue;
+        }
+
+        return '';
     }
 }
 
@@ -644,32 +676,17 @@ if (! function_exists('marketing_raw_setting')) {
     }
 }
 
-if (! function_exists('marketing_merged_list')) {
+if (! function_exists('marketing_merge_stored_list')) {
     /**
-     * A marketing list (repeater) for the current locale, merged over the
-     * shipped defaults. Stored items override defaults positionally; stored
-     * extras beyond the defaults are appended. Empty storage falls back to
-     * the full default list so the site never renders blank sections.
+     * Merge a stored repeater over its shipped defaults positionally. The
+     * stored list is authoritative for length so deletions stick.
      *
+     * @param  array<int, array<string, mixed>>  $defaults
+     * @param  array<int|string, array<string, mixed>>  $stored
      * @return array<int, array<string, mixed>>
      */
-    function marketing_merged_list(string $key): array
+    function marketing_merge_stored_list(array $defaults, array $stored): array
     {
-        $defaults = marketing_list_defaults()[$key] ?? [];
-        $map = marketing_settings_map();
-        $locale = app()->getLocale();
-
-        $stored = $map[$key.'@'.$locale] ?? null;
-        if (! is_array($stored) || $stored === []) {
-            $stored = $map[$key] ?? null;
-        }
-        if (! is_array($stored) || $stored === []) {
-            return $defaults;
-        }
-
-        // The stored list is authoritative for length (deletions stick);
-        // positionally inherit structural fields (icon, key, image) from the
-        // defaults, and treat blank strings as "reset to default".
         $merged = [];
         foreach (array_values($stored) as $i => $item) {
             if (! is_array($item)) {
@@ -680,6 +697,78 @@ if (! function_exists('marketing_merged_list')) {
         }
 
         return $merged ?: $defaults;
+    }
+}
+
+if (! function_exists('marketing_inherit_shared_list_fields')) {
+    /**
+     * Keep translated text from $translated while inheriting language-neutral
+     * fields (icons, images, counts and links) from a stored base list.
+     *
+     * @param  array<int, array<string, mixed>>  $translated
+     * @param  array<int|string, array<string, mixed>>  $base
+     * @return array<int, array<string, mixed>>
+     */
+    function marketing_inherit_shared_list_fields(array $translated, array $base): array
+    {
+        $sharedFields = [
+            'icon', 'key', 'cat', 'image', 'image_source', 'trim_start',
+            'video', 'url', 'link', 'value', 'suffix',
+        ];
+
+        foreach (array_values($base) as $i => $item) {
+            if (! isset($translated[$i]) || ! is_array($item)) {
+                continue;
+            }
+            foreach ($sharedFields as $field) {
+                if (array_key_exists($field, $item) && $item[$field] !== '' && $item[$field] !== null) {
+                    $translated[$i][$field] = $item[$field];
+                }
+            }
+        }
+
+        return $translated;
+    }
+}
+
+if (! function_exists('marketing_merged_list')) {
+    /**
+     * A marketing list (repeater) for the current locale.
+     *
+     * A stored localized list wins. Otherwise English and language-neutral
+     * fields use the base stored list, while other locales prefer their
+     * translated shipped defaults so English copy cannot leak through.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    function marketing_merged_list(string $key): array
+    {
+        $defaults = marketing_list_defaults()[$key] ?? [];
+        $map = marketing_settings_map();
+        $locale = app()->getLocale();
+        $isDefaultLocale = $locale === config('app.fallback_locale', 'en');
+
+        $stored = $map[$key.'@'.$locale] ?? null;
+        if (! is_array($stored) || $stored === []) {
+            $stored = null;
+        }
+
+        $base = $map[$key] ?? null;
+        if (! is_array($base) || $base === []) {
+            $base = null;
+        }
+
+        if ($stored !== null) {
+            return marketing_merge_stored_list($defaults, $stored);
+        }
+
+        if ($isDefaultLocale) {
+            return $base !== null ? marketing_merge_stored_list($defaults, $base) : $defaults;
+        }
+
+        return $base !== null
+            ? marketing_inherit_shared_list_fields($defaults, $base)
+            : $defaults;
     }
 }
 

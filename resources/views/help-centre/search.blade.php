@@ -1,7 +1,7 @@
 @extends('help-centre.layout')
 
 @section('title', ($query !== '' ? __('Search').': '.$query : __('Search')).' — '.__('Help').' — '.platform_name())
-@section('meta_description', __('Search the '.platform_name().' help centre.'))
+@section('meta_description', __('Search the :platform help centre.', ['platform' => platform_name()]))
 @section('seo_robots', 'noindex, follow')
 
 @section('breadcrumbs')

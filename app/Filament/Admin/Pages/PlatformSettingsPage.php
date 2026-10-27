@@ -1058,76 +1058,106 @@ class PlatformSettingsPage extends Page implements HasForms
 
     /**
      * What the public site currently renders for $key in $locale — mirrors
-     * marketing_content(): "{key}@{locale}" → "{key}" → translated default.
+     * marketing_content().
      */
     protected function marketingDisplayValue(string $key, string $locale): string
     {
         $map = marketing_settings_map();
+        $shared = marketing_key_is_shared($key);
+        $isDefaultLocale = $locale === config('app.fallback_locale', 'en');
 
-        foreach ([$key.'@'.$locale, $key] as $lookup) {
-            $value = $map[$lookup] ?? null;
-            if (is_array($value)) {
-                $value = $value[0] ?? null;
-            }
-            if ($value !== null && $value !== '') {
-                return (string) $value;
-            }
+        $value = $map[$key.'@'.$locale] ?? null;
+        if (is_array($value)) {
+            $value = $value[0] ?? null;
+        }
+        if ($value !== null && $value !== '') {
+            return (string) $value;
+        }
+
+        $base = $map[$key] ?? null;
+        if (is_array($base)) {
+            $base = $base[0] ?? null;
+        }
+
+        if (($isDefaultLocale || $shared) && $base !== null && $base !== '') {
+            return (string) $base;
         }
 
         $default = (string) ($this->marketingDefaultsEn()[$key] ?? '');
-        if ($default === '' || $locale === 'en') {
-            return $default;
+        if ($default !== '') {
+            return $locale === 'en' ? $default : (string) __($default, [], $locale);
         }
 
-        return (string) __($default, [], $locale);
+        if (! $isDefaultLocale
+            && ! $shared
+            && ! in_array($key, ['meta_title', 'meta_description'], true)
+            && $base !== null
+            && $base !== '') {
+            return (string) $base;
+        }
+
+        return '';
     }
 
     /**
      * What the public site currently renders for a list in $locale — mirrors
-     * marketing_merged_list(): stored "{key}@{locale}" / "{key}" wins,
-     * otherwise the shipped defaults translated into $locale.
+     * marketing_merged_list().
      *
      * @return array<int, array<string, mixed>>
      */
     protected function marketingDisplayList(string $key, string $locale): array
     {
         $map = marketing_settings_map();
+        $isDefaultLocale = $locale === config('app.fallback_locale', 'en');
+        $defaults = $this->marketingListDefaultsEn()[$key] ?? [];
+        $translated = $locale === 'en'
+            ? $defaults
+            : $this->translateMarketingList($defaults, $locale);
+
         $stored = $map[$key.'@'.$locale] ?? null;
         if (! is_array($stored) || $stored === []) {
-            $stored = $map[$key] ?? null;
+            $stored = null;
         }
 
-        $defaults = $this->marketingListDefaultsEn()[$key] ?? [];
+        if ($stored !== null) {
+            return $this->marketingApplyPendingMedia(marketing_merge_stored_list($translated, $stored));
+        }
 
-        if (is_array($stored) && $stored !== []) {
-            $merged = [];
-            foreach (array_values($stored) as $i => $item) {
-                if (! is_array($item)) {
-                    continue;
-                }
-                $clean = array_filter($item, fn ($v) => $v !== '' && $v !== null);
-                $merged[] = array_merge($defaults[$i] ?? [], $clean);
+        $base = $map[$key] ?? null;
+        if (! is_array($base) || $base === []) {
+            $base = null;
+        }
+
+        if ($isDefaultLocale) {
+            return $base !== null
+                ? $this->marketingApplyPendingMedia(marketing_merge_stored_list($defaults, $base))
+                : $defaults;
+        }
+
+        return $base !== null
+            ? $this->marketingApplyPendingMedia(marketing_inherit_shared_list_fields($translated, $base))
+            : $translated;
+    }
+
+    /**
+     * A card video still converting: re-display the pending upload in the
+     * editor while the site keeps rendering "image".
+     *
+     * @param  array<int, array<string, mixed>>  $list
+     * @return array<int, array<string, mixed>>
+     */
+    protected function marketingApplyPendingMedia(array $list): array
+    {
+        foreach ($list as $i => $item) {
+            if (is_array($item)
+                && isset($item['image_source'])
+                && is_string($item['image_source'])
+                && $item['image_source'] !== '') {
+                $list[$i]['image'] = $item['image_source'];
             }
-
-            // A card video still converting: re-display the pending upload
-            // in the editor while the site keeps rendering "image".
-            foreach ($merged as $i => $item) {
-                if (is_array($item)
-                    && isset($item['image_source'])
-                    && is_string($item['image_source'])
-                    && $item['image_source'] !== '') {
-                    $merged[$i]['image'] = $item['image_source'];
-                }
-            }
-
-            return $merged ?: $defaults;
         }
 
-        if ($locale === 'en') {
-            return $defaults;
-        }
-
-        return $this->translateMarketingList($defaults, $locale);
+        return $list;
     }
 
     /**

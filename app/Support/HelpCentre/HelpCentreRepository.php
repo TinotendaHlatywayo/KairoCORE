@@ -75,22 +75,51 @@ final class HelpCentreRepository
      */
     public function all(): array
     {
+        return $this->allForLocale(app()->getLocale());
+    }
+
+    /**
+     * All published articles for a locale. Localised Markdown lives under
+     * resources/docs/{locale}/{category}/{slug}.md and overrides the English
+     * file with the same category + slug; anything not translated falls back
+     * to the English article so the Help Centre is never half-empty.
+     *
+     * @return array<int, HelpArticle>
+     */
+    private function allForLocale(string $locale): array
+    {
         // Cache plain arrays, not objects: HelpArticle uses readonly
         // properties, which PHP cannot unserialize from file/redis stores.
-        $rows = Cache::remember('help-centre.articles', 600, function (): array {
-            $articles = [];
+        $rows = Cache::remember('help-centre.articles.'.$locale, 600, function () use ($locale): array {
             $base = resource_path('docs');
 
             if (! is_dir($base)) {
                 return [];
             }
 
+            $localisedDir = $base.'/'.$locale;
+            $hasLocalised = $locale !== 'en' && is_dir($localisedDir);
+
+            $byKey = [];
+
+            // English first, then overlay the translated article when present.
             foreach (glob($base.'/*/*.md') ?: [] as $file) {
                 $article = $this->loadFile($file);
                 if ($article !== null && $article->published) {
-                    $articles[] = $article;
+                    $byKey[$article->category.'/'.$article->slug] = $article;
                 }
             }
+
+            if ($hasLocalised) {
+                foreach (glob($localisedDir.'/*/*.md') ?: [] as $file) {
+                    $article = $this->loadFile($file);
+                    if ($article !== null && $article->published) {
+                        $byKey[$article->category.'/'.$article->slug] = $article;
+                    }
+                }
+            }
+
+            $articles = array_values($byKey);
 
             usort($articles, function (HelpArticle $a, HelpArticle $b): int {
                 $cat = $this->categoryOrder($a->category) <=> $this->categoryOrder($b->category);
@@ -165,8 +194,8 @@ final class HelpCentreRepository
         foreach ($byCategory as $key => $count) {
             $categories[] = [
                 'key' => $key,
-                'label' => self::CATEGORY_LABELS[$key] ?? str($key)->replace('-', ' ')->title(),
-                'description' => self::CATEGORY_DESCRIPTIONS[$key] ?? '',
+                'label' => self::labelFor($key),
+                'description' => self::descriptionFor($key),
                 'count' => $count,
             ];
         }
@@ -244,11 +273,31 @@ final class HelpCentreRepository
     }
 
     /**
-     * Clears the cache — call after editing Markdown in a deployment.
+     * Translated display label for a category folder.
+     */
+    public static function labelFor(string $category): string
+    {
+        $key = self::CATEGORY_LABELS[$category] ?? str($category)->replace('-', ' ')->title();
+
+        return __($key);
+    }
+
+    /**
+     * Translated one-line description for a category folder.
+     */
+    public static function descriptionFor(string $category): string
+    {
+        return __(self::CATEGORY_DESCRIPTIONS[$category] ?? '');
+    }
+
+    /**
+     * Clears every locale's cache — call after editing Markdown in a deployment.
      */
     public function flush(): void
     {
-        Cache::forget('help-centre.articles');
+        foreach (array_keys(supported_locales()) as $locale) {
+            Cache::forget('help-centre.articles.'.$locale);
+        }
     }
 
     private function loadFile(string $file): ?HelpArticle

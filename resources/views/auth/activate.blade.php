@@ -60,7 +60,7 @@
 
                         <div class="mb-3">
                             <label class="form-label fw-semibold text-secondary">{{ __('New Password') }}</label>
-                            <input type="password" name="password" id="password" class="form-control @error('password') is-invalid @enderror" placeholder="Min. 8 chars, 1 capital, 1 number, 1 special" autocomplete="new-password" required>
+                            <input type="password" name="password" id="password" class="form-control @error('password') is-invalid @enderror" placeholder="{{ __('Min. 8 chars, 1 capital, 1 number, 1 special') }}" autocomplete="new-password" required>
                             <div id="password-feedback" class="mt-2">
                                 <div id="pw-char" class="check-item text-danger"><span id="pw-char-icon">✕</span> {{ __('8 Characters') }}</div>
                                 <div id="pw-special" class="check-item text-danger"><span id="pw-special-icon">✕</span> {{ __('At least 1 special character') }}</div>
@@ -74,7 +74,7 @@
 
                         <div class="mb-3">
                             <label class="form-label fw-semibold text-secondary">{{ __('Confirm Password') }}</label>
-                            <input type="password" name="password_confirmation" id="password_confirmation" class="form-control @error('password') is-invalid @enderror" placeholder="Re-enter password" autocomplete="new-password" required>
+                            <input type="password" name="password_confirmation" id="password_confirmation" class="form-control @error('password') is-invalid @enderror" placeholder="{{ __('Re-enter password') }}" autocomplete="new-password" required>
                             @error('password')
                                 <div class="invalid-feedback d-block">{{ $message }}</div>
                             @enderror
@@ -147,17 +147,17 @@
                         if (!usernameAllowed.test(ch) && !seen[ch]) { seen[ch] = true; bad.push(ch); }
                     }
                     if (value === '') {
-                        unFb.textContent = 'Username is required.';
+                        unFb.textContent = @js(__('Username is required.'));
                         unFb.classList.remove('d-none');
                         un.classList.add('is-invalid');
                         un.classList.remove('is-valid');
                     } else if (value.length < 3) {
-                        unFb.textContent = 'Username must be at least 3 characters.';
+                        unFb.textContent = @js(__('Username must be at least 3 characters.'));
                         unFb.classList.remove('d-none');
                         un.classList.add('is-invalid');
                         un.classList.remove('is-valid');
                     } else if (bad.length > 0) {
-                        unFb.textContent = 'Invalid character' + (bad.length > 1 ? 's' : '') + ': ' + bad.join(' ') + '. Only letters, numbers, spaces, dashes, underscores and dots are allowed.';
+                        unFb.textContent = @js(__('Invalid character(s): :chars. Only letters, numbers, spaces, dashes, underscores and dots are allowed.', ['chars' => '__CHARS__'])).replace('__CHARS__', bad.join(' '));
                         unFb.classList.remove('d-none');
                         un.classList.add('is-invalid');
                         un.classList.remove('is-valid');

@@ -57,13 +57,12 @@ class HelpCentreController extends Controller
         $articles = $this->repository->inCategory($category);
         abort_if($articles === [], 404);
 
-        $label = HelpCentreRepository::CATEGORY_LABELS[$category]
-            ?? str($category)->replace('-', ' ')->title();
+        $label = HelpCentreRepository::labelFor($category);
 
         return view('help-centre.category', [
             'category' => $category,
             'label' => $label,
-            'description' => HelpCentreRepository::CATEGORY_DESCRIPTIONS[$category] ?? '',
+            'description' => HelpCentreRepository::descriptionFor($category),
             'articles' => $articles,
             'categories' => $this->repository->categories(),
             'seoJsonLd' => [
@@ -82,8 +81,7 @@ class HelpCentreController extends Controller
         $article = $this->repository->find($category, $slug);
         abort_if($article === null, 404);
 
-        $label = HelpCentreRepository::CATEGORY_LABELS[$category]
-            ?? str($category)->replace('-', ' ')->title();
+        $label = HelpCentreRepository::labelFor($category);
 
         $html = $article->renderHtml();
 
