@@ -5,28 +5,32 @@ category: finance
 slug: purchasing
 order: 5
 published: true
-updated: 2026-10-19
+updated: 2026-10-27
 ---
 
 # Purchasing, suppliers and stock
 
-Physical goods — supplies, textbooks, lab equipment — are managed in **Inventory & Procurement** in the workspace sidebar.
+Physical goods — supplies, textbooks, lab equipment — are managed in **Inventory & Procurement** in the workspace sidebar. This article covers the purchasing side from a finance perspective; see [Stock, procurement and fixed assets](/docs/inventory/stock-and-procurement) for the full operational guide.
 
 ## Suppliers
 
-Supplier records hold the vendors you buy from: contact details, terms, and history. Keep them current so purchase records stay linked to the right vendor.
+Open **Inventory & Procurement → Procurement → Suppliers** to keep the vendors you buy from current: contact details, terms and history. Purchase records stay linked to the right vendor.
 
 ## Procurement
 
-Open **Inventory & Procurement → Procurement** to work with purchase orders and the purchasing workflow. This is where you raise and track what the school is buying.
+The **Procurement** group follows a request → order → delivery flow:
+
+1. **Procurement Requests** — staff raise what they need, with line items, quantities and estimated costs. Requests move from **Draft** to **Approved**.
+2. **Purchase Orders** — approved requests become orders to a supplier, with order date, expected delivery date and priced line items.
+3. **Goods Received** — record what actually arrived against each order, including accepted and rejected quantities. Receiving updates stock automatically.
 
 ## Stock & inventory
 
-Open **Inventory & Procurement → Stock & Inventory** to see current holdings and adjustments. Stock adjustments record arrivals, issues and corrections so the count reflects reality.
+Open **Inventory & Procurement → Stock & Inventory** for current holdings, issuance to staff or departments, and **Stock Adjustments** that record arrivals, issues and corrections so counts reflect reality.
 
 ## Fixed assets
 
-**Inventory & Procurement → Fixed Assets** tracks higher-value items (furniture, computers, vehicles) over their life — useful for insurance schedules and audits.
+The **Fixed Assets** group tracks higher-value items (furniture, computers, vehicles) over their life: asset register, custodian and location, depreciation, and **Asset Maintenance** schedules. Useful for insurance schedules and audits.
 
 ## Expenses vs. procurement
 

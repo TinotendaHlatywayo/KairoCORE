@@ -85,11 +85,15 @@ class HelpCentreController extends Controller
         $label = HelpCentreRepository::CATEGORY_LABELS[$category]
             ?? str($category)->replace('-', ' ')->title();
 
+        $html = $article->renderHtml();
+
         return view('help-centre.article', [
             'article' => $article,
             'category' => $category,
             'categoryLabel' => $label,
-            'html' => $article->renderHtml(),
+            'html' => $html,
+            'toc' => HelpArticle::tocFromHtml($html),
+            'readMinutes' => $article->readMinutes(),
             'related' => $this->repository->related($article),
             'categories' => $this->repository->categories(),
             'seoJsonLd' => [

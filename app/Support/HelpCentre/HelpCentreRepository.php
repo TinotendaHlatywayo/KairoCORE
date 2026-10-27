@@ -16,6 +16,8 @@ final class HelpCentreRepository
 {
     /**
      * Human labels for the known category folders, in display order.
+     * Follows the workspace's module flow: setup → people → money →
+     * operations → systems.
      *
      * @var array<string, string>
      */
@@ -26,8 +28,16 @@ final class HelpCentreRepository
         'admissions' => 'Admissions',
         'finance' => 'Finance & fees',
         'exams' => 'Assessments & report cards',
-        'administration' => 'Administration & permissions',
+        'hr' => 'HR & payroll',
+        'inventory' => 'Inventory & procurement',
+        'library' => 'Library',
+        'boarding' => 'Boarding & welfare',
+        'health' => 'Health & clinic',
         'communication' => 'Announcements & communication',
+        'lms' => 'Learning (LMS)',
+        'website' => 'School website',
+        'reports' => 'Reports & analytics',
+        'administration' => 'Administration & permissions',
         'troubleshooting' => 'Troubleshooting',
     ];
 
@@ -43,8 +53,16 @@ final class HelpCentreRepository
         'admissions' => 'Receive and review applications from your school website, then admit students.',
         'finance' => 'Fee structures, invoicing, recording payments, balances, expenses and purchasing.',
         'exams' => 'Assessment types, marking, grading and producing report cards.',
-        'administration' => 'Staff accounts, custom roles and granular permissions.',
-        'communication' => 'Announcements and school-wide messaging.',
+        'hr' => 'Staff records, spreadsheet imports, salary grades, payroll, attendance and leave.',
+        'inventory' => 'Stock levels, procurement requests, purchase orders, suppliers and fixed assets.',
+        'library' => 'Book catalogue, e-resources, issuing and returns, and knowledge galleries.',
+        'boarding' => 'Hostels, rooms, allocations, out passes and welfare checks.',
+        'health' => 'Student medical records and clinic visit logs.',
+        'communication' => 'Announcements, events, chat and school-wide messaging.',
+        'lms' => 'Homework and online learning activities for your classes.',
+        'website' => 'Build and publish your school’s public website: pages, templates and content.',
+        'reports' => 'Dashboards, the report generator and the analytics explorer.',
+        'administration' => 'Staff accounts, custom roles, system settings and granular permissions.',
         'troubleshooting' => 'Common issues and how to resolve them.',
     ];
 
@@ -260,6 +278,10 @@ final class HelpCentreRepository
 
     private function categoryOrder(string $category): int
     {
-        return array_search($category, array_keys(self::CATEGORY_LABELS), true) ?: count(self::CATEGORY_LABELS);
+        $position = array_search($category, array_keys(self::CATEGORY_LABELS), true);
+
+        // array_search returns 0 for the first label ("Getting started"),
+        // which `?:` treated as missing and pushed to the end of the list.
+        return $position === false ? count(self::CATEGORY_LABELS) : $position;
     }
 }

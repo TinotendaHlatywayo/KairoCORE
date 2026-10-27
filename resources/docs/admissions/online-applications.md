@@ -5,7 +5,7 @@ category: admissions
 slug: online-applications
 order: 1
 published: true
-updated: 2026-10-19
+updated: 2026-10-27
 ---
 
 # Receive and process online applications
@@ -30,8 +30,8 @@ From the application you can admit the candidate. Admission creates the student 
 
 ## 4. Invoice the fees
 
-After admission, switch to **Finance → Student Invoices** and create the invoice (individually or with the auto-billing engine — see [Invoicing](/docs/finance/fee-structures-and-invoicing)).
+After admission, switch to **Finance → Student Billing & Revenue → Invoices** and create the invoice (individually or with the auto-billing engine — see [Invoicing](/docs/finance/fee-structures-and-invoicing)).
 
 ## Application statuses you will see
 
-Applications move through submitted / under review / admitted (and rejected where relevant). Always open the record rather than relying on the list colour alone — the full detail view shows everything that was submitted.
+Applications move through submitted, under review and admitted (and rejected where relevant). Always open the record rather than relying on the list colour alone — the full detail view shows everything that was submitted.

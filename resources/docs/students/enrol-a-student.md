@@ -5,7 +5,7 @@ category: students
 slug: enrol-a-student
 order: 1
 published: true
-updated: 2026-10-19
+updated: 2026-10-27
 ---
 
 # Enrol a student directly
@@ -18,8 +18,8 @@ You need an **academic year** and at least one **form or grade** (course) alread
 
 ## Steps
 
-1. Open **Students** in the workspace sidebar.
-2. Click **New Student** (or the create button on the students table).
+1. Open **Students → Students** in the workspace sidebar.
+2. Click **Create**.
 3. Fill in the student's details: names, gender, date of birth, and contact information.
 4. In the enrolment section of the same form, choose:
    - **Academic Year**

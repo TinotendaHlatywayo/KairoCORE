@@ -21,10 +21,11 @@ class HelpCentreTest extends TestCase
 
         // Help articles are plain Markdown files — no database needed for
         // rendering. The private-route guard test does touch sessions, so
-        // point the default connection at the local MySQL like sibling tests.
+        // point the default connection at the local MySQL like sibling tests
+        // (TEST_DB_* let the same suite run against a disposable Docker DB).
         Config::set('database.default', 'mysql');
-        Config::set('database.connections.mysql.database', 'schoolcore');
-        Config::set('database.connections.mysql.host', '127.0.0.1');
+        Config::set('database.connections.mysql.database', env('TEST_DB_NAME', 'schoolcore'));
+        Config::set('database.connections.mysql.host', env('TEST_DB_HOST', '127.0.0.1'));
         Config::set('database.connections.mysql.port', '3306');
         Config::set('database.connections.mysql.username', env('DB_USERNAME', 'root'));
         Config::set('database.connections.mysql.password', env('DB_PASSWORD', ''));
@@ -147,7 +148,12 @@ class HelpCentreTest extends TestCase
             $html = $this->get($path)->assertOk()->getContent();
 
             $this->assertStringNotContainsString('/workspace/', $html, "Private workspace path leaked on {$path}");
-            $this->assertStringNotContainsString('/platform/', $html, "Private platform path leaked on {$path}");
+
+            // The header's Login dropdown offers the public platform sign-in
+            // (an intentional public entry point since the login rework);
+            // every other /platform path is private and must stay unlinked.
+            $withoutPublicLogin = str_replace('/platform/login', '', $html);
+            $this->assertStringNotContainsString('/platform/', $withoutPublicLogin, "Private platform path leaked on {$path}");
         }
     }
 

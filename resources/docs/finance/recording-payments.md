@@ -5,7 +5,7 @@ category: finance
 slug: recording-payments
 order: 2
 published: true
-updated: 2026-10-19
+updated: 2026-10-27
 ---
 
 # Record payments against invoices
@@ -14,11 +14,11 @@ When money arrives (cash at the office, bank transfer, mobile money), record it 
 
 ## Record a payment
 
-1. Open **Finance → Student Invoices**.
+1. Open **Finance → Student Billing & Revenue → Invoices**.
 2. Find the student's invoice (search by name or invoice number).
 3. On the invoice row, click **Record Payment**.
-4. Enter the amount, payment method, date and any reference (receipt number from your bank, EcoCash transaction ID).
-5. Save.
+4. Enter the amount, payment method, date, and the reference (receipt number from your bank, EcoCash transaction ID).
+5. Choose the **deposit bank account**, then save.
 
 The invoice's **balance** recalculates: `total − payments`. A fully paid invoice shows a zero balance.
 
@@ -28,7 +28,7 @@ If you enter more than the outstanding balance, the system flags the overpayment
 
 ## Print a receipt
 
-After recording, click **Print Receipt** on the same row to give the payer proof of payment. Receipts carry your configured document branding and a security checksum.
+After recording, click **Print Receipt** on the same row to give the payer proof of payment. Receipts carry your configured document branding and a security checksum. **Print Selected Receipts** prints receipts for a batch of paid invoices.
 
 ## Family statements
 
@@ -36,8 +36,12 @@ Click **Print Statement** to produce a full payment history for the student or f
 
 ## Paynow (self-service)
 
-Rows with a balance also show **Pay via Paynow**, which opens the online checkout link — parents can pay online without the office capturing anything.
+Rows with a balance also show **Pay via Paynow**, which opens the online checkout link — parents can pay online without the office capturing anything. Online payments and uploaded **Payment Proofs** wait for your confirmation before they affect the balance.
 
 ## Export for your accounts
 
 **Export CSV** on the invoices table downloads the currently filtered list (invoice numbers, totals, balances) for your spreadsheet or accounting package.
+
+## Adjustments
+
+Use **Adjust Fee** on an invoice when a charge genuinely needs correcting, with a reason recorded for the audit trail. Never delete payment history.
