@@ -526,11 +526,13 @@ trait HasCsvBulkActions
         }
 
         $failures = collect($result['failures']);
+        $updated = (int) ($result['updated'] ?? 0);
+        $updatedNote = $updated > 0 ? ' '.__('Updated ').$updated.__(' existing record(s).') : '';
 
         if ($failures->isEmpty()) {
             Notification::make()
                 ->title(__('Import complete'))
-                ->body(__('Imported ').$result['success'].__(' of ').$result['total'].__(' records.'))
+                ->body(__('Imported ').$result['success'].__(' of ').$result['total'].__(' records.').$updatedNote)
                 ->success()
                 ->send();
 
@@ -543,7 +545,7 @@ trait HasCsvBulkActions
 
         Notification::make()
             ->title(__('Import finished with errors'))
-            ->body(__('Imported ').$result['success'].__(' of ').$result['total'].__(' records. ').$failures->count().__(' row(s) were rejected — download the error report below.'))
+            ->body(__('Imported ').$result['success'].__(' of ').$result['total'].__(' records.').$updatedNote.' '.$failures->count().__(' row(s) were rejected — download the error report below.'))
             ->warning()
             ->persistent()
             ->actions([

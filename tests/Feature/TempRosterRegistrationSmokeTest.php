@@ -9,6 +9,8 @@ use App\Models\User;
 use App\Services\Csv\EmployeeCsvService;
 use App\Services\RosterAccountProvisioningService;
 use App\Services\StudentCsvService;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -31,8 +33,10 @@ class TempRosterRegistrationSmokeTest extends TestCase
 
         Config::set('app.env', 'local');
         Config::set('database.default', 'mysql');
-        Config::set('database.connections.mysql.database', 'schoolcore');
-        Config::set('database.connections.mysql.host', '127.0.0.1');
+        // Defaults keep the historical local-host setup; the TEST_DB_* knobs
+        // let the suite run against a disposable database inside Docker too.
+        Config::set('database.connections.mysql.database', env('TEST_DB_NAME', 'schoolcore'));
+        Config::set('database.connections.mysql.host', env('TEST_DB_HOST', '127.0.0.1'));
         Config::set('database.connections.mysql.port', '3306');
         Config::set('database.connections.mysql.username', env('DB_USERNAME', 'root'));
         Config::set('database.connections.mysql.password', env('DB_PASSWORD', ''));
@@ -253,13 +257,17 @@ class TempRosterRegistrationSmokeTest extends TestCase
         $this->assertSame(User::STATUS_PENDING, $user->account_status, 'Imported staff accounts are created as pending so they receive an activation email to set their password.');
         $this->assertNotNull($user->activation_token, 'First-time import must issue an activation email.');
 
-        // Re-import same email: the email is already in use, so the row is
-        // rejected as a duplicate. No second account may be created and the
-        // existing account must keep its original activation token.
+        // Re-import the identical file: the row matches the existing employee
+        // on National ID, so it UPSERTS (updates) instead of being rejected as
+        // a duplicate email. No second account may be created, the employee
+        // count must not grow, and the existing account must keep its original
+        // activation token (activation is only ever issued on first creation).
         $tokenBefore = $user->activation_token;
         $result2 = EmployeeCsvService::import($path, $this->school->id, $map);
-        $this->assertSame(0, $result2['success']);
-        $this->assertNotEmpty($result2['failures'], 'A duplicate email row must be reported as a validation failure.');
+        $this->assertSame(1, $result2['success'], 'An identical re-upload is a harmless upsert, not a wall of duplicate errors.');
+        $this->assertSame([], array_values(array_filter($result2['failures'])));
+        $this->assertSame(1, $result2['updated'], 'The matched row must be counted as an update.');
+        $this->assertSame(1, Employee::query()->where('school_id', $this->school->id)->count(), 'Re-import must not create a second employee.');
         $users = User::withoutGlobalScopes()->where('school_id', $this->school->id)->get();
         $this->assertSame(1, $users->count(), 'Re-import must not create a second account.');
         $this->assertSame($tokenBefore, $users->first()->activation_token, 'Activation email must only be sent on first creation.');
@@ -295,10 +303,10 @@ class TempRosterRegistrationSmokeTest extends TestCase
         $user->forceFill(['activation_token_expires_at' => now()->subHour()])->save();
 
         $controller = new ActivationController;
-        $request = \Illuminate\Http\Request::create('/activate/request', 'POST', ['email' => 'chipo.dube@example.com']);
+        $request = Request::create('/activate/request', 'POST', ['email' => 'chipo.dube@example.com']);
         $response = $controller->resend($request);
 
-        $this->assertInstanceOf(\Illuminate\Http\RedirectResponse::class, $response);
+        $this->assertInstanceOf(RedirectResponse::class, $response);
         $this->assertNotNull($user->fresh()->activation_token, 'A fresh link must be issued for roster accounts with expired links.');
     }
 
