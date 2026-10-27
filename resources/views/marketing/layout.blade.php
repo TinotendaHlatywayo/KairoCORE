@@ -3,7 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="msvalidate.01" content="73BA1442529B66591DF90CB78368BC43">
+    @if (config('services.google.site_verification') || env('GOOGLE_SITE_VERIFICATION'))
+        <meta name="google-site-verification" content="{{ config('services.google.site_verification') ?: env('GOOGLE_SITE_VERIFICATION') }}">
+    @endif
+    @if (config('services.bing.site_verification') || env('BING_SITE_VERIFICATION'))
+        <meta name="msvalidate.01" content="{{ config('services.bing.site_verification') ?: env('BING_SITE_VERIFICATION') }}">
+    @else
+        <meta name="msvalidate.01" content="73BA1442529B66591DF90CB78368BC43">
+    @endif
     @php
         $metaTitle = trim((string) $__env->yieldContent('meta_title'));
         if ($metaTitle === '') {

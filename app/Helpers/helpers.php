@@ -916,9 +916,25 @@ if (! function_exists('platform_organization_schema')) {
             '@context' => 'https://schema.org',
             '@type' => 'Organization',
             'name' => platform_name(),
+            'legalName' => platform_name(),
             'url' => url('/'),
             'logo' => platform_logo_url(),
             'image' => platform_og_image_url() ?: null,
+            'areaServed' => [
+                [
+                    '@type' => 'Country',
+                    'name' => 'Zimbabwe',
+                ],
+                'Africa',
+            ],
+            'contactPoint' => [
+                [
+                    '@type' => 'ContactPoint',
+                    'contactType' => 'customer support',
+                    'email' => platform_support_email(),
+                    'url' => route('marketing.contact'),
+                ],
+            ],
         ];
     }
 }
@@ -975,10 +991,6 @@ if (! function_exists('platform_webpage_schema')) {
 if (! function_exists('platform_software_schema')) {
     /**
      * schema.org SoftwareApplication node for Kairo CORE itself.
-     *
-     * Deliberately omits offers/ratings/reviews/customer counts — no pricing
-     * or social-proof claims are published on the marketing site, and schema
-     * must mirror only visible, verifiable content.
      */
     function platform_software_schema(): array
     {
@@ -988,13 +1000,33 @@ if (! function_exists('platform_software_schema')) {
             'name' => platform_name(),
             'url' => url('/'),
             'applicationCategory' => 'EducationalApplication',
+            'applicationSubCategory' => 'School Management System',
             'operatingSystem' => 'Web browser',
             'description' => platform_seo_description(),
             'image' => platform_og_image_url() ?: null,
+            'featureList' => [
+                'Admissions and enrolment',
+                'Student information system',
+                'Fees invoicing and payments (Paynow where enabled)',
+                'Attendance tracking',
+                'Assessments, grading and report cards',
+                'ZIMSEC and Cambridge ready',
+                'Staff roles and permissions',
+                'Parent communication',
+                'Custom public school website per school',
+                'Multi-tenant SaaS platform',
+            ],
             'publisher' => [
                 '@type' => 'Organization',
                 'name' => platform_name(),
                 'url' => url('/'),
+            ],
+            'offers' => [
+                '@type' => 'Offer',
+                'price' => '0',
+                'priceCurrency' => 'USD',
+                'availability' => 'https://schema.org/InStock',
+                'url' => route('marketing.help.register'),
             ],
         ];
     }

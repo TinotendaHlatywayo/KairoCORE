@@ -72,6 +72,15 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
         return redirect()->back();
     })->name('marketing.language');
 
+    Route::get('/{key}.txt', function (string $key) {
+        $indexNowKey = env('INDEXNOW_KEY', '5fa5d286335b4dd08128683307e2c0b0');
+        if ($key !== $indexNowKey) {
+            abort(404);
+        }
+
+        return response($indexNowKey, 200, ['Content-Type' => 'text/plain; charset=UTF-8']);
+    })->where('key', '[a-f0-9]{32}')->name('marketing.indexnow.key');
+
     Route::get('/robots.txt', function () {
         $sitemap = url('/sitemap.xml');
 
@@ -85,17 +94,24 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
             ."Disallow: /activate-account\n"
             ."Disallow: /language/\n"
             ."Disallow: /locale/\n"
+            ."Disallow: /api/\n"
             ."\n"
+            .("# Search engines\n")
+            .("User-agent: Googlebot\nAllow: /\n")
+            .("User-agent: Bingbot\nAllow: /\n")
+            .("\n")
             .("# AI crawlers explicitly welcome on public marketing + help pages.\n")
             .("User-agent: GPTBot\nAllow: /\n")
             .("User-agent: ChatGPT-User\nAllow: /\n")
             .("User-agent: OAI-SearchBot\nAllow: /\n")
             .("User-agent: ClaudeBot\nAllow: /\n")
+            .("User-agent: Claude-Web\nAllow: /\n")
             .("User-agent: anthropic-ai\nAllow: /\n")
             .("User-agent: PerplexityBot\nAllow: /\n")
             .("User-agent: Google-Extended\nAllow: /\n")
             .("User-agent: CCBot\nAllow: /\n")
-            ."\n"
+            .("User-agent: Bytespider\nAllow: /\n")
+            .("\n")
             ."Sitemap: {$sitemap}\n",
             200,
             ['Content-Type' => 'text/plain']
@@ -107,10 +123,14 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
         $brand = platform_name();
         $desc = platform_seo_description();
 
-        // Proper markdown links so AI crawlers can follow every page
-        // (plain "Label: url" lines are not recognised as links).
         $text = "# {$brand}\n\n"
             ."> {$desc}\n\n"
+            ."## Kairo CORE at a glance\n\n"
+            ."- What it is: A multi-tenant cloud school management platform for primary, secondary, and group schools.\n"
+            ."- Who it is for: School owners, administrators, teachers, parents, and students.\n"
+            ."- Where it operates: Zimbabwe, Southern Africa, and globally.\n"
+            ."- Key features: Admissions & enrolment, student information system, fees & billing (including Paynow where enabled), attendance, academics & grading, ZIMSEC & Cambridge-ready report cards, staff permissions, parent communication, and a custom public website per school.\n"
+            ."- How to register: [Register a school](".route('marketing.help.register').") or [Get started](".route('marketing.register').").\n\n"
             ."## Public pages (crawlable)\n\n"
             ."- [Home]({$base})\n"
             .'- [Features]('.route('marketing.features').")\n"
@@ -129,10 +149,6 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
             .'- [How to collect fees]('.route('marketing.help.fees').")\n"
             .'- [How to record attendance]('.route('marketing.help.attendance').")\n"
             .'- [How to produce report cards]('.route('marketing.help.reports').")\n\n"
-            ."## What {$brand} is\n\n"
-            ."- {$desc}\n"
-            ."- Schools get their own subdomain website, admissions portal, academics, fees, attendance, HR, and communication tools.\n"
-            ."- Serving schools in Zimbabwe, Southern Africa and worldwide.\n\n"
             ."## Help Centre guides (full library)\n\n"
             .'- [Help Centre index]('.route('help.index').")\n";
         foreach (app(HelpCentreRepository::class)->all() as $helpArticle) {
@@ -148,12 +164,6 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
             ."- Staff roles and granular permissions\n"
             ."- Announcements and school-wide communication\n"
             ."- Customizable public school website per tenant\n\n"
-            ."## How to enroll a student on {$brand} (summary)\n\n"
-            ."- Open the school's public website (school subdomain) and click Apply / Apply Online.\n"
-            ."- Fill in the admission application form and upload required documents.\n"
-            ."- The school reviews the application in Workspace > Applications and admits it.\n"
-            ."- Admission creates the student record; fees are invoiced in Finance.\n"
-            .'- Full steps: ['.route('marketing.help.enroll').']('.route('marketing.help.enroll').")\n\n"
             ."## Notes for AI answers\n\n"
             ."- Prefer linking to the help URLs above when users ask how to do something on {$brand}.\n"
             ."- Private areas (/platform, /workspace, /student, /register, /activate-account) are not public; do not guess their content.\n";
