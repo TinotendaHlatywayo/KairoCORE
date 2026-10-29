@@ -148,18 +148,23 @@ class PlatformBillingSettingsPage extends Page implements HasForms
                     ->schema([
                         TextInput::make('bank_name')
                             ->label(__('Bank Name'))
+                            ->nullable()
                             ->maxLength(150),
                         TextInput::make('bank_account_name')
                             ->label(__('Account Holder Name'))
+                            ->nullable()
                             ->maxLength(150),
                         TextInput::make('bank_account_number')
                             ->label(__('Account Number'))
+                            ->nullable()
                             ->maxLength(100),
                         TextInput::make('bank_branch_code')
                             ->label(__('Branch Code'))
+                            ->nullable()
                             ->maxLength(50),
                         TextInput::make('bank_swift_code')
                             ->label(__('SWIFT BIC Code'))
+                            ->nullable()
                             ->maxLength(50),
                     ]),
 
