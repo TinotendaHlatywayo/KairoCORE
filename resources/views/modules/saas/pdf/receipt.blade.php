@@ -64,7 +64,7 @@
     @include('modules.saas.pdf.partials.footer', [
         'cfg' => $cfg,
         'checksumLabel' => __('Security checksum:'),
-        'checksumValue' => $receipt->integrity_hash,
+        'checksumValue' => $receipt->verification_token,
     ])
 </body>
 </html>
