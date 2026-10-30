@@ -20,7 +20,7 @@ class SeoIndexNow extends Command
         $urls = [];
 
         if (! empty($this->option('url'))) {
-            $urls = $this->option('url');
+            $urls = (array) $this->option('url');
         } else {
             $sitemapUrl = 'https://kairo.co.zw/sitemap.xml';
             try {
@@ -70,3 +70,12 @@ class SeoIndexNow extends Command
         return self::SUCCESS;
     }
 }
+
+    protected function getUrlsFromArgs(): array
+    {
+        $urls = $this->option('url');
+        if (is_array($urls) && ! empty($urls)) {
+            return $urls;
+        }
+        return [];
+    }
