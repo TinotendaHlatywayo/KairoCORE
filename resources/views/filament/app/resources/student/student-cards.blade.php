@@ -218,13 +218,11 @@
                         ? trim(($enrollment->course?->name ?? '') . ' ' . ($enrollment->section?->name ?? '')) ?: 'Unassigned'
                         : 'Unassigned';
 
-                    $statusColor = match ($student->status) {
-                        'active' => '#10b981',
-                        'suspended' => '#ef4444',
-                        'inactive' => '#f59e0b',
-                        'graduated' => 'var(--sc-primary-500)',
-                        default => '#64748b',
-                    };
+                    $user = $student->user;
+                    $isActivated = $user && ($user->activated_at || $user->account_status === \App\Models\User::STATUS_ACTIVE);
+
+                    $statusLabel = $isActivated ? __('Active') : __('Pending');
+                    $statusColor = $isActivated ? '#10b981' : '#f59e0b';
 
                     $age = $student->date_of_birth
                         ? \Carbon\Carbon::parse($student->date_of_birth)->age
@@ -235,7 +233,7 @@
                     $printUrl = route('students.print-cards', ['ids' => $student->id, 'layout' => 'pvc']);
                 @endphp
                 <div class="student-card" style="--status: {{ $statusColor }};">
-                    <span class="card-status">{{ ucfirst($student->status) }}</span>
+                    <span class="card-status">{{ $statusLabel }}</span>
 
                     <span class="sc-card-select">
                         <input type="checkbox" value="{{ $student->getKey() }}" x-model="selectedRecords"

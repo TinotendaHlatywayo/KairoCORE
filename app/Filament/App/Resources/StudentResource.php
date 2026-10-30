@@ -530,7 +530,7 @@ class StudentResource extends Resource
                 ]),
             ])
             ->content(fn () => view('filament.app.resources.student.student-cards'))
-            ->modifyQueryUsing(fn (Builder $query) => $query->with(['currentEnrollment.course', 'currentEnrollment.section']))
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['currentEnrollment.course', 'currentEnrollment.section', 'user']))
             ->paginated([8, 16, 24, 48, 'all'])
             ->defaultPaginationPageOption(8)
             ->defaultSort('created_at', 'desc');

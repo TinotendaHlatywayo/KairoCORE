@@ -11,13 +11,11 @@
         <div class="sc-card-grid">
             @foreach ($records as $employee)
                 @php
-                    $statusColor = match ($employee->status) {
-                        'active' => '#10b981',
-                        'suspended' => '#ef4444',
-                        'on_leave' => '#f59e0b',
-                        'terminated' => 'var(--sc-primary-500)',
-                        default => '#64748b',
-                    };
+                    $user = $employee->user;
+                    $isActivated = $user && ($user->activated_at || $user->account_status === \App\Models\User::STATUS_ACTIVE);
+
+                    $statusLabel = $isActivated ? __('Active') : __('Pending');
+                    $statusColor = $isActivated ? '#10b981' : '#f59e0b';
 
                     $fullName = trim(($employee->first_name ?? '') . ' ' . ($employee->last_name ?? '')) ?: __('Unnamed Employee');
                     $designation = $employee->designation ?: ($employee->role ?: '—');
@@ -37,7 +35,7 @@
                     $recordKey = $employee->getKey();
                 @endphp
                 <div class="sc-card" style="--sc-card-color: {{ $statusColor }};">
-                    <span class="sc-card-status">{{ ucwords(str_replace('_', ' ', $employee->status ?? 'active')) }}</span>
+                    <span class="sc-card-status">{{ $statusLabel }}</span>
 
                     <span class="sc-card-select">
                         <input type="checkbox" value="{{ $recordKey }}" x-model="selectedRecords"
