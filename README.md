@@ -2,7 +2,7 @@
 
   <img src="https://raw.githubusercontent.com/TinotendaHlatywayo/KairoCORE/main/public/images/KairoCORE_Logo_transparent.png" alt="KairoCORE Logo" width="220" />
 
-  # 🏫 Kairo CORE
+  
   ### **School Central Operation & Resource Environment**
 
   <p><b>Every tool your school needs.</b> From admissions to analytics, KairoCORE brings the day-to-day running of your school into one connected platform.</p>
