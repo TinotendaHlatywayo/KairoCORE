@@ -221,14 +221,22 @@ class AnnouncementResource extends Resource
                     }),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make()
+                // A plain Action (not ViewAction) so the modal renders ONLY the
+                // announcement preview — ViewAction also injects the resource's
+                // entire admin form into the modal, which looked like the whole
+                // page was being printed.
+                Action::make('viewAnnouncement')
                     ->label(__('View Announcement'))
+                    ->icon('heroicon-o-eye')
+                    ->color('info')
                     ->modalHeading(fn (Announcement $record) => $record->title)
                     ->modalWidth('6xl')
                     ->modalContent(fn (Announcement $record) => view(
                         'filament.app.resources.announcement-preview',
                         ['notice' => $record]
-                    )),
+                    ))
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel(__('Close')),
                 Tables\Actions\EditAction::make(),
 
                 Action::make('publish')

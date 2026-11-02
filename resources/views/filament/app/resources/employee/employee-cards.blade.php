@@ -12,7 +12,15 @@
             @foreach ($records as $employee)
                 @php
                     $user = $employee->user;
-                    $isActivated = $user && ($user->activated_at || $user->account_status === \App\Models\User::STATUS_ACTIVE);
+                    // Green "Active" only for accounts that actually completed
+                    // activation (activated_at) AND are allowed through the
+                    // login gate (account_status = active). The account_status
+                    // column defaults to 'active' in the DB, so it alone must
+                    // never light the badge up — otherwise never-activated
+                    // portal accounts show as Active.
+                    $isActivated = $user
+                        && $user->account_status === \App\Models\User::STATUS_ACTIVE
+                        && $user->activated_at;
 
                     $statusLabel = $isActivated ? __('Active') : __('Pending');
                     $statusColor = $isActivated ? '#10b981' : '#f59e0b';
