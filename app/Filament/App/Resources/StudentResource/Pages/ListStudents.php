@@ -157,11 +157,17 @@ class ListStudents extends ListRecords
             return;
         }
 
+        $reasonSummary = $failures
+            ->flatMap(fn (array $f): array => $f['errors'])
+            ->countBy()
+            ->map(fn (int $count, string $reason): string => $reason.' ('.$count.')')
+            ->implode('; ');
+
         $failedCsv = $this->buildFailedRowsCsv($result['failures']);
 
         Notification::make()
             ->title(__('Import finished with errors'))
-            ->body('Imported '.$result['success'].' of '.$result['total'].' students. '.$failures->count().' row(s) were rejected — download the error report below.')
+            ->body('Imported '.$result['success'].' of '.$result['total'].' students. '.$failures->count().' row(s) were rejected. Reasons: '.$reasonSummary.'. Download the rejected rows below.')
             ->warning()
             ->duration(15)
             ->actions([

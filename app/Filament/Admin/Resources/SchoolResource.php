@@ -250,6 +250,10 @@ class SchoolResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('id')
+                    ->label(__('School ID'))
+                    ->sortable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('name')
                     ->label(__('Institution'))
                     ->searchable()

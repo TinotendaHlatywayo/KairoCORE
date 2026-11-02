@@ -53,7 +53,7 @@ class StudentCsvService extends CsvBulkService
             ],
             'date_of_birth' => [
                 'label' => __('Date of Birth'),
-                'required' => true,
+                'required' => false,
                 'guesses' => ['Date of Birth', 'DOB', 'Birth Date'],
                 'example' => '2013-05-14',
                 'date' => true,
@@ -499,7 +499,7 @@ class StudentCsvService extends CsvBulkService
                         'first_name' => $data['first_name'],
                         'last_name' => $data['last_name'],
                         'gender' => $data['gender'],
-                        'date_of_birth' => $data['date_of_birth'],
+                        'date_of_birth' => $data['date_of_birth'] !== '' ? $data['date_of_birth'] : null,
                         'admission_date' => $admissionDate,
                         'status' => $data['status'] !== '' ? $data['status'] : 'active',
                         'house' => $data['house'] !== '' ? $data['house'] : null,
@@ -654,7 +654,10 @@ class StudentCsvService extends CsvBulkService
 
             if ($raw === '') {
                 if ($dateField === 'date_of_birth') {
-                    $errors[] = 'Date of Birth is required (column empty or not mapped).';
+                    // Date of Birth is now optional — leave blank and continue.
+                    $data[$dateField] = '';
+
+                    continue;
                 }
 
                 continue;

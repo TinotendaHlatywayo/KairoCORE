@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('first_name');
             $table->string('last_name');
             $table->enum('gender', ['male', 'female', 'other'])->required();
-            $table->date('date_of_birth');
+            $table->date('date_of_birth')->nullable();
             $table->date('admission_date');
             $table->string('status')->default('active'); // active, inactive, suspended, graduated
             $table->string('avatar_path')->nullable();
