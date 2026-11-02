@@ -78,3 +78,12 @@ public/images/*.zip
 public/images/*_frames/
 public/images/*_frames (1)/
 
+# Unnecessary binaries, backups and docs
+*.deb
+*.docx
+*.backup-*
+start_school.sh
+localhost+4-key.pem
+localhost+4.pem
+
+
