@@ -446,6 +446,12 @@ class StudentCsvService extends CsvBulkService
             ->map(fn ($v): string => strtolower(trim((string) $v)))
             ->flip();
 
+        $existingStudentFingerprints = Student::withoutTenantScope()
+            ->where('school_id', $schoolId)
+            ->get()
+            ->map(fn (Student $s): string => strtolower(trim($s->first_name)).'|'.strtolower(trim($s->last_name)).'|'.strtolower(trim((string) $s->gender)).'|'.($s->date_of_birth ? $s->date_of_birth->format('Y-m-d') : ''))
+            ->flip();
+
         $success = 0;
         $failures = [];
         $processed = 0;
@@ -470,7 +476,7 @@ class StudentCsvService extends CsvBulkService
                 continue;
             }
 
-            $errors = static::validateAndNormalize($data, $courses, $sectionsByCourse, $academicYears, $activeAcademicYear, $existingNationalIds, $existingStudentIds);
+            $errors = static::validateAndNormalize($data, $courses, $sectionsByCourse, $academicYears, $activeAcademicYear, $existingNationalIds, $existingStudentIds, $existingStudentFingerprints);
 
             if (! empty($errors)) {
                 $failures[] = ['row' => $rowNumber, 'errors' => $errors, 'data' => $data];
@@ -480,7 +486,7 @@ class StudentCsvService extends CsvBulkService
             }
 
             try {
-                DB::transaction(function () use (&$existingNationalIds, &$existingStudentIds, $data, $schoolId, &$activationSent, &$activationFailed) {
+                DB::transaction(function () use (&$existingNationalIds, &$existingStudentIds, &$existingStudentFingerprints, $data, $schoolId, &$activationSent, &$activationFailed) {
                     $course = $data['_course'];
                     $section = $data['_section'];
                     $year = $data['_academic_year'];
@@ -530,6 +536,9 @@ class StudentCsvService extends CsvBulkService
                     if (filled($student->student_id_number)) {
                         $existingStudentIds[strtolower(trim($student->student_id_number))] = true;
                     }
+
+                    $fingerprint = strtolower(trim($student->first_name)).'|'.strtolower(trim($student->last_name)).'|'.strtolower(trim((string) $student->gender)).'|'.($student->date_of_birth ? $student->date_of_birth->format('Y-m-d') : '');
+                    $existingStudentFingerprints[$fingerprint] = true;
 
                     // Provision portal account and send activation email for the new student
                     $user = app(RosterAccountProvisioningService::class)->provisionStudent($student);
@@ -589,6 +598,7 @@ class StudentCsvService extends CsvBulkService
         ?AcademicYear $activeAcademicYear,
         Collection $existingNationalIds,
         Collection $existingStudentIds,
+        Collection $existingStudentFingerprints,
     ): array {
         $errors = [];
 
@@ -715,6 +725,11 @@ class StudentCsvService extends CsvBulkService
 
         if ($data['student_id_number'] !== '' && isset($existingStudentIds[strtolower($data['student_id_number'])])) {
             $errors[] = 'Student ID ['.$data['student_id_number'].'] is already registered for a student in this school.';
+        }
+
+        $fingerprint = strtolower(trim($data['first_name'])).'|'.strtolower(trim($data['last_name'])).'|'.strtolower(trim($data['gender'])).'|'.($data['date_of_birth'] !== '' ? $data['date_of_birth'] : '');
+        if (isset($existingStudentFingerprints[$fingerprint])) {
+            $errors[] = 'Duplicate student: '.$data['first_name'].' '.$data['last_name'].' ('.$data['gender'].', '.($data['date_of_birth'] !== '' ? $data['date_of_birth'] : 'no DOB').') is already registered in this school.';
         }
 
         $data['_course'] = $course;
