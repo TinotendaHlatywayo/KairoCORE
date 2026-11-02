@@ -26,7 +26,7 @@
 ---
 
 ## 👨‍💻 Architect & Lead Developer
-Crafted with precision, architectural rigor, and uncompromising quality by **Tinotenda Hlatywayo**. KairoCORE represents the pinnacle of modern edtech software engineering—combining high-performance backend architecture with a gorgeous, user-centric interface.
+Crafted with precision, architectural rigor, and uncompromising quality by **Sigvarda Technology**. KairoCORE represents the pinnacle of modern edtech software engineering—combining high-performance backend architecture with a gorgeous, user-centric interface.
 
 ---
 
@@ -107,6 +107,6 @@ composer dev
 ### **Explore KairoCORE Live**
 [kairo.co.zw](https://kairo.co.zw) • [Register / Demo](https://kairo.co.zw/register) • [Contact Support](https://kairo.co.zw/contact)
 
-<p>Designed & Developed with excellence by <b>Tinotenda Hlatywayo</b></p>
+<p>Designed & Developed with excellence by <b>Sigvarda Technologies</b></p>
 
 </div>
