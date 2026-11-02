@@ -674,7 +674,12 @@ class StudentCsvService extends CsvBulkService
             }
 
             try {
-                $data[$dateField] = Carbon::parse($raw)->toDateString();
+                if (is_numeric($raw) && (float) $raw > 30000) {
+                    // Excel date serial number (days since 1899-12-30)
+                    $data[$dateField] = Carbon::createFromTimestampUTC(((float) $raw - 25569) * 86400)->toDateString();
+                } else {
+                    $data[$dateField] = Carbon::parse($raw)->toDateString();
+                }
             } catch (\Throwable) {
                 $errors[] = static::columns()[$dateField]['label'].' ['.$raw.'] is not a valid date. Use YYYY-MM-DD.';
             }

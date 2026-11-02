@@ -502,7 +502,7 @@ abstract class CsvBulkService
 
         try {
             $reader = new XlsxReader;
-            $reader->setReadDataOnly(true);
+            $reader->setReadDataOnly(false);
             $sheet = $reader->load($filePath)->getActiveSheet();
 
             $out = fopen('php://temp', 'r+');
