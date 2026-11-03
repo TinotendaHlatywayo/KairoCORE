@@ -1073,3 +1073,8 @@ Route::post('/student/paynow/sandbox-complete', function (Request $request) {
     return redirect('/student/my-fees')
         ->with('filament.notifications', [['title' => 'Payment Successful!', 'body' => 'Your fee payment via Paynow was processed successfully.', 'status' => 'success']]);
 })->name('student.paynow.sandbox-complete')->middleware(['auth']);
+
+Route::post('/clear-login-splash', function () {
+    session()->forget(['show_kairo_splash', 'kairo_splash_data']);
+    return response()->json(['ok' => true]);
+})->name('clear.login.splash')->middleware(['auth']);

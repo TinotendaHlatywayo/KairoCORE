@@ -138,6 +138,27 @@ class Login extends BaseLogin
         LoginSecurityService::clear($email, $ip);
 
         if ($user) {
+            $school = method_exists($user, 'school') ? $user->school : null;
+            $profileSchoolName = class_exists('\Modules\Admin\Models\SystemSetting') ? \Modules\Admin\Models\SystemSetting::get('profile', 'school_name') : null;
+            $schoolName = $profileSchoolName ?: ($school?->name ?? 'Kairo CORE');
+
+            $customLogo = $school ? \Modules\Admin\Models\SystemSetting::get('branding', 'logo_path') : null;
+            $logoUrl = platform_logo_url();
+            if (! empty($customLogo)) {
+                $logoUrl = asset('storage/' . $customLogo);
+            } elseif ($school && ! empty($school->logo_path)) {
+                $logoUrl = asset('storage/' . $school->logo_path);
+            }
+
+            session(['show_kairo_splash' => true]);
+            session([
+                'kairo_splash_data' => [
+                    'name' => $user->name,
+                    'school' => $schoolName,
+                    'logo' => $logoUrl,
+                ]
+            ]);
+
             session()->flash('login_greeting', [
                 'message' => match ((int) now()->format('G')) {
                     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 => 'Good morning',

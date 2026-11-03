@@ -81,6 +81,11 @@ class StudentPanelProvider extends PanelProvider
             ])
 
             ->renderHook(
+                PanelsRenderHook::BODY_START,
+                fn () => view('partials.login-splash')
+            )
+
+            ->renderHook(
                 'panels::head.end',
                 fn () => view('modules.cms.dynamic-styles')
             )

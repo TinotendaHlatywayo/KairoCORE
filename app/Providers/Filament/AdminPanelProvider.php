@@ -91,6 +91,10 @@ class AdminPanelProvider extends PanelProvider
                 Css::make('panel-tailwind', asset(Vite::asset('resources/css/panel-tailwind.css'))),
             ])
             ->renderHook(
+                PanelsRenderHook::BODY_START,
+                fn () => view('partials.login-splash')
+            )
+            ->renderHook(
                 PanelsRenderHook::HEAD_END,
                 fn () => view('filament.admin.partials.platform-theme-styles')
             )

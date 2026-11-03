@@ -169,6 +169,11 @@ class AppPanelProvider extends PanelProvider
                 ),
             ])
 
+            ->renderHook(
+                PanelsRenderHook::BODY_START,
+                fn () => view('partials.login-splash')
+            )
+
             // Inject custom styles and dynamic themes in head
             ->renderHook(
                 'panels::head.end',

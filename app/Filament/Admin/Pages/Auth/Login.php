@@ -85,6 +85,18 @@ class Login extends BaseLogin
         session()->regenerate();
         LoginSecurityService::clear($email, $ip);
 
+        $user = Filament::auth()->user();
+        if ($user) {
+            session(['show_kairo_splash' => true]);
+            session([
+                'kairo_splash_data' => [
+                    'name' => $user->name,
+                    'school' => 'Kairo CORE Platform Admin',
+                    'logo' => platform_logo_url(),
+                ]
+            ]);
+        }
+
         return app(LoginResponse::class);
     }
 }
