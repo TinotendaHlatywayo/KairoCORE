@@ -223,13 +223,27 @@ class TempFinancialHistoryTemplateIntegrityTest extends TestCase
         file_put_contents($tmp, $bytes);
 
         $reader = new Xlsx;
-        $reader->setReadDataOnly(true);
+        $reader->setReadDataOnly(false); // keep styles so data validations survive the round-trip
         $spreadsheet = $reader->load($tmp);
 
         $titles = collect($spreadsheet->getAllSheets())->map(fn ($s) => $s->getTitle())->values()->all();
-        $this->assertSame(['Import Data', 'Balance Summary', 'Change Log'], $titles);
+        $this->assertSame(['Import Data', 'How to Fill This File', 'Balance Summary', 'Change Log'], $titles);
         $this->assertSame(0, $spreadsheet->getActiveSheetIndex(), 'the import data sheet must stay active');
         $this->assertSame('Import Data', $spreadsheet->getActiveSheet()->getTitle());
+
+        // The guide sheet documents every importable column and the dropdowns
+        // exist on the data sheet's type/method columns.
+        $guide = $spreadsheet->getSheet(1);
+        $this->assertStringContainsString('Academic Year', (string) $guide->getCell('A11'));
+        $this->assertStringContainsString('created automatically', (string) $guide->getCell('C11'));
+
+        $typeValidation = $spreadsheet->getSheet(0)->getDataValidation('B2');
+        $this->assertNotNull($typeValidation, 'Transaction Type column must carry a dropdown list');
+        $this->assertStringContainsString('debit_carry_forward', (string) $typeValidation->getFormula1());
+
+        $methodValidation = $spreadsheet->getSheet(0)->getDataValidation('H2');
+        $this->assertNotNull($methodValidation, 'Payment Method column must carry a dropdown list');
+        $this->assertStringContainsString('bank_transfer', (string) $methodValidation->getFormula1());
 
         @unlink($tmp);
     }

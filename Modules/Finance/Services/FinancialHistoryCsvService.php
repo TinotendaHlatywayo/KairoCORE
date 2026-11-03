@@ -14,7 +14,9 @@ use Modules\Finance\Models\Payment;
 use Modules\Finance\Models\SchoolBankAccount;
 use Modules\Students\Models\Student;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 /**
@@ -496,21 +498,99 @@ class FinancialHistoryCsvService extends CsvBulkService
     {
         if (($context['scope'] ?? 'full') === 'full') {
             static::appendTemplateSheets($spreadsheet);
-
-            return;
+        } else {
+            $sheet = $spreadsheet->createSheet();
+            $sheet->setTitle('Template Scope');
+            static::writeSheetRows($sheet, [
+                ['Selected Scope', (string) ($context['label'] ?? '')],
+                ['Period Start', (string) ($context['start'] ?? '')],
+                ['Period End', (string) ($context['end'] ?? '')],
+                ['Template Basis', 'Examples in the Import Data sheet are limited to this period. Replace the sample learner IDs, amounts and dates with your own records before importing.'],
+            ]);
         }
 
-        $sheet = $spreadsheet->createSheet();
-        $sheet->setTitle('Template Scope');
-        static::writeSheetRows($sheet, [
-            ['Selected Scope', (string) ($context['label'] ?? '')],
-            ['Period Start', (string) ($context['start'] ?? '')],
-            ['Period End', (string) ($context['end'] ?? '')],
-            ['Template Basis', 'Examples in the Import Data sheet are limited to this period. Replace the sample learner IDs, amounts and dates with your own records before importing.'],
-        ]);
+        static::appendInstructionsSheet($spreadsheet);
 
         $spreadsheet->getSheet(0)->setTitle('Import Data');
         $spreadsheet->setActiveSheetIndex(0);
+    }
+
+    /**
+     * Insert the "How to Fill This File" guide right after the data sheet and
+     * put dropdown lists on the Transaction Type / Payment Method columns, so
+     * every value the importer accepts is spelled out in the workbook itself.
+     * The data sheet stays sheet 0 and active — the importer reads the active
+     * sheet, and transcodeXlsxToCsv() walks getActiveSheet().
+     */
+    protected static function appendInstructionsSheet(Spreadsheet $spreadsheet): void
+    {
+        $sheet = $spreadsheet->createSheet(1);
+        $sheet->setTitle('How to Fill This File');
+
+        $rows = [
+            ['Column / Topic', 'Required', 'How to fill it in'],
+            ['Student ID', 'Yes', 'The school student ID or admission number (e.g. R260001A). Must match a student in this school; matching ignores upper/lower case.'],
+            ['Transaction Type', 'Yes', 'Pick from the dropdown. charge = a new invoice/fee owed; payment = money received; refund = money returned; waiver = discount granted on an invoice; debit_carry_forward = opening unpaid balance from before this system; credit_carry_forward = opening overpayment credit from before this system.'],
+            ['Date', 'Yes', 'Transaction date. YYYY-MM-DD recommended (e.g. 2026-01-15); other common date formats are also accepted.'],
+            ['Description / Fee Name', 'For charge & debit_carry_forward', 'What the charge is for, e.g. Tuition Fees, Exam Fees. Required on charge and debit_carry_forward rows, optional on the rest.'],
+            ['Amount (USD)', 'Yes', 'A positive number in US dollars (e.g. 250.00). Enter waivers and refunds as positive amounts — the transaction type decides the direction.'],
+            ['Receipt Number', 'Payments & refunds', 'Your receipt reference for the money received/returned, e.g. RCP-2026-0184. Optional free text.'],
+            ['Reference Number', 'Optional', 'Bank or mobile-money reference, e.g. FNB-88213. Free text.'],
+            ['Payment Method', 'Payments (defaults to cash)', 'Choose from the dropdown: cash, bank_transfer, mobile_money, card, other. Leave blank on non-payment rows.'],
+            ['Invoice Number', 'Optional', 'Leave blank to settle against the student\'s oldest open invoice automatically (oldest first). Fill in a specific invoice number (e.g. INV-2026-00042) to target that exact invoice.'],
+            ['Academic Year', 'Optional', 'e.g. 2026. Leave blank to use the school\'s current active year. If the year named in the file does not exist yet, it is created automatically during import — history from years like 2020 imports without any setup.'],
+            ['Term', 'Optional', 'e.g. Term 1. Leave blank if the row is not term-specific. If the term does not exist for that year, it is created automatically during import using the school\'s usual term dates.'],
+            ['Notes', 'Optional', 'Free text stored with the record, e.g. Part payment agreed with parent.'],
+            ['', '', ''],
+            ['Transaction types explained', '', 'charge creates a real invoice; payment settles invoices oldest-first; waiver applies a discount to an invoice; refund returns money and reduces the bank balance; the two carry-forward types record opening balances brought into the system.'],
+            ['Row order matters', '', 'For each student, put the charge (or carry-forward) rows BEFORE the payment/waiver rows that settle them — payments and waivers attach to the oldest open invoice at that point.'],
+            ['What the import does', '', 'Charges become invoices, payments settle them, waivers discount them, and overpayments become student credit. Everything lands in the student\'s financial history, statements and the school bank balance.'],
+            ['Academic years & terms', '', 'Any Academic Year or Term written in the file that does not exist in the system yet is created automatically (kept inactive), so historical years such as 2020 import without being set up first.'],
+            ['Sheet to edit', '', 'Fill in the Import Data sheet only — that is the sheet the importer reads. The other sheets are reference material.'],
+        ];
+
+        foreach ($rows as $r => $cells) {
+            foreach ($cells as $c => $value) {
+                $coordinate = Coordinate::stringFromColumnIndex($c + 1).($r + 1);
+                $sheet->setCellValue($coordinate, $value);
+
+                if ($r === 0) {
+                    $sheet->getStyle($coordinate)->getFont()->setBold(true);
+                }
+            }
+        }
+
+        $sheet->getStyle('A1:C'.$sheet->getHighestRow())
+            ->getAlignment()
+            ->setVertical(Alignment::VERTICAL_TOP)
+            ->setWrapText(true);
+
+        $sheet->getColumnDimension('A')->setWidth(26);
+        $sheet->getColumnDimension('B')->setWidth(14);
+        $sheet->getColumnDimension('C')->setWidth(110);
+        $sheet->freezePane('A2');
+
+        $dataSheet = $spreadsheet->getSheet(0);
+
+        $typeValidation = (new DataValidation)
+            ->setType(DataValidation::TYPE_LIST)
+            ->setAllowBlank(true)
+            ->setShowErrorMessage(true)
+            ->setErrorStyle(DataValidation::STYLE_WARNING)
+            ->setErrorTitle('Invalid transaction type')
+            ->setError('Choose one of: charge, payment, refund, waiver, debit_carry_forward, credit_carry_forward.')
+            ->setFormula1('"charge,payment,refund,waiver,debit_carry_forward,credit_carry_forward"');
+        $dataSheet->setDataValidation('B2:B1000', $typeValidation);
+
+        $methodValidation = (new DataValidation)
+            ->setType(DataValidation::TYPE_LIST)
+            ->setAllowBlank(true)
+            ->setShowErrorMessage(true)
+            ->setErrorStyle(DataValidation::STYLE_WARNING)
+            ->setErrorTitle('Invalid payment method')
+            ->setError('Choose one of: cash, bank_transfer, mobile_money, card, other.')
+            ->setFormula1('"cash,bank_transfer,mobile_money,card,other"');
+        $dataSheet->setDataValidation('H2:H1000', $methodValidation);
     }
 
     /**
@@ -734,7 +814,7 @@ class FinancialHistoryCsvService extends CsvBulkService
                 continue;
             }
 
-            $errors = static::validateAndNormalize($data, $students, $studentsByAdmission, $academicYears, $terms, $activeYear);
+            $errors = static::validateAndNormalize($data, $students, $studentsByAdmission, $academicYears, $terms, $activeYear, $schoolId);
 
             if (! empty($errors)) {
                 $failures[] = ['row' => $rowNumber, 'errors' => $errors, 'data' => $data];
@@ -769,6 +849,11 @@ class FinancialHistoryCsvService extends CsvBulkService
      * Validate + normalise one row. Lookups are attached to $data as
      * '_student', '_academic_year', '_term', '_date', '_amount'.
      *
+     * Academic years and terms named in the file but missing from the school
+     * are created on the fly (kept inactive) so historical files — e.g. one
+     * starting at 2020 — import without any manual setup first. Created rows
+     * are pushed into $academicYears/$terms so later rows reuse them.
+     *
      * @return array<int, string>
      */
     protected static function validateAndNormalize(
@@ -778,6 +863,7 @@ class FinancialHistoryCsvService extends CsvBulkService
         Collection $academicYears,
         Collection $terms,
         ?AcademicYear $activeYear,
+        int $schoolId = 0,
     ): array {
         $errors = [];
 
@@ -844,6 +930,9 @@ class FinancialHistoryCsvService extends CsvBulkService
         $year = null;
         if ($data['academic_year'] !== '') {
             $year = $academicYears[strtolower($data['academic_year'])] ?? null;
+            if (! $year && $schoolId) {
+                $year = static::ensureAcademicYear($schoolId, $data['academic_year'], $data['date'], $academicYears);
+            }
             if (! $year) {
                 $errors[] = 'Academic Year ['.$data['academic_year'].'] was not found in this school. Available years: '.($academicYears->pluck('name')->implode(', ') ?: 'none').'.';
             }
@@ -868,7 +957,11 @@ class FinancialHistoryCsvService extends CsvBulkService
 
             if ($resolved) {
                 $term = $resolved;
-            } else {
+            } elseif ($schoolId && $year) {
+                $term = static::ensureTerm($schoolId, $year, $data['term'], $terms);
+            }
+
+            if (! $term) {
                 $errors[] = 'Term ['.$data['term'].'] was not found'.($year ? ' for Academic Year ['.$year->name.']' : '').'. Available terms: '.($terms->pluck('name')->unique()->values()->implode(', ') ?: 'none').'.';
             }
         }
@@ -880,6 +973,137 @@ class FinancialHistoryCsvService extends CsvBulkService
         $data['_term'] = $term;
 
         return $errors;
+    }
+
+    /**
+     * Resolve an academic year by name, creating it when the school has no
+     * such year yet. Historical imports routinely reference years (2020,
+     * 2021, …) that predate the system — instead of rejecting every row we
+     * add the year on the fly. Created years stay inactive so the school's
+     * current active year is untouched; dates default to the full calendar
+     * year parsed out of the name (falling back to the row's date).
+     */
+    protected static function ensureAcademicYear(int $schoolId, string $name, string $date, Collection $academicYears): ?AcademicYear
+    {
+        $existing = AcademicYear::withoutTenantScope()
+            ->where('school_id', $schoolId)
+            ->whereRaw('LOWER(name) = ?', [strtolower($name)])
+            ->first();
+
+        if (! $existing) {
+            $yearNumber = preg_match('/(\d{4})/', $name, $m)
+                ? (int) $m[1]
+                : (int) Carbon::parse($date)->year;
+
+            $existing = AcademicYear::withoutTenantScope()->create([
+                'school_id' => $schoolId,
+                'name' => $name,
+                'start_date' => sprintf('%04d-01-01', $yearNumber),
+                'end_date' => sprintf('%04d-12-31', $yearNumber),
+                'is_active' => false,
+            ]);
+        }
+
+        $academicYears->put(strtolower(trim($name)), $existing);
+
+        return $existing;
+    }
+
+    /**
+     * Resolve a term inside an academic year, creating it when missing. The
+     * new term copies the month/day range of any existing same-named term
+     * elsewhere in the school (Term 1 usually runs Jan–Apr every year), so
+     * created history terms line up with the school's usual calendar. Without
+     * a pattern to copy, numbered terms fall back to school-style thirds and
+     * everything else covers the whole year. Created terms stay inactive.
+     */
+    protected static function ensureTerm(int $schoolId, AcademicYear $year, string $name, Collection $terms): ?Term
+    {
+        $existing = $terms->first(fn (Term $t): bool => strtolower(trim((string) $t->name)) === strtolower($name)
+            && (int) $t->academic_year_id === (int) $year->id
+        );
+
+        if (! $existing) {
+            $existing = Term::withoutTenantScope()
+                ->where('school_id', $schoolId)
+                ->where('academic_year_id', $year->id)
+                ->whereRaw('LOWER(name) = ?', [strtolower($name)])
+                ->first();
+        }
+
+        if (! $existing) {
+            [$start, $end] = static::termDateRange($year, $name, $terms);
+
+            $existing = Term::withoutTenantScope()->create([
+                'school_id' => $schoolId,
+                'academic_year_id' => $year->id,
+                'name' => $name,
+                'start_date' => $start,
+                'end_date' => $end,
+                'is_active' => false,
+            ]);
+        }
+
+        $terms->push($existing);
+
+        return $existing;
+    }
+
+    /**
+     * Pick start/end dates for a newly created term.
+     *
+     * 1. Copy the month/day pattern from an existing same-named term (any
+     *    year of the school) — Term 1 keeps its usual Jan–Apr window etc.
+     * 2. Otherwise fall back to a conventional split: named "Semester N"
+     *    halves, "Term/Semester N" (N<=3) school-style thirds, whole year.
+     *
+     * @return array{0: string, 1: string}
+     */
+    protected static function termDateRange(AcademicYear $year, string $name, Collection $terms): array
+    {
+        $yearNumber = preg_match('/(\d{4})/', (string) $year->name, $m)
+            ? (int) $m[1]
+            : (int) ($year->start_date?->year ?? now()->year);
+
+        $pattern = $terms->first(fn (Term $t): bool => strtolower(trim((string) $t->name)) === strtolower($name));
+
+        if ($pattern?->start_date && $pattern?->end_date) {
+            $startDay = min($pattern->start_date->day, Carbon::create($yearNumber, $pattern->start_date->month, 1)->daysInMonth);
+            $endDay = min($pattern->end_date->day, Carbon::create($yearNumber, $pattern->end_date->month, 1)->daysInMonth);
+            $start = Carbon::create($yearNumber, $pattern->start_date->month, $startDay);
+            $end = Carbon::create($yearNumber, $pattern->end_date->month, $endDay);
+
+            if ($end->lt($start)) {
+                $end->addYear(); // cross-year pattern (e.g. Dec–Jan)
+            }
+
+            return [$start->toDateString(), $end->toDateString()];
+        }
+
+        $month = 1;
+        $day = 1;
+        $endMonth = 12;
+        $endDay = 31;
+
+        if (preg_match('/(\d+)\s*$/', $name, $m)) {
+            $n = (int) $m[1];
+
+            if (preg_match('/sem/i', $name) && $n <= 2) {
+                // Semester 1 = Jan–Jun, Semester 2 = Jul–Dec.
+                [$month, $endMonth] = $n === 1 ? [1, 6] : [7, 12];
+                $endDay = $n === 1 ? 30 : 31;
+            } elseif ($n >= 1 && $n <= 3) {
+                // School-style thirds: T1 Jan–Apr, T2 May–Aug, T3 Sep–Dec.
+                $ranges = [1 => [1, 4, 30], 2 => [5, 8, 31], 3 => [9, 12, 31]];
+                [$month, $endMonth, $endDay] = $ranges[$n];
+                $day = 1;
+            }
+        }
+
+        $start = Carbon::create($yearNumber, $month, min($day, Carbon::create($yearNumber, $month, 1)->daysInMonth));
+        $end = Carbon::create($yearNumber, $endMonth, min($endDay, Carbon::create($yearNumber, $endMonth, 1)->daysInMonth));
+
+        return [$start->toDateString(), $end->toDateString()];
     }
 
     /**

@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Models\School;
 use Illuminate\Foundation\Testing\TestCase;
 use Illuminate\Support\Facades\DB;
+use Modules\Academics\Models\AcademicYear;
+use Modules\Academics\Models\Term;
 use Modules\Finance\Models\FinanceAuditLog;
 use Modules\Finance\Models\Invoice;
 use Modules\Finance\Models\InvoiceItem;
@@ -175,6 +177,105 @@ class TempFinancialHistoryImportTest extends TestCase
             $this->assertCount(2, $result['failures']);
             $this->assertStringContainsString('No student was found', $result['failures'][0]['errors'][0]);
             $this->assertStringContainsString('Transaction Type must be one of', $result['failures'][1]['errors'][0]);
+        } finally {
+            DB::rollBack();
+        }
+    }
+
+    public function test_creates_missing_academic_years_and_terms_during_import(): void
+    {
+        DB::beginTransaction();
+
+        try {
+            // The school's usual Term 1 window — the created history term
+            // must copy its month/day range.
+            $pattern = Term::withoutTenantScope()
+                ->where('school_id', $this->schoolId)
+                ->where('name', 'Term 1')
+                ->orderBy('id')
+                ->first();
+            $this->assertNotNull($pattern, 'fixture school must already have a Term 1 to copy dates from');
+
+            $student = Student::withoutTenantScope()->create([
+                'school_id' => $this->schoolId,
+                'student_id_number' => 'FINH-'.uniqid(),
+                'admission_number' => 'FINHADM-'.uniqid(),
+                'first_name' => 'Historic',
+                'last_name' => 'Import '.uniqid(),
+                'gender' => 'female',
+                'date_of_birth' => now()->subYears(15)->toDateString(),
+                'admission_date' => '2019-01-14',
+                'status' => 'active',
+            ]);
+
+            $this->assertFalse(
+                AcademicYear::withoutTenantScope()->where('school_id', $this->schoolId)->where('name', '2020')->exists(),
+                'precondition: 2020 must not exist yet'
+            );
+
+            $id = $student->student_id_number;
+            $rows = [
+                ['Student ID', 'Transaction Type', 'Date', 'Description / Fee Name', 'Amount (USD)', 'Receipt Number', 'Reference Number', 'Payment Method', 'Invoice Number', 'Academic Year', 'Term', 'Notes'],
+                [$id, 'charge', '2020-02-10', 'Tuition Fees', '150.00', '', '', '', '', '2020', 'Term 1', 'History from before the system'],
+                [$id, 'payment', '2020-02-20', '', '150.00', 'RCP-2020-0001', '', 'cash', '', '2020', 'Term 1', ''],
+            ];
+
+            $file = tempnam(sys_get_temp_dir(), 'finh-import');
+            $out = fopen($file, 'w');
+            fwrite($out, "\xEF\xBB\xBF");
+            foreach ($rows as $row) {
+                fputcsv($out, $row, escape: '\\');
+            }
+            fclose($out);
+
+            $columns = FinancialHistoryCsvService::columns();
+            $columnMap = array_combine(array_keys($columns), array_values(array_map(
+                fn ($c) => $c['label'],
+                $columns,
+            )));
+
+            $result = FinancialHistoryCsvService::import($file, $this->schoolId, $columnMap, null, [
+                'requester_id' => null,
+            ]);
+
+            $this->assertSame(['success' => 2, 'total' => 2, 'failures' => []], $result);
+
+            $year = AcademicYear::withoutTenantScope()
+                ->where('school_id', $this->schoolId)
+                ->where('name', '2020')
+                ->first();
+            $this->assertNotNull($year, 'the missing academic year must be auto-created');
+            $this->assertFalse((bool) $year->is_active, 'auto-created years stay inactive');
+            $this->assertSame('2020-01-01', $year->start_date->toDateString());
+            $this->assertSame('2020-12-31', $year->end_date->toDateString());
+
+            $term = Term::withoutTenantScope()
+                ->where('school_id', $this->schoolId)
+                ->where('academic_year_id', $year->id)
+                ->where('name', 'Term 1')
+                ->first();
+            $this->assertNotNull($term, 'the missing term must be auto-created under the new year');
+            $this->assertFalse((bool) $term->is_active, 'auto-created terms stay inactive');
+            $this->assertSame(
+                $pattern->start_date->format('m-d'),
+                $term->start_date->format('m-d'),
+                'created term copies the school usual Term 1 start month/day'
+            );
+            $this->assertSame(
+                $pattern->end_date->format('m-d'),
+                $term->end_date->format('m-d'),
+                'created term copies the school usual Term 1 end month/day'
+            );
+
+            $invoice = Invoice::withoutTenantScope()->where('student_id', $student->id)->firstOrFail();
+            $this->assertSame((int) $year->id, (int) $invoice->academic_year_id);
+            $this->assertSame((int) $term->id, (int) $invoice->term_id);
+
+            $payments = Payment::withoutTenantScope()->where('invoice_id', $invoice->id)->where('is_reversed', false)->get();
+            $this->assertCount(1, $payments);
+
+            $ledger = StudentFinancialHistoryService::buildLedger($student->refresh());
+            $this->assertEqualsWithDelta(0.0, (float) $ledger['closing_balance'], 0.001);
         } finally {
             DB::rollBack();
         }

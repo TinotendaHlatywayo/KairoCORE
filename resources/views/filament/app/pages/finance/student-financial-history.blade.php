@@ -218,22 +218,22 @@
                                 </x-filament::button>
                             </x-slot>
                             <x-filament::dropdown.list>
-                                <x-filament::dropdown.list.item icon="heroicon-o-document-plus" wire:click="mountAction('record_charge')">
+                                <x-filament::dropdown.list.item icon="heroicon-o-document-plus" wire:click="mountAction('record_charge')" x-on:click="close()">
                                     {{ __('Record Charge') }}
                                 </x-filament::dropdown.list.item>
-                                <x-filament::dropdown.list.item icon="heroicon-o-check-circle" wire:click="mountAction('record_payment')">
+                                <x-filament::dropdown.list.item icon="heroicon-o-check-circle" wire:click="mountAction('record_payment')" x-on:click="close()">
                                     {{ __('Record Payment') }}
                                 </x-filament::dropdown.list.item>
-                                <x-filament::dropdown.list.item icon="heroicon-o-banknotes" wire:click="mountAction('record_refund')">
+                                <x-filament::dropdown.list.item icon="heroicon-o-banknotes" wire:click="mountAction('record_refund')" x-on:click="close()">
                                     {{ __('Record Refund') }}
                                 </x-filament::dropdown.list.item>
-                                <x-filament::dropdown.list.item icon="heroicon-o-adjustments-horizontal" wire:click="mountAction('record_waiver')">
+                                <x-filament::dropdown.list.item icon="heroicon-o-adjustments-horizontal" wire:click="mountAction('record_waiver')" x-on:click="close()">
                                     {{ __('Record Waiver') }}
                                 </x-filament::dropdown.list.item>
-                                <x-filament::dropdown.list.item icon="heroicon-o-arrow-up-circle" wire:click="mountAction('record_debit_carry_forward')">
+                                <x-filament::dropdown.list.item icon="heroicon-o-arrow-up-circle" wire:click="mountAction('record_debit_carry_forward')" x-on:click="close()">
                                     {{ __('Record Debit Carry Forward') }}
                                 </x-filament::dropdown.list.item>
-                                <x-filament::dropdown.list.item icon="heroicon-o-arrow-down-circle" wire:click="mountAction('record_credit_carry_forward')">
+                                <x-filament::dropdown.list.item icon="heroicon-o-arrow-down-circle" wire:click="mountAction('record_credit_carry_forward')" x-on:click="close()">
                                     {{ __('Record Credit Carry Forward') }}
                                 </x-filament::dropdown.list.item>
                             </x-filament::dropdown.list>
