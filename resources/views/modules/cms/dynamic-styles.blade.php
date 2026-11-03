@@ -289,6 +289,10 @@
     }
     .fi-dropdown, .fi-dropdown-panel, .fi-dropdown-list, .fi-dropdown-header, .fi-dropdown-footer {
         overflow: visible !important;
+    }
+    /* Topbar/platform chrome dropdowns only — page-content dropdowns keep
+       Filaments default z-index so they never paint over an open modal. */
+    .fi-topbar .fi-dropdown, .fi-topbar .fi-dropdown-panel, .fi-topbar .fi-dropdown-list, .fi-topbar .fi-dropdown-header, .fi-topbar .fi-dropdown-footer {
         z-index: 99999 !important;
     }
     .fi-topbar-actions, .fi-user-menu {
