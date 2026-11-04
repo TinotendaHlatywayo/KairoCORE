@@ -2,6 +2,7 @@
 
 @section('title', marketing_content('meta_title') ?: platform_name().' - School Management System')
 @section('meta_description', marketing_content('meta_description') ?: __('Modern school management system for admissions, academics, fees, attendance, HR, communications and more.'))
+@section('seo_image', asset('images/KairoCORE_Home_thumbnail.png'))
 
 @push('styles')
 @include('marketing.partials.animations')

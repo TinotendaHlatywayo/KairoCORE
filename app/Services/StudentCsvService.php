@@ -16,6 +16,7 @@ use Modules\Students\Models\Student;
 
 class StudentCsvService extends CsvBulkService
 {
+    public static $missingStreamHandler = null;
     /**
      * Single source of truth for every student CSV feature.
      *
@@ -630,7 +631,44 @@ class StudentCsvService extends CsvBulkService
             'student_id_number', 'national_id', 'roll_number', 'parent_email',
             'email', 'phone', 'emergency_contact_phone',
         ] as $trimField) {
-            $data[$trimField] = trim($data[$trimField] ?? '');
+            $val = trim($data[$trimField] ?? '');
+            if (($trimField === 'national_id' || in_array($trimField, ['parent_email', 'email'], true)) && static::isPlaceholderValue($val)) {
+                $val = '';
+            }
+            $data[$trimField] = $val;
+        }
+
+        if (str_ends_with($data['academic_year'], '.0')) {
+            $data['academic_year'] = (string) (int) floatval($data['academic_year']);
+        }
+
+        // Normalize grade/course typos and numeric levels
+        $gradeRaw = $data['course'];
+        if (is_numeric($gradeRaw)) {
+            $gradeRaw = 'Grade ' . $gradeRaw;
+        }
+        $gradeRaw = str_ireplace(['garde', 'gr.'], ['grade', 'Grade'], $gradeRaw);
+        $data['course'] = static::normaliseText($gradeRaw);
+
+        // Normalize section/stream
+        $sectionRaw = $data['section'];
+        if (is_numeric($sectionRaw) && in_array(strtoupper($data['course']), ['ECD A', 'ECD B', 'ECD  B'])) {
+            $sectionRaw = 'A';
+        }
+        $data['section'] = strtoupper(static::normaliseText($sectionRaw));
+
+        // If course is blank but section is 'special class', set course to 'Special Class'
+        if ($data['course'] === '' && mb_strtolower($data['section']) === 'special class') {
+            $data['course'] = 'Special Class';
+        }
+
+        // If last_name is blank and first_name has multiple words, split them
+        if ($data['last_name'] === '' && str_contains($data['first_name'], ' ')) {
+            $parts = preg_split('/\s+/', $data['first_name']);
+            if (count($parts) > 1) {
+                $data['last_name'] = array_pop($parts);
+                $data['first_name'] = implode(' ', $parts);
+            }
         }
 
         if ($data['first_name'] === '') {
@@ -676,14 +714,8 @@ class StudentCsvService extends CsvBulkService
         foreach (['date_of_birth', 'admission_date'] as $dateField) {
             $raw = trim($data[$dateField] ?? '');
 
-            if ($raw === '') {
-                if ($dateField === 'date_of_birth') {
-                    // Date of Birth is now optional — leave blank and continue.
-                    $data[$dateField] = '';
-
-                    continue;
-                }
-
+            if ($raw === '' || static::isPlaceholderValue($raw)) {
+                $data[$dateField] = '';
                 continue;
             }
 
@@ -710,17 +742,42 @@ class StudentCsvService extends CsvBulkService
 
         $course = $courses->get(static::normaliseKey($data['course']));
         if (! $course) {
-            $errors[] = 'Form / Grade ['.$data['course'].'] was not found in this school. Available levels: '.($courses->pluck('name')->implode(', ') ?: 'none').'.';
-
-            return $errors;
+            if (static::$missingStreamHandler !== null) {
+                $schoolId = \App\Models\School::first()?->id ?? 1;
+                $created = call_user_func(static::$missingStreamHandler, $schoolId, $data['course'], $data['section']);
+                if ($created) {
+                    $courses = Course::withoutTenantScope()->where('school_id', $schoolId)->get()
+                        ->keyBy(fn (Course $c): string => static::normaliseKey($c->name));
+                    $sectionsByCourse = Section::withoutTenantScope()->where('school_id', $schoolId)->get()
+                        ->groupBy('course_id')
+                        ->map(fn (Collection $sections): Collection => $sections->keyBy(fn (Section $s): string => static::normaliseKey($s->name)));
+                    $course = $courses->get(static::normaliseKey($data['course']));
+                }
+            }
+            if (! $course) {
+                $errors[] = 'Form / Grade ['.$data['course'].'] was not found in this school. Available levels: '.($courses->pluck('name')->implode(', ') ?: 'none').'.';
+                return $errors;
+            }
         }
 
         $sections = $sectionsByCourse->get($course->id, collect());
         $section = $sections->get(static::normaliseKey($data['section']));
         if (! $section) {
-            $errors[] = 'Stream / Class ['.$data['section'].'] was not found under ['.$course->name.']. Available streams: '.($sections->pluck('name')->implode(', ') ?: 'none').'.';
-
-            return $errors;
+            if (static::$missingStreamHandler !== null) {
+                $schoolId = \App\Models\School::first()?->id ?? 1;
+                $created = call_user_func(static::$missingStreamHandler, $schoolId, $course->name, $data['section']);
+                if ($created) {
+                    $sectionsByCourse = Section::withoutTenantScope()->where('school_id', $schoolId)->get()
+                        ->groupBy('course_id')
+                        ->map(fn (Collection $sections): Collection => $sections->keyBy(fn (Section $s): string => static::normaliseKey($s->name)));
+                    $sections = $sectionsByCourse->get($course->id, collect());
+                    $section = $sections->get(static::normaliseKey($data['section']));
+                }
+            }
+            if (! $section) {
+                $errors[] = 'Stream / Class ['.$data['section'].'] was not found under ['.$course->name.']. Available streams: '.($sections->pluck('name')->implode(', ') ?: 'none').'.';
+                return $errors;
+            }
         }
 
         $year = $data['academic_year'] !== ''
@@ -927,6 +984,12 @@ class StudentCsvService extends CsvBulkService
         return $map[$normalised] ?? $normalised;
     }
 
+    public static function isPlaceholderValue(string $value): bool
+    {
+        $normalised = mb_strtolower(trim($value));
+        return in_array($normalised, ['n/a', 'na', 'nil', 'n\a', 'none', '-', 'null', 'unknown', ''], true);
+    }
+
     /**
      * Parse the date formats people actually type, returning Y-m-d or null.
      *
@@ -936,11 +999,17 @@ class StudentCsvService extends CsvBulkService
      */
     protected static function parseDateValue(string $raw): ?string
     {
-        $raw = static::normaliseText($raw);
+        $raw = trim((string) $raw);
 
-        if ($raw === '') {
+        if ($raw === '' || ctype_space($raw) || static::isPlaceholderValue($raw)) {
             return '';
         }
+
+        // Handle backslashes and spaces in dates (e.g. 13\10\14 or 02 04 2013)
+        $raw = str_replace(['\\', ' '], ['/', '/'], $raw);
+        // Handle typos like letter 'l' instead of '1'
+        $raw = str_ireplace('l', '1', $raw);
+        $raw = (string) preg_replace('/[\/\-\.]+/', '/', $raw);
 
         if (preg_match('/^\d{8}$/', $raw) === 1) {
             $year = (int) substr($raw, 0, 4);
@@ -980,6 +1049,29 @@ class StudentCsvService extends CsvBulkService
             return checkdate($month, $day, $year)
                 ? sprintf('%04d-%02d-%02d', $year, $month, $day)
                 : null;
+        }
+
+        if (preg_match('#^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2})$#', $raw, $m) === 1) {
+            $first = (int) $m[1];
+            $second = (int) $m[2];
+            $yy = (int) $m[3];
+            $year = $yy < 50 ? 2000 + $yy : 1900 + $yy;
+
+            if ($first > 12 || $second > 12) {
+                if ($first > 12 && checkdate($second, $first, $year)) {
+                    return sprintf('%04d-%02d-%02d', $year, $second, $first);
+                }
+
+                if ($second > 12 && checkdate($first, $second, $year)) {
+                    return sprintf('%04d-%02d-%02d', $year, $first, $second);
+                }
+
+                return null;
+            }
+
+            if ($first > 0 && $second > 0 && checkdate($first, $second, $year)) {
+                return sprintf('%04d-%02d-%02d', $year, $first, $second);
+            }
         }
 
         if (preg_match('#^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$#', $raw, $m) === 1) {

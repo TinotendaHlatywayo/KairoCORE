@@ -840,7 +840,7 @@ if (! function_exists('platform_og_image_url')) {
      */
     function platform_og_image_url(): string
     {
-        return platform_branding_asset_url('platform_og_image', 'images/kairocore-link-preview.jpg');
+        return platform_branding_asset_url('platform_og_image', 'images/KairoCORE_link_preview.png');
     }
 }
 

@@ -514,7 +514,7 @@ abstract class CsvBulkService
 
         try {
             $reader = IOFactory::createReaderForFile($filePath);
-            $reader->setReadDataOnly(false);
+            $reader->setReadDataOnly(true);
             $sheet = $reader->load($filePath)->getActiveSheet();
 
             $out = fopen('php://temp', 'r+');
