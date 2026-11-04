@@ -213,12 +213,16 @@ trait HasCsvBulkActions
                 ->acceptedFileTypes([
                     'text/csv',
                     'text/plain',
+                    'text/comma-separated-values',
                     'text/x-csv',
                     'application/csv',
                     'application/vnd.ms-excel',
                     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    'application/zip',
+                    'application/x-zip-compressed',
+                    'application/octet-stream',
                 ])
-                ->maxSize(4096)
+                ->maxSize(20480)
                 ->required()
                 ->live()
                 ->disk('public')
@@ -482,7 +486,7 @@ trait HasCsvBulkActions
         if (empty($headers)) {
             Notification::make()
                 ->title(__('Import not started — no column headings detected'))
-                ->body(__('The first row of your file must contain the column headings (e.g. "First Name", "Last Name", "Gender"). Download the template again, fill it in, and re-upload your file as an Excel (XLSX) or CSV file.'))
+                ->body(__('The first row of your file must contain the column headings (e.g. "First Name", "Last Name", "Gender"). Download the template again, fill it in, and re-upload your file as an Excel (XLSX/XLS) or CSV file.'))
                 ->danger()
                 ->duration(8)
                 ->send();
@@ -530,6 +534,17 @@ trait HasCsvBulkActions
         $updatedNote = $updated > 0 ? ' '.__('Updated ').$updated.__(' existing record(s).') : '';
 
         if ($failures->isEmpty()) {
+            if ((int) $result['success'] === 0) {
+                Notification::make()
+                    ->title(__('No records were imported'))
+                    ->body(__('No data rows were found below the column headings. Fill in at least one row and upload the file again.'))
+                    ->warning()
+                    ->duration(10)
+                    ->send();
+
+                return;
+            }
+
             Notification::make()
                 ->title(__('Import complete'))
                 ->body(__('Imported ').$result['success'].__(' of ').$result['total'].__(' records.').$updatedNote)

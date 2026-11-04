@@ -101,7 +101,7 @@ class ListStudents extends ListRecords
         if (! $file) {
             Notification::make()
                 ->title(__('No file uploaded'))
-                ->body('Upload an Excel (XLSX) or CSV file in the first step before importing.')
+                ->body(__('Upload an Excel (XLSX/XLS) or CSV file in the first step before importing.'))
                 ->danger()
                 ->send();
 
@@ -148,6 +148,17 @@ class ListStudents extends ListRecords
         $failures = collect($result['failures']);
 
         if ($failures->isEmpty()) {
+            if ((int) $result['success'] === 0) {
+                Notification::make()
+                    ->title(__('No students were imported'))
+                    ->body(__('No data rows were found below the column headings. Fill in at least one student row and upload the file again.'))
+                    ->warning()
+                    ->duration(10)
+                    ->send();
+
+                return;
+            }
+
             Notification::make()
                 ->title(__('Import complete'))
                 ->body('Imported '.$result['success'].' of '.$result['total'].' students.')

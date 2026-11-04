@@ -13,7 +13,7 @@ use Modules\Finance\Models\Account;
 use Modules\HR\Models\Employee;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
-use PhpOffice\PhpSpreadsheet\Reader\Xlsx as XlsxReader;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx as XlsxWriter;
 
@@ -96,10 +96,11 @@ abstract class CsvBulkService
             return [];
         }
 
-        static::skipHeaderBlock($handle); // skip header block
+        $delimiter = static::csvDelimiter($filePath);
+        static::skipHeaderBlock($handle, $delimiter, $headers); // skip header block
 
         $values = [];
-        while (($row = fgetcsv($handle, 0, ',', escape: '\\')) !== false) {
+        while (($row = fgetcsv($handle, 0, $delimiter, escape: '\\')) !== false) {
             $value = trim((string) ($row[$index] ?? ''));
 
             if ($value !== '') {
@@ -457,43 +458,54 @@ abstract class CsvBulkService
             $path = storage_path('app/public/'.$file);
         }
 
-        // Excel workbooks are transcoded to CSV once so every existing reader
+        // Excel workbooks (both the modern .xlsx and legacy .xls that users
+        // often save) are transcoded to CSV once so every existing reader
         // (header preview, mapping, row iteration, reference values) keeps
         // working unchanged.
-        if (static::fileFormat($path) === 'xlsx') {
+        if (in_array(static::fileFormat($path), ['xlsx', 'xls'], true)) {
             return static::transcodeXlsxToCsv($path);
         }
 
         return $path;
     }
 
-    /** Detect whether a file is an .xlsx workbook (by magic bytes, with an extension fallback). */
+    /**
+     * Detect the real file format from its magic bytes.
+     *
+     * The extension is ignored on purpose: a CSV that a user renamed to .xlsx
+     * (or an old .xls export) must still be read correctly.
+     */
     protected static function fileFormat(string $filePath): string
     {
         if (! is_readable($filePath)) {
             return 'csv';
         }
 
-        if (! str_ends_with(strtolower($filePath), '.xlsx')) {
-            $handle = fopen($filePath, 'rb');
+        $handle = fopen($filePath, 'rb');
 
-            if ($handle !== false) {
-                $magic = (string) fread($handle, 4);
-                fclose($handle);
-
-                if (! str_starts_with($magic, "PK\x03\x04")) {
-                    return 'csv';
-                }
-            }
+        if ($handle === false) {
+            return 'csv';
         }
 
-        return 'xlsx';
+        $magic = (string) fread($handle, 8);
+        fclose($handle);
+
+        if (str_starts_with($magic, "PK\x03\x04")) {
+            return 'xlsx';
+        }
+
+        // Legacy Excel 97-2003 OLE compound document.
+        if (str_starts_with($magic, "\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1")) {
+            return 'xls';
+        }
+
+        return 'csv';
     }
 
     /** Cache of transcoded Excel workbooks keyed by the original path. */
     protected static array $transcodedXlsx = [];
 
-    /** Convert an .xlsx workbook to a temporary CSV file (BOM + rows). */
+    /** Convert an Excel workbook (.xlsx or .xls) to a temporary CSV file (BOM + rows). */
     protected static function transcodeXlsxToCsv(string $filePath): string
     {
         if (isset(static::$transcodedXlsx[$filePath])) {
@@ -501,7 +513,7 @@ abstract class CsvBulkService
         }
 
         try {
-            $reader = new XlsxReader;
+            $reader = IOFactory::createReaderForFile($filePath);
             $reader->setReadDataOnly(false);
             $sheet = $reader->load($filePath)->getActiveSheet();
 
@@ -540,37 +552,149 @@ abstract class CsvBulkService
         return static::$transcodedXlsx[$filePath] = $tmp;
     }
 
-    /** Read the header row of an uploaded CSV (BOM-safe, skips leading blank rows). */
-    public static function readCsvHeaders(string $filePath): array
+    /** Cache of scanned header rows keyed by service + file path. */
+    protected static array $csvHeaderCache = [];
+
+    /**
+     * Locate an uploaded file's header row.
+     *
+     * Users often leave a title, notes or blank rows above the real headings,
+     * and files exported from Excel/Sheets may be comma, semicolon, tab or pipe
+     * separated. We scan the first few non-blank rows, score each candidate by
+     * how many cells look like one of this service's columns, and use the
+     * best-scoring row. Falls back to the first non-blank row so files with
+     * unknown column names still get a usable (if incomplete) preview.
+     *
+     * @return array{headers: array<int, string>, delimiter: string}
+     */
+    protected static function scanCsvHeader(string $filePath): array
     {
+        $cacheKey = static::class.'|'.$filePath;
+
+        if (isset(static::$csvHeaderCache[$cacheKey])) {
+            return static::$csvHeaderCache[$cacheKey];
+        }
+
         if (! is_readable($filePath)) {
-            return [];
+            return static::$csvHeaderCache[$cacheKey] = ['headers' => [], 'delimiter' => ','];
         }
 
         $handle = fopen($filePath, 'r');
 
         if ($handle === false) {
-            return [];
+            return static::$csvHeaderCache[$cacheKey] = ['headers' => [], 'delimiter' => ','];
         }
 
-        $headers = [];
-        while (($line = fgets($handle)) !== false) {
-            $line = trim($line);
+        $firstLine = null;
+        $bestHeaders = [];
+        $bestDelimiter = ',';
+        $bestScore = 0;
+        $scanned = 0;
 
-            if ($line === '') {
+        while (($line = fgets($handle)) !== false && $scanned < 30) {
+            // Strip any leading UTF-8 BOM bytes (cell trimming handles the newline).
+            $line = (string) preg_replace('/^(?:\xEF\xBB\xBF)+/', '', $line);
+
+            if (trim($line) === '') {
                 continue;
             }
 
-            // Strip any leading UTF-8 BOM bytes from the first non-blank line.
-            $line = preg_replace('/^(?:\xEF\xBB\xBF)+/', '', $line);
-            $headers = str_getcsv($line, escape: '\\');
+            $scanned++;
+            $firstLine ??= $line;
 
-            break;
+            foreach ([',', ';', "\t", '|'] as $delimiter) {
+                $cells = array_map('trim', str_getcsv($line, $delimiter, '"', '\\'));
+
+                if (count($cells) < 2) {
+                    continue;
+                }
+
+                $score = static::headerMatchCount($cells);
+
+                if ($score > $bestScore || ($score === $bestScore && $score > 0 && count($cells) > count($bestHeaders))) {
+                    $bestHeaders = $cells;
+                    $bestDelimiter = $delimiter;
+                    $bestScore = $score;
+                }
+            }
+
+            // A row matching at least three known columns is almost certainly
+            // the header; stop before data rows can pollute the scan.
+            if ($bestScore >= 3) {
+                break;
+            }
         }
 
         fclose($handle);
 
-        return array_map('trim', array_map('strval', $headers ?: []));
+        if ($bestHeaders === [] && $firstLine !== null) {
+            $bestDelimiter = static::detectDelimiter($firstLine);
+            $bestHeaders = array_map('trim', str_getcsv($firstLine, $bestDelimiter, '"', '\\'));
+        }
+
+        return static::$csvHeaderCache[$cacheKey] = [
+            'headers' => array_map('strval', $bestHeaders),
+            'delimiter' => $bestDelimiter,
+        ];
+    }
+
+    /** Pick the delimiter that splits a line into the most cells. */
+    protected static function detectDelimiter(string $line): string
+    {
+        $best = ',';
+        $bestCount = 1;
+
+        foreach ([',', ';', "\t", '|'] as $delimiter) {
+            if (! str_contains($line, $delimiter)) {
+                continue;
+            }
+
+            $count = count(str_getcsv($line, $delimiter, '"', '\\'));
+
+            if ($count > $bestCount) {
+                $best = $delimiter;
+                $bestCount = $count;
+            }
+        }
+
+        return $best;
+    }
+
+    /** How many cells in a row match one of this service's known column names. */
+    protected static function headerMatchCount(array $headers): int
+    {
+        $known = [];
+
+        foreach (static::columns() as $key => $column) {
+            $known[static::normaliseHeader((string) $key)] = true;
+            $known[static::normaliseHeader((string) ($column['label'] ?? ''))] = true;
+
+            foreach (($column['guesses'] ?? []) as $guess) {
+                $known[static::normaliseHeader((string) $guess)] = true;
+            }
+        }
+
+        $count = 0;
+
+        foreach ($headers as $header) {
+            if ($header !== '' && isset($known[static::normaliseHeader($header)])) {
+                $count++;
+            }
+        }
+
+        return $count;
+    }
+
+    /** Delimiter used by the file's header row (comma when nothing is detected). */
+    protected static function csvDelimiter(string $filePath): string
+    {
+        return static::scanCsvHeader($filePath)['delimiter'];
+    }
+
+    /** Read the header row of an uploaded CSV (BOM-safe, skips leading blank/title rows). */
+    public static function readCsvHeaders(string $filePath): array
+    {
+        return static::scanCsvHeader($filePath)['headers'];
     }
 
     /**
@@ -673,6 +797,8 @@ abstract class CsvBulkService
             $headerIndex[strtolower($header)] = $i;
         }
 
+        $delimiter = static::csvDelimiter($filePath);
+
         $mappedIndexes = [];
         foreach ($columnMap as $key => $header) {
             if (blank($header)) {
@@ -689,15 +815,15 @@ abstract class CsvBulkService
             throw new \RuntimeException('Could not open the uploaded file.');
         }
 
-        static::skipHeaderBlock($handle); // skip header block (leading blank rows included)
+        static::skipHeaderBlock($handle, $delimiter, $csvHeaders); // skip header block (leading blank/title rows included)
 
         $total = 0;
-        while (fgetcsv($handle, 0, ',', escape: '\\') !== false) {
+        while (fgetcsv($handle, 0, $delimiter, escape: '\\') !== false) {
             $total++;
         }
 
         rewind($handle);
-        static::skipHeaderBlock($handle); // skip header block again
+        static::skipHeaderBlock($handle, $delimiter, $csvHeaders); // skip header block again
 
         $columns = static::columns();
         $success = 0;
@@ -705,7 +831,7 @@ abstract class CsvBulkService
         $processed = 0;
         $rowNumber = 1;
 
-        while (($row = fgetcsv($handle, 0, ',', escape: '\\')) !== false) {
+        while (($row = fgetcsv($handle, 0, $delimiter, escape: '\\')) !== false) {
             $rowNumber++;
             $processed++;
             $row = array_map('trim', $row);
@@ -769,12 +895,37 @@ abstract class CsvBulkService
     /**
      * Advance an open CSV handle past any leading blank/whitespace-only rows
      * and the header row, leaving the pointer at the first data row.
+     *
+     * When the expected headers are supplied, title/notes rows above the real
+     * headings are skipped too, by scanning until the parsed row matches the
+     * header row that readCsvHeaders()/scanCsvHeader() selected.
      */
-    protected static function skipHeaderBlock($handle): void
+    protected static function skipHeaderBlock($handle, string $delimiter = ',', ?array $expectedHeaders = null): void
     {
+        if ($expectedHeaders === null) {
+            while (($line = fgets($handle)) !== false) {
+                if (trim($line) !== '') {
+                    return; // consumed the header row
+                }
+            }
+
+            return;
+        }
+
+        $target = array_map([static::class, 'normaliseHeader'], $expectedHeaders);
+
         while (($line = fgets($handle)) !== false) {
-            if (trim($line) !== '') {
-                return; // consumed the header row
+            $line = (string) preg_replace('/^(?:\xEF\xBB\xBF)+/', '', $line);
+
+            if (trim($line) === '') {
+                continue;
+            }
+
+            $cells = array_map('trim', str_getcsv($line, $delimiter, '"', '\\'));
+            $normalised = array_map([static::class, 'normaliseHeader'], $cells);
+
+            if ($normalised === $target) {
+                return; // consumed the matching header row
             }
         }
     }
