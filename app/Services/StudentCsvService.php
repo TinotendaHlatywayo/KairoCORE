@@ -908,11 +908,14 @@ class StudentCsvService extends CsvBulkService
 
         $fingerprint = static::studentFingerprint($data['first_name'], $data['last_name'], $data['gender'], $data['date_of_birth'] !== '' ? $data['date_of_birth'] : null);
 
-        // Only use the name/gender/DOB fingerprint when a DOB is present; two
-        // different children can share a name and gender, and silently
-        // dropping one would be worse than importing both.
-        if ($duplicateReason === null && $data['date_of_birth'] !== '' && isset($existingStudentFingerprints[$fingerprint])) {
-            $duplicateReason = 'Duplicate student: '.$data['first_name'].' '.$data['last_name'].' ('.$data['gender'].', '.$data['date_of_birth'].') is already registered in this school.';
+        // Roster files often repeat the same pupil in more than one workbook,
+        // and many rows have no date of birth at all. The fingerprint is
+        // still exact for those rows (the empty DOB is part of the key), so
+        // use it to stop the second copy instead of creating a duplicate.
+        if ($duplicateReason === null && isset($existingStudentFingerprints[$fingerprint])) {
+            $duplicateReason = $data['date_of_birth'] !== ''
+                ? 'Duplicate student: '.$data['first_name'].' '.$data['last_name'].' ('.$data['gender'].', '.$data['date_of_birth'].') is already registered in this school.'
+                : 'Duplicate student: '.$data['first_name'].' '.$data['last_name'].' ('.$data['gender'].', no date of birth on file) is already registered in this school.';
         }
 
         if ($duplicateReason !== null) {
