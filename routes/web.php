@@ -178,7 +178,7 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
          * that trusts lastmod would otherwise keep the thumbnail it indexed
          * and never look at the new artwork.
          */
-        $previewFile = public_path('images/kairocore-link-preview.jpg');
+        $previewFile = public_path('images/KairoCORE_link_preview.png');
         $previewMtime = is_file($previewFile) ? (int) filemtime($previewFile) : 0;
 
         // The shared head (layout + SEO partial) carries the preview image,

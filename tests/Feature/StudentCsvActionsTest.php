@@ -342,9 +342,12 @@ class StudentCsvActionsTest extends TestCase
             $this->assertSame('2026', $created->currentEnrollment?->academicYear?->name);
 
             // Downloaded template has no national ID, so a second identical
-            // import must not trip the unique national-id check.
+            // import is recognised as the same student and skipped instead of
+            // creating a duplicate or failing the whole import.
             $second = StudentCsvService::import($path, $school->id, $map);
-            $this->assertSame(1, $second['success'], 'template is re-importable');
+            $this->assertSame(0, $second['success'], 'duplicate example row is not re-created');
+            $this->assertSame(1, $second['skipped'] ?? 0, 'duplicate example row is skipped');
+            $this->assertCount(0, $second['failures'], 'duplicate is not reported as a failure');
 
             Student::where('school_id', $school->id)
                 ->where('first_name', 'Tendai')

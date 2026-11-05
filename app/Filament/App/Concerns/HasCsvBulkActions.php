@@ -159,6 +159,7 @@ trait HasCsvBulkActions
                 ->schema(fn (Get $get): array => [
                     ...$this->uploadStepSchema($get, $service, $streamName, $title),
                     ...$this->missingReferenceSchema($get, $service),
+                    ...$this->missingStreamSchema($get, $service),
                 ]),
         ];
     }
@@ -430,6 +431,17 @@ trait HasCsvBulkActions
         }
 
         return $fieldsets;
+    }
+
+    /**
+     * Optional extra prompt for services that reference class streams the
+     * school has not created yet. Student imports override this.
+     *
+     * @return array<int, Forms\Components\Component>
+     */
+    protected function missingStreamSchema(Get $get, string $service): array
+    {
+        return [];
     }
 
     /**

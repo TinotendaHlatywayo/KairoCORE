@@ -866,7 +866,7 @@ if (! function_exists('platform_og_image_dimensions')) {
                 $candidates[] = public_path(ltrim($path, '/'));
             }
         } else {
-            $candidates[] = public_path('images/kairocore-link-preview.jpg');
+            $candidates[] = public_path('images/KairoCORE_link_preview.png');
         }
 
         foreach ($candidates as $candidate) {

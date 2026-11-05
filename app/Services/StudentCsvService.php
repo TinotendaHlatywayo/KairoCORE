@@ -17,6 +17,7 @@ use Modules\Students\Models\Student;
 class StudentCsvService extends CsvBulkService
 {
     public static $missingStreamHandler = null;
+
     /**
      * Single source of truth for every student CSV feature.
      *
@@ -379,28 +380,15 @@ class StudentCsvService extends CsvBulkService
      */
     public static function import(string $filePath, int $schoolId, array $columnMap, ?callable $onProgress = null): array
     {
+        $filePath = static::resolveTempFilePath($filePath);
         $csvHeaders = static::readCsvHeaders($filePath);
 
         if (empty($csvHeaders)) {
             throw new \RuntimeException('The uploaded file has no readable header row. Download the template and use its exact column names.');
         }
 
-        $headerIndex = [];
-        foreach ($csvHeaders as $i => $header) {
-            $headerIndex[static::normaliseHeader($header)] = $i;
-        }
-
         $delimiter = static::csvDelimiter($filePath);
-
-        $mappedIndexes = [];
-        foreach ($columnMap as $key => $header) {
-            if (blank($header)) {
-                $mappedIndexes[$key] = null;
-
-                continue;
-            }
-            $mappedIndexes[$key] = $headerIndex[static::normaliseHeader($header)] ?? null;
-        }
+        $mappedIndexes = static::mapColumnIndexes($csvHeaders, $columnMap);
 
         $handle = fopen($filePath, 'r');
 
@@ -410,10 +398,57 @@ class StudentCsvService extends CsvBulkService
 
         static::skipHeaderBlock($handle, $delimiter, $csvHeaders); // skip header row
 
+        // First pass: count data rows and learn this file's dominant grade,
+        // stream, year and gender. Paper registers often leave those cells
+        // blank on one or two rows, and copying the rest of the class is the
+        // only safe correction when the value is missing altogether.
         $total = 0;
-        while (fgetcsv($handle, 0, $delimiter, escape: '\\') !== false) {
+        $seedValues = ['course' => [], 'section' => [], 'academic_year' => [], 'gender' => []];
+
+        while (($row = fgetcsv($handle, 0, $delimiter, escape: '\\')) !== false) {
             $total++;
+            $row = array_map(fn ($value): string => trim((string) $value), $row);
+
+            if (implode('', $row) === '') {
+                continue;
+            }
+
+            $seed = [];
+            foreach ($mappedIndexes as $key => $index) {
+                $seed[$key] = ($index !== null && isset($row[$index])) ? $row[$index] : '';
+            }
+
+            $courseSeed = static::normaliseCourseName($seed['course'] ?? '');
+            if ($courseSeed !== '') {
+                $seedValues['course'][] = $courseSeed;
+            }
+
+            $sectionSeed = static::normaliseSectionName($seed['section'] ?? '', $courseSeed);
+            if ($sectionSeed !== '') {
+                $seedValues['section'][] = $sectionSeed;
+            }
+
+            $yearSeed = static::normaliseAcademicYearName($seed['academic_year'] ?? '');
+            if ($yearSeed !== '') {
+                $seedValues['academic_year'][] = $yearSeed;
+            }
+
+            $genderSeed = static::normaliseGender($seed['gender'] ?? '');
+            if (in_array($genderSeed, ['male', 'female', 'other'], true)) {
+                $seedValues['gender'][] = $genderSeed;
+            }
         }
+
+        $fileDefaults = [
+            'course' => static::mostCommonValue($seedValues['course']),
+            'section' => static::mostCommonValue($seedValues['section']),
+            'academic_year' => static::mostCommonValue($seedValues['academic_year']),
+            // Only trust a class-wide gender when every known row agrees.
+            // A blank cell with no consensus falls back to "other".
+            'gender' => count(array_unique($seedValues['gender'])) === 1
+                ? static::mostCommonValue($seedValues['gender'])
+                : '',
+        ];
 
         rewind($handle);
         static::skipHeaderBlock($handle, $delimiter, $csvHeaders); // skip header row again
@@ -455,6 +490,7 @@ class StudentCsvService extends CsvBulkService
             ->flip();
 
         $success = 0;
+        $skipped = 0;
         $failures = [];
         $processed = 0;
         $activationSent = 0;
@@ -464,7 +500,7 @@ class StudentCsvService extends CsvBulkService
         while (($row = fgetcsv($handle, 0, $delimiter, escape: '\\')) !== false) {
             $rowNumber++;
             $processed++;
-            $row = array_map('trim', $row);
+            $row = array_map(fn ($value): string => trim((string) $value), $row);
 
             $data = array_fill_keys(array_keys(static::columns()), '');
 
@@ -478,11 +514,18 @@ class StudentCsvService extends CsvBulkService
                 continue;
             }
 
-            $errors = static::validateAndNormalize($data, $courses, $sectionsByCourse, $academicYears, $activeAcademicYear, $existingNationalIds, $existingStudentIds, $existingStudentFingerprints);
+            $errors = static::validateAndNormalize($data, $schoolId, $courses, $sectionsByCourse, $academicYears, $activeAcademicYear, $existingNationalIds, $existingStudentIds, $existingStudentFingerprints, $fileDefaults);
 
             if (! empty($errors)) {
                 $failures[] = ['row' => $rowNumber, 'errors' => $errors, 'data' => $data];
                 $onProgress !== null && $onProgress($processed, $total, true, $errors);
+
+                continue;
+            }
+
+            if (! empty($data['_skip'])) {
+                $skipped++;
+                $onProgress !== null && $onProgress($processed, $total, false, []);
 
                 continue;
             }
@@ -599,7 +642,7 @@ class StudentCsvService extends CsvBulkService
             }
         }
 
-        return compact('success', 'total', 'failures');
+        return compact('success', 'skipped', 'total', 'failures');
     }
 
     /**
@@ -610,6 +653,7 @@ class StudentCsvService extends CsvBulkService
      */
     protected static function validateAndNormalize(
         array &$data,
+        int $schoolId,
         Collection $courses,
         Collection $sectionsByCourse,
         Collection $academicYears,
@@ -617,8 +661,20 @@ class StudentCsvService extends CsvBulkService
         Collection $existingNationalIds,
         Collection $existingStudentIds,
         Collection $existingStudentFingerprints,
+        array $fileDefaults = [],
     ): array {
         $errors = [];
+
+        // "N/A", "nil", "-" and a pasted block of spaces all mean "nothing was
+        // entered" on a paper register. Clear them for every column; required
+        // fields then fail with a clear message instead of importing "N/A".
+        foreach ($data as $key => $value) {
+            if (str_starts_with((string) $key, '_') || ! is_string($value)) {
+                continue;
+            }
+
+            $data[$key] = static::isPlaceholderValue($value) ? '' : trim($value);
+        }
 
         foreach ([
             'first_name', 'last_name', 'course', 'section', 'academic_year',
@@ -627,47 +683,48 @@ class StudentCsvService extends CsvBulkService
             $data[$textField] = static::normaliseText($data[$textField] ?? '');
         }
 
-        foreach ([
-            'student_id_number', 'national_id', 'roll_number', 'parent_email',
-            'email', 'phone', 'emergency_contact_phone',
-        ] as $trimField) {
-            $val = trim($data[$trimField] ?? '');
-            if (($trimField === 'national_id' || in_array($trimField, ['parent_email', 'email'], true)) && static::isPlaceholderValue($val)) {
-                $val = '';
-            }
-            $data[$trimField] = $val;
+        foreach (['phone', 'emergency_contact_phone'] as $phoneField) {
+            // Spreadsheet phone columns are often stored as numbers, which
+            // surface as "771234567.0" after a CSV round-trip.
+            $data[$phoneField] = (string) preg_replace('/^(\+?\d[\d\s\-()]*)\.0+$/', '$1', trim($data[$phoneField] ?? ''));
         }
 
-        if (str_ends_with($data['academic_year'], '.0')) {
-            $data['academic_year'] = (string) (int) floatval($data['academic_year']);
+        $data['course'] = static::normaliseCourseName($data['course']);
+        if ($data['course'] === '') {
+            $data['course'] = (string) ($fileDefaults['course'] ?? '');
         }
 
-        // Normalize grade/course typos and numeric levels
-        $gradeRaw = $data['course'];
-        if (is_numeric($gradeRaw)) {
-            $gradeRaw = 'Grade ' . $gradeRaw;
+        $data['section'] = static::normaliseSectionName($data['section'], $data['course']);
+        if ($data['section'] === '') {
+            $data['section'] = (string) ($fileDefaults['section'] ?? '');
         }
-        $gradeRaw = str_ireplace(['garde', 'gr.'], ['grade', 'Grade'], $gradeRaw);
-        $data['course'] = static::normaliseText($gradeRaw);
 
-        // Normalize section/stream
-        $sectionRaw = $data['section'];
-        if (is_numeric($sectionRaw) && in_array(strtoupper($data['course']), ['ECD A', 'ECD B', 'ECD  B'])) {
-            $sectionRaw = 'A';
+        $data['academic_year'] = static::normaliseAcademicYearName($data['academic_year']);
+        if ($data['academic_year'] === '') {
+            $data['academic_year'] = (string) ($fileDefaults['academic_year'] ?? '');
         }
-        $data['section'] = strtoupper(static::normaliseText($sectionRaw));
 
-        // If course is blank but section is 'special class', set course to 'Special Class'
+        // Files such as "special class" only name the stream. If no grade is
+        // present in the column or anywhere in the file, the special class is
+        // itself the level.
         if ($data['course'] === '' && mb_strtolower($data['section']) === 'special class') {
             $data['course'] = 'Special Class';
         }
 
-        // If last_name is blank and first_name has multiple words, split them
+        // A teacher sometimes writes the full name in one column and leaves
+        // the other blank. Split it either way round ("First Last" or, when
+        // the register is surname-first, "Last First").
         if ($data['last_name'] === '' && str_contains($data['first_name'], ' ')) {
             $parts = preg_split('/\s+/', $data['first_name']);
             if (count($parts) > 1) {
                 $data['last_name'] = array_pop($parts);
                 $data['first_name'] = implode(' ', $parts);
+            }
+        } elseif ($data['first_name'] === '' && str_contains($data['last_name'], ' ')) {
+            $parts = preg_split('/\s+/', $data['last_name']);
+            if (count($parts) > 1) {
+                $data['first_name'] = array_pop($parts);
+                $data['last_name'] = implode(' ', $parts);
             }
         }
 
@@ -680,17 +737,31 @@ class StudentCsvService extends CsvBulkService
         }
 
         $data['gender'] = static::normaliseGender($data['gender'] ?? '');
+        if ($data['gender'] === '' && in_array($fileDefaults['gender'] ?? '', ['male', 'female', 'other'], true)) {
+            $data['gender'] = $fileDefaults['gender'];
+        }
+        if ($data['gender'] === '') {
+            // A missing gender should not drop an otherwise valid child from
+            // the roster. "other" is the honest placeholder until corrected.
+            $data['gender'] = 'other';
+        }
         if (! in_array($data['gender'], ['male', 'female', 'other'], true)) {
             $errors[] = 'Gender must be one of: male, female, other.';
         }
 
         $data['status'] = static::normaliseStatus($data['status'] ?? '');
-        if ($data['status'] !== '' && ! in_array($data['status'], ['active', 'inactive', 'suspended', 'graduated'], true)) {
+        if ($data['status'] === '') {
+            $data['status'] = 'active';
+        }
+        if (! in_array($data['status'], ['active', 'inactive', 'suspended', 'graduated'], true)) {
             $errors[] = 'Status must be one of: active, inactive, suspended, graduated.';
         }
 
         $data['boarding_status'] = static::normaliseBoardingStatus($data['boarding_status'] ?? '');
-        if ($data['boarding_status'] !== '' && ! in_array($data['boarding_status'], ['day_scholar', 'boarder'], true)) {
+        if ($data['boarding_status'] === '') {
+            $data['boarding_status'] = 'day_scholar';
+        }
+        if (! in_array($data['boarding_status'], ['day_scholar', 'boarder'], true)) {
             $errors[] = 'Boarding Status must be one of: day_scholar, boarder.';
         }
 
@@ -716,6 +787,7 @@ class StudentCsvService extends CsvBulkService
 
             if ($raw === '' || static::isPlaceholderValue($raw)) {
                 $data[$dateField] = '';
+
                 continue;
             }
 
@@ -723,9 +795,41 @@ class StudentCsvService extends CsvBulkService
 
             if ($parsed === null) {
                 $errors[] = static::columns()[$dateField]['label'].' ['.$raw.'] is not a valid date. Use YYYY-MM-DD.';
-            } else {
-                $data[$dateField] = $parsed;
+
+                continue;
             }
+
+            if ($parsed === '') {
+                $data[$dateField] = '';
+
+                continue;
+            }
+
+            if ($dateField === 'date_of_birth' && Carbon::parse($parsed)->isAfter(today())) {
+                // A DOB in the future is almost always a mistyped decade
+                // ("19/11/2026" for "19/11/2016").
+                $corrected = Carbon::parse($parsed)->subYears(10)->toDateString();
+
+                if (! Carbon::parse($corrected)->isAfter(today())) {
+                    $parsed = $corrected;
+                }
+            }
+
+            if ($dateField === 'admission_date') {
+                // Registers copied forward sometimes keep an ancient admission
+                // date ("14/01/2002" in a 2026 class). Keep the day/month and
+                // move it into the class's academic year when it is implausible.
+                $referenceYear = (int) ($data['academic_year'] ?: now()->year);
+                $date = Carbon::parse($parsed);
+
+                if ($referenceYear >= 1990 && $referenceYear <= 2100
+                    && ($date->year < $referenceYear - 15 || $date->year > $referenceYear + 2)
+                    && checkdate($date->month, $date->day, $referenceYear)) {
+                    $parsed = sprintf('%04d-%02d-%02d', $referenceYear, $date->month, $date->day);
+                }
+            }
+
+            $data[$dateField] = $parsed;
         }
 
         if (empty($errors) && $data['course'] === '') {
@@ -743,7 +847,6 @@ class StudentCsvService extends CsvBulkService
         $course = $courses->get(static::normaliseKey($data['course']));
         if (! $course) {
             if (static::$missingStreamHandler !== null) {
-                $schoolId = \App\Models\School::first()?->id ?? 1;
                 $created = call_user_func(static::$missingStreamHandler, $schoolId, $data['course'], $data['section']);
                 if ($created) {
                     $courses = Course::withoutTenantScope()->where('school_id', $schoolId)->get()
@@ -756,6 +859,7 @@ class StudentCsvService extends CsvBulkService
             }
             if (! $course) {
                 $errors[] = 'Form / Grade ['.$data['course'].'] was not found in this school. Available levels: '.($courses->pluck('name')->implode(', ') ?: 'none').'.';
+
                 return $errors;
             }
         }
@@ -764,7 +868,6 @@ class StudentCsvService extends CsvBulkService
         $section = $sections->get(static::normaliseKey($data['section']));
         if (! $section) {
             if (static::$missingStreamHandler !== null) {
-                $schoolId = \App\Models\School::first()?->id ?? 1;
                 $created = call_user_func(static::$missingStreamHandler, $schoolId, $course->name, $data['section']);
                 if ($created) {
                     $sectionsByCourse = Section::withoutTenantScope()->where('school_id', $schoolId)->get()
@@ -776,6 +879,7 @@ class StudentCsvService extends CsvBulkService
             }
             if (! $section) {
                 $errors[] = 'Stream / Class ['.$data['section'].'] was not found under ['.$course->name.']. Available streams: '.($sections->pluck('name')->implode(', ') ?: 'none').'.';
+
                 return $errors;
             }
         }
@@ -792,17 +896,34 @@ class StudentCsvService extends CsvBulkService
             return $errors;
         }
 
+        $duplicateReason = null;
+
         if ($data['national_id'] !== '' && isset($existingNationalIds[static::normaliseIdentifier($data['national_id'])])) {
-            $errors[] = 'National ID ['.$data['national_id'].'] is already registered for a student in this school.';
+            $duplicateReason = 'National ID ['.$data['national_id'].'] is already registered for a student in this school.';
         }
 
-        if ($data['student_id_number'] !== '' && isset($existingStudentIds[static::normaliseIdentifier($data['student_id_number'])])) {
-            $errors[] = 'Student ID ['.$data['student_id_number'].'] is already registered for a student in this school.';
+        if ($duplicateReason === null && $data['student_id_number'] !== '' && isset($existingStudentIds[static::normaliseIdentifier($data['student_id_number'])])) {
+            $duplicateReason = 'Student ID ['.$data['student_id_number'].'] is already registered for a student in this school.';
         }
 
         $fingerprint = static::studentFingerprint($data['first_name'], $data['last_name'], $data['gender'], $data['date_of_birth'] !== '' ? $data['date_of_birth'] : null);
-        if (isset($existingStudentFingerprints[$fingerprint])) {
-            $errors[] = 'Duplicate student: '.$data['first_name'].' '.$data['last_name'].' ('.$data['gender'].', '.($data['date_of_birth'] !== '' ? $data['date_of_birth'] : 'no DOB').') is already registered in this school.';
+
+        // Only use the name/gender/DOB fingerprint when a DOB is present; two
+        // different children can share a name and gender, and silently
+        // dropping one would be worse than importing both.
+        if ($duplicateReason === null && $data['date_of_birth'] !== '' && isset($existingStudentFingerprints[$fingerprint])) {
+            $duplicateReason = 'Duplicate student: '.$data['first_name'].' '.$data['last_name'].' ('.$data['gender'].', '.$data['date_of_birth'].') is already registered in this school.';
+        }
+
+        if ($duplicateReason !== null) {
+            if (empty($errors)) {
+                $data['_skip'] = true;
+                $data['_skip_reason'] = $duplicateReason;
+
+                return [];
+            }
+
+            $errors[] = $duplicateReason;
         }
 
         $data['_course'] = $course;
@@ -860,6 +981,242 @@ class StudentCsvService extends CsvBulkService
         return (string) preg_replace('/[^\p{L}\p{N}]+/u', '', $value);
     }
 
+    /** @param array<int, string> $values */
+    protected static function mostCommonValue(array $values): string
+    {
+        $values = array_values(array_filter(array_map(fn ($value): string => trim((string) $value), $values), fn (string $value): bool => $value !== ''));
+
+        if ($values === []) {
+            return '';
+        }
+
+        $counts = array_count_values($values);
+        arsort($counts);
+
+        return (string) array_key_first($counts);
+    }
+
+    /**
+     * "Garde 1", "gGrade 5", "Grade5 5", "GRrade5", "4" and "ECD  B" all
+     * occur in real registers. Collapse them to the names the school uses.
+     */
+    protected static function normaliseCourseName(string $value): string
+    {
+        $value = static::normaliseText($value);
+
+        if ($value === '' || static::isPlaceholderValue($value)) {
+            return '';
+        }
+
+        $upper = mb_strtoupper($value);
+        $upper = (string) preg_replace('/\s+/', ' ', $upper);
+
+        if (preg_match('/^E\s*C\s*D\s*([AB])?$/u', $upper, $m) === 1) {
+            return trim('ECD '.($m[1] ?? ''));
+        }
+
+        if (preg_match('/^FORM\s*([1-6])$/u', $upper, $m) === 1) {
+            return 'Form '.(string) (int) $m[1];
+        }
+
+        if (is_numeric($value)) {
+            return 'Grade '.(string) (int) $value;
+        }
+
+        if (static::normaliseKey($value) === 'specialclass') {
+            return 'Special Class';
+        }
+
+        // Tolerate spelling slips and a duplicated stream cell:
+        // "Garde 1", "gGrade 5", "GRrade5", "Grade5 5", "Grade  6".
+        if (preg_match('/^([A-Z\s]+?)\s*(\d+)?(?:\s+\d+)?$/u', $upper, $m) === 1) {
+            $letters = (string) preg_replace('/[^A-Z]/', '', $m[1]);
+            $looksLikeGrade = preg_match('/^G.*A.*D.*E$/', $letters) === 1
+                || preg_match('/^G.*R.*A.*D.*E$/', $letters) === 1;
+
+            if ($looksLikeGrade) {
+                return isset($m[2]) && $m[2] !== '' ? 'Grade '.(string) (int) $m[2] : '';
+            }
+        }
+
+        return $value;
+    }
+
+    /** Stream cell: trim, uppercase, and treat ECD numeric "1" as stream A. */
+    protected static function normaliseSectionName(string $value, string $course = ''): string
+    {
+        $value = strtoupper(static::normaliseText($value));
+
+        if ($value === '' || static::isPlaceholderValue($value)) {
+            return '';
+        }
+
+        if (mb_strtolower($value) === 'special class') {
+            return 'Special Class';
+        }
+
+        if (preg_match('/^[A-Z]$/u', $value) === 1) {
+            return $value;
+        }
+
+        if (is_numeric($value) && str_starts_with(mb_strtoupper($course), 'ECD')) {
+            return 'A';
+        }
+
+        return $value;
+    }
+
+    protected static function normaliseAcademicYearName(string $value): string
+    {
+        $value = trim($value);
+
+        if ($value === '' || static::isPlaceholderValue($value)) {
+            return '';
+        }
+
+        if (str_ends_with($value, '.0')) {
+            $value = (string) (int) floatval($value);
+        }
+
+        return $value;
+    }
+
+    /**
+     * @param  array<int, string>  $headers
+     * @param  array<string, string|null>  $columnMap
+     * @return array<string, int|null>
+     */
+    protected static function mapColumnIndexes(array $headers, array $columnMap): array
+    {
+        $headerIndex = [];
+
+        foreach ($headers as $index => $header) {
+            $key = static::normaliseHeader((string) $header);
+
+            if ($key !== '' && ! array_key_exists($key, $headerIndex)) {
+                $headerIndex[$key] = $index;
+            }
+        }
+
+        $mappedIndexes = [];
+
+        foreach (static::columns() as $key => $column) {
+            $header = $columnMap[$key] ?? null;
+            $mappedIndexes[$key] = blank($header)
+                ? null
+                : ($headerIndex[static::normaliseHeader((string) $header)] ?? null);
+        }
+
+        return $mappedIndexes;
+    }
+
+    /** @param array<int, string|null> $row */
+    protected static function valueForColumn(array $row, ?int $index): string
+    {
+        return $index !== null && isset($row[$index]) ? trim((string) $row[$index]) : '';
+    }
+
+    public static function streamKey(string $course, string $section): string
+    {
+        return static::normaliseKey($course).'|'.static::normaliseKey($section);
+    }
+
+    /**
+     * Return every grade/stream pair referenced by the file that does not yet
+     * exist for the school. The UI uses this to ask the user whether the
+     * missing streams should be created before the import starts.
+     *
+     * @param  array<string, string|null>  $columnMap
+     * @return array<string, array{course: string, section: string}>
+     */
+    public static function missingStreams(string $filePath, array $columnMap, int $schoolId): array
+    {
+        $path = static::resolveTempFilePath($filePath);
+        $headers = static::readCsvHeaders($path);
+        $delimiter = static::csvDelimiter($path);
+        $mappedIndexes = static::mapColumnIndexes($headers, $columnMap);
+
+        $handle = fopen($path, 'rb');
+
+        if ($handle === false) {
+            return [];
+        }
+
+        static::skipHeaderBlock($handle, $delimiter, $headers);
+
+        $rows = [];
+        while (($row = fgetcsv($handle, 0, $delimiter, escape: '\\')) !== false) {
+            $row = array_map(fn ($value): string => trim((string) $value), $row);
+
+            if (implode('', $row) === '') {
+                continue;
+            }
+
+            $firstName = static::valueForColumn($row, $mappedIndexes['first_name'] ?? null);
+            $lastName = static::valueForColumn($row, $mappedIndexes['last_name'] ?? null);
+
+            if ($firstName === '' && $lastName === '') {
+                continue;
+            }
+
+            $rows[] = [
+                static::normaliseCourseName(static::valueForColumn($row, $mappedIndexes['course'] ?? null)),
+                static::normaliseSectionName(static::valueForColumn($row, $mappedIndexes['section'] ?? null), static::valueForColumn($row, $mappedIndexes['course'] ?? null)),
+            ];
+        }
+
+        fclose($handle);
+
+        $defaultCourse = static::mostCommonValue(array_column($rows, 0));
+        $defaultSection = static::mostCommonValue(array_column($rows, 1));
+
+        $courses = Course::withoutTenantScope()->where('school_id', $schoolId)->get()
+            ->keyBy(fn (Course $course): string => static::normaliseKey($course->name));
+
+        $sectionsByCourse = Section::withoutTenantScope()->where('school_id', $schoolId)->get()
+            ->groupBy('course_id')
+            ->map(fn (Collection $sections): Collection => $sections->keyBy(fn (Section $section): string => static::normaliseKey($section->name)));
+
+        $missing = [];
+        $seen = [];
+
+        foreach ($rows as [$courseName, $sectionName]) {
+            $courseName = $courseName !== '' ? $courseName : $defaultCourse;
+            $sectionName = $sectionName !== '' ? $sectionName : $defaultSection;
+
+            if ($courseName === '' && mb_strtolower($sectionName) === 'special class') {
+                $courseName = 'Special Class';
+            }
+
+            if ($courseName === '' || $sectionName === '') {
+                continue;
+            }
+
+            $key = static::streamKey($courseName, $sectionName);
+
+            if (isset($seen[$key])) {
+                continue;
+            }
+
+            $seen[$key] = true;
+            $course = $courses->get(static::normaliseKey($courseName));
+
+            if (! $course) {
+                $missing[$key] = ['course' => $courseName, 'section' => $sectionName];
+
+                continue;
+            }
+
+            $sections = $sectionsByCourse->get($course->id, collect());
+
+            if (! $sections->has(static::normaliseKey($sectionName))) {
+                $missing[$key] = ['course' => $courseName, 'section' => $sectionName];
+            }
+        }
+
+        return $missing;
+    }
+
     /**
      * Identifier key for duplicate checks only (never for storage): case and
      * all whitespace are ignored, so "r260001a" matches "R260001A" and
@@ -888,6 +1245,9 @@ class StudentCsvService extends CsvBulkService
             'man' => 'male',
             'f' => 'female',
             'female' => 'female',
+            'femal' => 'female',
+            'famale' => 'female',
+            'femail' => 'female',
             'girl' => 'female',
             'woman' => 'female',
             'o' => 'other',
@@ -987,6 +1347,7 @@ class StudentCsvService extends CsvBulkService
     public static function isPlaceholderValue(string $value): bool
     {
         $normalised = mb_strtolower(trim($value));
+
         return in_array($normalised, ['n/a', 'na', 'nil', 'n\a', 'none', '-', 'null', 'unknown', ''], true);
     }
 
@@ -994,8 +1355,8 @@ class StudentCsvService extends CsvBulkService
      * Parse the date formats people actually type, returning Y-m-d or null.
      *
      * Handles ISO dates, Excel serial numbers, and day-first dates such as
-     * 14/05/2013 (which PHP would otherwise reject). Truly ambiguous values
-     * like 05/06/2013 keep Carbon's default interpretation.
+     * 14/05/2013 (which PHP would otherwise reject). Ambiguous values like
+     * 05/06/2013 are read day-first, matching the registers this is used for.
      */
     protected static function parseDateValue(string $raw): ?string
     {
@@ -1005,16 +1366,49 @@ class StudentCsvService extends CsvBulkService
             return '';
         }
 
-        // Handle backslashes and spaces in dates (e.g. 13\10\14 or 02 04 2013)
-        $raw = str_replace(['\\', ' '], ['/', '/'], $raw);
-        // Handle typos like letter 'l' instead of '1'
-        $raw = str_ireplace('l', '1', $raw);
-        $raw = (string) preg_replace('/[\/\-\.]+/', '/', $raw);
+        // A full timestamp copied out of a spreadsheet ("2020-08-01 00:00:00")
+        // only needs its date part.
+        if (preg_match('/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})(?:[ T]\d{1,2}:\d{2}(?::\d{2})?)?$/', $raw, $m) === 1) {
+            $year = (int) $m[1];
+            $month = (int) $m[2];
+            $day = (int) $m[3];
 
-        if (preg_match('/^\d{8}$/', $raw) === 1) {
-            $year = (int) substr($raw, 0, 4);
-            $month = (int) substr($raw, 4, 2);
-            $day = (int) substr($raw, 6, 2);
+            return checkdate($month, $day, $year) ? sprintf('%04d-%02d-%02d', $year, $month, $day) : null;
+        }
+
+        // A stray leading letter is a common handwriting/typing slip
+        // ("l12-05-2015"). Strip it only when digits follow immediately.
+        $raw = (string) preg_replace('/^\s*[lIi|]+(?=\d)/', '', $raw);
+
+        // Only apply letter-for-digit repairs to values that are otherwise a
+        // date made of digits and separators, so "July" is never mangled.
+        $dateCharacters = '0123456789 oOlIi|/\\.,-';
+
+        if ($raw !== '' && strspn($raw, $dateCharacters) === strlen($raw)) {
+            $raw = str_ireplace(['o', 'l', 'i', '|'], ['0', '1', '1', '1'], $raw);
+        }
+
+        // Backslashes, spaces, dashes and dots all act as separators; trailing
+        // punctuation (e.g. "14/01/2002/") is ignored.
+        $raw = str_replace(['\\', ' ', '-', '.'], '/', $raw);
+        $raw = trim($raw, '/');
+        $raw = (string) preg_replace('#/+#', '/', $raw);
+
+        // Eight bare digits: YYYYMMDD, or DDMMYYYY when the first four digits
+        // cannot be a year.
+        if (preg_match('/^(\d{8})$/', $raw, $m) === 1) {
+            $digits = $m[1];
+            $year = (int) substr($digits, 0, 4);
+            $month = (int) substr($digits, 4, 2);
+            $day = (int) substr($digits, 6, 2);
+
+            if ($year >= 1900 && $year <= 2100 && checkdate($month, $day, $year)) {
+                return sprintf('%04d-%02d-%02d', $year, $month, $day);
+            }
+
+            $day = (int) substr($digits, 0, 2);
+            $month = (int) substr($digits, 2, 2);
+            $year = (int) substr($digits, 4, 4);
 
             if (checkdate($month, $day, $year)) {
                 return sprintf('%04d-%02d-%02d', $year, $month, $day);
@@ -1051,55 +1445,26 @@ class StudentCsvService extends CsvBulkService
                 : null;
         }
 
-        if (preg_match('#^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2})$#', $raw, $m) === 1) {
-            $first = (int) $m[1];
-            $second = (int) $m[2];
-            $yy = (int) $m[3];
-            $year = $yy < 50 ? 2000 + $yy : 1900 + $yy;
-
-            if ($first > 12 || $second > 12) {
-                if ($first > 12 && checkdate($second, $first, $year)) {
-                    return sprintf('%04d-%02d-%02d', $year, $second, $first);
-                }
-
-                if ($second > 12 && checkdate($first, $second, $year)) {
-                    return sprintf('%04d-%02d-%02d', $year, $first, $second);
-                }
-
-                return null;
-            }
-
-            if ($first > 0 && $second > 0 && checkdate($first, $second, $year)) {
-                return sprintf('%04d-%02d-%02d', $year, $first, $second);
-            }
-        }
-
-        if (preg_match('#^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$#', $raw, $m) === 1) {
+        // Two- or three-digit years: "13\01\218" means 2018, not year 218.
+        if (preg_match('#^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{1,3})$#', $raw, $m) === 1) {
             $first = (int) $m[1];
             $second = (int) $m[2];
             $year = (int) $m[3];
 
-            // Day-first (14/05/2013) and US month-first (05/14/2013) are both
-            // unambiguous when one side is greater than 12. An impossible
-            // value like 31/04/2013 is rejected rather than rolled over.
-            if ($first > 12 || $second > 12) {
-                if ($first > 12 && checkdate($second, $first, $year)) {
-                    return sprintf('%04d-%02d-%02d', $year, $second, $first);
-                }
-
-                if ($second > 12 && checkdate($first, $second, $year)) {
-                    return sprintf('%04d-%02d-%02d', $year, $first, $second);
-                }
-
-                return null;
+            if ($year < 100) {
+                $year = $year < 50 ? 2000 + $year : 1900 + $year;
+            } elseif ($year < 1000) {
+                $short = $year % 100;
+                $year = $short < 50 ? 2000 + $short : 1900 + $short;
             }
 
-            if ($first === 0 || $second === 0 || ! checkdate($first, $second, $year)) {
-                return null;
-            }
+            return static::makeDateFromParts($first, $second, $year);
+        }
 
-            // Keep the historical month-first reading for ambiguous values.
-            return sprintf('%04d-%02d-%02d', $year, $first, $second);
+        // Four-digit year: day-first when unambiguous, and also for ambiguous
+        // values because school registers in this region use DD/MM/YYYY.
+        if (preg_match('#^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$#', $raw, $m) === 1) {
+            return static::makeDateFromParts((int) $m[1], (int) $m[2], (int) $m[3]);
         }
 
         try {
@@ -1107,5 +1472,30 @@ class StudentCsvService extends CsvBulkService
         } catch (\Throwable) {
             return null;
         }
+    }
+
+    protected static function makeDateFromParts(int $first, int $second, int $year): ?string
+    {
+        if ($first > 12 && $second <= 12) {
+            return checkdate($second, $first, $year)
+                ? sprintf('%04d-%02d-%02d', $year, $second, $first)
+                : null;
+        }
+
+        if ($second > 12 && $first <= 12) {
+            return checkdate($first, $second, $year)
+                ? sprintf('%04d-%02d-%02d', $year, $first, $second)
+                : null;
+        }
+
+        if ($first > 0 && $second > 0 && checkdate($second, $first, $year)) {
+            return sprintf('%04d-%02d-%02d', $year, $second, $first);
+        }
+
+        if ($first > 0 && $second > 0 && checkdate($first, $second, $year)) {
+            return sprintf('%04d-%02d-%02d', $year, $first, $second);
+        }
+
+        return null;
     }
 }

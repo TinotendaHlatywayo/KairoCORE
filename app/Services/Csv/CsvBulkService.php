@@ -452,6 +452,8 @@ abstract class CsvBulkService
 
         if ($file instanceof TemporaryUploadedFile) {
             $path = $file->getRealPath();
+        } elseif (is_string($file) && is_file($file)) {
+            $path = $file;
         } elseif (Storage::disk(config('filesystems.default'))->exists($file)) {
             $path = Storage::disk(config('filesystems.default'))->path($file);
         } else {

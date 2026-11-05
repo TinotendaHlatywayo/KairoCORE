@@ -8,11 +8,15 @@ use App\Filament\App\Resources\StudentResource;
 use App\Services\StudentCsvService;
 use Filament\Actions;
 use Filament\Actions\Action;
+use Filament\Forms;
+use Filament\Forms\Get;
 use Filament\Notifications\Actions\Action as NotificationAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Support\Enums\MaxWidth;
 use Illuminate\Contracts\View\View;
+use Modules\Academics\Models\Course;
+use Modules\Academics\Models\Section;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ListStudents extends ListRecords
@@ -93,6 +97,50 @@ class ListStudents extends ListRecords
             });
     }
 
+    protected function missingStreamSchema(Get $get, string $service): array
+    {
+        $file = $get('csv_file');
+
+        if (! $file || ! is_a($service, StudentCsvService::class, true)) {
+            return [];
+        }
+
+        $filePath = $service::resolveTempFilePath($file);
+        $headers = $service::readCsvHeaders($filePath);
+
+        if ($headers === []) {
+            return [];
+        }
+
+        $columnMap = $get('columnMap') ?? $service::guessMapping($headers);
+        $schoolId = app('current_tenant')->id;
+        $missing = $service::missingStreams($filePath, $columnMap, $schoolId);
+
+        if ($missing === []) {
+            return [];
+        }
+
+        $rows = [];
+
+        foreach ($missing as $key => $stream) {
+            $rows[] = Forms\Components\Select::make("missingStreams.{$key}")
+                ->label($stream['course'].' / '.$stream['section'])
+                ->options([
+                    'create' => __('Create this class stream'),
+                    'skip' => __('Do not create (rows for it will be rejected)'),
+                ])
+                ->default('create')
+                ->required();
+        }
+
+        return [
+            Forms\Components\Section::make(__('Create missing class streams?'))
+                ->description(__('These grades/streams are in your file but do not exist in the system yet. Create them automatically during this import, or leave them out.'))
+                ->columns(2)
+                ->schema($rows),
+        ];
+    }
+
     protected function runStudentImport(array $data, string $service, string $streamName): void
     {
         $file = $data['csv_file'] ?? null;
@@ -114,6 +162,13 @@ class ListStudents extends ListRecords
             ->filter(fn (array $column): bool => $column['required'])
             ->filter(fn (array $column, string $key): bool => blank($columnMap[$key] ?? null));
 
+        // A "special class" register often has no grade column at all — the
+        // stream is the class. Let those rows through; validation assigns the
+        // Special Class level and the missing-stream prompt creates it.
+        if ($requiredMissing->has('course') && filled($columnMap['section'] ?? null)) {
+            $requiredMissing->forget('course');
+        }
+
         if ($requiredMissing->isNotEmpty()) {
             Notification::make()
                 ->title(__('Import not started — required columns are not mapped'))
@@ -127,6 +182,32 @@ class ListStudents extends ListRecords
 
         $filePath = $service::resolveTempFilePath($file);
         $schoolId = app('current_tenant')->id;
+        $streamChoices = $data['missingStreams'] ?? [];
+        $previousHandler = StudentCsvService::$missingStreamHandler;
+
+        StudentCsvService::$missingStreamHandler = function (int $tenantId, string $courseName, string $sectionName) use ($streamChoices): bool {
+            $key = StudentCsvService::streamKey($courseName, $sectionName);
+
+            if (($streamChoices[$key] ?? 'create') === 'skip') {
+                return false;
+            }
+
+            $level = str_contains(mb_strtolower($courseName), 'form')
+                ? (preg_match('/form\s*([12])\b/i', $courseName) === 1 ? 'lower_secondary' : 'upper_secondary')
+                : 'primary';
+
+            $course = Course::withoutTenantScope()->firstOrCreate(
+                ['school_id' => $tenantId, 'name' => $courseName],
+                ['level' => $level],
+            );
+
+            Section::withoutTenantScope()->firstOrCreate(
+                ['school_id' => $tenantId, 'course_id' => $course->id, 'name' => $sectionName],
+                ['capacity' => 40],
+            );
+
+            return true;
+        };
 
         try {
             $result = $service::import(
@@ -143,15 +224,21 @@ class ListStudents extends ListRecords
                 ->send();
 
             return;
+        } finally {
+            StudentCsvService::$missingStreamHandler = $previousHandler;
         }
 
         $failures = collect($result['failures']);
+        $skipped = (int) ($result['skipped'] ?? 0);
+        $skippedNote = $skipped > 0 ? ' '.$skipped.' already-registered student(s) were skipped.' : '';
 
         if ($failures->isEmpty()) {
             if ((int) $result['success'] === 0) {
                 Notification::make()
-                    ->title(__('No students were imported'))
-                    ->body(__('No data rows were found below the column headings. Fill in at least one student row and upload the file again.'))
+                    ->title(__($skipped > 0 ? 'No new students were imported' : 'No students were imported'))
+                    ->body(__($skipped > 0
+                        ? 'All valid rows were already registered in this school.'
+                        : 'No data rows were found below the column headings. Fill in at least one student row and upload the file again.').$skippedNote)
                     ->warning()
                     ->duration(10)
                     ->send();
@@ -161,7 +248,7 @@ class ListStudents extends ListRecords
 
             Notification::make()
                 ->title(__('Import complete'))
-                ->body('Imported '.$result['success'].' of '.$result['total'].' students.')
+                ->body('Imported '.$result['success'].' of '.$result['total'].' students.'.$skippedNote)
                 ->success()
                 ->send();
 
@@ -178,7 +265,7 @@ class ListStudents extends ListRecords
 
         Notification::make()
             ->title(__('Import finished with errors'))
-            ->body('Imported '.$result['success'].' of '.$result['total'].' students. '.$failures->count().' row(s) were rejected. Reasons: '.$reasonSummary.'. Download the rejected rows below.')
+            ->body('Imported '.$result['success'].' of '.$result['total'].' students. '.$failures->count().' row(s) were rejected.'.$skippedNote.' Reasons: '.$reasonSummary.'. Download the rejected rows below.')
             ->warning()
             ->duration(15)
             ->actions([
