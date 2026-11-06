@@ -736,7 +736,7 @@ class FinancialHistoryCsvService extends CsvBulkService
     /**
      * @param  array<string, string|null>  $columnMap
      * @param  array{requester_id?: int|null}  $options
-     * @return array{success: int, total: int, failures: array}
+     * @return array{success: int, skipped: int, total: int, failures: array}
      */
     public static function import(string $filePath, int $schoolId, array $columnMap, ?callable $onProgress = null, array $options = []): array
     {
@@ -745,6 +745,8 @@ class FinancialHistoryCsvService extends CsvBulkService
         if (empty($csvHeaders)) {
             throw new \RuntimeException('The uploaded file has no readable header row. Download the template and use its exact column names.');
         }
+
+        $delimiter = static::csvDelimiter($filePath);
 
         $headerIndex = [];
         foreach ($csvHeaders as $i => $header) {
@@ -767,21 +769,51 @@ class FinancialHistoryCsvService extends CsvBulkService
             throw new \RuntimeException('Could not open the uploaded file.');
         }
 
-        static::skipHeaderBlock($handle);
+        static::skipHeaderBlock($handle, $delimiter, $csvHeaders);
 
         $total = 0;
-        while (fgetcsv($handle, 0, ',', escape: '\\') !== false) {
+        $rawRows = [];
+        $rowNumber = 1;
+
+        while (($row = fgetcsv($handle, 0, $delimiter, escape: '\\')) !== false) {
+            $rowNumber++;
+            $row = array_map('trim', $row);
+
+            $data = array_fill_keys(array_keys(static::columns()), '');
+            foreach ($mappedIndexes as $key => $index) {
+                $data[$key] = ($index !== null && isset($row[$index])) ? $row[$index] : '';
+            }
+
+            if (implode('', $data) === '') {
+                continue;
+            }
+
             $total++;
+            $data['_row'] = $rowNumber;
+            $rawRows[] = $data;
         }
+        fclose($handle);
 
-        rewind($handle);
-        static::skipHeaderBlock($handle);
+        $students = Student::withoutTenantScope()->where('school_id', $schoolId)->get();
+        $studentLookup = [];
+        $nameLookup = [];
 
-        $students = Student::withoutTenantScope()->where('school_id', $schoolId)->get()
-            ->keyBy(fn (Student $s): string => strtolower(trim((string) $s->student_id_number)));
-
-        $studentsByAdmission = Student::withoutTenantScope()->where('school_id', $schoolId)->get()
-            ->keyBy(fn (Student $s): string => strtolower(trim((string) $s->admission_number)));
+        foreach ($students as $s) {
+            foreach (array_filter([$s->student_id_number, $s->admission_number]) as $identifier) {
+                $exact = strtolower(trim((string) $identifier));
+                $norm = static::normaliseStudentKey($identifier);
+                if ($exact !== '') {
+                    $studentLookup[$exact] ??= $s;
+                }
+                if ($norm !== '') {
+                    $studentLookup[$norm] ??= $s;
+                }
+            }
+            $nameKey = static::normaliseStudentKey($s->first_name.' '.$s->last_name);
+            if ($nameKey !== '') {
+                $nameLookup[$nameKey][] = $s;
+            }
+        }
 
         $academicYears = AcademicYear::withoutTenantScope()->where('school_id', $schoolId)->get()
             ->keyBy(fn (AcademicYear $y): string => strtolower(trim((string) $y->name)));
@@ -790,59 +822,314 @@ class FinancialHistoryCsvService extends CsvBulkService
 
         $activeYear = AcademicYear::withoutTenantScope()->where('school_id', $schoolId)->where('is_active', true)->first();
 
-        $columns = static::columns();
-        $success = 0;
+        $validRows = [];
         $failures = [];
-        $processed = 0;
-        $rowNumber = 1;
-        $requesterId = $options['requester_id'] ?? auth()->id();
+        $validatedCount = 0;
 
-        while (($row = fgetcsv($handle, 0, ',', escape: '\\')) !== false) {
-            $rowNumber++;
-            $processed++;
-            $row = array_map('trim', $row);
-
-            $data = array_fill_keys(array_keys($columns), '');
-
-            foreach ($mappedIndexes as $key => $index) {
-                $data[$key] = ($index !== null && isset($row[$index])) ? $row[$index] : '';
-            }
-
-            if (implode('', $data) === '') {
-                $onProgress !== null && $onProgress($processed, $total, false, []);
-
-                continue;
-            }
-
-            $errors = static::validateAndNormalize($data, $students, $studentsByAdmission, $academicYears, $terms, $activeYear, $schoolId);
+        foreach ($rawRows as $data) {
+            $validatedCount++;
+            $errors = static::validateAndNormalize($data, $studentLookup, $nameLookup, $academicYears, $terms, $activeYear, $schoolId);
 
             if (! empty($errors)) {
-                $failures[] = ['row' => $rowNumber, 'errors' => $errors, 'data' => $data];
-                $onProgress !== null && $onProgress($processed, $total, true, $errors);
-
-                continue;
+                $failures[] = ['row' => $data['_row'], 'errors' => $errors, 'data' => $data];
+                $onProgress !== null && $onProgress($validatedCount, max(1, $total), true, $errors);
+            } else {
+                $validRows[] = $data;
+                $onProgress !== null && $onProgress($validatedCount, max(1, $total), false, []);
             }
+        }
+
+        // Sort valid rows: student ID, date, transaction type order, original row number
+        usort($validRows, function ($a, $b) {
+            return [
+                $a['_student']->id,
+                $a['date'],
+                static::typeSortOrder($a['type']),
+                $a['_row'],
+            ] <=> [
+                $b['_student']->id,
+                $b['date'],
+                static::typeSortOrder($b['type']),
+                $b['_row'],
+            ];
+        });
+
+        $success = 0;
+        $skipped = 0;
+        $processed = 0;
+        $validCount = count($validRows);
+        $requesterId = $options['requester_id'] ?? auth()->id();
+
+        foreach ($validRows as $data) {
+            $processed++;
+            $progressPercent = (int) round(50 + ($processed / max(1, $validCount)) * 50);
 
             try {
-                DB::transaction(function () use (&$data, $schoolId, $requesterId) {
+                if (static::isDuplicateImportRow($data, $schoolId)) {
+                    $skipped++;
+                    $onProgress !== null && $onProgress($progressPercent, 100, false, []);
+
+                    continue;
+                }
+
+                DB::transaction(function () use ($data, $schoolId, $requesterId) {
                     static::persist($data, $schoolId, $requesterId);
                 });
 
                 $success++;
-                $onProgress !== null && $onProgress($processed, $total, false, []);
+                $onProgress !== null && $onProgress($progressPercent, 100, false, []);
             } catch (\Throwable $e) {
                 $failures[] = [
-                    'row' => $rowNumber,
+                    'row' => $data['_row'],
                     'errors' => ['Unexpected database error while saving: '.$e->getMessage()],
                     'data' => $data,
                 ];
-                $onProgress !== null && $onProgress($processed, $total, true, ['Unexpected database error']);
+                $onProgress !== null && $onProgress($progressPercent, 100, true, ['Unexpected database error']);
             }
         }
 
-        fclose($handle);
+        $onProgress !== null && $onProgress(100, 100, false, []);
 
-        return compact('success', 'total', 'failures');
+        return compact('success', 'skipped', 'total', 'failures');
+    }
+
+    protected static function typeSortOrder(string $type): int
+    {
+        return match ($type) {
+            self::TYPE_DEBIT_CARRY_FORWARD, self::TYPE_CREDIT_CARRY_FORWARD => 1,
+            self::TYPE_CHARGE => 2,
+            self::TYPE_WAIVER => 3,
+            self::TYPE_PAYMENT => 4,
+            self::TYPE_REFUND => 5,
+            default => 10,
+        };
+    }
+
+    protected static function parseAmount(string $value): ?float
+    {
+        $raw = trim($value);
+        if ($raw === '') {
+            return null;
+        }
+
+        $value = str_replace(["\u{2212}", "\u{2013}", "\u{2014}"], '-', $raw);
+        $value = preg_replace('/[\x{00A0}\x{202F}\x{2009}]/u', '', $value) ?? $value;
+        $value = preg_replace('/[^\d,.\-]/u', '', $value) ?? $value;
+
+        if (str_contains($value, ',') && str_contains($value, '.')) {
+            if (strrpos($value, ',') > strrpos($value, '.')) {
+                $value = str_replace('.', '', $value);
+                $value = str_replace(',', '.', $value);
+            } else {
+                $value = str_replace(',', '', $value);
+            }
+        } elseif (str_contains($value, ',')) {
+            $parts = explode(',', $value);
+            $last = end($parts);
+            if (count($parts) > 1 && strlen($last) === 2) {
+                $value = str_replace(',', '.', $value);
+            } else {
+                $value = str_replace(',', '', $value);
+            }
+        }
+
+        if ($value === '' || $value === '-' || $value === '.' || ! is_numeric($value)) {
+            return null;
+        }
+
+        return abs((float) $value);
+    }
+
+    protected static function parseDate(string $value): ?string
+    {
+        $raw = trim($value);
+        if ($raw === '') {
+            return null;
+        }
+
+        if (preg_match('/^\d{5}(?:\.\d+)?$/', $raw)) {
+            $serial = (int) floor((float) $raw);
+            if ($serial >= 1 && $serial <= 73050) {
+                return Carbon::create(1899, 12, 30)->addDays($serial)->toDateString();
+            }
+        }
+
+        foreach (['Y-m-d', 'Y/m/d', 'Y.m.d', 'Y-n-j', 'Y/n/j'] as $format) {
+            try {
+                $date = Carbon::createFromFormat('!'.$format, $raw);
+                if ($date && $date->format($format) === $raw) {
+                    return $date->toDateString();
+                }
+            } catch (\Throwable) {}
+        }
+
+        if (preg_match('/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/', $raw, $m)) {
+            [$all, $a, $b, $y] = $m;
+            $a = (int) $a;
+            $b = (int) $b;
+            if (strlen($y) === 2) {
+                $y = (int) $y;
+                $y += $y >= 70 ? 1900 : 2000;
+            } else {
+                $y = (int) $y;
+            }
+            $dayFirst = $a > 12 || $b <= 12;
+            [$day, $month] = $dayFirst ? [$a, $b] : [$b, $a];
+            if (checkdate($month, $day, $y)) {
+                return sprintf('%04d-%02d-%02d', $y, $month, $day);
+            }
+        }
+
+        try {
+            return Carbon::parse($raw)->toDateString();
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    protected static function normalisePaymentMethod(string $value): string
+    {
+        $normalised = strtolower(trim($value));
+        $normalised = preg_replace('/[^a-z0-9]+/', ' ', $normalised) ?? '';
+
+        return match (trim($normalised)) {
+            '', 'cash', 'cash payment' => 'cash',
+            'bank', 'bank transfer', 'bank_transfer', 'transfer', 'eft', 'wire', 'direct deposit', 'deposit' => 'bank_transfer',
+            'mobile', 'mobile money', 'mobile_money', 'momo', 'ecocash', 'eco cash', 'onemoney', 'one money', 'telecash', 'innbucks', 'wallet' => 'mobile_money',
+            'card', 'debit card', 'credit card', 'swipe', 'pos' => 'card',
+            'cheque', 'check', 'cheque payment', 'other', 'other payment' => 'other',
+            'credit' => 'credit',
+            default => $normalised,
+        };
+    }
+
+    protected static function normaliseAcademicYear(string $value): string
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return '';
+        }
+        if (preg_match('/(20\d{2}|19\d{2})/', $value, $m)) {
+            return $m[1];
+        }
+
+        return $value;
+    }
+
+    protected static function normaliseTermName(string $value): string
+    {
+        $raw = trim($value);
+        if ($raw === '') {
+            return '';
+        }
+        $lower = strtolower($raw);
+        $lower = preg_replace('/[^a-z0-9]+/', ' ', $lower) ?? '';
+        $lower = trim($lower);
+
+        if (preg_match('/^(?:term|sem|semester|t)\s*([0-9]{1,2})$/', $lower, $m)) {
+            $n = (int) $m[1];
+            return (str_contains($lower, 'sem') ? 'Semester ' : 'Term ').$n;
+        }
+        if (preg_match('/^([0-9]{1,2})(?:st|nd|rd|th)?\s*(?:term|semester)?$/', $lower, $m)) {
+            return (str_contains($lower, 'sem') ? 'Semester ' : 'Term ').(int) $m[1];
+        }
+        if (preg_match('/^(first|second|third|fourth)\s*(?:term|semester)?$/', $lower, $m)) {
+            $map = ['first' => 1, 'second' => 2, 'third' => 3, 'fourth' => 4];
+            return (str_contains($lower, 'sem') ? 'Semester ' : 'Term ').($map[$m[1]] ?? 1);
+        }
+
+        return $raw;
+    }
+
+    protected static function normaliseStudentKey(string $value): string
+    {
+        return strtolower(preg_replace('/[^a-z0-9]/i', '', trim($value)) ?? '');
+    }
+
+    protected static function isDuplicateImportRow(array $data, int $schoolId): bool
+    {
+        /** @var Student $student */
+        $student = $data['_student'];
+        $date = $data['date'];
+        $amount = round((float) $data['amount'], 2);
+
+        return match ($data['type']) {
+            self::TYPE_CHARGE => static::chargeExists($student, $data, $amount, $date, false),
+            self::TYPE_DEBIT_CARRY_FORWARD => static::chargeExists($student, $data, $amount, $date, true),
+            self::TYPE_PAYMENT => static::paymentExists($student, $data, $amount, $date, false),
+            self::TYPE_REFUND => static::paymentExists($student, $data, $amount, $date, true),
+            self::TYPE_WAIVER => static::waiverExists($student, $data, $amount),
+            self::TYPE_CREDIT_CARRY_FORWARD => static::creditCarryExists($student, $data, $amount, $date),
+            default => false,
+        };
+    }
+
+    protected static function chargeExists(Student $student, array $data, float $amount, string $date, bool $isCarryForward): bool
+    {
+        $query = Invoice::withoutTenantScope()
+            ->where('school_id', $student->school_id)
+            ->where('student_id', $student->id)
+            ->whereDate('created_at', $date)
+            ->whereRaw('ROUND(subtotal_amount, 2) = ?', [$amount]);
+
+        if ($data['invoice_number'] !== '') {
+            $query->where('invoice_number', $data['invoice_number']);
+        }
+        if ($data['description'] !== '') {
+            $query->whereHas('items', fn ($q) => $q->where('name', $data['description']));
+        }
+        if (! empty($data['_academic_year'])) {
+            $query->where('academic_year_id', $data['_academic_year']->id);
+        }
+        if (! empty($data['_term'])) {
+            $query->where('term_id', $data['_term']->id);
+        }
+
+        return $query->exists();
+    }
+
+    protected static function paymentExists(Student $student, array $data, float $amount, string $date, bool $isRefund): bool
+    {
+        $query = Payment::withoutTenantScope()
+            ->where('school_id', $student->school_id)
+            ->where('is_refund', $isRefund)
+            ->whereDate('payment_date', $date)
+            ->whereRaw('ROUND(ABS(amount), 2) = ?', [$amount])
+            ->whereHas('invoice', fn ($q) => $q->where('student_id', $student->id));
+
+        if ($data['receipt_number'] !== '') {
+            $query->where('receipt_number', $data['receipt_number']);
+        }
+        if ($data['reference_number'] !== '') {
+            $query->where('reference_number', $data['reference_number']);
+        }
+
+        return $query->exists();
+    }
+
+    protected static function waiverExists(Student $student, array $data, float $amount): bool
+    {
+        $query = Invoice::withoutTenantScope()
+            ->where('school_id', $student->school_id)
+            ->where('student_id', $student->id)
+            ->whereRaw('ROUND(discount_amount, 2) >= ?', [$amount]);
+
+        if ($data['description'] !== '') {
+            $query->where('waiver_details', 'LIKE', '%'.$data['description'].'%');
+        }
+
+        return $query->exists();
+    }
+
+    protected static function creditCarryExists(Student $student, array $data, float $amount, string $date): bool
+    {
+        return Payment::withoutTenantScope()
+            ->where('school_id', $student->school_id)
+            ->where('payment_method', 'credit')
+            ->whereDate('payment_date', $date)
+            ->whereRaw('ROUND(amount, 2) = ?', [$amount])
+            ->whereHas('invoice', fn ($q) => $q->where('student_id', $student->id))
+            ->exists();
     }
 
     /**
@@ -858,8 +1145,8 @@ class FinancialHistoryCsvService extends CsvBulkService
      */
     protected static function validateAndNormalize(
         array &$data,
-        Collection $students,
-        Collection $studentsByAdmission,
+        array $studentLookup,
+        array $nameLookup,
         Collection $academicYears,
         Collection $terms,
         ?AcademicYear $activeYear,
@@ -867,44 +1154,68 @@ class FinancialHistoryCsvService extends CsvBulkService
     ): array {
         $errors = [];
 
-        $data['student_id'] = trim($data['student_id']);
-        $data['type'] = static::normaliseType($data['type'] ?? '');
-        $data['description'] = trim($data['description']);
-        $data['receipt_number'] = trim($data['receipt_number']);
-        $data['reference_number'] = trim($data['reference_number']);
-        $data['payment_method'] = strtolower(trim($data['payment_method']));
-        $data['invoice_number'] = trim($data['invoice_number']);
-        $data['academic_year'] = trim($data['academic_year']);
-        $data['term'] = trim($data['term']);
-        $data['notes'] = trim($data['notes']);
+        $rawStudentId = trim((string) ($data['student_id'] ?? ''));
+        $rawType = trim((string) ($data['type'] ?? ''));
+        $rawDate = trim((string) ($data['date'] ?? ''));
+        $rawAmount = trim((string) ($data['amount'] ?? ''));
+        $rawMethod = trim((string) ($data['payment_method'] ?? ''));
+        $rawYear = trim((string) ($data['academic_year'] ?? ''));
+        $rawTerm = trim((string) ($data['term'] ?? ''));
 
-        if ($data['student_id'] === '') {
+        $data['student_id'] = $rawStudentId;
+        $data['type'] = static::normaliseType($rawType);
+        $data['description'] = trim((string) ($data['description'] ?? ''));
+        $data['receipt_number'] = trim((string) ($data['receipt_number'] ?? ''));
+        $data['reference_number'] = trim((string) ($data['reference_number'] ?? ''));
+        $data['payment_method'] = static::normalisePaymentMethod($rawMethod);
+        $data['invoice_number'] = trim((string) ($data['invoice_number'] ?? ''));
+        $data['academic_year'] = static::normaliseAcademicYear($rawYear);
+        $data['term'] = static::normaliseTermName($rawTerm);
+        $data['notes'] = trim((string) ($data['notes'] ?? ''));
+
+        if ($rawStudentId === '') {
             $errors[] = 'Student ID is required (column empty or not mapped).';
 
             return $errors;
         }
 
         if (! in_array($data['type'], [static::TYPE_CHARGE, static::TYPE_PAYMENT, static::TYPE_REFUND, static::TYPE_WAIVER, static::TYPE_DEBIT_CARRY_FORWARD, static::TYPE_CREDIT_CARRY_FORWARD], true)) {
-            $errors[] = 'Transaction Type must be one of: charge, payment, refund, waiver, debit_carry_forward, credit_carry_forward.';
+            $errors[] = 'Transaction Type ['.$rawType.'] must be one of: charge, payment, refund, waiver, debit_carry_forward, credit_carry_forward.';
 
             return $errors;
         }
 
-        $student = $students[strtolower($data['student_id'])]
-            ?? $studentsByAdmission[strtolower($data['student_id'])]
+        $student = $studentLookup[strtolower($rawStudentId)]
+            ?? $studentLookup[static::normaliseStudentKey($rawStudentId)]
             ?? null;
 
         if (! $student) {
-            $errors[] = 'No student was found with Student ID / Admission Number ['.$data['student_id'].'].';
+            $nameMatches = $nameLookup[static::normaliseStudentKey($rawStudentId)] ?? [];
+            if (count($nameMatches) === 1) {
+                $student = $nameMatches[0];
+            } elseif (count($nameMatches) > 1) {
+                $errors[] = 'Multiple students match name ['.$rawStudentId.']. Please use Student ID or Admission Number.';
 
-            return $errors;
+                return $errors;
+            } else {
+                $errors[] = 'No student was found with Student ID / Admission Number or Name ['.$rawStudentId.'].';
+
+                return $errors;
+            }
         }
 
-        $data['date'] = static::toDate($data['date'] ?? '') ?? now()->toDateString();
-        $data['amount'] = static::toDecimal($data['amount'], -1);
+        $parsedDate = static::parseDate($rawDate);
+        if ($parsedDate === null) {
+            $errors[] = 'Date ['.$rawDate.'] is required and must be a valid date (e.g. YYYY-MM-DD or DD/MM/YYYY).';
+        } else {
+            $data['date'] = $parsedDate;
+        }
 
-        if ($data['amount'] <= 0) {
-            $errors[] = 'Amount must be a positive number (column empty or not mapped).';
+        $parsedAmount = static::parseAmount($rawAmount);
+        if ($parsedAmount === null || $parsedAmount <= 0) {
+            $errors[] = 'Amount ['.$rawAmount.'] must be a positive number (e.g. 250.00).';
+        } else {
+            $data['amount'] = round($parsedAmount, 2);
         }
 
         if ($data['type'] === static::TYPE_CHARGE || $data['type'] === static::TYPE_DEBIT_CARRY_FORWARD) {
@@ -913,12 +1224,12 @@ class FinancialHistoryCsvService extends CsvBulkService
             }
         }
 
-        if ($data['type'] === static::TYPE_PAYMENT && empty($data['payment_method'])) {
+        if ($data['type'] === static::TYPE_PAYMENT && $rawMethod === '') {
             $data['payment_method'] = 'cash';
         }
 
-        if ($data['payment_method'] !== '' && ! in_array($data['payment_method'], ['cash', 'bank_transfer', 'mobile_money', 'card', 'other', 'credit'], true)) {
-            $errors[] = 'Payment Method must be one of: cash, bank_transfer, mobile_money, card, other.';
+        if ($rawMethod !== '' && ! in_array($data['payment_method'], ['cash', 'bank_transfer', 'mobile_money', 'card', 'other', 'credit'], true)) {
+            $errors[] = 'Payment Method ['.$rawMethod.'] must be one of: cash, bank_transfer, mobile_money, card, other.';
         }
 
         if (! empty($errors)) {
@@ -929,15 +1240,26 @@ class FinancialHistoryCsvService extends CsvBulkService
 
         $year = null;
         if ($data['academic_year'] !== '') {
-            $year = $academicYears[strtolower($data['academic_year'])] ?? null;
+            $yearKey = strtolower($data['academic_year']);
+            $year = $academicYears[$yearKey] ?? null;
             if (! $year && $schoolId) {
                 $year = static::ensureAcademicYear($schoolId, $data['academic_year'], $data['date'], $academicYears);
             }
             if (! $year) {
-                $errors[] = 'Academic Year ['.$data['academic_year'].'] was not found in this school. Available years: '.($academicYears->pluck('name')->implode(', ') ?: 'none').'.';
+                $errors[] = 'Academic Year ['.$rawYear.'] was not found in this school.';
             }
         } else {
-            $year = $activeYear;
+            $yearName = $parsedDate ? Carbon::parse($parsedDate)->format('Y') : null;
+            if ($yearName) {
+                $yearKey = strtolower($yearName);
+                $year = $academicYears[$yearKey] ?? null;
+                if (! $year && $schoolId) {
+                    $year = static::ensureAcademicYear($schoolId, $yearName, $parsedDate, $academicYears);
+                }
+            }
+            if (! $year) {
+                $year = $activeYear;
+            }
         }
 
         if (! empty($errors)) {
@@ -962,7 +1284,16 @@ class FinancialHistoryCsvService extends CsvBulkService
             }
 
             if (! $term) {
-                $errors[] = 'Term ['.$data['term'].'] was not found'.($year ? ' for Academic Year ['.$year->name.']' : '').'. Available terms: '.($terms->pluck('name')->unique()->values()->implode(', ') ?: 'none').'.';
+                $errors[] = 'Term ['.$rawTerm.'] was not found'.($year ? ' for Academic Year ['.$year->name.']' : '').'.';
+            }
+        } elseif ($year && $parsedDate) {
+            $carbonDate = Carbon::parse($parsedDate);
+            $resolved = $terms->first(fn (Term $t): bool => (int) $t->academic_year_id === (int) $year->id
+                && $t->start_date && $t->end_date
+                && $carbonDate->between($t->start_date, $t->end_date)
+            );
+            if ($resolved) {
+                $term = $resolved;
             }
         }
 

@@ -82,7 +82,7 @@ class TempFinancialHistoryImportTest extends TestCase
                 'requester_id' => null,
             ]);
 
-            $this->assertSame(['success' => 8, 'total' => 8, 'failures' => []], $result);
+            $this->assertSame(['success' => 8, 'skipped' => 0, 'total' => 8, 'failures' => []], $result);
 
             $student->refresh();
             $invoices = Invoice::withoutTenantScope()->where('student_id', $student->id)->orderBy('id')->get();
@@ -238,7 +238,7 @@ class TempFinancialHistoryImportTest extends TestCase
                 'requester_id' => null,
             ]);
 
-            $this->assertSame(['success' => 2, 'total' => 2, 'failures' => []], $result);
+            $this->assertSame(['success' => 2, 'skipped' => 0, 'total' => 2, 'failures' => []], $result);
 
             $year = AcademicYear::withoutTenantScope()
                 ->where('school_id', $this->schoolId)
@@ -276,6 +276,49 @@ class TempFinancialHistoryImportTest extends TestCase
 
             $ledger = StudentFinancialHistoryService::buildLedger($student->refresh());
             $this->assertEqualsWithDelta(0.0, (float) $ledger['closing_balance'], 0.001);
+        } finally {
+            DB::rollBack();
+        }
+    }
+
+    public function test_skips_duplicate_imports_on_reimport(): void
+    {
+        DB::beginTransaction();
+
+        try {
+            $student = Student::withoutTenantScope()->create([
+                'school_id' => $this->schoolId,
+                'student_id_number' => 'FINH-DUP-'.uniqid(),
+                'first_name' => 'Duplicate',
+                'last_name' => 'Test',
+                'gender' => 'male',
+                'date_of_birth' => now()->subYears(12)->toDateString(),
+                'admission_date' => now()->subYear()->toDateString(),
+                'status' => 'active',
+            ]);
+
+            $id = $student->student_id_number;
+            $rows = [
+                ['Student ID', 'Transaction Type', 'Date', 'Description / Fee Name', 'Amount (USD)', 'Receipt Number', 'Reference Number', 'Payment Method', 'Invoice Number', 'Academic Year', 'Term', 'Notes'],
+                [$id, 'charge', '2026-05-10', 'Tuition Fees', '100.00', '', '', '', '', '2026', 'Term 2', ''],
+            ];
+
+            $file = tempnam(sys_get_temp_dir(), 'finh-import');
+            $out = fopen($file, 'w');
+            fwrite($out, "\xEF\xBB\xBF");
+            foreach ($rows as $row) {
+                fputcsv($out, $row, escape: '\\');
+            }
+            fclose($out);
+
+            $columns = FinancialHistoryCsvService::columns();
+            $columnMap = array_combine(array_keys($columns), array_values(array_map(fn ($c) => $c['label'], $columns)));
+
+            $res1 = FinancialHistoryCsvService::import($file, $this->schoolId, $columnMap);
+            $this->assertSame(['success' => 1, 'skipped' => 0, 'total' => 1, 'failures' => []], $res1);
+
+            $res2 = FinancialHistoryCsvService::import($file, $this->schoolId, $columnMap);
+            $this->assertSame(['success' => 0, 'skipped' => 1, 'total' => 1, 'failures' => []], $res2);
         } finally {
             DB::rollBack();
         }
