@@ -108,7 +108,7 @@ body.kairo-v2 #faq .kfaq .rail { display: grid; grid-auto-flow: column; grid-tem
 body.kairo-v2 #faq .kfaq .rail::after { content: ""; width: 18px; }
 body.kairo-v2 #faq .kfaq .rail::-webkit-scrollbar { display: none; }
 body.kairo-v2 #faq .kfaq button, body.kairo-v2 #faq .kfaq input { appearance: none; box-shadow: none; text-transform: none; letter-spacing: normal; font: inherit; }
-body.kairo-v2 #faq .kfaq .chip { scroll-snap-align: start; white-space: nowrap; background: var(--surface, #fff); border: 1px solid var(--border); border-radius: 999px; padding: 8px 14px; font-size: 13.5px; font-weight: 600; cursor: pointer; transition: border-color .15s, background-color .15s, transform .15s; }
+body.kairo-v2 #faq .kfaq .chip { scroll-snap-align: start; white-space: nowrap; color: var(--ink); background: var(--surface, #fff); border: 1px solid var(--border); border-radius: 999px; padding: 8px 14px; font-size: 13.5px; font-weight: 600; cursor: pointer; transition: border-color .15s, background-color .15s, transform .15s; }
 body.kairo-v2 #faq .kfaq .chip:hover { border-color: var(--coral-strong); background: var(--soft, #fff1ed); transform: translateY(-1px); }
 
 body.kairo-v2 #faq .kfaq .form { width: 100%; display: flex; gap: 10px; padding: 4px 18px 8px; box-sizing: border-box; }
