@@ -1,0 +1,244 @@
+- generic [active] [ref=f3e1]:
+  - banner [ref=f3e2]:
+    - generic [ref=f3e3]:
+      - link "Kairo CORE home" [ref=f3e4] [cursor=pointer]:
+        - /url: https://kairo.co.zw
+        - img "Kairo CORE logo" [ref=f3e5]
+      - generic [ref=f3e6]:
+        - navigation "Primary navigation" [ref=f3e7]:
+          - link "Home" [ref=f3e8] [cursor=pointer]:
+            - /url: https://kairo.co.zw
+          - link "Features" [ref=f3e9] [cursor=pointer]:
+            - /url: https://kairo.co.zw/features
+          - link "Blog" [ref=f3e12] [cursor=pointer]:
+            - /url: https://kairo.co.zw/blog
+          - link "About" [ref=f3e13] [cursor=pointer]:
+            - /url: https://kairo.co.zw/about
+          - link "Contact" [ref=f3e14] [cursor=pointer]:
+            - /url: https://kairo.co.zw/contact
+        - generic [ref=f3e15]:
+          - button "Toggle dark mode" [ref=f3e16] [cursor=pointer]
+          - group [ref=f3e21]:
+            - generic "Change language" [ref=f3e22] [cursor=pointer]:
+              - generic [ref=f3e26]: EN
+              - text: ⌄
+          - group [ref=f3e27]:
+            - generic "Login ⌄" [ref=f3e28] [cursor=pointer]
+          - link "Register School" [ref=f3e32] [cursor=pointer]:
+            - /url: https://kairo.co.zw/register
+  - main [ref=f3e33]:
+    - generic [ref=f3e34]:
+      - generic [ref=f3e35]:
+        - heading [level=1]
+        - paragraph
+      - generic [ref=f3e37]:
+        - generic "Filter articles by category" [ref=f3e38]:
+          - link "All" [ref=f3e39] [cursor=pointer]:
+            - /url: https://kairo.co.zw/blog
+          - link "Academics" [ref=f3e40] [cursor=pointer]:
+            - /url: https://kairo.co.zw/blog?category=Academics
+          - link "Fees" [ref=f3e41] [cursor=pointer]:
+            - /url: https://kairo.co.zw/blog?category=Fees
+          - link "Insights" [ref=f3e42] [cursor=pointer]:
+            - /url: https://kairo.co.zw/blog?category=Insights
+          - link "Security" [ref=f3e43] [cursor=pointer]:
+            - /url: https://kairo.co.zw/blog?category=Security
+        - generic [ref=f3e44]:
+          - generic [ref=f3e45]: Search articles
+          - searchbox "Search articles" [ref=f3e46]
+      - generic [ref=f3e47]:
+        - article [ref=f3e48]:
+          - link "Five security habits every school should adopt" [ref=f3e49] [cursor=pointer]:
+            - /url: https://kairo.co.zw/blog/five-security-habits-every-school-should-adopt
+            - generic [ref=f3e50]:
+              - img "Five security habits every school should adopt" [ref=f3e52]
+              - generic [ref=f3e53]: 16 Oct 2026
+          - generic [ref=f3e54]:
+            - generic [ref=f3e55]: Security · 2 min read
+            - heading [level=3] [ref=f3e56]:
+              - link "Five security habits every school should adopt" [ref=f3e57] [cursor=pointer]:
+                - /url: https://kairo.co.zw/blog/five-security-habits-every-school-should-adopt
+            - paragraph [ref=f3e58]: From shared logins to lost paper records, student data leaks quietly. Five practical habits that protect learners, staff and families.
+            - generic [ref=f3e59]:
+              - link "Read article →" [ref=f3e60] [cursor=pointer]:
+                - /url: https://kairo.co.zw/blog/five-security-habits-every-school-should-adopt
+              - button "Like this article" [ref=f3e61] [cursor=pointer]:
+                - generic [ref=f3e64]: "0"
+        - article [ref=f3e65]:
+          - 'link "From admission to report card: a term with Kairo CORE" [ref=f3e66] [cursor=pointer]':
+            - /url: https://kairo.co.zw/blog/from-admission-to-report-card
+            - generic [ref=f3e67]:
+              - 'img "From admission to report card: a term with Kairo CORE" [ref=f3e69]'
+              - generic [ref=f3e70]: 12 Oct 2026
+          - generic [ref=f3e71]:
+            - generic [ref=f3e72]: Academics · 2 min read
+            - heading [level=3] [ref=f3e73]:
+              - 'link "From admission to report card: a term with Kairo CORE" [ref=f3e74] [cursor=pointer]':
+                - /url: https://kairo.co.zw/blog/from-admission-to-report-card
+            - paragraph [ref=f3e75]: Follow one school term end to end — online admissions, daily attendance, assessments and report cards — and see where the time goes back to teachers.
+            - generic [ref=f3e76]:
+              - link "Read article →" [ref=f3e77] [cursor=pointer]:
+                - /url: https://kairo.co.zw/blog/from-admission-to-report-card
+              - button "Like this article" [ref=f3e78] [cursor=pointer]:
+                - generic [ref=f3e81]: "0"
+        - article [ref=f3e82]:
+          - 'link "School fees made simple: invoicing, Paynow and payment tracking" [ref=f3e83] [cursor=pointer]':
+            - /url: https://kairo.co.zw/blog/school-fees-made-simple
+            - generic [ref=f3e84]:
+              - 'img "School fees made simple: invoicing, Paynow and payment tracking" [ref=f3e86]'
+              - generic [ref=f3e87]: 08 Oct 2026
+          - generic [ref=f3e88]:
+            - generic [ref=f3e89]: Fees · 1 min read
+            - heading [level=3] [ref=f3e90]:
+              - 'link "School fees made simple: invoicing, Paynow and payment tracking" [ref=f3e91] [cursor=pointer]':
+                - /url: https://kairo.co.zw/blog/school-fees-made-simple
+            - paragraph [ref=f3e92]: Chasing fees is stressful for bursars and families alike. Modern invoicing with digital payment options changes the conversation completely.
+            - generic [ref=f3e93]:
+              - link "Read article →" [ref=f3e94] [cursor=pointer]:
+                - /url: https://kairo.co.zw/blog/school-fees-made-simple
+              - button "Like this article" [ref=f3e95] [cursor=pointer]:
+                - generic [ref=f3e98]: "0"
+        - article [ref=f3e99]:
+          - link "Why schools are moving to digital management" [ref=f3e100] [cursor=pointer]:
+            - /url: https://kairo.co.zw/blog/why-schools-are-moving-to-digital-management
+            - generic [ref=f3e101]:
+              - img "Why schools are moving to digital management" [ref=f3e103]
+              - generic [ref=f3e104]: 05 Oct 2026
+          - generic [ref=f3e105]:
+            - generic [ref=f3e106]: Insights · 2 min read
+            - heading [level=3] [ref=f3e107]:
+              - link "Why schools are moving to digital management" [ref=f3e108] [cursor=pointer]:
+                - /url: https://kairo.co.zw/blog/why-schools-are-moving-to-digital-management
+            - paragraph [ref=f3e109]: Paper registers, spreadsheets and WhatsApp groups were never designed to run a school. Here is what changes when your institution moves onto a single, secure pl...
+            - generic [ref=f3e110]:
+              - link "Read article →" [ref=f3e111] [cursor=pointer]:
+                - /url: https://kairo.co.zw/blog/why-schools-are-moving-to-digital-management
+              - button "Like this article" [ref=f3e112] [cursor=pointer]:
+                - generic [ref=f3e115]: "0"
+      - generic [ref=f3e116]:
+        - heading [level=2]
+        - paragraph
+        - generic [ref=f3e117]:
+          - link "Register School" [ref=f3e118] [cursor=pointer]:
+            - /url: https://kairo.co.zw/register
+          - link "Explore Features" [ref=f3e119] [cursor=pointer]:
+            - /url: https://kairo.co.zw/features
+  - contentinfo [ref=f3e120]:
+    - generic [ref=f3e121]:
+      - generic [ref=f3e122]:
+        - generic [ref=f3e123]:
+          - link "Kairo CORE home" [ref=f3e124] [cursor=pointer]:
+            - /url: https://kairo.co.zw
+            - img "Kairo CORE logo" [ref=f3e125]
+          - paragraph [ref=f3e126]: Smarter Schools. Brighter Futures.
+          - paragraph [ref=f3e127]: Cloud-based school management platform built for schools.
+          - generic [ref=f3e128]:
+            - generic [ref=f3e129]:
+              - time [ref=f3e130]:
+                - text: 00:35
+                - generic [ref=f3e131]: :31
+              - generic [ref=f3e132]: CAT · UTC+2
+            - generic [ref=f3e133]: Sunday, 15 November 2026
+            - generic [ref=f3e134]: Harare, Zimbabwe
+        - navigation "Product" [ref=f3e135]:
+          - heading "Product" [level=3] [ref=f3e136]
+          - list [ref=f3e138]:
+            - listitem [ref=f3e139]:
+              - link "Features" [ref=f3e140] [cursor=pointer]:
+                - /url: https://kairo.co.zw/features
+            - listitem [ref=f3e141]:
+              - link "Fees & Finance" [ref=f3e142] [cursor=pointer]:
+                - /url: https://kairo.co.zw/school-fees
+            - listitem [ref=f3e143]:
+              - link "Admissions" [ref=f3e144] [cursor=pointer]:
+                - /url: https://kairo.co.zw/admissions
+            - listitem [ref=f3e145]:
+              - link "Security" [ref=f3e146] [cursor=pointer]:
+                - /url: https://kairo.co.zw/security
+            - listitem [ref=f3e147]:
+              - link "Reports & Analytics" [ref=f3e148] [cursor=pointer]:
+                - /url: https://kairo.co.zw/features#reports
+        - navigation "Company" [ref=f3e149]:
+          - heading "Company" [level=3] [ref=f3e150]
+          - list [ref=f3e152]:
+            - listitem [ref=f3e153]:
+              - link "About" [ref=f3e154] [cursor=pointer]:
+                - /url: https://kairo.co.zw/about
+            - listitem [ref=f3e155]:
+              - link "Blog" [ref=f3e156] [cursor=pointer]:
+                - /url: https://kairo.co.zw/blog
+            - listitem [ref=f3e157]:
+              - link "Contact" [ref=f3e158] [cursor=pointer]:
+                - /url: https://kairo.co.zw/contact
+            - listitem [ref=f3e159]:
+              - link "Why Kairo" [ref=f3e160] [cursor=pointer]:
+                - /url: https://kairo.co.zw#why
+        - navigation "Resources" [ref=f3e161]:
+          - heading "Resources" [level=3] [ref=f3e162]
+          - list [ref=f3e164]:
+            - listitem [ref=f3e165]:
+              - link "Help Centre" [ref=f3e166] [cursor=pointer]:
+                - /url: https://kairo.co.zw/docs
+            - listitem [ref=f3e167]:
+              - link "School websites" [ref=f3e168] [cursor=pointer]:
+                - /url: https://kairo.co.zw/schools
+            - listitem [ref=f3e169]:
+              - link "How it works" [ref=f3e170] [cursor=pointer]:
+                - /url: https://kairo.co.zw#start
+            - listitem [ref=f3e171]:
+              - link "Documentation" [ref=f3e172] [cursor=pointer]:
+                - /url: https://kairo.co.zw/docs
+            - listitem [ref=f3e173]:
+              - link "FAQ" [ref=f3e174] [cursor=pointer]:
+                - /url: https://kairo.co.zw#faq
+            - listitem [ref=f3e175]:
+              - link "Book a demo" [ref=f3e176] [cursor=pointer]:
+                - /url: https://kairo.co.zw/contact#contact-form
+        - generic [ref=f3e177]:
+          - heading "Reach out to us" [level=3] [ref=f3e178]
+          - generic [ref=f3e180]:
+            - link "+263 78 636 6855" [ref=f3e181] [cursor=pointer]:
+              - /url: tel:+263786366855
+            - link "sales@kairocore.co.zw" [ref=f3e186] [cursor=pointer]:
+              - /url: mailto:sales@kairocore.co.zw
+            - link "Chat on WhatsApp" [ref=f3e192] [cursor=pointer]:
+              - /url: https://wa.me/263786366855
+      - generic [ref=f3e198]:
+        - generic [ref=f3e199]:
+          - generic [ref=f3e200]: © 2026 Kairo CORE. All rights reserved.
+          - generic [ref=f3e201]:
+            - link "Privacy Policy" [ref=f3e202] [cursor=pointer]:
+              - /url: https://kairo.co.zw/privacy
+            - generic [aria-hidden] [ref=f3e203]: ·
+            - link "Terms" [ref=f3e204] [cursor=pointer]:
+              - /url: https://kairo.co.zw/terms
+        - generic [ref=f3e205]:
+          - generic [ref=f3e206]:
+            - link "Chat on WhatsApp" [ref=f3e207] [cursor=pointer]:
+              - /url: https://wa.me/263786366855
+            - link "Facebook" [ref=f3e210] [cursor=pointer]:
+              - /url: https://www.facebook.com/share/1CapPqChXU/
+            - link "Instagram" [ref=f3e213] [cursor=pointer]:
+              - /url: https://www.instagram.com/sigvardtech?exln=ZHQxc241eDNxZXN3
+            - link "X" [ref=f3e218] [cursor=pointer]:
+              - /url: https://x.com/
+            - link "TikTok" [ref=f3e221] [cursor=pointer]:
+              - /url: https://www.tiktok.com/@sigvardtech?_r=1&_t=ZS-9AlmsjBSObFl
+            - link "YouTube" [ref=f3e226] [cursor=pointer]:
+              - /url: https://www.youtube.com/
+          - link "↑ Back to top" [ref=f3e229] [cursor=pointer]:
+            - /url: "#"
+  - generic "Quick contact links" [ref=f3e230]:
+    - generic [ref=f3e231]:
+      - link "Chat on WhatsApp" [ref=f3e232] [cursor=pointer]:
+        - /url: https://wa.me/263786366855
+      - link "Facebook" [ref=f3e235] [cursor=pointer]:
+        - /url: https://www.facebook.com/share/1CapPqChXU/
+      - link "Instagram" [ref=f3e238] [cursor=pointer]:
+        - /url: https://www.instagram.com/sigvardtech?exln=ZHQxc241eDNxZXN3
+      - link "X" [ref=f3e243] [cursor=pointer]:
+        - /url: https://x.com/
+      - link "TikTok" [ref=f3e246] [cursor=pointer]:
+        - /url: https://www.tiktok.com/@sigvardtech?_r=1&_t=ZS-9AlmsjBSObFl
+      - link "YouTube" [ref=f3e251] [cursor=pointer]:
+        - /url: https://www.youtube.com/

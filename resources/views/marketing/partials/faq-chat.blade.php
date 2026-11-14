@@ -4,7 +4,7 @@ body.kairo-v2 #faq .kfaq {
     --bg: #f8f9fd; --surface: #ffffff; --chat: #f3f5fb; --dot: rgba(27,42,68,.07); --ink: #1c2a44; --muted: #6b7691; --line: #e6eaf4;
     --accent: #ea5a41; --accent2: #f2804f; --soft: #fff1ed; --soft-line: rgba(234,90,65,.28); --shadow: rgba(28,42,68,.32); --user: #dfe5f3; --bubble: #f1f3f9;
     color-scheme: light;
-    display: grid; grid-template-columns: 5fr 7fr; gap: 64px; align-items: center; padding: 48px 0;
+    display: grid; grid-template-columns: 1fr 2fr; gap: 48px; align-items: center; padding: 48px 0;
 }
 html.dark body.kairo-v2 #faq .kfaq {
     --bg: #0e1325; --surface: #161d35; --chat: #111830; --dot: rgba(255,255,255,.06); --ink: #eef1fb; --muted: #9ba5c6; --line: #27304d;
