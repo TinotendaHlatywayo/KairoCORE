@@ -200,30 +200,30 @@
 
 <script>
 const KF_FAQ = [
-    { q: @json(__('Is Kairo CORE built for my type of school?')),
-      a: @json(__('Yes. Kairo CORE is built for primary, secondary, boarding and group schools, with flexible setup for different class structures, terms and reporting needs.')) },
-    { q: @json(__('What does Kairo CORE cover?')),
-      a: @json(__('It brings admissions, student records, fees, attendance, academics, assessments, report cards, staff permissions, parent communication and school websites into one connected system.')) },
-    { q: @json(__('Is our school data safe?')),
-      a: @json(__('Each school’s data is isolated to that school, staff only see what their role allows, and permissions can be configured per user or role.')) },
-    { q: @json(__('Will my team be trained?')),
-      a: @json(__('Yes. Teams are supported with guided onboarding, the Help Centre, video tutorials and direct support. Additional training can be arranged for new staff or new modules.')) },
-    { q: @json(__('Can we access it from any device?')),
-      a: @json(__('Yes. Kairo CORE runs in the browser on phones, tablets and computers, so staff and parents can work from anywhere with an internet connection.')) },
-    { q: @json(__('How long does setup take?')),
-      a: @json(__('Most schools can start with core records, classes and fees quickly. A full rollout depends on how much data is imported and which modules you enable first.')) },
-    { q: @json(__('Can parents see student progress and fees?')),
-      a: @json(__('Yes. Parents can be given secure access to relevant student information, fees, balances and communication, depending on the permissions you configure.')) },
-    { q: @json(__('Does it support ZIMSEC and Cambridge reporting?')),
-      a: @json(__('Kairo CORE supports flexible grading, assessments and report cards, including ZIMSEC and Cambridge-style reporting where configured for your school.')) },
-    { q: @json(__('Can we import existing student data?')),
-      a: @json(__('Yes. Student records can be imported from Excel or CSV, with column matching and validation to reduce manual data entry.')) },
-    { q: @json(__('Can each school have its own public website?')),
-      a: @json(__('Yes. Each school can publish a branded public website with admissions, news, events, staff, contact details and SEO-friendly pages.')) },
-    { q: @json(__('What support is available after go-live?')),
-      a: @json(__('Support is available through the Help Centre, documentation, WhatsApp and direct contact channels. Issues are handled based on severity and school needs.')) },
-    { q: @json(__('Can we try Kairo CORE before committing?')),
-      a: @json(__('Yes. You can book a demo, explore the public features and Help Centre, then start with the modules that matter most to your school.')) }
+    { q: {!! json_encode(__('Is Kairo CORE built for my type of school?')) !!} ,
+      a: {!! json_encode(__('Yes. Kairo CORE is built for primary, secondary, boarding and group schools, with flexible setup for different class structures, terms and reporting needs.')) !!} },
+    { q: {!! json_encode(__('What does Kairo CORE cover?')) !!} ,
+      a: {!! json_encode(__('It brings admissions, student records, fees, attendance, academics, assessments, report cards, staff permissions, parent communication and school websites into one connected system.')) !!} },
+    { q: {!! json_encode(__('Is our school data safe?')) !!} ,
+      a: {!! json_encode(__('Each school’s data is isolated to that school, staff only see what their role allows, and permissions can be configured per user or role.')) !!} },
+    { q: {!! json_encode(__('Will my team be trained?')) !!} ,
+      a: {!! json_encode(__('Yes. Teams are supported with guided onboarding, the Help Centre, video tutorials and direct support. Additional training can be arranged for new staff or new modules.')) !!} },
+    { q: {!! json_encode(__('Can we access it from any device?')) !!} ,
+      a: {!! json_encode(__('Yes. Kairo CORE runs in the browser on phones, tablets and computers, so staff and parents can work from anywhere with an internet connection.')) !!} },
+    { q: {!! json_encode(__('How long does setup take?')) !!} ,
+      a: {!! json_encode(__('Most schools can start with core records, classes and fees quickly. A full rollout depends on how much data is imported and which modules you enable first.')) !!} },
+    { q: {!! json_encode(__('Can parents see student progress and fees?')) !!} ,
+      a: {!! json_encode(__('Yes. Parents can be given secure access to relevant student information, fees, balances and communication, depending on the permissions you configure.')) !!} },
+    { q: {!! json_encode(__('Does it support ZIMSEC and Cambridge reporting?')) !!} ,
+      a: {!! json_encode(__('Kairo CORE supports flexible grading, assessments and report cards, including ZIMSEC and Cambridge-style reporting where configured for your school.')) !!} },
+    { q: {!! json_encode(__('Can we import existing student data?')) !!} ,
+      a: {!! json_encode(__('Yes. Student records can be imported from Excel or CSV, with column matching and validation to reduce manual data entry.')) !!} },
+    { q: {!! json_encode(__('Can each school have its own public website?')) !!} ,
+      a: {!! json_encode(__('Yes. Each school can publish a branded public website with admissions, news, events, staff, contact details and SEO-friendly pages.')) !!} },
+    { q: {!! json_encode(__('What support is available after go-live?')) !!} ,
+      a: {!! json_encode(__('Support is available through the Help Centre, documentation, WhatsApp and direct contact channels. Issues are handled based on severity and school needs.')) !!} },
+    { q: {!! json_encode(__('Can we try Kairo CORE before committing?')) !!} ,
+      a: {!! json_encode(__('Yes. You can book a demo, explore the public features and Help Centre, then start with the modules that matter most to your school.')) }
 ];
 
 const kfFaqMsgs = document.getElementById('kf-faq-msgs');
@@ -282,7 +282,7 @@ function kfFaqStart() {
     kfFaqMsgs.innerHTML = '';
     kfFaqAsked = new Set([0]);
     kfFaqBusy = false;
-    kfFaqAdd('bot', @json(__('Hi, I’m here to answer the questions school leaders ask most. Tap one below.')));
+    kfFaqAdd('bot', {!! json_encode(__('Hi, I’m here to answer the questions school leaders ask most. Tap one below.')));
     kfFaqAdd('me', KF_FAQ[0].q);
     kfFaqAdd('bot', KF_FAQ[0].a);
     kfFaqChips();
