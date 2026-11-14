@@ -32,6 +32,7 @@ body.kairo-v2 #faq .kfaq :is(.talk, .chip, .reset, .send, .wa-pill, .src, .jump,
 }
 
 body.kairo-v2 #faq .kfaq .chat {
+    padding: 0;
     display: flex; flex-direction: column;
     height: min(680px, calc(100dvh - 48px));
     min-height: 560px;
@@ -181,7 +182,7 @@ html.dark body.kairo-v2 #faq .kfaq {
                 <div class="quick" id="kfaq-quick"></div>
 
                 <form class="form" id="kfaq-form" autocomplete="off">
-                    <input id="kfaq-input" type="text" maxlength="200" placeholder="{{ __('Type your question…') }}" aria-label="{{ __('Type your question') }}">
+                    <input id="kfaq-input" class="kfaq-input" type="text" maxlength="200" placeholder="{{ __('Type your question…') }}" aria-label="{{ __('Type your question') }}">
                     <button class="send" id="kfaq-send" type="submit" aria-label="{{ __('Send question') }}" disabled>
                         <svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </button>
