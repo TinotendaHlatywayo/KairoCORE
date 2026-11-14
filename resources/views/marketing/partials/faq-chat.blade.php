@@ -11,7 +11,7 @@ html.dark body.kairo-v2 #faq .kfaq {
     --accent: #ff6a52; --accent2: #ff8d5c; --soft: #2e2338; --soft-line: rgba(255,106,82,.35); --shadow: rgba(0,0,0,.7); --user: #2a3458; --bubble: #202947;
     color-scheme: dark;
 }
-body.kairo-v2 #faq .kfaq h2 { font-size: clamp(20px, 2vw, 24px); line-height: 1.08; letter-spacing: -.03em; font-weight: 800; margin: 0 0 18px; color: var(--ink); }
+body.kairo-v2 #faq .kfaq h2 { font-size: 32px; line-height: 1.08; letter-spacing: -.03em; font-weight: 800; margin: 0 0 18px; color: var(--ink); }
 body.kairo-v2 #faq .kfaq .lead { color: var(--muted); font-size: 17px; max-width: 34ch; margin: 0 0 28px; }
 body.kairo-v2 #faq .kfaq .talk { display: flex; align-items: center; gap: 14px; padding: 14px 16px; max-width: 340px; background: var(--surface); border: 1px solid var(--line); border-radius: 20px; color: inherit; text-decoration: none; transition: border-color .2s, transform .2s; }
 body.kairo-v2 #faq .kfaq .talk:hover { border-color: #25d366; transform: translateY(-2px); }
