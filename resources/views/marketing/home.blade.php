@@ -159,23 +159,7 @@
     </div>
 </section>
 
-<section id="faq">
-    <div class="w fq">
-        <div class="hd rv">
-            <div class="ey">{{ marketing_content('home_faq_badge') }}</div>
-            <h2>{{ marketing_content('home_faq_title') }}</h2>
-            <p>{{ marketing_content('home_faq_subtitle') }}</p>
-        </div>
-        <div class="rv">
-            @foreach (marketing_merged_list('home_faq') as $item)
-                <details @if($loop->first) open @endif>
-                    <summary>{{ $item['question'] ?? '' }}</summary>
-                    <p>{{ $item['answer'] ?? '' }}</p>
-                </details>
-            @endforeach
-        </div>
-    </div>
-</section>
+@include('marketing.partials.faq-chat')
 
 <div class="ct rv" id="contact" style="--bld:url('{{ marketing_image('cta_image', marketing_image('hero_image')) }}')">
     <h2>{{ marketing_content('cta_title') }}</h2>
