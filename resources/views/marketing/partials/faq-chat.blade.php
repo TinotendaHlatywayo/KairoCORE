@@ -414,7 +414,7 @@ function ask(text) {
     sync();
     asked.add(value);
     renderChips();
-    row('me').querySelector('.bub').textContent = value;
+    row('me').textContent = value;
 
     const result = matchQuestion(value, kb, previousTopic);
     const typingRow = typing();
