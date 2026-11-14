@@ -1,0 +1,1566 @@
+/*
+ * Academics workspace theme.
+ *
+ * Scoped under `.acad` so the Tinway-inspired Academics screen cannot leak
+ * styles into the rest of the panel. Colours are driven by Filament's
+ * tenant-aware primary palette (`--primary-*` -> `--sc-primary-*`), so the
+ * screen follows each school's chosen theme in both light and dark mode.
+ */
+
+.acad {
+    --a-bg: #f6f7fb;
+    --a-surf: #ffffff;
+    --a-surf2: #f1f3f9;
+    --a-line: #e5e8f1;
+    --a-tx: #141a30;
+    --a-mu: #68718f;
+    --a-pri: var(--sc-primary-600, #4f46e5);
+    --a-pri-deep: var(--sc-primary-700, #4338ca);
+    --a-pri-soft: var(--sc-brand-soft, rgba(79, 70, 229, 0.12));
+    --a-ok: #0f9d68;
+    --a-ok-bg: #e0f5ec;
+    --a-warn: #b86200;
+    --a-warn-bg: #fff0d9;
+    --a-bad: #d92d3f;
+    --a-bad-bg: #fdecef;
+    --a-shadow: 0 1px 2px rgba(20, 26, 60, 0.05), 0 10px 30px -10px rgba(20, 26, 60, 0.12);
+
+    color: var(--a-tx);
+    font-size: 14px;
+}
+
+.dark .acad {
+    --a-bg: #0c0f1d;
+    --a-surf: #151929;
+    --a-surf2: #1d2238;
+    --a-line: #283050;
+    --a-tx: #e9ecf9;
+    --a-mu: #8e98bc;
+    --a-pri: var(--sc-primary-400, #818cf8);
+    --a-pri-deep: var(--sc-primary-300, #a5b4fc);
+    --a-pri-soft: rgba(var(--primary-400, 129, 140, 248), 0.16);
+    --a-ok: #34d399;
+    --a-ok-bg: #0f3629;
+    --a-warn: #fbbf24;
+    --a-warn-bg: #3a2b0b;
+    --a-bad: #f87171;
+    --a-bad-bg: #3b1520;
+    --a-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.acad *,
+.acad *::before,
+.acad *::after {
+    box-sizing: border-box;
+}
+
+.acad button {
+    font: inherit;
+}
+
+.acad :focus-visible {
+    outline: 2px solid var(--a-pri);
+    outline-offset: 2px;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+.acad-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.acad-header-copy {
+    flex: 1 1 240px;
+    min-width: 240px;
+}
+
+.acad-eyebrow {
+    display: inline-block;
+    margin-bottom: 0.35rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--a-mu);
+}
+
+.acad-title {
+    margin: 0;
+    font-size: 1.9rem;
+    line-height: 1.1;
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    color: var(--a-tx);
+}
+
+.acad-sub {
+    margin: 0.35rem 0 0;
+    color: var(--a-mu);
+}
+
+.acad-header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.acad-year {
+    position: relative;
+}
+
+.acad .year-menu {
+    position: absolute;
+    right: 0;
+    z-index: 25;
+    width: 14rem;
+    max-height: 18rem;
+    margin-top: 0.5rem;
+    padding: 0.375rem;
+    overflow-y: auto;
+    border: 1px solid var(--a-line);
+    border-radius: 0.75rem;
+    background: var(--a-surf);
+    box-shadow: 0 18px 40px -18px rgba(20, 26, 60, 0.35);
+}
+
+.acad .year-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.55rem 0.65rem;
+    border: 0;
+    border-radius: 0.5rem;
+    background: transparent;
+    color: var(--a-mu);
+    font-size: 0.82rem;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+}
+
+.acad .year-option:hover {
+    background: var(--a-surf2);
+    color: var(--a-tx);
+}
+
+.acad .year-option.is-active {
+    background: var(--a-pri-soft);
+    color: var(--a-pri);
+    font-weight: 700;
+}
+
+.acad .year-empty {
+    margin: 0;
+    padding: 0.75rem;
+    color: var(--a-mu);
+    font-size: 0.8rem;
+}
+
+/* ── Buttons / pills / shared controls ──────────────────────────────────── */
+.acad .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.875rem;
+    border: 1px solid var(--a-line);
+    border-radius: 0.625rem;
+    background: var(--a-surf);
+    color: var(--a-tx);
+    font-weight: 600;
+    line-height: 1.2;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+}
+
+.acad .btn:hover {
+    border-color: var(--a-pri);
+    color: var(--a-pri);
+}
+
+.acad .btn:active {
+    transform: scale(0.96);
+}
+
+.acad .btn.primary {
+    border-color: var(--a-pri);
+    background: var(--a-pri);
+    color: #fff;
+}
+
+.acad .btn.primary:hover {
+    filter: brightness(1.08);
+    color: #fff;
+}
+
+.acad .btn.ghost {
+    border-color: transparent;
+    background: transparent;
+}
+
+.acad .btn.ghost:hover {
+    background: var(--a-surf2);
+}
+
+.acad .btn.icon {
+    padding: 0.5rem;
+}
+
+.acad .btn.danger {
+    border-color: var(--a-bad);
+    background: var(--a-bad);
+    color: #fff;
+}
+
+.acad .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.32rem;
+    padding: 0.18rem 0.62rem;
+    border-radius: 999px;
+    background: var(--a-surf2);
+    color: var(--a-mu);
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.acad .pill.ok {
+    background: var(--a-ok-bg);
+    color: var(--a-ok);
+}
+
+.acad .pill.warn {
+    background: var(--a-warn-bg);
+    color: var(--a-warn);
+}
+
+.acad .pill.pri {
+    background: var(--a-pri-soft);
+    color: var(--a-pri);
+}
+
+.acad .pill.bad {
+    background: var(--a-bad-bg);
+    color: var(--a-bad);
+}
+
+.acad .pill .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: currentColor;
+}
+
+.acad .card {
+    background: var(--a-surf);
+    border: 1px solid var(--a-line);
+    border-radius: 1rem;
+    box-shadow: var(--a-shadow);
+}
+
+/* ── Tabs ───────────────────────────────────────────────────────────────── */
+.acad-tabs {
+    display: flex;
+    gap: 0.25rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--a-line);
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.acad-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.acad-tab {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.7rem 1rem;
+    margin-bottom: -1px;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    background: transparent;
+    color: var(--a-mu);
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.acad-tab:hover {
+    color: var(--a-tx);
+}
+
+.acad-tab.is-active {
+    border-color: var(--a-pri);
+    color: var(--a-pri);
+}
+
+/* ── Overview ───────────────────────────────────────────────────────────── */
+.acad-stack {
+    display: grid;
+    gap: 1.25rem;
+}
+
+.acad-readiness {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2rem;
+    padding: 1.5rem;
+}
+
+.acad-ring {
+    position: relative;
+    width: 8rem;
+    height: 8rem;
+    flex: none;
+}
+
+.acad-ring svg {
+    width: 8rem;
+    height: 8rem;
+    transform: rotate(-90deg);
+}
+
+.acad-ring .track {
+    stroke: var(--a-surf2);
+}
+
+.acad-ring .value {
+    stroke: var(--a-ok);
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.acad-ring-caption {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-content: center;
+    text-align: center;
+}
+
+.acad-ring-caption b {
+    display: block;
+    font-size: 1.9rem;
+    line-height: 1;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+}
+
+.acad-ring-caption small {
+    color: var(--a-mu);
+    font-size: 0.72rem;
+}
+
+.acad-readiness-copy {
+    flex: 1 1 260px;
+    min-width: 260px;
+}
+
+.acad-readiness-copy h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.acad-readiness-copy p {
+    margin: 0.35rem 0 0;
+    color: var(--a-mu);
+}
+
+.acad-checks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.acad-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+@media (min-width: 1024px) {
+    .acad-stats {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+.acad .stat {
+    position: relative;
+    overflow: hidden;
+    padding: 1.1rem;
+    border: 1px solid var(--a-line);
+    border-radius: 1.125rem;
+    background: var(--a-surf);
+    box-shadow: var(--a-shadow);
+    text-align: left;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.acad .stat::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 3px;
+    background: var(--h, var(--a-pri));
+}
+
+.acad .stat::after {
+    content: '';
+    position: absolute;
+    right: -30px;
+    bottom: -30px;
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background: var(--h, var(--a-pri));
+    opacity: 0.08;
+    transition: transform 0.4s ease;
+}
+
+.acad .stat:hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in srgb, var(--h, var(--a-pri)) 50%, var(--a-line));
+    box-shadow: 0 14px 30px -12px color-mix(in srgb, var(--h, var(--a-pri)) 45%, transparent);
+}
+
+.acad .stat:hover::after {
+    transform: scale(1.7);
+}
+
+.acad .stat.featured {
+    grid-column: span 2;
+    border-color: transparent;
+    background: linear-gradient(135deg, var(--a-pri), #7c3aed);
+    color: #fff;
+}
+
+.acad .stat.featured::before {
+    display: none;
+}
+
+.acad .stat.featured::after {
+    background: #fff;
+    opacity: 0.12;
+}
+
+.acad .stat-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.acad .stat .chip {
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.75rem;
+    background: color-mix(in srgb, var(--h, var(--a-pri)) 14%, transparent);
+    color: var(--h, var(--a-pri));
+}
+
+.acad .stat.featured .chip {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+.acad .stat .go {
+    opacity: 0;
+    transform: translateX(-6px);
+    color: var(--h, var(--a-pri));
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.acad .stat:hover .go {
+    opacity: 1;
+    transform: none;
+}
+
+.acad .stat.featured .go {
+    color: #fff;
+}
+
+.acad .stat b {
+    display: block;
+    margin-top: 0.9rem;
+    font-size: 1.8rem;
+    line-height: 1;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+}
+
+.acad .stat .lbl {
+    display: block;
+    margin-top: 0.35rem;
+    font-size: 0.86rem;
+    font-weight: 600;
+}
+
+.acad .stat .detail {
+    display: block;
+    margin-top: 0.15rem;
+    color: var(--a-mu);
+    font-size: 0.75rem;
+}
+
+.acad .stat.featured .lbl,
+.acad .stat.featured .detail {
+    color: rgba(255, 255, 255, 0.84);
+}
+
+.acad-columns {
+    display: grid;
+    gap: 1.25rem;
+}
+
+@media (min-width: 1024px) {
+    .acad-columns {
+        grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    }
+}
+
+.acad-panel {
+    padding: 1.25rem;
+}
+
+.acad-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.acad-panel-head h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.acad-panel-head span {
+    color: var(--a-mu);
+    font-size: 0.85rem;
+}
+
+.acad-journey-bar {
+    height: 0.5rem;
+    margin-bottom: 1.25rem;
+    border-radius: 999px;
+    background: var(--a-surf2);
+    overflow: hidden;
+}
+
+.acad-journey-bar i {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--a-pri), var(--a-ok));
+    transition: width 0.7s ease;
+}
+
+.acad-phases {
+    display: grid;
+    gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+    .acad-phases {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.acad .phase {
+    border: 1px solid var(--a-line);
+    border-radius: 0.75rem;
+    overflow: hidden;
+}
+
+.acad .phase-head {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.875rem;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.acad .phase-head:hover {
+    background: var(--a-surf2);
+}
+
+.acad .phase-icon {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.5rem;
+    flex: none;
+}
+
+.acad .phase-icon.ok {
+    background: var(--a-ok-bg);
+    color: var(--a-ok);
+}
+
+.acad .phase-icon.warn {
+    background: var(--a-warn-bg);
+    color: var(--a-warn);
+}
+
+.acad .phase-copy {
+    flex: 1;
+    min-width: 0;
+}
+
+.acad .phase-copy b {
+    display: block;
+    font-size: 0.9rem;
+}
+
+.acad .phase-copy small {
+    color: var(--a-mu);
+    font-size: 0.75rem;
+}
+
+.acad .phase-progress {
+    display: block;
+    height: 4px;
+    margin-top: 0.4rem;
+    border-radius: 999px;
+    background: var(--a-ok);
+    transition: width 0.7s ease;
+}
+
+.acad .phase-chevron {
+    color: var(--a-mu);
+    transition: transform 0.2s ease;
+}
+
+.acad .phase-chevron.is-open {
+    transform: rotate(180deg);
+}
+
+.acad .phase-steps {
+    border-top: 1px solid var(--a-line);
+}
+
+.acad .phase-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.65rem 1rem;
+}
+
+.acad .phase-step + .phase-step {
+    border-top: 1px solid color-mix(in srgb, var(--a-line) 65%, transparent);
+}
+
+.acad .phase-step .mark {
+    margin-top: 0.1rem;
+    flex: none;
+}
+
+.acad .phase-step .mark.ok {
+    color: var(--a-ok);
+}
+
+.acad .phase-step .mark.warn {
+    color: var(--a-warn);
+}
+
+.acad .phase-step b {
+    display: block;
+    font-size: 0.82rem;
+}
+
+.acad .phase-step small {
+    color: var(--a-mu);
+    font-size: 0.72rem;
+}
+
+.acad-side {
+    display: grid;
+    gap: 1.25rem;
+    align-content: start;
+}
+
+.acad-year-track {
+    position: relative;
+    height: 0.625rem;
+    margin: 1.6rem 0 1.25rem;
+    border-radius: 999px;
+    background: var(--a-surf2);
+    cursor: crosshair;
+}
+
+.acad-year-fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    border-radius: inherit;
+    background: var(--a-pri);
+    transition: width 1s ease;
+}
+
+.acad-year-today {
+    position: absolute;
+    top: -1.35rem;
+    transform: translateX(-50%);
+    color: var(--a-pri);
+    font-size: 0.72rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.acad-year-term {
+    position: absolute;
+    top: 50%;
+    width: 3px;
+    height: 1rem;
+    transform: translate(-50%, -50%);
+    border-radius: 2px;
+    background: var(--a-warn);
+}
+
+.acad-year-tooltip {
+    position: absolute;
+    top: 1.15rem;
+    z-index: 5;
+    transform: translateX(-50%);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    background: var(--a-tx);
+    color: var(--a-bg);
+    font-size: 0.72rem;
+    font-weight: 600;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.acad-year-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.acad-year-footer b {
+    display: block;
+    font-size: 0.9rem;
+}
+
+.acad-year-footer small {
+    color: var(--a-mu);
+    font-size: 0.75rem;
+}
+
+.acad-quick {
+    display: grid;
+    gap: 0.35rem;
+}
+
+.acad-quick .btn {
+    justify-content: flex-start;
+}
+
+.acad-attention {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.acad-attention-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    font-size: 0.8rem;
+}
+
+.acad-attention-item .mark {
+    margin-top: 0.15rem;
+    flex: none;
+}
+
+.acad-attention-item .mark.critical {
+    color: var(--a-bad);
+}
+
+.acad-attention-item .mark.high {
+    color: var(--a-warn);
+}
+
+.acad-attention-item .mark.medium {
+    color: var(--a-mu);
+}
+
+.acad-attention-item b {
+    display: block;
+    font-size: 0.8rem;
+}
+
+.acad-attention-item small {
+    color: var(--a-mu);
+    font-size: 0.72rem;
+}
+
+/* ── Tables ─────────────────────────────────────────────────────────────── */
+.acad-table-card {
+    overflow: hidden;
+}
+
+.acad-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-bottom: 1px solid var(--a-line);
+}
+
+.acad-search {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1 1 240px;
+    max-width: 22rem;
+    min-width: 200px;
+    height: 2.5rem;
+    padding: 0 0.75rem;
+    border: 1px solid var(--a-line);
+    border-radius: 0.75rem;
+    background: var(--a-bg);
+    color: var(--a-mu);
+}
+
+.acad-search:focus-within {
+    border-color: var(--a-pri);
+    box-shadow: 0 0 0 3px var(--a-pri-soft);
+}
+
+.acad-search input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--a-tx);
+}
+
+.acad-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.acad .filter-chip {
+    padding: 0.35rem 0.7rem;
+    border: 0;
+    border-radius: 999px;
+    background: var(--a-surf2);
+    color: var(--a-mu);
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.acad .filter-chip:hover {
+    color: var(--a-tx);
+}
+
+.acad .filter-chip.is-active {
+    background: var(--a-pri);
+    color: #fff;
+}
+
+.acad-toolbar-spacer {
+    flex: 1;
+}
+
+.acad-table-wrap {
+    overflow-x: auto;
+}
+
+.acad table.data {
+    width: 100%;
+    min-width: 720px;
+    border-collapse: collapse;
+}
+
+.acad table.data th {
+    padding: 0.875rem 1rem;
+    background: var(--a-surf2);
+    color: var(--a-mu);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-align: left;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.acad table.data th.sortable {
+    cursor: pointer;
+    user-select: none;
+}
+
+.acad table.data th.sortable:hover {
+    color: var(--a-tx);
+}
+
+.acad table.data th.is-sorted {
+    color: var(--a-pri);
+}
+
+.acad table.data td {
+    padding: 0.875rem 1rem;
+    border-top: 1px solid color-mix(in srgb, var(--a-line) 70%, transparent);
+    vertical-align: middle;
+}
+
+.acad table.data tbody tr {
+    cursor: pointer;
+    transition: background 0.12s ease, opacity 0.22s ease, transform 0.22s ease;
+}
+
+.acad table.data tbody tr:hover {
+    background: var(--a-surf2);
+}
+
+.acad table.data tbody tr.is-selected {
+    background: var(--a-pri-soft);
+}
+
+.acad table.data tbody tr:hover td:first-child,
+.acad table.data tbody tr.is-selected td:first-child {
+    box-shadow: inset 3px 0 0 var(--a-pri);
+}
+
+.acad .row-check {
+    appearance: none;
+    display: grid;
+    place-content: center;
+    width: 1.1rem;
+    height: 1.1rem;
+    border: 1.5px solid var(--a-line);
+    border-radius: 0.375rem;
+    background: var(--a-surf);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.acad .row-check:hover {
+    border-color: var(--a-pri);
+}
+
+.acad .row-check:checked {
+    border-color: var(--a-pri);
+    background: var(--a-pri);
+}
+
+.acad .row-check:checked::after {
+    content: '';
+    width: 0.55rem;
+    height: 0.3rem;
+    border: 2px solid #fff;
+    border-top: 0;
+    border-right: 0;
+    transform: rotate(-45deg) translate(1px, -1px);
+}
+
+.acad .cell-name {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.acad .avatar {
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    flex: none;
+    border-radius: 0.75rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.acad .avatar.pri {
+    background: var(--a-pri-soft);
+    color: var(--a-pri);
+}
+
+.acad .avatar.ok {
+    background: var(--a-ok-bg);
+    color: var(--a-ok);
+}
+
+.acad .avatar.warn {
+    background: var(--a-warn-bg);
+    color: var(--a-warn);
+}
+
+.acad .cell-name b {
+    display: block;
+    font-size: 0.86rem;
+}
+
+.acad .cell-name small {
+    color: var(--a-mu);
+    font-size: 0.72rem;
+}
+
+.acad .meter {
+    width: 3.5rem;
+    height: 5px;
+    border-radius: 999px;
+    background: var(--a-surf2);
+    overflow: hidden;
+}
+
+.acad .meter i {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--a-pri);
+    transition: width 0.6s ease;
+}
+
+.acad .usage {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.acad .usage b {
+    width: 1.75rem;
+    font-size: 0.86rem;
+}
+
+.acad .row-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.25rem;
+    opacity: 0;
+    transform: translateX(6px);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.acad table.data tbody tr:hover .row-actions,
+.acad table.data tbody tr:focus-within .row-actions {
+    opacity: 1;
+    transform: none;
+}
+
+@media (hover: none) {
+    .acad .row-actions {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.acad .sel {
+    max-width: 11rem;
+    padding: 0.35rem 0.6rem;
+    border: 1px solid var(--a-line);
+    border-radius: 0.5rem;
+    background: var(--a-surf);
+    color: var(--a-tx);
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+}
+
+.acad .sel:hover,
+.acad .sel:focus {
+    border-color: var(--a-pri);
+}
+
+.acad .sel.is-empty {
+    border-style: dashed;
+    border-color: var(--a-warn);
+    color: var(--a-warn);
+}
+
+.acad .tog {
+    position: relative;
+    display: block;
+    width: 2.25rem;
+    height: 1.25rem;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: var(--a-line);
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.acad .tog::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 0.875rem;
+    height: 0.875rem;
+    border-radius: 999px;
+    background: #fff;
+    transition: left 0.2s ease, width 0.2s ease;
+}
+
+.acad .tog.on {
+    background: var(--a-ok);
+}
+
+.acad .tog.on::after {
+    left: 19px;
+}
+
+.acad .tog:active::after {
+    width: 1.1rem;
+}
+
+.acad .empty {
+    padding: 3.5rem 1.5rem;
+    text-align: center;
+    color: var(--a-mu);
+}
+
+.acad .empty-icon {
+    display: grid;
+    place-items: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    margin: 0 auto 1rem;
+    border-radius: 1rem;
+    background: var(--a-pri-soft);
+    color: var(--a-pri);
+}
+
+.acad .empty b {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: var(--a-tx);
+    font-size: 1rem;
+}
+
+.acad .pagination {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-top: 1px solid var(--a-line);
+    color: var(--a-mu);
+    font-size: 0.85rem;
+}
+
+.acad .page-buttons {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.acad .page-btn {
+    min-width: 2rem;
+    padding: 0.35rem 0.6rem;
+    border: 1px solid var(--a-line);
+    border-radius: 0.5rem;
+    background: var(--a-surf);
+    color: var(--a-tx);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.acad .page-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.acad .page-btn.is-active {
+    border-color: var(--a-pri);
+    background: var(--a-pri);
+    color: #fff;
+}
+
+.acad .per-page {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.acad .bulk-bar {
+    position: fixed;
+    left: 50%;
+    bottom: 1.5rem;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.6rem 0.75rem 0.6rem 1.25rem;
+    border-radius: 1rem;
+    background: var(--a-surf);
+    box-shadow: 0 18px 40px -18px rgba(20, 26, 60, 0.35), 0 0 0 1px var(--a-line);
+    transform: translateX(-50%);
+}
+
+/* ── Drawer / modal / command palette ───────────────────────────────────── */
+.acad .backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background: rgba(0, 0, 0, 0.42);
+}
+
+.acad .drawer-wrap,
+.acad .modal-wrap,
+.acad .command-wrap {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+}
+
+.acad .drawer {
+    position: absolute;
+    inset: 0 0 0 auto;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 28rem;
+    background: var(--a-surf);
+    box-shadow: -12px 0 40px -12px rgba(20, 26, 60, 0.35);
+    animation: acad-slide-in 0.2s ease;
+}
+
+@keyframes acad-slide-in {
+    from {
+        transform: translateX(100%);
+    }
+}
+
+.acad .drawer-head,
+.acad .drawer-foot {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.25rem;
+}
+
+.acad .drawer-head {
+    justify-content: space-between;
+    border-bottom: 1px solid var(--a-line);
+}
+
+.acad .drawer-head h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.acad .drawer-body {
+    flex: 1;
+    padding: 1.25rem;
+    overflow-y: auto;
+}
+
+.acad .drawer-foot {
+    justify-content: flex-end;
+    border-top: 1px solid var(--a-line);
+}
+
+.acad .field {
+    display: block;
+    margin-bottom: 1rem;
+}
+
+.acad .field > span {
+    display: block;
+    margin-bottom: 0.4rem;
+    color: var(--a-mu);
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.acad .fld {
+    width: 100%;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid var(--a-line);
+    border-radius: 0.625rem;
+    background: var(--a-bg);
+    color: var(--a-tx);
+    outline: 0;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.acad .fld:focus {
+    border-color: var(--a-pri);
+    box-shadow: 0 0 0 3px var(--a-pri-soft);
+}
+
+.acad .hint {
+    margin-top: 0.35rem;
+    color: var(--a-mu);
+    font-size: 0.75rem;
+}
+
+.acad .form-error {
+    margin-top: 0.35rem;
+    color: var(--a-bad);
+    font-size: 0.75rem;
+}
+
+.acad .assign-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border: 1px solid var(--a-line);
+    border-radius: 0.75rem;
+}
+
+.acad .assign-row + .assign-row {
+    margin-top: 0.5rem;
+}
+
+.acad .assign-row b {
+    flex: 1;
+    font-size: 0.86rem;
+}
+
+.acad .modal {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 1;
+    width: calc(100% - 2rem);
+    max-width: 26rem;
+    padding: 1.5rem;
+    border-radius: 1rem;
+    background: var(--a-surf);
+    box-shadow: 0 24px 60px -20px rgba(20, 26, 60, 0.45);
+    transform: translate(-50%, -50%);
+}
+
+.acad .modal h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.acad .modal p {
+    margin: 0 0 1.25rem;
+    color: var(--a-mu);
+    font-size: 0.86rem;
+}
+
+.acad .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.acad .command {
+    position: absolute;
+    top: 15vh;
+    left: 50%;
+    z-index: 1;
+    width: calc(100% - 2rem);
+    max-width: 32rem;
+    overflow: hidden;
+    border-radius: 1rem;
+    background: var(--a-surf);
+    box-shadow: 0 24px 60px -20px rgba(20, 26, 60, 0.45);
+    transform: translateX(-50%);
+}
+
+.acad .command input {
+    width: 100%;
+    padding: 1rem 1.25rem;
+    border: 0;
+    border-bottom: 1px solid var(--a-line);
+    outline: 0;
+    background: transparent;
+    color: var(--a-tx);
+    font-size: 1rem;
+}
+
+.acad .command-list {
+    max-height: 20rem;
+    padding: 0.5rem;
+    overflow-y: auto;
+}
+
+.acad .command-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border: 0;
+    border-radius: 0.5rem;
+    background: transparent;
+    color: var(--a-mu);
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+}
+
+.acad .command-item:hover {
+    background: var(--a-surf2);
+    color: var(--a-tx);
+}
+
+.acad .command-empty {
+    padding: 1rem;
+    color: var(--a-mu);
+}
+
+/* ── Toasts / skeleton / motion ─────────────────────────────────────────── */
+.acad .toast-stack {
+    position: fixed;
+    right: 1.5rem;
+    bottom: 1.5rem;
+    z-index: 60;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+}
+
+.acad .toast {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.75rem;
+    background: var(--a-tx);
+    color: var(--a-bg);
+    font-size: 0.86rem;
+    font-weight: 600;
+    box-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.5);
+}
+
+.acad .sk {
+    height: 2.25rem;
+    border-radius: 0.5rem;
+    background: linear-gradient(90deg, var(--a-surf2), var(--a-line), var(--a-surf2));
+    background-size: 200% 100%;
+    animation: acad-shimmer 1.2s infinite;
+}
+
+.acad .rise {
+    animation: acad-rise 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+
+.acad .pop {
+    animation: acad-pop 0.35s cubic-bezier(0.2, 1.3, 0.4, 1);
+}
+
+.acad .shake {
+    animation: acad-shake 0.35s;
+}
+
+.acad tr.rm {
+    opacity: 0;
+    transform: translateX(24px);
+}
+
+@keyframes acad-shimmer {
+    to {
+        background-position: -200% 0;
+    }
+}
+
+@keyframes acad-rise {
+    from {
+        opacity: 0;
+        transform: translateY(14px);
+    }
+}
+
+@keyframes acad-pop {
+    from {
+        opacity: 0;
+        transform: translateY(16px) scale(0.9);
+    }
+}
+
+@keyframes acad-shake {
+    20%, 60% {
+        transform: translateX(-6px);
+    }
+    40%, 80% {
+        transform: translateX(6px);
+    }
+}
+
+@media (max-width: 640px) {
+    .acad-title {
+        font-size: 1.5rem;
+    }
+
+    .acad-readiness {
+        gap: 1.25rem;
+    }
+
+    .acad .stat.featured {
+        grid-column: span 2;
+    }
+
+    .acad .bulk-bar {
+        right: 1rem;
+        left: 1rem;
+        transform: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .acad *,
+    .acad *::before,
+    .acad *::after {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
+.acad .acad-searchbox {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 12rem;
+    padding: 0.35rem 0.75rem;
+    border: 1px solid var(--a-line);
+    border-radius: 0.625rem;
+    background: var(--a-bg);
+    color: var(--a-mu);
+}
+
+.acad .acad-searchbox input {
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--a-tx);
+    font-size: 0.86rem;
+    width: 100%;
+    cursor: pointer;
+}

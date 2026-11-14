@@ -272,11 +272,35 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
     })->name('marketing.sitemap');
 
     // ── Blog (platform-wide) ─────────────────────────────────────────
-    Route::get('/blog', function () {
-        $posts = BlogPost::published()->paginate(9);
+    Route::get('/blog', function (Request $request) {
+        $query = BlogPost::published();
+        $activeCategory = trim((string) $request->query('category', ''));
+        $search = trim((string) $request->query('q', ''));
+        if ($activeCategory !== '') {
+            $query->where('category', $activeCategory);
+        }
+        if ($search !== '') {
+            $query->where(function ($query) use ($search) {
+                $query->where('title', 'like', '%'.$search.'%')
+                    ->orWhere('excerpt', 'like', '%'.$search.'%');
+            });
+        }
+        $posts = $query->paginate(9)->withQueryString();
+        $categories = BlogPost::query()
+            ->where('status', BlogPost::STATUS_PUBLISHED)
+            ->whereNotNull('published_at')
+            ->where('published_at', '<=', now())
+            ->whereNotNull('category')
+            ->where('category', '!=', '')
+            ->distinct()
+            ->orderBy('category')
+            ->pluck('category');
 
         return view('marketing.blog', [
             'posts' => $posts,
+            'categories' => $categories,
+            'activeCategory' => $activeCategory,
+            'search' => $search,
             'breadcrumbs' => [
                 ['name' => __('Home'), 'url' => route('marketing.home')],
                 ['name' => __('Blog'), 'url' => route('marketing.blog')],
@@ -297,6 +321,52 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
             ],
         ]);
     })->where('slug', '[a-z0-9\-]+')->name('marketing.blog.show');
+
+    Route::post('/blog/{slug}/like', function (string $slug, \Illuminate\Http\Request $request) {
+        $post = \App\Models\BlogPost::published()->where('slug', $slug)->firstOrFail();
+
+        $token = $request->cookie('kairo_browser');
+        if (! is_string($token) || $token === '') {
+            $token = \Illuminate\Support\Str::random(40);
+        }
+
+        $inserted = \Illuminate\Support\Facades\DB::table('platform_blog_post_likes')->insertOrIgnore([
+            'blog_post_id' => $post->id,
+            'browser_token' => hash('sha256', $token),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $count = \Illuminate\Support\Facades\DB::table('platform_blog_post_likes')
+            ->where('blog_post_id', $post->id)
+            ->count();
+
+        return response()->json([
+            'liked' => true,
+            'count' => $count,
+        ])->withCookie(cookie('kairo_browser', $token, 60 * 24 * 365));
+    })->name('marketing.blog.like');
+
+    Route::post('/blog/{slug}/share', function (string $slug, \Illuminate\Http\Request $request) {
+        $post = \App\Models\BlogPost::published()->where('slug', $slug)->firstOrFail();
+
+        $target = $request->validate([
+            'target' => ['required', 'string', 'in:native,copy,facebook,x,whatsapp'],
+        ])['target'];
+
+        \Illuminate\Support\Facades\DB::table('platform_blog_post_shares')->insert([
+            'blog_post_id' => $post->id,
+            'target' => $target,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $count = \Illuminate\Support\Facades\DB::table('platform_blog_post_shares')
+            ->where('blog_post_id', $post->id)
+            ->count();
+
+        return response()->json(['count' => $count]);
+    })->name('marketing.blog.share');
 
     Route::get('/about', function () {
         return view('marketing.about', [
@@ -561,11 +631,27 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
         ->name('help.article');
 
     Route::post('/contact', function (Request $request) {
+        if ($request->filled('website_hp')) {
+            \Illuminate\Support\Facades\Log::warning('Contact form honeypot triggered', ['ip' => $request->ip()]);
+
+            return back()->withInput()->withErrors(['name' => __('Your message could not be sent. Please try again.')]);
+        }
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],
             'email' => ['required', 'email', 'max:120'],
+            'school' => ['nullable', 'string', 'max:160'],
+            'topic' => ['nullable', 'string', 'max:80'],
             'message' => ['required', 'string', 'max:2000'],
+            'website_hp' => ['nullable', 'string', 'max:0'],
+            'started_at' => ['required', 'integer', 'max:'.time()],
         ]);
+
+        if (time() - (int) $data['started_at'] < 2) {
+            \Illuminate\Support\Facades\Log::warning('Contact form submitted too quickly', ['ip' => $request->ip()]);
+
+            return back()->withInput()->withErrors(['name' => __('Please take a moment to review your message and try again.')]);
+        }
 
         // Support inbox: Platform → Settings → contact email, else support@.
         $recipient = PlatformSetting::get('contact', 'email')
@@ -579,6 +665,8 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
                 [
                     'contactName' => $data['name'],
                     'contactEmail' => $data['email'],
+                    'contactSchool' => $data['school'] ?? '',
+                    'contactTopic' => $data['topic'] ?? '',
                     'messageText' => $data['message'],
                 ],
                 function ($message) use ($data, $recipient) {
@@ -597,7 +685,7 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
         }
 
         return back()->with('success_message', __('Your message has been sent. We will get back to you shortly.'));
-    })->name('marketing.contact.submit');
+    })->middleware('throttle:rate_limit:contact')->name('marketing.contact.submit');
 
     // School Portal Multi-step Registration
     Route::get('/register', RegistrationWizard::class)
@@ -619,6 +707,11 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
     // Google Single Sign-On
     Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirect'])->name('auth.google.redirect');
     Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->name('auth.google.callback');
+
+    // Platform Privacy Policy
+    Route::get('/privacy', function () {
+        return view('privacy.platform');
+    })->name('platform.privacy');
 
     // Platform Terms of Service
     Route::get('/terms', function () {

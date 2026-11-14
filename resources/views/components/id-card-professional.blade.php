@@ -102,7 +102,7 @@
     
     $barcode = null;
     if ($val('show_barcode', false)) {
-        try { $barcode = 'data:image/png;base64,'.base64_encode((new \Picqer\Barcode\BarcodeGeneratorPNG())->getBarcode($id, \Picqer\Barcode\BarcodeGenerator::TYPE_CODE_128, 2, (int) $px('barcode_height', 30))); } catch (\Throwable $e) {}
+        $barcode = id_card_barcode_data_uri($id, $tpl->barcode_format ?? 'Code128', (int) $px('barcode_height', 30));
     }
 @endphp
 

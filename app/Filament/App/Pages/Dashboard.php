@@ -2,11 +2,12 @@
 
 namespace App\Filament\App\Pages;
 
-use App\Filament\App\Widgets\UserRoleStatisticsWidget;
 use App\Models\School;
+use App\Services\DashboardMetricsService;
 use App\Services\DummyDataSeeder;
 use Filament\Notifications\Notification;
 use Filament\Pages\Dashboard as BaseDashboard;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Modules\Academics\Models\AcademicReport;
 use Modules\Students\Models\Student;
@@ -27,6 +28,41 @@ class Dashboard extends BaseDashboard
     {
         $this->school = current_tenant() ?? School::where('id', auth()->user()?->school_id ?? 0)->first();
         $this->loadDemoDataStatus();
+    }
+
+    /**
+     * The page keeps its plain "Dashboard" label for the browser title and
+     * the navigation registry; the greeting itself is the in-page heading,
+     * so the Filament page header steps aside for it. An empty heading makes
+     * the page component skip its header block entirely.
+     */
+    public function getHeading(): string | \Illuminate\Contracts\Support\Htmlable
+    {
+        return '';
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function getViewData(): array
+    {
+        $user = auth()->user();
+
+        $hour = Carbon::now()->hour;
+        $salutation = $hour < 12
+            ? __('Good morning')
+            : ($hour < 18 ? __('Good afternoon') : __('Good evening'));
+
+        $role = $user?->customRole?->name
+            ?? ($user?->requested_role !== null ? str($user->requested_role)->replace('_', ' ')->title() : null);
+
+        return [
+            'metrics' => app(DashboardMetricsService::class)->all(),
+            'greeting' => $user
+                ? __(':salutation, :name', ['salutation' => $salutation, 'name' => $user->name])
+                : $salutation,
+            'roleLabel' => $role,
+        ];
     }
 
     protected function loadDemoDataStatus(): void
@@ -167,8 +203,8 @@ class Dashboard extends BaseDashboard
 
     protected function getFooterWidgets(): array
     {
-        return [
-            UserRoleStatisticsWidget::class,
-        ];
+        // The Tinway dashboard carries its own live figures; the footer
+        // role-statistics widget duplicated them below the fold.
+        return [];
     }
 }

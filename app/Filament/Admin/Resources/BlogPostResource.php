@@ -67,6 +67,10 @@ class BlogPostResource extends Resource
                             ->maxLength(500)
                             ->helperText(__('Short summary shown on the blog index and in search results.'))
                             ->columnSpanFull(),
+                        Forms\Components\TextInput::make('category')
+                            ->label(__('Category'))
+                            ->maxLength(60)
+                            ->helperText(__('Used to group and filter posts on the public blog.')),
                         Forms\Components\FileUpload::make('cover_image')
                             ->label(__('Cover image'))
                             ->disk('public')

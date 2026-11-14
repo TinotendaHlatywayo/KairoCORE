@@ -22,4 +22,9 @@ class Classroom extends Model
         'features' => 'array',
         'capacity' => 'integer',
     ];
+
+    public function sections()
+    {
+        return $this->hasMany(Section::class);
+    }
 }

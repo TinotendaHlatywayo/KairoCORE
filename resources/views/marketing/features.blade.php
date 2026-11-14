@@ -1,161 +1,155 @@
 @extends('marketing.layout')
 
-@section('title', marketing_content('meta_title') ?: platform_name().' - Features')
-@section('meta_description', marketing_content('meta_description') ?: __('Explore all features of the school management system - admissions, academics, finance, HR, communications, attendance, library and more.'))
-@section('seo_image', asset('images/KairoCORE_Features_thumbnail.png'))
+@section('body_class', 'kairo-v2')
+
+@section('title', marketing_content('features_title') ?: __('Features').' - '.platform_name())
+@section('meta_description', marketing_content('features_subtitle') ?: __('Every tool your school needs.'))
 
 @push('styles')
-@include('marketing.partials.animations')
+@vite('resources/css/kairo-v2/features.css')
 @endpush
 
 @section('content')
 @php
-    $features = [];
-    foreach (marketing_merged_list('features_list') as $i => $item) {
-        $features[] = [
-            'key' => $item['key'] ?? 'feature-'.$i,
-            'cat' => $item['cat'] ?? 'admin',
-            'img' => marketing_resolve_image($item['image'] ?? ''),
-            'name' => $item['name'] ?? '',
-            'desc' => $item['desc'] ?? '',
-            'detail' => $item['detail'] ?? '',
-            'subs' => array_values(array_filter([$item['sub1'] ?? '', $item['sub2'] ?? '', $item['sub3'] ?? ''])),
-        ];
+    $icons = [
+        'admissions' => 'M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z',
+        'academics' => 'M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25',
+        'students' => 'M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z',
+        'finance' => 'M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33',
+        'hr' => 'M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z',
+        'attendance' => 'M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z',
+        'communications' => 'M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z',
+        'library' => 'M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25',
+        'health' => 'M21 7.5V18a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 18V7.5m18 0A2.25 2.25 0 0 0 18.75 5.25H5.25A2.25 2.25 0 0 0 3 7.5m18 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L4.07 9.659A2.25 2.25 0 0 1 3 7.743V7.5',
+        'inventory' => 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
+        'exams' => 'M16.5 8.25V6a2.25 2.25 0 0 0-2.25-2.25H6A2.25 2.25 0 0 0 3.75 6v8.25A2.25 2.25 0 0 0 6 16.5h2.25m8.25-8.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-7.5A2.25 2.25 0 0 1 8.25 18v-1.5m8.25-8.25h-6a2.25 2.25 0 0 0-2.25 2.25v6',
+        'lms' => 'M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25',
+        'boarding' => 'M3 21h18M5 21V7l7-4 7 4v14M9 9h2m-2 4h2m4-4h2m-2 4h2',
+        'reports' => 'M4 20V10m6 10V4m6 16v-7m5 7H3',
+        'cms' => 'M4 5h16M4 10h16M4 15h10M4 20h10',
+    ];
+    $categoryMeta = [
+        'admin' => [__('Administration'), '#ef6050'],
+        'academic' => [__('Academic'), '#16a34a'],
+        'campus' => [__('Campus life'), '#10b981'],
+    ];
+    $features = marketing_merged_list('features_list');
+    $featureCounts = ['all' => count($features)];
+    foreach ($features as $feature) {
+        $featureCategory = $feature['cat'] ?? 'admin';
+        $featureCounts[$featureCategory] = ($featureCounts[$featureCategory] ?? 0) + 1;
     }
 @endphp
 
-<section class="relative overflow-hidden bg-white pb-4 pt-14 lg:pt-20" x-data="featureExplorer()">
-    <div class="pointer-events-none absolute inset-0" aria-hidden="true">
-        <div class="absolute -top-32 left-1/4 h-96 w-96 rounded-full bg-[#D94B39]/7 blur-3xl"></div>
+<header class="fh" id="hero">
+    <div class="fiw" id="fi"></div>
+    <div class="w">
+        <div class="fhc">
+            <span class="pill"><i>{{ marketing_live_stats()['modules'] }}+</i> {{ __('modules in one connected platform') }}</span>
+            <h1>{{ marketing_content('features_title') }}</h1>
+            <p>{{ marketing_content('features_subtitle') }}</p>
+            <div class="cta">
+                <a class="btn o beg" href="{{ route('marketing.contact') }}#contact-form">
+                    {{ marketing_content('features_cta_primary_label') ?: __('Book a demo') }}
+                    <i class="ar">→</i>
+                </a>
+                <a class="btn g" href="#grid">
+                    {{ __('Explore modules') }}
+                    <i class="ar">↓</i>
+                </a>
+            </div>
+        </div>
     </div>
+</header>
 
-    <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div class="mx-auto max-w-3xl text-center">
-            <p class="reveal text-xs font-bold uppercase tracking-[0.2em] text-[#D94B39]">{{ marketing_content('features_badge') }}</p>
-            <h1 class="reveal reveal-d1 mt-4 text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 leading-[1.08]">{{ marketing_content('features_title') }}</h1>
-            <p class="reveal reveal-d2 mt-5 text-lg leading-8 text-slate-600">{{ marketing_content('features_subtitle') }}</p>
+<div class="mq">
+    <div id="mq">
+        @for ($i = 0; $i < 2; $i++)
+            @foreach ($features as $feature)
+                <span>{{ $feature['name'] ?? '' }}</span>
+            @endforeach
+        @endfor
+    </div>
+</div>
+
+<section class="fs" id="grid">
+    <div class="w">
+        <div class="fbar" role="search">
+            <div class="fch" aria-label="{{ __('Filter features by category') }}">
+                <span class="ind" aria-hidden="true"></span>
+                <button class="fc on" type="button" data-feature-filter="all">{{ __('All features') }} <small>{{ $featureCounts['all'] }}</small></button>
+                @foreach ($categoryMeta as $key => [$label])
+                    <button class="fc" type="button" data-feature-filter="{{ $key }}">{{ $label }} <small>{{ $featureCounts[$key] ?? 0 }}</small></button>
+                @endforeach
+            </div>
+            <label class="sr">
+                <span class="sr-only">{{ __('Search features') }}</span>
+                <input type="search" id="featureSearch" placeholder="{{ __('Search features') }}">
+            </label>
         </div>
-
-        {{-- Category filter --}}
-        <div class="reveal reveal-d3 mt-9 flex flex-wrap justify-center gap-2">
-            <template x-for="f in filters" :key="f.id">
-                <button type="button" @click="active = f.id"
-                    class="rounded-full border px-4 py-2 text-xs font-bold transition-colors"
-                    :class="active === f.id ? 'border-[#1F2E43] bg-[#1F2E43] text-white shadow-md shadow-[#1F2E43]/20' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'"
-                    x-text="f.label"></button>
-            </template>
-        </div>
-
-        {{-- Feature grid --}}
-        <div class="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            @foreach($features as $i => $f)
-                <article class="reveal card-lift group flex flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm"
-                    style="transition-delay: {{ ($i % 3) * 0.08 }}s"
-                    x-show="active === 'all' || active === '{{ $f['cat'] }}'"
-                    x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
-                    <div class="relative aspect-[16/9] w-full overflow-hidden bg-slate-100">
-                        <img src="{{ $f['img'] }}" alt="{{ $f['name'] }}" class="zoom-img h-full w-full object-cover" loading="lazy" decoding="async">
-                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900/35 via-transparent to-transparent"></div>
-                        <span class="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-700 backdrop-blur">{{ $f['cat'] === 'academic' ? __('Academic') : ($f['cat'] === 'admin' ? __('Administration') : __('Campus life')) }}</span>
+        <p class="fcount" id="cnt" aria-live="polite" data-all-label="{{ __('Showing all :count modules') }}" data-filtered-label="{{ __('Showing :shown of :total modules') }}">{{ __('Showing all :count modules', ['count' => count($features)]) }}</p>
+        <div class="mgrid" id="mgrid">
+            @foreach ($features as $feature)
+                @php
+                    [$categoryLabel, $color] = $categoryMeta[$feature['cat'] ?? 'admin'] ?? ['Platform', '#3b82f6'];
+                @endphp
+                <article class="mc rv" id="{{ $feature['key'] ?? '' }}" data-feature-card data-category="{{ $feature['cat'] ?? 'admin' }}" data-name="{{ $feature['name'] ?? '' }}" data-detail="{{ $feature['detail'] ?? '' }}" data-sub1="{{ $feature['sub1'] ?? '' }}" data-sub2="{{ $feature['sub2'] ?? '' }}" data-sub3="{{ $feature['sub3'] ?? '' }}" data-search="{{ strtolower(($feature['name'] ?? '').' '.($feature['desc'] ?? '').' '.($feature['detail'] ?? '').' '.($feature['sub1'] ?? '').' '.($feature['sub2'] ?? '').' '.($feature['sub3'] ?? '')) }}" style="--c:{{ $color }}">
+                    <div class="mv">
+                        <span class="cg">{{ $categoryLabel }}</span>
+                        <span class="wm">
+                            <svg width="150" height="150" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ $icons[$feature['key'] ?? ''] ?? '' }}"/></svg>
+                        </span>
+                        <div class="mi2">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ $icons[$feature['key'] ?? ''] ?? '' }}"/></svg>
+                        </div>
+                        <i class="bars"><b></b><b></b><b></b></i>
                     </div>
-                    <div class="flex flex-1 flex-col p-6">
-                        <h3 class="text-base font-bold text-slate-900">{{ $f['name'] }}</h3>
-                        <p class="mt-2 text-sm leading-6 text-slate-600">{{ $f['desc'] }}</p>
-                        <ul class="mt-4 space-y-2">
-                            @foreach($f['subs'] as $sub)
-                                <li class="flex items-center gap-2 text-sm text-slate-600">
-                                    <span class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#EF5F4D]/12 text-[#EF5F4D]">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="4" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
-                                    </span>
-                                    <span>{{ $sub }}</span>
-                                </li>
-                            @endforeach
-                        </ul>
-                        <button type="button" @click="open = {{ $i }}; document.body.style.overflow='hidden'"
-                            class="mt-5 inline-flex items-center gap-1.5 self-start rounded-xl border-2 border-[#1F2E43]/10 bg-[#1F2E43]/[0.04] px-4 py-2 text-xs font-bold text-[#1F2E43] transition hover:border-[#1F2E43]/25 hover:bg-[#1F2E43]/[0.08]">
-                            {{ __('Explore feature') }}
-                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
-                        </button>
+                    <div class="mb">
+                        <h3>{{ $feature['name'] ?? '' }}</h3>
+                        <p>{{ $feature['desc'] ?? '' }}</p>
+                        @if(!empty($feature['sub1']) || !empty($feature['sub2']) || !empty($feature['sub3']))
+                            <ul>
+                                @foreach ([$feature['sub1'] ?? null, $feature['sub2'] ?? null, $feature['sub3'] ?? null] as $sub)
+                                    @if($sub)
+                                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-11"/></svg>{{ $sub }}</li>
+                                    @endif
+                                @endforeach
+                            </ul>
+                        @endif
+                        <button class="btn g sm" type="button" data-open-feature>{{ __('Explore feature') }} <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></button>
                     </div>
                 </article>
             @endforeach
         </div>
+        <div class="em" hidden id="em">
+            <p>{{ __('No module matches that search. Try a word like fees, library or attendance.') }}</p>
+            <button class="btn g sm" type="button" data-feature-reset>{{ __('Show all features') }}</button>
+        </div>
+    </div>
+</section>
 
-        {{-- Explore modal --}}
-        <div x-show="open !== null" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-             x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-             class="modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="close()"
-             @keydown.escape.window="close()" style="display:none">
-            <div x-show="open !== null" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-6 scale-95" x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-                 class="relative flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl" role="dialog" aria-modal="true">
-                <button type="button" @click="close()" class="absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-slate-600 shadow-md backdrop-blur transition hover:bg-white hover:text-slate-900" aria-label="{{ __('Close') }}">
-                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
-                </button>
-                <template x-if="current">
-                    <div class="flex flex-1 flex-col overflow-y-auto">
-                        <div class="relative h-52 w-full shrink-0 overflow-hidden bg-slate-100 sm:h-64">
-                            <img :src="current.img" :alt="current.name" class="h-full w-full object-cover">
-                            <div class="absolute inset-0 bg-gradient-to-t from-slate-900/55 via-slate-900/10 to-transparent"></div>
-                            <div class="absolute bottom-4 left-5 right-5">
-                                <span class="rounded-full bg-white/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur" x-text="catLabel(current.cat)"></span>
-                                <h3 class="mt-2 text-2xl font-extrabold text-white" x-text="current.name"></h3>
-                            </div>
-                        </div>
-                        <div class="p-6 sm:p-8">
-                            <p class="text-sm leading-7 text-slate-600" x-text="current.detail"></p>
-                            <div class="mt-6 grid gap-3 sm:grid-cols-3">
-                                <template x-for="s in current.subs" :key="s">
-                                    <div class="flex items-start gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3.5">
-                                        <span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#EF5F4D]/12 text-[#EF5F4D]">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="4"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
-                                        </span>
-                                        <span class="text-xs font-semibold leading-5 text-slate-700" x-text="s"></span>
-                                    </div>
-                                </template>
-                            </div>
-                            <div class="mt-7 flex flex-wrap gap-3 border-t border-slate-100 pt-6">
-                                <a href="{{ route('register') }}" class="btn-magnetic inline-flex items-center gap-2 rounded-xl bg-[#D94B39] px-5 py-3 text-xs font-bold text-white shadow-lg shadow-[#D94B39]/25 hover:bg-[#c14332]">{{ marketing_content('features_cta_primary_label') }}</a>
-                                <a href="{{ route('marketing.contact') }}" class="inline-flex items-center gap-2 rounded-xl border-2 border-slate-200 px-5 py-3 text-xs font-bold text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-colors">{{ __('Ask us about this feature') }}</a>
-                            </div>
-                        </div>
-                    </div>
-                </template>
+<div class="md" id="featureModal" aria-hidden="true">
+    <div class="mp" role="dialog" aria-modal="true" aria-labelledby="featureModalTitle">
+        <button class="ib mx" type="button" data-close-feature aria-label="{{ __('Close') }}">✕</button>
+        <div class="mv" aria-hidden="true"></div>
+        <div class="mb">
+            <h3 id="featureModalTitle"></h3>
+            <p id="featureModalDetail"></p>
+            <ul id="featureModalPoints"></ul>
+            <div class="mact">
+                <a class="btn o" href="{{ route('marketing.contact') }}#contact-form">{{ __('Book a demo for this module') }}</a>
+                <button class="btn g" type="button" data-close-feature>{{ __('Close') }}</button>
             </div>
         </div>
     </div>
-</section>
+</div>
 
-<section class="bg-slate-50 py-16 mt-4">
-    <div class="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
-        <h2 class="reveal text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">{{ marketing_content('features_cta_title') }}</h2>
-        <p class="reveal reveal-d1 mt-4 text-lg text-slate-600">{{ marketing_content('features_cta_subtitle') }}</p>
-        <div class="reveal reveal-d2 mt-8 flex flex-wrap justify-center gap-3">
-            <a href="{{ route('register') }}" class="btn-magnetic inline-flex items-center gap-2 rounded-xl bg-[#D94B39] px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-[#D94B39]/25 hover:bg-[#c14332]">{{ marketing_content('features_cta_primary_label') }}</a>
-            <a href="{{ route('marketing.contact') }}" class="inline-flex items-center gap-2 rounded-xl border-2 border-slate-300 px-6 py-3.5 text-sm font-bold text-slate-700 hover:bg-white transition-colors">{{ marketing_content('features_cta_secondary_label') }}</a>
-        </div>
+<div class="ct rv" id="start">
+    <h2>{{ marketing_content('features_cta_title') ?: __('Not sure where to start?') }}</h2>
+    <p>{{ marketing_content('features_cta_subtitle') ?: __('Book a personal demo and we will show you the modules that matter most to your school.') }}</p>
+    <div class="cta">
+        <a class="btn o" href="{{ route('marketing.contact') }}#contact-form">{{ marketing_content('features_cta_primary_label') ?: __('Book a demo') }} →</a>
+        <a class="btn g" href="{{ route('marketing.contact') }}">{{ marketing_content('features_cta_secondary_label') ?: __('Contact us') }}</a>
     </div>
-</section>
-
-<script>
-function featureExplorer() {
-    return {
-        open: null,
-        active: 'all',
-        filters: [
-            { id: 'all', label: @json(__('All features')) },
-            { id: 'academic', label: @json(__('Academic')) },
-            { id: 'admin', label: @json(__('Administration')) },
-            { id: 'campus', label: @json(__('Campus life')) },
-        ],
-        features: @json($features),
-        get current() { return this.open !== null ? this.features[this.open] : null; },
-        catLabel(c) {
-            if (c === 'academic') return @json(__('Academic'));
-            if (c === 'admin') return @json(__('Administration'));
-            return @json(__('Campus life'));
-        },
-        close() { this.open = null; document.body.style.overflow = ''; },
-    };
-}
-</script>
+</div>
 @endsection

@@ -13,6 +13,7 @@ use App\Services\ProfilePhotoService;
 use App\Services\RosterAccountProvisioningService;
 use Filament\Forms;
 use Filament\Forms\Components\Tabs\Tab;
+use Filament\Forms\Get;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
@@ -26,6 +27,9 @@ use Modules\Academics\Models\Section;
 use Modules\Admin\Services\PermissionRegistry;
 use Modules\Finance\Models\FeeWaiver;
 use Modules\Students\Models\Student;
+use Modules\Students\Models\Enrollment;
+use Modules\Students\Models\CardTemplate;
+use App\Http\Controllers\StudentCardPrintController;
 use App\Filament\App\Concerns\ModulePermissionAccess;
 
 class StudentResource extends Resource
@@ -109,6 +113,8 @@ class StudentResource extends Resource
     {
         return $form
             ->schema([
+                Forms\Components\View::make('filament.app.resources.student.partials.form-progress'),
+
                 Forms\Components\Tabs::make(__('Student Profile'))
                     ->tabs([
                         Tab::make(__('Personal Details'))
@@ -119,30 +125,37 @@ class StudentResource extends Resource
                                             ->schema([
                                                 Forms\Components\TextInput::make('first_name')
                                                     ->required()
-                                                    ->placeholder(__('e.g., John')),
+                                                    ->live(debounce: 500)
+                                                    ->placeholder(__('Tinaye')),
                                                 Forms\Components\TextInput::make('last_name')
                                                     ->required()
-                                                    ->placeholder(__('e.g., Smith')),
+                                                    ->live(debounce: 500)
+                                                    ->placeholder(__('Maphosa')),
                                                 Forms\Components\Select::make('gender')
                                                     ->options(['male' => __('Male'), 'female' => __('Female'), 'other' => __('Other')])
-                                                    ->required(),
+                                                    ->required()
+                                                    ->live(),
                                                 Forms\Components\DatePicker::make('date_of_birth')
                                                     ->required()
+                                                    ->live()
                                                     ->maxDate(now()),
                                                 Forms\Components\TextInput::make('national_id')
                                                     ->label(__('National ID'))
+                                                    ->live(debounce: 500)
                                                     ->placeholder(__('e.g., 63-123456A78')),
                                                 Forms\Components\TextInput::make('phone')
                                                     ->label(__('Contact Number'))
                                                     ->tel()
+                                                    ->live(debounce: 500)
                                                     ->placeholder(__('e.g., +263 77 123 4567')),
                                                 Forms\Components\TextInput::make('email')
                                                     ->label(__('Email Address'))
                                                     ->email()
                                                     ->helperText(__('Used for the student portal account and activation emails.'))
-                                                    ->placeholder(__('e.g., tendai.moyo@example.com')),
+                                                    ->placeholder(__('tmaphosa@gmail.com')),
                                                 Forms\Components\Textarea::make('physical_address')
                                                     ->label(__('Physical Address'))
+                                                    ->live(debounce: 500)
                                                     ->placeholder(__('e.g., 14 Links Lane, Borrowdale, Harare'))
                                                     ->columnSpanFull(),
                                             ])->columns(2),
@@ -155,7 +168,13 @@ class StudentResource extends Resource
                                                     ->disk('public')
                                                     ->directory('student-photos')
                                                     ->imageEditor()
+                                                    ->live()
                                                     ->helperText(__('Used on ID cards, invoices and reports.')),
+                                                Forms\Components\View::make('filament.app.resources.student.partials.photo-preview')
+                                                    ->viewData(fn (Get $get): array => [
+                                                        'photo' => $get('photo_path'),
+                                                        'gender' => $get('gender'),
+                                                    ]),
                                             ])->columns(1),
 
                                         Forms\Components\Section::make(__('Guardian & Emergency Contact'))
@@ -173,12 +192,14 @@ class StudentResource extends Resource
                                         Forms\Components\Section::make(__('Boarding & Health'))
                                             ->schema([
                                                 Forms\Components\TextInput::make('house')
+                                                    ->live(debounce: 500)
                                                     ->placeholder(__('e.g., Chiadzwa, Nyanga, Bvumba')),
                                                 Forms\Components\Select::make('boarding_status')
                                                     ->options([
                                                         'day_scholar' => __('Day Scholar'),
                                                         'boarder' => __('Boarder'),
                                                     ])
+                                                    ->live()
                                                     ->default('day_scholar'),
                                                 Forms\Components\Select::make('blood_group')
                                                     ->options([
@@ -205,6 +226,7 @@ class StudentResource extends Resource
                                                     ->helperText(__('Auto-generated on creation.')),
                                                 Forms\Components\DatePicker::make('admission_date')
                                                     ->default(now())
+                                                    ->live()
                                                     ->required(),
                                                 Forms\Components\Select::make('status')
                                                     ->options([
@@ -288,16 +310,77 @@ class StudentResource extends Resource
                                             ])
                                             ->default('pending_issuance'),
                                         Forms\Components\DatePicker::make('card_expiry_date')
-                                            ->label(__('Card Expiry Date')),
+                                            ->label(__('Card Expiry Date'))
+                                            ->live(),
                                     ])->columns(2),
+
+                                Forms\Components\Placeholder::make('id_card_live_preview')
+                                    ->label(__('Live ID Card Preview'))
+                                    ->content(fn (Get $get) => view('filament.app.resources.student.partials.id-card-preview', [
+                                        'student' => static::previewStudentFromForm($get),
+                                        'template' => static::previewCardTemplate(),
+                                        'school' => current_tenant(),
+                                    ]))
+                                    ->columnSpanFull(),
                             ]),
                     ]),
             ]);
     }
 
+    /**
+     * Build an unsaved student from the live create form so the ID Card tab
+     * previews the real renderer with the active template.
+     */
+    protected static function previewStudentFromForm(Get $get): Student
+    {
+        $student = new Student;
+        $student->fill([
+            'first_name' => $get('first_name') ?: __('Student'),
+            'last_name' => $get('last_name') ?: __('Name'),
+            'gender' => $get('gender') ?: 'other',
+            'student_id_number' => $get('student_id_number') ?: __('Auto-generated'),
+            'admission_number' => $get('admission_number') ?: __('Auto-generated'),
+            'national_id' => $get('national_id'),
+            'date_of_birth' => $get('date_of_birth') ?: null,
+            'admission_date' => $get('admission_date') ?: now(),
+            'boarding_status' => $get('boarding_status') ?: 'day_scholar',
+            'house' => $get('house'),
+            'physical_address' => $get('physical_address'),
+            'phone' => $get('phone'),
+            'card_expiry_date' => $get('card_expiry_date') ?: null,
+            'status' => $get('status') ?: 'active',
+        ]);
+
+        $course = $get('course_id') ? Course::find($get('course_id')) : null;
+        $section = $get('section_id') ? Section::find($get('section_id')) : null;
+
+        if ($course || $section) {
+            if ($section) {
+                $section->setRelation('course', $course);
+            }
+
+            $enrollment = new Enrollment;
+            $enrollment->setRelation('course', $course);
+            $enrollment->setRelation('section', $section);
+            $student->setRelation('currentEnrollment', $enrollment);
+        }
+
+        return $student;
+    }
+
+    protected static function previewCardTemplate(): object
+    {
+        return CardTemplate::query()
+            ->where('school_id', current_tenant()?->id)
+            ->where('is_active', true)
+            ->first()
+            ?? StudentCardPrintController::defaultTemplate();
+    }
+
     public static function table(Table $table): Table
     {
         return $table
+            ->searchable(false)
             ->columns([
                 Tables\Columns\ImageColumn::make('photo_path')
                     ->label(__('Photo'))
@@ -529,10 +612,11 @@ class StudentResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ])
-            ->content(fn () => view('filament.app.resources.student.student-cards'))
+            ->content(fn ($livewire) => view('filament.app.resources.student.student-cards', ['records' => $livewire->getTableRecords()]))
+            ->emptyState(fn ($livewire) => view('filament.app.resources.student.student-empty-state', ['records' => $livewire->getTableRecords()]))
             ->modifyQueryUsing(fn (Builder $query) => $query->with(['currentEnrollment.course', 'currentEnrollment.section', 'user']))
-            ->paginated([8, 16, 24, 48, 'all'])
-            ->defaultPaginationPageOption(8)
+            ->paginated([10, 20, 50, 100])
+            ->defaultPaginationPageOption(20)
             ->defaultSort('created_at', 'desc');
     }
 

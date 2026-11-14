@@ -162,6 +162,10 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(80)->by($userId);
         });
 
+        RateLimiter::for('rate_limit:contact', function ($request) {
+            return Limit::perMinutes(10, 5)->by($request->ip());
+        });
+
         // 1. Force all generated URLs to HTTPS whenever the app is configured
         //    to be served over TLS (APP_URL=https://...). Keeps every redirect,
         //    notification link and asset URL on the secure scheme.

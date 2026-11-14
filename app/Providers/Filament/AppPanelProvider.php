@@ -167,6 +167,11 @@ class AppPanelProvider extends PanelProvider
                     'panel-tailwind',
                     asset(Vite::asset('resources/css/panel-tailwind.css'))
                 ),
+                // Tinway-inspired Academics workspace (scoped to `.acad`).
+                Css::make(
+                    'academics',
+                    asset(Vite::asset('resources/css/academics.css'))
+                ),
             ])
 
             ->renderHook(

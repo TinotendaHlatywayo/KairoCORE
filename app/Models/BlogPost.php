@@ -38,6 +38,7 @@ class BlogPost extends Model
         'title',
         'slug',
         'excerpt',
+        'category',
         'content',
         'cover_image',
         'status',
@@ -81,6 +82,25 @@ class BlogPost extends Model
      * (platform/blog/covers/xxx.webp), so they must be resolved against the
      * public disk before rendering; absolute paths/URLs pass through.
      */
+    public function likesCount(): int
+    {
+        return \Illuminate\Support\Facades\DB::table('platform_blog_post_likes')
+            ->where('blog_post_id', $this->id)
+            ->count();
+    }
+
+    public function sharesCount(): int
+    {
+        return \Illuminate\Support\Facades\DB::table('platform_blog_post_shares')
+            ->where('blog_post_id', $this->id)
+            ->count();
+    }
+
+    public function readingMinutes(): int
+    {
+        return max(1, (int) ceil(str_word_count(strip_tags($this->renderContent())) / 200));
+    }
+
     public function coverUrl(): string
     {
         if (blank($this->cover_image)) {

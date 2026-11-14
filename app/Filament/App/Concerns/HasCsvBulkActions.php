@@ -5,6 +5,7 @@ namespace App\Filament\App\Concerns;
 use App\Models\School;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Actions\Action;
+use Filament\Actions\StaticAction;
 use Filament\Actions\ActionGroup;
 use Filament\Forms;
 use Filament\Forms\Get;
@@ -140,6 +141,7 @@ trait HasCsvBulkActions
             ->modalDescription(__('Upload your file and the system matches every column automatically.'))
             ->modalWidth(MaxWidth::ExtraLarge)
             ->modalSubmitActionLabel(__("Import {$title}"))
+            ->modalSubmitAction(fn (StaticAction $action) => $action->disabled(fn (): bool => $this->isMountedImportFileMissing()))
             ->steps($this->csvImportSteps($service, $streamName, $title))
             ->action(function (array $data) use ($service, $streamName) {
                 $this->runCsvImport($data, $service, $streamName);
@@ -156,11 +158,13 @@ trait HasCsvBulkActions
         return [
             Forms\Components\Wizard\Step::make(__('Upload'))
                 ->description(__('Download the template, fill it in and upload the file with your records'))
-                ->schema(fn (Get $get): array => [
-                    ...$this->uploadStepSchema($get, $service, $streamName, $title),
-                    ...$this->missingReferenceSchema($get, $service),
-                    ...$this->missingStreamSchema($get, $service),
-                ]),
+                ->schema($this->uploadStepSchema($service, $title)),
+            Forms\Components\Wizard\Step::make(__('Validate'))
+                ->description(__('We check the columns, classes and reference values before anything is written'))
+                ->schema(fn (Get $get): array => $this->validateStepSchema($get, $service)),
+            Forms\Components\Wizard\Step::make(__('Import'))
+                ->description(__('Review the ready file and start the import'))
+                ->schema(fn (Get $get): array => $this->importStepSchema($get, $streamName)),
         ];
     }
 
@@ -170,37 +174,46 @@ trait HasCsvBulkActions
      */
     protected function requiresColumnMatching(Get $get, string $service): bool
     {
+        return $this->missingRequiredColumnLabels($get, $service) !== [];
+    }
+
+    /**
+     * Human-readable labels for required columns that could not be matched
+     * from the uploaded file's headers.
+     *
+     * @return array<int, string>
+     */
+    protected function missingRequiredColumnLabels(Get $get, string $service): array
+    {
         $file = $get('csv_file');
 
-        if (! $file) {
-            return false;
+        if (blank($file)) {
+            return [];
         }
 
-        $filePath = $service::resolveTempFilePath($file);
-        $headers = $service::readCsvHeaders($filePath);
+        $headers = $service::readCsvHeaders($service::resolveTempFilePath($file));
 
         if (empty($headers)) {
-            return true;
+            return collect($service::columns())
+                ->filter(fn (array $column): bool => (bool) ($column['required'] ?? false))
+                ->map(fn (array $column): string => (string) $column['label'])
+                ->values()
+                ->all();
         }
 
         $guess = $service::guessMapping($headers);
-        $columns = $service::columns();
 
-        foreach ($columns as $key => $column) {
-            if (($column['required'] ?? false) && blank($guess[$key] ?? null)) {
-                return true;
-            }
-        }
-
-        return false;
+        return collect($service::columns())
+            ->filter(fn (array $column, string $key): bool => (bool) ($column['required'] ?? false) && blank($guess[$key] ?? null))
+            ->map(fn (array $column): string => (string) $column['label'])
+            ->values()
+            ->all();
     }
 
-    /** Schema for the Upload step: template download, file picker, status + progress. */
-    protected function uploadStepSchema(Get $get, string $service, string $streamName, string $title): array
+    /** Step 1: template download and the real file picker. */
+    protected function uploadStepSchema(string $service, string $title): array
     {
-        $matchNeeded = $this->requiresColumnMatching($get, $service);
-
-        $schema = [
+        return [
             Forms\Components\Actions::make([
                 Forms\Components\Actions\Action::make('download_csv_template')
                     ->label(__('Download Excel Template'))
@@ -229,22 +242,42 @@ trait HasCsvBulkActions
                 ->disk('public')
                 ->directory('csv-imports'),
         ];
+    }
 
-        if (filled($get('csv_file'))) {
-            $schema[] = Forms\Components\View::make('filament.app.components.csv-import.column-status')
-                ->viewData([
-                    'matched' => ! $matchNeeded,
-                    'fileHeaders' => $service::readCsvHeaders($service::resolveTempFilePath($get('csv_file'))),
-                ]);
+    /** Step 2: automatic column match, missing reference values and classes. */
+    protected function validateStepSchema(Get $get, string $service): array
+    {
+        $file = $get('csv_file');
+
+        if (blank($file)) {
+            return [
+                Forms\Components\View::make('filament.app.components.csv-import.validation-empty'),
+            ];
         }
 
-        $schema[] = Forms\Components\View::make('filament.app.components.csv-import.progress-panel')
-            ->viewData([
-                'streamName' => $streamName,
-                'message' => __('Progress appears here.'),
-            ]);
+        return [
+            Forms\Components\View::make('filament.app.components.csv-import.column-status')
+                ->viewData([
+                    'matched' => ! $this->requiresColumnMatching($get, $service),
+                    'fileHeaders' => $service::readCsvHeaders($service::resolveTempFilePath($file)),
+                    'missingColumns' => $this->missingRequiredColumnLabels($get, $service),
+                ]),
+            ...$this->missingReferenceSchema($get, $service),
+            ...$this->missingStreamSchema($get, $service),
+        ];
+    }
 
-        return $schema;
+    /** Step 3: final confirmation and the live import progress panel. */
+    protected function importStepSchema(Get $get, string $streamName): array
+    {
+        return [
+            Forms\Components\View::make('filament.app.components.csv-import.import-summary'),
+            Forms\Components\View::make('filament.app.components.csv-import.progress-panel')
+                ->viewData([
+                    'streamName' => $streamName,
+                    'message' => __('Ready to import.'),
+                ]),
+        ];
     }
 
     protected function exportExcel(string $service, string $filename): StreamedResponse
@@ -471,6 +504,22 @@ trait HasCsvBulkActions
         }
 
         return $map;
+    }
+
+    /**
+     * The import button stays disabled until the first step has a file. The
+     * wizard stores live form state in mountedActionsData, so this works on
+     * every step without duplicating the upload field.
+     */
+    protected function isMountedImportFileMissing(): bool
+    {
+        $key = array_key_last($this->mountedActionsData);
+
+        if ($key === null) {
+            return true;
+        }
+
+        return blank($this->mountedActionsData[$key]['csv_file'] ?? null);
     }
 
     protected function runCsvImport(array $data, string $service, string $streamName): void

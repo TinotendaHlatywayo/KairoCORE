@@ -620,11 +620,50 @@ class TopbarCommandCenter extends Component
             EventReminderNotification::class,
             ProfilePhotoRejectedNotification::class,
             PlatformMessageNotification::class,
-            // Announcements, polls/surveys, fee confirmations and chat-bridge
-            // notices are delivered through Filament's database notification
-            // class; track it so they surface in the bell and its badge.
             DatabaseNotification::class,
         ];
+    }
+
+    /**
+     * Strict permission gating for the notification bell: only notification
+     * types the current user is actually authorised to receive are surfaced,
+     * so e.g. a librarian never sees enrolment/platform-task notices even if
+     * stale rows exist in the database.
+     */
+    protected function allowedNotificationTypes(): array
+    {
+        $user = $this->user();
+        if (! $user) {
+            return [];
+        }
+
+        $allowed = [];
+        foreach ($this->trackedNotificationTypes() as $type) {
+            if ($this->canSeeNotificationType($user, $type)) {
+                $allowed[] = $type;
+            }
+        }
+
+        return $allowed;
+    }
+
+    protected function canSeeNotificationType(\App\Models\User $user, string $type): bool
+    {
+        return match ($type) {
+            NewApplicationNotification::class,
+            NewEnrollmentNotification::class,
+            UserRegistrationApprovalNotification::class => PermissionRegistry::userCan($user, 'admissions.receive_notifications')
+                || PermissionRegistry::userCan($user, 'users.approve'),
+            PlatformMessageNotification::class => PermissionRegistry::userCan($user, 'communication.contact_platform'),
+            TaskAssignedNotification::class,
+            TaskReminderNotification::class,
+            TaskOverdueNotification::class => PermissionRegistry::userCan($user, 'tasks.view')
+                || PermissionRegistry::userCan($user, 'tasks.assign'),
+            EventReminderNotification::class => PermissionRegistry::userCan($user, 'communication.view_module'),
+            ProfilePhotoRejectedNotification::class => true,
+            DatabaseNotification::class => true,
+            default => false,
+        };
     }
 
     /**
@@ -652,7 +691,7 @@ class TopbarCommandCenter extends Component
         }
 
         return $user->notifications()
-            ->whereIn('type', $this->trackedNotificationTypes())
+            ->whereIn('type', $this->allowedNotificationTypes())
             ->whereNull('read_at')
             ->whereNull('cleared_at')
             ->latest()
@@ -668,7 +707,7 @@ class TopbarCommandCenter extends Component
         }
 
         return $user->unreadNotifications()
-            ->whereIn('type', $this->trackedNotificationTypes())
+            ->whereIn('type', $this->allowedNotificationTypes())
             ->whereNull('cleared_at')
             ->count();
     }
@@ -681,7 +720,7 @@ class TopbarCommandCenter extends Component
         }
 
         $user->unreadNotifications()
-            ->whereIn('type', $this->trackedNotificationTypes())
+            ->whereIn('type', $this->allowedNotificationTypes())
             ->whereNull('cleared_at')
             ->update(['read_at' => now()]);
     }
@@ -745,7 +784,7 @@ class TopbarCommandCenter extends Component
             ->where('created_at', '>=', now()->subDays($days)->startOfDay());
 
         if (in_array($this->historyCategory, ['chat', 'registration', 'system'], true)) {
-            $types = collect($this->trackedNotificationTypes())
+            $types = collect($this->allowedNotificationTypes())
                 ->filter(fn (string $type) => static::notificationCategory($type) === $this->historyCategory)
                 ->all();
 
@@ -753,7 +792,7 @@ class TopbarCommandCenter extends Component
             if ($this->historyCategory === 'system') {
                 $query->where(function ($q) use ($types) {
                     $q->whereIn('type', $types)
-                        ->orWhereNotIn('type', collect($this->trackedNotificationTypes())->all());
+                        ->orWhereNotIn('type', collect($this->allowedNotificationTypes())->all());
                 });
             } else {
                 $query->whereIn('type', $types);

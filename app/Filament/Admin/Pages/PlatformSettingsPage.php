@@ -12,6 +12,7 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Tabs; // Explicit import resolving layout compilation errors [1]
 use Filament\Forms\Components\Tabs\Tab;
+use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -309,16 +310,19 @@ class PlatformSettingsPage extends Page implements HasForms
                                     ->helperText(__('Full international number, digits only — no +, spaces or dashes.')),
                                 TextInput::make('contact_facebook')
                                     ->label(__('Facebook page URL'))
-                                    ->url()
-                                    ->default('https://facebook.com'),
+                                    ->url(),
                                 TextInput::make('contact_instagram')
                                     ->label(__('Instagram profile URL'))
-                                    ->url()
-                                    ->default('https://instagram.com'),
+                                    ->url(),
                                 TextInput::make('contact_tiktok')
                                     ->label(__('TikTok profile URL'))
-                                    ->url()
-                                    ->default('https://tiktok.com'),
+                                    ->url(),
+                                TextInput::make('contact_x')
+                                    ->label(__('X (Twitter) profile URL'))
+                                    ->url(),
+                                TextInput::make('contact_youtube')
+                                    ->label(__('YouTube channel URL'))
+                                    ->url(),
                             ])->columns(2),
 
                         Tab::make('Email Branding')
@@ -470,12 +474,9 @@ class PlatformSettingsPage extends Page implements HasForms
                     $this->mText('hero_subtitle', __('Hero subtitle'), null, true),
                     ...$this->mImage('hero_image', __('Hero image')),
                     $this->mText('hero_primary_label', __('Hero primary button label')),
-                    $this->mText('hero_primary_url', __('Hero primary button link'), __('Defaults to the registration page when blank.')),
+                    $this->mText('hero_primary_url', __('Hero primary button link'), __('Defaults to the contact form when blank.')),
                     $this->mText('hero_secondary_label', __('Hero secondary button label')),
                     $this->mText('hero_secondary_url', __('Hero secondary button link'), __('Defaults to the features page when blank.')),
-                    $this->mText('hero_trust_1', __('Hero trust point 1')),
-                    $this->mText('hero_trust_2', __('Hero trust point 2')),
-                    $this->mText('hero_trust_3', __('Hero trust point 3')),
                     $this->mText('hero_stat_1_label', __('Hero floating card 1 label')),
                     $this->mText('hero_stat_1_value', __('Hero floating card 1 value')),
                     $this->mText('hero_stat_2_label', __('Hero floating card 2 label')),
@@ -493,7 +494,14 @@ class PlatformSettingsPage extends Page implements HasForms
                             TextInput::make('label')->label(__('Label')),
                         ]),
 
+                    Repeater::make('marketing_home_audiences')
+                        ->label(__('School types marquee'))
+                        ->collapsible()
+                        ->itemLabel(fn (array $state) => $state['label'] ?? '#')
+                        ->schema([TextInput::make('label')->label(__('Label'))]),
+
                     $this->mText('modules_title', __('Modules section title'), null, true),
+                    $this->mText('home_modules_badge', __('Modules section eyebrow'), null, true),
                     $this->mText('modules_subtitle', __('Modules section subtitle'), null, true),
                     $this->mText('modules_cta_label', __('Modules section button label')),
 
@@ -510,7 +518,9 @@ class PlatformSettingsPage extends Page implements HasForms
                         ]),
 
                     $this->mText('benefits_title', __('Benefits section title'), null, true),
+                    $this->mText('home_why_badge', __('Benefits section eyebrow'), null, true),
                     $this->mText('benefits_subtitle', __('Benefits section subtitle'), null, true),
+                    ...$this->mImage('why_image', __('Benefits section background image')),
 
                     Repeater::make('marketing_home_benefits')
                         ->label(__('Benefit cards (Home, dark section)'))
@@ -525,7 +535,14 @@ class PlatformSettingsPage extends Page implements HasForms
                         ]),
 
                     $this->mText('steps_title', __('How-it-works section title'), null, true),
+                    $this->mText('home_steps_badge', __('How-it-works section eyebrow'), null, true),
                     $this->mText('steps_subtitle', __('How-it-works section subtitle'), null, true),
+                    $this->mText('home_training_badge', __('Training note badge'), null, true),
+                    $this->mText('home_training_title', __('Training note title'), null, true),
+                    $this->mText('home_training_desc', __('Training note description'), null, true),
+                    $this->mText('home_faq_badge', __('FAQ section eyebrow'), null, true),
+                    $this->mText('home_faq_title', __('FAQ section title'), null, true),
+                    $this->mText('home_faq_subtitle', __('FAQ section subtitle'), null, true),
 
                     Repeater::make('marketing_home_steps')
                         ->label(__('How-it-works steps'))
@@ -538,10 +555,22 @@ class PlatformSettingsPage extends Page implements HasForms
                             Textarea::make('desc')->label(__('Description'))->rows(2),
                         ]),
 
+                    Repeater::make('marketing_home_faq')
+                        ->label(__('Home FAQ'))
+                        ->collapsible()
+                        ->itemLabel(fn (array $state) => $state['question'] ?? '#')
+                        ->columns(1)
+                        ->columnSpanFull()
+                        ->schema([
+                            TextInput::make('question')->label(__('Question'))->columnSpanFull(),
+                            Textarea::make('answer')->label(__('Answer'))->rows(3)->columnSpanFull(),
+                        ]),
+
                     $this->mText('cta_title', __('Closing CTA title'), null, true),
                     $this->mText('cta_subtitle', __('Closing CTA subtitle'), null, true),
+                    ...$this->mImage('cta_image', __('Closing CTA background image')),
                     $this->mText('cta_primary_label', __('Closing CTA primary label')),
-                    $this->mText('cta_primary_url', __('Closing CTA primary link'), __('Defaults to the registration page when blank.')),
+                    $this->mText('cta_primary_url', __('Closing CTA primary link'), __('Defaults to the contact form when blank.')),
                     $this->mText('cta_secondary_label', __('Closing CTA secondary label')),
                     $this->mText('cta_secondary_url', __('Closing CTA secondary link'), __('Defaults to the features page when blank.')),
                 ]),
@@ -606,6 +635,13 @@ class PlatformSettingsPage extends Page implements HasForms
                 ->columns(2)
                 ->schema([
                     $this->mText('about_badge', __('Page badge'), null, true),
+                    $this->mText('about_problems_badge', __('Problem section badge'), null, true),
+                    $this->mText('about_problems_title', __('Problem section title'), null, true),
+                    $this->mText('about_problems_subtitle', __('Problem section subtitle'), null, true),
+                    $this->mText('about_make_yours_title', __('Customization callout title'), null, true),
+                    $this->mText('about_make_yours_text', __('Customization callout text'), null, true),
+                    $this->mText('about_platform_badge', __('Platform section badge'), null, true),
+                    $this->mText('about_platform_subtitle', __('Platform section subtitle'), null, true),
                     $this->mText('about_title', __('Page title'), null, true),
                     $this->mText('about_intro', __('Page intro paragraph'), null, true),
                     ...$this->mImage('about_image', __('Hero image')),
@@ -636,6 +672,27 @@ class PlatformSettingsPage extends Page implements HasForms
                             Textarea::make('text')->label(__('Point'))->rows(2)->columnSpanFull(),
                         ]),
 
+                    Repeater::make('marketing_about_problems')
+                        ->label(__('Problem / solution cards'))
+                        ->collapsible()
+                        ->itemLabel(fn (array $state) => $state['problem'] ?? '#')
+                        ->columns(1)
+                        ->columnSpanFull()
+                        ->schema([
+                            TextInput::make('problem')->label(__('Problem title'))->columnSpanFull(),
+                            Textarea::make('detail')->label(__('Problem detail'))->rows(3)->columnSpanFull(),
+                            Textarea::make('solution')->label(__('How Kairo CORE fixes it'))->rows(3)->columnSpanFull(),
+                            TagsInput::make('points')->label(__('Bullet points'))->columnSpanFull(),
+                            Repeater::make('links')
+                                ->label(__('Related feature links'))
+                                ->columns(2)
+                                ->columnSpanFull()
+                                ->schema([
+                                    TextInput::make('key')->label(__('Feature key')),
+                                    TextInput::make('label')->label(__('Link label')),
+                                ]),
+                        ]),
+
                     $this->mText('about_story_badge', __('Story badge'), null, true),
                     $this->mText('about_story_title', __('Story title'), null, true),
                     $this->mText('about_story_p1', __('Story paragraph 1'), null, true),
@@ -664,6 +721,17 @@ class PlatformSettingsPage extends Page implements HasForms
                     $this->mText('contact_badge', __('Page badge'), null, true),
                     $this->mText('contact_title', __('Page title'), null, true),
                     $this->mText('contact_intro', __('Page intro paragraph'), null, true),
+                    $this->mText('contact_form_subtitle', __('Form subtitle'), null, true),
+                    Repeater::make('marketing_contact_steps')
+                        ->label(__('Contact page steps'))
+                        ->collapsible()
+                        ->itemLabel(fn (array $state) => $state['title'] ?? '#')
+                        ->columns(1)
+                        ->columnSpanFull()
+                        ->schema([
+                            TextInput::make('title')->label(__('Title')),
+                            Textarea::make('desc')->label(__('Description'))->rows(2),
+                        ]),
                     $this->mText('contact_form_title', __('Form title'), null, true),
                     $this->mText('contact_form_name_label', __('Form: name label')),
                     $this->mText('contact_form_email_label', __('Form: email label')),
@@ -684,11 +752,23 @@ class PlatformSettingsPage extends Page implements HasForms
                     $this->mText('contact_card_text', __('Side card text'), null, true),
                 ]),
 
+            Tab::make('Blog')
+                ->icon('heroicon-o-newspaper')
+                ->columns(2)
+                ->schema([
+                    $this->mText('blog_badge', __('Page badge'), null, true),
+                    $this->mText('blog_title', __('Page title'), null, true),
+                    $this->mText('blog_intro', __('Page intro paragraph'), null, true),
+                    $this->mText('blog_cta_title', __('Bottom CTA title'), null, true),
+                    $this->mText('blog_cta_subtitle', __('Bottom CTA subtitle'), null, true),
+                ]),
+
             Tab::make('Global & SEO')
                 ->icon('heroicon-o-magnifying-glass')
                 ->columns(2)
                 ->schema([
                     $this->mText('footer_tagline', __('Footer tagline'), null, true),
+                    $this->mText('footer_description', __('Footer description'), null, true),
                     $this->mText('meta_title', __('SEO title'), __('Leave blank to use the page default.'), true),
                     $this->mText('meta_description', __('SEO description'), __('Leave blank to use the default platform description.'), true),
                 ]),
@@ -1115,7 +1195,7 @@ class PlatformSettingsPage extends Page implements HasForms
             : $this->translateMarketingList($defaults, $locale);
 
         $stored = $map[$key.'@'.$locale] ?? null;
-        if (! is_array($stored) || $stored === []) {
+        if (! is_array($stored)) {
             $stored = null;
         }
 
@@ -1124,19 +1204,19 @@ class PlatformSettingsPage extends Page implements HasForms
         }
 
         $base = $map[$key] ?? null;
-        if (! is_array($base) || $base === []) {
+        if (! is_array($base)) {
             $base = null;
         }
 
         if ($isDefaultLocale) {
             return $base !== null
                 ? $this->marketingApplyPendingMedia(marketing_merge_stored_list($defaults, $base))
-                : $defaults;
+                : $this->marketingApplyPendingMedia($defaults);
         }
 
         return $base !== null
-            ? $this->marketingApplyPendingMedia(marketing_inherit_shared_list_fields($translated, $base))
-            : $translated;
+            ? ($base === [] ? [] : $this->marketingApplyPendingMedia(marketing_inherit_shared_list_fields($translated, $base)))
+            : $this->marketingApplyPendingMedia($translated);
     }
 
     /**
@@ -1149,6 +1229,13 @@ class PlatformSettingsPage extends Page implements HasForms
     protected function marketingApplyPendingMedia(array $list): array
     {
         foreach ($list as $i => $item) {
+            if (is_array($item) && isset($item['links']) && is_array($item['links'])) {
+                foreach ($item['links'] as $linkIndex => $link) {
+                    if (is_array($link) && array_is_list($link) && count($link) >= 2) {
+                        $list[$i]['links'][$linkIndex] = ['key' => $link[0], 'label' => $link[1]];
+                    }
+                }
+            }
             if (is_array($item)
                 && isset($item['image_source'])
                 && is_string($item['image_source'])
@@ -1169,7 +1256,7 @@ class PlatformSettingsPage extends Page implements HasForms
      */
     protected function translateMarketingList(array $list, string $locale): array
     {
-        $textFields = ['name', 'desc', 'detail', 'title', 'label', 'text', 'sub1', 'sub2', 'sub3'];
+        $textFields = ['name', 'desc', 'detail', 'title', 'label', 'text', 'sub1', 'sub2', 'sub3', 'question', 'answer', 'problem', 'solution'];
 
         foreach ($list as $i => $item) {
             if (! is_array($item)) {
@@ -1178,6 +1265,19 @@ class PlatformSettingsPage extends Page implements HasForms
             foreach ($textFields as $field) {
                 if (isset($item[$field]) && is_string($item[$field]) && $item[$field] !== '') {
                     $list[$i][$field] = (string) __($item[$field], [], $locale);
+                }
+            }
+            if (isset($item['points']) && is_array($item['points'])) {
+                $list[$i]['points'] = array_map(fn ($point) => (string) __((string) $point, [], $locale), $item['points']);
+            }
+            if (isset($item['links']) && is_array($item['links'])) {
+                foreach ($item['links'] as $linkIndex => $link) {
+                    $labelKey = is_array($link) && array_key_exists('label', $link)
+                        ? 'label'
+                        : (is_array($link) && array_key_exists(1, $link) ? 1 : null);
+                    if ($labelKey !== null) {
+                        $list[$i]['links'][$linkIndex][$labelKey] = (string) __((string) $link[$labelKey], [], $locale);
+                    }
                 }
             }
         }
@@ -1341,6 +1441,8 @@ class PlatformSettingsPage extends Page implements HasForms
             'marketing_nav_logo',
             'marketing_footer_logo',
             'marketing_hero_image',
+            'marketing_why_image',
+            'marketing_cta_image',
             'marketing_about_image',
             'marketing_contact_image',
         ];

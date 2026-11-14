@@ -163,6 +163,10 @@ class WebsiteContentPage extends PlatformSettingsPage
                         ->maxLength(500)
                         ->helperText(__('Short summary shown on the blog index and in search results.'))
                         ->columnSpanFull(),
+                    TextInput::make('blog.category')
+                        ->label(__('Category'))
+                        ->maxLength(60)
+                        ->helperText(__('Used to group and filter posts on the public blog.')),
                     FileUpload::make('blog.cover_image')
                         ->label(__('Cover image'))
                         ->disk('public')
@@ -271,6 +275,7 @@ class WebsiteContentPage extends PlatformSettingsPage
             'title' => '',
             'slug' => '',
             'excerpt' => '',
+            'category' => '',
             'cover_image' => null,
             'content' => '',
             'status' => BlogPost::STATUS_DRAFT,
@@ -300,6 +305,7 @@ class WebsiteContentPage extends PlatformSettingsPage
             'title' => (string) $post->title,
             'slug' => (string) $post->slug,
             'excerpt' => (string) $post->excerpt,
+            'category' => (string) $post->category,
             'cover_image' => $post->cover_image ? [$post->cover_image] : null,
             'content' => (string) $post->content,
             'status' => (string) $post->status,

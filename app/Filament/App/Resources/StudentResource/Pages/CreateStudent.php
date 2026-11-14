@@ -14,6 +14,23 @@ class CreateStudent extends CreateRecord
 {
     protected static string $resource = StudentResource::class;
 
+    protected static ?string $title = 'Create Student';
+
+    protected array $extraBodyAttributes = ['data-page' => 'student-create'];
+
+    public function getBreadcrumbs(): array
+    {
+        return [
+            StudentResource::getUrl('index') => __('Students'),
+            __('Create'),
+        ];
+    }
+
+    public function areFormActionsSticky(): bool
+    {
+        return true;
+    }
+
     protected function handleRecordCreation(array $data): Model
     {
         $academicYearId = $data['academic_year_id'] ?? null;

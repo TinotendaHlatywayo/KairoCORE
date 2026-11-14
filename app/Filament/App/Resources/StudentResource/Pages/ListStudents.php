@@ -5,9 +5,11 @@ namespace App\Filament\App\Resources\StudentResource\Pages;
 use App\Filament\App\Concerns\HasCsvBulkActions;
 use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Resources\StudentResource;
+use App\Models\User;
 use App\Services\StudentCsvService;
 use Filament\Actions;
 use Filament\Actions\Action;
+use Filament\Actions\StaticAction;
 use Filament\Forms;
 use Filament\Forms\Get;
 use Filament\Notifications\Actions\Action as NotificationAction;
@@ -15,8 +17,10 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Support\Enums\MaxWidth;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
 use Modules\Academics\Models\Course;
 use Modules\Academics\Models\Section;
+use Modules\Students\Models\Student;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ListStudents extends ListRecords
@@ -26,11 +30,218 @@ class ListStudents extends ListRecords
 
     protected static string $resource = StudentResource::class;
 
-    protected static ?string $title = 'Student Directory';
+    protected static ?string $title = 'Students';
+
+    protected array $extraBodyAttributes = ['data-page' => 'students'];
+
+    public string $studentSort = 'date';
+
+    public string $classFilter = '';
+
+    public string $genderFilter = '';
+
+    public string $statusFilter = '';
+
+    public string $studentView = 'grid';
 
     public function getTitle(): string
     {
         return __(static::$title ?? '');
+    }
+
+    /**
+     * Directory totals for the header cards. They describe the whole school
+     * roster, not the current search/filter slice, so they stay stable while
+     * somebody is narrowing the grid.
+     *
+     * @return array{total: int, active: int, pending: int, female: int, male: int, femalePercent: int}
+     */
+    public function getStudentStats(): array
+    {
+        $row = Student::query()
+            ->leftJoin('users', 'students.user_id', '=', 'users.id')
+            ->selectRaw('count(*) as total')
+            ->selectRaw('sum(case when users.activated_at is not null or users.account_status = ? then 1 else 0 end) as active', [User::STATUS_ACTIVE])
+            ->selectRaw("sum(case when students.gender = 'female' then 1 else 0 end) as female")
+            ->selectRaw("sum(case when students.gender = 'male' then 1 else 0 end) as male")
+            ->first();
+
+        $total = (int) ($row->total ?? 0);
+        $active = (int) ($row->active ?? 0);
+        $female = (int) ($row->female ?? 0);
+        $male = (int) ($row->male ?? 0);
+
+        return [
+            'total' => $total,
+            'active' => $active,
+            'pending' => max(0, $total - $active),
+            'female' => $female,
+            'male' => $male,
+            'femalePercent' => $total > 0 ? (int) round(($female / $total) * 100) : 0,
+        ];
+    }
+
+    /**
+     * Class select options, keyed as "course:section" so a stream is never
+     * confused with the same stream name in another grade.
+     *
+     * @return array<string, string>
+     */
+    public function getClassOptions(): array
+    {
+        return Section::query()
+            ->with('course')
+            ->orderBy('name')
+            ->get()
+            ->mapWithKeys(function (Section $section): array {
+                $course = $section->course?->name ?? __('Unassigned');
+
+                return [
+                    $section->course_id.':'.$section->id => trim($course.' / '.$section->name),
+                ];
+            })
+            ->all();
+    }
+
+    public function updatedStudentSort(): void
+    {
+        $this->deselectAllTableRecords();
+        $this->resetPage();
+    }
+
+    public function updatedClassFilter(): void
+    {
+        $this->deselectAllTableRecords();
+        $this->resetPage();
+    }
+
+    public function updatedGenderFilter(): void
+    {
+        $this->deselectAllTableRecords();
+        $this->resetPage();
+    }
+
+    public function updatedStatusFilter(): void
+    {
+        $this->deselectAllTableRecords();
+        $this->resetPage();
+    }
+
+    public function updatedStudentView(): void
+    {
+        $this->deselectAllTableRecords();
+    }
+
+    public function clearStudentFilters(): void
+    {
+        $this->tableSearch = '';
+        $this->studentSort = 'date';
+        $this->classFilter = '';
+        $this->genderFilter = '';
+        $this->statusFilter = '';
+        $this->deselectAllTableRecords();
+        $this->resetPage();
+    }
+
+    /**
+     * Clicking a stat card narrows the roster. Pending/Active toggle the same
+     * status filter, Female/Male toggle the same gender filter, and Total
+     * returns to the full, unfiltered roster.
+     */
+    public function applyStatFilter(string $stat): void
+    {
+        if ($stat === 'total') {
+            $this->clearStudentFilters();
+
+            return;
+        }
+
+        if (in_array($stat, ['active', 'pending'], true)) {
+            $this->statusFilter = $this->statusFilter === $stat ? '' : $stat;
+        }
+
+        if (in_array($stat, ['female', 'male'], true)) {
+            $this->genderFilter = $this->genderFilter === $stat ? '' : $stat;
+        }
+
+        $this->deselectAllTableRecords();
+        $this->resetPage();
+    }
+
+    protected function applySearchToTableQuery(Builder $query): Builder
+    {
+        // The directory's search box is broader than the table columns (it also
+        // matches class names), so it is applied in applyStudentQueryFilters().
+        return $query;
+    }
+
+    public function getFilteredTableQuery(): Builder
+    {
+        return $this->applyStudentQueryFilters(parent::getFilteredTableQuery());
+    }
+
+    public function getFilteredSortedTableQuery(): Builder
+    {
+        $query = $this->getFilteredTableQuery();
+
+        return match ($this->studentSort) {
+            'name' => $query->orderBy('first_name')->orderBy('last_name')->orderBy('id'),
+            'age' => $query->orderByDesc('date_of_birth')->orderBy('id'),
+            'date' => $query->orderByDesc('admission_date')->orderByDesc('id'),
+            default => $query->orderByDesc('created_at')->orderByDesc('id'),
+        };
+    }
+
+    protected function applyStudentQueryFilters(Builder $query): Builder
+    {
+        $search = trim((string) $this->tableSearch);
+
+        if ($search !== '') {
+            $terms = preg_split('/\s+/u', $search) ?: [];
+
+            foreach ($terms as $term) {
+                $term = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $term);
+
+                $query->where(function (Builder $termQuery) use ($term): void {
+                    $like = '%'.$term.'%';
+
+                    $termQuery
+                        ->where('first_name', 'like', $like)
+                        ->orWhere('last_name', 'like', $like)
+                        ->orWhere('student_id_number', 'like', $like)
+                        ->orWhere('admission_number', 'like', $like)
+                        ->orWhere('national_id', 'like', $like)
+                        ->orWhereHas('currentEnrollment.course', fn (Builder $course) => $course->where('name', 'like', $like))
+                        ->orWhereHas('currentEnrollment.section', fn (Builder $section) => $section->where('name', 'like', $like));
+                });
+            }
+        }
+
+        if (in_array($this->genderFilter, ['male', 'female', 'other'], true)) {
+            $query->where('gender', $this->genderFilter);
+        }
+
+        if ($this->statusFilter === 'active') {
+            $query->whereHas('user', fn (Builder $user) => $user
+                ->where('account_status', User::STATUS_ACTIVE)
+                ->orWhereNotNull('activated_at'));
+        } elseif ($this->statusFilter === 'pending') {
+            $query->whereDoesntHave('user', fn (Builder $user) => $user
+                ->where('account_status', User::STATUS_ACTIVE)
+                ->orWhereNotNull('activated_at'));
+        }
+
+        if ($this->classFilter !== '' && str_contains($this->classFilter, ':')) {
+            [$courseId, $sectionId] = array_pad(explode(':', $this->classFilter, 2), 2, null);
+
+            if ($courseId && $sectionId) {
+                $query->whereHas('currentEnrollment', fn (Builder $enrollment) => $enrollment
+                    ->where('course_id', (int) $courseId)
+                    ->where('section_id', (int) $sectionId));
+            }
+        }
+
+        return $query;
     }
 
     protected static function csvService(): string
@@ -50,8 +261,9 @@ class ListStudents extends ListRecords
 
     public function getHeader(): ?View
     {
-        return view('filament.app.resources.student.import.page-actions', [
+        return view('filament.app.resources.student.index-header', [
             'actions' => $this->getCachedHeaderActions(),
+            'stats' => $this->getStudentStats(),
         ]);
     }
 
@@ -91,6 +303,7 @@ class ListStudents extends ListRecords
             ->modalDescription('Upload your file and the system matches every column automatically.')
             ->modalWidth(MaxWidth::ExtraLarge)
             ->modalSubmitActionLabel(__('Import Students'))
+            ->modalSubmitAction(fn (StaticAction $action) => $action->disabled(fn (): bool => $this->isMountedImportFileMissing()))
             ->steps($this->csvImportSteps($service, $streamName, 'Students'))
             ->action(function (array $data) use ($service, $streamName) {
                 $this->runStudentImport($data, $service, $streamName);

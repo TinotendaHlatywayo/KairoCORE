@@ -71,7 +71,7 @@
             . "Verify: " . $verify;
         $qr = id_card_generate_qr($qrDataText, (int) $px('qr_size', 58) * 2);
         $barcode = null;
-        if ($val('show_barcode', false)) { try { $barcode = 'data:image/png;base64,'.base64_encode((new \Picqer\Barcode\BarcodeGeneratorPNG())->getBarcode($id, \Picqer\Barcode\BarcodeGenerator::TYPE_CODE_128, 2, (int) $px('barcode_height', 30))); } catch (\Throwable $e) {} }
+        if ($val('show_barcode', false)) { $barcode = id_card_barcode_data_uri($id, $tpl->barcode_format ?? 'Code128', (int) $px('barcode_height', 30)); }
     @endphp
     <div class="id-card {{ $orientation }}{{ !empty($cropMarks) ? ' crop-marks' : '' }}" style="border: {{ (int) $px('card_border_width', 3) }}px solid {{ e($val('card_border_color', '#1e3a8a')) }}; border-radius: 12px; background: {{ e($val('canvas_bg_color', '#ffffff')) }};">
         {{-- The opacity belongs to this layer only: card content remains fully opaque. --}}

@@ -83,6 +83,22 @@ class HelpContent
     {
         $class = ltrim($pageOrResourceClass, '\\');
 
+        // The global help button asks for the *current page* class, while this
+        // catalogue is keyed by resource class. Resolve list/create/edit/view
+        // pages back to their owning resource so every page gets the same,
+        // resource-specific guidance instead of the generic fallback.
+        if (
+            class_exists($class)
+            && is_subclass_of($class, \Filament\Resources\Pages\Page::class)
+            && method_exists($class, 'getResource')
+        ) {
+            $resource = $class::getResource();
+
+            if (is_string($resource) && $resource !== '') {
+                $class = ltrim($resource, '\\');
+            }
+        }
+
         return match ($class) {
             // =========================================================
             // ACADEMICS MODULE

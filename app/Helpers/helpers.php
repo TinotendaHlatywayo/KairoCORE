@@ -405,6 +405,8 @@ if (! function_exists('marketing_content_defaults')) {
             'hero_title' => __('Run your whole school from one platform'),
             'hero_subtitle' => __('KairoCORE brings admissions, academics, fees, attendance, HR, communication and more together in one secure, cloud-based system, so your team spends less time on paperwork and more time on students.'),
             'hero_image' => 'https://images.pexels.com/photos/34211744/pexels-photo-34211744.jpeg?auto=compress&cs=tinysrgb&w=1600',
+            'why_image' => 'https://images.pexels.com/photos/34211744/pexels-photo-34211744.jpeg?auto=compress&cs=tinysrgb&w=1600',
+            'cta_image' => 'https://images.pexels.com/photos/34211744/pexels-photo-34211744.jpeg?auto=compress&cs=tinysrgb&w=1600',
             'hero_primary_label' => __('Book a personal demo'),
             'hero_primary_url' => '',
             'hero_secondary_label' => __('Explore features'),
@@ -419,12 +421,20 @@ if (! function_exists('marketing_content_defaults')) {
 
             // ── Home · sections ─────────────────────────────────────
             'modules_title' => __('Everything your school runs on, in one place'),
+            'home_modules_badge' => __('Platform features'),
             'modules_subtitle' => __('From the first admission enquiry to the final report card, every department works from the same system.'),
             'modules_cta_label' => __('See every feature'),
-            'benefits_title' => __('Why schools choose KairoCORE'),
-            'benefits_subtitle' => __('A single, dependable system that grows with your school.'),
+            'home_why_badge' => __('Why Kairo CORE'),
+            'benefits_title' => __('A smarter way to manage your school'),
+            'benefits_subtitle' => __('A trusted, reliable and innovative school operating system for primary, secondary and tertiary institutions.'),
             'steps_title' => __('Up and running in days, not months'),
             'steps_subtitle' => __('Getting your school onto KairoCORE is straightforward.'),
+            'home_training_badge' => __('Optional'),
+            'home_faq_badge' => __('FAQ'),
+            'home_faq_title' => __('Questions school leaders ask us'),
+            'home_faq_subtitle' => __('Can’t find your answer? Message us on WhatsApp.'),
+            'home_training_title' => __('Special training can be arranged'),
+            'home_training_desc' => __('Your team is trained — hands-on sessions, video tutorials and a help centre on call.'),
             'cta_title' => __('Ready to see KairoCORE in action?'),
             'cta_subtitle' => __('Book a personal demo tailored to your school, no obligation.'),
             'cta_primary_label' => __('Book a personal demo'),
@@ -524,6 +534,27 @@ if (! function_exists('marketing_list_defaults')) {
                 ['title' => __('Register your school'), 'desc' => __('Create your school account in minutes and get your own secure workspace.')],
                 ['title' => __('Set up your school'), 'desc' => __('Add classes, staff, fee structures and branding, with our team on hand to help.')],
                 ['title' => __('Go live'), 'desc' => __('Start managing admissions, academics, fees and communication from day one.')],
+            ],
+            'home_audiences' => [
+                ['label' => __('Primary schools')],
+                ['label' => __('Secondary schools')],
+                ['label' => __('Colleges')],
+                ['label' => __('Boarding schools')],
+                ['label' => __('Trust & group schools')],
+                ['label' => __('Tertiary institutions')],
+                ['label' => __('Private academies')],
+            ],
+            'home_faq' => [
+                ['question' => __('Is Kairo CORE built for my type of school?'), 'answer' => __('Yes. It is designed for primary, secondary and tertiary institutions, including boarding schools.')],
+                ['question' => __('What does it cover?'), 'answer' => __('Admissions, academics and report cards, fees and multi-currency billing, communication, events, clinic, inventory, library, HR and real-time reports.')],
+                ['question' => __('Is our data safe?'), 'answer' => __('Data is stored in the cloud with advanced security and backups, so records stay protected and available.')],
+                ['question' => __('Will my team be trained?'), 'answer' => __('Yes. We set up your school, train your staff, and provide video tutorials, a help centre and dedicated support.')],
+                ['question' => __('Can we access it from any device?'), 'answer' => __('Yes. Kairo CORE is cloud-based, so you can use it from any device, anywhere.')],
+            ],
+            'contact_steps' => [
+                ['title' => __('Tell us about your school'), 'desc' => __('Share your school’s size and what you want to fix, whether that is fees, reports, your website or something else.')],
+                ['title' => __('We reply within 24 hours'), 'desc' => __('A school specialist answers your questions and suggests the modules that fit.')],
+                ['title' => __('See Kairo CORE in action'), 'desc' => __('Book a personal demo and we will walk you through the system, module by module.')],
             ],
             'features_list' => [
                 ['key' => 'admissions', 'cat' => 'admin', 'name' => __('Admissions'), 'desc' => __('Manage student enrolment, applications and admission workflow.'), 'detail' => __('Run your whole admissions season from one place. Families apply online, your team reviews applications, places learners and issues offer letters, while every document, sibling link and placement stays attached to a single student record that follows the child through every grade.'), 'sub1' => __('Online applications'), 'sub2' => __('Student registration'), 'sub3' => __('Admission approval'), 'image' => $px(35305047)],
@@ -648,14 +679,6 @@ if (! function_exists('marketing_content')) {
         }
         if ($shipped !== null && $shipped !== '') {
             return (string) $shipped;
-        }
-
-        if (! $isDefaultLocale
-            && ! $shared
-            && ! in_array($key, ['meta_title', 'meta_description'], true)
-            && $baseValue !== null
-            && $baseValue !== '') {
-            return (string) $baseValue;
         }
 
         return '';
@@ -1584,6 +1607,51 @@ if (! function_exists('id_card_file_data_uri')) {
         $raw = @file_get_contents($url);
 
         return $raw ? 'data:image/png;base64,'.base64_encode($raw) : $url;
+    }
+}
+
+if (! function_exists('id_card_barcode_data_uri')) {
+    /**
+     * Render the barcode chosen on the card template.
+     *
+     * EAN-13 only accepts numeric data, so if a card's ID cannot be encoded
+     * with the chosen standard we fall back to Code 128 rather than leaving an
+     * empty strip on the printed card.
+     */
+    function id_card_barcode_data_uri(string $data, ?string $format = 'Code128', int $height = 30, int $widthFactor = 2): ?string
+    {
+        $normalised = strtolower(preg_replace('/[^a-z0-9]/i', '', (string) $format) ?? '');
+        $type = match ($normalised) {
+            'code39', 'c39' => \Picqer\Barcode\BarcodeGenerator::TYPE_CODE_39,
+            'ean13', 'ean' => \Picqer\Barcode\BarcodeGenerator::TYPE_EAN_13,
+            default => \Picqer\Barcode\BarcodeGenerator::TYPE_CODE_128,
+        };
+
+        $height = max(10, $height);
+        $widthFactor = max(1, $widthFactor);
+
+        try {
+            $png = (new \Picqer\Barcode\BarcodeGeneratorPNG())->getBarcode($data, $type, $widthFactor, $height);
+
+            return 'data:image/png;base64,'.base64_encode($png);
+        } catch (\Throwable $e) {
+            if ($type === \Picqer\Barcode\BarcodeGenerator::TYPE_CODE_128) {
+                return null;
+            }
+
+            try {
+                $png = (new \Picqer\Barcode\BarcodeGeneratorPNG())->getBarcode(
+                    $data,
+                    \Picqer\Barcode\BarcodeGenerator::TYPE_CODE_128,
+                    $widthFactor,
+                    $height,
+                );
+
+                return 'data:image/png;base64,'.base64_encode($png);
+            } catch (\Throwable $e) {
+                return null;
+            }
+        }
     }
 }
 

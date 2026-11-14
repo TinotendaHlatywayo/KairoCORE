@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Academics · Tinway Academy</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script>
+tailwind.config={theme:{extend:{fontFamily:{sans:['Plus Jakarta Sans','system-ui','sans-serif']},colors:{bg:'var(--bg)',surf:'var(--surf)',surf2:'var(--surf2)',line:'var(--line)',tx:'var(--tx)',mu:'var(--mu)',pri:'var(--p600)',pri50:'var(--p50)',ok:'var(--ok)',okbg:'var(--okbg)',warn:'var(--warn)',warnbg:'var(--warnbg)',bad:'var(--bad)'}}}}
+</script>
+<style>
+/* Filament-style tokens: map --p50/--p600 to Filament's --primary-50/--primary-600 on integration */
+:root{--p50:#eef0ff;--p600:#4f46e5;--p700:#4338ca;--bg:#f6f7fb;--surf:#fff;--surf2:#f1f3f9;--line:#e5e8f1;--tx:#141a30;--mu:#68718f;--ok:#0f9d68;--okbg:#e0f5ec;--warn:#b86200;--warnbg:#fff0d9;--bad:#d92d3f;--sh:0 1px 2px rgba(20,26,60,.05),0 10px 30px -10px rgba(20,26,60,.12);color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--p50:#242b5c;--p600:#818cf8;--p700:#a5b4fc;--bg:#0c0f1d;--surf:#151929;--surf2:#1d2238;--line:#283050;--tx:#e9ecf9;--mu:#8e98bc;--ok:#34d399;--okbg:#0f3629;--warn:#fbbf24;--warnbg:#3a2b0b;--bad:#f87171;--sh:0 1px 2px rgba(0,0,0,.4);color-scheme:dark}}
+:root[data-theme="dark"]{--p50:#242b5c;--p600:#818cf8;--p700:#a5b4fc;--bg:#0c0f1d;--surf:#151929;--surf2:#1d2238;--line:#283050;--tx:#e9ecf9;--mu:#8e98bc;--ok:#34d399;--okbg:#0f3629;--warn:#fbbf24;--warnbg:#3a2b0b;--bad:#f87171;--sh:0 1px 2px rgba(0,0,0,.4);color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{background:var(--bg);color:var(--tx);font-size:14px}
+[x-cloak]{display:none!important}
+svg.i{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+:focus-visible{outline:2px solid var(--p600);outline-offset:2px}
+.card{background:var(--surf);border:1px solid var(--line);border-radius:16px;box-shadow:var(--sh)}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:10px;font-weight:600;border:1px solid var(--line);background:var(--surf);transition:.15s}
+.btn:hover{border-color:var(--p600);color:var(--p600)}
+.btn.p{background:var(--p600);border-color:var(--p600);color:#fff}.btn.p:hover{filter:brightness(1.1)}
+.btn.g{border-color:transparent;background:transparent}.btn.g:hover{background:var(--surf2)}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:600;background:var(--surf2);color:var(--mu)}
+.pill.ok{background:var(--okbg);color:var(--ok)}.pill.warn{background:var(--warnbg);color:var(--warn)}.pill.pri{background:var(--p50);color:var(--p600)}
+.fld{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg)}
+.fld:focus{border-color:var(--p600);outline:0;box-shadow:0 0 0 3px var(--p50)}
+.sel{padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surf);font-weight:500;max-width:170px}
+.sel.w{border-style:dashed;border-color:var(--warn);color:var(--warn)}
+th{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--mu);text-align:left;padding:14px 16px;background:var(--surf2);white-space:nowrap;transition:color .15s}
+td{padding:14px 16px;border-top:1px solid color-mix(in srgb,var(--line) 70%,transparent);vertical-align:middle}
+tbody tr{transition:background .12s;cursor:pointer}tbody tr:hover{background:var(--surf2)}
+tbody tr.on{background:var(--p50)}
+tbody tr:hover td:first-child,tbody tr.on td:first-child{box-shadow:inset 3px 0 0 var(--p600)}
+.acts{opacity:0;transform:translateX(6px);transition:.15s}tbody tr:hover .acts,tbody tr:focus-within .acts{opacity:1;transform:none}@media(hover:none){.acts{opacity:1;transform:none}}
+input[type=checkbox]{appearance:none;width:18px;height:18px;border:1.5px solid var(--line);border-radius:6px;background:var(--surf);display:grid;place-content:center;cursor:pointer;transition:.15s}
+input[type=checkbox]:hover{border-color:var(--p600)}input[type=checkbox]:checked{background:var(--p600);border-color:var(--p600)}
+input[type=checkbox]:checked::after{content:"";width:9px;height:5px;border:2px solid #fff;border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px)}
+.pill .dot{width:6px;height:6px;border-radius:99px;background:currentColor}
+.sel{transition:.15s}.sel:hover{border-color:var(--p600)}
+.meter{width:56px;height:5px;border-radius:9px;background:var(--surf2);overflow:hidden}.meter i{display:block;height:100%;background:var(--p600);border-radius:9px;transition:width .6s}
+.stat{position:relative;overflow:hidden;padding:18px;border-radius:18px;background:var(--surf);border:1px solid var(--line);box-shadow:var(--sh);transition:transform .2s,box-shadow .2s,border-color .2s}
+.stat::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:var(--h)}
+.stat::after{content:"";position:absolute;right:-30px;bottom:-30px;width:110px;height:110px;border-radius:50%;background:var(--h);opacity:.08;transition:transform .4s}
+.stat:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--h) 50%,var(--line));box-shadow:0 14px 30px -12px color-mix(in srgb,var(--h) 45%,transparent)}
+.stat:hover::after{transform:scale(1.7)}
+.stat .chip{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:color-mix(in srgb,var(--h) 14%,transparent);color:var(--h)}
+.stat .go{opacity:0;transform:translateX(-6px);transition:.2s;color:var(--h)}.stat:hover .go{opacity:1;transform:none}
+.stat.feat{background:linear-gradient(135deg,#4f46e5,#7c3aed);border-color:transparent;color:#fff}
+.stat.feat .chip{background:rgba(255,255,255,.2);color:#fff}.stat.feat .go{color:#fff}.stat.feat::before{display:none}.stat.feat::after{background:#fff;opacity:.12}
+.stat.feat .lbl,.stat.feat small{color:rgba(255,255,255,.82)}
+.tog{width:36px;height:20px;border-radius:99px;background:var(--line);position:relative;transition:.2s;display:block}
+.tog::after{content:"";position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:99px;background:#fff;transition:.2s}
+.tog.on{background:var(--ok)}.tog.on::after{left:19px}
+.sk{background:linear-gradient(90deg,var(--surf2),var(--line),var(--surf2));background-size:200% 100%;animation:sh 1.2s infinite;border-radius:8px;height:36px}
+@keyframes sh{to{background-position:-200% 0}}
+.nav{display:flex;gap:10px;align-items:center;width:100%;padding:9px 10px;border-radius:10px;color:var(--mu);font-weight:500;text-align:left}
+.nav:hover{background:var(--surf2);color:var(--tx)}.nav.on{background:var(--p50);color:var(--p600);font-weight:700}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--bg) 85%,transparent);backdrop-filter:blur(12px)}
+.rise{animation:rise .55s cubic-bezier(.2,.8,.2,1) backwards}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}}
+.pop{animation:pop .35s cubic-bezier(.2,1.3,.4,1)}
+@keyframes pop{from{opacity:0;transform:translateY(16px) scale(.9)}}
+.shake{animation:shake .35s}
+@keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+tbody tr.rm{opacity:0;transform:translateX(24px);transition:.22s}
+.btn:active{transform:scale(.96)}.tog:active::after{width:18px}
+.nav{transition:.15s}.nav:hover{transform:translateX(3px)}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body class="font-sans antialiased" x-data="app()" x-init="init()" @keydown.window="key($event)" @hashchange.window="hash()">
+
+<!-- Sidebar: Filament panel navigation (NavigationGroup/NavigationItem) -->
+<aside class="fixed inset-y-0 left-0 z-40 w-64 bg-surf border-r border-line p-3 overflow-y-auto transition-transform lg:translate-x-0" :class="side?'translate-x-0':'-translate-x-full'">
+  <div class="flex items-center gap-3 px-2 pb-4"><div class="w-9 h-9 rounded-xl bg-pri text-white grid place-items-center font-extrabold">K</div><div><b class="block leading-tight">Tinway Academy</b><small class="text-mu">TINWAY-PRI</small></div></div>
+  <button class="nav" x-html="ic('home')+'<span>Dashboard</span>'"></button>
+  <template x-for="g in nav"><div><div class="px-2.5 pt-4 pb-1.5 text-xs font-bold text-mu" x-text="g[0]"></div>
+    <template x-for="n in g[1]"><button class="nav" :class="n[0]=='Setup &amp; Structure'&&'on'" x-html="ic(n[1])+'<span>'+n[0]+'</span>'"></button></template></div></template>
+</aside>
+<div x-show="side" x-cloak class="fixed inset-0 z-30 bg-black/40 lg:hidden" @click="side=false"></div>
+
+<main class="lg:pl-64 min-h-screen">
+  <header class="top border-b border-line">
+    <div class="flex items-center gap-2 px-4 lg:px-8 py-3">
+      <button class="btn g lg:hidden !p-2" @click="side=true" aria-label="Menu" x-html="ic('menu')"></button>
+      <nav class="hidden sm:flex items-center gap-2 text-mu text-sm"><span>Academics</span><span>/</span><b class="text-tx" x-text="tab=='overview'?'Operations center':'Setup &amp; structure'"></b></nav>
+      <div class="flex-1"></div>
+      <!-- Year switcher: Filament Select action / global scope -->
+      <div class="relative" @click.outside="ym=false">
+        <button class="btn" @click="ym=!ym"><span class="w-2 h-2 rounded-full bg-ok"></span><span x-text="'Year '+cur.name"></span><span x-html="ic('chev')"></span></button>
+        <div x-show="ym" x-cloak x-transition class="card absolute right-0 mt-2 w-56 p-1.5 max-h-72 overflow-auto">
+          <template x-for="y in data.years.rows.slice(0,6)"><button class="nav" @click="setYear(y);ym=false"><span x-text="y.name"></span><span class="ml-auto pill ok" x-show="y.active">Current</span></button></template>
+        </div>
+      </div>
+      <button class="btn hidden sm:inline-flex" @click="cmd=true;$nextTick(()=>$refs.cq.focus())"><span x-html="ic('search')"></span><span class="text-mu">Search</span><kbd class="pill">Ctrl K</kbd></button>
+      <button class="btn g !p-2" @click="toggleTheme()" aria-label="Theme" x-html="ic('moon')"></button>
+      <div class="w-9 h-9 rounded-full bg-pri text-white grid place-items-center font-bold text-xs">PH</div>
+    </div>
+  </header>
+
+  <div class="px-4 lg:px-8 py-6 max-w-[1240px] mx-auto">
+    <div class="flex flex-wrap items-end gap-4 mb-5">
+      <div class="flex-1 min-w-[240px]"><h1 class="text-3xl font-extrabold tracking-tight">Academics</h1><p class="text-mu mt-1">Set up levels, subjects and classrooms. Everything here feeds your timetable.</p></div>
+      <button class="btn p" x-show="tab!='overview'" @click="openNew()" x-html="ic('plus')+'New '+cfg.noun"></button>
+    </div>
+
+    <!-- Tabs: Filament Page with getSubNavigation() or Livewire tab component -->
+    <div class="flex gap-1 border-b border-line mb-6 overflow-x-auto">
+      <template x-for="t in tabs"><button class="px-4 py-2.5 -mb-px border-b-2 font-semibold whitespace-nowrap transition" :class="tab==t[0]?'border-pri text-pri':'border-transparent text-mu hover:text-tx'" @click="go(t[0])"><span x-text="t[1]"></span><span x-show="t[2]!=null" class="pill ml-2" x-text="t[2]"></span></button></template>
+    </div>
+
+    <!-- OVERVIEW: Filament Widgets (StatsOverview, custom Livewire widget) -->
+    <section x-show="tab=='overview'" x-cloak class="space-y-5">
+      <div class="card p-6 flex flex-wrap items-center gap-8">
+        <div class="relative w-32 h-32 shrink-0">
+          <svg viewBox="0 0 130 130" class="w-32 h-32 -rotate-90"><circle cx="65" cy="65" r="56" fill="none" stroke="var(--surf2)" stroke-width="10"/><circle cx="65" cy="65" r="56" fill="none" stroke="var(--ok)" stroke-width="10" stroke-linecap="round" stroke-dasharray="351.9" :stroke-dashoffset="351.9*(1-rv/100)" style="transition:stroke-dashoffset .9s"/></svg>
+          <div class="absolute inset-0 grid place-content-center text-center"><b class="text-3xl"><span x-count="rv"></span>%</b><small class="text-mu text-xs">ready</small></div>
+        </div>
+        <div class="flex-1 min-w-[260px]">
+          <h2 class="text-xl font-bold" x-text="todo.length?'One thing left before you\u2019re fully set up':'Your academic setup is complete'"></h2>
+          <p class="text-mu mt-1" x-text="todo.length?todo.length+' levels have no teacher assigned, so their timetables can\u2019t be built.':'Every level has a teacher and every check has passed.'"></p>
+          <div class="flex flex-wrap gap-3 mt-4">
+            <button class="btn p" x-show="todo.length" @click="openAssign()" x-html="ic('user')+'Assign teachers'"></button>
+            <button class="btn" @click="go('levels');filter=1" x-show="todo.length">Review levels</button>
+            <span class="pill" :class="todo.length?'warn':'ok'" x-text="(todo.length?8:9)+' of 9 checks passed'"></span><span class="pill ok">0 blocked steps</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <template x-for="(s,i) in stats" :key="s[0]+ov"><button class="rise stat text-left" :class="i==0&&'feat col-span-2'" :style="'animation-delay:'+i*70+'ms;--h:'+s[4]" @click="s[2]&&go(s[2])"><div class="flex items-start justify-between"><span class="chip" x-html="ic(s[3])"></span><span class="go" x-html="ic('arrow')"></span></div><b class="block text-3xl font-extrabold mt-4 tracking-tight" x-count="s[1]"></b><span class="lbl block text-sm font-semibold mt-0.5" x-text="s[0]"></span><small class="block text-mu text-xs mt-0.5" x-text="s[5]"></small></button></template>
+      </div>
+
+      <div class="grid lg:grid-cols-3 gap-5">
+        <div class="lg:col-span-2 card p-5">
+          <div class="flex items-center justify-between mb-4"><h3 class="font-bold text-base">Setup journey</h3><span class="text-mu text-sm" x-text="done+' of 15 steps done'"></span></div>
+          <div class="h-2 rounded-full bg-surf2 overflow-hidden mb-5"><i class="block h-full rounded-full transition-all duration-700" style="background:linear-gradient(90deg,var(--p600),var(--ok))" :style="'width:'+done/15*100+'%'"></i></div>
+          <div class="grid sm:grid-cols-2 gap-3">
+            <template x-for="(p,pi) in phases"><div class="border border-line rounded-xl overflow-hidden">
+              <button class="w-full flex items-center gap-3 p-3.5 text-left hover:bg-surf2" @click="open=open==pi?-1:pi">
+                <span class="w-8 h-8 rounded-lg grid place-items-center" :class="pdone(p)==p[1].length?'bg-okbg text-ok':'bg-warnbg text-warn'" x-html="pdone(p)==p[1].length?ic('check'):ic('alert')"></span>
+                <span class="flex-1"><b class="block" x-text="p[0]"></b><small class="text-mu" x-text="pdone(p)+' of '+p[1].length+' complete'"></small><i class="block h-1 mt-1.5 rounded bg-ok transition-all duration-700" :style="'width:'+(rv?pdone(p)/p[1].length*100:0)+'%'"></i></span><span x-html="ic('chev')" :class="open==pi&&'rotate-180'" class="transition text-mu"></span></button>
+              <div x-show="open==pi" x-collapse x-cloak class="border-t border-line">
+                <template x-for="s in p[1]"><div class="flex gap-3 px-4 py-2.5 items-start"><span class="mt-0.5" :class="ok(s)?'text-ok':'text-warn'" x-html="ok(s)?ic('check'):ic('alert')"></span><div><b class="block text-[13px]" x-text="s[0]"></b><small class="text-mu" x-text="s[1]"></small></div></div></template>
+              </div></div></template>
+          </div>
+        </div>
+        <div class="space-y-5">
+          <div class="card p-5"><h3 class="font-bold text-base mb-1">Academic year 2026</h3><p class="text-mu text-sm mb-4">Jan 5 – Dec 11 · 3 terms</p>
+            <div class="relative h-2.5 rounded-full bg-surf2 mt-6 cursor-crosshair" @mousemove="hv=Math.max(0,Math.min(1,($event.clientX-$el.getBoundingClientRect().left)/$el.offsetWidth))" @mouseleave="hv=null"><i class="absolute inset-y-0 left-0 rounded-full bg-pri transition-all duration-1000" :style="'width:'+(rv?yp:0)+'%'"></i><span x-show="hv!==null" x-cloak class="absolute top-5 z-10 text-xs font-semibold px-2 py-1 rounded-md bg-tx text-bg whitespace-nowrap -translate-x-1/2 pointer-events-none" :style="'left:'+hv*100+'%'" x-text="hdate()"></span><span class="absolute -top-6 text-xs font-bold text-pri -translate-x-1/2" :style="'left:'+yp+'%'">Today</span><span class="absolute top-1/2 w-1 h-4 -translate-y-1/2 bg-warn rounded" :style="'left:'+tp+'%'"></span></div>
+            <div class="flex items-center justify-between mt-5"><div><b class="block">Term 3 ends</b><small class="text-mu">Dec 3, 2026</small></div><span class="pill warn" x-text="left+' days left'"></span></div></div>
+          <div class="card p-5"><h3 class="font-bold text-base mb-3">Quick actions</h3><div class="grid gap-1.5">
+            <button class="btn g justify-start" @click="go('levels');openNew()" x-html="ic('plus')+'Add a level'"></button>
+            <button class="btn g justify-start" @click="go('subjects');openNew()" x-html="ic('plus')+'Add a subject'"></button>
+            <button class="btn g justify-start" @click="go('classrooms');openNew()" x-html="ic('plus')+'Add a classroom'"></button></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TABLES: Filament Table::make() with columns, filters, bulk actions, slide-over actions -->
+    <section x-show="tab!='overview'" x-cloak class="card overflow-hidden">
+      <div class="flex flex-wrap items-center gap-3 p-4 border-b border-line">
+        <label class="flex items-center gap-2 px-3 h-10 rounded-xl border border-line bg-bg min-w-[240px] flex-1 max-w-sm text-mu focus-within:border-pri"><span x-html="ic('search')"></span><input x-ref="q" x-model.debounce.150ms="q" @input="pg=1" placeholder="Search…  (press /)" class="bg-transparent outline-none flex-1 text-tx"></label>
+        <div class="flex gap-1.5"><template x-for="(f,fi) in cfg.filters"><button class="pill !px-3 !py-1.5 cursor-pointer" :class="filter==fi&&'!bg-pri !text-white'" @click="filter=fi;pg=1" x-text="f[0]"></button></template></div>
+        <div class="flex-1"></div>
+        <button class="btn" @click="exportCsv()" x-html="ic('dl')+'Export'"></button>
+        <button class="btn" @click="toast('Choose an Excel or CSV file to import')" x-html="ic('up')+'Import'"></button>
+      </div>
+      <div class="overflow-x-auto"><table class="w-full min-w-[720px]">
+        <thead><tr><th class="w-10"><input type="checkbox" class="accent-[var(--p600)]" :checked="slice.length&&slice.every(r=>sel.includes(r.id))" @change="selAll($event.target.checked)" aria-label="Select all"></th>
+          <template x-for="c in cfg.cols"><th :class="[c[2]&&'cursor-pointer select-none hover:text-tx',sk==c[0]&&'!text-pri']" @click="c[2]&&sort(c[0])"><span x-text="c[1]"></span><span x-show="sk==c[0]" x-text="sd>0?' ↑':' ↓'"></span></th></template><th></th></tr></thead>
+        <tbody x-show="loading"><template x-for="n in 5"><tr><td colspan="9"><div class="sk"></div></td></tr></template></tbody>
+        <tbody x-show="!loading"><template x-for="(r,i) in slice" :key="r.id+'_'+ver"><tr class="rise" :style="'animation-delay:'+i*30+'ms'" :class="[sel.includes(r.id)&&'on',r._rm&&'rm']" @click="rowClick($event,r)" @change="rowClick($event,r)">
+          <td><input type="checkbox" class="accent-[var(--p600)]" :value="r.id" x-model="sel" @click.stop></td>
+          <template x-for="c in cfg.cols"><td x-html="cell(c,r)"></td></template>
+          <td><div class="acts flex justify-end gap-1"><button data-a="edit" class="btn g !p-2" title="Edit" x-html="ic('edit')"></button><button data-a="del" class="btn g !p-2 hover:!text-bad" title="Delete" x-html="ic('trash')"></button></div></td></tr></template></tbody>
+      </table>
+      <div x-show="!loading&&!slice.length" class="text-center py-14 text-mu"><div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-pri50 text-pri grid place-items-center" x-html="ic('search')"></div><b class="block text-tx text-base mb-1" x-text="'No '+cfg.label.toLowerCase()+' match'"></b>Clear the search or add a new <span x-text="cfg.noun"></span>.<div class="mt-4"><button class="btn p" @click="openNew()">Add <span x-text="cfg.noun"></span></button></div></div></div>
+      <div class="flex flex-wrap items-center justify-between gap-3 p-4 border-t border-line text-sm text-mu">
+        <span x-text="'Showing '+(rows.length?(pg-1)*per+1:0)+'–'+Math.min(pg*per,rows.length)+' of '+rows.length"></span>
+        <label class="flex items-center gap-2">Per page <select class="sel" x-model.number="per" @change="pg=1"><option>5</option><option>10</option><option>25</option></select></label>
+        <div class="flex gap-1"><button class="btn !px-3 !py-1.5" :disabled="pg<2" :class="pg<2&&'opacity-40'" @click="pg--">‹</button><template x-for="n in pages"><button class="btn !px-3 !py-1.5" :class="n==pg&&'p'" @click="pg=n" x-text="n"></button></template><button class="btn !px-3 !py-1.5" :disabled="pg>=pages" :class="pg>=pages&&'opacity-40'" @click="pg++">›</button></div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<!-- Floating bulk bar: Filament BulkAction -->
+<div x-show="sel.length&&tab!='overview'" x-cloak x-transition class="fixed bottom-6 left-1/2 -translate-x-1/2 z-30 card flex items-center gap-4 pl-5 pr-3 py-2.5">
+  <b x-text="sel.length+' selected'"></b><button class="btn g" @click="sel=[]">Clear</button><button class="btn p !bg-bad !border-bad" @click="del(sel)" x-html="ic('trash')+'Delete selected'"></button></div>
+
+<!-- Slide-over: Filament Action::make()->slideOver() -->
+<div x-show="drawer" x-cloak class="fixed inset-0 z-50" @keydown.escape.window="drawer=null">
+  <div class="absolute inset-0 bg-black/40" x-transition.opacity @click="drawer=null"></div>
+  <div class="absolute inset-y-0 right-0 w-full max-w-md bg-surf shadow-2xl flex flex-col" x-show="drawer" x-transition:enter="transition duration-200" x-transition:enter-start="translate-x-full" x-transition:leave="transition duration-150" x-transition:leave-end="translate-x-full">
+    <div class="flex items-center justify-between p-5 border-b border-line"><h3 class="text-lg font-bold" x-text="drawer=='assign'?'Assign teachers':(editing?'Edit ':'New ')+cfg.noun"></h3><button class="btn g !p-2" @click="drawer=null" x-html="ic('x')"></button></div>
+    <div class="flex-1 overflow-y-auto p-5 space-y-4">
+      <template x-if="drawer=='form'"><div class="space-y-4"><template x-for="f in cfg.fields"><label class="block"><span class="text-xs font-bold text-mu block mb-1.5" x-text="f[1]"></span>
+        <template x-if="f[2]=='select'"><select class="fld" x-model="form[f[0]]"><template x-for="o in f[3]"><option x-text="o"></option></template></select></template>
+        <template x-if="f[2]!='select'"><input class="fld" :type="f[2]||'text'" x-model="form[f[0]]" :class="err&&f[0]=='name'&&!form.name&&'!border-bad shake'"></template></label></template>
+        <p x-show="err" class="text-bad text-sm">Name is required.</p></div></template>
+      <template x-if="drawer=='assign'"><div class="space-y-3"><p class="text-mu">Pick a teacher for each level. Changes save as you go.</p><template x-for="r in data.levels.rows.filter(r=>!r.teacher||r._a)"><div class="flex items-center gap-3 p-3 rounded-xl border border-line"><b class="flex-1" x-text="r.name"></b><select class="sel" x-model="r.teacher" @change="r._a=true"><option value="">Choose…</option><template x-for="t in T"><option x-text="t"></option></template></select></div></template></div></template>
+    </div>
+    <div class="p-5 border-t border-line flex justify-end gap-2"><button class="btn" @click="drawer=null">Cancel</button><button class="btn p" @click="save()" x-text="drawer=='assign'?'Done':'Save changes'"></button></div>
+  </div>
+</div>
+
+<!-- Command palette -->
+<div x-show="cmd" x-cloak class="fixed inset-0 z-50 grid place-items-start justify-center pt-[15vh] px-4" @keydown.escape.window="cmd=false">
+  <div class="absolute inset-0 bg-black/40" @click="cmd=false"></div>
+  <div class="card relative w-full max-w-lg overflow-hidden"><input x-ref="cq" x-model="cq" @keydown.enter="cmds[0]&&run(cmds[0])" placeholder="Type a command or jump to a page…" class="w-full px-5 py-4 bg-transparent outline-none border-b border-line text-base">
+    <div class="p-2 max-h-80 overflow-auto"><template x-for="c in cmds"><button class="nav" @click="run(c)" x-text="c[0]"></button></template><p x-show="!cmds.length" class="p-4 text-mu">Nothing matches.</p></div></div>
+</div>
+
+<div class="fixed bottom-6 right-6 z-[60] flex flex-col gap-2 items-end">
+  <template x-for="t in toasts" :key="t.id"><div class="pop flex items-center gap-4 px-4 py-3 rounded-xl bg-tx text-bg font-semibold shadow-xl"><span x-text="t.m"></span><button x-show="t.u" class="underline" @click="t.u();toasts=toasts.filter(x=>x!=t)">Undo</button></div></template>
+</div>
+
+<script>
+const P={arrow:'M5 12h14m-6-6l6 6-6 6',home:'M3 11l9-8 9 8v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z',menu:'M4 6h16M4 12h16M4 18h16',search:'M11 4a7 7 0 100 14 7 7 0 000-14zM21 21l-4-4',plus:'M12 5v14M5 12h14',dl:'M12 3v12m-5-5l5 5 5-5M4 21h16',up:'M12 15V3m-5 5l5-5 5 5M4 21h16',edit:'M12 20h9M16.500 3.500a2.100 2.100 0 013 3L7 19l-4 1 1-4z',trash:'M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14',check:'M5 12l5 5 9-10',alert:'M12 9v4m0 4h.01M10.300 3.900L1.800 18a2 2 0 001.700 3h17a2 2 0 001.700-3L13.700 3.900a2 2 0 00-3.400 0z',chev:'M6 9l6 6 6-6',x:'M6 6l12 12M18 6L6 18',moon:'M21 12.800A9 9 0 1111.200 3a7 7 0 009.800 9.800z',user:'M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 3a4 4 0 100 8 4 4 0 000-8z',grid:'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z',cal:'M3 5h18v16H3zM3 10h18M8 3v4M16 3v4',chart:'M3 17l6-6 4 4 8-8',doc:'M6 2h9l5 5v15H6zM14 2v6h6',cap:'M22 10L12 5 2 10l10 5 10-5zM6 12v5c3 2.500 9 2.500 12 0v-5',wallet:'M3 7h18v13H3zM3 7l3-4h12l3 4M16 14h2'};
+const ic=n=>'<svg class="i" viewBox="0 0 24 24"><path d="'+P[n]+'"/></svg>';
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const T=['Mrs Moyo','Mr Chikwanha','Ms Ndlovu','Mr Sibanda','Mrs Dube'];
+document.addEventListener('alpine:init',()=>Alpine.directive('count',(el,{expression},{evaluateLater,effect})=>{const g=evaluateLater(expression);effect(()=>g(v=>{const t=Number(v);if(v===''||isNaN(t)){el.textContent=v;return}const f=Number(el.dataset.v||0);el.dataset.v=t;const s=performance.now(),step=n=>{const p=Math.max(0,Math.min(1,(n-s)/800)),e=1-Math.pow(1-p,3);el.textContent=Math.round(f+(t-f)*e);if(p<1)requestAnimationFrame(step)};requestAnimationFrame(step)}))}));
+let uid=1;const mk=a=>a.map(r=>({id:uid++,...r}));
+function app(){return{
+tab:'overview',ov:0,rv:0,ver:0,hv:null,loading:false,side:false,ym:false,cmd:false,cq:'',drawer:null,editing:null,form:{},err:false,open:-1,
+q:'',filter:0,sk:null,sd:1,pg:1,per:10,sel:[],toasts:[],
+nav:[['Admissions',[['Online Admissions','doc']]],['Students',[['ID Card Designer','edit'],['Student Directory','user']]],['Academics',[['Operations Center','grid'],['Setup & Structure','cap'],['Timetables & Teaching','cal'],['Progression','chart']]],['Exams & grading',[['Assessment Center','doc'],['Grading & Marks','edit'],['Reports & Publishing','doc']]],['Finance',[['Dashboard & Analytics','chart'],['Student Billing','wallet'],['Expenses','wallet']]]],
+T,
+data:{
+ levels:{label:'Levels',noun:'level',cols:[['name','Level / form',1,'name'],['code','Code',1,'code'],['teacher','Teacher',1,'teacher'],['streams','Streams',1,'num'],['stage','Stage',0,'stage']],fields:[['name','Name'],['code','Code'],['teacher','Teacher','select',['',...T]],['streams','Class streams','number']],stages:['pending','active'],sub:r=>r.streams+(r.streams==1?' stream':' streams'),filters:[['All'],['Needs teacher',r=>!r.teacher]],
+  rows:mk([['ECD A','ECDA',3,'Mrs Moyo'],['ECD B','ECDB',3,'Mr Chikwanha'],['gGrade 5','GGRADES',1,''],['GRADE','GRADE',1,''],['Grade 1','G1',3,'Ms Ndlovu'],['Grade 2','G2',5,'Mr Sibanda'],['Grade 3','G3',5,'Mrs Dube'],['Grade 4','G4',5,'Mrs Moyo'],['Grade 5','G5',3,''],['Grade 6','G6',3,'']].map(a=>({name:a[0],code:a[1],streams:a[2],teacher:a[3],stage:'pending'})))},
+ subjects:{label:'Subjects',noun:'subject',cols:[['name','Subject',1,'name'],['code','Code',1,'code'],['type','Type',1,'badge'],['credits','Credits',1,'cr'],['elective','Elective',0,'toggle'],['stage','Stage',0,'stage']],fields:[['name','Name'],['code','Code'],['type','Type','select',['theory','practical']],['credits','Credits','number']],stages:['pending','active'],sub:r=>'',filters:[['All'],['Pending',r=>r.stage=='pending'],['Active',r=>r.stage=='active']],
+  rows:mk([['Agriculture, Science and Technology and ICT','PR-STI'],['English Language','PR-ENG'],['Mathematics','PR-MATH'],['Physical Education and Arts','PR-PEA'],['Shona Language','PR-SHO'],['Social Sciences','PR-SOC']].map(a=>({name:a[0],code:a[1],type:'theory',credits:1,elective:false,stage:'pending'})))},
+ classrooms:{label:'Classrooms',noun:'classroom',cols:[['name','Classroom',1,'name'],['building','Building',1,'text'],['capacity','Capacity',1,'cap'],['usage','In use',1,'use']],fields:[['name','Name'],['building','Building'],['capacity','Capacity','number']],sub:r=>r.building,filters:[['All'],['Unused',r=>!r.usage]],
+  rows:mk([...['ECD A','ECD B','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6'].flatMap(g=>['Blue','Red'].map(c=>g+' '+c)).map(n=>({name:n,building:'Main Block',capacity:40,usage:2})),{name:'Library hall',building:'Annex',capacity:60,usage:0},{name:'Science lab',building:'Annex',capacity:30,usage:1}])},
+ years:{label:'Academic years',noun:'academic year',cols:[['name','Year',1,'name'],['start','Starts',1,'date'],['end','Ends',1,'date'],['active','Current',0,'toggle'],['stage','Stage',0,'stage'],['terms','Terms',1,'num']],fields:[['name','Name'],['start','Start date','date'],['end','End date','date']],stages:['draft','published'],sub:r=>'3 terms',filters:[['All'],['Current',r=>r.active]],
+  rows:mk(Array.from({length:10},(_,i)=>2035-i).map(y=>({name:''+y,start:y+'-01-05',end:y+'-12-11',active:y==2026,stage:'draft',terms:3})))}},
+phases:[['Foundation',[['Academic year','Start and end dates'],['Terms','Terms for the year'],['Education levels','Primary, secondary, etc.']]],['Structure',[['Forms','Grades for enrolment'],['Streams','Groups within each form'],['Subjects','Offered across forms'],['Classrooms','Physical teaching spaces']]],['Teaching',[['Teachers','Assigned to forms and subjects'],['Time slots','For timetable scheduling'],['Timetable','The school timetable'],['Assessment setup','Assessment types and grading']]],['Go live',[['Admissions open','For the new year'],['Student enrolment','Into forms and streams'],['Attendance ready','Tracking configured'],['Report cards ready','Templates and generation']]]],
+init(){this.hash();this.$watch('ready',v=>this.rv=v);setTimeout(()=>this.rv=this.ready,250)},
+hue(s){return[...String(s)].reduce((a,c)=>a+c.charCodeAt(0),0)*37%360},
+hdate(){const a=new Date('2026-01-05'),b=new Date('2026-12-11');return new Date(+a+this.hv*(b-a)).toLocaleDateString('en',{month:'short',day:'numeric'})},
+confetti(){if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;const cols=['#4f46e5','#0f9d68','#f59e0b','#ef4444','#06b6d4'];for(let i=0;i<60;i++){const d=document.createElement('i'),a=Math.random()*Math.PI*2,v=150+Math.random()*260;d.style.cssText='position:fixed;left:50%;top:40%;width:8px;height:12px;z-index:90;pointer-events:none;border-radius:2px;background:'+cols[i%5];document.body.append(d);d.animate([{transform:'translate(0,0) rotate(0)',opacity:1},{transform:'translate('+Math.cos(a)*v+'px,'+(Math.sin(a)*v+320)+'px) rotate('+Math.random()*720+'deg)',opacity:0}],{duration:1400+Math.random()*600,easing:'cubic-bezier(.2,.7,.3,1)'}).onfinish=()=>d.remove()}},
+hash(){const h=(location.hash||'').slice(1);if(h&&(h=='overview'||this.data[h])&&h!=this.tab)this.go(h,1)},
+get tabs(){return[['overview','Overview'],...Object.keys(this.data).map(k=>[k,this.data[k].label,this.data[k].rows.length])]},
+get cfg(){return this.data[this.tab]||this.data.levels},
+get todo(){return this.data.levels.rows.filter(r=>!r.teacher)},
+get ready(){return this.todo.length?91:100},get done(){return this.todo.length?14:15},
+ok(s){return !(s[0]=='Teachers'&&this.todo.length)},pdone(p){return p[1].filter(s=>this.ok(s)).length},
+get cur(){return this.data.years.rows.find(y=>y.active)||this.data.years.rows[0]},
+get stats(){const d=this.data;return[['Active academic year',this.cur.name,'years','cal','#4f46e5','Jan 5 – Dec 11 · current'],['Terms',3,'years','chart','#8b5cf6','Configured this year'],['Forms',20,'levels','doc','#0ea5e9','Levels in use'],['Streams',37,'levels','grid','#14b8a6','Class groups'],['Subjects',d.subjects.rows.length,'subjects','cap','#f59e0b','Offered across forms'],['Classrooms',18,'classrooms','home','#f43f5e','Teaching spaces'],['Grading scales',1,null,'check','#10b981','In use']]},
+get yp(){const a=new Date('2026-01-05'),b=new Date('2026-12-11');return Math.max(0,Math.min(100,(new Date()-a)/(b-a)*100)).toFixed(1)},
+get tp(){return((new Date('2026-12-03')-new Date('2026-01-05'))/(new Date('2026-12-11')-new Date('2026-01-05'))*100).toFixed(1)},
+get left(){return Math.max(0,Math.ceil((new Date('2026-12-03')-new Date())/864e5))},
+get rows(){const c=this.cfg,f=c.filters[this.filter]||[],q=this.q.toLowerCase();let r=c.rows.filter(x=>(!f[1]||f[1](x))&&(!q||Object.values(x).join(' ').toLowerCase().includes(q)));if(this.sk)r=[...r].sort((a,b)=>(a[this.sk]>b[this.sk]?1:a[this.sk]<b[this.sk]?-1:0)*this.sd);return r},
+get pages(){return Math.max(1,Math.ceil(this.rows.length/this.per))},
+get slice(){return this.rows.slice((this.pg-1)*this.per,this.pg*this.per)},
+go(t,nohash){this.tab=t;this.q='';this.filter=this.filter&&t=='levels'&&nohash!==2?this.filter:0;this.sk=null;this.pg=1;this.sel=[];this.ver++;if(t=='overview'){this.ov++;this.rv=0;setTimeout(()=>this.rv=this.ready,150)}this.loading=t!='overview';setTimeout(()=>this.loading=false,380);if(!nohash)try{location.hash=t}catch(e){}},
+sort(k){this.sd=this.sk==k?-this.sd:1;this.sk=k;this.ver++},
+selAll(v){const ids=this.slice.map(r=>r.id);this.sel=v?[...new Set([...this.sel,...ids])]:this.sel.filter(i=>!ids.includes(i))},
+cell(c,r){const v=r[c[0]];switch(c[3]){
+ case'name':return'<div class="flex items-center gap-3"><span class="w-10 h-10 rounded-xl grid place-items-center font-bold text-xs" style="background:hsl('+this.hue(v)+' 80% 55%/.16);color:hsl('+this.hue(v)+' 70% 48%)">'+esc(String(v).slice(0,2).toUpperCase())+'</span><div><b class="block">'+esc(v)+'</b><small class="text-mu">'+esc(this.cfg.sub(r))+'</small></div></div>';
+ case'code':return'<span class="pill pri">'+esc(v)+'</span>';
+ case'badge':return'<span class="pill">'+esc(v)+'</span>';
+ case'cr':return Number(v).toFixed(2);
+ case'cap':return'<div class="flex items-center gap-3"><b class="w-7">'+v+'</b><span class="meter"><i style="width:'+Math.min(100,v/60*100)+'%"></i></span></div>';
+ case'num':return v;
+ case'use':return'<span class="pill '+(v?'ok':'')+'">'+v+' slot'+(v==1?'':'s')+'</span>';
+ case'date':return new Date(v+'T00:00').toLocaleDateString('en',{month:'short',day:'numeric',year:'numeric'});
+ case'stage':return'<button data-a="stage" class="pill '+(['active','published'].includes(v)?'ok':'warn')+'" style="text-transform:capitalize" title="Click to change"><i class="dot"></i>'+v+'</button>';
+ case'toggle':return'<button data-a="tog" data-f="'+c[0]+'" class="tog '+(v?'on':'')+'" aria-label="'+c[1]+'"></button>';
+ case'teacher':return'<select data-a="teacher" class="sel '+(v?'':'w')+'"><option value="">Unassigned</option>'+T.map(t=>'<option'+(t==v?' selected':'')+'>'+t+'</option>').join('')+'</select>';
+ default:return esc(v)}},
+rowClick(e,r){const a=e.target.closest('[data-a]');if(!a){if(e.type=='click'&&e.target.tagName!='INPUT')this.openEdit(r);return}
+ const k=a.dataset.a;if(k=='teacher'){if(e.type=='change'){r.teacher=a.value;this.toast(a.value?r.name+' → '+a.value:'Teacher removed')}return}
+ if(e.type!='click')return;
+ if(k=='edit')this.openEdit(r);else if(k=='del')this.del([r.id]);
+ else if(k=='stage'){const s=this.cfg.stages;r.stage=s[(s.indexOf(r.stage)+1)%s.length]}
+ else if(k=='tog'){const f=a.dataset.f;if(f=='active'){this.cfg.rows.forEach(x=>x.active=false);r.active=true;this.toast(r.name+' is now the current year')}else r[f]=!r[f]}},
+openNew(){this.editing=null;this.err=false;this.form=Object.fromEntries(this.cfg.fields.map(f=>[f[0],f[2]=='select'?f[3][0]:f[2]=='number'?1:'']));this.drawer='form'},
+openEdit(r){this.editing=r;this.err=false;this.form={...r};this.drawer='form'},
+openAssign(){this.drawer='assign'},
+save(){if(this.drawer=='assign'){this.drawer=null;this.toast('Teachers saved');if(!this.todo.length)setTimeout(()=>this.confetti(),300);return}
+ if(!String(this.form.name).trim()){this.err=false;this.$nextTick(()=>this.err=true);return}
+ if(this.editing)Object.assign(this.editing,this.form);else this.cfg.rows.unshift({id:uid++,stage:this.cfg.stages[0],teacher:'',streams:1,usage:0,terms:3,active:false,elective:false,type:'theory',credits:1,building:'Main Block',capacity:40,...this.form});
+ this.drawer=null;this.toast(this.editing?'Changes saved':'Created '+this.form.name)},
+del(ids){const c=this.cfg,old=[...c.rows];c.rows.forEach(r=>{if(ids.includes(r.id))r._rm=true});this.sel=[];setTimeout(()=>{c.rows=c.rows.filter(r=>!ids.includes(r.id));this.toast(ids.length+' deleted',()=>{old.forEach(r=>delete r._rm);c.rows=old})},230)},
+setYear(y){this.data.years.rows.forEach(x=>x.active=false);y.active=true;this.toast('Switched to '+y.name)},
+exportCsv(){const c=this.cfg,s=[c.cols.map(x=>x[1]).join(',')].concat(c.rows.map(r=>c.cols.map(x=>'"'+r[x[0]]+'"').join(','))).join('\n');(navigator.clipboard?navigator.clipboard.writeText(s).then(()=>this.toast('CSV copied to clipboard')):Promise.reject()).catch(()=>this.toast('Copy is blocked in this preview'))},
+toast(m,u){const t={id:Date.now()+Math.random(),m,u};this.toasts.push(t);setTimeout(()=>this.toasts=this.toasts.filter(x=>x!=t),5000)},
+toggleTheme(){const r=document.documentElement,d=r.dataset.theme?r.dataset.theme=='dark':matchMedia('(prefers-color-scheme:dark)').matches;r.dataset.theme=d?'light':'dark'},
+get cmds(){const q=this.cq.toLowerCase(),all=[['Go to Overview',()=>this.go('overview')],...Object.keys(this.data).map(k=>['Go to '+this.data[k].label,()=>this.go(k)]),['New level',()=>{this.go('levels');this.openNew()}],['New subject',()=>{this.go('subjects');this.openNew()}],['New classroom',()=>{this.go('classrooms');this.openNew()}],['Assign teachers',()=>this.openAssign()],['Toggle dark mode',()=>this.toggleTheme()]];return all.filter(c=>c[0].toLowerCase().includes(q))},
+run(c){this.cmd=false;this.cq='';c[1]()},
+key(e){const t=document.activeElement.tagName,typing=/INPUT|SELECT|TEXTAREA/.test(t);
+ if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()=='k'){e.preventDefault();this.cmd=true;this.$nextTick(()=>this.$refs.cq.focus())}
+ else if(e.key=='/'&&!typing&&this.tab!='overview'){e.preventDefault();this.$refs.q.focus()}}
+}}
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.14.1/dist/cdn.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+</body>
+</html>

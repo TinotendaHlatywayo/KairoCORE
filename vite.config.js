@@ -6,7 +6,21 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/css/app.css', 'resources/css/marketing.css', 'resources/css/filament-custom.css', 'resources/css/panel-tailwind.css', 'resources/js/app.js'],
+            input: [
+                'resources/css/app.css',
+                'resources/css/marketing.css',
+                'resources/css/kairo-site.css',
+                'resources/css/filament-custom.css',
+                'resources/css/panel-tailwind.css',
+                'resources/css/academics.css',
+                'resources/css/kairo-v2/home.css',
+                'resources/css/kairo-v2/features.css',
+                'resources/css/kairo-v2/about.css',
+                'resources/css/kairo-v2/contact.css',
+                'resources/css/kairo-v2/blog.css',
+                'resources/js/app.js',
+                'resources/js/kairo-site.js',
+            ],
             refresh: true,
             fonts: [
                 bunny('Instrument Sans', {

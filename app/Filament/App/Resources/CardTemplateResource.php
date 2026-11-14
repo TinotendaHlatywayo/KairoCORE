@@ -739,13 +739,31 @@ Forms\Components\Select::make('layout_config.logo_bg_mode')
                     ->label(__('Preview'))
                     ->icon('heroicon-o-eye')
                     ->color('info')
-                    ->url(fn ($record) => route('students.print-cards', [
-                        'scope' => 'selected',
-                        'ids' => Student::where('school_id', $record->school_id)->first()?->id ?? 0,
-                        'layout' => 'pvc',
-                        'template_id' => $record->id,
-                    ]))
-                    ->openUrlInNewTab(),
+                    ->modalHeading(__('Preview card template'))
+                    ->modalDescription(__('Choose a real student to preview this template with their photo and enrollment details.'))
+                    ->modalSubmitActionLabel(__('Open preview'))
+                    ->form([
+                        Forms\Components\Select::make('student_id')
+                            ->label(__('Student'))
+                            ->options(fn ($record) => Student::query()
+                                ->where('school_id', $record->school_id)
+                                ->orderBy('first_name')
+                                ->orderBy('last_name')
+                                ->limit(500)
+                                ->get()
+                                ->mapWithKeys(fn (Student $student): array => [$student->id => $student->full_name])
+                                ->all())
+                            ->searchable()
+                            ->required(),
+                    ])
+                    ->action(function (array $data, $record) {
+                        return redirect()->route('students.print-cards', [
+                            'scope' => 'selected',
+                            'ids' => (int) $data['student_id'],
+                            'layout' => 'pvc',
+                            'template_id' => $record->id,
+                        ]);
+                    }),
 
                 Tables\Actions\Action::make('duplicate')
                     ->label(__('Duplicate'))
@@ -785,7 +803,11 @@ Forms\Components\Select::make('layout_config.logo_bg_mode')
 
                 Tables\Actions\EditAction::make()->iconButton(),
                 Tables\Actions\DeleteAction::make()->iconButton(),
-            ]);
+            ])
+            ->content(fn ($livewire) => view('filament.app.resources.card-template.card-templates', ['records' => $livewire->getTableRecords()]))
+            ->emptyState(fn ($livewire) => view('filament.app.resources.card-template.card-templates-empty', ['records' => $livewire->getTableRecords()]))
+            ->paginated([10, 20, 50, 100])
+            ->defaultPaginationPageOption(20);
     }
 
     public static function getPages(): array
