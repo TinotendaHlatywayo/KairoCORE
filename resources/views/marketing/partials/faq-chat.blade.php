@@ -179,7 +179,7 @@
         <div class="ey">{{ marketing_content('home_faq_badge') ?: __('FAQ') }}</div>
         <h1>{{ marketing_content('home_faq_title') ?: __('Questions school leaders ask us') }}</h1>
         <p class="lead">{{ marketing_content('home_faq_subtitle') ?: __('Tap a question and get the answer straight away. Can’t find yours? Message us on WhatsApp.') }}</p>
-        <a class="wa" href="https://wa.me/{{ preg_replace('/\D+/', '', Modules\Admin\Models\PlatformSetting::get('contact', 'whatsapp') ?: '263786366855') }}" target="_blank" rel="noopener">{{ __('Message us on WhatsApp') }}</a>
+        <a class="wa" href="https://wa.me/{{ preg_replace('/\D+/', '', Modules\SaaS\Models\PlatformSetting::get('contact', 'whatsapp') ?: '263786366855') }}" target="_blank" rel="noopener">{{ __('Message us on WhatsApp') }}</a>
     </div>
 
     <section class="chat" aria-label="{{ __('Frequently asked questions') }}">
@@ -254,7 +254,7 @@ function kfFaqChips() {
     });
 
     if (!remaining.length) {
-        kfFaqQuick.innerHTML = '<p class="done">{{ __('That’s every common question. Still curious?') }} <a href="https://wa.me/{{ preg_replace("/\D+/", "", Modules\Admin\Models\PlatformSetting::get("contact", "whatsapp") ?: "263786366855") }}" target="_blank" rel="noopener">{{ __('Message us on WhatsApp') }}</a>.</p>';
+        kfFaqQuick.innerHTML = '<p class="done">{{ __('That’s every common question. Still curious?') }} <a href="https://wa.me/{{ preg_replace("/\D+/", "", Modules\SaaS\Models\PlatformSetting::get("contact", "whatsapp") ?: "263786366855") }}" target="_blank" rel="noopener">{{ __('Message us on WhatsApp') }}</a>.</p>';
     }
 }
 
