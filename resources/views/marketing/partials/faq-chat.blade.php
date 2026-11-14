@@ -1,16 +1,17 @@
 <style>
+.kf-faq-section {
+    padding: 0;
+}
 .kf-faq-chat {
     display: grid;
     grid-template-columns: 5fr 7fr;
     gap: 64px;
     align-items: center;
-    max-width: 1180px;
-    margin: 0 auto;
-    padding: 80px 24px;
+    padding: 48px 0;
 }
-.kf-faq-chat h1 {
-    font-size: clamp(34px, 5vw, 56px);
-    line-height: 1.04;
+.kf-faq-chat h2 {
+    font-size: clamp(30px, 3vw, 42px);
+    line-height: 1.08;
     letter-spacing: -.03em;
     font-weight: 800;
     margin: 0 0 18px;
@@ -33,6 +34,12 @@
     transition: transform .15s;
 }
 .kf-faq-chat .wa:hover { transform: translateY(-2px); }
+.kf-faq-chat .wa:focus-visible,
+.kf-faq-chat .chip:focus-visible,
+.kf-faq-chat .reset:focus-visible {
+    outline: 3px solid var(--coral-strong);
+    outline-offset: 3px;
+}
 .kf-faq-chat .chat {
     background: var(--surface, #fff);
     border: 1px solid var(--border);
@@ -164,7 +171,7 @@
 }
 .kf-faq-chat .done a { color: var(--coral-strong); font-weight: 700; }
 @media (max-width: 860px) {
-    .kf-faq-chat { grid-template-columns: 1fr; gap: 36px; padding: 48px 18px; }
+    .kf-faq-chat { grid-template-columns: 1fr; gap: 36px; padding: 32px 0; }
     .kf-faq-chat .msgs { height: 340px; }
     .kf-faq-chat .m { max-width: 92%; }
 }
@@ -174,56 +181,46 @@
 }
 </style>
 
-<section id="faq" class="kf-faq-chat">
-    <div>
-        <div class="ey">{{ marketing_content('home_faq_badge') ?: __('FAQ') }}</div>
-        <h1>{{ marketing_content('home_faq_title') ?: __('Questions school leaders ask us') }}</h1>
-        <p class="lead">{{ marketing_content('home_faq_subtitle') ?: __('Tap a question and get the answer straight away. Can’t find yours? Message us on WhatsApp.') }}</p>
-        <a class="wa" href="https://wa.me/{{ preg_replace('/\D+/', '', Modules\SaaS\Models\PlatformSetting::get('contact', 'whatsapp') ?: '263786366855') }}" target="_blank" rel="noopener">{{ __('Message us on WhatsApp') }}</a>
-    </div>
-
-    <section class="chat" aria-label="{{ __('Frequently asked questions') }}">
-        <div class="head">
-            <div class="avatar" aria-hidden="true">
-                <img src="{{ platform_logo_url() }}" alt="{{ platform_name() }}">
-            </div>
+<section id="faq" class="kf-faq-section">
+    <div class="w">
+        <div class="kf-faq-chat">
             <div>
-                <b>{{ platform_name() }} {{ __('team') }}</b>
-                <small><span class="live"></span>{{ __('Answers instantly') }}</small>
+                <div class="ey">{{ marketing_content('home_faq_badge') ?: __('FAQ') }}</div>
+                <h2>{{ marketing_content('home_faq_title') ?: __('Questions school leaders ask us') }}</h2>
+                <p class="lead">{{ marketing_content('home_faq_subtitle') ?: __('Tap a question and get the answer straight away. Can’t find yours? Message us on WhatsApp.') }}</p>
+                <a class="wa" href="https://wa.me/{{ preg_replace('/\D+/', '', Modules\SaaS\Models\PlatformSetting::get('contact', 'whatsapp') ?: '263786366855') }}" target="_blank" rel="noopener">{{ __('Message us on WhatsApp') }}</a>
             </div>
-            <button class="reset" id="kf-faq-reset" type="button">{{ __('Start over') }}</button>
+
+            <section class="chat" aria-label="{{ __('Frequently asked questions') }}">
+                <div class="head">
+                    <div class="avatar" aria-hidden="true">
+                        <img src="{{ platform_logo_url() }}" alt="{{ platform_name() }}">
+                    </div>
+                    <div>
+                        <b>{{ platform_name() }} {{ __('team') }}</b>
+                        <small><span class="live"></span>{{ __('Answers instantly') }}</small>
+                    </div>
+                    <button class="reset" id="kf-faq-reset" type="button">{{ __('Start over') }}</button>
+                </div>
+                <div class="msgs" id="kf-faq-msgs" aria-live="polite"></div>
+                <div class="quick" id="kf-faq-quick"></div>
+            </section>
         </div>
-        <div class="msgs" id="kf-faq-msgs" aria-live="polite"></div>
-        <div class="quick" id="kf-faq-quick"></div>
-    </section>
+    </div>
 </section>
 
 <script>
 const KF_FAQ = [
-    { q: {!! json_encode(__('Is Kairo CORE built for my type of school?')) !!} ,
-      a: {!! json_encode(__('Yes. Kairo CORE is built for primary, secondary, boarding and group schools, with flexible setup for different class structures, terms and reporting needs.')) !!} },
-    { q: {!! json_encode(__('What does Kairo CORE cover?')) !!} ,
-      a: {!! json_encode(__('It brings admissions, student records, fees, attendance, academics, assessments, report cards, staff permissions, parent communication and school websites into one connected system.')) !!} },
-    { q: {!! json_encode(__('Is our school data safe?')) !!} ,
-      a: {!! json_encode(__('Each school’s data is isolated to that school, staff only see what their role allows, and permissions can be configured per user or role.')) !!} },
-    { q: {!! json_encode(__('Will my team be trained?')) !!} ,
-      a: {!! json_encode(__('Yes. Teams are supported with guided onboarding, the Help Centre, video tutorials and direct support. Additional training can be arranged for new staff or new modules.')) !!} },
-    { q: {!! json_encode(__('Can we access it from any device?')) !!} ,
-      a: {!! json_encode(__('Yes. Kairo CORE runs in the browser on phones, tablets and computers, so staff and parents can work from anywhere with an internet connection.')) !!} },
-    { q: {!! json_encode(__('How long does setup take?')) !!} ,
-      a: {!! json_encode(__('Most schools can start with core records, classes and fees quickly. A full rollout depends on how much data is imported and which modules you enable first.')) !!} },
-    { q: {!! json_encode(__('Can parents see student progress and fees?')) !!} ,
-      a: {!! json_encode(__('Yes. Parents can be given secure access to relevant student information, fees, balances and communication, depending on the permissions you configure.')) !!} },
-    { q: {!! json_encode(__('Does it support ZIMSEC and Cambridge reporting?')) !!} ,
-      a: {!! json_encode(__('Kairo CORE supports flexible grading, assessments and report cards, including ZIMSEC and Cambridge-style reporting where configured for your school.')) !!} },
-    { q: {!! json_encode(__('Can we import existing student data?')) !!} ,
-      a: {!! json_encode(__('Yes. Student records can be imported from Excel or CSV, with column matching and validation to reduce manual data entry.')) !!} },
-    { q: {!! json_encode(__('Can each school have its own public website?')) !!} ,
-      a: {!! json_encode(__('Yes. Each school can publish a branded public website with admissions, news, events, staff, contact details and SEO-friendly pages.')) !!} },
-    { q: {!! json_encode(__('What support is available after go-live?')) !!} ,
-      a: {!! json_encode(__('Support is available through the Help Centre, documentation, WhatsApp and direct contact channels. Issues are handled based on severity and school needs.')) !!} },
-    { q: {!! json_encode(__('Can we try Kairo CORE before committing?')) !!} ,
-      a: {!! json_encode(__('Yes. You can book a demo, explore the public features and Help Centre, then start with the modules that matter most to your school.')) }
+    { q: {!! json_encode(__("Is Kairo CORE built for my type of school?")) !!} ,
+      a: {!! json_encode(__("Yes. It's designed for primary, secondary and tertiary institutions, including boarding schools.")) !!} },
+    { q: {!! json_encode(__("What does it cover?")) !!} ,
+      a: {!! json_encode(__("The day-to-day running of your school in one system, from admissions and fees to academics and parent communication.")) !!} },
+    { q: {!! json_encode(__("Is our data safe?")) !!} ,
+      a: {!! json_encode(__("Your school's records stay private to your school, and staff only see what their role allows.")) !!} },
+    { q: {!! json_encode(__("Will my team be trained?")) !!} ,
+      a: {!! json_encode(__("Yes. Your team is trained through hands-on sessions, video tutorials and a help centre on call. Extra training can be arranged.")) !!} },
+    { q: {!! json_encode(__("Can we access it from any device?")) !!} ,
+      a: {!! json_encode(__("Yes. Use it on a phone, tablet or computer with an internet connection.")) !!} }
 ];
 
 const kfFaqMsgs = document.getElementById('kf-faq-msgs');
@@ -275,14 +272,14 @@ function kfFaqAsk(index) {
         typing.remove();
         kfFaqAdd('bot', KF_FAQ[index].a);
         kfFaqBusy = false;
-    }, kfFaqReduce ? 0 : 700);
+    }, kfFaqReduce ? 0 : 900);
 }
 
 function kfFaqStart() {
     kfFaqMsgs.innerHTML = '';
     kfFaqAsked = new Set([0]);
     kfFaqBusy = false;
-    kfFaqAdd('bot', {!! json_encode(__('Hi, I’m here to answer the questions school leaders ask most. Tap one below.')));
+    kfFaqAdd('bot', {!! json_encode(__('Hi, I’m here to answer the questions school leaders ask most. Tap one below.')) !!});
     kfFaqAdd('me', KF_FAQ[0].q);
     kfFaqAdd('bot', KF_FAQ[0].a);
     kfFaqChips();
