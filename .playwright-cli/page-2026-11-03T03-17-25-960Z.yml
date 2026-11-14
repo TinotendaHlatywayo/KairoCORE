@@ -1,0 +1,57 @@
+- generic [active] [ref=f1e1]:
+  - main [ref=f1e4]:
+    - generic [ref=f1e5]:
+      - generic [ref=f1e7]:
+        - generic [ref=f1e9]:
+          - img "Kairo CORE" [ref=f1e11]
+          - heading "Kairo CORE" [level=1] [ref=f1e13]
+        - generic [ref=f1e14]:
+          - complementary [ref=f1e15]:
+            - generic [aria-hidden] [ref=f1e16]: Kairo CORE
+            - generic [aria-hidden] [ref=f1e18]:
+              - generic [ref=f1e19]:
+                - generic [ref=f1e24]: Secure Portal
+                - paragraph [ref=f1e25]: Reconnect with your educational community.
+                - button [ref=f1e26] [cursor=pointer]: Create Account
+              - generic:
+                - generic: Join the Community
+                - paragraph: Join your designated school platform.
+                - button: Sign In
+            - generic [aria-hidden] [ref=f1e29]:
+              - generic [ref=f1e30]: Learn
+              - generic [ref=f1e32]: Grow
+              - generic [ref=f1e34]: Succeed
+          - generic [ref=f1e37]:
+            - heading "Welcome Back" [level=2] [ref=f1e38]
+            - paragraph [ref=f1e39]: Sign in to access your workspace
+            - generic [ref=f1e41]:
+              - generic [ref=f1e43]:
+                - generic [ref=f1e46]:
+                  - generic [ref=f1e49]:
+                    - text: Email address
+                    - superscript [ref=f1e50]: "*"
+                  - textbox "Email address*" [ref=f1e54]
+                - generic [ref=f1e57]:
+                  - generic [ref=f1e58]:
+                    - generic [ref=f1e60]:
+                      - text: Password
+                      - superscript [ref=f1e61]: "*"
+                    - link "Forgot password?" [ref=f1e64] [cursor=pointer]:
+                      - /url: https://lvh.me/workspace/password-reset/request
+                  - generic [ref=f1e67]:
+                    - textbox "Password*" [ref=f1e69]
+                    - button "Show password" [ref=f1e72] [cursor=pointer]
+                - generic [ref=f1e81]:
+                  - checkbox "Remember me" [ref=f1e82]
+                  - generic [ref=f1e83]: Remember me
+              - button "Sign in" [ref=f1e86] [cursor=pointer]
+      - generic [ref=f1e88]:
+        - link "Terms of Service" [ref=f1e89] [cursor=pointer]:
+          - /url: https://lvh.me/terms
+        - generic [ref=f1e90]: ·
+        - link "Terms of Use" [ref=f1e91] [cursor=pointer]:
+          - /url: https://lvh.me/terms
+        - generic [ref=f1e92]: ·
+        - generic [ref=f1e93]: Powered by Kairo CORE
+  - generic:
+    - status

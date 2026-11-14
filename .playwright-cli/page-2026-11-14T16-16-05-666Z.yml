@@ -1,0 +1,57 @@
+- generic [active] [ref=f3e1]:
+  - main [ref=f3e4]:
+    - generic [ref=f3e5]:
+      - generic [ref=f3e7]:
+        - generic [ref=f3e9]:
+          - img "Rujeko High" [ref=f3e11]
+          - heading "Rujeko High" [level=1] [ref=f3e13]
+        - generic [ref=f3e14]:
+          - complementary [ref=f3e15]:
+            - generic [aria-hidden] [ref=f3e16]: Rujeko High
+            - generic [aria-hidden] [ref=f3e18]:
+              - generic [ref=f3e19]:
+                - generic [ref=f3e24]: Secure Portal
+                - paragraph [ref=f3e25]: Reconnect with your educational community.
+                - button [ref=f3e26] [cursor=pointer]: Create Account
+              - generic:
+                - generic: Join the Community
+                - paragraph: Join your designated school platform.
+                - button: Sign In
+            - generic [aria-hidden] [ref=f3e29]:
+              - generic [ref=f3e30]: Learn
+              - generic [ref=f3e32]: Grow
+              - generic [ref=f3e34]: Succeed
+          - generic [ref=f3e37]:
+            - heading "Welcome Back" [level=2] [ref=f3e38]
+            - paragraph [ref=f3e39]: Sign in to access your workspace
+            - generic [ref=f3e41]:
+              - generic [ref=f3e43]:
+                - generic [ref=f3e46]:
+                  - generic [ref=f3e49]:
+                    - text: Email address
+                    - superscript [ref=f3e50]: "*"
+                  - textbox "Email address*" [ref=f3e54]
+                - generic [ref=f3e57]:
+                  - generic [ref=f3e58]:
+                    - generic [ref=f3e60]:
+                      - text: Password
+                      - superscript [ref=f3e61]: "*"
+                    - link "Forgot password?" [ref=f3e64] [cursor=pointer]:
+                      - /url: https://rujeko.lvh.me/workspace/password-reset/request
+                  - generic [ref=f3e67]:
+                    - textbox "Password*" [ref=f3e69]
+                    - button "Show password" [ref=f3e72] [cursor=pointer]
+                - generic [ref=f3e81]:
+                  - checkbox "Remember me" [ref=f3e82]
+                  - generic [ref=f3e83]: Remember me
+              - button "Sign in" [ref=f3e86] [cursor=pointer]
+      - generic [ref=f3e88]:
+        - link "Terms of Service" [ref=f3e89] [cursor=pointer]:
+          - /url: https://lvh.me/terms
+        - generic [ref=f3e90]: ·
+        - link "Terms of Use" [ref=f3e91] [cursor=pointer]:
+          - /url: https://lvh.me/terms
+        - generic [ref=f3e92]: ·
+        - generic [ref=f3e93]: Powered by Kairo CORE
+  - generic:
+    - status

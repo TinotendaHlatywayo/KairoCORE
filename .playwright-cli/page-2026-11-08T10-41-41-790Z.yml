@@ -1,0 +1,336 @@
+- generic [ref=f21e1]:
+  - banner [ref=f21e2]:
+    - generic [ref=f21e3]:
+      - link "Kairo CORE home" [ref=f21e4] [cursor=pointer]:
+        - /url: https://lvh.me
+        - img "Kairo CORE logo" [ref=f21e5]
+      - navigation "Primary navigation" [ref=f21e6]:
+        - link "Home" [ref=f21e7] [cursor=pointer]:
+          - /url: https://lvh.me
+        - link "Features" [expanded] [active] [ref=f21e8] [cursor=pointer]:
+          - /url: https://lvh.me/features
+        - link "Blog" [ref=f21e11] [cursor=pointer]:
+          - /url: https://lvh.me/blog
+        - link "About" [ref=f21e12] [cursor=pointer]:
+          - /url: https://lvh.me/about
+        - link "Contact" [ref=f21e13] [cursor=pointer]:
+          - /url: https://lvh.me/contact
+      - generic [ref=f21e14]:
+        - button "Toggle dark mode" [ref=f21e15] [cursor=pointer]
+        - group [ref=f21e18]:
+          - generic "Change language" [ref=f21e19] [cursor=pointer]:
+            - generic [ref=f21e23]: EN
+            - text: ⌄
+        - group [ref=f21e24]:
+          - generic "Login ⌄" [ref=f21e25] [cursor=pointer]
+        - link "Register School" [ref=f21e29] [cursor=pointer]:
+          - /url: https://lvh.me/register
+    - region "Platform modules" [ref=f21e278]:
+      - generic [ref=f21e279]:
+        - generic [ref=f21e280]:
+          - generic [ref=f21e281]: Platform ecosystem
+          - generic [ref=f21e282]: Explore every integrated department and module
+        - link "View all features →" [ref=f21e283] [cursor=pointer]:
+          - /url: https://lvh.me/features
+      - generic [ref=f21e284]:
+        - link "Clinic Manage student enrolment, applications and admission workflow." [ref=f21e285] [cursor=pointer]:
+          - /url: https://lvh.me/features#admissions
+          - generic [aria-hidden] [ref=f21e286]: C
+          - generic [ref=f21e287]:
+            - text: Clinic
+            - generic [ref=f21e288]: Manage student enrolment, applications and admission workflow.
+          - generic [aria-hidden] [ref=f21e289]: →
+        - link "Academics Classes, timetables, subjects, grading and report cards." [ref=f21e290] [cursor=pointer]:
+          - /url: https://lvh.me/features#academics
+          - generic [aria-hidden] [ref=f21e291]: A
+          - generic [ref=f21e292]:
+            - text: Academics
+            - generic [ref=f21e293]: Classes, timetables, subjects, grading and report cards.
+          - generic [aria-hidden] [ref=f21e294]: →
+        - link "Students Student portal for learning materials, homework, fees and results." [ref=f21e295] [cursor=pointer]:
+          - /url: https://lvh.me/features#students
+          - generic [aria-hidden] [ref=f21e296]: S
+          - generic [ref=f21e297]:
+            - text: Students
+            - generic [ref=f21e298]: Student portal for learning materials, homework, fees and results.
+          - generic [aria-hidden] [ref=f21e299]: →
+        - link "Finance & Fees Fees, billing, invoicing and financial management." [ref=f21e300] [cursor=pointer]:
+          - /url: https://lvh.me/features#finance
+          - generic [aria-hidden] [ref=f21e301]: F
+          - generic [ref=f21e302]:
+            - text: Finance & Fees
+            - generic [ref=f21e303]: Fees, billing, invoicing and financial management.
+          - generic [aria-hidden] [ref=f21e304]: →
+        - link "HR & Payroll Staff management, leave, attendance and payroll." [ref=f21e305] [cursor=pointer]:
+          - /url: https://lvh.me/features#hr
+          - generic [aria-hidden] [ref=f21e306]: H
+          - generic [ref=f21e307]:
+            - text: HR & Payroll
+            - generic [ref=f21e308]: Staff management, leave, attendance and payroll.
+          - generic [aria-hidden] [ref=f21e309]: →
+        - link "Attendance Track student and staff attendance with ease." [ref=f21e310] [cursor=pointer]:
+          - /url: https://lvh.me/features#attendance
+          - generic [aria-hidden] [ref=f21e311]: A
+          - generic [ref=f21e312]:
+            - text: Attendance
+            - generic [ref=f21e313]: Track student and staff attendance with ease.
+          - generic [aria-hidden] [ref=f21e314]: →
+        - link "Communications Announcements and timely alerts to parents and staff." [ref=f21e315] [cursor=pointer]:
+          - /url: https://lvh.me/features#communications
+          - generic [aria-hidden] [ref=f21e316]: C
+          - generic [ref=f21e317]:
+            - text: Communications
+            - generic [ref=f21e318]: Announcements and timely alerts to parents and staff.
+          - generic [aria-hidden] [ref=f21e319]: →
+        - link "Library Manage library resources and circulation." [ref=f21e320] [cursor=pointer]:
+          - /url: https://lvh.me/features#library
+          - generic [aria-hidden] [ref=f21e321]: L
+          - generic [ref=f21e322]:
+            - text: Library
+            - generic [ref=f21e323]: Manage library resources and circulation.
+          - generic [aria-hidden] [ref=f21e324]: →
+        - link "Health & Wellness Student health records, clinic visits, medications and alerts." [ref=f21e325] [cursor=pointer]:
+          - /url: https://lvh.me/features#health
+          - generic [aria-hidden] [ref=f21e326]: H
+          - generic [ref=f21e327]:
+            - text: Health & Wellness
+            - generic [ref=f21e328]: Student health records, clinic visits, medications and alerts.
+          - generic [aria-hidden] [ref=f21e329]: →
+        - link "Inventory & Procurement Stock management, procurement, requisitions and assets." [ref=f21e330] [cursor=pointer]:
+          - /url: https://lvh.me/features#inventory
+          - generic [aria-hidden] [ref=f21e331]: I
+          - generic [ref=f21e332]:
+            - text: Inventory & Procurement
+            - generic [ref=f21e333]: Stock management, procurement, requisitions and assets.
+          - generic [aria-hidden] [ref=f21e334]: →
+        - link "Exams & Results Examinations, grading schemes and result publication." [ref=f21e335] [cursor=pointer]:
+          - /url: https://lvh.me/features#exams
+          - generic [aria-hidden] [ref=f21e336]: E
+          - generic [ref=f21e337]:
+            - text: Exams & Results
+            - generic [ref=f21e338]: Examinations, grading schemes and result publication.
+          - generic [aria-hidden] [ref=f21e339]: →
+        - link "LMS Learning management with assignments and resources." [ref=f21e340] [cursor=pointer]:
+          - /url: https://lvh.me/features#lms
+          - generic [aria-hidden] [ref=f21e341]: L
+          - generic [ref=f21e342]:
+            - text: LMS
+            - generic [ref=f21e343]: Learning management with assignments and resources.
+          - generic [aria-hidden] [ref=f21e344]: →
+        - link "Boarding & Hostel Hostel management, rooms and allocations." [ref=f21e345] [cursor=pointer]:
+          - /url: https://lvh.me/features#boarding
+          - generic [aria-hidden] [ref=f21e346]: B
+          - generic [ref=f21e347]:
+            - text: Boarding & Hostel
+            - generic [ref=f21e348]: Hostel management, rooms and allocations.
+          - generic [aria-hidden] [ref=f21e349]: →
+        - link "Reports & Analytics Comprehensive reports and data insights." [ref=f21e350] [cursor=pointer]:
+          - /url: https://lvh.me/features#reports
+          - generic [aria-hidden] [ref=f21e351]: R
+          - generic [ref=f21e352]:
+            - text: Reports & Analytics
+            - generic [ref=f21e353]: Comprehensive reports and data insights.
+          - generic [aria-hidden] [ref=f21e354]: →
+        - link "Website CMS Manage school website content easily." [ref=f21e355] [cursor=pointer]:
+          - /url: https://lvh.me/features#cms
+          - generic [aria-hidden] [ref=f21e356]: W
+          - generic [ref=f21e357]:
+            - text: Website CMS
+            - generic [ref=f21e358]: Manage school website content easily.
+          - generic [aria-hidden] [ref=f21e359]: →
+      - link "Explore modules →" [ref=f21e360] [cursor=pointer]:
+        - /url: https://lvh.me/features
+  - main [ref=f21e30]:
+    - generic [ref=f21e33]:
+      - generic [ref=f21e34]: Contact us
+      - heading "Let’s talk about your school" [level=1] [ref=f21e35]
+      - paragraph [ref=f21e36]: Have questions about Kairo CORE, or want a personalized demo? Reach us through any channel below.
+    - generic [ref=f21e37]:
+      - generic [ref=f21e38]:
+        - generic [ref=f21e39]:
+          - generic [ref=f21e45]:
+            - heading "Send us a message" [level=2] [ref=f21e46]
+            - generic [ref=f21e47]: We respond to all school inquiries within 24 hours.
+          - generic [ref=f21e48]:
+            - textbox [aria-hidden] [ref=f21e49]
+            - generic [ref=f21e50]:
+              - generic [ref=f21e51]:
+                - generic [ref=f21e52]:
+                  - text: Your name *
+                  - generic [ref=f21e53]: 0 / 100
+                - textbox "Your name * 0 / 100" [ref=f21e54]:
+                  - /placeholder: Tendai Marufu
+              - generic [ref=f21e55]:
+                - generic [ref=f21e56]: Your email *
+                - textbox "Your email *" [ref=f21e57]:
+                  - /placeholder: you@yourschool.co.zw
+            - generic [ref=f21e58]:
+              - generic [ref=f21e59]:
+                - generic [ref=f21e60]: School name
+                - textbox "School name" [ref=f21e61]:
+                  - /placeholder: Your school
+              - generic [ref=f21e62]:
+                - generic [ref=f21e63]: I’m interested in
+                - combobox "I’m interested in" [ref=f21e64]:
+                  - option "Booking a demo" [selected]
+                  - option "A price quote"
+                  - option "Product questions"
+                  - option "Support"
+            - generic [ref=f21e65]:
+              - generic [ref=f21e66]:
+                - text: Message *
+                - generic [ref=f21e67]: 0 / 2000
+              - textbox "Message * 0 / 2000" [ref=f21e68]:
+                - /placeholder: Tell us a little about your school and what you need...
+            - button "Send message" [ref=f21e69] [cursor=pointer]
+        - generic [ref=f21e74]:
+          - heading "What happens next" [level=2] [ref=f21e75]
+          - list [ref=f21e76]:
+            - listitem [ref=f21e77]:
+              - generic [ref=f21e78]:
+                - heading "Tell us about your school" [level=3] [ref=f21e79]
+                - paragraph [ref=f21e80]: Share your school’s size and what you want to fix, whether that is fees, reports, your website or something else.
+            - listitem [ref=f21e81]:
+              - generic [ref=f21e82]:
+                - heading "We reply within 24 hours" [level=3] [ref=f21e83]
+                - paragraph [ref=f21e84]: A school specialist answers your questions and suggests the modules that fit.
+            - listitem [ref=f21e85]:
+              - generic [ref=f21e86]:
+                - heading "See Kairo CORE in action" [level=3] [ref=f21e87]
+                - paragraph [ref=f21e88]: Book a personal demo and we will walk you through the system, module by module.
+      - complementary [ref=f21e89]:
+        - link "WhatsApp us +263 78 636 6855 Fastest replies during office hours" [ref=f21e90] [cursor=pointer]:
+          - /url: https://wa.me/263786366855
+          - generic [ref=f21e95]:
+            - generic [ref=f21e96]: WhatsApp us
+            - generic [ref=f21e97]: +263 78 636 6855
+            - text: Fastest replies during office hours
+        - link "Email us support@kairocore.co.zw For quotes, demos and support" [ref=f21e101] [cursor=pointer]:
+          - /url: mailto:support@kairocore.co.zw
+          - generic [ref=f21e106]:
+            - generic [ref=f21e107]: Email us
+            - generic [ref=f21e108]: support@kairocore.co.zw
+            - text: For quotes, demos and support
+        - generic [ref=f21e117]:
+          - text: Office hours
+          - paragraph [ref=f21e118]: Monday – Friday, 08:00 – 17:00 (CAT)
+          - paragraph [ref=f21e119]: Harare, Zimbabwe
+        - generic [ref=f21e121]:
+          - generic [ref=f21e122]: Follow our official channels
+          - generic [ref=f21e123]:
+            - link "Facebook" [ref=f21e124] [cursor=pointer]:
+              - /url: https://www.facebook.com/
+              - generic [ref=f21e128]: Follow
+            - link "Instagram" [ref=f21e129] [cursor=pointer]:
+              - /url: https://www.instagram.com/
+              - generic [ref=f21e135]: Follow
+            - link "X" [ref=f21e136] [cursor=pointer]:
+              - /url: https://x.com/
+              - generic [ref=f21e140]: Follow
+            - link "Tiktok" [ref=f21e141] [cursor=pointer]:
+              - /url: https://www.tiktok.com/
+              - generic [ref=f21e147]: Follow
+            - link "Youtube" [ref=f21e148] [cursor=pointer]:
+              - /url: https://www.youtube.com/
+              - generic [ref=f21e152]: Follow
+        - generic [ref=f21e153]:
+          - img "A Kairo CORE school specialist helping colleagues at a laptop" [ref=f21e155]
+          - generic [ref=f21e156]:
+            - heading "Talk to a school specialist" [level=3] [ref=f21e157]
+            - paragraph [ref=f21e158]: We understand school terms, fee cycles and exam seasons, and we speak your language.
+    - generic [ref=f21e161]:
+      - generic [ref=f21e162]:
+        - generic [ref=f21e167]:
+          - text: Our office
+          - generic [ref=f21e168]: Harare, Zimbabwe
+        - link "Open in Google Maps" [ref=f21e169] [cursor=pointer]:
+          - /url: https://www.google.com/maps/search/?api=1&query=Harare%2C%20Zimbabwe
+      - iframe [ref=f21e170]
+  - contentinfo [ref=f21e171]:
+    - generic [ref=f21e172]:
+      - generic [ref=f21e173]:
+        - generic [ref=f21e174]:
+          - link "Kairo CORE home" [ref=f21e175] [cursor=pointer]:
+            - /url: https://lvh.me
+            - img "Kairo CORE logo" [ref=f21e176]
+          - paragraph [ref=f21e177]: Smarter Schools. Brighter Futures.
+          - paragraph [ref=f21e178]: The complete school management platform for primary, secondary and tertiary institutions.
+          - generic [ref=f21e179]:
+            - text: All systems operational ·
+            - generic [ref=f21e181]: 12:41
+        - generic [ref=f21e182]:
+          - heading "Quick links" [level=4] [ref=f21e183]
+          - list [ref=f21e184]:
+            - listitem [ref=f21e185]:
+              - link "Home" [ref=f21e186] [cursor=pointer]:
+                - /url: https://lvh.me
+            - listitem [ref=f21e187]:
+              - link "Features" [ref=f21e188] [cursor=pointer]:
+                - /url: https://lvh.me/features
+            - listitem [ref=f21e189]:
+              - link "Why Kairo" [ref=f21e190] [cursor=pointer]:
+                - /url: https://lvh.me#why
+            - listitem [ref=f21e191]:
+              - link "How it works" [ref=f21e192] [cursor=pointer]:
+                - /url: https://lvh.me#start
+            - listitem [ref=f21e193]:
+              - link "FAQ" [ref=f21e194] [cursor=pointer]:
+                - /url: https://lvh.me#faq
+            - listitem [ref=f21e195]:
+              - link "About" [ref=f21e196] [cursor=pointer]:
+                - /url: https://lvh.me/about
+            - listitem [ref=f21e197]:
+              - link "Contact" [ref=f21e198] [cursor=pointer]:
+                - /url: https://lvh.me/contact
+        - generic [ref=f21e199]:
+          - heading "Reach out to us" [level=4] [ref=f21e200]
+          - list [ref=f21e201]:
+            - listitem [ref=f21e202]:
+              - link [ref=f21e203] [cursor=pointer]:
+                - /url: tel:+263786366855
+            - listitem [ref=f21e207]:
+              - link [ref=f21e208] [cursor=pointer]:
+                - /url: mailto:support@kairocore.co.zw
+            - listitem [ref=f21e213]:
+              - link [ref=f21e214] [cursor=pointer]:
+                - /url: https://wa.me/263786366855
+        - generic [ref=f21e218]:
+          - heading "Follow us" [level=4] [ref=f21e219]
+          - generic [ref=f21e220]:
+            - link "WhatsApp" [ref=f21e221] [cursor=pointer]:
+              - /url: https://wa.me/263786366855
+            - link "Facebook" [ref=f21e224] [cursor=pointer]:
+              - /url: https://www.facebook.com/
+            - link "Instagram" [ref=f21e227] [cursor=pointer]:
+              - /url: https://www.instagram.com/
+            - link "X" [ref=f21e232] [cursor=pointer]:
+              - /url: https://x.com/
+            - link "TikTok" [ref=f21e235] [cursor=pointer]:
+              - /url: https://www.tiktok.com/
+            - link "YouTube" [ref=f21e240] [cursor=pointer]:
+              - /url: https://www.youtube.com/
+      - generic [ref=f21e243]:
+        - generic [ref=f21e244]: © 2026 Kairo CORE. All rights reserved.
+        - generic [ref=f21e245]:
+          - link "Privacy Policy" [ref=f21e246] [cursor=pointer]:
+            - /url: https://lvh.me/privacy
+          - generic [aria-hidden] [ref=f21e247]: "|"
+          - link "Terms of Service" [ref=f21e248] [cursor=pointer]:
+            - /url: https://lvh.me/terms
+        - link "↑ Back to top" [ref=f21e249] [cursor=pointer]:
+          - /url: "#"
+  - generic "Quick contact links" [ref=f21e250]:
+    - link "WhatsApp" [ref=f21e251] [cursor=pointer]:
+      - /url: https://wa.me/263786366855
+    - link "Facebook" [ref=f21e254] [cursor=pointer]:
+      - /url: https://www.facebook.com/
+    - link "Instagram" [ref=f21e257] [cursor=pointer]:
+      - /url: https://www.instagram.com/
+    - link "X" [ref=f21e262] [cursor=pointer]:
+      - /url: https://x.com/
+    - link "TikTok" [ref=f21e265] [cursor=pointer]:
+      - /url: https://www.tiktok.com/
+    - link "YouTube" [ref=f21e270] [cursor=pointer]:
+      - /url: https://www.youtube.com/
+    - link "Email" [ref=f21e273] [cursor=pointer]:
+      - /url: mailto:support@kairocore.co.zw

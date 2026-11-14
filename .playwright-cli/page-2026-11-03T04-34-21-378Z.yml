@@ -1,0 +1,552 @@
+- generic [ref=f2e1]:
+  - generic [ref=f2e2]:
+    - generic [ref=f2e3]:
+      - navigation [ref=f2e5]:
+        - button "🇬🇧" [ref=f2e7] [cursor=pointer]
+        - button "Pin sidebar" [ref=f2e11] [cursor=pointer]
+        - button "Tue, Nov 3 06:34:21" [ref=f2e1160] [cursor=pointer]:
+          - generic [ref=f2e21]:
+            - generic [ref=f2e22]: Tue, Nov 3
+            - generic [ref=f2e23]: 06:34:21
+        - button "User menu" [ref=f2e27] [cursor=pointer]:
+          - img "Avatar of System Founder" [ref=f2e28]
+      - main [ref=f2e29]:
+        - generic [ref=f2e31]:
+          - generic [ref=f2e32]:
+            - paragraph [ref=f2e34]: Manage registered school workspaces, review pending onboarding requests, monitor subscriptions, and access school environments securely.
+            - link "Onboard New Institution" [ref=f2e37] [cursor=pointer]:
+              - /url: https://lvh.me/platform/schools/create
+          - generic [ref=f2e40]:
+            - generic [ref=f2e42]:
+              - heading "Institutions by status" [level=3] [ref=f2e1111]
+              - generic [ref=f2e1112]:
+                - generic [ref=f2e1114]:
+                  - generic [ref=f2e1115]: Total Institutions
+                  - generic [ref=f2e1117]: "8"
+                  - generic [ref=f2e1118]: Registered school workspaces
+                - generic [ref=f2e1123]:
+                  - generic [ref=f2e1124]: Active
+                  - generic [ref=f2e1126]: "8"
+                  - generic [ref=f2e1127]: 100% of all institutions
+                - generic [ref=f2e1132]:
+                  - generic [ref=f2e1133]: Pending Approval
+                  - generic [ref=f2e1135]: "0"
+                  - generic [ref=f2e1136]: Awaiting activation
+                - generic [ref=f2e1141]:
+                  - generic [ref=f2e1142]: Suspended
+                  - generic [ref=f2e1144]: "0"
+                  - generic [ref=f2e1145]: Temporarily suspended
+                - generic [ref=f2e1150]:
+                  - generic [ref=f2e1151]: On Trial
+                  - generic [ref=f2e1153]: "2"
+                  - generic [ref=f2e1154]: 0 ending within 7 days
+            - generic [ref=f2e46]:
+              - tablist [ref=f2e47]:
+                - tab "All Institutions" [ref=f2e48] [cursor=pointer]
+                - tab "Pending Approval 0" [ref=f2e50] [cursor=pointer]:
+                  - generic [ref=f2e51]: Pending Approval
+                  - generic [ref=f2e52]: "0"
+                - tab "Active 8" [ref=f2e55] [cursor=pointer]:
+                  - generic [ref=f2e56]: Active
+                  - generic [ref=f2e57]: "8"
+                - tab "Suspended 0" [ref=f2e60] [cursor=pointer]:
+                  - generic [ref=f2e61]: Suspended
+                  - generic [ref=f2e62]: "0"
+                - tab "Trial Period" [ref=f2e65] [cursor=pointer]
+              - generic [ref=f2e67]:
+                - generic [ref=f2e68]:
+                  - generic [ref=f2e69]:
+                    - generic [ref=f2e71]:
+                      - generic [ref=f2e72]:
+                        - heading "Filters" [level=4] [ref=f2e73]
+                        - button "Reset" [ref=f2e75] [cursor=pointer]
+                      - generic [ref=f2e77]:
+                        - generic [ref=f2e83]:
+                          - generic [ref=f2e84]: Status
+                          - combobox "Status" [ref=f2e90]:
+                            - option "All" [selected]
+                            - option "Pending Approval"
+                            - option "Active"
+                            - option "Suspended"
+                            - option "Expired"
+                        - generic [ref=f2e96]:
+                          - generic [ref=f2e97]: Region
+                          - combobox "Region" [ref=f2e103]:
+                            - option "All" [selected]
+                            - option "Zimbabwe"
+                            - option "South Africa"
+                            - option "United States"
+                    - generic [ref=f2e105]:
+                      - generic [ref=f2e106]:
+                        - generic [ref=f2e107]: Search
+                        - searchbox "Search" [ref=f2e113]
+                      - button "Toggle columns" [ref=f2e116] [cursor=pointer]
+                  - table [ref=f2e121]:
+                    - rowgroup [ref=f2e122]:
+                      - row [ref=f2e123]:
+                        - columnheader [ref=f2e124]:
+                          - button "School ID" [ref=f2e125] [cursor=pointer]
+                        - columnheader [ref=f2e129]:
+                          - button "Institution" [ref=f2e130] [cursor=pointer]
+                        - columnheader "Workspace" [ref=f2e134]
+                        - columnheader "Country" [ref=f2e137]
+                        - columnheader "Phone" [ref=f2e140]
+                        - columnheader "Region" [ref=f2e143]
+                        - columnheader "Status" [ref=f2e146]
+                        - columnheader "Demo Data" [ref=f2e149]
+                        - columnheader [ref=f2e152]:
+                          - button "Trial Ends" [ref=f2e153] [cursor=pointer]
+                        - columnheader "Admins" [ref=f2e157]
+                        - columnheader "Actions" [ref=f2e160]
+                    - rowgroup [ref=f2e161]:
+                      - row [ref=f2e162]:
+                        - cell [ref=f2e163]:
+                          - link "7" [ref=f2e165] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/7/edit
+                        - cell [ref=f2e171]:
+                          - link "Tinway Academy" [ref=f2e173] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/7/edit
+                        - cell [ref=f2e179]:
+                          - link "tinwayacademy" [ref=f2e181] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/7/edit
+                        - cell [ref=f2e188]:
+                          - link "Zimbabwe" [ref=f2e190] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/7/edit
+                        - cell [ref=f2e196]:
+                          - link "+263786366855" [ref=f2e198] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/7/edit
+                        - cell [ref=f2e204]:
+                          - link "Zimbabwe" [ref=f2e206] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/7/edit
+                        - cell [ref=f2e213]:
+                          - link "active" [ref=f2e215] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/7/edit
+                        - cell [ref=f2e222]:
+                          - link "—" [ref=f2e224] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/7/edit
+                        - cell [ref=f2e227]:
+                          - link "17 Dec 2026" [ref=f2e229] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/7/edit
+                        - cell [ref=f2e235]:
+                          - link "12" [ref=f2e237] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/7/edit
+                        - cell [ref=f2e243]:
+                          - generic [ref=f2e245]:
+                            - button "Suspend Access" [ref=f2e246] [cursor=pointer]
+                            - button "Enter school" [ref=f2e250] [cursor=pointer]
+                            - link "Edit" [ref=f2e254] [cursor=pointer]:
+                              - /url: https://lvh.me/platform/schools/7/edit
+                            - button "Delete" [ref=f2e259] [cursor=pointer]
+                      - row [ref=f2e263]:
+                        - cell [ref=f2e264]:
+                          - link "8" [ref=f2e266] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/8/edit
+                        - cell [ref=f2e272]:
+                          - link "Chiwarira Primary School" [ref=f2e274] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/8/edit
+                        - cell [ref=f2e280]:
+                          - link "chiwariraprimaryschool" [ref=f2e282] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/8/edit
+                        - cell [ref=f2e289]:
+                          - link "Zimbabwe" [ref=f2e291] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/8/edit
+                        - cell [ref=f2e297]:
+                          - link "+263776398674" [ref=f2e299] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/8/edit
+                        - cell [ref=f2e305]:
+                          - link "Zimbabwe" [ref=f2e307] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/8/edit
+                        - cell [ref=f2e314]:
+                          - link "active" [ref=f2e316] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/8/edit
+                        - cell [ref=f2e323]:
+                          - link "—" [ref=f2e325] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/8/edit
+                        - cell [ref=f2e328]:
+                          - link "26 Dec 2026" [ref=f2e330] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/8/edit
+                        - cell [ref=f2e336]:
+                          - link "17" [ref=f2e338] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/8/edit
+                        - cell [ref=f2e344]:
+                          - generic [ref=f2e346]:
+                            - button "Suspend Access" [ref=f2e347] [cursor=pointer]
+                            - button "Enter school" [ref=f2e351] [cursor=pointer]
+                            - link "Edit" [ref=f2e355] [cursor=pointer]:
+                              - /url: https://lvh.me/platform/schools/8/edit
+                            - button "Delete" [ref=f2e360] [cursor=pointer]
+                      - row "148 Rujeko High rujeko — — Zimbabwe active — 2 Suspend Access Enter school Edit Delete" [ref=f2e364]:
+                        - cell [ref=f2e365]:
+                          - link "148" [ref=f2e367] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/148/edit
+                        - cell [ref=f2e373]:
+                          - link "Rujeko High" [ref=f2e375] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/148/edit
+                        - cell [ref=f2e381]:
+                          - link "rujeko" [ref=f2e383] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/148/edit
+                        - cell [ref=f2e390]:
+                          - link "—" [ref=f2e392] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/148/edit
+                        - cell [ref=f2e395]:
+                          - link "—" [ref=f2e397] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/148/edit
+                        - cell [ref=f2e400]:
+                          - link "Zimbabwe" [ref=f2e402] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/148/edit
+                        - cell [ref=f2e409]:
+                          - link "active" [ref=f2e411] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/148/edit
+                        - cell [ref=f2e418]:
+                          - link "—" [ref=f2e420] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/148/edit
+                        - cell [ref=f2e423]:
+                          - link [ref=f2e425] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/148/edit
+                        - cell [ref=f2e427]:
+                          - link "2" [ref=f2e429] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/148/edit
+                        - cell [ref=f2e435]:
+                          - generic [ref=f2e437]:
+                            - button "Suspend Access" [ref=f2e438] [cursor=pointer]
+                            - button "Enter school" [ref=f2e442] [cursor=pointer]
+                            - link "Edit" [ref=f2e446] [cursor=pointer]:
+                              - /url: https://lvh.me/platform/schools/148/edit
+                            - button "Delete" [ref=f2e451] [cursor=pointer]
+                      - row "149 ID Card PNG Fixture idcardpngfixture — — Zimbabwe active — 1 Suspend Access Enter school Edit Delete" [ref=f2e455]:
+                        - cell [ref=f2e456]:
+                          - link "149" [ref=f2e458] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/149/edit
+                        - cell [ref=f2e464]:
+                          - link "ID Card PNG Fixture" [ref=f2e466] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/149/edit
+                        - cell [ref=f2e472]:
+                          - link "idcardpngfixture" [ref=f2e474] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/149/edit
+                        - cell [ref=f2e481]:
+                          - link "—" [ref=f2e483] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/149/edit
+                        - cell [ref=f2e486]:
+                          - link "—" [ref=f2e488] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/149/edit
+                        - cell [ref=f2e491]:
+                          - link "Zimbabwe" [ref=f2e493] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/149/edit
+                        - cell [ref=f2e500]:
+                          - link "active" [ref=f2e502] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/149/edit
+                        - cell [ref=f2e509]:
+                          - link "—" [ref=f2e511] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/149/edit
+                        - cell [ref=f2e514]:
+                          - link [ref=f2e516] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/149/edit
+                        - cell [ref=f2e518]:
+                          - link "1" [ref=f2e520] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/149/edit
+                        - cell [ref=f2e526]:
+                          - generic [ref=f2e528]:
+                            - button "Suspend Access" [ref=f2e529] [cursor=pointer]
+                            - button "Enter school" [ref=f2e533] [cursor=pointer]
+                            - link "Edit" [ref=f2e537] [cursor=pointer]:
+                              - /url: https://lvh.me/platform/schools/149/edit
+                            - button "Delete" [ref=f2e542] [cursor=pointer]
+                      - row "174 Modal Layering Fixture modallayeringfixture — — Zimbabwe active — 1 Suspend Access Enter school Edit Delete" [ref=f2e546]:
+                        - cell [ref=f2e547]:
+                          - link "174" [ref=f2e549] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/174/edit
+                        - cell [ref=f2e555]:
+                          - link "Modal Layering Fixture" [ref=f2e557] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/174/edit
+                        - cell [ref=f2e563]:
+                          - link "modallayeringfixture" [ref=f2e565] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/174/edit
+                        - cell [ref=f2e572]:
+                          - link "—" [ref=f2e574] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/174/edit
+                        - cell [ref=f2e577]:
+                          - link "—" [ref=f2e579] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/174/edit
+                        - cell [ref=f2e582]:
+                          - link "Zimbabwe" [ref=f2e584] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/174/edit
+                        - cell [ref=f2e591]:
+                          - link "active" [ref=f2e593] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/174/edit
+                        - cell [ref=f2e600]:
+                          - link "—" [ref=f2e602] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/174/edit
+                        - cell [ref=f2e605]:
+                          - link [ref=f2e607] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/174/edit
+                        - cell [ref=f2e609]:
+                          - link "1" [ref=f2e611] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/174/edit
+                        - cell [ref=f2e617]:
+                          - generic [ref=f2e619]:
+                            - button "Suspend Access" [ref=f2e620] [cursor=pointer]
+                            - button "Enter school" [ref=f2e624] [cursor=pointer]
+                            - link "Edit" [ref=f2e628] [cursor=pointer]:
+                              - /url: https://lvh.me/platform/schools/174/edit
+                            - button "Delete" [ref=f2e633] [cursor=pointer]
+                      - row "255 Enrollment Display Fixture enrollmentdisplayfixture — — Zimbabwe active — 1 Suspend Access Enter school Edit Delete" [ref=f2e637]:
+                        - cell [ref=f2e638]:
+                          - link "255" [ref=f2e640] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/255/edit
+                        - cell [ref=f2e646]:
+                          - link "Enrollment Display Fixture" [ref=f2e648] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/255/edit
+                        - cell [ref=f2e654]:
+                          - link "enrollmentdisplayfixture" [ref=f2e656] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/255/edit
+                        - cell [ref=f2e663]:
+                          - link "—" [ref=f2e665] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/255/edit
+                        - cell [ref=f2e668]:
+                          - link "—" [ref=f2e670] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/255/edit
+                        - cell [ref=f2e673]:
+                          - link "Zimbabwe" [ref=f2e675] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/255/edit
+                        - cell [ref=f2e682]:
+                          - link "active" [ref=f2e684] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/255/edit
+                        - cell [ref=f2e691]:
+                          - link "—" [ref=f2e693] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/255/edit
+                        - cell [ref=f2e696]:
+                          - link [ref=f2e698] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/255/edit
+                        - cell [ref=f2e700]:
+                          - link "1" [ref=f2e702] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/255/edit
+                        - cell [ref=f2e708]:
+                          - generic [ref=f2e710]:
+                            - button "Suspend Access" [ref=f2e711] [cursor=pointer]
+                            - button "Enter school" [ref=f2e715] [cursor=pointer]
+                            - link "Edit" [ref=f2e719] [cursor=pointer]:
+                              - /url: https://lvh.me/platform/schools/255/edit
+                            - button "Delete" [ref=f2e724] [cursor=pointer]
+                      - row "1451 Command Center Test School cc-test-53a86ee3 — — Zimbabwe active — 1 Suspend Access Enter school Edit Delete" [ref=f2e728]:
+                        - cell [ref=f2e729]:
+                          - link "1451" [ref=f2e731] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/1451/edit
+                        - cell [ref=f2e737]:
+                          - link "Command Center Test School" [ref=f2e739] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/1451/edit
+                        - cell [ref=f2e745]:
+                          - link "cc-test-53a86ee3" [ref=f2e747] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/1451/edit
+                        - cell [ref=f2e754]:
+                          - link "—" [ref=f2e756] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/1451/edit
+                        - cell [ref=f2e759]:
+                          - link "—" [ref=f2e761] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/1451/edit
+                        - cell [ref=f2e764]:
+                          - link "Zimbabwe" [ref=f2e766] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/1451/edit
+                        - cell [ref=f2e773]:
+                          - link "active" [ref=f2e775] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/1451/edit
+                        - cell [ref=f2e782]:
+                          - link "—" [ref=f2e784] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/1451/edit
+                        - cell [ref=f2e787]:
+                          - link [ref=f2e789] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/1451/edit
+                        - cell [ref=f2e791]:
+                          - link "1" [ref=f2e793] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/1451/edit
+                        - cell [ref=f2e799]:
+                          - generic [ref=f2e801]:
+                            - button "Suspend Access" [ref=f2e802] [cursor=pointer]
+                            - button "Enter school" [ref=f2e806] [cursor=pointer]
+                            - link "Edit" [ref=f2e810] [cursor=pointer]:
+                              - /url: https://lvh.me/platform/schools/1451/edit
+                            - button "Delete" [ref=f2e815] [cursor=pointer]
+                      - row "3994 Reassign 6add10aaeb40a reassign6add10aaeb40d — — Zimbabwe active — 2 Suspend Access Enter school Edit Delete" [ref=f2e819]:
+                        - cell [ref=f2e820]:
+                          - link "3994" [ref=f2e822] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/3994/edit
+                        - cell [ref=f2e828]:
+                          - link "Reassign 6add10aaeb40a" [ref=f2e830] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/3994/edit
+                        - cell [ref=f2e836]:
+                          - link "reassign6add10aaeb40d" [ref=f2e838] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/3994/edit
+                        - cell [ref=f2e845]:
+                          - link "—" [ref=f2e847] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/3994/edit
+                        - cell [ref=f2e850]:
+                          - link "—" [ref=f2e852] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/3994/edit
+                        - cell [ref=f2e855]:
+                          - link "Zimbabwe" [ref=f2e857] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/3994/edit
+                        - cell [ref=f2e864]:
+                          - link "active" [ref=f2e866] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/3994/edit
+                        - cell [ref=f2e873]:
+                          - link "—" [ref=f2e875] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/3994/edit
+                        - cell [ref=f2e878]:
+                          - link [ref=f2e880] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/3994/edit
+                        - cell [ref=f2e882]:
+                          - link "2" [ref=f2e884] [cursor=pointer]:
+                            - /url: https://lvh.me/platform/schools/3994/edit
+                        - cell [ref=f2e890]:
+                          - generic [ref=f2e892]:
+                            - button "Suspend Access" [ref=f2e893] [cursor=pointer]
+                            - button "Enter school" [ref=f2e897] [cursor=pointer]
+                            - link "Edit" [ref=f2e901] [cursor=pointer]:
+                              - /url: https://lvh.me/platform/schools/3994/edit
+                            - button "Delete" [ref=f2e906] [cursor=pointer]
+                  - navigation "Pagination navigation" [ref=f2e910]:
+                    - generic [ref=f2e913]:
+                      - generic [ref=f2e914]: Per page
+                      - combobox "Per page" [ref=f2e917]:
+                        - option "5"
+                        - option "10" [selected]
+                        - option "25"
+                        - option "50"
+                        - option "All"
+                - generic:
+                  - dialog
+                - generic:
+                  - dialog:
+                    - generic [ref=f2e1164]:
+                      - generic [ref=f2e1165]:
+                        - button "Close" [ref=f2e1167] [cursor=pointer]
+                        - generic [ref=f2e1175]:
+                          - heading "Enter Tinway Academy?" [level=2] [ref=f2e1176]
+                          - paragraph [ref=f2e1177]: You will work inside this school as its 'System Administrator'. A banner will remind you and every change is recorded in the platform audit log. The session ends automatically after 30 minutes.
+                      - generic [ref=f2e1179]:
+                        - button "Cancel" [active] [ref=f2e1180] [cursor=pointer]
+                        - button "Enter school" [ref=f2e1182] [cursor=pointer]
+                - generic:
+                  - dialog
+                - generic:
+                  - dialog
+                - generic:
+                  - dialog
+    - complementary [ref=f2e918]:
+      - link [ref=f2e922] [cursor=pointer]:
+        - /url: https://lvh.me/platform
+        - img "Kairo CORE" [ref=f2e924]
+      - navigation [ref=f2e925]:
+        - list [ref=f2e926]:
+          - listitem [ref=f2e927]:
+            - list [ref=f2e928]:
+              - listitem [ref=f2e929]:
+                - link "Command Center" [ref=f2e930] [cursor=pointer]:
+                  - /url: https://lvh.me/platform
+          - listitem [ref=f2e934]:
+            - generic [ref=f2e935] [cursor=pointer]:
+              - generic [ref=f2e936]: Tenants
+              - button "Tenants" [expanded] [ref=f2e937]
+            - list [ref=f2e941]:
+              - listitem [ref=f2e942]:
+                - link "Institutions" [ref=f2e943] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/schools
+              - listitem [ref=f2e947]:
+                - link "Tenant Diagnostics" [ref=f2e948] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/tenant-healths
+          - listitem [ref=f2e952]:
+            - generic [ref=f2e953] [cursor=pointer]:
+              - generic [ref=f2e954]: Billing & Subscriptions
+              - button "Billing & Subscriptions" [expanded] [ref=f2e955]
+            - list [ref=f2e959]:
+              - listitem [ref=f2e960]:
+                - link "Subscription Plans" [ref=f2e961] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/saa-s-plans
+              - listitem [ref=f2e965]:
+                - link "School Subscriptions" [ref=f2e966] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/school-subscriptions
+              - listitem [ref=f2e970]:
+                - link "Invoices" [ref=f2e971] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/saa-s-invoices
+              - listitem [ref=f2e975]:
+                - link "Manual Confirmations" [ref=f2e976] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/pending-payments
+              - listitem [ref=f2e980]:
+                - link "Billing Automation" [ref=f2e981] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/platform-billing-settings-page
+              - listitem [ref=f2e985]:
+                - link "Billing Messages" [ref=f2e986] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/platform-billing-messages
+          - listitem [ref=f2e990]:
+            - generic [ref=f2e991] [cursor=pointer]:
+              - generic [ref=f2e992]: Finance
+              - button "Finance" [expanded] [ref=f2e993]
+            - list [ref=f2e997]:
+              - listitem [ref=f2e998]:
+                - link "Document Configuration" [ref=f2e999] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/platform-document-config-page
+              - listitem [ref=f2e1003]:
+                - link "Platform Finance" [ref=f2e1004] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/platform-finance
+              - listitem [ref=f2e1009]:
+                - link "Tenant Statements" [ref=f2e1010] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/platform-billing-statements
+              - listitem [ref=f2e1014]:
+                - link "Kairo CORE Expenses" [ref=f2e1015] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/platform-expenses
+          - listitem [ref=f2e1019]:
+            - generic [ref=f2e1020] [cursor=pointer]:
+              - generic [ref=f2e1021]: Intelligence
+              - button "Intelligence" [expanded] [ref=f2e1022]
+            - list [ref=f2e1026]:
+              - listitem [ref=f2e1027]:
+                - link "Platform Intelligence Dashboard" [ref=f2e1028] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/platform-intelligence-dashboard
+          - listitem [ref=f2e1032]:
+            - generic [ref=f2e1033] [cursor=pointer]:
+              - generic [ref=f2e1034]: Operations
+              - button "Operations" [expanded] [ref=f2e1035]
+            - list [ref=f2e1039]:
+              - listitem [ref=f2e1040]:
+                - link "Platform Backup Manager" [ref=f2e1041] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/platform-backup-manager
+              - listitem [ref=f2e1045]:
+                - link "Platform Audits" [ref=f2e1046] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/platform-audit-logs
+              - listitem [ref=f2e1050]:
+                - link "Platform Maintenance" [ref=f2e1051] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/platform-maintenance-page
+          - listitem [ref=f2e1055]:
+            - generic [ref=f2e1056] [cursor=pointer]:
+              - generic [ref=f2e1057]: Communication
+              - button "Communication" [expanded] [ref=f2e1058]
+            - list [ref=f2e1062]:
+              - listitem [ref=f2e1063]:
+                - link "Tenant Messages" [ref=f2e1064] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/platform-messages
+              - listitem [ref=f2e1068]:
+                - link "Announcements" [ref=f2e1069] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/platform-announcements
+              - listitem [ref=f2e1073]:
+                - link "Global Templates" [ref=f2e1074] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/platform-templates
+          - listitem [ref=f2e1078]:
+            - generic [ref=f2e1079] [cursor=pointer]:
+              - generic [ref=f2e1080]: Platform Control
+              - button "Platform Control" [expanded] [ref=f2e1081]
+            - list [ref=f2e1085]:
+              - listitem [ref=f2e1086]:
+                - link "Platform Settings" [ref=f2e1087] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/platform-settings-page
+              - listitem [ref=f2e1091]:
+                - link "SaaS Transactions" [ref=f2e1092] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/saa-s-transactions
+          - listitem [ref=f2e1096]:
+            - generic [ref=f2e1097] [cursor=pointer]:
+              - generic [ref=f2e1098]: Website Content
+              - button "Website Content" [expanded] [ref=f2e1099]
+            - list [ref=f2e1103]:
+              - listitem [ref=f2e1104]:
+                - link "Website Content" [ref=f2e1105] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/website-content
+  - generic:
+    - status

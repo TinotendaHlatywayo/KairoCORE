@@ -1,0 +1,208 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - link [ref=e6] [cursor=pointer]:
+          - /url: https://kairo.co.zw
+          - img "Kairo CORE logo" [ref=e7]
+        - generic [ref=e8]:
+          - link "Home" [ref=e9] [cursor=pointer]:
+            - /url: https://kairo.co.zw
+          - button "Features" [ref=e13] [cursor=pointer]
+          - link "Blog" [ref=e17] [cursor=pointer]:
+            - /url: https://kairo.co.zw/blog
+          - link "About" [ref=e19] [cursor=pointer]:
+            - /url: https://kairo.co.zw/about
+          - link "Contact" [ref=e21] [cursor=pointer]:
+            - /url: https://kairo.co.zw/contact
+      - generic [ref=e23]:
+        - button "Toggle color scheme" [ref=e24]
+        - button "Change language" [ref=e28]:
+          - generic [ref=e31]: en
+        - button "Login" [ref=e35]
+        - link "Register School" [ref=e38] [cursor=pointer]:
+          - /url: https://kairo.co.zw/register
+  - main [ref=e40]:
+    - generic [ref=e43]:
+      - generic [ref=e44]:
+        - generic [ref=e45]: Built for schools globally with multi-language support
+        - heading "Run your whole school from one platform" [level=1] [ref=e47]
+        - paragraph [ref=e48]: KairoCORE brings admissions, academics, fees, attendance, HR, communication and more together in one secure, cloud-based system, so your team spends less time on paperwork and more time on students.
+        - generic [ref=e49]:
+          - link "Book a personal demo" [ref=e50] [cursor=pointer]:
+            - /url: https://kairo.co.zw/register
+          - link "Explore features" [ref=e51] [cursor=pointer]:
+            - /url: https://kairo.co.zw/features
+        - generic [ref=e52]:
+          - generic [ref=e53]: Easy to set up
+          - generic [ref=e55]: Secure & reliable
+          - generic [ref=e57]: Multi-currency billing
+      - generic [ref=e59]:
+        - img "Diverse students in crisp uniforms learning in a bright modern classroom" [ref=e61]
+        - generic [ref=e67]:
+          - paragraph [ref=e68]: Modules included
+          - paragraph [ref=e69]: "19"
+        - generic [ref=e75]:
+          - paragraph [ref=e76]: Schools running KairoCORE
+          - paragraph [ref=e77]: "3"
+    - generic [ref=e79]:
+      - generic [ref=e80]:
+        - generic [ref=e85]:
+          - generic [ref=e86]: "0"
+          - generic [ref=e87]: Schools onboard
+        - generic [ref=e93]:
+          - generic [ref=e94]: "0"
+          - generic [ref=e95]: Students managed
+        - generic [ref=e101]:
+          - generic [ref=e102]: "0"
+          - generic [ref=e103]: Total users
+        - generic [ref=e109]:
+          - generic [ref=e110]: "0"
+          - generic [ref=e111]: Uptime
+        - generic [ref=e117]:
+          - generic [ref=e118]: "0"
+          - generic [ref=e119]: Languages
+      - generic [ref=e121]:
+        - generic [ref=e126]:
+          - generic [ref=e127]: "0"
+          - generic [ref=e128]: Schools onboard
+        - generic [ref=e134]:
+          - generic [ref=e135]: "0"
+          - generic [ref=e136]: Students managed
+        - generic [ref=e142]:
+          - generic [ref=e143]: "0"
+          - generic [ref=e144]: Total users
+        - generic [ref=e150]:
+          - generic [ref=e151]: "0"
+          - generic [ref=e152]: Uptime
+        - generic [ref=e158]:
+          - generic [ref=e159]: "0"
+          - generic [ref=e160]: Languages
+    - generic [ref=e163]:
+      - generic [ref=e164]:
+        - paragraph [ref=e165]: Platform
+        - heading "Everything your school runs on, in one place" [level=2] [ref=e166]
+        - paragraph [ref=e167]: From the first admission enquiry to the final report card, every department works from the same system.
+      - generic [ref=e168]:
+        - generic [ref=e169]:
+          - heading "Admissions" [level=3] [ref=e173]
+          - paragraph [ref=e174]: Applications, enrolment and complete student records.
+        - generic [ref=e175]:
+          - heading "Academics" [level=3] [ref=e179]
+          - paragraph [ref=e180]: Classes, subjects, timetables and report cards.
+        - generic [ref=e181]:
+          - heading "Finance & Fees" [level=3] [ref=e185]
+          - paragraph [ref=e186]: Fee structures, invoicing and multi-currency billing.
+        - generic [ref=e187]:
+          - heading "Attendance" [level=3] [ref=e191]
+          - paragraph [ref=e192]: Daily student and staff attendance with alerts.
+        - generic [ref=e193]:
+          - heading "HR & Payroll" [level=3] [ref=e197]
+          - paragraph [ref=e198]: Staff records, leave management and payroll.
+        - generic [ref=e199]:
+          - heading "Communication" [level=3] [ref=e203]
+          - paragraph [ref=e204]: Announcements and email or WhatsApp alerts to parents.
+        - generic [ref=e205]:
+          - heading "Exams & Results" [level=3] [ref=e209]
+          - paragraph [ref=e210]: Exam scheduling, grading schemes and result publishing.
+        - generic [ref=e211]:
+          - heading "Library" [level=3] [ref=e215]
+          - paragraph [ref=e216]: Book catalogue, issuance tracking, returns and fines.
+        - generic [ref=e217]:
+          - heading "Health & Wellness" [level=3] [ref=e221]
+          - paragraph [ref=e222]: Student health records, clinic visits and medical alerts.
+      - link "See every feature" [ref=e224] [cursor=pointer]:
+        - /url: https://kairo.co.zw/features
+    - generic [ref=e228]:
+      - generic [ref=e229]:
+        - paragraph [ref=e230]: Benefits
+        - heading "Why schools choose KairoCORE" [level=2] [ref=e231]
+        - paragraph [ref=e232]: A single, dependable system that grows with your school.
+      - generic [ref=e233]:
+        - generic [ref=e234]:
+          - heading "One system for the whole school" [level=3] [ref=e238]
+          - paragraph [ref=e239]: Admissions, academics, finance, HR and communication share the same data, so nothing has to be captured twice.
+        - generic [ref=e240]:
+          - heading "Save hours of admin every week" [level=3] [ref=e244]
+          - paragraph [ref=e245]: Automated fees, invoices, report cards and alerts replace repetitive paperwork so your staff can focus on learners.
+        - generic [ref=e246]:
+          - heading "Reach parents where they are" [level=3] [ref=e250]
+          - paragraph [ref=e251]: Send announcements and timely updates by email or WhatsApp, and let parents follow attendance, fees and results.
+        - generic [ref=e252]:
+          - heading "Secure, cloud-based and current" [level=3] [ref=e256]
+          - paragraph [ref=e257]: Your data is backed up and always up to date, with role-based access so everyone sees only what they should.
+    - generic [ref=e259]:
+      - generic [ref=e260]:
+        - paragraph [ref=e261]: Get started
+        - heading "Up and running in days, not months" [level=2] [ref=e262]
+        - paragraph [ref=e263]: Getting your school onto KairoCORE is straightforward.
+      - generic [ref=e265]:
+        - generic [ref=e266]:
+          - generic [ref=e267]: "1"
+          - heading "Register your school" [level=3] [ref=e268]
+          - paragraph [ref=e269]: Create your school account in minutes and get your own secure workspace.
+        - generic [ref=e270]:
+          - generic [ref=e271]: "2"
+          - heading "Set up your school" [level=3] [ref=e272]
+          - paragraph [ref=e273]: Add classes, staff, fee structures and branding, with our team on hand to help.
+        - generic [ref=e274]:
+          - generic [ref=e275]: "3"
+          - heading "Go live" [level=3] [ref=e276]
+          - paragraph [ref=e277]: Start managing admissions, academics, fees and communication from day one.
+    - generic [ref=e279]:
+      - heading "Ready to see KairoCORE in action?" [level=2] [ref=e280]
+      - paragraph [ref=e281]: Book a personal demo tailored to your school, no obligation.
+      - generic [ref=e282]:
+        - link "Book a personal demo" [ref=e283] [cursor=pointer]:
+          - /url: https://kairo.co.zw/register
+        - link "Explore features" [ref=e284] [cursor=pointer]:
+          - /url: https://kairo.co.zw/features
+  - contentinfo [ref=e285]:
+    - generic [ref=e286]:
+      - generic [ref=e287]:
+        - generic [ref=e288]:
+          - img "Kairo CORE logo" [ref=e289]
+          - paragraph [ref=e290]: Cloud-based school management platform built for schools.
+        - generic [ref=e291]:
+          - heading "Product" [level=3] [ref=e292]
+          - list [ref=e293]:
+            - listitem [ref=e294]:
+              - link "Features" [ref=e295] [cursor=pointer]:
+                - /url: https://kairo.co.zw/features
+            - listitem [ref=e296]:
+              - link "Fees & Finance" [ref=e297] [cursor=pointer]:
+                - /url: https://kairo.co.zw/school-fees
+            - listitem [ref=e298]:
+              - link "Admissions" [ref=e299] [cursor=pointer]:
+                - /url: https://kairo.co.zw/admissions
+            - listitem [ref=e300]:
+              - link "Security" [ref=e301] [cursor=pointer]:
+                - /url: https://kairo.co.zw/security
+        - generic [ref=e302]:
+          - heading "Company" [level=3] [ref=e303]
+          - list [ref=e304]:
+            - listitem [ref=e305]:
+              - link "About" [ref=e306] [cursor=pointer]:
+                - /url: https://kairo.co.zw/about
+            - listitem [ref=e307]:
+              - link "Blog" [ref=e308] [cursor=pointer]:
+                - /url: https://kairo.co.zw/blog
+            - listitem [ref=e309]:
+              - link "Contact" [ref=e310] [cursor=pointer]:
+                - /url: https://kairo.co.zw/contact
+            - listitem [ref=e311]:
+              - link "Terms" [ref=e312] [cursor=pointer]:
+                - /url: https://kairo.co.zw/terms
+        - generic [ref=e313]:
+          - heading "Resources" [level=3] [ref=e314]
+          - list [ref=e315]:
+            - listitem [ref=e316]:
+              - link "Help Centre" [ref=e317] [cursor=pointer]:
+                - /url: https://kairo.co.zw/docs
+            - listitem [ref=e318]:
+              - link "How to enroll a student" [ref=e319] [cursor=pointer]:
+                - /url: https://kairo.co.zw/help/enroll-student
+            - listitem [ref=e320]:
+              - link "Book a demo" [ref=e321] [cursor=pointer]:
+                - /url: https://kairo.co.zw/register
+      - paragraph [ref=e323]: © 2026 Kairo CORE. All rights reserved.

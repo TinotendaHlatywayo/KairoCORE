@@ -1,0 +1,207 @@
+- generic [active] [ref=f1e1]:
+  - generic [ref=f1e2]:
+    - generic [ref=f1e3]:
+      - navigation [ref=f1e5]:
+        - button "🇬🇧" [ref=f1e7] [cursor=pointer]
+        - button "Pin sidebar" [ref=f1e11] [cursor=pointer]
+        - button "Tue, Nov 3 06:33:38" [ref=f1e16] [cursor=pointer]:
+          - generic [ref=f1e21]:
+            - generic [ref=f1e22]: Tue, Nov 3
+            - generic [ref=f1e23]: 06:33:38
+        - button "User menu" [ref=f1e27] [cursor=pointer]:
+          - img "Avatar of System Founder" [ref=f1e28]
+      - main [ref=f1e29]:
+        - generic [ref=f1e30]:
+          - generic [ref=f1e31]:
+            - heading "Dashboard" [level=1] [ref=f1e34]
+            - generic [ref=f1e37]:
+              - generic [ref=f1e39]:
+                - generic [ref=f1e40]: Super Admin Enterprise Control Center
+                - heading "Welcome back, System Founder" [level=1] [ref=f1e42]
+                - paragraph [ref=f1e43]: Manage multi-tenant school subscriptions, review manual payment confirmations, monitor platform telemetry, and communicate globally with all registered institutions.
+                - generic [ref=f1e44]:
+                  - link "Manage Institutions" [ref=f1e45] [cursor=pointer]:
+                    - /url: /platform/schools
+                  - link "Pending Confirmations (0)" [ref=f1e48] [cursor=pointer]:
+                    - /url: /platform/pending-payments
+              - generic [ref=f1e51]:
+                - generic [ref=f1e53]:
+                  - text: Total Institutions
+                  - heading "8" [level=3] [ref=f1e54]
+                  - paragraph [ref=f1e55]: 8 Active online
+                - generic [ref=f1e60]:
+                  - text: Total Gross Revenue
+                  - heading "$45.00" [level=3] [ref=f1e61]
+                  - paragraph [ref=f1e62]: Verified collections
+                - generic [ref=f1e67]:
+                  - text: Pending Approvals
+                  - heading "0" [level=3] [ref=f1e68]
+                  - paragraph [ref=f1e69]: Awaiting onboarding
+                - generic [ref=f1e74]:
+                  - text: Manual Slips Due
+                  - heading "0" [level=3] [ref=f1e75]
+                  - paragraph [ref=f1e76]: Require admin review
+              - generic [ref=f1e80]:
+                - generic [ref=f1e81]:
+                  - generic [ref=f1e82]:
+                    - heading "Recent Transactions" [level=3] [ref=f1e83]
+                    - link "View All →" [ref=f1e84] [cursor=pointer]:
+                      - /url: https://lvh.me/platform/saa-s-transactions
+                  - table [ref=f1e86]:
+                    - rowgroup [ref=f1e87]:
+                      - row [ref=f1e88]:
+                        - columnheader "Institution" [ref=f1e89]
+                        - columnheader "Amount" [ref=f1e90]
+                        - columnheader "Gateway" [ref=f1e91]
+                        - columnheader "Date" [ref=f1e92]
+                    - rowgroup [ref=f1e93]:
+                      - row [ref=f1e94]:
+                        - cell "Chiwarira Primary School" [ref=f1e95]
+                        - cell "$30.00" [ref=f1e96]
+                        - cell "cash" [ref=f1e97]
+                        - cell "Oct 29, 14:52" [ref=f1e98]
+                      - row [ref=f1e99]:
+                        - cell "Tinway Academy" [ref=f1e100]
+                        - cell "$15.00" [ref=f1e101]
+                        - cell "cash" [ref=f1e102]
+                        - cell "Oct 29, 14:48" [ref=f1e103]
+                - generic [ref=f1e104]:
+                  - generic [ref=f1e105]:
+                    - heading "Pending Institutions Onboarding" [level=3] [ref=f1e106]
+                    - link "View All →" [ref=f1e107] [cursor=pointer]:
+                      - /url: /platform/schools
+                  - table [ref=f1e109]:
+                    - rowgroup [ref=f1e110]:
+                      - row [ref=f1e111]:
+                        - columnheader "Name" [ref=f1e112]
+                        - columnheader "Subdomain" [ref=f1e113]
+                        - columnheader "Region" [ref=f1e114]
+                        - columnheader "Action" [ref=f1e115]
+                    - rowgroup [ref=f1e116]:
+                      - row [ref=f1e117]:
+                        - cell "No pending institutions." [ref=f1e118]
+          - generic:
+            - dialog
+          - generic:
+            - dialog
+          - generic:
+            - dialog
+    - complementary [ref=f1e119]:
+      - link [ref=f1e123] [cursor=pointer]:
+        - /url: https://lvh.me/platform
+        - img "Kairo CORE" [ref=f1e125]
+      - navigation [ref=f1e126]:
+        - list [ref=f1e127]:
+          - listitem [ref=f1e128]:
+            - list [ref=f1e129]:
+              - listitem [ref=f1e130]:
+                - link "Command Center" [ref=f1e131] [cursor=pointer]:
+                  - /url: https://lvh.me/platform
+          - listitem [ref=f1e135]:
+            - generic [ref=f1e136] [cursor=pointer]:
+              - generic [ref=f1e137]: Tenants
+              - button "Tenants" [expanded] [ref=f1e138]
+            - list [ref=f1e142]:
+              - listitem [ref=f1e143]:
+                - link "Institutions" [ref=f1e144] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/schools
+              - listitem [ref=f1e148]:
+                - link "Tenant Diagnostics" [ref=f1e149] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/tenant-healths
+          - listitem [ref=f1e153]:
+            - generic [ref=f1e154] [cursor=pointer]:
+              - generic [ref=f1e155]: Billing & Subscriptions
+              - button "Billing & Subscriptions" [expanded] [ref=f1e156]
+            - list [ref=f1e160]:
+              - listitem [ref=f1e161]:
+                - link "Subscription Plans" [ref=f1e162] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/saa-s-plans
+              - listitem [ref=f1e166]:
+                - link "School Subscriptions" [ref=f1e167] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/school-subscriptions
+              - listitem [ref=f1e171]:
+                - link "Invoices" [ref=f1e172] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/saa-s-invoices
+              - listitem [ref=f1e176]:
+                - link "Manual Confirmations" [ref=f1e177] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/pending-payments
+              - listitem [ref=f1e181]:
+                - link "Billing Automation" [ref=f1e182] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/platform-billing-settings-page
+              - listitem [ref=f1e186]:
+                - link "Billing Messages" [ref=f1e187] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/platform-billing-messages
+          - listitem [ref=f1e191]:
+            - generic [ref=f1e192] [cursor=pointer]:
+              - generic [ref=f1e193]: Finance
+              - button "Finance" [expanded] [ref=f1e194]
+            - list [ref=f1e198]:
+              - listitem [ref=f1e199]:
+                - link "Document Configuration" [ref=f1e200] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/platform-document-config-page
+              - listitem [ref=f1e204]:
+                - link "Platform Finance" [ref=f1e205] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/platform-finance
+              - listitem [ref=f1e210]:
+                - link "Tenant Statements" [ref=f1e211] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/platform-billing-statements
+              - listitem [ref=f1e215]:
+                - link "Kairo CORE Expenses" [ref=f1e216] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/platform-expenses
+          - listitem [ref=f1e220]:
+            - generic [ref=f1e221] [cursor=pointer]:
+              - generic [ref=f1e222]: Intelligence
+              - button "Intelligence" [expanded] [ref=f1e223]
+            - list [ref=f1e227]:
+              - listitem [ref=f1e228]:
+                - link "Platform Intelligence Dashboard" [ref=f1e229] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/platform-intelligence-dashboard
+          - listitem [ref=f1e233]:
+            - generic [ref=f1e234] [cursor=pointer]:
+              - generic [ref=f1e235]: Operations
+              - button "Operations" [expanded] [ref=f1e236]
+            - list [ref=f1e240]:
+              - listitem [ref=f1e241]:
+                - link "Platform Backup Manager" [ref=f1e242] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/platform-backup-manager
+              - listitem [ref=f1e246]:
+                - link "Platform Audits" [ref=f1e247] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/platform-audit-logs
+              - listitem [ref=f1e251]:
+                - link "Platform Maintenance" [ref=f1e252] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/platform-maintenance-page
+          - listitem [ref=f1e256]:
+            - generic [ref=f1e257] [cursor=pointer]:
+              - generic [ref=f1e258]: Communication
+              - button "Communication" [expanded] [ref=f1e259]
+            - list [ref=f1e263]:
+              - listitem [ref=f1e264]:
+                - link "Tenant Messages" [ref=f1e265] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/platform-messages
+              - listitem [ref=f1e269]:
+                - link "Announcements" [ref=f1e270] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/platform-announcements
+              - listitem [ref=f1e274]:
+                - link "Global Templates" [ref=f1e275] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/platform-templates
+          - listitem [ref=f1e279]:
+            - generic [ref=f1e280] [cursor=pointer]:
+              - generic [ref=f1e281]: Platform Control
+              - button "Platform Control" [expanded] [ref=f1e282]
+            - list [ref=f1e286]:
+              - listitem [ref=f1e287]:
+                - link "Platform Settings" [ref=f1e288] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/platform-settings-page
+              - listitem [ref=f1e292]:
+                - link "SaaS Transactions" [ref=f1e293] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/saa-s-transactions
+          - listitem [ref=f1e297]:
+            - generic [ref=f1e298] [cursor=pointer]:
+              - generic [ref=f1e299]: Website Content
+              - button "Website Content" [expanded] [ref=f1e300]
+            - list [ref=f1e304]:
+              - listitem [ref=f1e305]:
+                - link "Website Content" [ref=f1e306] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/website-content
+  - generic:
+    - status

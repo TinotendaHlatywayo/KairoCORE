@@ -1,0 +1,17 @@
+- generic [ref=f1e3]:
+  - generic [ref=f1e4]: "500"
+  - heading "Something Went Wrong" [level=1] [ref=f1e14]
+  - paragraph [ref=f1e15]: Our servers encountered an unexpected error while processing your request.
+  - generic [ref=f1e16]:
+    - strong [ref=f1e17]: Don't worry — this has been logged.
+    - text: "Our team has been notified automatically. You can try the following:"
+    - list [ref=f1e18]:
+      - listitem [ref=f1e19]: Refresh the page and try again
+      - listitem [ref=f1e20]: Go back to the previous page
+      - listitem [ref=f1e21]: If the problem persists, contact support with the time of the error
+  - generic [ref=f1e22]:
+    - button "Try Again" [ref=f1e23] [cursor=pointer]
+    - button "Go Back" [ref=f1e26] [cursor=pointer]
+    - link "Home" [ref=f1e29] [cursor=pointer]:
+      - /url: /workspace
+  - generic [ref=f1e32]: Kairo CORE

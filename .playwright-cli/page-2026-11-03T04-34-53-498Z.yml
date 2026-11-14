@@ -1,0 +1,315 @@
+- generic [active] [ref=f3e1]:
+  - alert [ref=f3e2]:
+    - generic [ref=f3e6]:
+      - strong [ref=f3e7]: System Administrator mode
+      - text: — You are working inside
+      - strong [ref=f3e8]: Tinway Academy
+      - text: as
+      - strong [ref=f3e9]: System Administrator
+      - text: ", not as one of their own staff. Signed in as System Founder"
+    - generic [ref=f3e10]:
+      - generic [ref=f3e11]: Session ends 07:04
+      - button "Leave school" [ref=f3e13] [cursor=pointer]
+  - generic [ref=f3e14]:
+    - generic [ref=f3e15]:
+      - navigation [ref=f3e17]:
+        - button "Toggle navigation menu" [expanded] [ref=f3e18] [cursor=pointer]
+        - button "Go Back" [ref=f3e21] [cursor=pointer]
+        - generic [ref=f3e24]:
+          - button "Nov 3 06:34 4" [ref=f3e26] [cursor=pointer]:
+            - generic [ref=f3e29]: Nov 3
+            - generic [ref=f3e30]: 06:34
+            - generic [ref=f3e31]: "4"
+          - button "User menu" [ref=f3e34] [cursor=pointer]:
+            - img "Avatar of System Administrator" [ref=f3e35]
+        - button "Switch Sidebar Left/Right" [ref=f3e36] [cursor=pointer]
+        - link "System Settings" [ref=f3e39] [cursor=pointer]:
+          - /url: https://tinwayacademy.lvh.me/workspace/system-settings-page
+        - button "Help Guide" [ref=f3e44] [cursor=pointer]
+      - main [ref=f3e48]:
+        - generic [ref=f3e49]:
+          - generic [ref=f3e50]:
+            - heading "Dashboard" [level=1] [ref=f3e53]
+            - generic [ref=f3e56]:
+              - generic [ref=f3e57]:
+                - generic [ref=f3e63]:
+                  - generic [ref=f3e64]: Administrative Workspace
+                  - heading "Welcome back, System Administrator" [level=2] [ref=f3e66]
+                  - paragraph [ref=f3e67]:
+                    - text: You are currently managing portal operations for
+                    - strong [ref=f3e68]: Tinway Academy
+                    - text: .
+                - generic [ref=f3e69]:
+                  - generic [ref=f3e75]:
+                    - heading "Seed demonstration data" [level=3] [ref=f3e76]
+                    - paragraph [ref=f3e77]: Populate the whole system with test data which include students, classes, assessments, marks and reports for testing.
+                  - button "Seed Demo Data" [ref=f3e79] [cursor=pointer]
+              - generic [ref=f3e83]:
+                - link "Manage Students Register new admissions, edit medical profiles, and compile identity cards. Open directory" [ref=f3e84] [cursor=pointer]:
+                  - /url: /workspace/students
+                  - generic [ref=f3e85]:
+                    - heading "Manage Students" [level=4] [ref=f3e86]
+                    - paragraph [ref=f3e87]: Register new admissions, edit medical profiles, and compile identity cards.
+                  - generic [ref=f3e88]: Open directory
+                - link "School Timetable Configure period schedules, assign classes, and record daily attendance rosters. Open timetables" [ref=f3e92] [cursor=pointer]:
+                  - /url: /workspace/timetable-lessons
+                  - generic [ref=f3e93]:
+                    - heading "School Timetable" [level=4] [ref=f3e94]
+                    - paragraph [ref=f3e95]: Configure period schedules, assign classes, and record daily attendance rosters.
+                  - generic [ref=f3e96]: Open timetables
+                - link "Online Admissions Review incoming public applications, verify documents, and auto-enroll students. Open admissions" [ref=f3e100] [cursor=pointer]:
+                  - /url: /workspace/applications
+                  - generic [ref=f3e101]:
+                    - heading "Online Admissions" [level=4] [ref=f3e102]
+                    - paragraph [ref=f3e103]: Review incoming public applications, verify documents, and auto-enroll students.
+                  - generic [ref=f3e104]: Open admissions
+          - generic:
+            - dialog
+          - generic:
+            - dialog
+          - generic:
+            - dialog
+      - contentinfo [ref=f3e113]:
+        - generic [ref=f3e114]:
+          - paragraph:
+            - link:
+              - /url: ""
+          - paragraph [ref=f3e115]: © 2026 Kairo CORE. All rights reserved.
+    - complementary [ref=f3e116]:
+      - generic [ref=f3e118]:
+        - link "School Logo Tinway Academy (TINWAY-PRI)" [ref=f3e120] [cursor=pointer]:
+          - /url: https://tinwayacademy.lvh.me/workspace
+          - generic [ref=f3e122]:
+            - img "School Logo" [ref=f3e124]
+            - generic [ref=f3e125]:
+              - generic [ref=f3e126]: Tinway Academy
+              - generic "School login code — share it so people can find your login page at kairo.co.zw/school-login" [ref=f3e127]: (TINWAY-PRI)
+        - button "Collapse sidebar" [ref=f3e128] [cursor=pointer]
+      - navigation [ref=f3e132]:
+        - generic [ref=f3e134]:
+          - generic "Search workspace" [ref=f3e135] [cursor=pointer]
+          - textbox "Search workspace..." [ref=f3e138]
+          - generic: ⌘K
+        - list [ref=f3e139]:
+          - listitem [ref=f3e140]:
+            - list [ref=f3e141]:
+              - listitem [ref=f3e142]:
+                - link "Dashboard" [ref=f3e143] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace
+          - listitem [ref=f3e147]:
+            - generic [ref=f3e148] [cursor=pointer]:
+              - generic [ref=f3e149]: Admissions
+              - button "Admissions" [expanded] [ref=f3e150]
+            - list [ref=f3e154]:
+              - listitem [ref=f3e155]:
+                - link "Online Admissions" [ref=f3e156] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/applications
+          - listitem [ref=f3e160]:
+            - generic [ref=f3e161] [cursor=pointer]:
+              - generic [ref=f3e162]: Students
+              - button "Students" [expanded] [ref=f3e163]
+            - list [ref=f3e167]:
+              - listitem [ref=f3e168]:
+                - link "ID Card Designer" [ref=f3e169] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/card-templates
+              - listitem [ref=f3e173]:
+                - link "Student Directory" [ref=f3e174] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/students
+          - listitem [ref=f3e178]:
+            - generic [ref=f3e179] [cursor=pointer]:
+              - generic [ref=f3e180]: Academics
+              - button "Academics" [expanded] [ref=f3e181]
+            - list [ref=f3e185]:
+              - listitem [ref=f3e186]:
+                - link "Academic Operations Center" [ref=f3e187] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/academic-operations-center
+              - listitem [ref=f3e191]:
+                - link "Setup & Structure" [ref=f3e192] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/academics-setup-structure
+              - listitem [ref=f3e196]:
+                - link "Timetables & Teaching" [ref=f3e197] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/academics-timetables-teaching
+              - listitem [ref=f3e201]:
+                - link "Progression" [ref=f3e202] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/academics-progression
+          - listitem [ref=f3e206]:
+            - generic [ref=f3e207] [cursor=pointer]:
+              - generic [ref=f3e208]: Exams & Grading
+              - button "Exams & Grading" [expanded] [ref=f3e209]
+            - list [ref=f3e213]:
+              - listitem [ref=f3e214]:
+                - link "Assessment Center" [ref=f3e215] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/exams-assessment-center
+              - listitem [ref=f3e219]:
+                - link "Grading & Marks Management" [ref=f3e220] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/exams-grading-marks
+              - listitem [ref=f3e224]:
+                - link "Reports & Academic Publishing" [ref=f3e225] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/exams-reports-publishing
+          - listitem [ref=f3e229]:
+            - generic [ref=f3e230] [cursor=pointer]:
+              - generic [ref=f3e231]: Finance
+              - button "Finance" [expanded] [ref=f3e232]
+            - list [ref=f3e236]:
+              - listitem [ref=f3e237]:
+                - link "Dashboard & Analytics" [ref=f3e238] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/executive-financial-dashboard
+              - listitem [ref=f3e242]:
+                - link "Financial Statements" [ref=f3e243] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/financial-statements
+              - listitem [ref=f3e247]:
+                - link "Student Billing & Revenue" [ref=f3e248] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/finance-student-billing
+              - listitem [ref=f3e252]:
+                - link "Expenses & Purchasing" [ref=f3e253] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/finance-expenses-purchasing
+              - listitem [ref=f3e257]:
+                - link "Core Accounting & Setup" [ref=f3e258] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/finance-core-accounting
+          - listitem [ref=f3e262]:
+            - generic [ref=f3e263] [cursor=pointer]:
+              - generic [ref=f3e264]: HR & Payroll
+              - button "HR & Payroll" [expanded] [ref=f3e265]
+            - list [ref=f3e269]:
+              - listitem [ref=f3e270]:
+                - link "Staff Directory & HR" [ref=f3e271] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/hr-staff-directory
+              - listitem [ref=f3e275]:
+                - link "Payroll & Compensation" [ref=f3e276] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/hr-payroll-compensation
+              - listitem [ref=f3e280]:
+                - link "Attendance & Leave" [ref=f3e281] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/hr-attendance-leave
+          - listitem [ref=f3e285]:
+            - generic [ref=f3e286] [cursor=pointer]:
+              - generic [ref=f3e287]: Inventory & Procurement
+              - button "Inventory & Procurement" [expanded] [ref=f3e288]
+            - list [ref=f3e292]:
+              - listitem [ref=f3e293]:
+                - link "Stock & Inventory" [ref=f3e294] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/inventory-stock
+              - listitem [ref=f3e298]:
+                - link "Procurement" [ref=f3e299] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/inventory-procurement
+              - listitem [ref=f3e303]:
+                - link "Fixed Assets" [ref=f3e304] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/inventory-fixed-assets
+          - listitem [ref=f3e308]:
+            - generic [ref=f3e309] [cursor=pointer]:
+              - generic [ref=f3e310]: Library
+              - button "Library" [expanded] [ref=f3e311]
+            - list [ref=f3e315]:
+              - listitem [ref=f3e316]:
+                - link "Catalogue" [ref=f3e317] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/library-catalogue
+              - listitem [ref=f3e321]:
+                - link "Circulation" [ref=f3e322] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/library-circulation
+              - listitem [ref=f3e326]:
+                - link "Knowledge" [ref=f3e327] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/knowledge-knowledge
+          - listitem [ref=f3e331]:
+            - generic [ref=f3e332] [cursor=pointer]:
+              - generic [ref=f3e333]: Boarding & Welfare
+              - button "Boarding & Welfare" [expanded] [ref=f3e334]
+            - list [ref=f3e338]:
+              - listitem [ref=f3e339]:
+                - link "Accommodation" [ref=f3e340] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/boarding-accommodation
+              - listitem [ref=f3e344]:
+                - link "Welfare & Care" [ref=f3e345] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/boarding-welfare
+          - listitem [ref=f3e349]:
+            - generic [ref=f3e350] [cursor=pointer]:
+              - generic [ref=f3e351]: Health & Safety
+              - button "Health & Safety" [expanded] [ref=f3e352]
+            - list [ref=f3e356]:
+              - listitem [ref=f3e357]:
+                - link "Health Records" [ref=f3e358] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/health-records
+          - listitem [ref=f3e362]:
+            - generic [ref=f3e363] [cursor=pointer]:
+              - generic [ref=f3e364]: Communication Center
+              - button "Communication Center" [expanded] [ref=f3e365]
+            - list [ref=f3e369]:
+              - listitem [ref=f3e370]:
+                - link "Communication Center" [ref=f3e371] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/communication-center
+              - listitem [ref=f3e375]:
+                - link "Notices" [ref=f3e376] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/notices
+              - listitem [ref=f3e380]:
+                - link "Community & Engagement" [ref=f3e381] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/communication-community
+              - listitem [ref=f3e385]:
+                - link "Help & Inbox" [ref=f3e386] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/communication-help-inbox
+          - listitem [ref=f3e390]:
+            - generic [ref=f3e391] [cursor=pointer]:
+              - generic [ref=f3e392]: LMS
+              - button "LMS" [expanded] [ref=f3e393]
+            - list [ref=f3e397]:
+              - listitem [ref=f3e398]:
+                - link "LMS" [ref=f3e399] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/lms-lms
+          - listitem [ref=f3e403]:
+            - generic [ref=f3e404] [cursor=pointer]:
+              - generic [ref=f3e405]: Website
+              - button "Website" [expanded] [ref=f3e406]
+            - list [ref=f3e410]:
+              - listitem [ref=f3e411]:
+                - link "Templates & Design" [ref=f3e412] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/website-templates
+              - listitem [ref=f3e416]:
+                - link "Website Templates" [ref=f3e417] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/cms/templates
+              - listitem [ref=f3e421]:
+                - link "Content Manager" [ref=f3e422] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/cms/content
+          - listitem [ref=f3e426]:
+            - generic [ref=f3e427] [cursor=pointer]:
+              - generic [ref=f3e428]: Reports & Intelligence
+              - button "Reports & Intelligence" [expanded] [ref=f3e429]
+            - list [ref=f3e433]:
+              - listitem [ref=f3e434]:
+                - link "Dashboard" [ref=f3e435] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/reporting-dashboard
+              - listitem [ref=f3e439]:
+                - link "Analytics Explorer" [ref=f3e440] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/analytics-explorer
+              - listitem [ref=f3e444]:
+                - link "Generate Report" [ref=f3e445] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/report-generator-page
+              - listitem [ref=f3e449]:
+                - link "Reports" [ref=f3e450] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/reports-reports
+          - listitem [ref=f3e454]:
+            - generic [ref=f3e455] [cursor=pointer]:
+              - generic [ref=f3e456]: System Administration
+              - button "System Administration" [expanded] [ref=f3e457]
+            - list [ref=f3e461]:
+              - listitem [ref=f3e462]:
+                - link "System Settings" [ref=f3e463] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/admin-system-settings
+              - listitem [ref=f3e467]:
+                - link "Overview" [ref=f3e468] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/administration-dashboard
+              - listitem [ref=f3e473]:
+                - link "User Management" [ref=f3e474] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/admin-user-management
+              - listitem [ref=f3e478]:
+                - link "Audit & Compliance" [ref=f3e479] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/admin-audit
+          - listitem [ref=f3e483]:
+            - generic [ref=f3e484] [cursor=pointer]:
+              - generic [ref=f3e485]: Subscription & Billing
+              - button "Subscription & Billing" [expanded] [ref=f3e486]
+            - list [ref=f3e490]:
+              - listitem [ref=f3e491]:
+                - link "Overview & Billing" [ref=f3e492] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/saas-billing-overview
+              - listitem [ref=f3e496]:
+                - link "Subscription & Billing" [ref=f3e497] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/saas-hub
+  - generic:
+    - status

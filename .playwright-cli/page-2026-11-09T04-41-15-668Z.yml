@@ -1,0 +1,153 @@
+- generic [active] [ref=f52e1]:
+  - banner [ref=f52e2]:
+    - generic [ref=f52e3]:
+      - link "Kairo CORE home" [ref=f52e4] [cursor=pointer]:
+        - /url: https://lvh.me
+        - img "Kairo CORE logo" [ref=f52e5]
+      - generic [ref=f52e6]:
+        - button "Toggle dark mode" [pressed] [ref=f52e7] [cursor=pointer]
+        - text: ⌄ ⌄
+        - button "Open menu" [ref=f52e8] [cursor=pointer]
+  - main [ref=f52e11]:
+    - generic [ref=f52e12]:
+      - paragraph [ref=f52e13]: Help Center
+      - heading "How to use Kairo CORE" [level=1] [ref=f52e14]
+      - paragraph [ref=f52e15]: Short, step-by-step guides for the tasks people ask about most. Each guide also works as a plain-text reference for search engines and AI assistants.
+      - generic [ref=f52e16]:
+        - link "How to enroll a student Apply online, review the application, admit the student, invoice fees. Read guide →" [ref=f52e17] [cursor=pointer]:
+          - /url: https://lvh.me/help/enroll-student
+          - heading "How to enroll a student" [level=2] [ref=f52e18]
+          - paragraph [ref=f52e19]: Apply online, review the application, admit the student, invoice fees.
+          - generic [ref=f52e20]: Read guide →
+        - link "How to register a school Create your school account and launch your portal and website. Read guide →" [ref=f52e21] [cursor=pointer]:
+          - /url: https://lvh.me/help/register-school
+          - heading "How to register a school" [level=2] [ref=f52e22]
+          - paragraph [ref=f52e23]: Create your school account and launch your portal and website.
+          - generic [ref=f52e24]: Read guide →
+        - link "How to collect school fees Invoice students, accept payments, issue receipts and statements. Read guide →" [ref=f52e25] [cursor=pointer]:
+          - /url: https://lvh.me/help/collect-fees
+          - heading "How to collect school fees" [level=2] [ref=f52e26]
+          - paragraph [ref=f52e27]: Invoice students, accept payments, issue receipts and statements.
+          - generic [ref=f52e28]: Read guide →
+        - link "How to record attendance Mark each learner present or absent from the timetable lesson. Read guide →" [ref=f52e29] [cursor=pointer]:
+          - /url: https://lvh.me/help/record-attendance
+          - heading "How to record attendance" [level=2] [ref=f52e30]
+          - paragraph [ref=f52e31]: Mark each learner present or absent from the timetable lesson.
+          - generic [ref=f52e32]: Read guide →
+        - link "How to produce report cards Assessments, marks, analytics, then generate and publish reports. Read guide →" [ref=f52e33] [cursor=pointer]:
+          - /url: https://lvh.me/help/report-cards
+          - heading "How to produce report cards" [level=2] [ref=f52e34]
+          - paragraph [ref=f52e35]: Assessments, marks, analytics, then generate and publish reports.
+          - generic [ref=f52e36]: Read guide →
+        - generic [ref=f52e37]:
+          - generic [ref=f52e38]:
+            - heading "Can’t find your answer?" [level=2] [ref=f52e39]
+            - paragraph [ref=f52e40]: Talk to us directly — we will answer factually about how the platform works.
+          - link "Contact Kairo CORE →" [ref=f52e41] [cursor=pointer]:
+            - /url: https://lvh.me/contact
+  - contentinfo [ref=f52e42]:
+    - generic [ref=f52e43]:
+      - generic [ref=f52e44]:
+        - generic [ref=f52e45]:
+          - link "Kairo CORE home" [ref=f52e46] [cursor=pointer]:
+            - /url: https://lvh.me
+            - img "Kairo CORE logo" [ref=f52e47]
+          - paragraph [ref=f52e48]: Smarter Schools. Brighter Futures.
+          - paragraph [ref=f52e49]: Cloud-based school management platform built for schools.
+          - generic [ref=f52e50]:
+            - generic [ref=f52e52]: All systems operational
+            - text: ·
+            - generic [ref=f52e53]: 06:41
+        - generic [ref=f52e54]:
+          - heading "Product" [level=4] [ref=f52e55]
+          - navigation "Product navigation" [ref=f52e56]:
+            - list [ref=f52e57]:
+              - listitem [ref=f52e58]:
+                - link "Features" [ref=f52e59] [cursor=pointer]:
+                  - /url: https://lvh.me/features
+              - listitem [ref=f52e60]:
+                - link "Fees & Finance" [ref=f52e61] [cursor=pointer]:
+                  - /url: https://lvh.me/features#finance
+              - listitem [ref=f52e62]:
+                - link "Admissions" [ref=f52e63] [cursor=pointer]:
+                  - /url: https://lvh.me/features#admissions
+              - listitem [ref=f52e64]:
+                - link "Security" [ref=f52e65] [cursor=pointer]:
+                  - /url: https://lvh.me/security
+        - generic [ref=f52e66]:
+          - heading "Company" [level=4] [ref=f52e67]
+          - navigation "Company navigation" [ref=f52e68]:
+            - list [ref=f52e69]:
+              - listitem [ref=f52e70]:
+                - link "About" [ref=f52e71] [cursor=pointer]:
+                  - /url: https://lvh.me/about
+              - listitem [ref=f52e72]:
+                - link "Why Kairo" [ref=f52e73] [cursor=pointer]:
+                  - /url: https://lvh.me#why
+              - listitem [ref=f52e74]:
+                - link "How it works" [ref=f52e75] [cursor=pointer]:
+                  - /url: https://lvh.me#start
+              - listitem [ref=f52e76]:
+                - link "Blog" [ref=f52e77] [cursor=pointer]:
+                  - /url: https://lvh.me/blog
+              - listitem [ref=f52e78]:
+                - link "Contact" [ref=f52e79] [cursor=pointer]:
+                  - /url: https://lvh.me/contact
+              - listitem [ref=f52e80]:
+                - link "FAQ" [ref=f52e81] [cursor=pointer]:
+                  - /url: https://lvh.me#faq
+              - listitem [ref=f52e82]:
+                - link "Terms" [ref=f52e83] [cursor=pointer]:
+                  - /url: https://lvh.me/terms
+        - generic [ref=f52e84]:
+          - heading "Resources" [level=4] [ref=f52e85]
+          - navigation "Resources navigation" [ref=f52e86]:
+            - list [ref=f52e87]:
+              - listitem [ref=f52e88]:
+                - link "Help Centre" [ref=f52e89] [cursor=pointer]:
+                  - /url: https://lvh.me/docs
+              - listitem [ref=f52e90]:
+                - link "How to enrol a student" [ref=f52e91] [cursor=pointer]:
+                  - /url: https://lvh.me/help/enroll-student
+              - listitem [ref=f52e92]:
+                - link "Book a demo" [ref=f52e93] [cursor=pointer]:
+                  - /url: https://lvh.me/contact#contact-form
+        - generic [ref=f52e94]:
+          - heading "Reach out to us" [level=4] [ref=f52e95]
+          - navigation "Contact navigation" [ref=f52e96]:
+            - list [ref=f52e97]:
+              - listitem [ref=f52e98]:
+                - link "+263 78 636 6855" [ref=f52e99] [cursor=pointer]:
+                  - /url: tel:+263786366855
+              - listitem [ref=f52e104]:
+                - link "support@kairocore.co.zw" [ref=f52e105] [cursor=pointer]:
+                  - /url: mailto:support@kairocore.co.zw
+              - listitem [ref=f52e111]:
+                - link "Chat on WhatsApp" [ref=f52e112] [cursor=pointer]:
+                  - /url: https://wa.me/263786366855
+      - generic [ref=f52e117]:
+        - generic [ref=f52e118]:
+          - generic [ref=f52e119]: © 2026 Kairo CORE. All rights reserved.
+          - generic [ref=f52e120]:
+            - link "Privacy Policy" [ref=f52e121] [cursor=pointer]:
+              - /url: https://lvh.me/privacy
+            - link "Terms" [ref=f52e122] [cursor=pointer]:
+              - /url: https://lvh.me/terms
+        - generic [ref=f52e123]:
+          - generic [ref=f52e124]:
+            - link "Chat on WhatsApp" [ref=f52e125] [cursor=pointer]:
+              - /url: https://wa.me/263786366855
+            - link "Facebook" [ref=f52e128] [cursor=pointer]:
+              - /url: https://www.facebook.com/
+            - link "Instagram" [ref=f52e131] [cursor=pointer]:
+              - /url: https://www.instagram.com/
+            - link "X" [ref=f52e136] [cursor=pointer]:
+              - /url: https://x.com/
+            - link "TikTok" [ref=f52e139] [cursor=pointer]:
+              - /url: https://www.tiktok.com/
+            - link "YouTube" [ref=f52e144] [cursor=pointer]:
+              - /url: https://www.youtube.com/
+          - link "↑ Back to top" [ref=f52e147] [cursor=pointer]:
+            - /url: "#"
+  - generic "Quick contact links" [ref=f52e148]:
+    - button "Toggle social links" [ref=f52e149] [cursor=pointer]

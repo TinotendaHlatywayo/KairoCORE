@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html
+  data-composition-variables='[
+    {"id":"color-ground","type":"color","label":"Background","default":"#FFFFFF"},
+    {"id":"color-ink","type":"color","label":"Text","default":"#1F2E43"},
+    {"id":"color-accent","type":"color","label":"Accent","default":"#EF5F4D"},
+    {"id":"font-display","type":"string","label":"Display font","default":"Plus Jakarta Sans"}
+  ]'
+>
+<head>
+  <meta charset="UTF-8" />
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js"></script>
+  <style>
+    @font-face { font-family: 'Plus Jakarta Sans'; font-style: normal; font-weight: 400; font-display: swap; src: url('assets/fonts/LDIbaomQNQcsA88c7O9yZ4KMCoOg4IA6-91aHEjcWuA_qU7NSg.ttf') format('truetype'); }
+    @font-face { font-family: 'Plus Jakarta Sans'; font-style: normal; font-weight: 600; font-display: swap; src: url('assets/fonts/LDIbaomQNQcsA88c7O9yZ4KMCoOg4IA6-91aHEjcWuA_d0nNSg.ttf') format('truetype'); }
+    @font-face { font-family: 'Plus Jakarta Sans'; font-style: normal; font-weight: 700; font-display: swap; src: url('assets/fonts/LDIbaomQNQcsA88c7O9yZ4KMCoOg4IA6-91aHEjcWuA_TknNSg.ttf') format('truetype'); }
+    @font-face { font-family: 'Plus Jakarta Sans'; font-style: normal; font-weight: 800; font-display: swap; src: url('assets/fonts/LDIbaomQNQcsA88c7O9yZ4KMCoOg4IA6-91aHEjcWuA_KUnNSg.ttf') format('truetype'); }
+
+    :root {
+      --color-ground: #FFFFFF;
+      --color-ink: #1F2E43;
+      --color-accent: #EF5F4D;
+      --color-accent-strong: #D94B39;
+      --color-muted: #444B57;
+      --font-display: 'Plus Jakarta Sans', system-ui, sans-serif;
+      --font-body: 'Inter', system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: var(--color-ground); font-family: var(--font-body); color: var(--color-ink); }
+    .scene { position: absolute; inset: 0; opacity: 0; }
+    #scene-hook { opacity: 1; }
+    #scene-hook .title, #scene-hook .subtitle { opacity: 1; transform: none; filter: none; }
+
+    .bg-glow { position: absolute; inset: 0; background: radial-gradient(circle at 82% 18%, rgba(239,95,77,.16), transparent 34%), radial-gradient(circle at 12% 86%, rgba(31,46,67,.10), transparent 38%); }
+    .bg-screen { position: absolute; inset: -80px; opacity: .07; filter: blur(18px) saturate(.9); transform: scale(1.08); }
+    .bg-screen img { width: 100%; height: 100%; object-fit: cover; }
+
+    .tag { position: absolute; left: 120px; top: 92px; font-size: 28px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--color-accent); }
+    .title { position: absolute; left: 120px; top: 150px; width: 780px; font-family: var(--font-display); font-weight: 800; font-size: 72px; line-height: 1.02; letter-spacing: -.03em; }
+    .subtitle { position: absolute; left: 120px; top: 395px; width: 560px; font-size: 28px; line-height: 1.35; color: var(--color-muted); }
+    .accent { color: var(--color-accent); }
+    .screen-frame { position: absolute; right: 90px; top: 118px; width: 980px; height: 613px; border-radius: 30px; overflow: hidden; box-shadow: 0 42px 110px rgba(31,46,67,.24); background: #F8FAFC; border: 1px solid rgba(226,232,240,.9); }
+    .screen-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .logo { position: absolute; left: 810px; top: 150px; width: 300px; height: auto; }
+    .center-title { position: absolute; left: 120px; top: 300px; width: 1680px; text-align: center; font-family: var(--font-display); font-weight: 800; font-size: 82px; line-height: 1.02; letter-spacing: -.03em; }
+    .center-sub { position: absolute; left: 260px; top: 560px; width: 1400px; text-align: center; font-size: 32px; line-height: 1.3; color: var(--color-muted); }
+    .cta { position: absolute; left: 805px; top: 690px; padding: 22px 44px; border-radius: 999px; background: var(--color-accent); color: #FFFFFF; font-family: var(--font-display); font-weight: 700; font-size: 28px; box-shadow: 0 18px 45px rgba(239,95,77,.35); }
+
+    .collage { position: absolute; border-radius: 22px; overflow: hidden; box-shadow: 0 30px 80px rgba(31,46,67,.22); border: 1px solid rgba(226,232,240,.8); background: #F8FAFC; }
+    .collage img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .collage-a { left: 1080px; top: 140px; width: 540px; height: 338px; transform: rotate(-6deg); }
+    .collage-b { left: 1260px; top: 330px; width: 470px; height: 294px; transform: rotate(5deg); }
+    .collage-c { left: 1130px; top: 535px; width: 490px; height: 306px; transform: rotate(-3deg); }
+  </style>
+</head>
+<body>
+  <div
+    id="root"
+    data-composition-id="main"
+    data-start="0"
+    data-duration="20"
+    data-width="1920"
+    data-height="1080"
+    data-motion-blur="on"
+  >
+    <audio id="music" class="clip" data-start="0" data-duration="20" data-track-index="0" data-volume="0.60" src="assets/music.mp3"></audio>
+
+    <div id="scene-hook" class="scene clip" data-start="0" data-duration="2.19" data-track-index="1">
+      <div class="bg-glow"></div>
+      <div class="collage collage-a" data-layout-ignore><img src="assets/screens/dashboard.png" alt=""></div>
+      <div class="collage collage-b" data-layout-ignore><img src="assets/screens/finance.png" alt=""></div>
+      <div class="collage collage-c" data-layout-ignore><img src="assets/screens/communication.png" alt=""></div>
+      <div class="tag">KairoCORE</div>
+      <div class="title">One school.<br><span class="accent">Many moving parts.</span></div>
+      <div class="subtitle">Admissions, academics, finance, communication.</div>
+    </div>
+
+    <div id="scene-reveal" class="scene clip" data-start="2.19" data-duration="2.20" data-track-index="2">
+      <div class="bg-glow"></div>
+      <div class="bg-screen" data-layout-ignore><img src="assets/screens/dashboard.png" alt=""></div>
+      <img class="logo clip" id="logo-reveal" data-start="2.19" data-duration="2.20" data-track-index="3" src="assets/logo.png" alt="KairoCORE logo" />
+      <div class="center-title">One platform for your school.</div>
+      <div class="center-sub">Cloud-based school operating system.</div>
+    </div>
+
+    <div id="scene-dashboard" class="scene clip" data-start="4.39" data-duration="1.81" data-track-index="4">
+      <div class="bg-glow"></div>
+      <div class="tag">Dashboard</div>
+      <div class="title">See the whole<br><span class="accent">school.</span></div>
+      <div class="subtitle">One connected workspace.</div>
+      <div class="screen-frame" data-layout-allow-overflow><img class="clip" id="screen-dashboard" data-start="4.39" data-duration="1.81" data-track-index="5" src="assets/screens/dashboard.png" alt="KairoCORE dashboard" /></div>
+    </div>
+
+    <div id="scene-admissions" class="scene clip" data-start="6.20" data-duration="1.80" data-track-index="6">
+      <div class="bg-glow"></div>
+      <div class="tag">Admissions</div>
+      <div class="title">Track applicants<br><span class="accent">fast.</span></div>
+      <div class="subtitle">Admissions to student records.</div>
+      <div class="screen-frame" data-layout-allow-overflow><img class="clip" id="screen-admissions" data-start="6.20" data-duration="1.80" data-track-index="7" src="assets/screens/admissions.png" alt="KairoCORE admissions" /></div>
+    </div>
+
+    <div id="scene-academics" class="scene clip" data-start="8.00" data-duration="1.80" data-track-index="8">
+      <div class="bg-glow"></div>
+      <div class="tag">Academics</div>
+      <div class="title">Reports and<br><span class="accent">marks.</span></div>
+      <div class="subtitle">Academics and assessment.</div>
+      <div class="screen-frame" data-layout-allow-overflow><img class="clip" id="screen-academics" data-start="8.00" data-duration="1.80" data-track-index="9" src="assets/screens/academics.png" alt="KairoCORE academics" /></div>
+    </div>
+
+    <div id="scene-finance" class="scene clip" data-start="9.80" data-duration="1.80" data-track-index="10">
+      <div class="bg-glow"></div>
+      <div class="tag">Finance</div>
+      <div class="title">Accounts and<br><span class="accent">payments.</span></div>
+      <div class="subtitle">Fees and finance.</div>
+      <div class="screen-frame" data-layout-allow-overflow><img class="clip" id="screen-finance" data-start="9.80" data-duration="1.80" data-track-index="11" src="assets/screens/finance.png" alt="KairoCORE finance" /></div>
+    </div>
+
+    <div id="scene-communication" class="scene clip" data-start="11.60" data-duration="1.80" data-track-index="12">
+      <div class="bg-glow"></div>
+      <div class="tag">Communication</div>
+      <div class="title">Teams and<br><span class="accent">notices.</span></div>
+      <div class="subtitle">Communication and insight.</div>
+      <div class="screen-frame" data-layout-allow-overflow><img class="clip" id="screen-communication" data-start="11.60" data-duration="1.80" data-track-index="13" src="assets/screens/communication.png" alt="KairoCORE communication" /></div>
+    </div>
+
+    <div id="scene-analytics" class="scene clip" data-start="13.40" data-duration="1.80" data-track-index="14">
+      <div class="bg-glow"></div>
+      <div class="tag">Analytics</div>
+      <div class="title">Insight across<br><span class="accent">operations.</span></div>
+      <div class="subtitle">Clarity for decisions.</div>
+      <div class="screen-frame" data-layout-allow-overflow><img class="clip" id="screen-analytics" data-start="13.40" data-duration="1.80" data-track-index="15" src="assets/screens/analytics.png" alt="KairoCORE analytics" /></div>
+    </div>
+
+    <div id="scene-outcome" class="scene clip" data-start="15.20" data-duration="2.20" data-track-index="16">
+      <div class="bg-glow"></div>
+      <div class="center-title">Clarity. Control.<br><span class="accent">Connection.</span></div>
+      <div class="center-sub">Operations finally connected.</div>
+    </div>
+
+    <div id="scene-close" class="scene clip" data-start="17.40" data-duration="2.60" data-track-index="17">
+      <div class="bg-glow"></div>
+      <img class="logo clip" id="logo-close" data-start="17.40" data-duration="2.60" data-track-index="18" src="assets/logo.png" alt="KairoCORE logo" />
+      <div class="center-title" style="top: 420px;">Run your school from one platform.</div>
+      <div class="cta">Book a demo</div>
+    </div>
+  </div>
+
+  <script>
+    const tl = gsap.timeline({ paused: true });
+
+    // beat-locked: 2.19s reveal
+    tl.fromTo("#scene-hook", { opacity: 1 }, { opacity: 1, duration: 0.3, ease: "power2.out" }, 0)
+      .fromTo("#scene-hook .title", { opacity: 1, y: 0, filter: "blur(0px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.6, ease: "power4.out" }, 0)
+      .fromTo("#scene-hook .subtitle", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 0.35)
+      .fromTo(".collage-a", { opacity: 0, x: 120, rotate: -12 }, { opacity: .72, x: 0, rotate: -6, duration: 0.7, ease: "expo.out" }, 0.15)
+      .fromTo(".collage-b", { opacity: 0, x: 140, rotate: 12 }, { opacity: .68, x: 0, rotate: 5, duration: 0.7, ease: "expo.out" }, 0.28)
+      .fromTo(".collage-c", { opacity: 0, x: 100, rotate: -8 }, { opacity: .64, x: 0, rotate: -3, duration: 0.7, ease: "expo.out" }, 0.42);
+
+    tl.fromTo("#scene-reveal", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power2.out" }, 2.19)
+      .fromTo("#logo-reveal", { opacity: 0, scale: .78, filter: "blur(12px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.6, ease: "expo.out" }, 2.22)
+      .fromTo("#scene-reveal .center-title", { opacity: 0, y: 30, filter: "blur(8px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.55, ease: "power4.out" }, 2.35)
+      .fromTo("#scene-reveal .center-sub", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 2.65)
+      .fromTo("#scene-reveal .bg-screen", { opacity: 0, scale: 1.12 }, { opacity: .08, scale: 1.05, duration: 0.8, ease: "power2.out" }, 2.19);
+
+    const productScenes = [
+      ["#scene-dashboard", "#screen-dashboard", 4.39],
+      ["#scene-admissions", "#screen-admissions", 6.20],
+      ["#scene-academics", "#screen-academics", 8.00],
+      ["#scene-finance", "#screen-finance", 9.80],
+      ["#scene-communication", "#screen-communication", 11.60],
+      ["#scene-analytics", "#screen-analytics", 13.40]
+    ];
+
+    productScenes.forEach(([scene, screen, start]) => {
+      tl.fromTo(scene, { opacity: 0, scale: 1.03 }, { opacity: 1, scale: 1, duration: 0.32, ease: "power2.out" }, start)
+        .fromTo(`${scene} .tag`, { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.3, ease: "power3.out" }, start + 0.08)
+        .fromTo(`${scene} .title`, { opacity: 0, y: 26, filter: "blur(8px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.5, ease: "power4.out" }, start + 0.16)
+        .fromTo(`${scene} .subtitle`, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" }, start + 0.36)
+        .fromTo(screen, { opacity: 0, scale: 1.1, filter: "blur(10px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.7, ease: "expo.out" }, start + 0.12);
+    });
+
+    // beat-locked: 17.40s close
+    tl.fromTo("#scene-outcome", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power2.out" }, 15.20)
+      .fromTo("#scene-outcome .center-title", { opacity: 0, y: 32, filter: "blur(8px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.6, ease: "power4.out" }, 15.35)
+      .fromTo("#scene-outcome .center-sub", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 15.75);
+
+    tl.fromTo("#scene-close", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power2.out" }, 17.40)
+      .fromTo("#logo-close", { opacity: 0, scale: .78, filter: "blur(12px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.6, ease: "expo.out" }, 17.45)
+      .fromTo("#scene-close .center-title", { opacity: 0, y: 26, filter: "blur(8px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.55, ease: "power4.out" }, 17.65)
+      .fromTo("#scene-close .cta", { opacity: 0, scale: .9 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.4)" }, 17.90);
+
+    window.__timelines["main"] = tl;
+  </script>
+</body>
+</html>

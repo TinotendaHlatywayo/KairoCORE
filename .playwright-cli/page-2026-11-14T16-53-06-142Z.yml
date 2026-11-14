@@ -1,0 +1,299 @@
+- generic [active] [ref=f3e1]:
+  - generic [ref=f3e2]:
+    - generic [ref=f3e3]:
+      - navigation [ref=f3e5]:
+        - button "Toggle navigation menu" [expanded] [ref=f3e6] [cursor=pointer]
+        - button "Go Back" [ref=f3e9] [cursor=pointer]
+        - generic [ref=f3e12]:
+          - button "Nov 14 18:53 14" [ref=f3e14] [cursor=pointer]:
+            - generic [ref=f3e17]: Nov 14
+            - generic [ref=f3e18]: 18:53
+            - generic [ref=f3e19]: "14"
+          - button "User menu" [ref=f3e22] [cursor=pointer]:
+            - img "Avatar of Admin" [ref=f3e23]
+        - button "Switch Sidebar Left/Right" [ref=f3e24] [cursor=pointer]
+        - link "System Settings" [ref=f3e27] [cursor=pointer]:
+          - /url: https://rujeko.lvh.me/workspace/system-settings-page
+        - button "Help Guide" [ref=f3e32] [cursor=pointer]
+      - main [ref=f3e36]:
+        - generic [ref=f3e37]:
+          - generic [ref=f3e38]:
+            - generic [ref=f3e43]:
+              - generic [ref=f3e44]: Stu
+              - generic [ref=f3e46]: Manage the student body and identification cards.
+            - tablist [ref=f3e48]:
+              - tab "Students ›" [ref=f3e49] [cursor=pointer]:
+                - generic [ref=f3e50]: Students
+                - text: ›
+              - tab "ID Card Templates" [selected] [ref=f3e51] [cursor=pointer]
+          - generic [ref=f3e54]:
+            - generic [ref=f3e58]:
+              - link "New card template" [ref=f3e59] [cursor=pointer]:
+                - /url: https://rujeko.lvh.me/workspace/card-templates/create
+              - link "Bulk Print ID Cards" [ref=f3e61] [cursor=pointer]:
+                - /url: https://rujeko.lvh.me/workspace/students/cards/print?scope=all&layout=pvc
+              - button "Help" [ref=f3e65] [cursor=pointer]
+            - generic [ref=f3e72]:
+              - generic [ref=f3e75]:
+                - generic [ref=f3e76]:
+                  - searchbox "Search templates" [ref=f3e78]
+                  - link "New card template" [ref=f3e79] [cursor=pointer]:
+                    - /url: https://rujeko.lvh.me/workspace/card-templates/create
+                - generic [ref=f3e80]:
+                  - generic [ref=f3e81]: No templates match
+                  - text: Try a different search or create a new card template.
+                  - button "Clear search" [ref=f3e83] [cursor=pointer]
+              - generic:
+                - dialog
+              - generic:
+                - dialog
+              - generic:
+                - dialog
+              - generic:
+                - dialog
+              - generic:
+                - dialog
+      - contentinfo [ref=f3e84]:
+        - generic [ref=f3e85]:
+          - paragraph [ref=f3e86]:
+            - link "Powered by Kairo CORE" [ref=f3e87] [cursor=pointer]:
+              - /url: https://rujeko.lvh.me
+          - paragraph [ref=f3e88]: © 2026 Kairo CORE. All rights reserved.
+    - complementary [ref=f3e89]:
+      - generic [ref=f3e91]:
+        - link "School Logo Rujeko High (RUJEKO-SEC)" [ref=f3e93] [cursor=pointer]:
+          - /url: https://rujeko.lvh.me/workspace
+          - generic [ref=f3e95]:
+            - img "School Logo" [ref=f3e97]
+            - generic [ref=f3e98]:
+              - generic [ref=f3e99]: Rujeko High
+              - generic "School login code — share it so people can find your login page at kairo.co.zw/school-login" [ref=f3e100]: (RUJEKO-SEC)
+        - button "Collapse sidebar" [ref=f3e101] [cursor=pointer]
+      - navigation [ref=f3e105]:
+        - generic [ref=f3e107]:
+          - generic "Search workspace" [ref=f3e108] [cursor=pointer]
+          - textbox "Search workspace..." [ref=f3e111]
+          - generic: ⌘K
+        - list [ref=f3e112]:
+          - listitem [ref=f3e113]:
+            - list [ref=f3e114]:
+              - listitem [ref=f3e115]:
+                - link "Dashboard" [ref=f3e116] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace
+          - listitem [ref=f3e120]:
+            - generic [ref=f3e121] [cursor=pointer]:
+              - generic [ref=f3e122]: Admissions
+              - button "Admissions" [expanded] [ref=f3e123]
+            - list [ref=f3e127]:
+              - listitem [ref=f3e128]:
+                - link "Online Admissions" [ref=f3e129] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/applications
+          - listitem [ref=f3e133]:
+            - generic [ref=f3e134] [cursor=pointer]:
+              - generic [ref=f3e135]: Students
+              - button "Students" [expanded] [ref=f3e136]
+            - list [ref=f3e140]:
+              - listitem [ref=f3e141]:
+                - link "ID Card Designer" [ref=f3e142] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/card-templates
+              - listitem [ref=f3e146]:
+                - link "Student Directory" [ref=f3e147] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/students
+          - listitem [ref=f3e151]:
+            - generic [ref=f3e152] [cursor=pointer]:
+              - generic [ref=f3e153]: Academics
+              - button "Academics" [expanded] [ref=f3e154]
+            - list [ref=f3e158]:
+              - listitem [ref=f3e159]:
+                - link "Academic Operations Center" [ref=f3e160] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/academic-operations-center
+              - listitem [ref=f3e164]:
+                - link "Setup & Structure" [ref=f3e165] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/academics-setup-structure
+              - listitem [ref=f3e169]:
+                - link "Timetables & Teaching" [ref=f3e170] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/academics-timetables-teaching
+              - listitem [ref=f3e174]:
+                - link "Progression" [ref=f3e175] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/academics-progression
+          - listitem [ref=f3e179]:
+            - generic [ref=f3e180] [cursor=pointer]:
+              - generic [ref=f3e181]: Exams & Grading
+              - button "Exams & Grading" [expanded] [ref=f3e182]
+            - list [ref=f3e186]:
+              - listitem [ref=f3e187]:
+                - link "Assessment Center" [ref=f3e188] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/exams-assessment-center
+              - listitem [ref=f3e192]:
+                - link "Grading & Marks Management" [ref=f3e193] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/exams-grading-marks
+              - listitem [ref=f3e197]:
+                - link "Reports & Academic Publishing" [ref=f3e198] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/exams-reports-publishing
+          - listitem [ref=f3e202]:
+            - generic [ref=f3e203] [cursor=pointer]:
+              - generic [ref=f3e204]: Finance
+              - button "Finance" [expanded] [ref=f3e205]
+            - list [ref=f3e209]:
+              - listitem [ref=f3e210]:
+                - link "Dashboard & Analytics" [ref=f3e211] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/executive-financial-dashboard
+              - listitem [ref=f3e215]:
+                - link "Financial Statements" [ref=f3e216] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/financial-statements
+              - listitem [ref=f3e220]:
+                - link "Student Billing & Revenue" [ref=f3e221] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/finance-student-billing
+              - listitem [ref=f3e225]:
+                - link "Expenses & Purchasing" [ref=f3e226] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/finance-expenses-purchasing
+              - listitem [ref=f3e230]:
+                - link "Core Accounting & Setup" [ref=f3e231] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/finance-core-accounting
+          - listitem [ref=f3e235]:
+            - generic [ref=f3e236] [cursor=pointer]:
+              - generic [ref=f3e237]: HR & Payroll
+              - button "HR & Payroll" [expanded] [ref=f3e238]
+            - list [ref=f3e242]:
+              - listitem [ref=f3e243]:
+                - link "Staff Directory & HR" [ref=f3e244] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/hr-staff-directory
+              - listitem [ref=f3e248]:
+                - link "Payroll & Compensation" [ref=f3e249] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/hr-payroll-compensation
+              - listitem [ref=f3e253]:
+                - link "Attendance & Leave" [ref=f3e254] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/hr-attendance-leave
+          - listitem [ref=f3e258]:
+            - generic [ref=f3e259] [cursor=pointer]:
+              - generic [ref=f3e260]: Inventory & Procurement
+              - button "Inventory & Procurement" [expanded] [ref=f3e261]
+            - list [ref=f3e265]:
+              - listitem [ref=f3e266]:
+                - link "Stock & Inventory" [ref=f3e267] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/inventory-stock
+              - listitem [ref=f3e271]:
+                - link "Procurement" [ref=f3e272] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/inventory-procurement
+              - listitem [ref=f3e276]:
+                - link "Fixed Assets" [ref=f3e277] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/inventory-fixed-assets
+          - listitem [ref=f3e281]:
+            - generic [ref=f3e282] [cursor=pointer]:
+              - generic [ref=f3e283]: Library
+              - button "Library" [expanded] [ref=f3e284]
+            - list [ref=f3e288]:
+              - listitem [ref=f3e289]:
+                - link "Catalogue" [ref=f3e290] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/library-catalogue
+              - listitem [ref=f3e294]:
+                - link "Circulation" [ref=f3e295] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/library-circulation
+              - listitem [ref=f3e299]:
+                - link "Knowledge" [ref=f3e300] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/knowledge-knowledge
+          - listitem [ref=f3e304]:
+            - generic [ref=f3e305] [cursor=pointer]:
+              - generic [ref=f3e306]: Boarding & Welfare
+              - button "Boarding & Welfare" [expanded] [ref=f3e307]
+            - list [ref=f3e311]:
+              - listitem [ref=f3e312]:
+                - link "Accommodation" [ref=f3e313] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/boarding-accommodation
+              - listitem [ref=f3e317]:
+                - link "Welfare & Care" [ref=f3e318] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/boarding-welfare
+          - listitem [ref=f3e322]:
+            - generic [ref=f3e323] [cursor=pointer]:
+              - generic [ref=f3e324]: Health & Safety
+              - button "Health & Safety" [expanded] [ref=f3e325]
+            - list [ref=f3e329]:
+              - listitem [ref=f3e330]:
+                - link "Health Records" [ref=f3e331] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/health-records
+          - listitem [ref=f3e335]:
+            - generic [ref=f3e336] [cursor=pointer]:
+              - generic [ref=f3e337]: Communication Center
+              - button "Communication Center" [expanded] [ref=f3e338]
+            - list [ref=f3e342]:
+              - listitem [ref=f3e343]:
+                - link "Communication Center" [ref=f3e344] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/communication-center
+              - listitem [ref=f3e348]:
+                - link "Notices" [ref=f3e349] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/notices
+              - listitem [ref=f3e353]:
+                - link "Community & Engagement" [ref=f3e354] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/communication-community
+              - listitem [ref=f3e358]:
+                - link "Help & Inbox" [ref=f3e359] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/communication-help-inbox
+          - listitem [ref=f3e363]:
+            - generic [ref=f3e364] [cursor=pointer]:
+              - generic [ref=f3e365]: LMS
+              - button "LMS" [expanded] [ref=f3e366]
+            - list [ref=f3e370]:
+              - listitem [ref=f3e371]:
+                - link "LMS" [ref=f3e372] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/lms-lms
+          - listitem [ref=f3e376]:
+            - generic [ref=f3e377] [cursor=pointer]:
+              - generic [ref=f3e378]: Website
+              - button "Website" [expanded] [ref=f3e379]
+            - list [ref=f3e383]:
+              - listitem [ref=f3e384]:
+                - link "Templates & Design" [ref=f3e385] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/website-templates
+              - listitem [ref=f3e389]:
+                - link "Website Templates" [ref=f3e390] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/cms/templates
+              - listitem [ref=f3e394]:
+                - link "Content Manager" [ref=f3e395] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/cms/content
+          - listitem [ref=f3e399]:
+            - generic [ref=f3e400] [cursor=pointer]:
+              - generic [ref=f3e401]: Reports & Intelligence
+              - button "Reports & Intelligence" [expanded] [ref=f3e402]
+            - list [ref=f3e406]:
+              - listitem [ref=f3e407]:
+                - link "Dashboard" [ref=f3e408] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/reporting-dashboard
+              - listitem [ref=f3e412]:
+                - link "Analytics Explorer" [ref=f3e413] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/analytics-explorer
+              - listitem [ref=f3e417]:
+                - link "Generate Report" [ref=f3e418] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/report-generator-page
+              - listitem [ref=f3e422]:
+                - link "Reports" [ref=f3e423] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/reports-reports
+          - listitem [ref=f3e427]:
+            - generic [ref=f3e428] [cursor=pointer]:
+              - generic [ref=f3e429]: System Administration
+              - button "System Administration" [expanded] [ref=f3e430]
+            - list [ref=f3e434]:
+              - listitem [ref=f3e435]:
+                - link "System Settings" [ref=f3e436] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/admin-system-settings
+              - listitem [ref=f3e440]:
+                - link "Overview" [ref=f3e441] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/administration-dashboard
+              - listitem [ref=f3e446]:
+                - link "User Management" [ref=f3e447] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/admin-user-management
+              - listitem [ref=f3e451]:
+                - link "Audit & Compliance" [ref=f3e452] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/admin-audit
+          - listitem [ref=f3e456]:
+            - generic [ref=f3e457] [cursor=pointer]:
+              - generic [ref=f3e458]: Subscription & Billing
+              - button "Subscription & Billing" [expanded] [ref=f3e459]
+            - list [ref=f3e463]:
+              - listitem [ref=f3e464]:
+                - link "Overview & Billing" [ref=f3e465] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/saas-billing-overview
+              - listitem [ref=f3e469]:
+                - link "Subscription & Billing" [ref=f3e470] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/saas-hub
+  - generic:
+    - status

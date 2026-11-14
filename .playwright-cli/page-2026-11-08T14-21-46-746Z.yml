@@ -1,0 +1,428 @@
+- generic [active] [ref=f3e1]:
+  - banner [ref=f3e2]:
+    - generic [ref=f3e3]:
+      - link "Kairo CORE home" [ref=f3e4] [cursor=pointer]:
+        - /url: https://lvh.me
+        - img "Kairo CORE logo" [ref=f3e5]
+      - navigation "Primary navigation" [ref=f3e6]:
+        - link "Home" [ref=f3e7] [cursor=pointer]:
+          - /url: https://lvh.me
+        - link "Features" [ref=f3e8] [cursor=pointer]:
+          - /url: https://lvh.me/features
+        - link "Blog" [ref=f3e11] [cursor=pointer]:
+          - /url: https://lvh.me/blog
+        - link "About" [ref=f3e12] [cursor=pointer]:
+          - /url: https://lvh.me/about
+        - link "Contact" [ref=f3e13] [cursor=pointer]:
+          - /url: https://lvh.me/contact
+      - generic [ref=f3e14]:
+        - button "Toggle dark mode" [ref=f3e15] [cursor=pointer]
+        - group [ref=f3e18]:
+          - generic "Change language" [ref=f3e19] [cursor=pointer]:
+            - generic [ref=f3e23]: EN
+            - text: ⌄
+        - group [ref=f3e24]:
+          - generic "Login ⌄" [ref=f3e25] [cursor=pointer]
+        - link "Register School" [ref=f3e29] [cursor=pointer]:
+          - /url: https://lvh.me/register
+  - main [ref=f3e30]:
+    - generic [ref=f3e32]:
+      - generic [ref=f3e33]:
+        - generic [ref=f3e34]: About us
+        - heading "School software built for the way schools actually run" [level=1] [ref=f3e35]
+        - paragraph [ref=f3e36]: KairoCORE is a modern, all-in-one school management system. It brings admissions, academics, finance, HR, communication, health, inventory and daily operations into one secure, cloud-based platform, for schools of every size.
+        - generic [ref=f3e37]:
+          - link "Book a demo →" [ref=f3e38] [cursor=pointer]:
+            - /url: https://lvh.me/contact#contact-form
+            - text: Book a demo
+            - generic [ref=f3e39]: →
+          - link "Contact us" [ref=f3e40] [cursor=pointer]:
+            - /url: https://lvh.me/contact
+      - generic [ref=f3e41]:
+        - img "School team using Kairo CORE" [ref=f3e43]
+        - generic [ref=f3e44]:
+          - text: Founded in
+          - generic [ref=f3e45]: Harare, Zimbabwe
+    - generic [ref=f3e48]:
+      - generic [ref=f3e49]:
+        - heading "Admissions" [level=3] [ref=f3e53]
+        - paragraph [ref=f3e54]: Applications, enrolment and complete student records.
+      - generic [ref=f3e55]:
+        - heading "Academics" [level=3] [ref=f3e59]
+        - paragraph [ref=f3e60]: Classes, subjects, timetables and report cards.
+      - generic [ref=f3e61]:
+        - heading "Finance & Fees" [level=3] [ref=f3e65]
+        - paragraph [ref=f3e66]: Fee structures, invoicing and multi-currency billing.
+      - generic [ref=f3e67]:
+        - heading "Attendance" [level=3] [ref=f3e71]
+        - paragraph [ref=f3e72]: Daily student and staff attendance with alerts.
+      - generic [ref=f3e73]:
+        - heading "HR & Payroll" [level=3] [ref=f3e77]
+        - paragraph [ref=f3e78]: Staff records, leave management and payroll.
+      - generic [ref=f3e79]:
+        - heading "Communication" [level=3] [ref=f3e83]
+        - paragraph [ref=f3e84]: Announcements and email or WhatsApp alerts to parents.
+      - generic [ref=f3e85]:
+        - heading "Exams & Results" [level=3] [ref=f3e89]
+        - paragraph [ref=f3e90]: Exam scheduling, grading schemes and result publishing.
+      - generic [ref=f3e91]:
+        - heading "Library" [level=3] [ref=f3e95]
+        - paragraph [ref=f3e96]: Book catalogue, issuance tracking, returns and fines.
+      - generic [ref=f3e97]:
+        - heading "Health & Wellness" [level=3] [ref=f3e101]
+        - paragraph [ref=f3e102]: Student health records, clinic visits and medical alerts.
+    - generic [ref=f3e104]:
+      - generic [ref=f3e105]:
+        - generic [ref=f3e106]: What schools face
+        - heading "Stop losing time, money and records to old ways of running a school" [level=2] [ref=f3e107]
+        - paragraph [ref=f3e108]: These problems hit many schools, small private schools most of all. Here is how Kairo CORE ends each one.
+      - generic [ref=f3e109]:
+        - article [ref=f3e110]:
+          - generic [ref=f3e111]:
+            - generic [ref=f3e112]: The problem
+            - heading "Fees chased by hand" [level=3] [ref=f3e114]
+            - paragraph [ref=f3e115]: Handwritten receipts, lost records and balances nobody can trust. You find out who owes what when the term is almost over.
+          - generic [ref=f3e116]:
+            - generic [ref=f3e117]: How Kairo CORE fixes it
+            - paragraph [ref=f3e119]: Invoices, receipts and fee statements are generated for you, and every student has a financial history from the day they enrol.
+            - list [ref=f3e120]:
+              - listitem [ref=f3e121]: Invoices, receipts and fee statements produced by the system
+              - listitem [ref=f3e122]: Complete financial history for each student, from enrolment day
+              - listitem [ref=f3e123]: Download your data and analyse it any time
+            - generic [ref=f3e124]:
+              - link "Finance & Fees" [ref=f3e126] [cursor=pointer]:
+                - /url: https://lvh.me/features#finance
+              - button "See everything it does" [ref=f3e127] [cursor=pointer]
+        - article [ref=f3e131]:
+          - generic [ref=f3e132]:
+            - generic [ref=f3e133]: The problem
+            - heading "Report cards held up by the slowest teacher" [level=3] [ref=f3e135]
+            - paragraph [ref=f3e136]: The English teacher can’t enter marks until the Maths teacher has finished. Every term the queue repeats, and reports reach parents late.
+          - generic [ref=f3e137]:
+            - generic [ref=f3e138]: How Kairo CORE fixes it
+            - paragraph [ref=f3e140]: Each teacher enters marks for their own subject, so nobody waits in line. Report cards go straight to the student portal where parents can read them.
+            - list [ref=f3e141]:
+              - listitem [ref=f3e142]: Teachers capture their own subject marks independently
+              - listitem [ref=f3e143]: Report cards sent directly to the student portal for parents
+              - listitem [ref=f3e144]: Student performance analytics for targeted interventions
+            - generic [ref=f3e145]:
+              - generic [ref=f3e146]:
+                - link "Exams & Results" [ref=f3e147] [cursor=pointer]:
+                  - /url: https://lvh.me/features#exams
+                - link "Academics" [ref=f3e148] [cursor=pointer]:
+                  - /url: https://lvh.me/features#academics
+              - button "See everything it does" [ref=f3e149] [cursor=pointer]
+        - article [ref=f3e153]:
+          - generic [ref=f3e154]:
+            - generic [ref=f3e155]: The problem
+            - heading "A website that costs extra and goes stale" [level=3] [ref=f3e157]
+            - paragraph [ref=f3e158]: You pay a developer to build a static site, then wait and pay again every time you need to add a notice or a photo.
+          - generic [ref=f3e159]:
+            - generic [ref=f3e160]: How Kairo CORE fixes it
+            - paragraph [ref=f3e162]: Your website comes with the system. Pick from ready-made templates, customize every section and update your own content any time.
+            - list [ref=f3e163]:
+              - listitem [ref=f3e164]: Website included, with no separate development fee
+              - listitem [ref=f3e165]: Customize every section through a graphical interface
+              - listitem [ref=f3e166]: "Content management: add, edit or remove all text and images"
+            - generic [ref=f3e167]:
+              - link "Website CMS" [ref=f3e169] [cursor=pointer]:
+                - /url: https://lvh.me/features#cms
+              - button "See everything it does" [ref=f3e170] [cursor=pointer]
+        - article [ref=f3e174]:
+          - generic [ref=f3e175]:
+            - generic [ref=f3e176]: The problem
+            - heading "Parents hear too late" [level=3] [ref=f3e178]
+            - paragraph [ref=f3e179]: Notices go home in school bags, WhatsApp groups get buried, and families miss events, deadlines and absences.
+          - generic [ref=f3e180]:
+            - generic [ref=f3e181]: How Kairo CORE fixes it
+            - paragraph [ref=f3e183]: Send announcements, events and polls from one place. Families receive them in the system, by email, on WhatsApp or by SMS.
+            - list [ref=f3e184]:
+              - listitem [ref=f3e185]: School announcements and events sent in a few clicks
+              - listitem [ref=f3e186]: Delivered through the system, email, WhatsApp and/or SMS
+              - listitem [ref=f3e187]: Daily attendance with absence alerts
+            - generic [ref=f3e188]:
+              - generic [ref=f3e189]:
+                - link "Communications" [ref=f3e190] [cursor=pointer]:
+                  - /url: https://lvh.me/features#communications
+                - link "Attendance" [ref=f3e191] [cursor=pointer]:
+                  - /url: https://lvh.me/features#attendance
+              - button "See everything it does" [ref=f3e192] [cursor=pointer]
+        - article [ref=f3e196]:
+          - generic [ref=f3e197]:
+            - generic [ref=f3e198]: The problem
+            - heading "Past papers that vanish when a teacher leaves" [level=3] [ref=f3e200]
+            - paragraph [ref=f3e201]: ZIMSEC past papers are hard to find. If the teacher holding a paper leaves, or their phone fails, the paper is gone.
+          - generic [ref=f3e202]:
+            - generic [ref=f3e203]: How Kairo CORE fixes it
+            - paragraph [ref=f3e205]: One digital library keeps past exam papers and school resources safe and organized. Every learner opens them from the student portal.
+            - list [ref=f3e206]:
+              - listitem [ref=f3e207]: Store and manage past papers and school resources centrally
+              - listitem [ref=f3e208]: Learners revise from the student portal, any time
+              - listitem [ref=f3e209]: Nothing depends on one teacher’s phone or files
+            - generic [ref=f3e210]:
+              - link "Library" [ref=f3e212] [cursor=pointer]:
+                - /url: https://lvh.me/features#library
+              - button "See everything it does" [ref=f3e213] [cursor=pointer]
+        - article [ref=f3e217]:
+          - generic [ref=f3e218]:
+            - generic [ref=f3e219]: The problem
+            - heading "Applications on paper, enrolment in a pile" [level=3] [ref=f3e221]
+            - paragraph [ref=f3e222]: Forms get lost, applicants slip through and registration drags on at the start of every term.
+          - generic [ref=f3e223]:
+            - generic [ref=f3e224]: How Kairo CORE fixes it
+            - paragraph [ref=f3e226]: Parents apply online, you review and approve, and the student is registered in a single workflow.
+            - list [ref=f3e227]:
+              - listitem [ref=f3e228]: Online applications
+              - listitem [ref=f3e229]: Student registration
+              - listitem [ref=f3e230]: Admission approval
+            - generic [ref=f3e231]:
+              - generic [ref=f3e232]:
+                - link "Admissions" [ref=f3e233] [cursor=pointer]:
+                  - /url: https://lvh.me/features#admissions
+                - link "Students" [ref=f3e234] [cursor=pointer]:
+                  - /url: https://lvh.me/features#students
+              - button "See everything it does" [ref=f3e235] [cursor=pointer]
+        - article [ref=f3e239]:
+          - generic [ref=f3e240]:
+            - generic [ref=f3e241]: The problem
+            - heading "Decisions made without current data" [level=3] [ref=f3e243]
+            - paragraph [ref=f3e244]: Reports are compiled by hand, so the numbers are already out of date by the time leaders see them.
+          - generic [ref=f3e245]:
+            - generic [ref=f3e246]: How Kairo CORE fixes it
+            - paragraph [ref=f3e248]: Over 25 premade reports, financial analytics and student performance analytics give you a live view of the whole school.
+            - list [ref=f3e249]:
+              - listitem [ref=f3e250]: More than 25 premade reports ready to use
+              - listitem [ref=f3e251]: Financial analytics and academic reports
+              - listitem [ref=f3e252]: Student performance analytics for targeted interventions
+            - generic [ref=f3e253]:
+              - link "Reports & Analytics" [ref=f3e255] [cursor=pointer]:
+                - /url: https://lvh.me/features#reports
+              - button "See everything it does" [ref=f3e256] [cursor=pointer]
+        - article [ref=f3e260]:
+          - generic [ref=f3e261]:
+            - generic [ref=f3e262]: The problem
+            - heading "Staff, stock and boarding run on registers" [level=3] [ref=f3e264]
+            - paragraph [ref=f3e265]: Leave balances, payslips, purchases, room lists and clinic notes are spread across books and spreadsheets.
+          - generic [ref=f3e266]:
+            - generic [ref=f3e267]: How Kairo CORE fixes it
+            - paragraph [ref=f3e269]: HR and payroll, inventory, boarding and health records live in the same system as the rest of your school.
+            - list [ref=f3e270]:
+              - listitem [ref=f3e271]: Staff records, leave management and payroll processing
+              - listitem [ref=f3e272]: Requisitions, purchase orders and asset tracking
+              - listitem [ref=f3e273]: Room allocation, hostel attendance and boarding fees
+            - generic [ref=f3e274]:
+              - generic [ref=f3e275]:
+                - link "HR & Payroll" [ref=f3e276] [cursor=pointer]:
+                  - /url: https://lvh.me/features#hr
+                - link "Inventory & Procurement" [ref=f3e277] [cursor=pointer]:
+                  - /url: https://lvh.me/features#inventory
+                - link "Boarding & Hostel" [ref=f3e278] [cursor=pointer]:
+                  - /url: https://lvh.me/features#boarding
+                - link "Health & Wellness" [ref=f3e279] [cursor=pointer]:
+                  - /url: https://lvh.me/features#health
+              - button "See everything it does" [ref=f3e280] [cursor=pointer]
+      - generic [ref=f3e286]:
+        - heading "Make it yours" [level=3] [ref=f3e287]
+        - paragraph [ref=f3e288]: Every document, from academic reports to financial statements, can be customized for your school. So can the look and feel of the system itself.
+    - generic [ref=f3e290]:
+      - generic [ref=f3e291]:
+        - generic [ref=f3e292]: The platform
+        - heading "19+ modules. One connected system." [level=2] [ref=f3e293]
+        - paragraph [ref=f3e294]: From admissions to analytics, every department works in the same platform.
+      - generic [ref=f3e295]:
+        - generic [ref=f3e296]:
+          - heading "Administration 6" [level=3] [ref=f3e297]:
+            - text: Administration
+            - generic [ref=f3e298]: "6"
+          - list [ref=f3e299]:
+            - listitem [ref=f3e300]:
+              - link "Clinic" [ref=f3e301] [cursor=pointer]:
+                - /url: https://lvh.me/features#admissions
+            - listitem [ref=f3e303]:
+              - link "Finance & Fees" [ref=f3e304] [cursor=pointer]:
+                - /url: https://lvh.me/features#finance
+            - listitem [ref=f3e306]:
+              - link "HR & Payroll" [ref=f3e307] [cursor=pointer]:
+                - /url: https://lvh.me/features#hr
+            - listitem [ref=f3e309]:
+              - link "Inventory & Procurement" [ref=f3e310] [cursor=pointer]:
+                - /url: https://lvh.me/features#inventory
+            - listitem [ref=f3e312]:
+              - link "Reports & Analytics" [ref=f3e313] [cursor=pointer]:
+                - /url: https://lvh.me/features#reports
+            - listitem [ref=f3e315]:
+              - link "Website CMS" [ref=f3e316] [cursor=pointer]:
+                - /url: https://lvh.me/features#cms
+        - generic [ref=f3e318]:
+          - heading "Academic 5" [level=3] [ref=f3e319]:
+            - text: Academic
+            - generic [ref=f3e320]: "5"
+          - list [ref=f3e321]:
+            - listitem [ref=f3e322]:
+              - link "Academics" [ref=f3e323] [cursor=pointer]:
+                - /url: https://lvh.me/features#academics
+            - listitem [ref=f3e325]:
+              - link "Students" [ref=f3e326] [cursor=pointer]:
+                - /url: https://lvh.me/features#students
+            - listitem [ref=f3e328]:
+              - link "Exams & Results" [ref=f3e329] [cursor=pointer]:
+                - /url: https://lvh.me/features#exams
+            - listitem [ref=f3e331]:
+              - link "LMS" [ref=f3e332] [cursor=pointer]:
+                - /url: https://lvh.me/features#lms
+            - listitem [ref=f3e334]:
+              - link "Library" [ref=f3e335] [cursor=pointer]:
+                - /url: https://lvh.me/features#library
+        - generic [ref=f3e337]:
+          - heading "Campus life 4" [level=3] [ref=f3e338]:
+            - text: Campus life
+            - generic [ref=f3e339]: "4"
+          - list [ref=f3e340]:
+            - listitem [ref=f3e341]:
+              - link "Attendance" [ref=f3e342] [cursor=pointer]:
+                - /url: https://lvh.me/features#attendance
+            - listitem [ref=f3e344]:
+              - link "Communications" [ref=f3e345] [cursor=pointer]:
+                - /url: https://lvh.me/features#communications
+            - listitem [ref=f3e347]:
+              - link "Health & Wellness" [ref=f3e348] [cursor=pointer]:
+                - /url: https://lvh.me/features#health
+            - listitem [ref=f3e350]:
+              - link "Boarding & Hostel" [ref=f3e351] [cursor=pointer]:
+                - /url: https://lvh.me/features#boarding
+    - generic [ref=f3e354]:
+      - generic [ref=f3e355]:
+        - generic [ref=f3e356]: Why KairoCORE
+        - heading "Why schools choose KairoCORE" [level=2] [ref=f3e357]
+      - generic [ref=f3e358]:
+        - generic [ref=f3e359]:
+          - heading "One system for the whole school" [level=3] [ref=f3e363]
+          - paragraph [ref=f3e364]: Admissions, academics, finance, HR and communication share the same data, so nothing has to be captured twice.
+        - generic [ref=f3e365]:
+          - heading "Save hours of admin every week" [level=3] [ref=f3e369]
+          - paragraph [ref=f3e370]: Automated fees, invoices, report cards and alerts replace repetitive paperwork so your staff can focus on learners.
+        - generic [ref=f3e371]:
+          - heading "Reach parents where they are" [level=3] [ref=f3e375]
+          - paragraph [ref=f3e376]: Send announcements and timely updates by email or WhatsApp, and let parents follow attendance, fees and results.
+        - generic [ref=f3e377]:
+          - heading "Secure, cloud-based and current" [level=3] [ref=f3e381]
+          - paragraph [ref=f3e382]: Your data is backed up and always up to date, with role-based access so everyone sees only what they should.
+      - generic [ref=f3e383]:
+        - generic [ref=f3e384]: One connected platform for every department
+        - generic [ref=f3e387]: Built for African schools with multi-currency fees and WhatsApp alerts
+        - generic [ref=f3e390]: Simple enough for busy admin teams to adopt quickly
+        - generic [ref=f3e393]: Role-based access and regular backups keep your data safe
+        - generic [ref=f3e396]: Reports and dashboards that turn daily data into decisions
+        - generic [ref=f3e399]: A team that understands school operations, on hand to help
+    - generic [ref=f3e403]:
+      - generic [ref=f3e404]:
+        - generic [ref=f3e405]: Our story
+        - heading "Built in Zimbabwe, for schools everywhere" [level=2] [ref=f3e406]
+        - paragraph [ref=f3e407]: "KairoCORE started with a simple observation: school administrators were drowning in paperwork, duplicate records and disconnected spreadsheets. We built one system that mirrors how schools really work, term by term, class by class, fee by fee, and made it affordable and simple enough for any school to adopt."
+        - paragraph [ref=f3e408]: Today, primary and secondary schools run admissions, exams, fees and parent communication on KairoCORE every day.
+      - generic [ref=f3e409]:
+        - generic [ref=f3e410]:
+          - generic [ref=f3e411]: "0"
+          - text: Schools onboard
+        - generic [ref=f3e412]:
+          - generic [ref=f3e413]: "0"
+          - text: Students managed
+        - generic [ref=f3e414]:
+          - generic [ref=f3e415]: "0"
+          - text: Languages supported
+        - generic [ref=f3e416]:
+          - generic [ref=f3e417]: "0"
+          - text: Connected modules
+    - generic [ref=f3e418]:
+      - heading "Want to see how KairoCORE fits your school?" [level=2] [ref=f3e419]
+      - paragraph [ref=f3e420]: Book a personal demo and we will walk you through it, module by module.
+      - link "Book a demo →" [ref=f3e422] [cursor=pointer]:
+        - /url: https://lvh.me/contact#contact-form
+  - contentinfo [ref=f3e423]:
+    - generic [ref=f3e424]:
+      - generic [ref=f3e425]:
+        - generic [ref=f3e426]:
+          - link "Kairo CORE home" [ref=f3e427] [cursor=pointer]:
+            - /url: https://lvh.me
+            - img "Kairo CORE logo" [ref=f3e428]
+          - paragraph [ref=f3e429]: Smarter Schools. Brighter Futures.
+          - paragraph [ref=f3e430]: The complete school management platform for primary, secondary and tertiary institutions.
+          - generic [ref=f3e431]:
+            - text: All systems operational ·
+            - generic [ref=f3e433]: 16:21
+        - generic [ref=f3e434]:
+          - heading "Quick links" [level=4] [ref=f3e435]
+          - list [ref=f3e436]:
+            - listitem [ref=f3e437]:
+              - link "Home" [ref=f3e438] [cursor=pointer]:
+                - /url: https://lvh.me
+            - listitem [ref=f3e439]:
+              - link "Features" [ref=f3e440] [cursor=pointer]:
+                - /url: https://lvh.me/features
+            - listitem [ref=f3e441]:
+              - link "Why Kairo" [ref=f3e442] [cursor=pointer]:
+                - /url: https://lvh.me#why
+            - listitem [ref=f3e443]:
+              - link "How it works" [ref=f3e444] [cursor=pointer]:
+                - /url: https://lvh.me#start
+            - listitem [ref=f3e445]:
+              - link "FAQ" [ref=f3e446] [cursor=pointer]:
+                - /url: https://lvh.me#faq
+            - listitem [ref=f3e447]:
+              - link "About" [ref=f3e448] [cursor=pointer]:
+                - /url: https://lvh.me/about
+            - listitem [ref=f3e449]:
+              - link "Contact" [ref=f3e450] [cursor=pointer]:
+                - /url: https://lvh.me/contact
+        - generic [ref=f3e451]:
+          - heading "Reach out to us" [level=4] [ref=f3e452]
+          - list [ref=f3e453]:
+            - listitem [ref=f3e454]:
+              - link [ref=f3e455] [cursor=pointer]:
+                - /url: tel:+263786366855
+            - listitem [ref=f3e459]:
+              - link [ref=f3e460] [cursor=pointer]:
+                - /url: mailto:support@kairocore.co.zw
+            - listitem [ref=f3e465]:
+              - link [ref=f3e466] [cursor=pointer]:
+                - /url: https://wa.me/263786366855
+        - generic [ref=f3e470]:
+          - heading "Follow us" [level=4] [ref=f3e471]
+          - generic [ref=f3e472]:
+            - link "WhatsApp" [ref=f3e473] [cursor=pointer]:
+              - /url: https://wa.me/263786366855
+            - link "Facebook" [ref=f3e476] [cursor=pointer]:
+              - /url: https://www.facebook.com/
+            - link "Instagram" [ref=f3e479] [cursor=pointer]:
+              - /url: https://www.instagram.com/
+            - link "X" [ref=f3e484] [cursor=pointer]:
+              - /url: https://x.com/
+            - link "TikTok" [ref=f3e487] [cursor=pointer]:
+              - /url: https://www.tiktok.com/
+            - link "YouTube" [ref=f3e492] [cursor=pointer]:
+              - /url: https://www.youtube.com/
+      - generic [ref=f3e495]:
+        - generic [ref=f3e496]: © 2026 Kairo CORE. All rights reserved.
+        - generic [ref=f3e497]:
+          - link "Privacy Policy" [ref=f3e498] [cursor=pointer]:
+            - /url: https://lvh.me/privacy
+          - generic [aria-hidden] [ref=f3e499]: "|"
+          - link "Terms of Service" [ref=f3e500] [cursor=pointer]:
+            - /url: https://lvh.me/terms
+        - link "↑ Back to top" [ref=f3e501] [cursor=pointer]:
+          - /url: "#"
+  - generic "Quick contact links" [ref=f3e502]:
+    - link "WhatsApp" [ref=f3e503] [cursor=pointer]:
+      - /url: https://wa.me/263786366855
+    - link "Facebook" [ref=f3e506] [cursor=pointer]:
+      - /url: https://www.facebook.com/
+    - link "Instagram" [ref=f3e509] [cursor=pointer]:
+      - /url: https://www.instagram.com/
+    - link "X" [ref=f3e514] [cursor=pointer]:
+      - /url: https://x.com/
+    - link "TikTok" [ref=f3e517] [cursor=pointer]:
+      - /url: https://www.tiktok.com/
+    - link "YouTube" [ref=f3e522] [cursor=pointer]:
+      - /url: https://www.youtube.com/
+    - link "Email" [ref=f3e525] [cursor=pointer]:
+      - /url: mailto:support@kairocore.co.zw

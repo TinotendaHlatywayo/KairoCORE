@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html
+  data-composition-variables='[
+    {"id":"color-ground","type":"color","label":"Background","default":"#FFFFFF"},
+    {"id":"color-ink","type":"color","label":"Text","default":"#1F2E43"},
+    {"id":"color-accent","type":"color","label":"Accent","default":"#EF5F4D"},
+    {"id":"font-display","type":"string","label":"Display font","default":"Plus Jakarta Sans"}
+  ]'
+>
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    @font-face { font-family: 'Plus Jakarta Sans'; font-style: normal; font-weight: 400; font-display: swap; src: url('assets/fonts/LDIbaomQNQcsA88c7O9yZ4KMCoOg4IA6-91aHEjcWuA_qU7NSg.ttf') format('truetype'); }
+    @font-face { font-family: 'Plus Jakarta Sans'; font-style: normal; font-weight: 600; font-display: swap; src: url('assets/fonts/LDIbaomQNQcsA88c7O9yZ4KMCoOg4IA6-91aHEjcWuA_d0nNSg.ttf') format('truetype'); }
+    @font-face { font-family: 'Plus Jakarta Sans'; font-style: normal; font-weight: 700; font-display: swap; src: url('assets/fonts/LDIbaomQNQcsA88c7O9yZ4KMCoOg4IA6-91aHEjcWuA_TknNSg.ttf') format('truetype'); }
+    @font-face { font-family: 'Plus Jakarta Sans'; font-style: normal; font-weight: 800; font-display: swap; src: url('assets/fonts/LDIbaomQNQcsA88c7O9yZ4KMCoOg4IA6-91aHEjcWuA_KUnNSg.ttf') format('truetype'); }
+
+    :root {
+      --color-ground: #FFFFFF;
+      --color-ink: #1F2E43;
+      --color-accent: #EF5F4D;
+      --color-accent-strong: #D94B39;
+      --color-muted: #444B57;
+      --font-display: 'Plus Jakarta Sans', system-ui, sans-serif;
+      --font-body: 'Inter', system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: var(--color-ground); font-family: var(--font-body); color: var(--color-ink); }
+    .scene { position: absolute; inset: 0; opacity: 0; }
+    #scene-hook { opacity: 1; }
+    #scene-hook .title, #scene-hook .subtitle { opacity: 1; transform: none; filter: none; }
+    .title { position: absolute; left: 120px; top: 150px; width: 760px; font-family: var(--font-display); font-weight: 800; font-size: 78px; line-height: 1.02; letter-spacing: -0.03em; }
+    .subtitle { position: absolute; left: 120px; top: 360px; width: 620px; font-size: 28px; line-height: 1.35; color: var(--color-muted); }
+    .accent { color: var(--color-accent); }
+    .screen-frame { position: absolute; right: 110px; top: 120px; width: 980px; height: 613px; border-radius: 28px; overflow: hidden; box-shadow: 0 40px 100px rgba(31, 46, 67, 0.22); background: #F8FAFC; }
+    .screen-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .logo { position: absolute; left: 120px; top: 180px; width: 300px; height: auto; }
+    .center-title { position: absolute; left: 120px; top: 360px; width: 1680px; text-align: center; font-family: var(--font-display); font-weight: 800; font-size: 86px; line-height: 1.02; letter-spacing: -0.03em; }
+    .center-sub { position: absolute; left: 260px; top: 560px; width: 1400px; text-align: center; font-size: 34px; line-height: 1.3; color: var(--color-muted); }
+    .cta { position: absolute; left: 805px; top: 700px; padding: 22px 42px; border-radius: 999px; background: var(--color-accent); color: #FFFFFF; font-family: var(--font-display); font-weight: 700; font-size: 28px; box-shadow: 0 18px 45px rgba(239, 95, 77, 0.35); }
+    .tag { position: absolute; left: 120px; top: 95px; font-size: 28px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-accent); }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js"></script>
+</head>
+<body>
+  <div
+    id="root"
+    data-composition-id="main"
+    data-start="0"
+    data-duration="20"
+    data-width="1920"
+    data-height="1080"
+    data-motion-blur="on"
+  >
+    <audio id="music" class="clip" data-start="0" data-duration="20" data-track-index="0" data-volume="0.58" src="assets/music.mp3"></audio>
+
+    <div id="scene-hook" class="scene clip" data-start="0" data-duration="2.19" data-track-index="1">
+      <div class="tag">KairoCORE</div>
+      <div class="title">One school.<br><span class="accent">Many moving parts.</span></div>
+      <div class="subtitle">Admissions, academics, finance, communication.</div>
+    </div>
+
+    <div id="scene-reveal" class="scene clip" data-start="2.19" data-duration="2.20" data-track-index="2">
+      <img class="logo clip" id="logo-reveal" data-start="2.19" data-duration="2.20" data-track-index="3" src="assets/logo.png" alt="KairoCORE logo" />
+      <div class="center-title">One platform for your school.</div>
+      <div class="center-sub">Cloud-based school operating system.</div>
+    </div>
+
+    <div id="scene-dashboard" class="scene clip" data-start="4.39" data-duration="2.17" data-track-index="4">
+      <div class="tag">Workspace</div>
+      <div class="title">One connected<br><span class="accent">workspace.</span></div>
+      <div class="subtitle">See everything at a glance.</div>
+      <div class="screen-frame"><img class="clip" id="screen-dashboard" data-start="4.39" data-duration="2.17" data-track-index="5" src="assets/screens/dashboard.png" alt="KairoCORE dashboard" /></div>
+    </div>
+
+    <div id="scene-admissions" class="scene clip" data-start="6.56" data-duration="2.18" data-track-index="6">
+      <div class="tag">Admissions</div>
+      <div class="title">Admissions to<br><span class="accent">student records.</span></div>
+      <div class="subtitle">Track applicants and enrollments.</div>
+      <div class="screen-frame"><img class="clip" id="screen-admissions" data-start="6.56" data-duration="2.18" data-track-index="7" src="assets/screens/admissions.png" alt="KairoCORE admissions" /></div>
+    </div>
+
+    <div id="scene-academics" class="scene clip" data-start="8.74" data-duration="2.18" data-track-index="8">
+      <div class="tag">Academics</div>
+      <div class="title">Academics and<br><span class="accent">assessment.</span></div>
+      <div class="subtitle">Reports, marks, workflows connected.</div>
+      <div class="screen-frame"><img class="clip" id="screen-academics" data-start="8.74" data-duration="2.18" data-track-index="9" src="assets/screens/academics.png" alt="KairoCORE academics" /></div>
+    </div>
+
+    <div id="scene-finance" class="scene clip" data-start="10.93" data-duration="2.18" data-track-index="10">
+      <div class="tag">Finance</div>
+      <div class="title">Fees and<br><span class="accent">finance.</span></div>
+      <div class="subtitle">Accounts, invoices, payments together.</div>
+      <div class="screen-frame"><img class="clip" id="screen-finance" data-start="10.93" data-duration="2.18" data-track-index="11" src="assets/screens/finance.png" alt="KairoCORE finance" /></div>
+    </div>
+
+    <div id="scene-communication" class="scene clip" data-start="13.11" data-duration="2.18" data-track-index="12">
+      <div class="tag">Communication</div>
+      <div class="title">Communication and<br><span class="accent">insight.</span></div>
+      <div class="subtitle">Teams, notices, conversations connected.</div>
+      <div class="screen-frame"><img class="clip" id="screen-communication" data-start="13.11" data-duration="2.18" data-track-index="13" src="assets/screens/communication.png" alt="KairoCORE communication" /></div>
+    </div>
+
+    <div id="scene-outcome" class="scene clip" data-start="15.29" data-duration="2.18" data-track-index="14">
+      <div class="center-title">Clarity. Control.<br><span class="accent">Connection.</span></div>
+      <div class="center-sub">Clarity, control, and connection.</div>
+    </div>
+
+    <div id="scene-close" class="scene clip" data-start="17.47" data-duration="2.53" data-track-index="15">
+      <img class="logo clip" id="logo-close" data-start="17.47" data-duration="2.53" data-track-index="16" src="assets/logo.png" alt="KairoCORE logo" />
+      <div class="center-title" style="top: 420px;">Run your whole school from one platform.</div>
+      <div class="cta">Book a demo</div>
+    </div>
+  </div>
+
+  <script>
+    const tl = gsap.timeline({ paused: true });
+
+    // beat-locked: 0.00s, 2.19s, 4.39s, 6.56s, 8.74s, 10.93s, 13.11s, 15.29s, 17.47s
+    tl.fromTo("#scene-hook", { opacity: 1 }, { opacity: 1, duration: 0.45, ease: "power2.out" }, 0)
+      .fromTo("#scene-hook .title", { opacity: 0, y: 24, filter: "blur(8px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.55, ease: "power4.out" }, 0.15)
+      .fromTo("#scene-hook .subtitle", { opacity: 1, y: 0 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 0.45);
+
+    tl.fromTo("#scene-reveal", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power2.out" }, 2.19)
+      .fromTo("#logo-reveal", { opacity: 0, scale: 0.82, filter: "blur(10px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.6, ease: "expo.out" }, 2.25)
+      .fromTo("#scene-reveal .center-title", { opacity: 0, y: 28, filter: "blur(8px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.55, ease: "power4.out" }, 2.45)
+      .fromTo("#scene-reveal .center-sub", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 2.65);
+
+    const productScenes = [
+      ["#scene-dashboard", "#screen-dashboard", 4.39],
+      ["#scene-admissions", "#screen-admissions", 6.56],
+      ["#scene-academics", "#screen-academics", 8.74],
+      ["#scene-finance", "#screen-finance", 10.93],
+      ["#scene-communication", "#screen-communication", 13.11]
+    ];
+
+    productScenes.forEach(([scene, screen, start]) => {
+      tl.fromTo(scene, { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power2.out" }, start)
+        .fromTo(`${scene} .tag`, { opacity: 0, x: -18 }, { opacity: 1, x: 0, duration: 0.35, ease: "power3.out" }, start + 0.12)
+        .fromTo(`${scene} .title`, { opacity: 0, y: 24, filter: "blur(8px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.5, ease: "power4.out" }, start + 0.22)
+        .fromTo(`${scene} .subtitle`, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, start + 0.45)
+        .fromTo(screen, { opacity: 0, scale: 1.06, filter: "blur(8px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.65, ease: "expo.out" }, start + 0.18);
+    });
+
+    tl.fromTo("#scene-outcome", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power2.out" }, 15.29)
+      .fromTo("#scene-outcome .center-title", { opacity: 0, y: 30, filter: "blur(8px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.6, ease: "power4.out" }, 15.45)
+      .fromTo("#scene-outcome .center-sub", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 15.85);
+
+    tl.fromTo("#scene-close", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power2.out" }, 17.47)
+      .fromTo("#logo-close", { opacity: 0, scale: 0.82, filter: "blur(10px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.6, ease: "expo.out" }, 17.55)
+      .fromTo("#scene-close .center-title", { opacity: 0, y: 26, filter: "blur(8px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.55, ease: "power4.out" }, 17.65)
+      .fromTo("#scene-close .cta", { opacity: 0, scale: 0.92 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.3)" }, 17.90);
+
+    window.__timelines["main"] = tl;
+  </script>
+</body>
+</html>

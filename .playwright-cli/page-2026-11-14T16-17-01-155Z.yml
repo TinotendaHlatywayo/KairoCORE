@@ -1,0 +1,512 @@
+- generic [active] [ref=f4e1]:
+  - status "Signing you in to Kairo CORE" [ref=f4e2]:
+    - generic [ref=f4e5]:
+      - img "Kairo CORE" [ref=f4e7]
+      - heading "Rujeko High" [level=2] [ref=f4e8]:
+        - generic [aria-hidden] [ref=f4e9]:
+          - generic [ref=f4e10]: R
+          - generic [ref=f4e11]: u
+          - generic [ref=f4e12]: j
+          - generic [ref=f4e13]: e
+          - generic [ref=f4e14]: k
+          - generic [ref=f4e15]: o
+        - generic [aria-hidden] [ref=f4e16]:
+          - generic [ref=f4e17]: H
+          - generic [ref=f4e18]: i
+          - generic [ref=f4e19]: g
+          - generic [ref=f4e20]: h
+      - generic [aria-hidden] [ref=f4e21]:
+        - generic [ref=f4e26]: Academics
+        - generic [ref=f4e32]: Admissions
+        - generic [ref=f4e39]: Finance
+        - generic [ref=f4e45]: Attendance
+        - generic [ref=f4e52]: Communication
+        - generic [ref=f4e58]: Exams
+      - generic [ref=f4e65]:
+        - generic [ref=f4e66]: Your school. In sync.
+        - generic [ref=f4e67]:
+          - generic [ref=f4e68]: Good evening, Admin
+          - generic [ref=f4e69]: Saturday 14 November
+      - button "Skip" [ref=f4e70] [cursor=pointer]
+  - generic [ref=f4e71]:
+    - generic [ref=f4e72]:
+      - navigation [ref=f4e74]:
+        - button "Toggle navigation menu" [expanded] [ref=f4e75] [cursor=pointer]
+        - button "Go Back" [ref=f4e78] [cursor=pointer]
+        - generic [ref=f4e81]:
+          - button "Nov 14 18:17 14" [ref=f4e83] [cursor=pointer]:
+            - generic [ref=f4e86]: Nov 14
+            - generic [ref=f4e87]: 18:17
+            - generic [ref=f4e88]: "14"
+          - button "User menu" [ref=f4e91] [cursor=pointer]:
+            - img "Avatar of Admin" [ref=f4e92]
+        - button "Switch Sidebar Left/Right" [ref=f4e93] [cursor=pointer]
+        - link "System Settings" [ref=f4e96] [cursor=pointer]:
+          - /url: https://rujeko.lvh.me/workspace/system-settings-page
+        - button "Help Guide" [ref=f4e101] [cursor=pointer]
+      - main [ref=f4e105]:
+        - generic [ref=f4e106]:
+          - generic [ref=f4e110]:
+            - link "Skip to dashboard" [ref=f4e111] [cursor=pointer]:
+              - /url: "#tw-content"
+            - generic [ref=f4e112]:
+              - generic [ref=f4e113]:
+                - button "Open menu" [ref=f4e114] [cursor=pointer]
+                - generic [ref=f4e117]: Saturday, November 14, 2026 · 06:17 PM
+                - button "Quick find (Ctrl + K)" [ref=f4e118] [cursor=pointer]
+              - generic [ref=f4e122]:
+                - heading "Good evening, Admin" [level=1] [ref=f4e123]
+                - paragraph [ref=f4e124]: Here’s how Rujeko High is doing today.
+                - generic [ref=f4e126]:
+                  - generic [ref=f4e130]:
+                    - generic [ref=f4e131]: 0%
+                    - text: Fees collected
+                  - emphasis [ref=f4e132]: $0.00
+                - generic [ref=f4e133]:
+                  - generic [ref=f4e134]:
+                    - heading "Students" [level=2] [ref=f4e135]
+                    - generic [ref=f4e136]:
+                      - generic [ref=f4e137]:
+                        - generic [ref=f4e138]: "0"
+                        - img "0 girls, 1 boys" [ref=f4e139]
+                        - generic [ref=f4e141]:
+                          - generic [ref=f4e142]: 0 girls
+                          - generic [ref=f4e144]: 1 boys
+                        - generic [ref=f4e146]:
+                          - generic [ref=f4e147]:
+                            - generic [ref=f4e148]: "0"
+                            - text: Teaching
+                          - generic [ref=f4e149]:
+                            - generic [ref=f4e150]: "0"
+                            - text: Non-teaching
+                          - generic [ref=f4e151]:
+                            - generic [ref=f4e152]: "0"
+                            - text: Admins
+                      - generic [ref=f4e153]:
+                        - generic [ref=f4e154]: Students per grade
+                        - img [ref=f4e155]:
+                          - generic [ref=f4e156] [cursor=pointer]:
+                            - generic [ref=f4e157]: "0"
+                            - generic [ref=f4e158]: Grade 1
+                  - generic [ref=f4e159]:
+                    - heading "Quick actions" [level=2] [ref=f4e160]
+                    - generic [ref=f4e161]:
+                      - link "Add a student Register or edit profiles" [ref=f4e162] [cursor=pointer]:
+                        - /url: https://rujeko.lvh.me/workspace/students
+                        - generic [ref=f4e166]:
+                          - text: Add a student
+                          - generic [ref=f4e167]: Register or edit profiles
+                      - link "Enter marks Current term" [ref=f4e168] [cursor=pointer]:
+                        - /url: https://rujeko.lvh.me/workspace/assessment-marks
+                        - generic [ref=f4e172]:
+                          - text: Enter marks
+                          - generic [ref=f4e173]: Current term
+                      - link "Record a payment Fee collections" [ref=f4e174] [cursor=pointer]:
+                        - /url: https://rujeko.lvh.me/workspace/fee-collections
+                        - generic [ref=f4e178]:
+                          - text: Record a payment
+                          - generic [ref=f4e179]: Fee collections
+                      - link "Staff attendance Today’s register" [ref=f4e180] [cursor=pointer]:
+                        - /url: https://rujeko.lvh.me/workspace/staff-attendances
+                        - generic [ref=f4e184]:
+                          - text: Staff attendance
+                          - generic [ref=f4e185]: Today’s register
+                      - link "Review applications Online admissions" [ref=f4e186] [cursor=pointer]:
+                        - /url: https://rujeko.lvh.me/workspace/applications
+                        - generic [ref=f4e190]:
+                          - text: Review applications
+                          - generic [ref=f4e191]: Online admissions
+                      - link "Send announcement Parents and staff" [ref=f4e192] [cursor=pointer]:
+                        - /url: https://rujeko.lvh.me/workspace/announcements
+                        - generic [ref=f4e196]:
+                          - text: Send announcement
+                          - generic [ref=f4e197]: Parents and staff
+                  - generic [ref=f4e198]:
+                    - heading [level=2] [ref=f4e199]:
+                      - text: Attendance today
+                      - link "Open" [ref=f4e200] [cursor=pointer]:
+                        - /url: https://rujeko.lvh.me/workspace/timetable-lessons
+                    - generic [ref=f4e201]: No attendance has been recorded for today yet. Mark it from a lesson on the timetable.
+                  - generic [ref=f4e202]:
+                    - heading [level=2] [ref=f4e203]:
+                      - text: Fees collected this year
+                      - generic [ref=f4e204]:
+                        - button "Total" [pressed] [ref=f4e205] [cursor=pointer]
+                        - button "Monthly" [ref=f4e206] [cursor=pointer]
+                      - link "Statements" [ref=f4e207] [cursor=pointer]:
+                        - /url: https://rujeko.lvh.me/workspace/financial-statements
+                    - generic [ref=f4e208]:
+                      - generic [ref=f4e209]:
+                        - generic [ref=f4e210]: $0
+                        - generic [ref=f4e211]: of $0 billed
+                      - generic [ref=f4e214]:
+                        - generic [ref=f4e215]: 0% collected
+                        - generic [ref=f4e216]: $0 outstanding
+                    - img "Fees collected this year, cumulative" [ref=f4e218]:
+                      - generic [ref=f4e219] [cursor=pointer]
+                      - generic [ref=f4e220]: Jan
+                      - generic [ref=f4e221] [cursor=pointer]
+                      - generic [ref=f4e222]: Feb
+                      - generic [ref=f4e223] [cursor=pointer]
+                      - generic [ref=f4e224]: Mar
+                      - generic [ref=f4e225] [cursor=pointer]
+                      - generic [ref=f4e226]: Apr
+                      - generic [ref=f4e227] [cursor=pointer]
+                      - generic [ref=f4e228]: May
+                      - generic [ref=f4e229] [cursor=pointer]
+                      - generic [ref=f4e230]: Jun
+                      - generic [ref=f4e231] [cursor=pointer]
+                      - generic [ref=f4e232]: Jul
+                      - generic [ref=f4e233] [cursor=pointer]
+                      - generic [ref=f4e234]: Aug
+                      - generic [ref=f4e235] [cursor=pointer]
+                      - generic [ref=f4e236]: Sep
+                      - generic [ref=f4e237] [cursor=pointer]
+                      - generic [ref=f4e238]: Oct
+                      - generic [ref=f4e239] [cursor=pointer]
+                      - generic [ref=f4e240]: Nov
+                      - generic [ref=f4e241]: $0
+                  - generic [ref=f4e242]:
+                    - heading "Needs your attention" [level=2] [ref=f4e243]
+                    - list
+                    - generic [ref=f4e244]: You’re all caught up.
+                  - generic [ref=f4e245]:
+                    - heading [level=2] [ref=f4e246]:
+                      - text: Average mark by subject
+                      - link "Analytics" [ref=f4e247] [cursor=pointer]:
+                        - /url: https://rujeko.lvh.me/workspace/assessment-marks
+                    - generic [ref=f4e248]: No marks have been entered for the current term yet.
+                  - generic [ref=f4e249]:
+                    - heading [level=2] [ref=f4e250]:
+                      - text: Today’s schedule
+                      - link "Full schedule" [ref=f4e251] [cursor=pointer]:
+                        - /url: https://rujeko.lvh.me/workspace/schedule
+                    - generic [ref=f4e252]: Nothing scheduled for today. Add events or timetable lessons to fill this list.
+                  - generic [ref=f4e253]:
+                    - heading "This week across the school" [level=2] [ref=f4e254]
+                    - generic [ref=f4e255]:
+                      - generic [ref=f4e256]:
+                        - generic [ref=f4e257]: Books on loan
+                        - generic [ref=f4e258]: "0"
+                        - text: 0 out this week
+                      - generic [ref=f4e261]:
+                        - generic [ref=f4e262]: Clinic visits
+                        - generic [ref=f4e263]: "0"
+                        - text: +0 vs last week
+                      - generic [ref=f4e266]:
+                        - generic [ref=f4e267]: Boarders
+                        - generic [ref=f4e268]: "0"
+                        - text: of 0 beds
+                      - generic [ref=f4e271]:
+                        - generic [ref=f4e272]: Open tickets
+                        - generic [ref=f4e273]: "0"
+                        - text: 0 closed today
+                  - generic [ref=f4e276]:
+                    - heading [level=2] [ref=f4e277]:
+                      - text: Attendance not marked yet
+                      - link "Mark now" [ref=f4e278] [cursor=pointer]:
+                        - /url: https://rujeko.lvh.me/workspace/timetable-lessons
+                    - generic [ref=f4e279]: Every class on today’s timetable has been marked.
+                  - generic [ref=f4e280]:
+                    - heading "Alerts and school health" [level=2] [ref=f4e281]
+                    - generic [ref=f4e282]:
+                      - generic [ref=f4e283]: Accounts
+                      - generic [ref=f4e284]: 1 registrations awaiting approval
+                      - link "Approve" [ref=f4e286] [cursor=pointer]:
+                        - /url: https://rujeko.lvh.me/workspace/user-accounts
+                    - generic [ref=f4e287]:
+                      - generic [ref=f4e288]: Subscription
+                      - generic [ref=f4e289]: Trialing · renews in 14 days
+                      - link "Manage" [ref=f4e291] [cursor=pointer]:
+                        - /url: https://rujeko.lvh.me/workspace/saas-billing-overview
+                  - generic [ref=f4e292]:
+                    - heading [level=2] [ref=f4e293]:
+                      - text: Recent activity
+                      - link "Audit log" [ref=f4e294] [cursor=pointer]:
+                        - /url: https://rujeko.lvh.me/workspace/system-audit-logs
+                    - list [ref=f4e295]:
+                      - listitem [ref=f4e296]:
+                        - generic [ref=f4e298]:
+                          - text: "Deleted Record inside: AcademicYear"
+                          - generic [ref=f4e299]: Admin · Academics & SIS
+                        - time [ref=f4e300]: 3 minutes ago
+                      - listitem [ref=f4e301]:
+                        - generic [ref=f4e303]:
+                          - text: "Updated Record inside: AcademicYear"
+                          - generic [ref=f4e304]: Admin · Academics & SIS
+                        - time [ref=f4e305]: 3 minutes ago
+                      - listitem [ref=f4e306]:
+                        - generic [ref=f4e308]:
+                          - text: "Created Record inside: AcademicYear"
+                          - generic [ref=f4e309]: Admin · Academics & SIS
+                        - time [ref=f4e310]: 3 minutes ago
+                      - listitem [ref=f4e311]:
+                        - generic [ref=f4e313]:
+                          - text: "Deleted Record inside: Course"
+                          - generic [ref=f4e314]: Admin · Academics & SIS
+                        - time [ref=f4e315]: 3 minutes ago
+                      - listitem [ref=f4e316]:
+                        - generic [ref=f4e318]:
+                          - text: "Updated Record inside: Course"
+                          - generic [ref=f4e319]: Admin · Academics & SIS
+                        - time [ref=f4e320]: 3 minutes ago
+                      - listitem [ref=f4e321]:
+                        - generic [ref=f4e323]:
+                          - text: "Created Record inside: Section"
+                          - generic [ref=f4e324]: Admin · Academics & SIS
+                        - time [ref=f4e325]: 3 minutes ago
+                - generic [ref=f4e326]:
+                  - paragraph [ref=f4e327]: Demo data. Fill the system with sample students, classes, marks and reports so you can test every area.
+                  - button "Seed demo data" [ref=f4e329] [cursor=pointer]
+            - tooltip
+            - status
+          - generic:
+            - dialog
+          - generic:
+            - dialog
+          - generic:
+            - dialog
+      - contentinfo [ref=f4e330]:
+        - generic [ref=f4e331]:
+          - paragraph [ref=f4e332]:
+            - link "Powered by Kairo CORE" [ref=f4e333] [cursor=pointer]:
+              - /url: https://rujeko.lvh.me
+          - paragraph [ref=f4e334]: © 2026 Kairo CORE. All rights reserved.
+    - complementary [ref=f4e335]:
+      - generic [ref=f4e337]:
+        - link "School Logo Rujeko High (RUJEKO-SEC)" [ref=f4e339] [cursor=pointer]:
+          - /url: https://rujeko.lvh.me/workspace
+          - generic [ref=f4e341]:
+            - img "School Logo" [ref=f4e343]
+            - generic [ref=f4e344]:
+              - generic [ref=f4e345]: Rujeko High
+              - generic "School login code — share it so people can find your login page at kairo.co.zw/school-login" [ref=f4e346]: (RUJEKO-SEC)
+        - button "Collapse sidebar" [ref=f4e347] [cursor=pointer]
+      - navigation [ref=f4e351]:
+        - generic [ref=f4e353]:
+          - generic "Search workspace" [ref=f4e354] [cursor=pointer]
+          - textbox "Search workspace..." [ref=f4e357]
+          - generic: ⌘K
+        - list [ref=f4e358]:
+          - listitem [ref=f4e359]:
+            - list [ref=f4e360]:
+              - listitem [ref=f4e361]:
+                - link "Dashboard" [ref=f4e362] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace
+          - listitem [ref=f4e366]:
+            - generic [ref=f4e367] [cursor=pointer]:
+              - generic [ref=f4e368]: Admissions
+              - button "Admissions" [expanded] [ref=f4e369]
+            - list [ref=f4e373]:
+              - listitem [ref=f4e374]:
+                - link "Online Admissions" [ref=f4e375] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/applications
+          - listitem [ref=f4e379]:
+            - generic [ref=f4e380] [cursor=pointer]:
+              - generic [ref=f4e381]: Students
+              - button "Students" [expanded] [ref=f4e382]
+            - list [ref=f4e386]:
+              - listitem [ref=f4e387]:
+                - link "ID Card Designer" [ref=f4e388] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/card-templates
+              - listitem [ref=f4e392]:
+                - link "Student Directory" [ref=f4e393] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/students
+          - listitem [ref=f4e397]:
+            - generic [ref=f4e398] [cursor=pointer]:
+              - generic [ref=f4e399]: Academics
+              - button "Academics" [expanded] [ref=f4e400]
+            - list [ref=f4e404]:
+              - listitem [ref=f4e405]:
+                - link "Academic Operations Center" [ref=f4e406] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/academic-operations-center
+              - listitem [ref=f4e410]:
+                - link "Setup & Structure" [ref=f4e411] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/academics-setup-structure
+              - listitem [ref=f4e415]:
+                - link "Timetables & Teaching" [ref=f4e416] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/academics-timetables-teaching
+              - listitem [ref=f4e420]:
+                - link "Progression" [ref=f4e421] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/academics-progression
+          - listitem [ref=f4e425]:
+            - generic [ref=f4e426] [cursor=pointer]:
+              - generic [ref=f4e427]: Exams & Grading
+              - button "Exams & Grading" [expanded] [ref=f4e428]
+            - list [ref=f4e432]:
+              - listitem [ref=f4e433]:
+                - link "Assessment Center" [ref=f4e434] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/exams-assessment-center
+              - listitem [ref=f4e438]:
+                - link "Grading & Marks Management" [ref=f4e439] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/exams-grading-marks
+              - listitem [ref=f4e443]:
+                - link "Reports & Academic Publishing" [ref=f4e444] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/exams-reports-publishing
+          - listitem [ref=f4e448]:
+            - generic [ref=f4e449] [cursor=pointer]:
+              - generic [ref=f4e450]: Finance
+              - button "Finance" [expanded] [ref=f4e451]
+            - list [ref=f4e455]:
+              - listitem [ref=f4e456]:
+                - link "Dashboard & Analytics" [ref=f4e457] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/executive-financial-dashboard
+              - listitem [ref=f4e461]:
+                - link "Financial Statements" [ref=f4e462] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/financial-statements
+              - listitem [ref=f4e466]:
+                - link "Student Billing & Revenue" [ref=f4e467] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/finance-student-billing
+              - listitem [ref=f4e471]:
+                - link "Expenses & Purchasing" [ref=f4e472] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/finance-expenses-purchasing
+              - listitem [ref=f4e476]:
+                - link "Core Accounting & Setup" [ref=f4e477] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/finance-core-accounting
+          - listitem [ref=f4e481]:
+            - generic [ref=f4e482] [cursor=pointer]:
+              - generic [ref=f4e483]: HR & Payroll
+              - button "HR & Payroll" [expanded] [ref=f4e484]
+            - list [ref=f4e488]:
+              - listitem [ref=f4e489]:
+                - link "Staff Directory & HR" [ref=f4e490] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/hr-staff-directory
+              - listitem [ref=f4e494]:
+                - link "Payroll & Compensation" [ref=f4e495] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/hr-payroll-compensation
+              - listitem [ref=f4e499]:
+                - link "Attendance & Leave" [ref=f4e500] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/hr-attendance-leave
+          - listitem [ref=f4e504]:
+            - generic [ref=f4e505] [cursor=pointer]:
+              - generic [ref=f4e506]: Inventory & Procurement
+              - button "Inventory & Procurement" [expanded] [ref=f4e507]
+            - list [ref=f4e511]:
+              - listitem [ref=f4e512]:
+                - link "Stock & Inventory" [ref=f4e513] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/inventory-stock
+              - listitem [ref=f4e517]:
+                - link "Procurement" [ref=f4e518] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/inventory-procurement
+              - listitem [ref=f4e522]:
+                - link "Fixed Assets" [ref=f4e523] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/inventory-fixed-assets
+          - listitem [ref=f4e527]:
+            - generic [ref=f4e528] [cursor=pointer]:
+              - generic [ref=f4e529]: Library
+              - button "Library" [expanded] [ref=f4e530]
+            - list [ref=f4e534]:
+              - listitem [ref=f4e535]:
+                - link "Catalogue" [ref=f4e536] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/library-catalogue
+              - listitem [ref=f4e540]:
+                - link "Circulation" [ref=f4e541] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/library-circulation
+              - listitem [ref=f4e545]:
+                - link "Knowledge" [ref=f4e546] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/knowledge-knowledge
+          - listitem [ref=f4e550]:
+            - generic [ref=f4e551] [cursor=pointer]:
+              - generic [ref=f4e552]: Boarding & Welfare
+              - button "Boarding & Welfare" [expanded] [ref=f4e553]
+            - list [ref=f4e557]:
+              - listitem [ref=f4e558]:
+                - link "Accommodation" [ref=f4e559] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/boarding-accommodation
+              - listitem [ref=f4e563]:
+                - link "Welfare & Care" [ref=f4e564] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/boarding-welfare
+          - listitem [ref=f4e568]:
+            - generic [ref=f4e569] [cursor=pointer]:
+              - generic [ref=f4e570]: Health & Safety
+              - button "Health & Safety" [expanded] [ref=f4e571]
+            - list [ref=f4e575]:
+              - listitem [ref=f4e576]:
+                - link "Health Records" [ref=f4e577] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/health-records
+          - listitem [ref=f4e581]:
+            - generic [ref=f4e582] [cursor=pointer]:
+              - generic [ref=f4e583]: Communication Center
+              - button "Communication Center" [expanded] [ref=f4e584]
+            - list [ref=f4e588]:
+              - listitem [ref=f4e589]:
+                - link "Communication Center" [ref=f4e590] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/communication-center
+              - listitem [ref=f4e594]:
+                - link "Notices" [ref=f4e595] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/notices
+              - listitem [ref=f4e599]:
+                - link "Community & Engagement" [ref=f4e600] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/communication-community
+              - listitem [ref=f4e604]:
+                - link "Help & Inbox" [ref=f4e605] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/communication-help-inbox
+          - listitem [ref=f4e609]:
+            - generic [ref=f4e610] [cursor=pointer]:
+              - generic [ref=f4e611]: LMS
+              - button "LMS" [expanded] [ref=f4e612]
+            - list [ref=f4e616]:
+              - listitem [ref=f4e617]:
+                - link "LMS" [ref=f4e618] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/lms-lms
+          - listitem [ref=f4e622]:
+            - generic [ref=f4e623] [cursor=pointer]:
+              - generic [ref=f4e624]: Website
+              - button "Website" [expanded] [ref=f4e625]
+            - list [ref=f4e629]:
+              - listitem [ref=f4e630]:
+                - link "Templates & Design" [ref=f4e631] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/website-templates
+              - listitem [ref=f4e635]:
+                - link "Website Templates" [ref=f4e636] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/cms/templates
+              - listitem [ref=f4e640]:
+                - link "Content Manager" [ref=f4e641] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/cms/content
+          - listitem [ref=f4e645]:
+            - generic [ref=f4e646] [cursor=pointer]:
+              - generic [ref=f4e647]: Reports & Intelligence
+              - button "Reports & Intelligence" [expanded] [ref=f4e648]
+            - list [ref=f4e652]:
+              - listitem [ref=f4e653]:
+                - link "Dashboard" [ref=f4e654] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/reporting-dashboard
+              - listitem [ref=f4e658]:
+                - link "Analytics Explorer" [ref=f4e659] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/analytics-explorer
+              - listitem [ref=f4e663]:
+                - link "Generate Report" [ref=f4e664] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/report-generator-page
+              - listitem [ref=f4e668]:
+                - link "Reports" [ref=f4e669] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/reports-reports
+          - listitem [ref=f4e673]:
+            - generic [ref=f4e674] [cursor=pointer]:
+              - generic [ref=f4e675]: System Administration
+              - button "System Administration" [expanded] [ref=f4e676]
+            - list [ref=f4e680]:
+              - listitem [ref=f4e681]:
+                - link "System Settings" [ref=f4e682] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/admin-system-settings
+              - listitem [ref=f4e686]:
+                - link "Overview" [ref=f4e687] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/administration-dashboard
+              - listitem [ref=f4e692]:
+                - link "User Management" [ref=f4e693] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/admin-user-management
+              - listitem [ref=f4e697]:
+                - link "Audit & Compliance" [ref=f4e698] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/admin-audit
+          - listitem [ref=f4e702]:
+            - generic [ref=f4e703] [cursor=pointer]:
+              - generic [ref=f4e704]: Subscription & Billing
+              - button "Subscription & Billing" [expanded] [ref=f4e705]
+            - list [ref=f4e709]:
+              - listitem [ref=f4e710]:
+                - link "Overview & Billing" [ref=f4e711] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/saas-billing-overview
+              - listitem [ref=f4e715]:
+                - link "Subscription & Billing" [ref=f4e716] [cursor=pointer]:
+                  - /url: https://rujeko.lvh.me/workspace/saas-hub
+  - generic:
+    - status

@@ -1,0 +1,428 @@
+- generic [ref=f41e1]:
+  - banner [ref=f41e2]:
+    - generic [ref=f41e3]:
+      - link "Kairo CORE home" [ref=f41e4] [cursor=pointer]:
+        - /url: https://lvh.me
+        - img "Kairo CORE logo" [ref=f41e5]
+      - navigation "Primary navigation" [ref=f41e6]:
+        - link "Home" [ref=f41e7] [cursor=pointer]:
+          - /url: https://lvh.me
+        - link "Features" [expanded] [active] [ref=f41e8] [cursor=pointer]:
+          - /url: https://lvh.me/features
+        - link "Blog" [ref=f41e11] [cursor=pointer]:
+          - /url: https://lvh.me/blog
+        - link "About" [ref=f41e12] [cursor=pointer]:
+          - /url: https://lvh.me/about
+        - link "Contact" [ref=f41e13] [cursor=pointer]:
+          - /url: https://lvh.me/contact
+      - generic [ref=f41e14]:
+        - button "Toggle dark mode" [pressed] [ref=f41e15] [cursor=pointer]
+        - group [ref=f41e16]:
+          - generic "Change language" [ref=f41e17] [cursor=pointer]:
+            - generic [ref=f41e21]: EN
+            - text: ⌄
+        - group [ref=f41e22]:
+          - generic "Login ⌄" [ref=f41e23] [cursor=pointer]
+        - link "Register School" [ref=f41e27] [cursor=pointer]:
+          - /url: https://lvh.me/register
+  - region "Platform modules" [ref=f41e659]:
+    - generic [ref=f41e660]:
+      - generic [ref=f41e661]:
+        - generic [ref=f41e662]: Platform ecosystem
+        - generic [ref=f41e663]: Explore every integrated department and module
+      - link "View all features" [ref=f41e664] [cursor=pointer]:
+        - /url: https://lvh.me/features#grid
+        - text: View all features
+        - generic [aria-hidden] [ref=f41e665]: →
+    - generic [ref=f41e666]:
+      - link "Core Admissions, Students, Academics" [ref=f41e667] [cursor=pointer]:
+        - /url: https://lvh.me/features#admissions
+        - generic [ref=f41e671]:
+          - generic [ref=f41e672]: Core
+          - generic [ref=f41e673]: Admissions, Students, Academics
+        - generic [aria-hidden] [ref=f41e674]: →
+      - link "Finance & Fees Fees, Billing, Invoicing, Accounting" [ref=f41e675] [cursor=pointer]:
+        - /url: https://lvh.me/features#finance
+        - generic [ref=f41e679]:
+          - generic [ref=f41e680]: Finance & Fees
+          - generic [ref=f41e681]: Fees, Billing, Invoicing, Accounting
+        - generic [aria-hidden] [ref=f41e682]: →
+      - link "People HR, Payroll, Staff" [ref=f41e683] [cursor=pointer]:
+        - /url: https://lvh.me/features#hr
+        - generic [ref=f41e687]:
+          - generic [ref=f41e688]: People
+          - generic [ref=f41e689]: HR, Payroll, Staff
+        - generic [aria-hidden] [ref=f41e690]: →
+      - link "Health & Wellness Clinic, Records, Follow-ups" [ref=f41e691] [cursor=pointer]:
+        - /url: https://lvh.me/features#health
+        - generic [ref=f41e695]:
+          - generic [ref=f41e696]: Health & Wellness
+          - generic [ref=f41e697]: Clinic, Records, Follow-ups
+        - generic [aria-hidden] [ref=f41e698]: →
+      - link "Inventory & Procurement Stock, Requisitions, Assets" [ref=f41e699] [cursor=pointer]:
+        - /url: https://lvh.me/features#inventory
+        - generic [ref=f41e703]:
+          - generic [ref=f41e704]: Inventory & Procurement
+          - generic [ref=f41e705]: Stock, Requisitions, Assets
+        - generic [aria-hidden] [ref=f41e706]: →
+      - link "Communications Announcements, Email or WhatsApp alerts" [ref=f41e707] [cursor=pointer]:
+        - /url: https://lvh.me/features#communications
+        - generic [ref=f41e711]:
+          - generic [ref=f41e712]: Communications
+          - generic [ref=f41e713]: Announcements, Email or WhatsApp alerts
+        - generic [aria-hidden] [ref=f41e714]: →
+      - link "Academics & Exams Timetables, Results, Reports" [ref=f41e715] [cursor=pointer]:
+        - /url: https://lvh.me/features#exams
+        - generic [ref=f41e719]:
+          - generic [ref=f41e720]: Academics & Exams
+          - generic [ref=f41e721]: Timetables, Results, Reports
+        - generic [aria-hidden] [ref=f41e722]: →
+      - link "All Features FULL Explore the full feature set" [ref=f41e723] [cursor=pointer]:
+        - /url: https://lvh.me/features#grid
+        - generic [ref=f41e727]:
+          - generic [ref=f41e728]:
+            - text: All Features
+            - generic [ref=f41e729]: FULL
+          - generic [ref=f41e730]: Explore the full feature set
+        - generic [aria-hidden] [ref=f41e731]: →
+    - generic [ref=f41e732]:
+      - generic [ref=f41e733]: Cloud-based, multi-language system built for modern schools.
+      - link "Book a demo" [ref=f41e734] [cursor=pointer]:
+        - /url: https://lvh.me/contact#contact-form
+        - text: Book a demo
+        - generic [aria-hidden] [ref=f41e735]: →
+  - main [ref=f41e28]:
+    - generic [ref=f41e31]:
+      - generic [ref=f41e32]:
+        - generic [ref=f41e33]: 19+
+        - text: modules in one connected platform
+      - heading "Every tool your school needs" [level=1] [ref=f41e34]
+      - paragraph [ref=f41e35]: From admissions to analytics, KairoCORE brings the day-to-day running of your school into one connected platform.
+      - generic [ref=f41e36]:
+        - link "Book a demo →" [ref=f41e37] [cursor=pointer]:
+          - /url: https://lvh.me/contact#contact-form
+          - text: Book a demo
+          - generic [ref=f41e38]: →
+        - link "Explore modules ↓" [ref=f41e39] [cursor=pointer]:
+          - /url: "#grid"
+          - text: Explore modules
+          - generic [ref=f41e40]: ↓
+    - generic [ref=f41e42]:
+      - generic [ref=f41e43]: Clinic
+      - generic [ref=f41e44]: Academics
+      - generic [ref=f41e45]: Students
+      - generic [ref=f41e46]: Finance & Fees
+      - generic [ref=f41e47]: HR & Payroll
+      - generic [ref=f41e48]: Attendance
+      - generic [ref=f41e49]: Communications
+      - generic [ref=f41e50]: Library
+      - generic [ref=f41e51]: Health & Wellness
+      - generic [ref=f41e52]: Inventory & Procurement
+      - generic [ref=f41e53]: Exams & Results
+      - generic [ref=f41e54]: LMS
+      - generic [ref=f41e55]: Boarding & Hostel
+      - generic [ref=f41e56]: Reports & Analytics
+      - generic [ref=f41e57]: Website CMS
+      - generic [ref=f41e58]: Clinic
+      - generic [ref=f41e59]: Academics
+      - generic [ref=f41e60]: Students
+      - generic [ref=f41e61]: Finance & Fees
+      - generic [ref=f41e62]: HR & Payroll
+      - generic [ref=f41e63]: Attendance
+      - generic [ref=f41e64]: Communications
+      - generic [ref=f41e65]: Library
+      - generic [ref=f41e66]: Health & Wellness
+      - generic [ref=f41e67]: Inventory & Procurement
+      - generic [ref=f41e68]: Exams & Results
+      - generic [ref=f41e69]: LMS
+      - generic [ref=f41e70]: Boarding & Hostel
+      - generic [ref=f41e71]: Reports & Analytics
+      - generic [ref=f41e72]: Website CMS
+    - generic [ref=f41e74]:
+      - search [ref=f41e75]:
+        - generic "Filter features by category" [ref=f41e76]:
+          - button "All features 15" [ref=f41e78] [cursor=pointer]
+          - button "Administration 6" [ref=f41e79] [cursor=pointer]
+          - button "Academic 5" [ref=f41e80] [cursor=pointer]
+          - button "Campus life 4" [ref=f41e81] [cursor=pointer]
+        - generic [ref=f41e82]:
+          - generic [ref=f41e83]: Search features
+          - searchbox "Search features" [ref=f41e84]
+      - paragraph [ref=f41e85]: Showing all 15 modules
+      - generic [ref=f41e86]:
+        - article [ref=f41e87]:
+          - generic [ref=f41e88]: Administration
+          - generic [ref=f41e100]:
+            - heading "Clinic" [level=3] [ref=f41e101]
+            - paragraph [ref=f41e102]: Manage student enrolment, applications and admission workflow.
+            - list [ref=f41e103]:
+              - listitem [ref=f41e104]: Online applications
+              - listitem [ref=f41e107]: Student registration
+              - listitem [ref=f41e110]: Admission approval
+            - button "Explore feature" [ref=f41e113] [cursor=pointer]
+        - article [ref=f41e116]:
+          - generic [ref=f41e117]: Academic
+          - generic [ref=f41e129]:
+            - heading "Academics" [level=3] [ref=f41e130]
+            - paragraph [ref=f41e131]: Classes, timetables, subjects, grading and report cards.
+            - list [ref=f41e132]:
+              - listitem [ref=f41e133]: Class management
+              - listitem [ref=f41e136]: Timetable scheduling
+              - listitem [ref=f41e139]: Report cards
+            - button "Explore feature" [ref=f41e142] [cursor=pointer]
+        - article [ref=f41e145]:
+          - generic [ref=f41e146]: Academic
+          - generic [ref=f41e158]:
+            - heading "Students" [level=3] [ref=f41e159]
+            - paragraph [ref=f41e160]: Student portal for learning materials, homework, fees and results.
+            - list [ref=f41e161]:
+              - listitem [ref=f41e162]: Student portal
+              - listitem [ref=f41e165]: Attendance tracking
+              - listitem [ref=f41e168]: Student directory
+            - button "Explore feature" [ref=f41e171] [cursor=pointer]
+        - article [ref=f41e174]:
+          - generic [ref=f41e175]: Administration
+          - generic [ref=f41e187]:
+            - heading "Finance & Fees" [level=3] [ref=f41e188]
+            - paragraph [ref=f41e189]: Fees, billing, invoicing and financial management.
+            - list [ref=f41e190]:
+              - listitem [ref=f41e191]: Fee structure
+              - listitem [ref=f41e194]: Invoicing
+              - listitem [ref=f41e197]: Financial history
+            - button "Explore feature" [ref=f41e200] [cursor=pointer]
+        - article [ref=f41e203]:
+          - generic [ref=f41e204]: Administration
+          - generic [ref=f41e216]:
+            - heading "HR & Payroll" [level=3] [ref=f41e217]
+            - paragraph [ref=f41e218]: Staff management, leave, attendance and payroll.
+            - list [ref=f41e219]:
+              - listitem [ref=f41e220]: Staff records
+              - listitem [ref=f41e223]: Leave management
+              - listitem [ref=f41e226]: Payroll processing
+            - button "Explore feature" [ref=f41e229] [cursor=pointer]
+        - article [ref=f41e232]:
+          - generic [ref=f41e233]: Campus life
+          - generic [ref=f41e245]:
+            - heading "Attendance" [level=3] [ref=f41e246]
+            - paragraph [ref=f41e247]: Track student and staff attendance with ease.
+            - list [ref=f41e248]:
+              - listitem [ref=f41e249]: Daily attendance
+              - listitem [ref=f41e252]: Attendance reports
+              - listitem [ref=f41e255]: Absence alerts
+            - button "Explore feature" [ref=f41e258] [cursor=pointer]
+        - article [ref=f41e261]:
+          - generic [ref=f41e262]: Campus life
+          - generic [ref=f41e274]:
+            - heading "Communications" [level=3] [ref=f41e275]
+            - paragraph [ref=f41e276]: Announcements and timely alerts to parents and staff.
+            - list [ref=f41e277]:
+              - listitem [ref=f41e278]: School announcements
+              - listitem [ref=f41e281]: Email or WhatsApp alerts
+              - listitem [ref=f41e284]: Parent engagement
+            - button "Explore feature" [ref=f41e287] [cursor=pointer]
+        - article [ref=f41e290]:
+          - generic [ref=f41e291]: Academic
+          - generic [ref=f41e303]:
+            - heading "Library" [level=3] [ref=f41e304]
+            - paragraph [ref=f41e305]: Manage library resources and circulation.
+            - list [ref=f41e306]:
+              - listitem [ref=f41e307]: Book catalogue
+              - listitem [ref=f41e310]: Issuance tracking
+              - listitem [ref=f41e313]: Returns & fines
+            - button "Explore feature" [ref=f41e316] [cursor=pointer]
+        - article [ref=f41e319]:
+          - generic [ref=f41e320]: Campus life
+          - generic [ref=f41e332]:
+            - heading "Health & Wellness" [level=3] [ref=f41e333]
+            - paragraph [ref=f41e334]: Student health records, clinic visits, medications and alerts.
+            - list [ref=f41e335]:
+              - listitem [ref=f41e336]: Health records
+              - listitem [ref=f41e339]: Clinic visits
+              - listitem [ref=f41e342]: Medical alerts
+            - button "Explore feature" [ref=f41e345] [cursor=pointer]
+        - article [ref=f41e348]:
+          - generic [ref=f41e349]: Administration
+          - generic [ref=f41e361]:
+            - heading "Inventory & Procurement" [level=3] [ref=f41e362]
+            - paragraph [ref=f41e363]: Stock management, procurement, requisitions and assets.
+            - list [ref=f41e364]:
+              - listitem [ref=f41e365]: Stock management
+              - listitem [ref=f41e368]: Requisitions & purchase orders
+              - listitem [ref=f41e371]: Asset tracking
+            - button "Explore feature" [ref=f41e374] [cursor=pointer]
+        - article [ref=f41e377]:
+          - generic [ref=f41e378]: Academic
+          - generic [ref=f41e390]:
+            - heading "Exams & Results" [level=3] [ref=f41e391]
+            - paragraph [ref=f41e392]: Examinations, grading schemes and result publication.
+            - list [ref=f41e393]:
+              - listitem [ref=f41e394]: Exam scheduling
+              - listitem [ref=f41e397]: Grade setup
+              - listitem [ref=f41e400]: Result publication
+            - button "Explore feature" [ref=f41e403] [cursor=pointer]
+        - article [ref=f41e406]:
+          - generic [ref=f41e407]: Academic
+          - generic [ref=f41e419]:
+            - heading "LMS" [level=3] [ref=f41e420]
+            - paragraph [ref=f41e421]: Learning management with assignments and resources.
+            - list [ref=f41e422]:
+              - listitem [ref=f41e423]: Assignments
+              - listitem [ref=f41e426]: Course materials
+              - listitem [ref=f41e429]: Student submissions
+            - button "Explore feature" [ref=f41e432] [cursor=pointer]
+        - article [ref=f41e435]:
+          - generic [ref=f41e436]: Campus life
+          - generic [ref=f41e448]:
+            - heading "Boarding & Hostel" [level=3] [ref=f41e449]
+            - paragraph [ref=f41e450]: Hostel management, rooms and allocations.
+            - list [ref=f41e451]:
+              - listitem [ref=f41e452]: Room allocation
+              - listitem [ref=f41e455]: Hostel attendance
+              - listitem [ref=f41e458]: Boarding fees
+            - button "Explore feature" [ref=f41e461] [cursor=pointer]
+        - article [ref=f41e464]:
+          - generic [ref=f41e465]: Administration
+          - generic [ref=f41e477]:
+            - heading "Reports & Analytics" [level=3] [ref=f41e478]
+            - paragraph [ref=f41e479]: Comprehensive reports and data insights.
+            - list [ref=f41e480]:
+              - listitem [ref=f41e481]: Financial reports
+              - listitem [ref=f41e484]: Academic reports
+              - listitem [ref=f41e487]: Custom reports
+            - button "Explore feature" [ref=f41e490] [cursor=pointer]
+        - article [ref=f41e493]:
+          - generic [ref=f41e494]: Administration
+          - generic [ref=f41e506]:
+            - heading "Website CMS" [level=3] [ref=f41e507]
+            - paragraph [ref=f41e508]: Manage school website content easily.
+            - list [ref=f41e509]:
+              - listitem [ref=f41e510]: Page management
+              - listitem [ref=f41e513]: Media library
+              - listitem [ref=f41e516]: Content editor
+            - button "Explore feature" [ref=f41e519] [cursor=pointer]
+    - generic [ref=f41e522]:
+      - heading "Not sure where to start?" [level=2] [ref=f41e523]
+      - paragraph [ref=f41e524]: Book a personal demo and we will show you the modules that matter most to your school.
+      - generic [ref=f41e525]:
+        - link "Book a demo →" [ref=f41e526] [cursor=pointer]:
+          - /url: https://lvh.me/contact#contact-form
+        - link "Contact us" [ref=f41e527] [cursor=pointer]:
+          - /url: https://lvh.me/contact
+  - contentinfo [ref=f41e528]:
+    - generic [ref=f41e529]:
+      - generic [ref=f41e530]:
+        - generic [ref=f41e531]:
+          - link "Kairo CORE home" [ref=f41e532] [cursor=pointer]:
+            - /url: https://lvh.me
+            - img "Kairo CORE logo" [ref=f41e533]
+          - paragraph [ref=f41e534]: Smarter Schools. Brighter Futures.
+          - paragraph [ref=f41e535]: Cloud-based school management platform built for schools.
+          - generic [ref=f41e536]:
+            - generic [ref=f41e538]: All systems operational
+            - text: ·
+            - generic [ref=f41e539]: 06:39
+        - generic [ref=f41e540]:
+          - heading "Product" [level=4] [ref=f41e541]
+          - navigation "Product navigation" [ref=f41e542]:
+            - list [ref=f41e543]:
+              - listitem [ref=f41e544]:
+                - link "Features" [ref=f41e545] [cursor=pointer]:
+                  - /url: https://lvh.me/features
+              - listitem [ref=f41e546]:
+                - link "Fees & Finance" [ref=f41e547] [cursor=pointer]:
+                  - /url: https://lvh.me/features#finance
+              - listitem [ref=f41e548]:
+                - link "Admissions" [ref=f41e549] [cursor=pointer]:
+                  - /url: https://lvh.me/features#admissions
+              - listitem [ref=f41e550]:
+                - link "Security" [ref=f41e551] [cursor=pointer]:
+                  - /url: https://lvh.me/security
+        - generic [ref=f41e552]:
+          - heading "Company" [level=4] [ref=f41e553]
+          - navigation "Company navigation" [ref=f41e554]:
+            - list [ref=f41e555]:
+              - listitem [ref=f41e556]:
+                - link "About" [ref=f41e557] [cursor=pointer]:
+                  - /url: https://lvh.me/about
+              - listitem [ref=f41e558]:
+                - link "Why Kairo" [ref=f41e559] [cursor=pointer]:
+                  - /url: https://lvh.me#why
+              - listitem [ref=f41e560]:
+                - link "How it works" [ref=f41e561] [cursor=pointer]:
+                  - /url: https://lvh.me#start
+              - listitem [ref=f41e562]:
+                - link "Blog" [ref=f41e563] [cursor=pointer]:
+                  - /url: https://lvh.me/blog
+              - listitem [ref=f41e564]:
+                - link "Contact" [ref=f41e565] [cursor=pointer]:
+                  - /url: https://lvh.me/contact
+              - listitem [ref=f41e566]:
+                - link "FAQ" [ref=f41e567] [cursor=pointer]:
+                  - /url: https://lvh.me#faq
+              - listitem [ref=f41e568]:
+                - link "Terms" [ref=f41e569] [cursor=pointer]:
+                  - /url: https://lvh.me/terms
+        - generic [ref=f41e570]:
+          - heading "Resources" [level=4] [ref=f41e571]
+          - navigation "Resources navigation" [ref=f41e572]:
+            - list [ref=f41e573]:
+              - listitem [ref=f41e574]:
+                - link "Help Centre" [ref=f41e575] [cursor=pointer]:
+                  - /url: https://lvh.me/docs
+              - listitem [ref=f41e576]:
+                - link "How to enrol a student" [ref=f41e577] [cursor=pointer]:
+                  - /url: https://lvh.me/help/enroll-student
+              - listitem [ref=f41e578]:
+                - link "Book a demo" [ref=f41e579] [cursor=pointer]:
+                  - /url: https://lvh.me/contact#contact-form
+        - generic [ref=f41e580]:
+          - heading "Reach out to us" [level=4] [ref=f41e581]
+          - navigation "Contact navigation" [ref=f41e582]:
+            - list [ref=f41e583]:
+              - listitem [ref=f41e584]:
+                - link "+263 78 636 6855" [ref=f41e585] [cursor=pointer]:
+                  - /url: tel:+263786366855
+              - listitem [ref=f41e590]:
+                - link "support@kairocore.co.zw" [ref=f41e591] [cursor=pointer]:
+                  - /url: mailto:support@kairocore.co.zw
+              - listitem [ref=f41e597]:
+                - link "Chat on WhatsApp" [ref=f41e598] [cursor=pointer]:
+                  - /url: https://wa.me/263786366855
+      - generic [ref=f41e603]:
+        - generic [ref=f41e604]:
+          - generic [ref=f41e605]: © 2026 Kairo CORE. All rights reserved.
+          - generic [ref=f41e606]:
+            - link "Privacy Policy" [ref=f41e607] [cursor=pointer]:
+              - /url: https://lvh.me/privacy
+            - link "Terms" [ref=f41e608] [cursor=pointer]:
+              - /url: https://lvh.me/terms
+        - generic [ref=f41e609]:
+          - generic [ref=f41e610]:
+            - link "Chat on WhatsApp" [ref=f41e611] [cursor=pointer]:
+              - /url: https://wa.me/263786366855
+            - link "Facebook" [ref=f41e614] [cursor=pointer]:
+              - /url: https://www.facebook.com/
+            - link "Instagram" [ref=f41e617] [cursor=pointer]:
+              - /url: https://www.instagram.com/
+            - link "X" [ref=f41e622] [cursor=pointer]:
+              - /url: https://x.com/
+            - link "TikTok" [ref=f41e625] [cursor=pointer]:
+              - /url: https://www.tiktok.com/
+            - link "YouTube" [ref=f41e630] [cursor=pointer]:
+              - /url: https://www.youtube.com/
+          - link "↑ Back to top" [ref=f41e633] [cursor=pointer]:
+            - /url: "#"
+  - generic "Quick contact links" [ref=f41e634]:
+    - generic [ref=f41e635]:
+      - link "Chat on WhatsApp" [ref=f41e636] [cursor=pointer]:
+        - /url: https://wa.me/263786366855
+      - link "Facebook" [ref=f41e639] [cursor=pointer]:
+        - /url: https://www.facebook.com/
+      - link "Instagram" [ref=f41e642] [cursor=pointer]:
+        - /url: https://www.instagram.com/
+      - link "X" [ref=f41e647] [cursor=pointer]:
+        - /url: https://x.com/
+      - link "TikTok" [ref=f41e650] [cursor=pointer]:
+        - /url: https://www.tiktok.com/
+      - link "YouTube" [ref=f41e655] [cursor=pointer]:
+        - /url: https://www.youtube.com/

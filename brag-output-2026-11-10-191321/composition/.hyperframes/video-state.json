@@ -1,0 +1,167 @@
+{
+  "version": 1,
+  "historyId": "9bbc240e-68b0-4f7f-9917-adf6922716ce",
+  "currentRevision": "d71f88dd-a362-499d-9123-6781868583bc",
+  "pendingChanges": false,
+  "files": {
+    "assets/fonts/LDIbaomQNQcsA88c7O9yZ4KMCoOg4IA6-91aHEjcWuA_KUnNSg.ttf": {
+      "hash": "d9e0ddb4a15a0054ad84b4ded3b4b9f354a0b7df426e21a1363d6933728da9d5",
+      "content": "/home/wayne/.cache/hyperframes/history/9bbc240e-68b0-4f7f-9917-adf6922716ce/blobs/d9/d9e0ddb4a15a0054ad84b4ded3b4b9f354a0b7df426e21a1363d6933728da9d5"
+    },
+    "assets/fonts/LDIbaomQNQcsA88c7O9yZ4KMCoOg4IA6-91aHEjcWuA_TknNSg.ttf": {
+      "hash": "32971ad7976930539a11c79ce91ce84092df7f25c5be716b594601842f10a7ae",
+      "content": "/home/wayne/.cache/hyperframes/history/9bbc240e-68b0-4f7f-9917-adf6922716ce/blobs/32/32971ad7976930539a11c79ce91ce84092df7f25c5be716b594601842f10a7ae"
+    },
+    "assets/fonts/LDIbaomQNQcsA88c7O9yZ4KMCoOg4IA6-91aHEjcWuA_d0nNSg.ttf": {
+      "hash": "50357df108c5d297ec4ece76aeddf49561f3794f67af077cfc2c711b7a75b439",
+      "content": "/home/wayne/.cache/hyperframes/history/9bbc240e-68b0-4f7f-9917-adf6922716ce/blobs/50/50357df108c5d297ec4ece76aeddf49561f3794f67af077cfc2c711b7a75b439"
+    },
+    "assets/fonts/LDIbaomQNQcsA88c7O9yZ4KMCoOg4IA6-91aHEjcWuA_qU7NSg.ttf": {
+      "hash": "076831b98043f50f829b6c91db3be4a844641f1c95bccff5c886ed87c661a852",
+      "content": "/home/wayne/.cache/hyperframes/history/9bbc240e-68b0-4f7f-9917-adf6922716ce/blobs/07/076831b98043f50f829b6c91db3be4a844641f1c95bccff5c886ed87c661a852"
+    },
+    "assets/logo.png": {
+      "hash": "b3bd3b2eb7bfdfea73d3f7eec4d5dd1775fe58c533301094022432040397bfb9",
+      "content": "/home/wayne/.cache/hyperframes/history/9bbc240e-68b0-4f7f-9917-adf6922716ce/blobs/b3/b3bd3b2eb7bfdfea73d3f7eec4d5dd1775fe58c533301094022432040397bfb9"
+    },
+    "assets/screens/academics.png": {
+      "hash": "f898a8d79177f4c89ced7cfa5174a20eafdb53fa1c972ea279f17547d0fa38b0",
+      "content": "/home/wayne/.cache/hyperframes/history/9bbc240e-68b0-4f7f-9917-adf6922716ce/blobs/f8/f898a8d79177f4c89ced7cfa5174a20eafdb53fa1c972ea279f17547d0fa38b0"
+    },
+    "assets/screens/admissions.png": {
+      "hash": "d3fedbf9e8608280a2c1385f9162dfa02f75f63a7b9814d0406ed66567332ae8",
+      "content": "/home/wayne/.cache/hyperframes/history/9bbc240e-68b0-4f7f-9917-adf6922716ce/blobs/d3/d3fedbf9e8608280a2c1385f9162dfa02f75f63a7b9814d0406ed66567332ae8"
+    },
+    "assets/screens/analytics.png": {
+      "hash": "5b898faede942f56c3d13d9f7220fec5f80e895ea21f67a01bc36563e6ee717c",
+      "content": "/home/wayne/.cache/hyperframes/history/9bbc240e-68b0-4f7f-9917-adf6922716ce/blobs/5b/5b898faede942f56c3d13d9f7220fec5f80e895ea21f67a01bc36563e6ee717c"
+    },
+    "assets/screens/communication.png": {
+      "hash": "91cae254575a93983fb5584af5292ddb52e3d7b15c2d4117453a5a51189b43a6",
+      "content": "/home/wayne/.cache/hyperframes/history/9bbc240e-68b0-4f7f-9917-adf6922716ce/blobs/91/91cae254575a93983fb5584af5292ddb52e3d7b15c2d4117453a5a51189b43a6"
+    },
+    "assets/screens/dashboard.png": {
+      "hash": "cce11188a94d715135917f9a9a37c500cacf0930485a14fdd89be55a8031b508",
+      "content": "/home/wayne/.cache/hyperframes/history/9bbc240e-68b0-4f7f-9917-adf6922716ce/blobs/cc/cce11188a94d715135917f9a9a37c500cacf0930485a14fdd89be55a8031b508"
+    },
+    "assets/screens/finance.png": {
+      "hash": "d3fedbf9e8608280a2c1385f9162dfa02f75f63a7b9814d0406ed66567332ae8",
+      "content": "/home/wayne/.cache/hyperframes/history/9bbc240e-68b0-4f7f-9917-adf6922716ce/blobs/d3/d3fedbf9e8608280a2c1385f9162dfa02f75f63a7b9814d0406ed66567332ae8"
+    },
+    "index.html": {
+      "hash": "c0320cb7146e7eb6ed8a8ed7c2ec0921337deb046eca92568179eaf25beb23b1",
+      "content": "/home/wayne/.cache/hyperframes/history/9bbc240e-68b0-4f7f-9917-adf6922716ce/blobs/c0/c0320cb7146e7eb6ed8a8ed7c2ec0921337deb046eca92568179eaf25beb23b1"
+    },
+    "assets/music.mp3": {
+      "hash": "5888d4bd2ba0119b87a94e502ae2cc401c08192945cc5e5c2f8e8a33aa47a0a1",
+      "content": "/home/wayne/.cache/hyperframes/history/9bbc240e-68b0-4f7f-9917-adf6922716ce/blobs/58/5888d4bd2ba0119b87a94e502ae2cc401c08192945cc5e5c2f8e8a33aa47a0a1"
+    }
+  },
+  "revisions": {
+    "d71f88dd-a362-499d-9123-6781868583bc": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1794331317830,
+      "endedAt": 1794331317832,
+      "files": {
+        "index.html": {
+          "before": "/home/wayne/.cache/hyperframes/history/9bbc240e-68b0-4f7f-9917-adf6922716ce/blobs/70/70dab56df25bcf422e569edac3f9e1d67036122f04bb68c1931859c1e005056f",
+          "after": "/home/wayne/.cache/hyperframes/history/9bbc240e-68b0-4f7f-9917-adf6922716ce/blobs/c0/c0320cb7146e7eb6ed8a8ed7c2ec0921337deb046eca92568179eaf25beb23b1"
+        }
+      }
+    }
+  },
+  "checks": {
+    "latest": {
+      "revision": "d71f88dd-a362-499d-9123-6781868583bc",
+      "id": "541ba0c7-3ed9-4c96-a0ad-f0b493dcdb19"
+    },
+    "revisions": {
+      "d71f88dd-a362-499d-9123-6781868583bc": [
+        {
+          "id": "541ba0c7-3ed9-4c96-a0ad-f0b493dcdb19",
+          "scope": "project",
+          "report": "/opt/lampp/htdocs/SchoolManagementSystem/schoolcore/brag-output-2026-11-10-191321/composition/.hyperframes/artifacts/checks/541ba0c7-3ed9-4c96-a0ad-f0b493dcdb19.json",
+          "metadata": {
+            "ok": true,
+            "browserSkipped": false,
+            "options": {
+              "samples": 9,
+              "atTransitions": false,
+              "maxIssues": 80,
+              "collapseStatic": true,
+              "tolerance": 2,
+              "timeout": 45000,
+              "cache": true,
+              "contrast": true,
+              "craft": true,
+              "strict": false,
+              "snapshots": false,
+              "browserGpuMode": "auto",
+              "includeUnmounted": false
+            }
+          },
+          "createdAt": 1794331328919,
+          "contentHash": "e46d804dfe55997e34f39a22a6fc254fa06a209fdfca7a8f5f9b816e5f790f80",
+          "revision": "d71f88dd-a362-499d-9123-6781868583bc",
+          "inputFingerprint": "8776fe02d717c744f8c63789e250f8038bf9dae2d04bd9a6703f24e87f38f1d0",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        }
+      ]
+    },
+    "unversioned": [
+      {
+        "id": "3ed67136-0149-4379-8d83-585d3980dddf",
+        "scope": "project",
+        "report": "/opt/lampp/htdocs/SchoolManagementSystem/schoolcore/brag-output-2026-11-10-191321/composition/.hyperframes/artifacts/checks/3ed67136-0149-4379-8d83-585d3980dddf.json",
+        "metadata": {
+          "ok": false,
+          "browserSkipped": false,
+          "options": {
+            "samples": 9,
+            "atTransitions": false,
+            "maxIssues": 80,
+            "collapseStatic": true,
+            "tolerance": 2,
+            "timeout": 45000,
+            "cache": true,
+            "contrast": true,
+            "craft": true,
+            "strict": false,
+            "snapshots": false,
+            "browserGpuMode": "auto",
+            "includeUnmounted": false
+          }
+        },
+        "createdAt": 1794331303611,
+        "contentHash": "bd16ae569070083fe8b41ed4f58c7b9ba9de6e5b238b67f1c3628797d531d754",
+        "revision": null,
+        "inputFingerprint": "50c63d4b61c0f84ffa493f07476e965a9e5babb4acfbf713c863d5c29af370b3",
+        "inputScope": "local-project-files",
+        "attribution": "unversioned"
+      }
+    ]
+  },
+  "snapshots": {
+    "latest": null,
+    "revisions": {},
+    "unversioned": []
+  },
+  "renders": {
+    "latest": {
+      "id": "f503933b-1362-4764-8210-37a8d44441d5",
+      "completedAt": 1794331417988,
+      "output": "/opt/lampp/htdocs/SchoolManagementSystem/schoolcore/brag-output-2026-11-10-191321/brag.mp4",
+      "status": "completed",
+      "revision": "d71f88dd-a362-499d-9123-6781868583bc"
+    },
+    "retainedRevisions": [
+      "d71f88dd-a362-499d-9123-6781868583bc"
+    ]
+  },
+  "pendingArtifactCleanup": []
+}

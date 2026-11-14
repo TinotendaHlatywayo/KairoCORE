@@ -1,0 +1,61 @@
+- generic [active] [ref=e1]:
+  - main [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e7]:
+        - generic [ref=e9]:
+          - img "Kairo CORE" [ref=e11]
+          - heading "Kairo CORE" [level=1] [ref=e13]
+        - generic [ref=e14]:
+          - complementary [ref=e15]:
+            - generic [aria-hidden] [ref=e16]: Kairo CORE
+            - generic [aria-hidden] [ref=e18]:
+              - generic [ref=e19]:
+                - generic [ref=e24]: Secure Portal
+                - heading [level=3] [ref=e94]: Welcome Back
+                - paragraph [ref=e25]: Reconnect with your educational community.
+                - button [ref=e26] [cursor=pointer]: Create Account
+              - generic:
+                - generic: Join the Community
+                - heading [level=3]: Begin Your Journey
+                - paragraph: Join your designated school platform.
+                - button: Sign In
+            - generic [aria-hidden] [ref=e29]:
+              - generic [ref=e30]: Learn
+              - generic [ref=e32]: Grow
+              - generic [ref=e34]: Succeed
+          - generic [ref=e37]:
+            - heading "Welcome Back" [level=2] [ref=e38]
+            - paragraph [ref=e39]: Sign in to access your workspace
+            - generic [ref=e41]:
+              - generic [ref=e43]:
+                - generic [ref=e46]:
+                  - generic [ref=e49]:
+                    - text: Email address
+                    - superscript [ref=e50]: "*"
+                  - generic [ref=e51]:
+                    - textbox "Email address*" [ref=e54]: twaynehlatywayo09@gmail.com
+                    - paragraph [ref=e97]: The email or password you entered is incorrect.
+                - generic [ref=e57]:
+                  - generic [ref=e58]:
+                    - generic [ref=e60]:
+                      - text: Password
+                      - superscript [ref=e61]: "*"
+                    - link "Forgot password?" [ref=e64] [cursor=pointer]:
+                      - /url: https://kairo.co.zw/workspace/password-reset/request
+                  - generic [ref=e67]:
+                    - textbox "Password*" [ref=e69]: securepassword
+                    - button "Show password" [ref=e72] [cursor=pointer]
+                - generic [ref=e81]:
+                  - checkbox "Remember me" [ref=e82]
+                  - generic [ref=e83]: Remember me
+              - button "Sign in" [ref=e86] [cursor=pointer]
+      - generic [ref=e88]:
+        - link "Terms of Service" [ref=e89] [cursor=pointer]:
+          - /url: https://kairo.co.zw/terms
+        - generic [ref=e90]: ·
+        - link "Terms of Use" [ref=e91] [cursor=pointer]:
+          - /url: https://kairo.co.zw/terms
+        - generic [ref=e92]: ·
+        - generic [ref=e93]: Powered by Kairo CORE
+  - generic:
+    - status

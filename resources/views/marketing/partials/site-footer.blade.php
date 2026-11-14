@@ -95,6 +95,7 @@
                     <li><a href="{{ route('marketing.school-fees') }}">{{ __('Fees & Finance') }}</a></li>
                     <li><a href="{{ route('marketing.admissions') }}">{{ __('Admissions') }}</a></li>
                     <li><a href="{{ route('marketing.security') }}">{{ __('Security') }}</a></li>
+                    <li><a href="{{ route('marketing.features') }}#reports">{{ __('Reports & Analytics') }}</a></li>
                 </ul>
             </nav>
 
@@ -114,8 +115,8 @@
                 <div class="kf-faccent"></div>
                 <ul class="kf-flist">
                     <li><a href="{{ route('help.index') }}">{{ __('Help Centre') }}</a></li>
-                    <li><a href="{{ route('marketing.help.enroll') }}">{{ __('How to enrol a student') }}</a></li>
                     <li><a href="{{ route('marketing.home') }}#start">{{ __('How it works') }}</a></li>
+                    <li><a href="{{ route('help.index') }}">{{ __('Documentation') }}</a></li>
                     <li><a href="{{ route('marketing.home') }}#faq">{{ __('FAQ') }}</a></li>
                     <li><a href="{{ route('marketing.contact') }}#contact-form">{{ __('Book a demo') }}</a></li>
                 </ul>

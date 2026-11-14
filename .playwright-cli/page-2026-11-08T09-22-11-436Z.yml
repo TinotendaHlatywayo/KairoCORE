@@ -1,0 +1,182 @@
+- generic [active] [ref=f5e1]:
+  - banner [ref=f5e2]:
+    - generic [ref=f5e3]:
+      - link "Kairo CORE home" [ref=f5e4] [cursor=pointer]:
+        - /url: https://lvh.me
+        - img "Kairo CORE logo" [ref=f5e5]
+      - navigation "Primary navigation" [ref=f5e6]:
+        - link "Home" [ref=f5e7] [cursor=pointer]:
+          - /url: https://lvh.me
+        - link "Features" [ref=f5e8] [cursor=pointer]:
+          - /url: https://lvh.me/features
+        - link "Blog" [ref=f5e9] [cursor=pointer]:
+          - /url: https://lvh.me/blog
+        - link "About" [ref=f5e10] [cursor=pointer]:
+          - /url: https://lvh.me/about
+        - link "Contact" [ref=f5e11] [cursor=pointer]:
+          - /url: https://lvh.me/contact
+      - generic [ref=f5e12]:
+        - button "Toggle dark mode" [ref=f5e13] [cursor=pointer]
+        - group [ref=f5e16]:
+          - generic "Change language" [ref=f5e17] [cursor=pointer]
+        - group [ref=f5e21]:
+          - generic "Login" [ref=f5e22] [cursor=pointer]
+        - link "Book a Demo" [ref=f5e23] [cursor=pointer]:
+          - /url: https://lvh.me/contact#contact-form
+  - main [ref=f5e24]:
+    - generic [ref=f5e25]:
+      - generic [ref=f5e26]:
+        - generic [ref=f5e27]: Insights & updates
+        - heading "The Kairo CORE Blog" [level=1] [ref=f5e28]
+        - paragraph [ref=f5e29]: Practical advice on admissions, fees, academics and security — plus news from the product team.
+      - generic [ref=f5e30]:
+        - generic "Filter articles by category" [ref=f5e31]:
+          - link "All" [ref=f5e32] [cursor=pointer]:
+            - /url: https://lvh.me/blog
+          - link "Academics" [ref=f5e33] [cursor=pointer]:
+            - /url: https://lvh.me/blog?category=Academics
+          - link "Fees" [ref=f5e34] [cursor=pointer]:
+            - /url: https://lvh.me/blog?category=Fees
+          - link "Insights" [ref=f5e35] [cursor=pointer]:
+            - /url: https://lvh.me/blog?category=Insights
+          - link "Security" [ref=f5e36] [cursor=pointer]:
+            - /url: https://lvh.me/blog?category=Security
+        - generic [ref=f5e37]:
+          - generic [ref=f5e38]: Search articles
+          - searchbox "Search articles" [ref=f5e39]
+      - generic [ref=f5e40]:
+        - article [ref=f5e41]:
+          - link "Five security habits every school should adopt" [ref=f5e42] [cursor=pointer]:
+            - /url: https://lvh.me/blog/five-security-habits-every-school-should-adopt
+            - generic [ref=f5e43]:
+              - img "Five security habits every school should adopt" [ref=f5e45]
+              - generic [ref=f5e46]: 16 Oct 2026
+          - generic [ref=f5e47]:
+            - generic [ref=f5e48]: Security · 2 min read
+            - heading [level=3] [ref=f5e49]:
+              - link "Five security habits every school should adopt" [ref=f5e50] [cursor=pointer]:
+                - /url: https://lvh.me/blog/five-security-habits-every-school-should-adopt
+            - paragraph [ref=f5e51]: From shared logins to lost paper records, student data leaks quietly. Five practical habits that protect learners, staff and families.
+            - generic [ref=f5e52]:
+              - link "Read article →" [ref=f5e53] [cursor=pointer]:
+                - /url: https://lvh.me/blog/five-security-habits-every-school-should-adopt
+              - button "Like this article" [ref=f5e54] [cursor=pointer]:
+                - generic [ref=f5e57]: "1"
+        - article [ref=f5e58]:
+          - 'link "From admission to report card: a term with Kairo CORE" [ref=f5e59] [cursor=pointer]':
+            - /url: https://lvh.me/blog/from-admission-to-report-card
+            - generic [ref=f5e60]:
+              - 'img "From admission to report card: a term with Kairo CORE" [ref=f5e62]'
+              - generic [ref=f5e63]: 12 Oct 2026
+          - generic [ref=f5e64]:
+            - generic [ref=f5e65]: Academics · 2 min read
+            - heading [level=3] [ref=f5e66]:
+              - 'link "From admission to report card: a term with Kairo CORE" [ref=f5e67] [cursor=pointer]':
+                - /url: https://lvh.me/blog/from-admission-to-report-card
+            - paragraph [ref=f5e68]: Follow one school term end to end — online admissions, daily attendance, assessments and report cards — and see where the time goes back to teachers.
+            - generic [ref=f5e69]:
+              - link "Read article →" [ref=f5e70] [cursor=pointer]:
+                - /url: https://lvh.me/blog/from-admission-to-report-card
+              - button "Like this article" [ref=f5e71] [cursor=pointer]:
+                - generic [ref=f5e74]: "0"
+        - article [ref=f5e75]:
+          - 'link "School fees made simple: invoicing, Paynow and payment tracking" [ref=f5e76] [cursor=pointer]':
+            - /url: https://lvh.me/blog/school-fees-made-simple
+            - generic [ref=f5e77]:
+              - 'img "School fees made simple: invoicing, Paynow and payment tracking" [ref=f5e79]'
+              - generic [ref=f5e80]: 08 Oct 2026
+          - generic [ref=f5e81]:
+            - generic [ref=f5e82]: Fees · 1 min read
+            - heading [level=3] [ref=f5e83]:
+              - 'link "School fees made simple: invoicing, Paynow and payment tracking" [ref=f5e84] [cursor=pointer]':
+                - /url: https://lvh.me/blog/school-fees-made-simple
+            - paragraph [ref=f5e85]: Chasing fees is stressful for bursars and families alike. Modern invoicing with digital payment options changes the conversation completely.
+            - generic [ref=f5e86]:
+              - link "Read article →" [ref=f5e87] [cursor=pointer]:
+                - /url: https://lvh.me/blog/school-fees-made-simple
+              - button "Like this article" [ref=f5e88] [cursor=pointer]:
+                - generic [ref=f5e91]: "0"
+        - article [ref=f5e92]:
+          - link "Why schools are moving to digital management" [ref=f5e93] [cursor=pointer]:
+            - /url: https://lvh.me/blog/why-schools-are-moving-to-digital-management
+            - generic [ref=f5e94]:
+              - img "Why schools are moving to digital management" [ref=f5e96]
+              - generic [ref=f5e97]: 05 Oct 2026
+          - generic [ref=f5e98]:
+            - generic [ref=f5e99]: Insights · 2 min read
+            - heading [level=3] [ref=f5e100]:
+              - link "Why schools are moving to digital management" [ref=f5e101] [cursor=pointer]:
+                - /url: https://lvh.me/blog/why-schools-are-moving-to-digital-management
+            - paragraph [ref=f5e102]: Paper registers, spreadsheets and WhatsApp groups were never designed to run a school. Here is what changes when your institution moves onto a single, secure pl...
+            - generic [ref=f5e103]:
+              - link "Read article →" [ref=f5e104] [cursor=pointer]:
+                - /url: https://lvh.me/blog/why-schools-are-moving-to-digital-management
+              - button "Like this article" [ref=f5e105] [cursor=pointer]:
+                - generic [ref=f5e108]: "0"
+      - generic [ref=f5e109]:
+        - heading "See Kairo CORE in action" [level=2] [ref=f5e110]
+        - paragraph [ref=f5e111]: Create a free school workspace and explore every feature — no credit card required.
+        - generic [ref=f5e112]:
+          - link "Register School" [ref=f5e113] [cursor=pointer]:
+            - /url: https://lvh.me/register
+          - link "Explore Features" [ref=f5e114] [cursor=pointer]:
+            - /url: https://lvh.me/features
+  - contentinfo [ref=f5e115]:
+    - generic [ref=f5e116]:
+      - generic [ref=f5e117]:
+        - generic [ref=f5e118]:
+          - link "Kairo CORE home" [ref=f5e119] [cursor=pointer]:
+            - /url: https://lvh.me
+            - img "Kairo CORE logo" [ref=f5e120]
+          - paragraph [ref=f5e121]: Smarter Schools. Brighter Futures.
+          - paragraph [ref=f5e122]: The complete school management platform for primary, secondary and tertiary institutions.
+          - generic [ref=f5e123]:
+            - text: All systems operational ·
+            - generic [ref=f5e125]: 11:22
+        - generic [ref=f5e126]:
+          - heading "Quick links" [level=4] [ref=f5e127]
+          - list [ref=f5e128]:
+            - listitem [ref=f5e129]:
+              - link "Home" [ref=f5e130] [cursor=pointer]:
+                - /url: https://lvh.me
+            - listitem [ref=f5e131]:
+              - link "Features" [ref=f5e132] [cursor=pointer]:
+                - /url: https://lvh.me/features
+            - listitem [ref=f5e133]:
+              - link "Why Kairo" [ref=f5e134] [cursor=pointer]:
+                - /url: https://lvh.me#why
+            - listitem [ref=f5e135]:
+              - link "How it works" [ref=f5e136] [cursor=pointer]:
+                - /url: https://lvh.me#start
+            - listitem [ref=f5e137]:
+              - link "FAQ" [ref=f5e138] [cursor=pointer]:
+                - /url: https://lvh.me#faq
+            - listitem [ref=f5e139]:
+              - link "Contact" [ref=f5e140] [cursor=pointer]:
+                - /url: https://lvh.me/contact
+        - generic [ref=f5e141]:
+          - heading "Reach out to us" [level=4] [ref=f5e142]
+          - list [ref=f5e143]:
+            - listitem [ref=f5e144]:
+              - link [ref=f5e145] [cursor=pointer]:
+                - /url: tel:+263786366855
+            - listitem [ref=f5e149]:
+              - link [ref=f5e150] [cursor=pointer]:
+                - /url: https://wa.me/263786366855
+        - generic [ref=f5e154]:
+          - heading "Follow us" [level=4] [ref=f5e155]
+          - link "WhatsApp" [ref=f5e157] [cursor=pointer]:
+            - /url: https://wa.me/263786366855
+      - generic [ref=f5e160]:
+        - generic [ref=f5e161]: © 2026 Kairo CORE. All rights reserved.
+        - generic [ref=f5e162]:
+          - link "Privacy Policy" [ref=f5e163] [cursor=pointer]:
+            - /url: https://lvh.me/privacy
+          - generic [aria-hidden] [ref=f5e164]: "|"
+          - link "Terms of Service" [ref=f5e165] [cursor=pointer]:
+            - /url: https://lvh.me/terms
+        - link "↑ Back to top" [ref=f5e166] [cursor=pointer]:
+          - /url: "#"
+  - generic "Quick contact links" [ref=f5e167]:
+    - link "WhatsApp" [ref=f5e168] [cursor=pointer]:
+      - /url: https://wa.me/263786366855

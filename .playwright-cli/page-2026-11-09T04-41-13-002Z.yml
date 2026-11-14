@@ -1,0 +1,167 @@
+- generic [active] [ref=f51e1]:
+  - banner [ref=f51e2]:
+    - generic [ref=f51e3]:
+      - link "Kairo CORE home" [ref=f51e4] [cursor=pointer]:
+        - /url: https://lvh.me
+        - img "Kairo CORE logo" [ref=f51e5]
+      - generic [ref=f51e6]:
+        - button "Toggle dark mode" [pressed] [ref=f51e7] [cursor=pointer]
+        - text: ⌄ ⌄
+        - button "Open menu" [ref=f51e8] [cursor=pointer]
+  - main [ref=f51e11]:
+    - generic [ref=f51e13]:
+      - generic [ref=f51e14]:
+        - paragraph [ref=f51e15]: Security & Data Protection
+        - heading "Your school’s data, protected by design" [level=1] [ref=f51e16]
+        - paragraph [ref=f51e17]: Kairo CORE holds the records your school cannot afford to lose — students, guardians, fees and results. This page explains, in plain terms, how the platform keeps that data isolated, access-controlled and recoverable.
+        - generic [ref=f51e18]:
+          - link "Ask us about security" [ref=f51e19] [cursor=pointer]:
+            - /url: https://lvh.me/contact
+          - link "Read our terms" [ref=f51e20] [cursor=pointer]:
+            - /url: https://lvh.me/terms
+      - generic [ref=f51e21]:
+        - generic [ref=f51e22]:
+          - heading "Every school has its own isolated workspace" [level=2] [ref=f51e23]
+          - paragraph [ref=f51e24]: "Kairo CORE is multi-tenant: each school’s data lives in a separate workspace, and every request is bound to the school you are logged into. One school’s students, fees or documents are never served to another school’s users."
+        - generic [ref=f51e25]:
+          - heading "Role-based access for every staff member" [level=2] [ref=f51e26]
+          - paragraph [ref=f51e27]: Staff only see and do what their role allows. A form teacher’s view differs from a bursar’s; sensitive areas such as payroll, backups and platform administration require elevated permissions that you control.
+        - generic [ref=f51e28]:
+          - heading "Protected sessions and forms" [level=2] [ref=f51e29]
+          - paragraph [ref=f51e30]: Login sessions use secure, HTTP-only cookies, with session encryption available, and every state-changing form is protected against cross-site request forgery. Account activation links are single-use and time-limited.
+        - generic [ref=f51e31]:
+          - heading "Strong password storage" [level=2] [ref=f51e32]
+          - paragraph [ref=f51e33]: Passwords are never stored in readable form; the platform stores salted bcrypt hashes, and password resets go through expiring links rather than reversible copies.
+        - generic [ref=f51e34]:
+          - heading "Private documents stay private" [level=2] [ref=f51e35]
+          - paragraph [ref=f51e36]: Student documents, invoices, receipts and reports are served only through authenticated, permission-checked endpoints — never as public files, and never listed in sitemaps or search indexes.
+        - generic [ref=f51e37]:
+          - heading "Backups you can rely on" [level=2] [ref=f51e38]
+          - paragraph [ref=f51e39]: The platform includes backup management with restore points kept outside day-to-day operation, so a mistake or incident does not have to mean permanent data loss.
+        - generic [ref=f51e40]:
+          - heading "Out of reach of search engines by default" [level=2] [ref=f51e41]
+          - paragraph [ref=f51e42]: Authenticated areas — workspaces, student portals and administration — are excluded from the public site index and from sitemaps. Private school data is protected by access control, not merely by obscurity.
+        - generic [ref=f51e43]:
+          - heading "Operated with care" [level=2] [ref=f51e44]
+          - paragraph [ref=f51e45]: Dependencies are kept current, administrative access is restricted, and configuration defaults favour secure behaviour — such as production environments running with debug output disabled.
+    - generic [ref=f51e47]:
+      - heading "What we will never claim" [level=2] [ref=f51e48]
+      - paragraph [ref=f51e49]: We do not publish certifications, compliance badges or “bank-level” slogans we cannot substantiate. If your school has specific data-protection requirements — auditor questions, PoPIA or other regulatory reviews, or procurement policies — talk to us and we will answer factually about how the platform works.
+      - generic [ref=f51e50]:
+        - link "Terms of Service" [ref=f51e51] [cursor=pointer]:
+          - /url: https://lvh.me/terms
+        - link "About Kairo CORE" [ref=f51e52] [cursor=pointer]:
+          - /url: https://lvh.me/about
+        - link "Contact" [ref=f51e53] [cursor=pointer]:
+          - /url: https://lvh.me/contact
+    - generic [ref=f51e55]:
+      - heading "Have a security question?" [level=2] [ref=f51e56]
+      - paragraph [ref=f51e57]: Ask us directly — we prefer an accurate answer over a marketing one.
+      - link "Contact Kairo CORE" [ref=f51e59] [cursor=pointer]:
+        - /url: https://lvh.me/contact
+  - contentinfo [ref=f51e60]:
+    - generic [ref=f51e61]:
+      - generic [ref=f51e62]:
+        - generic [ref=f51e63]:
+          - link "Kairo CORE home" [ref=f51e64] [cursor=pointer]:
+            - /url: https://lvh.me
+            - img "Kairo CORE logo" [ref=f51e65]
+          - paragraph [ref=f51e66]: Smarter Schools. Brighter Futures.
+          - paragraph [ref=f51e67]: Cloud-based school management platform built for schools.
+          - generic [ref=f51e68]:
+            - generic [ref=f51e70]: All systems operational
+            - text: ·
+            - generic [ref=f51e71]: 06:41
+        - generic [ref=f51e72]:
+          - heading "Product" [level=4] [ref=f51e73]
+          - navigation "Product navigation" [ref=f51e74]:
+            - list [ref=f51e75]:
+              - listitem [ref=f51e76]:
+                - link "Features" [ref=f51e77] [cursor=pointer]:
+                  - /url: https://lvh.me/features
+              - listitem [ref=f51e78]:
+                - link "Fees & Finance" [ref=f51e79] [cursor=pointer]:
+                  - /url: https://lvh.me/features#finance
+              - listitem [ref=f51e80]:
+                - link "Admissions" [ref=f51e81] [cursor=pointer]:
+                  - /url: https://lvh.me/features#admissions
+              - listitem [ref=f51e82]:
+                - link "Security" [ref=f51e83] [cursor=pointer]:
+                  - /url: https://lvh.me/security
+        - generic [ref=f51e84]:
+          - heading "Company" [level=4] [ref=f51e85]
+          - navigation "Company navigation" [ref=f51e86]:
+            - list [ref=f51e87]:
+              - listitem [ref=f51e88]:
+                - link "About" [ref=f51e89] [cursor=pointer]:
+                  - /url: https://lvh.me/about
+              - listitem [ref=f51e90]:
+                - link "Why Kairo" [ref=f51e91] [cursor=pointer]:
+                  - /url: https://lvh.me#why
+              - listitem [ref=f51e92]:
+                - link "How it works" [ref=f51e93] [cursor=pointer]:
+                  - /url: https://lvh.me#start
+              - listitem [ref=f51e94]:
+                - link "Blog" [ref=f51e95] [cursor=pointer]:
+                  - /url: https://lvh.me/blog
+              - listitem [ref=f51e96]:
+                - link "Contact" [ref=f51e97] [cursor=pointer]:
+                  - /url: https://lvh.me/contact
+              - listitem [ref=f51e98]:
+                - link "FAQ" [ref=f51e99] [cursor=pointer]:
+                  - /url: https://lvh.me#faq
+              - listitem [ref=f51e100]:
+                - link "Terms" [ref=f51e101] [cursor=pointer]:
+                  - /url: https://lvh.me/terms
+        - generic [ref=f51e102]:
+          - heading "Resources" [level=4] [ref=f51e103]
+          - navigation "Resources navigation" [ref=f51e104]:
+            - list [ref=f51e105]:
+              - listitem [ref=f51e106]:
+                - link "Help Centre" [ref=f51e107] [cursor=pointer]:
+                  - /url: https://lvh.me/docs
+              - listitem [ref=f51e108]:
+                - link "How to enrol a student" [ref=f51e109] [cursor=pointer]:
+                  - /url: https://lvh.me/help/enroll-student
+              - listitem [ref=f51e110]:
+                - link "Book a demo" [ref=f51e111] [cursor=pointer]:
+                  - /url: https://lvh.me/contact#contact-form
+        - generic [ref=f51e112]:
+          - heading "Reach out to us" [level=4] [ref=f51e113]
+          - navigation "Contact navigation" [ref=f51e114]:
+            - list [ref=f51e115]:
+              - listitem [ref=f51e116]:
+                - link "+263 78 636 6855" [ref=f51e117] [cursor=pointer]:
+                  - /url: tel:+263786366855
+              - listitem [ref=f51e122]:
+                - link "support@kairocore.co.zw" [ref=f51e123] [cursor=pointer]:
+                  - /url: mailto:support@kairocore.co.zw
+              - listitem [ref=f51e129]:
+                - link "Chat on WhatsApp" [ref=f51e130] [cursor=pointer]:
+                  - /url: https://wa.me/263786366855
+      - generic [ref=f51e135]:
+        - generic [ref=f51e136]:
+          - generic [ref=f51e137]: © 2026 Kairo CORE. All rights reserved.
+          - generic [ref=f51e138]:
+            - link "Privacy Policy" [ref=f51e139] [cursor=pointer]:
+              - /url: https://lvh.me/privacy
+            - link "Terms" [ref=f51e140] [cursor=pointer]:
+              - /url: https://lvh.me/terms
+        - generic [ref=f51e141]:
+          - generic [ref=f51e142]:
+            - link "Chat on WhatsApp" [ref=f51e143] [cursor=pointer]:
+              - /url: https://wa.me/263786366855
+            - link "Facebook" [ref=f51e146] [cursor=pointer]:
+              - /url: https://www.facebook.com/
+            - link "Instagram" [ref=f51e149] [cursor=pointer]:
+              - /url: https://www.instagram.com/
+            - link "X" [ref=f51e154] [cursor=pointer]:
+              - /url: https://x.com/
+            - link "TikTok" [ref=f51e157] [cursor=pointer]:
+              - /url: https://www.tiktok.com/
+            - link "YouTube" [ref=f51e162] [cursor=pointer]:
+              - /url: https://www.youtube.com/
+          - link "↑ Back to top" [ref=f51e165] [cursor=pointer]:
+            - /url: "#"
+  - generic "Quick contact links" [ref=f51e166]:
+    - button "Toggle social links" [ref=f51e167] [cursor=pointer]

@@ -1,0 +1,279 @@
+- generic [active] [ref=f3e1]:
+  - navigation [ref=f3e2]:
+    - generic [ref=f3e3]:
+      - link "Kairo CORE home" [ref=f3e4] [cursor=pointer]:
+        - /url: "#"
+        - img "Kairo CORE" [ref=f3e5]
+      - generic [ref=f3e6]:
+        - link "Home" [ref=f3e7] [cursor=pointer]:
+          - /url: "#"
+        - link "Features" [ref=f3e8] [cursor=pointer]:
+          - /url: "#features"
+        - link "Why Kairo" [ref=f3e9] [cursor=pointer]:
+          - /url: "#why"
+        - link "How it works" [ref=f3e10] [cursor=pointer]:
+          - /url: "#start"
+        - link "FAQ" [ref=f3e11] [cursor=pointer]:
+          - /url: "#faq"
+        - link "Contact" [ref=f3e12] [cursor=pointer]:
+          - /url: "#contact"
+      - button "Toggle theme" [ref=f3e13] [cursor=pointer]: ◐
+      - link "Book a Demo" [ref=f3e14] [cursor=pointer]:
+        - /url: "#contact"
+  - banner [ref=f3e15]:
+    - generic [ref=f3e17]:
+      - generic [ref=f3e18]:
+        - generic [ref=f3e19]: "0"
+        - generic [ref=f3e20]: Connected modules
+      - generic [ref=f3e22]:
+        - generic [ref=f3e23]: "0"
+        - generic [ref=f3e24]: Uptime, cloud-hosted
+      - generic [ref=f3e26]:
+        - generic [ref=f3e27]: "0"
+        - generic [ref=f3e28]: Languages supported
+      - generic [ref=f3e30]:
+        - generic [ref=f3e31]: "0"
+        - generic [ref=f3e32]: Dedicated support
+    - generic [ref=f3e35]:
+      - generic [ref=f3e36]:
+        - generic [ref=f3e37]: NEW
+        - text: Built for schools across Africa
+      - heading "Run your whole school from one powerful platform" [level=1] [ref=f3e38]:
+        - generic [ref=f3e39]: Run
+        - generic [ref=f3e40]: your
+        - generic [ref=f3e41]: whole
+        - generic [ref=f3e42]: school
+        - generic [ref=f3e43]: from
+        - generic [ref=f3e44]: one
+        - generic [ref=f3e45]: powerful
+        - generic [ref=f3e46]: platform
+      - paragraph [ref=f3e47]: Admissions, academics, fees, attendance, HR and communication — together in one secure, cloud-based system, so you can focus on quality education.
+      - generic [ref=f3e48]:
+        - link "Book a Demo →" [ref=f3e49] [cursor=pointer]:
+          - /url: "#contact"
+          - text: Book a Demo
+          - generic [ref=f3e50]: →
+        - link "Explore features" [ref=f3e51] [cursor=pointer]:
+          - /url: "#features"
+  - generic [ref=f3e53]:
+    - generic [ref=f3e54]: Primary schools
+    - generic [ref=f3e55]: Secondary schools
+    - generic [ref=f3e56]: Colleges
+    - generic [ref=f3e57]: Boarding schools
+    - generic [ref=f3e58]: Trust & group schools
+    - generic [ref=f3e59]: Tertiary institutions
+    - generic [ref=f3e60]: Private academies
+    - generic [ref=f3e61]: Primary schools
+    - generic [ref=f3e62]: Secondary schools
+    - generic [ref=f3e63]: Colleges
+    - generic [ref=f3e64]: Boarding schools
+    - generic [ref=f3e65]: Trust & group schools
+    - generic [ref=f3e66]: Tertiary institutions
+    - generic [ref=f3e67]: Private academies
+  - generic [ref=f3e69]:
+    - generic [ref=f3e70]:
+      - generic [ref=f3e71]: Platform features
+      - heading "Everything your school needs, in one place" [level=2] [ref=f3e72]
+      - paragraph [ref=f3e73]: From the first admission enquiry to the final report card, every department works in the same system.
+    - generic [ref=f3e74]:
+      - generic [ref=f3e75]:
+        - heading "Admissions" [level=3] [ref=f3e80]
+        - paragraph [ref=f3e81]: Manage enrolments and complete student profiles.
+        - generic [ref=f3e82]: Explore
+      - generic [ref=f3e85]:
+        - heading "Academics" [level=3] [ref=f3e89]
+        - paragraph [ref=f3e90]: Classes, subjects and report cards.
+        - generic [ref=f3e91]: Explore
+      - generic [ref=f3e94]:
+        - heading "Finance & Fees" [level=3] [ref=f3e99]
+        - paragraph [ref=f3e100]: Fee structures, invoicing and multi-currency billing.
+        - generic [ref=f3e101]: Explore
+      - generic [ref=f3e104]:
+        - heading "Communication" [level=3] [ref=f3e108]
+        - paragraph [ref=f3e109]: Announcements, events and direct messaging.
+        - generic [ref=f3e110]: Explore
+      - generic [ref=f3e113]:
+        - heading "Events & Notices" [level=3] [ref=f3e118]
+        - paragraph [ref=f3e119]: Keep everyone informed.
+        - generic [ref=f3e120]: Explore
+      - generic [ref=f3e123]:
+        - heading "Clinic" [level=3] [ref=f3e128]
+        - paragraph [ref=f3e129]: Manage student health and medical records.
+        - generic [ref=f3e130]: Explore
+      - generic [ref=f3e133]:
+        - heading "Inventory" [level=3] [ref=f3e138]
+        - paragraph [ref=f3e139]: Track and manage school assets and stock.
+        - generic [ref=f3e140]: Explore
+      - generic [ref=f3e143]:
+        - heading "Library" [level=3] [ref=f3e149]
+        - paragraph [ref=f3e150]: Catalog and manage library resources.
+        - generic [ref=f3e151]: Explore
+      - generic [ref=f3e154]:
+        - heading "Reports & Intelligence" [level=3] [ref=f3e158]
+        - paragraph [ref=f3e159]: Powerful insights with real-time reports.
+        - generic [ref=f3e160]: Explore
+  - generic [ref=f3e164]:
+    - generic [ref=f3e165]:
+      - generic [ref=f3e166]: Why Kairo CORE
+      - heading "A smarter way to manage your school" [level=2] [ref=f3e167]
+      - paragraph [ref=f3e168]: A trusted, reliable and innovative school operating system for primary, secondary and tertiary institutions.
+      - link "Book a Demo →" [ref=f3e169] [cursor=pointer]:
+        - /url: "#contact"
+        - text: Book a Demo
+        - generic [ref=f3e170]: →
+    - generic [ref=f3e171]:
+      - generic [ref=f3e172]:
+        - generic [ref=f3e175]: Save Time
+        - text: Automate daily tasks
+      - generic [ref=f3e176]:
+        - generic [ref=f3e180]: Keep Data Secure
+        - text: Advanced security and backups
+      - generic [ref=f3e181]:
+        - generic [ref=f3e184]: Get Real-time Insights
+        - text: Make informed decisions
+      - generic [ref=f3e185]:
+        - generic [ref=f3e190]: Access Support Anytime
+        - text: Expert help when you need it
+  - generic [ref=f3e192]:
+    - generic [ref=f3e193]:
+      - generic [ref=f3e194]: Getting started
+      - heading "From registration to go-live" [level=2] [ref=f3e195]
+      - paragraph [ref=f3e196]: Three clear steps, with our team beside you.
+    - generic [ref=f3e197]:
+      - generic [ref=f3e198]:
+        - generic [ref=f3e199]: "1"
+        - heading "Register your school" [level=3] [ref=f3e204]
+        - paragraph [ref=f3e205]: Submit your school’s details. Once your registration is approved, your Kairo CORE workspace is ready.
+      - generic [ref=f3e206]:
+        - generic [ref=f3e207]: "2"
+        - heading "Set up your school" [level=3] [ref=f3e213]
+        - paragraph [ref=f3e214]: Add your classes, fee structures, staff and students to your workspace.
+      - generic [ref=f3e215]:
+        - generic [ref=f3e216]: "3"
+        - heading "Go live with support" [level=3] [ref=f3e220]
+        - paragraph [ref=f3e221]: Parents, teachers and admin start using Kairo CORE with us beside you.
+    - generic [ref=f3e222]:
+      - generic [ref=f3e227]:
+        - generic [ref=f3e228]: Optional
+        - heading "Special training can be arranged" [level=3] [ref=f3e229]
+        - paragraph [ref=f3e230]: Your team is trained — hands-on sessions, video tutorials and a help centre on call.
+      - generic [ref=f3e231]:
+        - generic [ref=f3e232]: Hands-on sessions
+        - generic [ref=f3e233]: Video tutorials
+        - generic [ref=f3e234]: Help centre
+  - generic [ref=f3e236]:
+    - generic [ref=f3e237]:
+      - generic [ref=f3e238]: FAQ
+      - heading "Questions school leaders ask us" [level=2] [ref=f3e239]
+      - paragraph [ref=f3e240]: Can’t find your answer? Message us on WhatsApp.
+    - generic [ref=f3e241]:
+      - group [ref=f3e242]:
+        - generic "Is Kairo CORE built for my type of school? +" [ref=f3e243] [cursor=pointer]
+        - paragraph [ref=f3e244]: Yes. It is designed for primary, secondary and tertiary institutions, including boarding schools.
+      - group [ref=f3e245]:
+        - generic "What does it cover? +" [ref=f3e246] [cursor=pointer]
+      - group [ref=f3e247]:
+        - generic "Is our data safe? +" [ref=f3e248] [cursor=pointer]
+      - group [ref=f3e249]:
+        - generic "Will my team be trained? +" [ref=f3e250] [cursor=pointer]
+      - group [ref=f3e251]:
+        - generic "Can we access it from any device? +" [ref=f3e252] [cursor=pointer]
+  - generic [ref=f3e253]:
+    - heading "Ready to transform your school?" [level=2] [ref=f3e254]
+    - paragraph [ref=f3e255]: Join hundreds of schools already using Kairo CORE. See a live demo built around your school.
+    - generic [ref=f3e256]:
+      - generic [ref=f3e257]:
+        - generic [ref=f3e258]: Your name
+        - textbox "Your name" [ref=f3e259]
+      - generic [ref=f3e260]:
+        - generic [ref=f3e261]: School name
+        - textbox "School name" [ref=f3e262]
+      - generic [ref=f3e263]:
+        - generic [ref=f3e264]: Work email
+        - textbox "Work email" [ref=f3e265]
+      - button "Book my demo →" [ref=f3e266] [cursor=pointer]
+  - contentinfo [ref=f3e267]:
+    - generic [ref=f3e268]:
+      - generic [ref=f3e269]:
+        - generic [ref=f3e270]:
+          - link [ref=f3e271] [cursor=pointer]:
+            - /url: "#"
+            - img "Kairo CORE" [ref=f3e272]
+          - paragraph [ref=f3e273]: Smarter Schools. Brighter Futures.
+          - paragraph [ref=f3e274]: The complete school management platform for primary, secondary and tertiary institutions.
+          - generic [ref=f3e275]:
+            - text: All systems operational ·
+            - generic [ref=f3e277]: 04:38
+        - generic [ref=f3e278]:
+          - heading "Quick links" [level=4] [ref=f3e279]
+          - list [ref=f3e280]:
+            - listitem [ref=f3e281]:
+              - link "Home" [ref=f3e282] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=f3e283]:
+              - link "Features" [ref=f3e284] [cursor=pointer]:
+                - /url: "#features"
+            - listitem [ref=f3e285]:
+              - link "Why Kairo" [ref=f3e286] [cursor=pointer]:
+                - /url: "#why"
+            - listitem [ref=f3e287]:
+              - link "How it works" [ref=f3e288] [cursor=pointer]:
+                - /url: "#start"
+            - listitem [ref=f3e289]:
+              - link "FAQ" [ref=f3e290] [cursor=pointer]:
+                - /url: "#faq"
+            - listitem [ref=f3e291]:
+              - link "Contact" [ref=f3e292] [cursor=pointer]:
+                - /url: "#contact"
+        - generic [ref=f3e293]:
+          - heading "Get in touch" [level=4] [ref=f3e294]
+          - list [ref=f3e295]:
+            - listitem [ref=f3e296]:
+              - link [ref=f3e297] [cursor=pointer]:
+                - /url: tel:+263771234567
+            - listitem [ref=f3e301]:
+              - link [ref=f3e302] [cursor=pointer]:
+                - /url: mailto:info@kairo.co.zw
+            - listitem [ref=f3e307]:
+              - link [ref=f3e308] [cursor=pointer]:
+                - /url: https://wa.me/263771234567
+        - generic [ref=f3e312]:
+          - heading "Follow us" [level=4] [ref=f3e313]
+          - generic [ref=f3e314]:
+            - link "Facebook" [ref=f3e315] [cursor=pointer]:
+              - /url: https://www.facebook.com/
+            - link "Instagram" [ref=f3e318] [cursor=pointer]:
+              - /url: https://www.instagram.com/
+            - link "X" [ref=f3e323] [cursor=pointer]:
+              - /url: https://x.com/
+            - link "TikTok" [ref=f3e326] [cursor=pointer]:
+              - /url: https://www.tiktok.com/
+            - link "YouTube" [ref=f3e331] [cursor=pointer]:
+              - /url: https://www.youtube.com/
+            - link "WhatsApp" [ref=f3e334] [cursor=pointer]:
+              - /url: https://wa.me/263771234567
+      - generic [ref=f3e337]:
+        - generic [ref=f3e338]: © 2026 Kairo CORE. All rights reserved.
+        - generic [ref=f3e339]:
+          - link "Privacy Policy" [ref=f3e340] [cursor=pointer]:
+            - /url: "#"
+          - text: "|"
+          - link "Terms of Service" [ref=f3e341] [cursor=pointer]:
+            - /url: "#"
+        - link "↑ Back to top" [ref=f3e342] [cursor=pointer]:
+          - /url: "#"
+  - group "Chat and social links" [ref=f3e343]:
+    - generic [ref=f3e344]:
+      - link "Instagram" [ref=f3e345] [cursor=pointer]:
+        - /url: https://www.instagram.com/
+      - link "Chat on WhatsApp" [ref=f3e350] [cursor=pointer]:
+        - /url: https://wa.me/263771234567
+      - link "Facebook" [ref=f3e353] [cursor=pointer]:
+        - /url: https://www.facebook.com/
+    - generic [ref=f3e356]:
+      - link "X" [ref=f3e357] [cursor=pointer]:
+        - /url: https://x.com/
+      - link "TikTok" [ref=f3e360] [cursor=pointer]:
+        - /url: https://www.tiktok.com/
+      - link "YouTube" [ref=f3e365] [cursor=pointer]:
+        - /url: https://www.youtube.com/

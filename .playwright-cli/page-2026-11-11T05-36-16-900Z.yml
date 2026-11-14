@@ -1,0 +1,616 @@
+- generic [active] [ref=f1e1]:
+  - status "Signing you in to Kairo CORE" [ref=f1e2]:
+    - generic [ref=f1e5]:
+      - img "Kairo CORE" [ref=f1e7]
+      - heading "Tinway Academy" [level=2] [ref=f1e8]:
+        - generic [aria-hidden] [ref=f1e9]:
+          - generic [ref=f1e10]: T
+          - generic [ref=f1e11]: i
+          - generic [ref=f1e12]: "n"
+          - generic [ref=f1e13]: w
+          - generic [ref=f1e14]: a
+          - generic [ref=f1e15]: "y"
+        - generic [aria-hidden] [ref=f1e16]:
+          - generic [ref=f1e17]: A
+          - generic [ref=f1e18]: c
+          - generic [ref=f1e19]: a
+          - generic [ref=f1e20]: d
+          - generic [ref=f1e21]: e
+          - generic [ref=f1e22]: m
+          - generic [ref=f1e23]: "y"
+      - generic [aria-hidden] [ref=f1e24]:
+        - generic [ref=f1e29]: Academics
+        - generic [ref=f1e35]: Admissions
+        - generic [ref=f1e42]: Finance
+        - generic [ref=f1e48]: Attendance
+        - generic [ref=f1e55]: Communication
+        - generic [ref=f1e61]: Exams
+      - generic [ref=f1e68]:
+        - generic [ref=f1e69]: Your school. In sync.
+        - generic [ref=f1e70]:
+          - generic [ref=f1e71]: Good morning, Prof Hla
+          - generic [ref=f1e72]: Wednesday 11 November
+      - button "Skip" [ref=f1e73] [cursor=pointer]
+  - generic [ref=f1e74]:
+    - generic [ref=f1e75]:
+      - navigation [ref=f1e77]:
+        - button "Toggle navigation menu" [expanded] [ref=f1e78] [cursor=pointer]
+        - button "Go Back" [ref=f1e81] [cursor=pointer]
+        - generic [ref=f1e84]:
+          - button "Nov 11 07:36 5" [ref=f1e86] [cursor=pointer]:
+            - generic [ref=f1e89]: Nov 11
+            - generic [ref=f1e90]: 07:36
+            - generic [ref=f1e91]: "5"
+          - button "User menu" [ref=f1e94] [cursor=pointer]:
+            - img "Avatar of Prof Hla" [ref=f1e95]
+        - button "Switch Sidebar Left/Right" [ref=f1e96] [cursor=pointer]
+        - link "System Settings" [ref=f1e99] [cursor=pointer]:
+          - /url: https://lvh.me/workspace/system-settings-page
+        - button "Help Guide" [ref=f1e104] [cursor=pointer]
+      - main [ref=f1e108]:
+        - generic [ref=f1e109]:
+          - generic [ref=f1e113]:
+            - link "Skip to dashboard" [ref=f1e114] [cursor=pointer]:
+              - /url: "#tw-content"
+            - generic [ref=f1e115]:
+              - generic [ref=f1e116]:
+                - button "Open menu" [ref=f1e117] [cursor=pointer]
+                - generic [ref=f1e120]: Wednesday, November 11, 2026 · 07:36 AM
+                - generic [ref=f1e121]: Term 3 · 2026
+                - button "Quick find (Ctrl + K)" [ref=f1e122] [cursor=pointer]
+              - generic [ref=f1e126]:
+                - heading "Good morning, Prof Hla" [level=1] [ref=f1e127]
+                - paragraph [ref=f1e128]: Here’s how Tinway Academy is doing today.
+                - generic [ref=f1e129]:
+                  - generic [ref=f1e130]:
+                    - generic [ref=f1e134]:
+                      - generic [ref=f1e135]: 0%
+                      - text: Fees collected
+                    - emphasis [ref=f1e136]: $0.00
+                  - generic [ref=f1e137]:
+                    - generic [ref=f1e141]:
+                      - generic [ref=f1e142]: "1"
+                      - text: Awaiting approval
+                    - emphasis [ref=f1e143]: All within SLA
+                - generic [ref=f1e144]:
+                  - generic [ref=f1e145]:
+                    - heading "Students" [level=2] [ref=f1e146]
+                    - generic [ref=f1e147]:
+                      - generic [ref=f1e148]:
+                        - generic [ref=f1e149]: "342"
+                        - img "269 girls, 280 boys" [ref=f1e150]
+                        - generic [ref=f1e153]:
+                          - generic [ref=f1e154]: 269 girls
+                          - generic [ref=f1e156]: 280 boys
+                        - generic [ref=f1e158]:
+                          - generic [ref=f1e159]:
+                            - generic [ref=f1e160]: "1"
+                            - text: Teaching
+                          - generic [ref=f1e161]:
+                            - generic [ref=f1e162]: "0"
+                            - text: Non-teaching
+                          - generic [ref=f1e163]:
+                            - generic [ref=f1e164]: "1"
+                            - text: Admins
+                      - generic [ref=f1e165]:
+                        - generic [ref=f1e166]: Students per grade
+                        - img [ref=f1e167]:
+                          - generic [ref=f1e168] [cursor=pointer]:
+                            - generic [ref=f1e170]: "95"
+                            - generic [ref=f1e171]: ECD A
+                          - generic [ref=f1e172] [cursor=pointer]:
+                            - generic [ref=f1e174]: "51"
+                            - generic [ref=f1e175]: ECD B
+                          - generic [ref=f1e176] [cursor=pointer]:
+                            - generic [ref=f1e178]: "1"
+                            - generic [ref=f1e179]: gGrade 5
+                          - generic [ref=f1e180] [cursor=pointer]:
+                            - generic [ref=f1e182]: "1"
+                            - generic [ref=f1e183]: GRADE
+                          - generic [ref=f1e184] [cursor=pointer]:
+                            - generic [ref=f1e186]: "7"
+                            - generic [ref=f1e187]: Grade 1
+                          - generic [ref=f1e188] [cursor=pointer]:
+                            - generic [ref=f1e190]: "102"
+                            - generic [ref=f1e191]: Grade 2
+                          - generic [ref=f1e192] [cursor=pointer]:
+                            - generic [ref=f1e194]: "93"
+                            - generic [ref=f1e195]: Grade 3
+                          - generic [ref=f1e196] [cursor=pointer]:
+                            - generic [ref=f1e198]: "100"
+                            - generic [ref=f1e199]: Grade 4
+                          - generic [ref=f1e200] [cursor=pointer]:
+                            - generic [ref=f1e202]: "29"
+                            - generic [ref=f1e203]: Grade 5
+                          - generic [ref=f1e204] [cursor=pointer]:
+                            - generic [ref=f1e206]: "44"
+                            - generic [ref=f1e207]: Grade 6
+                          - generic [ref=f1e208] [cursor=pointer]:
+                            - generic [ref=f1e210]: "3"
+                            - generic [ref=f1e211]: Grade5 5
+                          - generic [ref=f1e212] [cursor=pointer]:
+                            - generic [ref=f1e214]: "1"
+                            - generic [ref=f1e215]: Grrade 5
+                          - generic [ref=f1e216] [cursor=pointer]:
+                            - generic [ref=f1e218]: "18"
+                            - generic [ref=f1e219]: Special Cl
+                  - generic [ref=f1e220]:
+                    - heading "Quick actions" [level=2] [ref=f1e221]
+                    - generic [ref=f1e222]:
+                      - link "Add a student Register or edit profiles" [ref=f1e223] [cursor=pointer]:
+                        - /url: https://lvh.me/workspace/students
+                        - generic [ref=f1e227]:
+                          - text: Add a student
+                          - generic [ref=f1e228]: Register or edit profiles
+                      - link "Enter marks Current term" [ref=f1e229] [cursor=pointer]:
+                        - /url: https://lvh.me/workspace/assessment-marks
+                        - generic [ref=f1e233]:
+                          - text: Enter marks
+                          - generic [ref=f1e234]: Current term
+                      - link "Record a payment Fee collections" [ref=f1e235] [cursor=pointer]:
+                        - /url: https://lvh.me/workspace/fee-collections
+                        - generic [ref=f1e239]:
+                          - text: Record a payment
+                          - generic [ref=f1e240]: Fee collections
+                      - link "Staff attendance Today’s register" [ref=f1e241] [cursor=pointer]:
+                        - /url: https://lvh.me/workspace/staff-attendances
+                        - generic [ref=f1e245]:
+                          - text: Staff attendance
+                          - generic [ref=f1e246]: Today’s register
+                      - link "Review applications Online admissions" [ref=f1e247] [cursor=pointer]:
+                        - /url: https://lvh.me/workspace/applications
+                        - generic [ref=f1e251]:
+                          - text: Review applications
+                          - generic [ref=f1e252]: Online admissions
+                      - link "Send announcement Parents and staff" [ref=f1e253] [cursor=pointer]:
+                        - /url: https://lvh.me/workspace/announcements
+                        - generic [ref=f1e257]:
+                          - text: Send announcement
+                          - generic [ref=f1e258]: Parents and staff
+                  - generic [ref=f1e259]:
+                    - heading [level=2] [ref=f1e260]:
+                      - text: Attendance today
+                      - link "Open" [ref=f1e261] [cursor=pointer]:
+                        - /url: https://lvh.me/workspace/timetable-lessons
+                    - generic [ref=f1e262]: No attendance has been recorded for today yet. Mark it from a lesson on the timetable.
+                  - generic [ref=f1e263]:
+                    - heading [level=2] [ref=f1e264]:
+                      - text: Fees collected this year
+                      - generic [ref=f1e265]:
+                        - button "Total" [pressed] [ref=f1e266] [cursor=pointer]
+                        - button "Monthly" [ref=f1e267] [cursor=pointer]
+                      - link "Statements" [ref=f1e268] [cursor=pointer]:
+                        - /url: https://lvh.me/workspace/financial-statements
+                    - generic [ref=f1e269]:
+                      - generic [ref=f1e270]:
+                        - generic [ref=f1e271]: $0
+                        - generic [ref=f1e272]: of $0 billed
+                      - generic [ref=f1e275]:
+                        - generic [ref=f1e276]: 0% collected
+                        - generic [ref=f1e277]: $0 outstanding
+                    - img "Fees collected this year, cumulative" [ref=f1e279]:
+                      - generic [ref=f1e280] [cursor=pointer]
+                      - generic [ref=f1e281]: Jan
+                      - generic [ref=f1e282] [cursor=pointer]
+                      - generic [ref=f1e283]: Feb
+                      - generic [ref=f1e284] [cursor=pointer]
+                      - generic [ref=f1e285]: Mar
+                      - generic [ref=f1e286] [cursor=pointer]
+                      - generic [ref=f1e287]: Apr
+                      - generic [ref=f1e288] [cursor=pointer]
+                      - generic [ref=f1e289]: May
+                      - generic [ref=f1e290] [cursor=pointer]
+                      - generic [ref=f1e291]: Jun
+                      - generic [ref=f1e292] [cursor=pointer]
+                      - generic [ref=f1e293]: Jul
+                      - generic [ref=f1e294] [cursor=pointer]
+                      - generic [ref=f1e295]: Aug
+                      - generic [ref=f1e296] [cursor=pointer]
+                      - generic [ref=f1e297]: Sep
+                      - generic [ref=f1e298] [cursor=pointer]
+                      - generic [ref=f1e299]: Oct
+                      - generic [ref=f1e300] [cursor=pointer]
+                      - generic [ref=f1e301]: Nov
+                      - generic [ref=f1e302]: $0
+                  - generic [ref=f1e303]:
+                    - heading "Needs your attention" [level=2] [ref=f1e304]
+                    - list [ref=f1e305]:
+                      - listitem [ref=f1e306]:
+                        - generic [ref=f1e307]: "1"
+                        - generic [ref=f1e308]:
+                          - text: Report cards ready to publish
+                          - generic [ref=f1e309]: Exams & Grading
+                        - link "Publish" [ref=f1e310] [cursor=pointer]:
+                          - /url: https://lvh.me/workspace/academic-reports
+                        - 'button "Dismiss: Report cards ready to publish" [ref=f1e311] [cursor=pointer]': ×
+                  - generic [ref=f1e312]:
+                    - heading [level=2] [ref=f1e313]:
+                      - text: Average mark by subject
+                      - link "Analytics" [ref=f1e314] [cursor=pointer]:
+                        - /url: https://lvh.me/workspace/assessment-marks
+                    - generic [ref=f1e315]: No marks have been entered for the current term yet.
+                  - generic [ref=f1e316]:
+                    - heading [level=2] [ref=f1e317]:
+                      - text: Admissions pipeline
+                      - link "Open" [ref=f1e318] [cursor=pointer]:
+                        - /url: https://lvh.me/workspace/applications
+                    - generic [ref=f1e319]:
+                      - generic [ref=f1e320]: 1 · Applications
+                      - generic [ref=f1e321]: 1 · Documents verified
+                      - generic [ref=f1e322]: 1 · Enrolled
+                  - generic [ref=f1e323]:
+                    - heading [level=2] [ref=f1e324]:
+                      - text: Today’s schedule
+                      - link "Full schedule" [ref=f1e325] [cursor=pointer]:
+                        - /url: https://lvh.me/workspace/schedule
+                    - list [ref=f1e326]:
+                      - listitem [ref=f1e327]:
+                        - generic [ref=f1e328]: 08:00
+                        - generic [ref=f1e329]:
+                          - text: Social Sciences · North
+                          - generic [ref=f1e330]: Grade 1
+                      - listitem [ref=f1e331]:
+                        - generic [ref=f1e332]: 08:35
+                        - generic [ref=f1e333]:
+                          - text: Social Sciences · North
+                          - generic [ref=f1e334]: Grade 1
+                      - listitem [ref=f1e335]:
+                        - generic [ref=f1e336]: 09:10
+                        - generic [ref=f1e337]:
+                          - text: Mathematics · North
+                          - generic [ref=f1e338]: Grade 1
+                      - listitem [ref=f1e339]:
+                        - generic [ref=f1e340]: 09:45
+                        - generic [ref=f1e341]:
+                          - text: Mathematics · North
+                          - generic [ref=f1e342]: Grade 1
+                      - listitem [ref=f1e343]:
+                        - generic [ref=f1e344]: 10:50
+                        - generic [ref=f1e345]:
+                          - text: Physical Education and Arts · North
+                          - generic [ref=f1e346]: Grade 1
+                      - listitem [ref=f1e347]:
+                        - generic [ref=f1e348]: 11:25
+                        - generic [ref=f1e349]:
+                          - text: Physical Education and Arts · North
+                          - generic [ref=f1e350]: Grade 1
+                  - generic [ref=f1e351]:
+                    - heading "This week across the school" [level=2] [ref=f1e352]
+                    - generic [ref=f1e353]:
+                      - generic [ref=f1e354]:
+                        - generic [ref=f1e355]: Books on loan
+                        - generic [ref=f1e356]: "0"
+                        - text: 0 out this week
+                      - generic [ref=f1e359]:
+                        - generic [ref=f1e360]: Clinic visits
+                        - generic [ref=f1e361]: "0"
+                        - text: +0 vs last week
+                      - generic [ref=f1e364]:
+                        - generic [ref=f1e365]: Boarders
+                        - generic [ref=f1e366]: "0"
+                        - text: of 0 beds
+                      - generic [ref=f1e369]:
+                        - generic [ref=f1e370]: Open tickets
+                        - generic [ref=f1e371]: "0"
+                        - text: 0 closed today
+                  - generic [ref=f1e374]:
+                    - heading [level=2] [ref=f1e375]:
+                      - text: Attendance not marked yet
+                      - link "Mark now" [ref=f1e376] [cursor=pointer]:
+                        - /url: https://lvh.me/workspace/timetable-lessons
+                    - generic [ref=f1e377]:
+                      - generic [ref=f1e378]: North
+                      - generic [ref=f1e379]: Grade 1 · No class teacher
+                      - generic [ref=f1e380]: Not marked
+                    - generic [ref=f1e381]:
+                      - generic [ref=f1e382]: South
+                      - generic [ref=f1e383]: Grade 1 · No class teacher
+                      - generic [ref=f1e384]: Not marked
+                  - generic [ref=f1e385]:
+                    - heading "Alerts and school health" [level=2] [ref=f1e386]
+                    - generic [ref=f1e387]:
+                      - generic [ref=f1e388]: Inventory
+                      - generic [ref=f1e389]: 1 items at or below reorder level
+                      - link "Reorder" [ref=f1e391] [cursor=pointer]:
+                        - /url: https://lvh.me/workspace/inventory-items
+                    - generic [ref=f1e392]:
+                      - generic [ref=f1e393]: Accounts
+                      - generic [ref=f1e394]: 6 registrations awaiting approval
+                      - link "Approve" [ref=f1e396] [cursor=pointer]:
+                        - /url: https://lvh.me/workspace/user-accounts
+                    - generic [ref=f1e397]:
+                      - generic [ref=f1e398]: Subscription
+                      - generic [ref=f1e399]: Active · renewal overdue
+                      - link "Manage" [ref=f1e401] [cursor=pointer]:
+                        - /url: https://lvh.me/workspace/saas-billing-overview
+                  - generic [ref=f1e402]:
+                    - heading [level=2] [ref=f1e403]:
+                      - text: Recent activity
+                      - link "Audit log" [ref=f1e404] [cursor=pointer]:
+                        - /url: https://lvh.me/workspace/system-audit-logs
+                    - list [ref=f1e405]:
+                      - listitem [ref=f1e406]:
+                        - generic [ref=f1e408]:
+                          - text: "Deleted Record inside: Employee"
+                          - generic [ref=f1e409]: Prof Hla · HR & Payroll
+                        - time [ref=f1e410]: 1 day ago
+                      - listitem [ref=f1e411]:
+                        - generic [ref=f1e413]:
+                          - text: "Updated Record inside: Employee"
+                          - generic [ref=f1e414]: Prof Hla · HR & Payroll
+                        - time [ref=f1e415]: 1 day ago
+                      - listitem [ref=f1e416]:
+                        - generic [ref=f1e418]:
+                          - text: "Created Record inside: Employee"
+                          - generic [ref=f1e419]: Prof Hla · HR & Payroll
+                        - time [ref=f1e420]: 1 day ago
+                      - listitem [ref=f1e421]:
+                        - generic [ref=f1e423]:
+                          - text: "Created Record inside: User"
+                          - generic [ref=f1e424]: Prof Hla · System Administration
+                        - time [ref=f1e425]: 1 day ago
+                      - listitem [ref=f1e426]:
+                        - generic [ref=f1e428]:
+                          - text: "Updated Record inside: User"
+                          - generic [ref=f1e429]: Prof Hla · System Administration
+                        - time [ref=f1e430]: 1 day ago
+                      - listitem [ref=f1e431]:
+                        - generic [ref=f1e433]:
+                          - text: "Updated Record inside: User"
+                          - generic [ref=f1e434]: Prof Hla · System Administration
+                        - time [ref=f1e435]: 1 day ago
+                - generic [ref=f1e436]:
+                  - paragraph [ref=f1e437]: Demo data. Fill the system with sample students, classes, marks and reports so you can test every area.
+                  - button "Seed demo data" [ref=f1e439] [cursor=pointer]
+            - tooltip
+            - status
+          - generic:
+            - dialog
+          - generic:
+            - dialog
+          - generic:
+            - dialog
+      - contentinfo [ref=f1e440]:
+        - generic [ref=f1e441]:
+          - paragraph:
+            - link:
+              - /url: ""
+          - paragraph [ref=f1e442]: © 2026 Kairo CORE. All rights reserved.
+    - complementary [ref=f1e443]:
+      - generic [ref=f1e445]:
+        - link "School Logo Tinway Academy (TINWAY-PRI)" [ref=f1e447] [cursor=pointer]:
+          - /url: https://lvh.me/workspace
+          - generic [ref=f1e449]:
+            - img "School Logo" [ref=f1e451]
+            - generic [ref=f1e452]:
+              - generic [ref=f1e453]: Tinway Academy
+              - generic "School login code — share it so people can find your login page at kairo.co.zw/school-login" [ref=f1e454]: (TINWAY-PRI)
+        - button "Collapse sidebar" [ref=f1e455] [cursor=pointer]
+      - navigation [ref=f1e459]:
+        - generic [ref=f1e461]:
+          - generic "Search workspace" [ref=f1e462] [cursor=pointer]
+          - textbox "Search workspace..." [ref=f1e465]
+          - generic: ⌘K
+        - list [ref=f1e466]:
+          - listitem [ref=f1e467]:
+            - list [ref=f1e468]:
+              - listitem [ref=f1e469]:
+                - link "Dashboard" [ref=f1e470] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace
+          - listitem [ref=f1e474]:
+            - generic [ref=f1e475] [cursor=pointer]:
+              - generic [ref=f1e476]: Admissions
+              - button "Admissions" [expanded] [ref=f1e477]
+            - list [ref=f1e481]:
+              - listitem [ref=f1e482]:
+                - link "Online Admissions" [ref=f1e483] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/applications
+          - listitem [ref=f1e487]:
+            - generic [ref=f1e488] [cursor=pointer]:
+              - generic [ref=f1e489]: Students
+              - button "Students" [expanded] [ref=f1e490]
+            - list [ref=f1e494]:
+              - listitem [ref=f1e495]:
+                - link "ID Card Designer" [ref=f1e496] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/card-templates
+              - listitem [ref=f1e500]:
+                - link "Student Directory" [ref=f1e501] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/students
+          - listitem [ref=f1e505]:
+            - generic [ref=f1e506] [cursor=pointer]:
+              - generic [ref=f1e507]: Academics
+              - button "Academics" [expanded] [ref=f1e508]
+            - list [ref=f1e512]:
+              - listitem [ref=f1e513]:
+                - link "Academic Operations Center" [ref=f1e514] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/academic-operations-center
+              - listitem [ref=f1e518]:
+                - link "Setup & Structure" [ref=f1e519] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/academics-setup-structure
+              - listitem [ref=f1e523]:
+                - link "Timetables & Teaching" [ref=f1e524] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/academics-timetables-teaching
+              - listitem [ref=f1e528]:
+                - link "Progression" [ref=f1e529] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/academics-progression
+          - listitem [ref=f1e533]:
+            - generic [ref=f1e534] [cursor=pointer]:
+              - generic [ref=f1e535]: Exams & Grading
+              - button "Exams & Grading" [expanded] [ref=f1e536]
+            - list [ref=f1e540]:
+              - listitem [ref=f1e541]:
+                - link "Assessment Center" [ref=f1e542] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/exams-assessment-center
+              - listitem [ref=f1e546]:
+                - link "Grading & Marks Management" [ref=f1e547] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/exams-grading-marks
+              - listitem [ref=f1e551]:
+                - link "Reports & Academic Publishing" [ref=f1e552] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/exams-reports-publishing
+          - listitem [ref=f1e556]:
+            - generic [ref=f1e557] [cursor=pointer]:
+              - generic [ref=f1e558]: Finance
+              - button "Finance" [expanded] [ref=f1e559]
+            - list [ref=f1e563]:
+              - listitem [ref=f1e564]:
+                - link "Dashboard & Analytics" [ref=f1e565] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/executive-financial-dashboard
+              - listitem [ref=f1e569]:
+                - link "Financial Statements" [ref=f1e570] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/financial-statements
+              - listitem [ref=f1e574]:
+                - link "Student Billing & Revenue" [ref=f1e575] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/finance-student-billing
+              - listitem [ref=f1e579]:
+                - link "Expenses & Purchasing" [ref=f1e580] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/finance-expenses-purchasing
+              - listitem [ref=f1e584]:
+                - link "Core Accounting & Setup" [ref=f1e585] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/finance-core-accounting
+          - listitem [ref=f1e589]:
+            - generic [ref=f1e590] [cursor=pointer]:
+              - generic [ref=f1e591]: HR & Payroll
+              - button "HR & Payroll" [expanded] [ref=f1e592]
+            - list [ref=f1e596]:
+              - listitem [ref=f1e597]:
+                - link "Staff Directory & HR" [ref=f1e598] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/hr-staff-directory
+              - listitem [ref=f1e602]:
+                - link "Payroll & Compensation" [ref=f1e603] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/hr-payroll-compensation
+              - listitem [ref=f1e607]:
+                - link "Attendance & Leave" [ref=f1e608] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/hr-attendance-leave
+          - listitem [ref=f1e612]:
+            - generic [ref=f1e613] [cursor=pointer]:
+              - generic [ref=f1e614]: Inventory & Procurement
+              - button "Inventory & Procurement" [expanded] [ref=f1e615]
+            - list [ref=f1e619]:
+              - listitem [ref=f1e620]:
+                - link "Stock & Inventory" [ref=f1e621] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/inventory-stock
+              - listitem [ref=f1e625]:
+                - link "Procurement" [ref=f1e626] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/inventory-procurement
+              - listitem [ref=f1e630]:
+                - link "Fixed Assets" [ref=f1e631] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/inventory-fixed-assets
+          - listitem [ref=f1e635]:
+            - generic [ref=f1e636] [cursor=pointer]:
+              - generic [ref=f1e637]: Library
+              - button "Library" [expanded] [ref=f1e638]
+            - list [ref=f1e642]:
+              - listitem [ref=f1e643]:
+                - link "Catalogue" [ref=f1e644] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/library-catalogue
+              - listitem [ref=f1e648]:
+                - link "Circulation" [ref=f1e649] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/library-circulation
+              - listitem [ref=f1e653]:
+                - link "Knowledge" [ref=f1e654] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/knowledge-knowledge
+          - listitem [ref=f1e658]:
+            - generic [ref=f1e659] [cursor=pointer]:
+              - generic [ref=f1e660]: Boarding & Welfare
+              - button "Boarding & Welfare" [expanded] [ref=f1e661]
+            - list [ref=f1e665]:
+              - listitem [ref=f1e666]:
+                - link "Accommodation" [ref=f1e667] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/boarding-accommodation
+              - listitem [ref=f1e671]:
+                - link "Welfare & Care" [ref=f1e672] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/boarding-welfare
+          - listitem [ref=f1e676]:
+            - generic [ref=f1e677] [cursor=pointer]:
+              - generic [ref=f1e678]: Health & Safety
+              - button "Health & Safety" [expanded] [ref=f1e679]
+            - list [ref=f1e683]:
+              - listitem [ref=f1e684]:
+                - link "Health Records" [ref=f1e685] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/health-records
+          - listitem [ref=f1e689]:
+            - generic [ref=f1e690] [cursor=pointer]:
+              - generic [ref=f1e691]: Communication Center
+              - button "Communication Center" [expanded] [ref=f1e692]
+            - list [ref=f1e696]:
+              - listitem [ref=f1e697]:
+                - link "Communication Center" [ref=f1e698] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/communication-center
+              - listitem [ref=f1e702]:
+                - link "Notices" [ref=f1e703] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/notices
+              - listitem [ref=f1e707]:
+                - link "Community & Engagement" [ref=f1e708] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/communication-community
+              - listitem [ref=f1e712]:
+                - link "Help & Inbox" [ref=f1e713] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/communication-help-inbox
+          - listitem [ref=f1e717]:
+            - generic [ref=f1e718] [cursor=pointer]:
+              - generic [ref=f1e719]: LMS
+              - button "LMS" [expanded] [ref=f1e720]
+            - list [ref=f1e724]:
+              - listitem [ref=f1e725]:
+                - link "LMS" [ref=f1e726] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/lms-lms
+          - listitem [ref=f1e730]:
+            - generic [ref=f1e731] [cursor=pointer]:
+              - generic [ref=f1e732]: Website
+              - button "Website" [expanded] [ref=f1e733]
+            - list [ref=f1e737]:
+              - listitem [ref=f1e738]:
+                - link "Templates & Design" [ref=f1e739] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/website-templates
+              - listitem [ref=f1e743]:
+                - link "Website Templates" [ref=f1e744] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/cms/templates
+              - listitem [ref=f1e748]:
+                - link "Content Manager" [ref=f1e749] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/cms/content
+          - listitem [ref=f1e753]:
+            - generic [ref=f1e754] [cursor=pointer]:
+              - generic [ref=f1e755]: Reports & Intelligence
+              - button "Reports & Intelligence" [expanded] [ref=f1e756]
+            - list [ref=f1e760]:
+              - listitem [ref=f1e761]:
+                - link "Dashboard" [ref=f1e762] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/reporting-dashboard
+              - listitem [ref=f1e766]:
+                - link "Analytics Explorer" [ref=f1e767] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/analytics-explorer
+              - listitem [ref=f1e771]:
+                - link "Generate Report" [ref=f1e772] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/report-generator-page
+              - listitem [ref=f1e776]:
+                - link "Reports" [ref=f1e777] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/reports-reports
+          - listitem [ref=f1e781]:
+            - generic [ref=f1e782] [cursor=pointer]:
+              - generic [ref=f1e783]: System Administration
+              - button "System Administration" [expanded] [ref=f1e784]
+            - list [ref=f1e788]:
+              - listitem [ref=f1e789]:
+                - link "System Settings" [ref=f1e790] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/admin-system-settings
+              - listitem [ref=f1e794]:
+                - link "Overview" [ref=f1e795] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/administration-dashboard
+              - listitem [ref=f1e800]:
+                - link "User Management" [ref=f1e801] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/admin-user-management
+              - listitem [ref=f1e805]:
+                - link "Audit & Compliance" [ref=f1e806] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/admin-audit
+          - listitem [ref=f1e810]:
+            - generic [ref=f1e811] [cursor=pointer]:
+              - generic [ref=f1e812]: Subscription & Billing
+              - button "Subscription & Billing" [expanded] [ref=f1e813]
+            - list [ref=f1e817]:
+              - listitem [ref=f1e818]:
+                - link "Overview & Billing" [ref=f1e819] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/saas-billing-overview
+              - listitem [ref=f1e823]:
+                - link "Subscription & Billing" [ref=f1e824] [cursor=pointer]:
+                  - /url: https://lvh.me/workspace/saas-hub
+  - generic:
+    - status

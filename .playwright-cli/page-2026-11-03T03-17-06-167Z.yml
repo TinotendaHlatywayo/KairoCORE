@@ -1,0 +1,20 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]: 🔍
+  - generic [ref=e4]: 🗺️
+  - generic [ref=e5]: 🧭
+  - generic [ref=e6]: 📎
+  - generic [ref=e7]:
+    - generic [ref=e8]: "404"
+    - heading "Page Not Found" [level=1] [ref=e9]
+    - paragraph [ref=e10]: The page you're looking for doesn't exist, has been moved, or is temporarily unavailable.
+    - generic [ref=e11]:
+      - strong [ref=e12]: "Quick Navigation Help:"
+      - text: Check the URL for typos or use the search box below to locate the requested resource quickly.
+    - generic [ref=e13]:
+      - link "Back to Home" [ref=e14] [cursor=pointer]:
+        - /url: /workspace
+      - button "Go Back" [ref=e17] [cursor=pointer]
+    - generic [ref=e20]:
+      - textbox "Search for something..." [ref=e21]
+      - button [ref=e22] [cursor=pointer]
+    - generic [ref=e26]: Kairo CORE

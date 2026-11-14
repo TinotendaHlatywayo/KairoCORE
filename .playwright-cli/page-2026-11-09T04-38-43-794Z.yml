@@ -1,0 +1,254 @@
+- generic [active] [ref=f30e1]:
+  - banner [ref=f30e2]:
+    - generic [ref=f30e3]:
+      - link "Kairo CORE home" [ref=f30e4] [cursor=pointer]:
+        - /url: https://lvh.me
+        - img "Kairo CORE logo" [ref=f30e5]
+      - navigation "Primary navigation" [ref=f30e6]:
+        - link "Home" [ref=f30e7] [cursor=pointer]:
+          - /url: https://lvh.me
+        - link "Features" [ref=f30e8] [cursor=pointer]:
+          - /url: https://lvh.me/features
+        - link "Blog" [ref=f30e11] [cursor=pointer]:
+          - /url: https://lvh.me/blog
+        - link "About" [ref=f30e12] [cursor=pointer]:
+          - /url: https://lvh.me/about
+        - link "Contact" [ref=f30e13] [cursor=pointer]:
+          - /url: https://lvh.me/contact
+      - generic [ref=f30e14]:
+        - button "Toggle dark mode" [pressed] [ref=f30e15] [cursor=pointer]
+        - group [ref=f30e16]:
+          - generic "Change language" [ref=f30e17] [cursor=pointer]:
+            - generic [ref=f30e21]: EN
+            - text: ⌄
+        - group [ref=f30e22]:
+          - generic "Login ⌄" [ref=f30e23] [cursor=pointer]
+        - link "Register School" [ref=f30e27] [cursor=pointer]:
+          - /url: https://lvh.me/register
+  - main [ref=f30e28]:
+    - generic [ref=f30e31]:
+      - generic [ref=f30e32]: Contact us
+      - heading "Let’s talk about your school" [level=1] [ref=f30e33]
+      - paragraph [ref=f30e34]: Have questions about Kairo CORE, or want a personalized demo? Reach us through any channel below.
+    - generic [ref=f30e35]:
+      - generic [ref=f30e36]:
+        - generic [ref=f30e37]:
+          - generic [ref=f30e43]:
+            - heading "Send us a message" [level=2] [ref=f30e44]
+            - generic [ref=f30e45]: We respond to all school inquiries within 24 hours.
+          - generic [ref=f30e46]:
+            - textbox [aria-hidden] [ref=f30e47]
+            - generic [ref=f30e48]:
+              - generic [ref=f30e49]:
+                - generic [ref=f30e50]:
+                  - text: Your name *
+                  - generic [ref=f30e51]: 0 / 100
+                - textbox "Your name * 0 / 100" [ref=f30e52]:
+                  - /placeholder: Tendai Marufu
+              - generic [ref=f30e53]:
+                - generic [ref=f30e54]: Your email *
+                - textbox "Your email *" [ref=f30e55]:
+                  - /placeholder: you@yourschool.co.zw
+            - generic [ref=f30e56]:
+              - generic [ref=f30e57]:
+                - generic [ref=f30e58]: School name
+                - textbox "School name" [ref=f30e59]:
+                  - /placeholder: Your school
+              - generic [ref=f30e60]:
+                - generic [ref=f30e61]: I’m interested in
+                - combobox "I’m interested in" [ref=f30e62]:
+                  - option "Booking a demo" [selected]
+                  - option "A price quote"
+                  - option "Product questions"
+                  - option "Support"
+            - generic [ref=f30e63]:
+              - generic [ref=f30e64]:
+                - text: Message *
+                - generic [ref=f30e65]: 0 / 2000
+              - textbox "Message * 0 / 2000" [ref=f30e66]:
+                - /placeholder: Tell us a little about your school and what you need...
+            - button "Send message" [ref=f30e67] [cursor=pointer]
+        - generic [ref=f30e72]:
+          - heading "What happens next" [level=2] [ref=f30e73]
+          - list [ref=f30e74]:
+            - listitem [ref=f30e75]:
+              - generic [ref=f30e76]:
+                - heading "Tell us about your school" [level=3] [ref=f30e77]
+                - paragraph [ref=f30e78]: Share your school’s size and what you want to fix, whether that is fees, reports, your website or something else.
+            - listitem [ref=f30e79]:
+              - generic [ref=f30e80]:
+                - heading "We reply within 24 hours" [level=3] [ref=f30e81]
+                - paragraph [ref=f30e82]: A school specialist answers your questions and suggests the modules that fit.
+            - listitem [ref=f30e83]:
+              - generic [ref=f30e84]:
+                - heading "See Kairo CORE in action" [level=3] [ref=f30e85]
+                - paragraph [ref=f30e86]: Book a personal demo and we will walk you through the system, module by module.
+      - complementary [ref=f30e87]:
+        - link "WhatsApp us +263 78 636 6855 Fastest replies during office hours" [ref=f30e88] [cursor=pointer]:
+          - /url: https://wa.me/263786366855
+          - generic [ref=f30e93]:
+            - generic [ref=f30e94]: WhatsApp us
+            - generic [ref=f30e95]: +263 78 636 6855
+            - text: Fastest replies during office hours
+        - link "Email us support@kairocore.co.zw For quotes, demos and support" [ref=f30e99] [cursor=pointer]:
+          - /url: mailto:support@kairocore.co.zw
+          - generic [ref=f30e104]:
+            - generic [ref=f30e105]: Email us
+            - generic [ref=f30e106]: support@kairocore.co.zw
+            - text: For quotes, demos and support
+        - generic [ref=f30e115]:
+          - text: Office hours
+          - paragraph [ref=f30e116]: Monday – Friday, 08:00 – 17:00 (CAT)
+          - paragraph [ref=f30e117]: Harare, Zimbabwe
+        - generic [ref=f30e119]:
+          - generic [ref=f30e120]: Follow our official channels
+          - generic [ref=f30e121]:
+            - link "Facebook" [ref=f30e122] [cursor=pointer]:
+              - /url: https://www.facebook.com/
+              - generic [ref=f30e126]: Follow
+            - link "Instagram" [ref=f30e127] [cursor=pointer]:
+              - /url: https://www.instagram.com/
+              - generic [ref=f30e133]: Follow
+            - link "X" [ref=f30e134] [cursor=pointer]:
+              - /url: https://x.com/
+              - generic [ref=f30e138]: Follow
+            - link "Tiktok" [ref=f30e139] [cursor=pointer]:
+              - /url: https://www.tiktok.com/
+              - generic [ref=f30e145]: Follow
+            - link "Youtube" [ref=f30e146] [cursor=pointer]:
+              - /url: https://www.youtube.com/
+              - generic [ref=f30e150]: Follow
+        - generic [ref=f30e151]:
+          - img "A Kairo CORE school specialist helping colleagues at a laptop" [ref=f30e153]
+          - generic [ref=f30e154]:
+            - heading "Talk to a school specialist" [level=3] [ref=f30e155]
+            - paragraph [ref=f30e156]: We understand school terms, fee cycles and exam seasons, and we speak your language.
+    - generic [ref=f30e159]:
+      - generic [ref=f30e160]:
+        - generic [ref=f30e165]:
+          - text: Our office
+          - generic [ref=f30e166]: Harare, Zimbabwe
+        - link "Open in Google Maps" [ref=f30e167] [cursor=pointer]:
+          - /url: https://www.google.com/maps/search/?api=1&query=Harare%2C%20Zimbabwe
+      - iframe [ref=f30e168]:
+        - generic [ref=f31e6]:
+          - region "Map" [ref=f31e7]
+          - iframe [aria-hidden] [ref=f31e42]
+  - contentinfo [ref=f30e169]:
+    - generic [ref=f30e170]:
+      - generic [ref=f30e171]:
+        - generic [ref=f30e172]:
+          - link "Kairo CORE home" [ref=f30e173] [cursor=pointer]:
+            - /url: https://lvh.me
+            - img "Kairo CORE logo" [ref=f30e174]
+          - paragraph [ref=f30e175]: Smarter Schools. Brighter Futures.
+          - paragraph [ref=f30e176]: Cloud-based school management platform built for schools.
+          - generic [ref=f30e177]:
+            - generic [ref=f30e179]: All systems operational
+            - text: ·
+            - generic [ref=f30e180]: 06:38
+        - generic [ref=f30e181]:
+          - heading "Product" [level=4] [ref=f30e182]
+          - navigation "Product navigation" [ref=f30e183]:
+            - list [ref=f30e184]:
+              - listitem [ref=f30e185]:
+                - link "Features" [ref=f30e186] [cursor=pointer]:
+                  - /url: https://lvh.me/features
+              - listitem [ref=f30e187]:
+                - link "Fees & Finance" [ref=f30e188] [cursor=pointer]:
+                  - /url: https://lvh.me/features#finance
+              - listitem [ref=f30e189]:
+                - link "Admissions" [ref=f30e190] [cursor=pointer]:
+                  - /url: https://lvh.me/features#admissions
+              - listitem [ref=f30e191]:
+                - link "Security" [ref=f30e192] [cursor=pointer]:
+                  - /url: https://lvh.me/security
+        - generic [ref=f30e193]:
+          - heading "Company" [level=4] [ref=f30e194]
+          - navigation "Company navigation" [ref=f30e195]:
+            - list [ref=f30e196]:
+              - listitem [ref=f30e197]:
+                - link "About" [ref=f30e198] [cursor=pointer]:
+                  - /url: https://lvh.me/about
+              - listitem [ref=f30e199]:
+                - link "Why Kairo" [ref=f30e200] [cursor=pointer]:
+                  - /url: https://lvh.me#why
+              - listitem [ref=f30e201]:
+                - link "How it works" [ref=f30e202] [cursor=pointer]:
+                  - /url: https://lvh.me#start
+              - listitem [ref=f30e203]:
+                - link "Blog" [ref=f30e204] [cursor=pointer]:
+                  - /url: https://lvh.me/blog
+              - listitem [ref=f30e205]:
+                - link "Contact" [ref=f30e206] [cursor=pointer]:
+                  - /url: https://lvh.me/contact
+              - listitem [ref=f30e207]:
+                - link "FAQ" [ref=f30e208] [cursor=pointer]:
+                  - /url: https://lvh.me#faq
+              - listitem [ref=f30e209]:
+                - link "Terms" [ref=f30e210] [cursor=pointer]:
+                  - /url: https://lvh.me/terms
+        - generic [ref=f30e211]:
+          - heading "Resources" [level=4] [ref=f30e212]
+          - navigation "Resources navigation" [ref=f30e213]:
+            - list [ref=f30e214]:
+              - listitem [ref=f30e215]:
+                - link "Help Centre" [ref=f30e216] [cursor=pointer]:
+                  - /url: https://lvh.me/docs
+              - listitem [ref=f30e217]:
+                - link "How to enrol a student" [ref=f30e218] [cursor=pointer]:
+                  - /url: https://lvh.me/help/enroll-student
+              - listitem [ref=f30e219]:
+                - link "Book a demo" [ref=f30e220] [cursor=pointer]:
+                  - /url: https://lvh.me/contact#contact-form
+        - generic [ref=f30e221]:
+          - heading "Reach out to us" [level=4] [ref=f30e222]
+          - navigation "Contact navigation" [ref=f30e223]:
+            - list [ref=f30e224]:
+              - listitem [ref=f30e225]:
+                - link "+263 78 636 6855" [ref=f30e226] [cursor=pointer]:
+                  - /url: tel:+263786366855
+              - listitem [ref=f30e231]:
+                - link "support@kairocore.co.zw" [ref=f30e232] [cursor=pointer]:
+                  - /url: mailto:support@kairocore.co.zw
+              - listitem [ref=f30e238]:
+                - link "Chat on WhatsApp" [ref=f30e239] [cursor=pointer]:
+                  - /url: https://wa.me/263786366855
+      - generic [ref=f30e244]:
+        - generic [ref=f30e245]:
+          - generic [ref=f30e246]: © 2026 Kairo CORE. All rights reserved.
+          - generic [ref=f30e247]:
+            - link "Privacy Policy" [ref=f30e248] [cursor=pointer]:
+              - /url: https://lvh.me/privacy
+            - link "Terms" [ref=f30e249] [cursor=pointer]:
+              - /url: https://lvh.me/terms
+        - generic [ref=f30e250]:
+          - generic [ref=f30e251]:
+            - link "Chat on WhatsApp" [ref=f30e252] [cursor=pointer]:
+              - /url: https://wa.me/263786366855
+            - link "Facebook" [ref=f30e255] [cursor=pointer]:
+              - /url: https://www.facebook.com/
+            - link "Instagram" [ref=f30e258] [cursor=pointer]:
+              - /url: https://www.instagram.com/
+            - link "X" [ref=f30e263] [cursor=pointer]:
+              - /url: https://x.com/
+            - link "TikTok" [ref=f30e266] [cursor=pointer]:
+              - /url: https://www.tiktok.com/
+            - link "YouTube" [ref=f30e271] [cursor=pointer]:
+              - /url: https://www.youtube.com/
+          - link "↑ Back to top" [ref=f30e274] [cursor=pointer]:
+            - /url: "#"
+  - generic "Quick contact links" [ref=f30e275]:
+    - generic [ref=f30e276]:
+      - link "Chat on WhatsApp" [ref=f30e277] [cursor=pointer]:
+        - /url: https://wa.me/263786366855
+      - link "Facebook" [ref=f30e280] [cursor=pointer]:
+        - /url: https://www.facebook.com/
+      - link "Instagram" [ref=f30e283] [cursor=pointer]:
+        - /url: https://www.instagram.com/
+      - link "X" [ref=f30e288] [cursor=pointer]:
+        - /url: https://x.com/
+      - link "TikTok" [ref=f30e291] [cursor=pointer]:
+        - /url: https://www.tiktok.com/
+      - link "YouTube" [ref=f30e296] [cursor=pointer]:
+        - /url: https://www.youtube.com/

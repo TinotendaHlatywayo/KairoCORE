@@ -3,6 +3,7 @@
 @section('body_class', 'kairo-v2')
 
 @section('title', marketing_content('features_title') ?: __('Features').' - '.platform_name())
+@section('seo_image', asset('images/KairoCORE_Features_thumbnail.png'))
 @section('meta_description', marketing_content('features_subtitle') ?: __('Every tool your school needs.'))
 
 @push('styles')

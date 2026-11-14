@@ -1,0 +1,480 @@
+- generic [active] [ref=f4e1]:
+  - alert [ref=f4e2]:
+    - generic [ref=f4e6]:
+      - strong [ref=f4e7]: System Administrator mode
+      - text: — You are working inside
+      - strong [ref=f4e8]: Tinway Academy
+      - text: as
+      - strong [ref=f4e9]: System Administrator
+      - text: ", not as one of their own staff. Signed in as System Founder"
+    - generic [ref=f4e10]:
+      - generic [ref=f4e11]: Session ends 07:04
+      - button "Leave school" [ref=f4e13] [cursor=pointer]
+  - generic [ref=f4e14]:
+    - generic [ref=f4e15]:
+      - navigation [ref=f4e17]:
+        - button "Toggle navigation menu" [expanded] [ref=f4e18] [cursor=pointer]
+        - button "Go Back" [ref=f4e21] [cursor=pointer]
+        - generic [ref=f4e24]:
+          - button "Nov 3 06:35 4" [ref=f4e26] [cursor=pointer]:
+            - generic [ref=f4e29]: Nov 3
+            - generic [ref=f4e30]: 06:35
+            - generic [ref=f4e31]: "4"
+          - button "User menu" [ref=f4e34] [cursor=pointer]:
+            - img "Avatar of System Administrator" [ref=f4e35]
+        - button "Switch Sidebar Left/Right" [ref=f4e36] [cursor=pointer]
+        - link "System Settings" [ref=f4e39] [cursor=pointer]:
+          - /url: https://tinwayacademy.lvh.me/workspace/system-settings-page
+        - button "Help Guide" [ref=f4e44] [cursor=pointer]
+      - main [ref=f4e48]:
+        - generic [ref=f4e49]:
+          - generic [ref=f4e50]:
+            - generic [ref=f4e55]:
+              - generic [ref=f4e56]: Fin
+              - generic [ref=f4e57]: Fees, billing, payments, expenses, revenue and the school bank accounts.
+            - tablist [ref=f4e59]:
+              - tab "Fee Categories ›" [ref=f4e60] [cursor=pointer]:
+                - generic [ref=f4e61]: Fee Categories
+                - text: ›
+              - tab "Fee Structures ›" [ref=f4e62] [cursor=pointer]:
+                - generic [ref=f4e63]: Fee Structures
+                - text: ›
+              - tab "Invoices ›" [ref=f4e64] [cursor=pointer]:
+                - generic [ref=f4e65]: Invoices
+                - text: ›
+              - tab "Fee Collections ›" [ref=f4e66] [cursor=pointer]:
+                - generic [ref=f4e67]: Fee Collections
+                - text: ›
+              - tab "Student Financial History" [selected] [ref=f4e68] [cursor=pointer]
+              - tab "Payment Proofs ›" [ref=f4e71] [cursor=pointer]:
+                - generic [ref=f4e72]: Payment Proofs
+                - text: ›
+              - tab "Fee Waivers ›" [ref=f4e73] [cursor=pointer]:
+                - generic [ref=f4e74]: Fee Waivers
+                - text: ›
+          - generic [ref=f4e75]:
+            - generic [ref=f4e76]:
+              - heading "Stu" [level=1] [ref=f4e78]
+              - button "Help" [ref=f4e81] [cursor=pointer]
+            - generic [ref=f4e87]:
+              - generic [ref=f4e92]:
+                - generic [ref=f4e93]: Select Student
+                - combobox "Select Student" [ref=f4e100]
+              - generic [ref=f4e101]:
+                - generic [ref=f4e102]:
+                  - heading "Filters" [level=3] [ref=f4e103]
+                  - generic [ref=f4e104]:
+                    - button "Import Financial History" [ref=f4e105] [cursor=pointer]
+                    - button "Reset" [ref=f4e109] [cursor=pointer]
+                    - button "Download Excel" [ref=f4e111] [cursor=pointer]
+                    - button "Download CSV" [ref=f4e115] [cursor=pointer]
+                - generic [ref=f4e119]:
+                  - generic [ref=f4e120]:
+                    - generic [ref=f4e121]: Year
+                    - combobox [ref=f4e122]:
+                      - option "—"
+                      - option "2026 (active)" [selected]
+                      - option "2027"
+                      - option "2028"
+                      - option "2029"
+                      - option "2030"
+                      - option "2031"
+                      - option "2032"
+                      - option "2033"
+                      - option "2034"
+                      - option "2035"
+                  - generic [ref=f4e123]:
+                    - generic [ref=f4e124]: Term
+                    - combobox [ref=f4e125]:
+                      - option "—" [selected]
+                      - option "Term 1"
+                      - option "Term 2"
+                      - option "Term 3"
+                  - generic [ref=f4e126]:
+                    - generic [ref=f4e127]: Level
+                    - combobox [ref=f4e128]:
+                      - option "All Levels" [selected]
+                      - option "ECD A"
+                      - option "ECD B"
+                      - option "Form 1"
+                      - option "Form 2"
+                      - option "Form 3"
+                      - option "Form 4"
+                      - option "Grade 1"
+                      - option "Grade 2"
+                      - option "Grade 3"
+                      - option "Grade 4"
+                      - option "Grade 5"
+                      - option "Grade 6"
+                      - option "Grade 7"
+                      - option "Lower Six (Form 5)"
+                      - option "Upper Six (Form 6)"
+                  - generic [ref=f4e129]:
+                    - generic [ref=f4e130]: Class / Stream
+                    - combobox [ref=f4e131]:
+                      - option "All Classes" [selected]
+                      - option "Blue"
+                      - option "Blue"
+                      - option "North"
+                      - option "North"
+                      - option "North"
+                      - option "North"
+                      - option "North"
+                      - option "North"
+                      - option "North"
+                      - option "Red"
+                      - option "Red"
+                      - option "South"
+                      - option "South"
+                      - option "South"
+                      - option "South"
+                      - option "South"
+                      - option "South"
+                      - option "South"
+                  - generic [ref=f4e132]:
+                    - generic [ref=f4e133]: Payment Status
+                    - combobox [ref=f4e134]:
+                      - option "All" [selected]
+                      - option "Paid"
+                      - option "Unpaid / Partial"
+                - generic [ref=f4e135]:
+                  - generic [ref=f4e136]:
+                    - generic [ref=f4e137]: Gender
+                    - combobox [ref=f4e138]:
+                      - option "All" [selected]
+                      - option "Male"
+                      - option "Female"
+                  - generic [ref=f4e139]: 4 student(s) found
+              - generic [ref=f4e141]:
+                - generic [ref=f4e142]:
+                  - paragraph [ref=f4e143]: Total Billed
+                  - paragraph [ref=f4e144]: $0.00
+                - generic [ref=f4e145]:
+                  - paragraph [ref=f4e146]: Total Paid
+                  - paragraph [ref=f4e147]: $0.00
+                - generic [ref=f4e148]:
+                  - paragraph [ref=f4e149]: Total Outstanding
+                  - paragraph [ref=f4e150]: $0.00
+              - generic [ref=f4e151]:
+                - generic [ref=f4e152]:
+                  - heading "Students Financial Summary (2026)" [level=3] [ref=f4e153]
+                  - generic [ref=f4e154]:
+                    - generic [ref=f4e155]: Per page
+                    - combobox [ref=f4e156]:
+                      - option "25" [selected]
+                      - option "50"
+                      - option "100"
+                      - option "250"
+                      - option "500"
+                - table [ref=f4e158]:
+                  - rowgroup [ref=f4e159]:
+                    - row [ref=f4e160]:
+                      - columnheader "Student" [ref=f4e161]
+                      - columnheader "Student ID" [ref=f4e162]
+                      - columnheader "Admission No." [ref=f4e163]
+                      - columnheader "Class" [ref=f4e164]
+                      - columnheader "Gender" [ref=f4e165]
+                      - columnheader "Billed" [ref=f4e166]
+                      - columnheader "Paid" [ref=f4e167]
+                      - columnheader "Balance" [ref=f4e168]
+                      - columnheader "Status" [ref=f4e169]
+                      - columnheader "Action" [ref=f4e170]
+                  - rowgroup [ref=f4e171]:
+                    - row [ref=f4e172]:
+                      - cell "Tinotenda Moyo" [ref=f4e173]
+                      - cell "R264063C" [ref=f4e174]
+                      - cell "2601-0001-99" [ref=f4e175]
+                      - cell "Unassigned" [ref=f4e176]
+                      - cell "Male" [ref=f4e177]
+                      - cell "$0.00" [ref=f4e178]
+                      - cell "$0.00" [ref=f4e179]
+                      - cell "$0.00" [ref=f4e180]
+                      - cell "Paid" [ref=f4e181]
+                      - cell [ref=f4e183]:
+                        - button "View" [ref=f4e184] [cursor=pointer]
+                    - row [ref=f4e188]:
+                      - cell "Tatenda Moyo" [ref=f4e189]
+                      - cell "R267987C" [ref=f4e190]
+                      - cell "2601-0001-63" [ref=f4e191]
+                      - cell "Unassigned" [ref=f4e192]
+                      - cell "Male" [ref=f4e193]
+                      - cell "$0.00" [ref=f4e194]
+                      - cell "$0.00" [ref=f4e195]
+                      - cell "$0.00" [ref=f4e196]
+                      - cell "Paid" [ref=f4e197]
+                      - cell [ref=f4e199]:
+                        - button "View" [ref=f4e200] [cursor=pointer]
+                    - row [ref=f4e204]:
+                      - cell "Tadiwa Mutamba" [ref=f4e205]
+                      - cell "R265559D" [ref=f4e206]
+                      - cell "2601-0002-96" [ref=f4e207]
+                      - cell "Grade 3 South" [ref=f4e208]
+                      - cell "Female" [ref=f4e209]
+                      - cell "$0.00" [ref=f4e210]
+                      - cell "$0.00" [ref=f4e211]
+                      - cell "$0.00" [ref=f4e212]
+                      - cell "Paid" [ref=f4e213]
+                      - cell [ref=f4e215]:
+                        - button "View" [ref=f4e216] [cursor=pointer]
+                    - row [ref=f4e220]:
+                      - cell "Tatenda Sithole" [ref=f4e221]
+                      - cell "R266313X" [ref=f4e222]
+                      - cell "2026/422" [ref=f4e223]
+                      - cell "Grade 4 North" [ref=f4e224]
+                      - cell "Female" [ref=f4e225]
+                      - cell "$0.00" [ref=f4e226]
+                      - cell "$0.00" [ref=f4e227]
+                      - cell "$0.00" [ref=f4e228]
+                      - cell "Paid" [ref=f4e229]
+                      - cell [ref=f4e231]:
+                        - button "View" [ref=f4e232] [cursor=pointer]
+          - generic:
+            - dialog
+          - generic:
+            - dialog
+          - generic:
+            - dialog
+      - contentinfo [ref=f4e236]:
+        - generic [ref=f4e237]:
+          - paragraph:
+            - link:
+              - /url: ""
+          - paragraph [ref=f4e238]: © 2026 Kairo CORE. All rights reserved.
+    - complementary [ref=f4e239]:
+      - generic [ref=f4e241]:
+        - link "School Logo Tinway Academy (TINWAY-PRI)" [ref=f4e243] [cursor=pointer]:
+          - /url: https://tinwayacademy.lvh.me/workspace
+          - generic [ref=f4e245]:
+            - img "School Logo" [ref=f4e247]
+            - generic [ref=f4e248]:
+              - generic [ref=f4e249]: Tinway Academy
+              - generic "School login code — share it so people can find your login page at kairo.co.zw/school-login" [ref=f4e250]: (TINWAY-PRI)
+        - button "Collapse sidebar" [ref=f4e251] [cursor=pointer]
+      - navigation [ref=f4e255]:
+        - generic [ref=f4e257]:
+          - generic "Search workspace" [ref=f4e258] [cursor=pointer]
+          - textbox "Search workspace..." [ref=f4e261]
+          - generic: ⌘K
+        - list [ref=f4e262]:
+          - listitem [ref=f4e263]:
+            - list [ref=f4e264]:
+              - listitem [ref=f4e265]:
+                - link "Dashboard" [ref=f4e266] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace
+          - listitem [ref=f4e270]:
+            - generic [ref=f4e271] [cursor=pointer]:
+              - generic [ref=f4e272]: Admissions
+              - button "Admissions" [expanded] [ref=f4e273]
+            - list [ref=f4e277]:
+              - listitem [ref=f4e278]:
+                - link "Online Admissions" [ref=f4e279] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/applications
+          - listitem [ref=f4e283]:
+            - generic [ref=f4e284] [cursor=pointer]:
+              - generic [ref=f4e285]: Students
+              - button "Students" [expanded] [ref=f4e286]
+            - list [ref=f4e290]:
+              - listitem [ref=f4e291]:
+                - link "ID Card Designer" [ref=f4e292] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/card-templates
+              - listitem [ref=f4e296]:
+                - link "Student Directory" [ref=f4e297] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/students
+          - listitem [ref=f4e301]:
+            - generic [ref=f4e302] [cursor=pointer]:
+              - generic [ref=f4e303]: Academics
+              - button "Academics" [expanded] [ref=f4e304]
+            - list [ref=f4e308]:
+              - listitem [ref=f4e309]:
+                - link "Academic Operations Center" [ref=f4e310] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/academic-operations-center
+              - listitem [ref=f4e314]:
+                - link "Setup & Structure" [ref=f4e315] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/academics-setup-structure
+              - listitem [ref=f4e319]:
+                - link "Timetables & Teaching" [ref=f4e320] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/academics-timetables-teaching
+              - listitem [ref=f4e324]:
+                - link "Progression" [ref=f4e325] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/academics-progression
+          - listitem [ref=f4e329]:
+            - generic [ref=f4e330] [cursor=pointer]:
+              - generic [ref=f4e331]: Exams & Grading
+              - button "Exams & Grading" [expanded] [ref=f4e332]
+            - list [ref=f4e336]:
+              - listitem [ref=f4e337]:
+                - link "Assessment Center" [ref=f4e338] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/exams-assessment-center
+              - listitem [ref=f4e342]:
+                - link "Grading & Marks Management" [ref=f4e343] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/exams-grading-marks
+              - listitem [ref=f4e347]:
+                - link "Reports & Academic Publishing" [ref=f4e348] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/exams-reports-publishing
+          - listitem [ref=f4e352]:
+            - generic [ref=f4e353] [cursor=pointer]:
+              - generic [ref=f4e354]: Finance
+              - button "Finance" [expanded] [ref=f4e355]
+            - list [ref=f4e359]:
+              - listitem [ref=f4e360]:
+                - link "Dashboard & Analytics" [ref=f4e361] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/executive-financial-dashboard
+              - listitem [ref=f4e365]:
+                - link "Financial Statements" [ref=f4e366] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/financial-statements
+              - listitem [ref=f4e370]:
+                - link "Student Billing & Revenue" [ref=f4e371] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/finance-student-billing
+              - listitem [ref=f4e375]:
+                - link "Expenses & Purchasing" [ref=f4e376] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/finance-expenses-purchasing
+              - listitem [ref=f4e380]:
+                - link "Core Accounting & Setup" [ref=f4e381] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/finance-core-accounting
+          - listitem [ref=f4e385]:
+            - generic [ref=f4e386] [cursor=pointer]:
+              - generic [ref=f4e387]: HR & Payroll
+              - button "HR & Payroll" [expanded] [ref=f4e388]
+            - list [ref=f4e392]:
+              - listitem [ref=f4e393]:
+                - link "Staff Directory & HR" [ref=f4e394] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/hr-staff-directory
+              - listitem [ref=f4e398]:
+                - link "Payroll & Compensation" [ref=f4e399] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/hr-payroll-compensation
+              - listitem [ref=f4e403]:
+                - link "Attendance & Leave" [ref=f4e404] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/hr-attendance-leave
+          - listitem [ref=f4e408]:
+            - generic [ref=f4e409] [cursor=pointer]:
+              - generic [ref=f4e410]: Inventory & Procurement
+              - button "Inventory & Procurement" [expanded] [ref=f4e411]
+            - list [ref=f4e415]:
+              - listitem [ref=f4e416]:
+                - link "Stock & Inventory" [ref=f4e417] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/inventory-stock
+              - listitem [ref=f4e421]:
+                - link "Procurement" [ref=f4e422] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/inventory-procurement
+              - listitem [ref=f4e426]:
+                - link "Fixed Assets" [ref=f4e427] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/inventory-fixed-assets
+          - listitem [ref=f4e431]:
+            - generic [ref=f4e432] [cursor=pointer]:
+              - generic [ref=f4e433]: Library
+              - button "Library" [expanded] [ref=f4e434]
+            - list [ref=f4e438]:
+              - listitem [ref=f4e439]:
+                - link "Catalogue" [ref=f4e440] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/library-catalogue
+              - listitem [ref=f4e444]:
+                - link "Circulation" [ref=f4e445] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/library-circulation
+              - listitem [ref=f4e449]:
+                - link "Knowledge" [ref=f4e450] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/knowledge-knowledge
+          - listitem [ref=f4e454]:
+            - generic [ref=f4e455] [cursor=pointer]:
+              - generic [ref=f4e456]: Boarding & Welfare
+              - button "Boarding & Welfare" [expanded] [ref=f4e457]
+            - list [ref=f4e461]:
+              - listitem [ref=f4e462]:
+                - link "Accommodation" [ref=f4e463] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/boarding-accommodation
+              - listitem [ref=f4e467]:
+                - link "Welfare & Care" [ref=f4e468] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/boarding-welfare
+          - listitem [ref=f4e472]:
+            - generic [ref=f4e473] [cursor=pointer]:
+              - generic [ref=f4e474]: Health & Safety
+              - button "Health & Safety" [expanded] [ref=f4e475]
+            - list [ref=f4e479]:
+              - listitem [ref=f4e480]:
+                - link "Health Records" [ref=f4e481] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/health-records
+          - listitem [ref=f4e485]:
+            - generic [ref=f4e486] [cursor=pointer]:
+              - generic [ref=f4e487]: Communication Center
+              - button "Communication Center" [expanded] [ref=f4e488]
+            - list [ref=f4e492]:
+              - listitem [ref=f4e493]:
+                - link "Communication Center" [ref=f4e494] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/communication-center
+              - listitem [ref=f4e498]:
+                - link "Notices" [ref=f4e499] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/notices
+              - listitem [ref=f4e503]:
+                - link "Community & Engagement" [ref=f4e504] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/communication-community
+              - listitem [ref=f4e508]:
+                - link "Help & Inbox" [ref=f4e509] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/communication-help-inbox
+          - listitem [ref=f4e513]:
+            - generic [ref=f4e514] [cursor=pointer]:
+              - generic [ref=f4e515]: LMS
+              - button "LMS" [expanded] [ref=f4e516]
+            - list [ref=f4e520]:
+              - listitem [ref=f4e521]:
+                - link "LMS" [ref=f4e522] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/lms-lms
+          - listitem [ref=f4e526]:
+            - generic [ref=f4e527] [cursor=pointer]:
+              - generic [ref=f4e528]: Website
+              - button "Website" [expanded] [ref=f4e529]
+            - list [ref=f4e533]:
+              - listitem [ref=f4e534]:
+                - link "Templates & Design" [ref=f4e535] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/website-templates
+              - listitem [ref=f4e539]:
+                - link "Website Templates" [ref=f4e540] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/cms/templates
+              - listitem [ref=f4e544]:
+                - link "Content Manager" [ref=f4e545] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/cms/content
+          - listitem [ref=f4e549]:
+            - generic [ref=f4e550] [cursor=pointer]:
+              - generic [ref=f4e551]: Reports & Intelligence
+              - button "Reports & Intelligence" [expanded] [ref=f4e552]
+            - list [ref=f4e556]:
+              - listitem [ref=f4e557]:
+                - link "Dashboard" [ref=f4e558] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/reporting-dashboard
+              - listitem [ref=f4e562]:
+                - link "Analytics Explorer" [ref=f4e563] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/analytics-explorer
+              - listitem [ref=f4e567]:
+                - link "Generate Report" [ref=f4e568] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/report-generator-page
+              - listitem [ref=f4e572]:
+                - link "Reports" [ref=f4e573] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/reports-reports
+          - listitem [ref=f4e577]:
+            - generic [ref=f4e578] [cursor=pointer]:
+              - generic [ref=f4e579]: System Administration
+              - button "System Administration" [expanded] [ref=f4e580]
+            - list [ref=f4e584]:
+              - listitem [ref=f4e585]:
+                - link "System Settings" [ref=f4e586] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/admin-system-settings
+              - listitem [ref=f4e590]:
+                - link "Overview" [ref=f4e591] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/administration-dashboard
+              - listitem [ref=f4e596]:
+                - link "User Management" [ref=f4e597] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/admin-user-management
+              - listitem [ref=f4e601]:
+                - link "Audit & Compliance" [ref=f4e602] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/admin-audit
+          - listitem [ref=f4e606]:
+            - generic [ref=f4e607] [cursor=pointer]:
+              - generic [ref=f4e608]: Subscription & Billing
+              - button "Subscription & Billing" [expanded] [ref=f4e609]
+            - list [ref=f4e613]:
+              - listitem [ref=f4e614]:
+                - link "Overview & Billing" [ref=f4e615] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/saas-billing-overview
+              - listitem [ref=f4e619]:
+                - link "Subscription & Billing" [ref=f4e620] [cursor=pointer]:
+                  - /url: https://tinwayacademy.lvh.me/workspace/saas-hub
+  - generic:
+    - status

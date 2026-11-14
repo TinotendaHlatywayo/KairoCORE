@@ -200,7 +200,7 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
 
         $urls = [
             ['loc' => route('marketing.home'), 'lastmod' => $lastmod('marketing/home'), 'changefreq' => 'weekly', 'priority' => '1.0', 'image' => platform_og_image_url()],
-            ['loc' => route('marketing.features'), 'lastmod' => $lastmod('marketing/features'), 'changefreq' => 'monthly', 'priority' => '0.8'],
+            ['loc' => route('marketing.features'), 'lastmod' => $lastmod('marketing/features'), 'changefreq' => 'monthly', 'priority' => '0.8', 'image' => asset('images/KairoCORE_Features_thumbnail.png')],
             ['loc' => route('marketing.school-fees'), 'lastmod' => $lastmod('marketing/school-fees'), 'changefreq' => 'monthly', 'priority' => '0.8'],
             ['loc' => route('marketing.students'), 'lastmod' => $lastmod('marketing/students'), 'changefreq' => 'monthly', 'priority' => '0.8'],
             ['loc' => route('marketing.admissions'), 'lastmod' => $lastmod('marketing/admissions'), 'changefreq' => 'monthly', 'priority' => '0.8'],
@@ -213,7 +213,7 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
             ['loc' => route('marketing.help.fees'), 'lastmod' => $lastmod('marketing/help-collect-fees'), 'changefreq' => 'monthly', 'priority' => '0.8'],
             ['loc' => route('marketing.help.attendance'), 'lastmod' => $lastmod('marketing/help-record-attendance'), 'changefreq' => 'monthly', 'priority' => '0.8'],
             ['loc' => route('marketing.help.reports'), 'lastmod' => $lastmod('marketing/help-report-cards'), 'changefreq' => 'monthly', 'priority' => '0.8'],
-            ['loc' => route('marketing.about'), 'lastmod' => $lastmod('marketing/about'), 'changefreq' => 'monthly', 'priority' => '0.8'],
+            ['loc' => route('marketing.about'), 'lastmod' => $lastmod('marketing/about'), 'changefreq' => 'monthly', 'priority' => '0.8', 'image' => asset('images/KairoCORE_About_thumbnail.png')],
             ['loc' => route('marketing.blog'), 'lastmod' => $lastmod('marketing/blog'), 'changefreq' => 'weekly', 'priority' => '0.8'],
             ['loc' => route('marketing.contact'), 'lastmod' => $lastmod('marketing/contact'), 'changefreq' => 'monthly', 'priority' => '0.7'],
             ['loc' => route('platform.terms'), 'lastmod' => $lastmod('terms/platform'), 'changefreq' => 'yearly', 'priority' => '0.5'],

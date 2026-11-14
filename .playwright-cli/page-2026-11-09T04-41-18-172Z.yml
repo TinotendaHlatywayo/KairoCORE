@@ -1,0 +1,237 @@
+- generic [ref=f53e2]:
+  - generic [ref=f53e3]:
+    - link "← Back to Registration" [ref=f53e4] [cursor=pointer]:
+      - /url: javascript:history.back()
+    - link "Download PDF" [ref=f53e6] [cursor=pointer]:
+      - /url: https://lvh.me/terms/pdf
+  - banner [ref=f53e9]:
+    - img "Kairo CORE — Central Operations and Resources Environment" [ref=f53e11]
+    - generic [ref=f53e12]: Kairo CORE Legal
+    - heading "Terms of Service & Terms of Use" [level=1] [ref=f53e14]
+    - paragraph [ref=f53e15]: Kairo CORE (Central Operations and Resources Environment) is a comprehensive software platform designed to support schools and other authorised organisations in managing operational, academic, administrative and related activities. These Terms govern access to and use of the Kairo CORE software platform, tenant environments, websites, APIs, integrations and related services.
+    - generic [ref=f53e16]:
+      - generic [ref=f53e17]: "Last Updated: 7 September 2026"
+      - generic [ref=f53e18]: Effective upon acceptance
+      - generic [ref=f53e19]: Version 2.0
+  - main [ref=f53e21]:
+    - generic [ref=f53e22]:
+      - generic [ref=f53e23]:
+        - strong [ref=f53e24]: "Important:"
+        - text: By registering for, accessing, or using Kairo CORE, you confirm that you have read, understood and agreed to these Terms. If you are accepting these Terms on behalf of a school, company, institution or other legal entity, you represent that you have authority to bind that entity.
+      - paragraph [ref=f53e25]: Please read these Terms of Service and Terms of Use ("Terms", "Agreement") carefully before accessing or using Kairo CORE ("Kairo CORE", "Platform", "Service", "we", "us", or "our"). The Service may include software, multi-tenant infrastructure, school management functionality, websites, APIs, mobile or web interfaces, communications features, storage, reporting, integrations and other related services.
+      - paragraph [ref=f53e26]: If you do not agree to these Terms, you must not register for, access, or use the Service.
+      - generic [ref=f53e27]:
+        - heading "1 Acceptance and Contract Formation" [level=2] [ref=f53e28]:
+          - generic [ref=f53e29]: "1"
+          - text: Acceptance and Contract Formation
+        - paragraph [ref=f53e30]: These Terms form a legally binding agreement between you and the legal entity that owns and operates Kairo CORE ("Company"). Your acceptance occurs when you create an account, click an acceptance checkbox, execute an order or subscription, access the Platform, or otherwise use the Service.
+        - paragraph [ref=f53e31]: If you are using Kairo CORE on behalf of an organisation, the organisation is the customer ("Tenant" or "Customer") and you confirm that you are authorised to accept these Terms on its behalf. You are responsible for ensuring that all authorised users within your organisation comply with this Agreement.
+      - generic [ref=f53e32]:
+        - heading "2 Definitions" [level=2] [ref=f53e33]:
+          - generic [ref=f53e34]: "2"
+          - text: Definitions
+        - list [ref=f53e35]:
+          - listitem [ref=f53e36]:
+            - strong [ref=f53e37]: "Customer/Tenant:"
+            - text: the school, institution, business or other entity subscribing to or using Kairo CORE.
+          - listitem [ref=f53e38]:
+            - strong [ref=f53e39]: "Authorised User:"
+            - text: an individual permitted by the Customer to access the Customer’s tenant environment.
+          - listitem [ref=f53e40]:
+            - strong [ref=f53e41]: "Customer Data:"
+            - text: data, records, files, documents, images, student information, employee information and other content submitted to the Platform by or on behalf of the Customer.
+          - listitem [ref=f53e42]:
+            - strong [ref=f53e43]: "Platform Data:"
+            - text: technical, operational, security, diagnostic and usage information generated through operation of the Service, subject to applicable law and the Privacy Policy.
+          - listitem [ref=f53e44]:
+            - strong [ref=f53e45]: "Subscription:"
+            - text: the paid or trial plan under which the Customer receives access to the Service.
+      - generic [ref=f53e46]:
+        - heading "3 Accounts, Authorised Users and Tenant Security" [level=2] [ref=f53e47]:
+          - generic [ref=f53e48]: "3"
+          - text: Accounts, Authorised Users and Tenant Security
+        - paragraph [ref=f53e49]: Each Customer is responsible for the accuracy of registration information, maintaining secure credentials, controlling user permissions and ensuring that accounts are used only by authorised persons.
+        - list [ref=f53e50]:
+          - listitem [ref=f53e51]: Do not share administrator credentials or permit unauthorised persons to access a tenant environment.
+          - listitem [ref=f53e52]: Immediately notify us of suspected credential compromise, unauthorised access or material security incidents affecting the Platform.
+          - listitem [ref=f53e53]: You are responsible for actions taken through your accounts, including actions performed by employees, contractors, administrators and other Authorised Users.
+          - listitem [ref=f53e54]: Configure roles and permissions appropriately and do not intentionally circumvent tenant isolation or access controls.
+          - listitem [ref=f53e55]: The Company may require reasonable verification before changing an organisation’s administrator, domain, billing details or security settings.
+      - generic [ref=f53e56]:
+        - heading "4 Subscriptions, Trials, Fees and Payment" [level=2] [ref=f53e57]:
+          - generic [ref=f53e58]: "4"
+          - text: Subscriptions, Trials, Fees and Payment
+        - paragraph [ref=f53e59]: Access to paid features is subject to the applicable subscription, pricing, order form or plan displayed at the time of purchase. Prices, features, limits and billing intervals may vary by plan and may be changed prospectively by the Company.
+        - list [ref=f53e60]:
+          - listitem [ref=f53e61]: Trial access, promotional periods and free plans may be subject to eligibility, feature, usage and duration limits.
+          - listitem [ref=f53e62]: Unless otherwise stated in writing, subscriptions renew according to the selected billing interval until cancelled or terminated.
+          - listitem [ref=f53e63]: You authorise the applicable payment provider to process legitimate charges associated with your subscription.
+          - listitem [ref=f53e64]: Failed, reversed, disputed or overdue payments may result in restricted features, suspension or termination after reasonable notice where required by law.
+          - listitem [ref=f53e65]: Taxes, duties, bank charges, payment-provider charges or other transaction costs may be payable by the Customer where applicable.
+          - listitem [ref=f53e66]: Refunds are subject to the applicable plan, order terms and mandatory legal rights. Nothing in these Terms excludes rights that cannot lawfully be excluded.
+      - generic [ref=f53e67]:
+        - heading "5 Acceptable Use and Prohibited Activities" [level=2] [ref=f53e68]:
+          - generic [ref=f53e69]: "5"
+          - text: Acceptable Use and Prohibited Activities
+        - paragraph [ref=f53e70]: "You must use Kairo CORE lawfully, responsibly and only for legitimate educational, administrative, organisational or business purposes. You must not:"
+        - list [ref=f53e71]:
+          - listitem [ref=f53e72]: attempt to breach, disable, bypass or defeat authentication, authorisation, rate limits, tenant isolation or other security controls;
+          - listitem [ref=f53e73]: probe, scan, penetration-test or conduct vulnerability assessments against the Platform without prior written authorisation;
+          - listitem [ref=f53e74]: perform denial-of-service attacks, excessive automated requests, scraping, credential stuffing or other activity that could impair the Platform;
+          - listitem [ref=f53e75]: reverse engineer, decompile, disassemble or attempt to obtain source code except to the limited extent expressly permitted by applicable law;
+          - listitem [ref=f53e76]: upload malicious code, ransomware, spyware, malware or content intended to compromise systems;
+          - listitem [ref=f53e77]: use the Service to infringe intellectual-property, privacy, confidentiality or other rights of third parties;
+          - listitem [ref=f53e78]: use the Platform for unlawful surveillance, harassment, fraud, impersonation or other unlawful conduct;
+          - listitem [ref=f53e79]: attempt unauthorised access to another Customer’s environment or data;
+        - generic [ref=f53e80]:
+          - strong [ref=f53e81]: "Security violations:"
+          - text: Unauthorised attempts to access another tenant, bypass platform controls or compromise the security of Kairo CORE may result in immediate suspension or termination and may be reported where required or permitted by law.
+      - generic [ref=f53e82]:
+        - heading "6 Customer Data, Content and Responsibility" [level=2] [ref=f53e83]:
+          - generic [ref=f53e84]: "6"
+          - text: Customer Data, Content and Responsibility
+        - paragraph [ref=f53e85]: The Customer retains ownership of Customer Data, subject to the rights necessary for the Company to operate the Service. The Customer grants the Company a limited, non-exclusive, worldwide, royalty-free licence to host, store, transmit, reproduce, process and otherwise use Customer Data solely as reasonably necessary to provide, secure, maintain, improve and support the Service, comply with law, prevent abuse, and perform contractual obligations.
+        - paragraph [ref=f53e86]: The Customer is responsible for the legality, accuracy, quality and integrity of Customer Data; having all necessary rights, permissions, notices and lawful bases to collect and process data submitted to Kairo CORE; ensuring content does not unlawfully infringe third-party rights; configuring retention, access, roles and permissions appropriately; and responding to data-subject requests where the Customer is the relevant controller.
+      - generic [ref=f53e87]:
+        - heading "7 Privacy, Data Protection and Regulatory Compliance" [level=2] [ref=f53e88]:
+          - generic [ref=f53e89]: "7"
+          - text: Privacy, Data Protection and Regulatory Compliance
+        - paragraph [ref=f53e90]: Use of personal information is also governed by the Kairo CORE Privacy Policy and applicable data-protection law. Where the Customer determines the purposes and means of processing personal information and Kairo CORE processes information on the Customer’s behalf, the parties will operate on the basis of the applicable controller/processor relationship to the extent recognised by law.
+        - paragraph [ref=f53e91]: Customers remain responsible for determining lawful bases for processing, providing required privacy notices, obtaining required consents, handling data-subject requests and complying with applicable retention, security and transfer requirements.
+        - paragraph [ref=f53e92]: Where applicable, the parties may enter into additional data-processing terms, data-processing agreements or other contractual safeguards required by law.
+      - generic [ref=f53e93]:
+        - heading "8 Security and Security Incidents" [level=2] [ref=f53e94]:
+          - generic [ref=f53e95]: "8"
+          - text: Security and Security Incidents
+        - paragraph [ref=f53e96]: The Company implements reasonable technical and organisational measures designed to protect the Service. However, no internet-connected system, software, hosting environment or transmission method can be guaranteed to be completely secure.
+        - paragraph [ref=f53e97]: Security also depends on Customer-side controls, including strong passwords, multi-factor authentication where available, least-privilege permissions, secure devices, secure networks and appropriate staff practices.
+        - paragraph [ref=f53e98]: Where required by applicable law, the Company will provide notices and cooperate with competent authorities and Customers regarding qualifying personal-data or security incidents.
+      - generic [ref=f53e99]:
+        - heading "9 Third-Party Services and Integrations" [level=2] [ref=f53e100]:
+          - generic [ref=f53e101]: "9"
+          - text: Third-Party Services and Integrations
+        - paragraph [ref=f53e102]: The Service may integrate with or depend on third-party services including payment processors, email providers, hosting providers, domain services, communications platforms, analytics providers and other technology providers.
+        - paragraph [ref=f53e103]: Third-party services are controlled by their respective providers. The Company does not guarantee their availability, security, functionality, accuracy or continued compatibility and is not responsible for failures caused solely by third-party providers, except to the extent liability cannot lawfully be excluded.
+      - generic [ref=f53e104]:
+        - heading "10 Availability, Maintenance, Backups and Service Changes" [level=2] [ref=f53e105]:
+          - generic [ref=f53e106]: "10"
+          - text: Availability, Maintenance, Backups and Service Changes
+        - paragraph [ref=f53e107]: The Company aims to provide a reliable service but does not promise uninterrupted or error-free availability unless a separate written service-level agreement expressly provides otherwise.
+        - list [ref=f53e108]:
+          - listitem [ref=f53e109]: The Platform may be unavailable because of maintenance, upgrades, security events, infrastructure failures, telecommunications failures or events beyond reasonable control.
+          - listitem [ref=f53e110]: Features may be added, modified, replaced or discontinued as the Platform evolves.
+          - listitem [ref=f53e111]: Unless a separate written agreement states otherwise, Customer-managed backups remain the Customer’s responsibility.
+          - listitem [ref=f53e112]: Where backup or recovery functionality is provided, it is a resilience feature and not a guarantee that every record can always be restored.
+      - generic [ref=f53e113]:
+        - heading "11 Intellectual Property and Platform Ownership" [level=2] [ref=f53e114]:
+          - generic [ref=f53e115]: "11"
+          - text: Intellectual Property and Platform Ownership
+        - paragraph [ref=f53e116]: The Platform and associated intellectual property, including software, source code, object code, architecture, workflows, APIs, databases and schemas, interfaces, designs, documentation, trademarks, logos, branding, templates, reports, visual elements and proprietary know-how, are owned by or licensed to the Company and protected by applicable intellectual-property laws.
+        - paragraph [ref=f53e117]: Except for the limited right to access and use the Service during an active subscription in accordance with these Terms, no ownership interest is transferred to you.
+        - paragraph [ref=f53e118]: You may not copy, reproduce, resell, sublicense, distribute, modify, create derivative works from, commercially exploit or publicly represent the Platform as your own except where expressly authorised in writing or permitted by mandatory law.
+      - generic [ref=f53e119]:
+        - heading "12 Educational and Administrative Disclaimer" [level=2] [ref=f53e120]:
+          - generic [ref=f53e121]: "12"
+          - text: Educational and Administrative Disclaimer
+        - paragraph [ref=f53e122]: Kairo CORE is a software and administrative platform. It is not a substitute for professional judgment, legal obligations, safeguarding duties, academic policies, financial controls or regulatory responsibilities of a school, institution, administrator, teacher, accountant, healthcare professional or other authorised professional.
+        - paragraph [ref=f53e123]: Reports, analytics, automated calculations, notifications, recommendations, grades, attendance records and other outputs must be reviewed by appropriately authorised personnel before being relied upon where accuracy or legal consequences matter.
+      - generic [ref=f53e124]:
+        - heading "13 Warranties and Disclaimers" [level=2] [ref=f53e125]:
+          - generic [ref=f53e126]: "13"
+          - text: Warranties and Disclaimers
+        - paragraph [ref=f53e127]:
+          - strong [ref=f53e128]: TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE SERVICE IS PROVIDED “AS IS” AND “AS AVAILABLE”.
+        - paragraph [ref=f53e129]: Except where expressly stated in a separate written agreement, the Company disclaims warranties not required by law, including implied warranties of merchantability, fitness for a particular purpose, title and non-infringement.
+        - paragraph [ref=f53e130]: The Company does not warrant that the Service will always be uninterrupted, completely secure, error-free, compatible with every device or third-party system, or that every defect will be corrected immediately.
+      - generic [ref=f53e131]:
+        - heading "14 Limitation of Liability" [level=2] [ref=f53e132]:
+          - generic [ref=f53e133]: "14"
+          - text: Limitation of Liability
+        - paragraph [ref=f53e134]: To the maximum extent permitted by applicable law, the Company, its affiliates, officers, directors, employees, contractors, agents, licensors and service providers will not be liable for indirect, incidental, special, exemplary, punitive or consequential losses, including loss of profits, revenue, business opportunity, goodwill, anticipated savings or use, arising from or relating to the Service or these Terms.
+        - paragraph [ref=f53e135]: To the maximum extent permitted by applicable law, the Company’s aggregate liability for direct claims arising out of or relating to the Service or these Terms will not exceed the greater of (a) the fees actually paid by the Customer to the Company for the affected Service during the three (3) months immediately preceding the event giving rise to the claim, or (b) USD 100.
+        - paragraph [ref=f53e136]: These limitations apply regardless of the legal theory on which a claim is based, including contract, delict/tort, negligence, strict liability or otherwise, subject to liabilities that cannot legally be limited or excluded.
+      - generic [ref=f53e137]:
+        - heading "15 Customer Indemnification" [level=2] [ref=f53e138]:
+          - generic [ref=f53e139]: "15"
+          - text: Customer Indemnification
+        - paragraph [ref=f53e140]: To the maximum extent permitted by law, the Customer agrees to defend, indemnify and hold harmless the Company and its affiliates, officers, directors, employees, contractors and agents from third-party claims, damages, liabilities, costs and reasonable legal expenses arising from or relating to Customer Data or content submitted by or on behalf of the Customer; breach of these Terms; violation of applicable law or third-party rights; unauthorised or unlawful use through Customer-controlled accounts; or failure to obtain required permissions, notices or lawful authority to process personal information.
+      - generic [ref=f53e141]:
+        - heading "16 Suspension and Termination" [level=2] [ref=f53e142]:
+          - generic [ref=f53e143]: "16"
+          - text: Suspension and Termination
+        - paragraph [ref=f53e144]: The Company may suspend or restrict access where reasonably necessary to protect the Platform, other customers, data, infrastructure or the Company; to investigate suspected abuse, fraud or security incidents; for non-payment; or where continued access may violate law or these Terms.
+        - paragraph [ref=f53e145]: The Company may terminate an account or subscription for material breach, unlawful use, persistent non-payment, security abuse, fraud, or other grounds permitted by the applicable agreement or law. Where appropriate and legally required, we will provide notice and a reasonable opportunity to cure the breach.
+        - paragraph [ref=f53e146]: The Customer may terminate its subscription in accordance with the applicable cancellation procedure. Termination does not extinguish accrued payment obligations or provisions intended to survive termination.
+      - generic [ref=f53e147]:
+        - heading "17 Data Export, Retention and Deletion After Termination" [level=2] [ref=f53e148]:
+          - generic [ref=f53e149]: "17"
+          - text: Data Export, Retention and Deletion After Termination
+        - paragraph [ref=f53e150]: Subject to the applicable subscription plan and law, the Customer may request an export of Customer Data during the applicable post-termination period. Export formats, availability, fees and deadlines may depend on the Service plan and technical feasibility.
+        - paragraph [ref=f53e151]: After the applicable retention or export period, the Company may delete Customer Data from active systems, subject to legal retention obligations, security backups, disaster-recovery cycles and legitimate compliance requirements. Data in backups may persist until the normal backup-retention cycle expires.
+        - paragraph [ref=f53e152]: The Customer remains responsible for maintaining independent copies required for legal, educational, accounting, archival or operational purposes.
+      - generic [ref=f53e153]:
+        - heading "18 Confidentiality" [level=2] [ref=f53e154]:
+          - generic [ref=f53e155]: "18"
+          - text: Confidentiality
+        - paragraph [ref=f53e156]: Each party may receive non-public information belonging to the other party and will use reasonable measures to protect such confidential information and use it only for purposes connected with the relationship between the parties.
+        - paragraph [ref=f53e157]: Confidentiality obligations do not apply to information that is publicly available without breach, was lawfully known before disclosure, is independently developed, is lawfully received from a third party without confidentiality restrictions, or must be disclosed by law or lawful authority.
+      - generic [ref=f53e158]:
+        - heading "19 Changes to the Service and These Terms" [level=2] [ref=f53e159]:
+          - generic [ref=f53e160]: "19"
+          - text: Changes to the Service and These Terms
+        - paragraph [ref=f53e161]: The Company may update the Platform, pricing, policies or these Terms from time to time. Material changes will be communicated through reasonable means where required. Revised Terms become effective on the stated effective date.
+        - paragraph [ref=f53e162]: Continued use after the effective date constitutes acceptance to the extent permitted by law. If you do not agree to a material change, your remedy is to stop using the affected Service and, where applicable, cancel your subscription in accordance with the applicable cancellation terms.
+      - generic [ref=f53e163]:
+        - heading "20 Governing Law and Dispute Resolution" [level=2] [ref=f53e164]:
+          - generic [ref=f53e165]: "20"
+          - text: Governing Law and Dispute Resolution
+        - paragraph [ref=f53e166]: Unless a separate written agreement provides otherwise, these Terms are governed by the laws of Zimbabwe, without giving effect to conflict-of-law principles.
+        - paragraph [ref=f53e167]: The parties will first attempt in good faith to resolve material disputes through written notice and direct discussion. Where appropriate, the parties may agree to mediation or arbitration under applicable Zimbabwean law. If a dispute cannot be resolved through the agreed alternative process, the competent courts of Zimbabwe will have jurisdiction, subject to mandatory rights that cannot lawfully be excluded.
+        - paragraph [ref=f53e168]: Nothing in this section prevents either party from seeking urgent interim or protective relief from a competent court where reasonably necessary to protect confidential information, intellectual property, security, personal information or other legal rights.
+      - generic [ref=f53e169]:
+        - heading "21 General Provisions" [level=2] [ref=f53e170]:
+          - generic [ref=f53e171]: "21"
+          - text: General Provisions
+        - list [ref=f53e172]:
+          - listitem [ref=f53e173]:
+            - strong [ref=f53e174]: "Entire Agreement:"
+            - text: These Terms, the Privacy Policy, applicable subscription/order terms and expressly incorporated policies form the agreement governing the Service.
+          - listitem [ref=f53e175]:
+            - strong [ref=f53e176]: "Severability:"
+            - text: If any provision is unenforceable, it will be modified to the minimum extent necessary or severed, while the remaining provisions continue in effect.
+          - listitem [ref=f53e177]:
+            - strong [ref=f53e178]: "No Waiver:"
+            - text: Failure to enforce a provision is not a waiver of the right to enforce it later.
+          - listitem [ref=f53e179]:
+            - strong [ref=f53e180]: "Assignment:"
+            - text: You may not assign or transfer this Agreement without the Company’s prior written consent except where mandatory law permits otherwise. The Company may assign it in connection with a merger, acquisition, restructuring or transfer of substantially all relevant business assets.
+          - listitem [ref=f53e181]:
+            - strong [ref=f53e182]: "Independent Parties:"
+            - text: These Terms do not create a partnership, joint venture, employment relationship, franchise or agency relationship.
+          - listitem [ref=f53e183]:
+            - strong [ref=f53e184]: "Force Majeure:"
+            - text: The Company will not be responsible for delay or failure caused by events beyond reasonable control, including natural disasters, war, civil unrest, government action, telecommunications or power failures, widespread cyber incidents, infrastructure outages or failures of third-party providers.
+          - listitem [ref=f53e185]:
+            - strong [ref=f53e186]: "Survival:"
+            - text: Intellectual property, confidentiality, payment obligations, indemnification, limitations of liability, dispute resolution and provisions that by their nature should survive will survive termination.
+          - listitem [ref=f53e187]:
+            - strong [ref=f53e188]: "Electronic Records:"
+            - text: Electronic acceptance, notices, records and communications may be used to evidence agreement and communications to the extent permitted by applicable law.
+      - generic [ref=f53e189]:
+        - heading "22 Contact and Legal Notices" [level=2] [ref=f53e190]:
+          - generic [ref=f53e191]: "22"
+          - text: Contact and Legal Notices
+        - paragraph [ref=f53e192]: For legal, privacy, security, billing or support enquiries, contact the Company using the official contact details published within Kairo CORE or the applicable subscription documentation.
+        - paragraph [ref=f53e193]:
+          - strong [ref=f53e194]: "Current support/legal contact:"
+          - text: twaynehlatywayo09@gmail.com
+        - paragraph [ref=f53e195]: For formal legal notices, the Company may require notices to be sent through a designated legal or administrative channel specified in the applicable agreement.
+        - generic [ref=f53e196]:
+          - strong [ref=f53e197]: Acceptance
+          - paragraph [ref=f53e198]: By clicking “I Agree”, creating an account, signing an applicable order, or using Kairo CORE, you acknowledge that you have read and accepted these Terms.
+      - paragraph [ref=f53e200]:
+        - strong [ref=f53e201]: "Document version:"
+        - text: 2.0 •
+        - strong [ref=f53e202]: "Effective date:"
+        - text: 7 September 2026
+  - generic [ref=f53e203]: © 2026 Kairo CORE. All rights reserved.

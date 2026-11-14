@@ -1,0 +1,86 @@
+- generic [ref=f2e3]:
+  - navigation [ref=f2e5]:
+    - button "🇬🇧" [ref=f2e7] [cursor=pointer]
+    - button "Pin sidebar" [ref=f2e11] [cursor=pointer]
+    - button "Tue, Nov 3 05:17:52" [ref=f2e16] [cursor=pointer]:
+      - generic [ref=f2e21]:
+        - generic [ref=f2e22]: Tue, Nov 3
+        - generic [ref=f2e23]: 05:17:52
+    - button "User menu" [ref=f2e27] [cursor=pointer]:
+      - img "Avatar of System Founder" [ref=f2e28]
+  - main [ref=f2e29]:
+    - generic [ref=f2e30]:
+      - generic [ref=f2e31]:
+        - heading "Dashboard" [level=1] [ref=f2e34]
+        - generic [ref=f2e37]:
+          - generic [ref=f2e39]:
+            - generic [ref=f2e40]: Super Admin Enterprise Control Center
+            - heading "Welcome back, System Founder" [level=1] [ref=f2e42]
+            - paragraph [ref=f2e43]: Manage multi-tenant school subscriptions, review manual payment confirmations, monitor platform telemetry, and communicate globally with all registered institutions.
+            - generic [ref=f2e44]:
+              - link "Manage Institutions" [ref=f2e45] [cursor=pointer]:
+                - /url: /platform/schools
+              - link "Pending Confirmations (0)" [ref=f2e48] [cursor=pointer]:
+                - /url: /platform/pending-payments
+          - generic [ref=f2e51]:
+            - generic [ref=f2e53]:
+              - text: Total Institutions
+              - heading "8" [level=3] [ref=f2e54]
+              - paragraph [ref=f2e55]: 8 Active online
+            - generic [ref=f2e60]:
+              - text: Total Gross Revenue
+              - heading "$45.00" [level=3] [ref=f2e61]
+              - paragraph [ref=f2e62]: Verified collections
+            - generic [ref=f2e67]:
+              - text: Pending Approvals
+              - heading "0" [level=3] [ref=f2e68]
+              - paragraph [ref=f2e69]: Awaiting onboarding
+            - generic [ref=f2e74]:
+              - text: Manual Slips Due
+              - heading "0" [level=3] [ref=f2e75]
+              - paragraph [ref=f2e76]: Require admin review
+          - generic [ref=f2e80]:
+            - generic [ref=f2e81]:
+              - generic [ref=f2e82]:
+                - heading "Recent Transactions" [level=3] [ref=f2e83]
+                - link "View All →" [ref=f2e84] [cursor=pointer]:
+                  - /url: https://lvh.me/platform/saa-s-transactions
+              - table [ref=f2e86]:
+                - rowgroup [ref=f2e87]:
+                  - row [ref=f2e88]:
+                    - columnheader "Institution" [ref=f2e89]
+                    - columnheader "Amount" [ref=f2e90]
+                    - columnheader "Gateway" [ref=f2e91]
+                    - columnheader "Date" [ref=f2e92]
+                - rowgroup [ref=f2e93]:
+                  - row [ref=f2e94]:
+                    - cell "Chiwarira Primary School" [ref=f2e95]
+                    - cell "$30.00" [ref=f2e96]
+                    - cell "cash" [ref=f2e97]
+                    - cell "Oct 29, 14:52" [ref=f2e98]
+                  - row [ref=f2e99]:
+                    - cell "Tinway Academy" [ref=f2e100]
+                    - cell "$15.00" [ref=f2e101]
+                    - cell "cash" [ref=f2e102]
+                    - cell "Oct 29, 14:48" [ref=f2e103]
+            - generic [ref=f2e104]:
+              - generic [ref=f2e105]:
+                - heading "Pending Institutions Onboarding" [level=3] [ref=f2e106]
+                - link "View All →" [ref=f2e107] [cursor=pointer]:
+                  - /url: /platform/schools
+              - table [ref=f2e109]:
+                - rowgroup [ref=f2e110]:
+                  - row [ref=f2e111]:
+                    - columnheader "Name" [ref=f2e112]
+                    - columnheader "Subdomain" [ref=f2e113]
+                    - columnheader "Region" [ref=f2e114]
+                    - columnheader "Action" [ref=f2e115]
+                - rowgroup [ref=f2e116]:
+                  - row [ref=f2e117]:
+                    - cell "No pending institutions." [ref=f2e118]
+      - generic:
+        - dialog
+      - generic:
+        - dialog
+      - generic:
+        - dialog

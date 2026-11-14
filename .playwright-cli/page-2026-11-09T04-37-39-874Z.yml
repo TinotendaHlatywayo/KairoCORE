@@ -1,0 +1,284 @@
+- generic [active] [ref=f25e1]:
+  - banner [ref=f25e2]:
+    - generic [ref=f25e3]:
+      - link "Kairo CORE home" [ref=f25e4] [cursor=pointer]:
+        - /url: https://lvh.me
+        - img "Kairo CORE logo" [ref=f25e5]
+      - generic [ref=f25e6]:
+        - button "Toggle dark mode" [pressed] [ref=f25e7] [cursor=pointer]
+        - text: ⌄ ⌄
+        - button "Open menu" [ref=f25e8] [cursor=pointer]
+  - main [ref=f25e11]:
+    - generic [ref=f25e12]:
+      - generic [ref=f25e14]:
+        - generic [ref=f25e15]:
+          - generic [ref=f25e16]: "5"
+          - generic [ref=f25e17]: Connected modules
+        - generic [ref=f25e19]:
+          - generic [ref=f25e20]: 25.6%
+          - generic [ref=f25e21]: Uptime, cloud-hosted
+        - generic [ref=f25e23]:
+          - generic [ref=f25e24]: "2"
+          - generic [ref=f25e25]: Languages supported
+        - generic [ref=f25e27]:
+          - generic [ref=f25e28]: 6/7
+          - generic [ref=f25e29]: Dedicated support
+      - generic [ref=f25e31]:
+        - generic [ref=f25e32]:
+          - generic [ref=f25e33]: NEW
+          - text: Built for schools across Africa
+        - heading "Run your whole school from one powerful platform" [level=1] [ref=f25e34]:
+          - generic [ref=f25e35]: Run
+          - generic [ref=f25e36]: your
+          - generic [ref=f25e37]: whole
+          - generic [ref=f25e38]: school
+          - generic [ref=f25e39]: from
+          - generic [ref=f25e40]: one
+          - generic [ref=f25e41]: powerful
+          - generic [ref=f25e42]: platform
+        - paragraph [ref=f25e43]: Admissions, academics, fees, attendance, HR and communication , together in one secure, cloud-based system, so you can focus on quality education.
+        - generic [ref=f25e44]:
+          - link "Book a demo →" [ref=f25e45] [cursor=pointer]:
+            - /url: https://lvh.me/contact#contact-form
+            - text: Book a demo
+            - generic [ref=f25e46]: →
+          - link "Explore features" [ref=f25e47] [cursor=pointer]:
+            - /url: https://lvh.me/features
+    - generic [ref=f25e49]:
+      - generic [ref=f25e50]: Primary schools
+      - generic [ref=f25e51]: Secondary schools
+      - generic [ref=f25e52]: Colleges
+      - generic [ref=f25e53]: Boarding schools
+      - generic [ref=f25e54]: Trust & group schools
+      - generic [ref=f25e55]: Tertiary institutions
+      - generic [ref=f25e56]: Private academies
+      - generic [ref=f25e57]: Primary schools
+      - generic [ref=f25e58]: Secondary schools
+      - generic [ref=f25e59]: Colleges
+      - generic [ref=f25e60]: Boarding schools
+      - generic [ref=f25e61]: Trust & group schools
+      - generic [ref=f25e62]: Tertiary institutions
+      - generic [ref=f25e63]: Private academies
+    - generic [ref=f25e65]:
+      - generic [ref=f25e66]:
+        - generic [ref=f25e67]: Platform features
+        - heading "Everything your school needs, in one place" [level=2] [ref=f25e68]
+        - paragraph [ref=f25e69]: From the first admission enquiry to the final report card, every department works from the same system.
+      - generic [ref=f25e70]:
+        - generic [ref=f25e71]:
+          - heading "Admissions" [level=3] [ref=f25e75]
+          - paragraph [ref=f25e76]: Applications, enrolment and complete student records.
+        - generic [ref=f25e77]:
+          - heading "Academics" [level=3] [ref=f25e81]
+          - paragraph [ref=f25e82]: Classes, subjects, timetables and report cards.
+        - generic [ref=f25e83]:
+          - heading "Finance & Fees" [level=3] [ref=f25e87]
+          - paragraph [ref=f25e88]: Fee structures, invoicing and multi-currency billing.
+        - generic [ref=f25e89]:
+          - heading "Attendance" [level=3] [ref=f25e93]
+          - paragraph [ref=f25e94]: Daily student and staff attendance with alerts.
+        - generic [ref=f25e95]:
+          - heading "HR & Payroll" [level=3] [ref=f25e99]
+          - paragraph [ref=f25e100]: Staff records, leave management and payroll.
+        - generic [ref=f25e101]:
+          - heading "Communication" [level=3] [ref=f25e105]
+          - paragraph [ref=f25e106]: Announcements and email or WhatsApp alerts to parents.
+        - generic [ref=f25e107]:
+          - heading "Exams & Results" [level=3] [ref=f25e111]
+          - paragraph [ref=f25e112]: Exam scheduling, grading schemes and result publishing.
+        - generic [ref=f25e113]:
+          - heading "Library" [level=3] [ref=f25e117]
+          - paragraph [ref=f25e118]: Book catalogue, issuance tracking, returns and fines.
+        - generic [ref=f25e119]:
+          - heading "Health & Wellness" [level=3] [ref=f25e123]
+          - paragraph [ref=f25e124]: Student health records, clinic visits and medical alerts.
+      - link "See every feature →" [ref=f25e126] [cursor=pointer]:
+        - /url: https://lvh.me/features
+        - text: See every feature
+        - generic [ref=f25e127]: →
+    - generic [ref=f25e129]:
+      - generic [ref=f25e130]:
+        - generic [ref=f25e131]: Why Kairo CORE
+        - heading "A smarter way to manage your school" [level=2] [ref=f25e132]
+        - paragraph [ref=f25e133]: A single, dependable system that grows with your school.
+        - link "Book a demo →" [ref=f25e134] [cursor=pointer]:
+          - /url: "#contact"
+          - text: Book a demo
+          - generic [ref=f25e135]: →
+      - generic [ref=f25e136]:
+        - generic [ref=f25e137]:
+          - generic [ref=f25e140]: One system for the whole school
+          - text: Admissions, academics, finance, HR and communication share the same data, so nothing has to be captured twice.
+        - generic [ref=f25e141]:
+          - generic [ref=f25e144]: Save hours of admin every week
+          - text: Automated fees, invoices, report cards and alerts replace repetitive paperwork so your staff can focus on learners.
+        - generic [ref=f25e145]:
+          - generic [ref=f25e148]: Reach parents where they are
+          - text: Send announcements and timely updates by email or WhatsApp, and let parents follow attendance, fees and results.
+        - generic [ref=f25e149]:
+          - generic [ref=f25e152]: Secure, cloud-based and current
+          - text: Your data is backed up and always up to date, with role-based access so everyone sees only what they should.
+    - generic [ref=f25e154]:
+      - generic [ref=f25e155]:
+        - generic [ref=f25e156]: Getting started
+        - heading "From registration to go-live" [level=2] [ref=f25e157]
+        - paragraph [ref=f25e158]: Getting your school onto KairoCORE is straightforward.
+      - generic [ref=f25e159]:
+        - generic [ref=f25e160]:
+          - generic [ref=f25e161]: "1"
+          - heading "Register your school" [level=3] [ref=f25e165]
+          - paragraph [ref=f25e166]: Create your school account in minutes and get your own secure workspace.
+        - generic [ref=f25e167]:
+          - generic [ref=f25e168]: "2"
+          - heading "Set up your school" [level=3] [ref=f25e172]
+          - paragraph [ref=f25e173]: Add classes, staff, fee structures and branding, with our team on hand to help.
+        - generic [ref=f25e174]:
+          - generic [ref=f25e175]: "3"
+          - heading "Go live" [level=3] [ref=f25e179]
+          - paragraph [ref=f25e180]: Start managing admissions, academics, fees and communication from day one.
+      - generic [ref=f25e181]:
+        - generic [ref=f25e186]:
+          - generic [ref=f25e187]: Optional
+          - heading "Special training can be arranged" [level=3] [ref=f25e188]
+          - paragraph [ref=f25e189]: Your team is trained — hands-on sessions, video tutorials and a help centre on call.
+        - generic [ref=f25e190]:
+          - generic [ref=f25e191]: Hands-on sessions
+          - generic [ref=f25e192]: Video tutorials
+          - generic [ref=f25e193]: Help centre
+    - generic [ref=f25e195]:
+      - generic [ref=f25e196]:
+        - generic [ref=f25e197]: FAQ
+        - heading "Questions school leaders ask us" [level=2] [ref=f25e198]
+        - paragraph [ref=f25e199]: Can’t find your answer? Message us on WhatsApp.
+      - generic [ref=f25e200]:
+        - group [ref=f25e201]:
+          - generic "Is Kairo CORE built for my type of school? +" [ref=f25e202] [cursor=pointer]
+          - paragraph [ref=f25e203]: Yes. It is designed for primary, secondary and tertiary institutions, including boarding schools.
+        - group [ref=f25e204]:
+          - generic "What does it cover? +" [ref=f25e205] [cursor=pointer]
+        - group [ref=f25e206]:
+          - generic "Is our data safe? +" [ref=f25e207] [cursor=pointer]
+        - group [ref=f25e208]:
+          - generic "Will my team be trained? +" [ref=f25e209] [cursor=pointer]
+        - group [ref=f25e210]:
+          - generic "Can we access it from any device? +" [ref=f25e211] [cursor=pointer]
+    - generic [ref=f25e212]:
+      - heading "Ready to transform your school?" [level=2] [ref=f25e213]
+      - paragraph [ref=f25e214]: Join hundreds of schools already using Kairo CORE. See a live demo built around your school.
+      - generic [ref=f25e215]:
+        - generic [ref=f25e216]:
+          - generic [ref=f25e217]: Your name
+          - textbox "Your name" [ref=f25e218]
+        - generic [ref=f25e219]:
+          - generic [ref=f25e220]: School name
+          - textbox "School name" [ref=f25e221]
+        - generic [ref=f25e222]:
+          - generic [ref=f25e223]: Work email
+          - textbox "Work email" [ref=f25e224]
+        - button "Book a demo →" [ref=f25e225] [cursor=pointer]
+  - contentinfo [ref=f25e226]:
+    - generic [ref=f25e227]:
+      - generic [ref=f25e228]:
+        - generic [ref=f25e229]:
+          - link "Kairo CORE home" [ref=f25e230] [cursor=pointer]:
+            - /url: https://lvh.me
+            - img "Kairo CORE logo" [ref=f25e231]
+          - paragraph [ref=f25e232]: Smarter Schools. Brighter Futures.
+          - paragraph [ref=f25e233]: Cloud-based school management platform built for schools.
+          - generic [ref=f25e234]:
+            - generic [ref=f25e236]: All systems operational
+            - text: ·
+            - generic [ref=f25e237]: 06:37
+        - generic [ref=f25e238]:
+          - heading "Product" [level=4] [ref=f25e239]
+          - navigation "Product navigation" [ref=f25e240]:
+            - list [ref=f25e241]:
+              - listitem [ref=f25e242]:
+                - link "Features" [ref=f25e243] [cursor=pointer]:
+                  - /url: https://lvh.me/features
+              - listitem [ref=f25e244]:
+                - link "Fees & Finance" [ref=f25e245] [cursor=pointer]:
+                  - /url: https://lvh.me/features#finance
+              - listitem [ref=f25e246]:
+                - link "Admissions" [ref=f25e247] [cursor=pointer]:
+                  - /url: https://lvh.me/features#admissions
+              - listitem [ref=f25e248]:
+                - link "Security" [ref=f25e249] [cursor=pointer]:
+                  - /url: https://lvh.me/security
+        - generic [ref=f25e250]:
+          - heading "Company" [level=4] [ref=f25e251]
+          - navigation "Company navigation" [ref=f25e252]:
+            - list [ref=f25e253]:
+              - listitem [ref=f25e254]:
+                - link "About" [ref=f25e255] [cursor=pointer]:
+                  - /url: https://lvh.me/about
+              - listitem [ref=f25e256]:
+                - link "Why Kairo" [ref=f25e257] [cursor=pointer]:
+                  - /url: https://lvh.me#why
+              - listitem [ref=f25e258]:
+                - link "How it works" [ref=f25e259] [cursor=pointer]:
+                  - /url: https://lvh.me#start
+              - listitem [ref=f25e260]:
+                - link "Blog" [ref=f25e261] [cursor=pointer]:
+                  - /url: https://lvh.me/blog
+              - listitem [ref=f25e262]:
+                - link "Contact" [ref=f25e263] [cursor=pointer]:
+                  - /url: https://lvh.me/contact
+              - listitem [ref=f25e264]:
+                - link "FAQ" [ref=f25e265] [cursor=pointer]:
+                  - /url: https://lvh.me#faq
+              - listitem [ref=f25e266]:
+                - link "Terms" [ref=f25e267] [cursor=pointer]:
+                  - /url: https://lvh.me/terms
+        - generic [ref=f25e268]:
+          - heading "Resources" [level=4] [ref=f25e269]
+          - navigation "Resources navigation" [ref=f25e270]:
+            - list [ref=f25e271]:
+              - listitem [ref=f25e272]:
+                - link "Help Centre" [ref=f25e273] [cursor=pointer]:
+                  - /url: https://lvh.me/docs
+              - listitem [ref=f25e274]:
+                - link "How to enrol a student" [ref=f25e275] [cursor=pointer]:
+                  - /url: https://lvh.me/help/enroll-student
+              - listitem [ref=f25e276]:
+                - link "Book a demo" [ref=f25e277] [cursor=pointer]:
+                  - /url: https://lvh.me/contact#contact-form
+        - generic [ref=f25e278]:
+          - heading "Reach out to us" [level=4] [ref=f25e279]
+          - navigation "Contact navigation" [ref=f25e280]:
+            - list [ref=f25e281]:
+              - listitem [ref=f25e282]:
+                - link "+263 78 636 6855" [ref=f25e283] [cursor=pointer]:
+                  - /url: tel:+263786366855
+              - listitem [ref=f25e288]:
+                - link "support@kairocore.co.zw" [ref=f25e289] [cursor=pointer]:
+                  - /url: mailto:support@kairocore.co.zw
+              - listitem [ref=f25e295]:
+                - link "Chat on WhatsApp" [ref=f25e296] [cursor=pointer]:
+                  - /url: https://wa.me/263786366855
+      - generic [ref=f25e301]:
+        - generic [ref=f25e302]:
+          - generic [ref=f25e303]: © 2026 Kairo CORE. All rights reserved.
+          - generic [ref=f25e304]:
+            - link "Privacy Policy" [ref=f25e305] [cursor=pointer]:
+              - /url: https://lvh.me/privacy
+            - link "Terms" [ref=f25e306] [cursor=pointer]:
+              - /url: https://lvh.me/terms
+        - generic [ref=f25e307]:
+          - generic [ref=f25e308]:
+            - link "Chat on WhatsApp" [ref=f25e309] [cursor=pointer]:
+              - /url: https://wa.me/263786366855
+            - link "Facebook" [ref=f25e312] [cursor=pointer]:
+              - /url: https://www.facebook.com/
+            - link "Instagram" [ref=f25e315] [cursor=pointer]:
+              - /url: https://www.instagram.com/
+            - link "X" [ref=f25e320] [cursor=pointer]:
+              - /url: https://x.com/
+            - link "TikTok" [ref=f25e323] [cursor=pointer]:
+              - /url: https://www.tiktok.com/
+            - link "YouTube" [ref=f25e328] [cursor=pointer]:
+              - /url: https://www.youtube.com/
+          - link "↑ Back to top" [ref=f25e331] [cursor=pointer]:
+            - /url: "#"
+  - generic "Quick contact links" [ref=f25e332]:
+    - button "Toggle social links" [ref=f25e333] [cursor=pointer]
