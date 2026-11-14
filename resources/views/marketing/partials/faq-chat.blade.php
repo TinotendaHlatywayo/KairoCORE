@@ -89,7 +89,7 @@ body.kairo-v2 #faq .kfaq .quick { border-top: 1px solid var(--line); padding: 12
 body.kairo-v2 #faq .kfaq .label { margin: 0 18px 8px; font-size: 12.5px; font-weight: 600; color: var(--muted); }
 body.kairo-v2 #faq .kfaq .rail-wrap { overflow: visible; padding: 0 18px 4px; }
 body.kairo-v2 #faq .kfaq .rail { display: flex; flex-wrap: wrap; gap: 8px; width: auto; min-width: 0; }
-body.kairo-v2 #faq .kfaq .chip { scroll-snap-align: start; white-space: nowrap; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; font-size: 13.5px; font-weight: 600; cursor: pointer; transition: border-color .15s, background-color .15s, transform .15s; }
+body.kairo-v2 #faq .kfaq .chip { scroll-snap-align: start; white-space: nowrap; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 7px 12px; font-size: 12.5px; font-weight: 600; cursor: pointer; transition: border-color .15s, background-color .15s, transform .15s; }
 body.kairo-v2 #faq .kfaq .chip:hover { border-color: var(--accent); background: var(--soft); transform: translateY(-1px); }
 
 body.kairo-v2 #faq .kfaq .form { width: 100%; display: flex; gap: 10px; padding: 4px 18px 8px; box-sizing: border-box; }
