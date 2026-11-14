@@ -4,14 +4,14 @@ body.kairo-v2 #faq .kfaq {
     --bg: #f8f9fd; --surface: #ffffff; --chat: #f3f5fb; --dot: rgba(27,42,68,.07); --ink: #1c2a44; --muted: #6b7691; --line: #e6eaf4;
     --accent: #ea5a41; --accent2: #f2804f; --soft: #fff1ed; --soft-line: rgba(234,90,65,.28); --shadow: rgba(28,42,68,.32); --user: #dfe5f3; --bubble: #f1f3f9;
     color-scheme: light;
-    display: grid; grid-template-columns: minmax(180px, 1fr) 5fr; gap: 48px; align-items: center; padding: 48px 0;
+    display: grid; grid-template-columns: minmax(240px, 1fr) 4fr; gap: 48px; align-items: center; padding: 48px 0;
 }
 html.dark body.kairo-v2 #faq .kfaq {
     --bg: #0e1325; --surface: #161d35; --chat: #111830; --dot: rgba(255,255,255,.06); --ink: #eef1fb; --muted: #9ba5c6; --line: #27304d;
     --accent: #ff6a52; --accent2: #ff8d5c; --soft: #2e2338; --soft-line: rgba(255,106,82,.35); --shadow: rgba(0,0,0,.7); --user: #2a3458; --bubble: #202947;
     color-scheme: dark;
 }
-body.kairo-v2 #faq .kfaq h2 { font-size: clamp(20px, 2vw, 28px); line-height: 1.08; letter-spacing: -.03em; font-weight: 800; margin: 0 0 18px; color: var(--ink); }
+body.kairo-v2 #faq .kfaq h2 { font-size: clamp(20px, 2vw, 24px); line-height: 1.08; letter-spacing: -.03em; font-weight: 800; margin: 0 0 18px; color: var(--ink); }
 body.kairo-v2 #faq .kfaq .lead { color: var(--muted); font-size: 17px; max-width: 34ch; margin: 0 0 28px; }
 body.kairo-v2 #faq .kfaq .talk { display: flex; align-items: center; gap: 14px; padding: 14px 16px; max-width: 340px; background: var(--surface); border: 1px solid var(--line); border-radius: 20px; color: inherit; text-decoration: none; transition: border-color .2s, transform .2s; }
 body.kairo-v2 #faq .kfaq .talk:hover { border-color: #25d366; transform: translateY(-2px); }
