@@ -4,7 +4,7 @@ body.kairo-v2 #faq .kfaq {
     --bg: #f8f9fd; --surface: #ffffff; --chat: #f3f5fb; --dot: rgba(27,42,68,.07); --ink: #1c2a44; --muted: #6b7691; --line: #e6eaf4;
     --accent: #ea5a41; --accent2: #f2804f; --soft: #fff1ed; --soft-line: rgba(234,90,65,.28); --shadow: rgba(28,42,68,.32); --user: #dfe5f3; --bubble: #f1f3f9;
     color-scheme: light;
-    display: grid; grid-template-columns: minmax(240px, 1fr) 4fr; gap: 48px; align-items: center; padding: 48px 0;
+    display: grid; grid-template-columns: 1fr 2fr; gap: 48px; align-items: center; padding: 48px 0;
 }
 html.dark body.kairo-v2 #faq .kfaq {
     --bg: #0e1325; --surface: #161d35; --chat: #111830; --dot: rgba(255,255,255,.06); --ink: #eef1fb; --muted: #9ba5c6; --line: #27304d;
@@ -20,7 +20,7 @@ body.kairo-v2 #faq .kfaq .talk b { display: block; font-size: 15px; line-height:
 body.kairo-v2 #faq .kfaq .talk span { font-size: 13.5px; color: var(--muted); }
 body.kairo-v2 #faq .kfaq :is(.talk, .chip, .reset, .send, .wa-pill, .src, .jump, .opt, .fb button):focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
-body.kairo-v2 #faq .kfaq .chat { padding: 0; display: flex; flex-direction: column; height: min(680px, calc(100dvh - 48px)); min-height: 560px; background: var(--surface); border: 1px solid var(--line); border-radius: 28px; box-shadow: 0 44px 80px -48px var(--shadow); overflow: hidden; }
+body.kairo-v2 #faq .kfaq .chat { padding: 0; margin-left: auto; max-width: 850px; display: flex; flex-direction: column; height: min(680px, calc(100dvh - 48px)); min-height: 560px; background: var(--surface); border: 1px solid var(--line); border-radius: 28px; box-shadow: 0 44px 80px -48px var(--shadow); overflow: hidden; }
 body.kairo-v2 #faq .kfaq .head { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--line); }
 body.kairo-v2 #faq .kfaq .brand { display: flex; align-items: center; gap: 9px; padding: 6px 12px 6px 7px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
 body.kairo-v2 #faq .kfaq .brand img { width: auto; height: 30px; object-fit: contain; }
