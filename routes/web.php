@@ -151,6 +151,27 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
             .'- [How to produce report cards]('.route('marketing.help.reports').")\n\n"
             ."## Help Centre guides (full library)\n\n"
             .'- [Help Centre index]('.route('help.index').")\n";
+        // Public school websites are listed here so search engines can discover
+        // every tenant site from the central sitemap.
+        $urls[] = [
+            'loc' => route('marketing.schools'),
+            'lastmod' => date('c'),
+            'changefreq' => 'weekly',
+            'priority' => '0.7',
+        ];
+        foreach (\Modules\CMS\Models\CmsWebsite::with('school')->where('is_template_site', false)->get() as $tenantWebsite) {
+            if (! $tenantWebsite->school || ! filled($tenantWebsite->school->subdomain)) {
+                continue;
+            }
+            $tenantHost = parse_url(config('app.url'), PHP_URL_HOST);
+            $urls[] = [
+                'loc' => 'https://'.$tenantWebsite->school->subdomain.'.'.$tenantHost.'/',
+                'lastmod' => $tenantWebsite->updated_at?->toAtomString() ?? date('c'),
+                'changefreq' => 'weekly',
+                'priority' => '0.8',
+            ];
+        }
+
         foreach (app(HelpCentreRepository::class)->all() as $helpArticle) {
             $text .= '- ['.str_replace(']', '', $helpArticle->title).']('.$helpArticle->url().")\n";
         }
@@ -378,6 +399,10 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
             ],
         ]);
     })->name('marketing.about');
+
+    Route::get('/schools', function () {
+        return view('marketing.schools');
+    })->name('marketing.schools');
 
     Route::get('/contact', function () {
         return view('marketing.contact', [
