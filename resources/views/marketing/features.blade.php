@@ -9,6 +9,9 @@
 @push('styles')
 @vite('resources/css/kairo-v2/features.css')
 @endpush
+@push('styles')
+<style>body.kairo-v2 section { padding-top: 24px; }</style>
+@endpush
 
 @section('content')
 @php

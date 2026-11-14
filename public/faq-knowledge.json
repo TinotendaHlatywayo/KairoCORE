@@ -190,7 +190,7 @@
     "id": "setup-time",
     "category": "general",
     "question": "How long does setup take?",
-    "answer": "Schools are up and running in days, not months: register, set up classes, staff, fee structures and branding with our team on hand, then go live.",
+    "answer": "Schools are up and running in days, not months: register, set up classes, staff, fee structures and branding with our team on hand, then go live. Registration takes a few minutes, and setting up academics (classes, subjects, students, teachers) and other modules may take a few hours up to a few days.",
     "tags": [
       "Setup",
       "Onboarding"
@@ -2256,6 +2256,161 @@
     "source": {
       "title": "Build reports and explore analytics",
       "url": "/docs/reports/reporting-and-analytics"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "reset-password",
+    "category": "troubleshooting",
+    "question": "How do I reset my password?",
+    "answer": "Use Forgot password on the login page to reset. If you never received the activation email, check spam, then ask an administrator to resend it from User Accounts.",
+    "tags": [
+      "Support",
+      "Login"
+    ],
+    "phrasings": [
+      "how do i reset my password?",
+      "how do i reset my password",
+      "how do i how do i reset my password",
+      "how to how do i reset my password",
+      "where can i how do i reset my password",
+      "can i how do i reset my password",
+      "what about how do i reset my password",
+      "tell me about how do i reset my password",
+      "help with how do i reset my password",
+      "i need to how do i reset my password",
+      "please how do i reset my password",
+      "show me how do i reset my password"
+    ],
+    "keywords": [
+      "password",
+      "reset",
+      "forgot",
+      "login",
+      "activation",
+      "email"
+    ],
+    "related": [
+      "common-issues"
+    ],
+    "source": {
+      "title": "Troubleshooting common issues",
+      "url": "/docs/troubleshooting/common-issues"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "create-academic-year",
+    "category": "academics",
+    "question": "How do I create an academic year?",
+    "answer": "Open Academics, then Setup and Structure, then Academic Years, and create the current year with its terms.",
+    "tags": [
+      "Academics",
+      "Setup"
+    ],
+    "phrasings": [
+      "how do i create an academic year?",
+      "how do i create an academic year",
+      "how do i how do i create an academic year",
+      "how to how do i create an academic year",
+      "where can i how do i create an academic year",
+      "can i how do i create an academic year",
+      "what about how do i create an academic year",
+      "tell me about how do i create an academic year",
+      "help with how do i create an academic year",
+      "i need to how do i create an academic year",
+      "please how do i create an academic year",
+      "show me how do i create an academic year"
+    ],
+    "keywords": [
+      "academic",
+      "year",
+      "create",
+      "terms",
+      "setup"
+    ],
+    "related": [
+      "academic-structure"
+    ],
+    "source": {
+      "title": "Set up your academic structure",
+      "url": "/docs/academics/academic-structure"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "sign-in",
+    "category": "getting-started",
+    "question": "How do I sign in?",
+    "answer": "Go to /login and enter your email and password. Your team uses the workspace URL, while students and parents use the school website and student login.",
+    "tags": [
+      "Getting started"
+    ],
+    "phrasings": [
+      "how do i sign in?",
+      "how do i sign in",
+      "how do i how do i sign in",
+      "how to how do i sign in",
+      "where can i how do i sign in",
+      "can i how do i sign in",
+      "what about how do i sign in",
+      "tell me about how do i sign in",
+      "help with how do i sign in",
+      "i need to how do i sign in",
+      "please how do i sign in",
+      "show me how do i sign in"
+    ],
+    "keywords": [
+      "sign",
+      "in",
+      "login",
+      "workspace",
+      "password"
+    ],
+    "related": [
+      "create-account-and-sign-in"
+    ],
+    "source": {
+      "title": "Create your school account and sign in",
+      "url": "/docs/getting-started/create-account-and-sign-in"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "find-help",
+    "category": "troubleshooting",
+    "question": "Where can I find help?",
+    "answer": "Use the Help Centre at /docs for guides, or contact support through the platform website if a guide does not resolve the issue.",
+    "tags": [
+      "Support"
+    ],
+    "phrasings": [
+      "where can i find help?",
+      "where can i find help",
+      "how do i where can i find help",
+      "how to where can i find help",
+      "where can i where can i find help",
+      "can i where can i find help",
+      "what about where can i find help",
+      "tell me about where can i find help",
+      "help with where can i find help",
+      "i need to where can i find help",
+      "please where can i find help",
+      "show me where can i find help"
+    ],
+    "keywords": [
+      "help",
+      "support",
+      "docs",
+      "guide",
+      "contact"
+    ],
+    "related": [
+      "common-issues"
+    ],
+    "source": {
+      "title": "Troubleshooting common issues",
+      "url": "/docs/troubleshooting/common-issues"
     },
     "needsOwnerAnswer": false
   },

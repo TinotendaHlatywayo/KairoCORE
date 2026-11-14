@@ -87,10 +87,8 @@ body.kairo-v2 #faq .kfaq .follow .chip { font-size: 13px; padding: 7px 13px; }
 
 body.kairo-v2 #faq .kfaq .quick { border-top: 1px solid var(--line); padding: 12px 0 10px; }
 body.kairo-v2 #faq .kfaq .label { margin: 0 18px 8px; font-size: 12.5px; font-weight: 600; color: var(--muted); }
-body.kairo-v2 #faq .kfaq .rail-wrap { overflow-x: auto; scrollbar-width: none; padding: 0 18px 4px; scroll-padding: 0 18px; -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent); }
-body.kairo-v2 #faq .kfaq .rail-wrap::-webkit-scrollbar { display: none; }
-body.kairo-v2 #faq .kfaq .rail { display: flex; flex-direction: column; gap: 8px; width: max-content; min-width: 100%; }
-body.kairo-v2 #faq .kfaq .rail-row { display: flex; gap: 8px; flex-wrap: nowrap; }
+body.kairo-v2 #faq .kfaq .rail-wrap { overflow: visible; padding: 0 18px 4px; }
+body.kairo-v2 #faq .kfaq .rail { display: flex; flex-wrap: wrap; gap: 8px; width: auto; min-width: 0; }
 body.kairo-v2 #faq .kfaq .chip { scroll-snap-align: start; white-space: nowrap; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; font-size: 13.5px; font-weight: 600; cursor: pointer; transition: border-color .15s, background-color .15s, transform .15s; }
 body.kairo-v2 #faq .kfaq .chip:hover { border-color: var(--accent); background: var(--soft); transform: translateY(-1px); }
 
@@ -131,6 +129,12 @@ body.kairo-v2 #faq .kfaq .note { display: flex; justify-content: space-between; 
                     </span>
                     <span><b>{{ __('Chat on WhatsApp') }}</b><span>+263 78 636 6855</span></span>
                 </a>
+                <a class="talk" href="{{ route('marketing.contact') }}#contact-form">
+                    <span class="ic" aria-hidden="true">
+                        <svg width="22" height="22" viewBox="0 0 24 24"><path d="M4 4h16v16H4zM4 4l8 8 8-8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </span>
+                    <span><b>{{ __('Email us') }}</b><span>sales@kairocore.co.zw</span></span>
+                </a>
             </div>
 
             <section class="chat" aria-label="{{ __('Kairo assistant') }}">
@@ -165,7 +169,6 @@ body.kairo-v2 #faq .kfaq .note { display: flex; justify-content: space-between; 
                     </button>
                 </form>
                 <div class="note">
-                    <span>{{ __('Automated assistant. Answers come from Kairo CORE guides.') }}</span>
                     <span id="kfaq-count"></span>
                 </div>
             </section>
@@ -375,31 +378,14 @@ function renderChips() {
     wrap.className = 'rail-wrap';
     const rail = document.createElement('div');
     rail.className = 'rail';
-
-    const rows = [[], []];
     remaining.forEach(question => {
-        if (rows[0].reduce((sum, q) => sum + q.length, 0) <= rows[1].reduce((sum, q) => sum + q.length, 0)) {
-            rows[0].push(question);
-        } else {
-            rows[1].push(question);
-        }
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'chip';
+        chip.textContent = question;
+        chip.addEventListener('click', () => ask(question));
+        rail.appendChild(chip);
     });
-
-    rows.forEach(rowQuestions => {
-        if (!rowQuestions.length) return;
-        const rowEl = document.createElement('div');
-        rowEl.className = 'rail-row';
-        rowQuestions.forEach(question => {
-            const chip = document.createElement('button');
-            chip.type = 'button';
-            chip.className = 'chip';
-            chip.textContent = question;
-            chip.addEventListener('click', () => ask(question));
-            rowEl.appendChild(chip);
-        });
-        rail.appendChild(rowEl);
-    });
-
     wrap.appendChild(rail);
     quick.appendChild(wrap);
 }
@@ -446,17 +432,29 @@ function ask(text) {
         }
         if (result.type === 'fallback') {
             if (!result.entry || result.entry.needsOwnerAnswer) logUnmatched(value);
+            const isPricing = /price|pricing|cost|quote/i.test(value) || (result.entry && result.entry.id === 'pricing');
             const bubble = row('bot');
             const p = document.createElement('p');
-            p.textContent = 'I don’t have that one yet. Message the team on WhatsApp and a person will help.';
+            p.textContent = isPricing
+                ? 'I don’t have pricing details yet. Message the team on WhatsApp or send us a message through the contact form.'
+                : 'I don’t have that one yet. Message the team on WhatsApp and a person will help.';
             bubble.appendChild(p);
-            const link = document.createElement('a');
-            link.className = 'wa-pill';
-            link.href = 'https://wa.me/263786366855';
-            link.target = '_blank';
-            link.rel = 'noopener';
-            link.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24"><path d="M4 20l1.4-4.2A8 8 0 1 1 8.3 18.7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Message us on WhatsApp';
-            bubble.appendChild(link);
+            const waLink = document.createElement('a');
+            waLink.className = 'wa-pill';
+            waLink.href = 'https://wa.me/263786366855';
+            waLink.target = '_blank';
+            waLink.rel = 'noopener';
+            waLink.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24"><path d="M4 20l1.4-4.2A8 8 0 1 1 8.3 18.7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Message us on WhatsApp';
+            bubble.appendChild(waLink);
+            if (isPricing) {
+                const emailLink = document.createElement('a');
+                emailLink.className = 'wa-pill';
+                emailLink.href = '/contact#contact-form';
+                emailLink.style.background = '#3b82f6';
+                emailLink.style.color = '#fff';
+                emailLink.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24"><path d="M4 4h16v16H4zM4 4l8 8 8-8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Email us';
+                bubble.appendChild(emailLink);
+            }
             busy = false;
             scrollToBottom(false);
             return;
