@@ -265,7 +265,7 @@ const down = () => scrollToBottom(false);
 msgs.addEventListener('scroll', () => jump.classList.toggle('on', msgs.scrollHeight - msgs.scrollTop - msgs.clientHeight > 90));
 jump.addEventListener('click', () => scrollToBottom(false));
 
-function clearFollowups() { msgs.querySelectorAll('.kfaq-follow').forEach(node => node.kfaq-remove()); }
+function clearFollowups() { msgs.querySelectorAll('.kfaq-follow').forEach(node => node.remove()); }
 
 function row(kind) {
     clearFollowups();
@@ -322,7 +322,7 @@ function streamText(element, text, done) {
         scrollToBottom(false);
         if (i >= words.length) {
             clearInterval(timer);
-            caret.kfaq-remove();
+            caret.remove();
             done();
         }
     }, 30);
@@ -378,7 +378,7 @@ function renderAnswer(bubble, entry, secondIntent) {
     feedback.append(up, downBtn);
     bubble.appendChild(feedback);
 
-    const related = (entry.kfaq-related || []).map(id => kb.find(item => item.id === id)).filter(Boolean).slice(0, 3);
+    const related = (entry.related || []).map(id => kb.find(item => item.id === id)).filter(Boolean).slice(0, 3);
     if (related.length) {
         const wrap = document.createElement('div');
         wrap.className = 'kfaq-follow';
@@ -455,7 +455,7 @@ function ask(text) {
     const typingRow = typing();
 
     setTimeout(() => {
-        typingRow.kfaq-remove();
+        typingRow.remove();
         if (result.smallTalk) {
             const bubble = row('bot');
             bubble.textContent = result.smallTalk;
