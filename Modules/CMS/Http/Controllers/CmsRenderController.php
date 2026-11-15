@@ -35,6 +35,24 @@ class CmsRenderController extends Controller
      */
     public function render(Request $request, $tenant = null, $slug = null, bool $preview = false)
     {
+        $route = $request->route();
+        $routeTenant = $route?->parameter('tenant');
+        $routeBaseHost = $route?->parameter('__baseHost');
+        $routeSlug = $route?->parameter('slug');
+
+        // Normalize direct/closure calls: render($request, 'apply-online') or render($request, null, 'apply-online')
+        if ($slug === null && $tenant !== null && $tenant !== $routeTenant && $tenant !== $routeBaseHost) {
+            $slug = $tenant;
+            $tenant = null;
+        }
+
+        // Prefer explicit route slug; domain placeholders must not be treated as page slugs
+        if ($route && $route->hasParameter('slug')) {
+            $slug = $routeSlug;
+        } elseif ($slug === $routeBaseHost || $slug === $routeTenant) {
+            $slug = null;
+        }
+
         $school = app('current_tenant');
         if (! $school) {
             $school = School::first();
