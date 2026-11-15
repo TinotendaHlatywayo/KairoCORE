@@ -4,7 +4,7 @@
 
 @section('title', marketing_content('meta_title') ?: platform_name().' - Best School Management Software in Zimbabwe')
 @section('meta_description', marketing_content('meta_description') ?: platform_seo_description())
-@section('seo_image', asset('images/KairoCORE_Home_thumbnail.png'))
+@section('seo_image', asset('images/og-home.png'))
 
 @push('styles')
 @vite('resources/css/kairo-v2/home.css')

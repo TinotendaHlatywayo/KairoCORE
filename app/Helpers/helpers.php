@@ -870,11 +870,11 @@ if (! function_exists('marketing_image')) {
 if (! function_exists('platform_og_image_url')) {
     /**
      * Social share (Open Graph / Twitter) image for the platform pages.
-     * Prefers an uploaded OG image, then the bundled 1200px social card.
+     * Prefers an uploaded OG image, then the bundled 1200x630 social card.
      */
     function platform_og_image_url(): string
     {
-        return platform_branding_asset_url('platform_og_image', 'images/KairoCORE_link_preview.png');
+        return platform_branding_asset_url('platform_og_image', 'images/og-default.png');
     }
 }
 
@@ -900,7 +900,7 @@ if (! function_exists('platform_og_image_dimensions')) {
                 $candidates[] = public_path(ltrim($path, '/'));
             }
         } else {
-            $candidates[] = public_path('images/KairoCORE_link_preview.png');
+            $candidates[] = public_path('images/og-default.png');
         }
 
         foreach ($candidates as $candidate) {

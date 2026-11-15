@@ -3,7 +3,7 @@
 @section('body_class', 'kairo-v2')
 
 @section('title', marketing_content('features_title') ?: __('Features').' - '.platform_name().' | School Management System Zimbabwe')
-@section('seo_image', asset('images/KairoCORE_Features_thumbnail.png'))
+@section('seo_image', asset('images/og-features.png'))
 @section('meta_description', marketing_content('features_subtitle') ?: __('Explore Kairo CORE features for admissions, academics, fees, attendance, HR and report cards — the best school management software for schools in Zimbabwe.'))
 
 @push('styles')

@@ -2,7 +2,7 @@
 
 @section('title', __('School websites') . ' - ' . platform_name())
 @section('meta_description', __('Browse public websites of schools using Kairo CORE.'))
-@section('seo_image', asset('images/KairoCORE_link_preview.png'))
+@section('seo_image', asset('images/og-schools.png'))
 
 @section('content')
 @php
