@@ -1,177 +1,203 @@
 <style>
-body.kairo-v2 #faq.kfaq-section { padding: 0; }
-body.kairo-v2 #faq .kfaq {
+body.kairo-v2 #faq.kfaq-section { padding: 100px 0; }
+body.kairo-v2 #faq .kfaq-root {
     --bg: #f8f9fd; --surface: #ffffff; --chat: #f3f5fb; --dot: rgba(27,42,68,.07); --ink: #1c2a44; --muted: #6b7691; --line: #e6eaf4;
     --accent: #ea5a41; --accent2: #f2804f; --soft: #fff1ed; --soft-line: rgba(234,90,65,.28); --shadow: rgba(28,42,68,.32); --user: #dfe5f3; --bubble: #f1f3f9;
     color-scheme: light;
-    display: grid; grid-template-columns: 1fr 3fr; gap: 48px; align-items: center; padding: 48px 0;
 }
-html.dark body.kairo-v2 #faq .kfaq {
+html.dark body.kairo-v2 #faq .kfaq-root {
     --bg: #0e1325; --surface: #161d35; --chat: #111830; --dot: rgba(255,255,255,.06); --ink: #eef1fb; --muted: #9ba5c6; --line: #27304d;
     --accent: #ff6a52; --accent2: #ff8d5c; --soft: #2e2338; --soft-line: rgba(255,106,82,.35); --shadow: rgba(0,0,0,.7); --user: #2a3458; --bubble: #202947;
     color-scheme: dark;
 }
-body.kairo-v2 #faq .kfaq h2 { font-size: clamp(32px, 4.4vw, 54px); line-height: 1.08; letter-spacing: -.03em; font-weight: 800; margin: 0 0 18px; color: var(--ink); }
-body.kairo-v2 #faq .kfaq .lead { color: var(--muted); font-size: 17px; max-width: 34ch; margin: 0 0 28px; }
-body.kairo-v2 #faq .kfaq .talk { display: flex; align-items: center; gap: 14px; padding: 14px 16px; max-width: 340px; background: var(--surface); border: 1px solid var(--line); border-radius: 20px; color: inherit; text-decoration: none; transition: border-color .2s, transform .2s; }
-body.kairo-v2 #faq .kfaq .talk:hover { border-color: #25d366; transform: translateY(-2px); }
-body.kairo-v2 #faq .kfaq .talk .ic { width: 44px; height: 44px; flex: none; border-radius: 14px; background: #25d366; color: #06361a; display: grid; place-items: center; }
-body.kairo-v2 #faq .kfaq .talk b { display: block; font-size: 15px; line-height: 1.25; }
-body.kairo-v2 #faq .kfaq .talk span { font-size: 13.5px; color: var(--muted); }
-body.kairo-v2 #faq .kfaq :is(.talk, .chip, .reset, .send, .wa-pill, .src, .jump, .opt, .fb button):focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+body.kairo-v2 #faq .kfaq-header { margin-bottom: 40px; }
+body.kairo-v2 #faq .kfaq-header .ey { color: var(--accent); font-weight: 700; font-size: 13px; display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+body.kairo-v2 #faq .kfaq-header .ey::before { content: ""; width: 32px; height: 2px; background: var(--accent); }
+body.kairo-v2 #faq .kfaq-header h2 { font-size: clamp(28px, 3.6vw, 44px); line-height: 1.05; letter-spacing: -.03em; font-weight: 800; margin: 0 0 16px; color: var(--ink); text-wrap: balance; }
+body.kairo-v2 #faq .kfaq-header .lead { color: var(--muted); font-size: 16.5px; max-width: 60ch; margin: 0; }
+body.kairo-v2 #faq .kfaq-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; column-gap: 32px; align-items: start; }
+body.kairo-v2 #faq .kfaq-chat { padding: 0; display: flex; flex-direction: column; height: min(640px, calc(100dvh - 48px)); min-height: 560px; background: var(--surface); border: 1px solid var(--line); border-radius: 28px; box-shadow: 0 44px 80px -48px var(--shadow); overflow: hidden; }
+body.kairo-v2 #faq .kfaq-chat .head { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+body.kairo-v2 #faq .kfaq-chat .brand { display: flex; align-items: center; gap: 9px; padding: 6px 12px 6px 7px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+body.kairo-v2 #faq .kfaq-chat .brand img { width: auto; height: 30px; object-fit: contain; }
+body.kairo-v2 #faq .kfaq-chat .brand .logo-dark { display: none; }
+html.dark body.kairo-v2 #faq .kfaq-chat .brand .logo-light { display: none; }
+html.dark body.kairo-v2 #faq .kfaq-chat .brand .logo-dark { display: block; }
+body.kairo-v2 #faq .kfaq-chat .who { min-width: 0; }
+body.kairo-v2 #faq .kfaq-chat .who b { display: block; font-size: 14.5px; line-height: 1.2; }
+body.kairo-v2 #faq .kfaq-chat .who small { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12.5px; }
+body.kairo-v2 #faq .kfaq-chat .who small::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #2fbf71; }
+body.kairo-v2 #faq .kfaq-chat .reset { margin-left: auto; display: flex; align-items: center; gap: 6px; background: none; border: 1px solid var(--line); border-radius: 999px; padding: 7px 13px; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; transition: color .15s, border-color .15s; }
+body.kairo-v2 #faq .kfaq-chat .reset:hover { color: var(--ink); border-color: var(--ink); }
+body.kairo-v2 #faq .kfaq-chat .reset svg { width: 14px; height: 14px; }
+@media (max-width: 860px) { body.kairo-v2 #faq .kfaq-chat .reset span { display: none; } }
 
-body.kairo-v2 #faq .kfaq .chat { padding: 0; margin-left: auto; max-width: 950px; display: flex; flex-direction: column; height: min(680px, calc(100dvh - 48px)); min-height: 560px; background: var(--surface); border: 1px solid var(--line); border-radius: 28px; box-shadow: 0 44px 80px -48px var(--shadow); overflow: hidden; }
-body.kairo-v2 #faq .kfaq .head { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--line); }
-body.kairo-v2 #faq .kfaq .brand { display: flex; align-items: center; gap: 9px; padding: 6px 12px 6px 7px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
-body.kairo-v2 #faq .kfaq .brand img { width: auto; height: 30px; object-fit: contain; }
-body.kairo-v2 #faq .kfaq .brand .logo-dark { display: none; }
-html.dark body.kairo-v2 #faq .kfaq .brand .logo-light { display: none; }
-html.dark body.kairo-v2 #faq .kfaq .brand .logo-dark { display: block; }
-body.kairo-v2 #faq .kfaq .who { min-width: 0; }
-body.kairo-v2 #faq .kfaq .who b { display: block; font-size: 14.5px; line-height: 1.2; }
-body.kairo-v2 #faq .kfaq .who small { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12.5px; }
-body.kairo-v2 #faq .kfaq .who small::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #2fbf71; }
-body.kairo-v2 #faq .kfaq .reset { margin-left: auto; display: flex; align-items: center; gap: 6px; background: none; border: 1px solid var(--line); border-radius: 999px; padding: 7px 13px; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; transition: color .15s, border-color .15s; }
-body.kairo-v2 #faq .kfaq .reset:hover { color: var(--ink); border-color: var(--ink); }
-body.kairo-v2 #faq .kfaq .reset svg { width: 14px; height: 14px; }
-@media (max-width: 860px) { body.kairo-v2 #faq .kfaq .reset span { display: none; } }
+body.kairo-v2 #faq .kfaq-chat .stage { position: relative; flex: 1 1 auto; min-height: 0; }
+body.kairo-v2 #faq .kfaq-chat .msgs { height: 100%; overflow-y: auto; padding: 18px 22px 22px 18px; display: flex; flex-direction: column; gap: 16px; background: var(--surface); background-image: none; scroll-behavior: auto; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+body.kairo-v2 #faq .kfaq-chat .msgs::-webkit-scrollbar { width: 8px; }
+body.kairo-v2 #faq .kfaq-chat .msgs::-webkit-scrollbar-track { background: transparent; }
+body.kairo-v2 #faq .kfaq-chat .msgs::-webkit-scrollbar-thumb { background: var(--line); border-radius: 999px; }
+body.kairo-v2 #faq .kfaq-chat .day { align-self: center; padding: 4px 12px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-size: 11.5px; font-weight: 600; color: var(--muted); }
+body.kairo-v2 #faq .kfaq-chat .jump { position: absolute; right: 16px; bottom: 14px; width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--ink); display: none; place-items: center; cursor: pointer; box-shadow: 0 8px 20px -8px var(--shadow); }
+body.kairo-v2 #faq .kfaq-chat .jump.on { display: grid; }
+body.kairo-v2 #faq .kfaq-chat .jump svg { width: 18px; height: 18px; }
 
-body.kairo-v2 #faq .kfaq .stage { position: relative; flex: 1 1 auto; min-height: 0; }
-body.kairo-v2 #faq .kfaq .msgs { height: 100%; overflow-y: auto; padding: 18px 22px 22px 18px; display: flex; flex-direction: column; gap: 16px; background: var(--surface); background-image: none; scroll-behavior: auto; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
-body.kairo-v2 #faq .kfaq .msgs::-webkit-scrollbar { width: 8px; }
-body.kairo-v2 #faq .kfaq .msgs::-webkit-scrollbar-track { background: transparent; }
-body.kairo-v2 #faq .kfaq .msgs::-webkit-scrollbar-thumb { background: var(--line); border-radius: 999px; }
-body.kairo-v2 #faq .kfaq .day { align-self: center; padding: 4px 12px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-size: 11.5px; font-weight: 600; color: var(--muted); }
-body.kairo-v2 #faq .kfaq .jump { position: absolute; right: 16px; bottom: 14px; width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--ink); display: none; place-items: center; cursor: pointer; box-shadow: 0 8px 20px -8px var(--shadow); }
-body.kairo-v2 #faq .kfaq .jump.on { display: grid; }
-body.kairo-v2 #faq .kfaq .jump svg { width: 18px; height: 18px; }
+body.kairo-v2 #faq .kfaq-chat .row { display: flex; align-items: flex-start; gap: 10px; animation: kfaqIn .3s ease both; }
+body.kairo-v2 #faq .kfaq-chat .row.me { justify-content: flex-end; }
+body.kairo-v2 #faq .kfaq-chat .pic { position: static; width: 34px; height: 34px; flex: 0 0 34px; margin-top: 2px; overflow: hidden; border-radius: 12px; display: grid; place-items: center; background: #fff; border: 1px solid var(--line); max-width: 34px; box-sizing: border-box; }
+body.kairo-v2 #faq .kfaq-chat .pic:not(.u) img { width: 100%; height: 100%; object-fit: contain; max-width: none; display: block; }
+body.kairo-v2 #faq .kfaq-chat .pic.u { background: var(--user); border-radius: 50%; }
+body.kairo-v2 #faq .kfaq-chat .pic.u svg { width: 20px; height: 20px; color: var(--muted); max-width: none; display: block; }
+body.kairo-v2 #faq .kfaq-chat .col { display: flex; flex-direction: column; min-width: 0; max-width: min(78%, 520px); }
+body.kairo-v2 #faq .kfaq-chat .me .col { align-items: flex-end; }
+body.kairo-v2 #faq .kfaq-chat .bot .col { align-items: flex-start; }
+body.kairo-v2 #faq .kfaq-chat .bub { width: fit-content; max-width: 100%; padding: 12px 16px; font-size: 15px; border-radius: 18px; overflow-wrap: anywhere; }
+body.kairo-v2 #faq .kfaq-chat .bot .bub { background: var(--bubble); border: none; border-top-left-radius: 6px; }
+body.kairo-v2 #faq .kfaq-chat .me .bub { background: linear-gradient(135deg, var(--coral-strong), var(--accent)); color: #fff; font-weight: 600; border-top-right-radius: 6px; }
+body.kairo-v2 #faq .kfaq-chat .meta { margin: 5px 0 0; font-size: 11.5px; color: var(--muted); }
+body.kairo-v2 #faq .kfaq-chat .me .meta { text-align: right; }
+body.kairo-v2 #faq .kfaq-chat .bot .meta { text-align: left; }
+body.kairo-v2 #faq .kfaq-chat .caret { display: inline-block; width: 2px; height: 1em; margin-left: 2px; vertical-align: -.15em; background: var(--accent); animation: kfaqBlink .8s steps(1) infinite; }
+body.kairo-v2 #faq .kfaq-chat .dots { display: flex; gap: 5px; padding: 16px 18px; background: var(--bubble); border-radius: 18px; border-top-left-radius: 6px; }
+body.kairo-v2 #faq .kfaq-chat .dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); animation: kfaqBob 1s infinite; }
+body.kairo-v2 #faq .kfaq-chat .dots i:nth-child(2) { animation-delay: .15s; }
+body.kairo-v2 #faq .kfaq-chat .dots i:nth-child(3) { animation-delay: .3s; }
 
-body.kairo-v2 #faq .kfaq .row { display: flex; align-items: flex-start; gap: 10px; animation: kfaqIn .3s ease both; }
-body.kairo-v2 #faq .kfaq .row.me { justify-content: flex-end; }
-body.kairo-v2 #faq .kfaq .pic { position: static; width: 34px; height: 34px; flex: 0 0 34px; margin-top: 2px; overflow: hidden; border-radius: 12px; display: grid; place-items: center; background: #fff; border: 1px solid var(--line); max-width: 34px; box-sizing: border-box; }
-body.kairo-v2 #faq .kfaq .pic:not(.u) img { width: 100%; height: 100%; object-fit: contain; max-width: none; display: block; }
-body.kairo-v2 #faq .kfaq .pic.u { background: var(--user); border-radius: 50%; }
-body.kairo-v2 #faq .kfaq .pic.u svg { width: 20px; height: 20px; color: var(--muted); max-width: none; display: block; }
-body.kairo-v2 #faq .kfaq .col { display: flex; flex-direction: column; min-width: 0; max-width: min(78%, 520px); }
-body.kairo-v2 #faq .kfaq .me .col { align-items: flex-end; }
-body.kairo-v2 #faq .kfaq .bot .col { align-items: flex-start; }
-body.kairo-v2 #faq .kfaq .bub { width: fit-content; max-width: 100%; padding: 12px 16px; font-size: 15px; border-radius: 18px; overflow-wrap: anywhere; }
-body.kairo-v2 #faq .kfaq .bot .bub { background: var(--bubble); border: none; border-top-left-radius: 6px; }
-body.kairo-v2 #faq .kfaq .me .bub { background: linear-gradient(135deg, var(--coral-strong), var(--accent)); color: #fff; font-weight: 600; border-top-right-radius: 6px; }
-body.kairo-v2 #faq .kfaq .meta { margin: 5px 0 0; font-size: 11.5px; color: var(--muted); }
-body.kairo-v2 #faq .kfaq .me .meta { text-align: right; }
-body.kairo-v2 #faq .kfaq .bot .meta { text-align: left; }
-body.kairo-v2 #faq .kfaq .caret { display: inline-block; width: 2px; height: 1em; margin-left: 2px; vertical-align: -.15em; background: var(--accent); animation: kfaqBlink .8s steps(1) infinite; }
-body.kairo-v2 #faq .kfaq .dots { display: flex; gap: 5px; padding: 16px 18px; background: var(--bubble); border-radius: 18px; border-top-left-radius: 6px; }
-body.kairo-v2 #faq .kfaq .dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); animation: kfaqBob 1s infinite; }
-body.kairo-v2 #faq .kfaq .dots i:nth-child(2) { animation-delay: .15s; }
-body.kairo-v2 #faq .kfaq .dots i:nth-child(3) { animation-delay: .3s; }
+body.kairo-v2 #faq .kfaq-chat .tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 0; padding: 0; list-style: none; }
+body.kairo-v2 #faq .kfaq-chat .tags li { padding: 5px 11px; border-radius: 999px; background: var(--soft); border: 1px solid var(--soft-line); font-size: 12.5px; font-weight: 600; }
+body.kairo-v2 #faq .kfaq-chat .src { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: inherit; text-decoration: none; font-size: 13px; transition: border-color .15s; }
+body.kairo-v2 #faq .kfaq-chat .src:hover { border-color: var(--accent); }
+body.kairo-v2 #faq .kfaq-chat .src svg { width: 18px; height: 18px; flex: none; color: var(--accent); }
+body.kairo-v2 #faq .kfaq-chat .src small { display: block; color: var(--muted); font-size: 11.5px; line-height: 1.2; }
+body.kairo-v2 #faq .kfaq-chat .src b { font-weight: 600; line-height: 1.3; }
+body.kairo-v2 #faq .kfaq-chat .wa-pill { display: inline-flex; align-items: center; gap: 8px; margin-top: 12px; padding: 9px 15px; border-radius: 999px; background: #25d366; color: #06361a; font-size: 13px; font-weight: 700; text-decoration: none; }
+body.kairo-v2 #faq .kfaq-chat .opts { display: grid; gap: 8px; margin-top: 12px; }
+body.kairo-v2 #faq .kfaq-chat .opt { text-align: left; padding: 10px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); font-size: 13.5px; font-weight: 600; cursor: pointer; transition: border-color .15s, background-color .15s; }
+body.kairo-v2 #faq .kfaq-chat .opt:hover { border-color: var(--accent); background: var(--soft); }
+body.kairo-v2 #faq .kfaq-chat .fb { display: flex; align-items: center; justify-content: flex-end; gap: 6px; margin-top: 10px; font-size: 12px; color: var(--muted); }
+body.kairo-v2 #faq .kfaq-chat .fb button { width: 30px; height: 30px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 50%; background: var(--surface); color: var(--muted); cursor: pointer; transition: color .15s, border-color .15s; }
+body.kairo-v2 #faq .kfaq-chat .fb button:hover { color: var(--accent); border-color: var(--accent); }
+body.kairo-v2 #faq .kfaq-chat .fb svg { width: 15px; height: 15px; }
+body.kairo-v2 #faq .kfaq-chat .follow { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 0 44px; animation: kfaqIn .3s ease both; }
+body.kairo-v2 #faq .kfaq-chat .follow .chip { font-size: 13px; padding: 7px 13px; }
 
-body.kairo-v2 #faq .kfaq .tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 0; padding: 0; list-style: none; }
-body.kairo-v2 #faq .kfaq .tags li { padding: 5px 11px; border-radius: 999px; background: var(--soft); border: 1px solid var(--soft-line); font-size: 12.5px; font-weight: 600; }
-body.kairo-v2 #faq .kfaq .src { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: inherit; text-decoration: none; font-size: 13px; transition: border-color .15s; }
-body.kairo-v2 #faq .kfaq .src:hover { border-color: var(--accent); }
-body.kairo-v2 #faq .kfaq .src svg { width: 18px; height: 18px; flex: none; color: var(--accent); }
-body.kairo-v2 #faq .kfaq .src small { display: block; color: var(--muted); font-size: 11.5px; line-height: 1.2; }
-body.kairo-v2 #faq .kfaq .src b { font-weight: 600; line-height: 1.3; }
-body.kairo-v2 #faq .kfaq .wa-pill { display: inline-flex; align-items: center; gap: 8px; margin-top: 12px; padding: 9px 15px; border-radius: 999px; background: #25d366; color: #06361a; font-size: 13px; font-weight: 700; text-decoration: none; }
-body.kairo-v2 #faq .kfaq .opts { display: grid; gap: 8px; margin-top: 12px; }
-body.kairo-v2 #faq .kfaq .opt { text-align: left; padding: 10px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); font-size: 13.5px; font-weight: 600; cursor: pointer; transition: border-color .15s, background-color .15s; }
-body.kairo-v2 #faq .kfaq .opt:hover { border-color: var(--accent); background: var(--soft); }
-body.kairo-v2 #faq .kfaq .fb { display: flex; align-items: center; justify-content: flex-end; gap: 6px; margin-top: 10px; font-size: 12px; color: var(--muted); }
-body.kairo-v2 #faq .kfaq .fb button { width: 30px; height: 30px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 50%; background: var(--surface); color: var(--muted); cursor: pointer; transition: color .15s, border-color .15s; }
-body.kairo-v2 #faq .kfaq .fb button:hover { color: var(--accent); border-color: var(--accent); }
-body.kairo-v2 #faq .kfaq .fb svg { width: 15px; height: 15px; }
-body.kairo-v2 #faq .kfaq .follow { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 0 44px; animation: kfaqIn .3s ease both; }
-body.kairo-v2 #faq .kfaq .follow .chip { font-size: 13px; padding: 7px 13px; }
+body.kairo-v2 #faq .kfaq-quick { border-top: 1px solid var(--line); padding: 12px 0 10px; }
+body.kairo-v2 #faq .kfaq-quick .label { margin: 0 18px 8px; font-size: 12.5px; font-weight: 600; color: var(--muted); }
+body.kairo-v2 #faq .kfaq-quick .rail-wrap { overflow: visible; padding: 0 18px 4px; }
+body.kairo-v2 #faq .kfaq-quick .rail { display: flex; flex-wrap: wrap; gap: 6px; width: auto; min-width: 0; }
+body.kairo-v2 #faq .kfaq-quick .chip { scroll-snap-align: start; white-space: nowrap; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 5px 9px; font-size: 11.5px; font-weight: 600; cursor: pointer; transition: border-color .15s, background-color .15s, transform .15s; }
+body.kairo-v2 #faq .kfaq-quick .chip:hover { border-color: var(--accent); background: var(--soft); transform: translateY(-1px); }
 
-body.kairo-v2 #faq .kfaq .quick { border-top: 1px solid var(--line); padding: 12px 0 10px; }
-body.kairo-v2 #faq .kfaq .label { margin: 0 18px 8px; font-size: 12.5px; font-weight: 600; color: var(--muted); }
-body.kairo-v2 #faq .kfaq .rail-wrap { overflow: visible; padding: 0 18px 4px; }
-body.kairo-v2 #faq .kfaq .rail { display: flex; flex-wrap: wrap; gap: 6px; width: auto; min-width: 0; }
-body.kairo-v2 #faq .kfaq .chip { scroll-snap-align: start; white-space: nowrap; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 5px 9px; font-size: 11.5px; font-weight: 600; cursor: pointer; transition: border-color .15s, background-color .15s, transform .15s; }
-body.kairo-v2 #faq .kfaq .chip:hover { border-color: var(--accent); background: var(--soft); transform: translateY(-1px); }
+body.kairo-v2 #faq .kfaq-form { width: 100%; display: flex; gap: 10px; padding: 4px 18px 8px; box-sizing: border-box; }
+body.kairo-v2 #faq .kfaq-input { flex: 1 1 auto; min-width: 0; width: auto; padding: 12px 18px; border-radius: 999px; border: 1px solid var(--line); background: var(--chat); font-size: 14.5px; color: var(--ink); box-shadow: none; }
+body.kairo-v2 #faq .kfaq-input::placeholder { color: var(--muted); }
+body.kairo-v2 #faq .kfaq-send { width: 46px; height: 46px; flex: none; border: 0; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; display: grid; place-items: center; cursor: pointer; transition: transform .15s, opacity .15s; }
+body.kairo-v2 #faq .kfaq-send:hover:not(:disabled) { transform: scale(1.06); }
+body.kairo-v2 #faq .kfaq-send:disabled { opacity: .4; cursor: default; }
+body.kairo-v2 #faq .kfaq-send svg { width: 20px; height: 20px; }
 
-body.kairo-v2 #faq .kfaq .form { width: 100%; display: flex; gap: 10px; padding: 4px 18px 8px; box-sizing: border-box; }
-body.kairo-v2 #faq .kfaq .kfaq-input { flex: 1 1 auto; min-width: 0; width: auto; padding: 12px 18px; border-radius: 999px; border: 1px solid var(--line); background: var(--chat); font-size: 14.5px; color: var(--ink); box-shadow: none; }
-body.kairo-v2 #faq .kfaq .kfaq-input::placeholder { color: var(--muted); }
-body.kairo-v2 #faq .kfaq .send { width: 46px; height: 46px; flex: none; border: 0; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; display: grid; place-items: center; cursor: pointer; transition: transform .15s, opacity .15s; }
-body.kairo-v2 #faq .kfaq .send:hover:not(:disabled) { transform: scale(1.06); }
-body.kairo-v2 #faq .kfaq .send:disabled { opacity: .4; cursor: default; }
-body.kairo-v2 #faq .kfaq .send svg { width: 20px; height: 20px; }
-body.kairo-v2 #faq .kfaq .note { display: flex; justify-content: space-between; gap: 12px; padding: 0 22px 14px; font-size: 11.5px; color: var(--muted); }
+body.kairo-v2 #faq .kfaq-aside { display: flex; flex-direction: column; gap: 12px; position: sticky; top: calc(69px + 24px); }
+body.kairo-v2 #faq .kfaq-card { display: flex; align-items: center; gap: 14px; padding: 16px; min-height: 0; height: auto; border: 1px solid var(--line); border-radius: 20px; background: var(--surface); text-decoration: none; color: inherit; transition: border-color .15s, transform .15s; }
+body.kairo-v2 #faq .kfaq-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+body.kairo-v2 #faq .kfaq-card--whatsapp:hover { border-color: #25d366; }
+body.kairo-v2 #faq .kfaq-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+body.kairo-v2 #faq .kfaq-icon { width: 44px; height: 44px; flex: none; border-radius: 14px; display: grid; place-items: center; }
+body.kairo-v2 #faq .kfaq-icon svg { width: 22px; height: 22px; }
+body.kairo-v2 #faq .kfaq-card-title { font-size: 15px; font-weight: 700; line-height: 1.2; }
+body.kairo-v2 #faq .kfaq-card-sub { font-size: 13.5px; color: var(--muted); margin-top: 2px; }
 
-@media (max-width: 860px) {
-    body.kairo-v2 #faq .kfaq { grid-template-columns: 1fr; gap: 32px; padding: 32px 0; }
-    body.kairo-v2 #faq .kfaq .chat { height: 640px; max-height: calc(100dvh - 24px); }
-    body.kairo-v2 #faq .kfaq .col { max-width: 86%; }
-    body.kairo-v2 #faq .kfaq .brand b i { display: none; }
+@media (max-width: 1023px) {
+    body.kairo-v2 #faq .kfaq-grid { grid-template-columns: 1fr; }
+    body.kairo-v2 #faq .kfaq-aside { position: static; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+}
+@media (max-width: 767px) {
+    body.kairo-v2 #faq .kfaq-grid { grid-template-columns: 1fr; }
+    body.kairo-v2 #faq .kfaq-aside { display: flex; flex-direction: column; gap: 12px; }
+    body.kairo-v2 #faq .kfaq-chat { height: min(640px, calc(100dvh - 24px)); }
+    body.kairo-v2 #faq .kfaq-header h2 { font-size: clamp(28px, 6vw, 36px); }
 }
 @media (prefers-reduced-motion: reduce) {
-    body.kairo-v2 #faq .kfaq * { animation: none !important; transition: none !important; }
-    body.kairo-v2 #faq .kfaq .msgs { scroll-behavior: auto; }
+    body.kairo-v2 #faq .kfaq-chat * { animation: none !important; transition: none !important; }
+    body.kairo-v2 #faq .kfaq-chat .msgs { scroll-behavior: auto; }
 }
 @keyframes kfaqIn { from { opacity: 0; transform: translateY(8px); } }
 @keyframes kfaqBob { 0%, 60%, 100% { transform: translateY(0); opacity: .4; } 30% { transform: translateY(-4px); opacity: 1; } }
 @keyframes kfaqBlink { 50% { opacity: 0; } }
 </style>
 
-<section id="faq" class="kfaq-section">
+<section id="faq" class="kfaq-section" aria-labelledby="faq-title">
     <div class="w">
-        <div class="kfaq">
-            <div>
-                <div class="ey">{{ marketing_content('home_faq_badge') ?: __('FAQ') }}</div>
-                <h2>{{ marketing_content('home_faq_title') ?: __('Questions school leaders ask us') }}</h2>
-                <p class="lead">{{ marketing_content('home_faq_subtitle') ?: __('Tap a question or type your own. Can’t find your answer? Talk to a person.') }}</p>
-                <a class="talk" href="https://wa.me/{{ preg_replace('/\D+/', '', Modules\SaaS\Models\PlatformSetting::get('contact', 'whatsapp') ?: '263786366855') }}" target="_blank" rel="noopener">
-                    <span class="ic" aria-hidden="true">
-                        <svg width="22" height="22" viewBox="0 0 24 24"><path d="M4 20l1.4-4.2A8 8 0 1 1 8.3 18.7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    </span>
-                    <span><b>{{ __('Chat on WhatsApp') }}</b><span>+263 78 636 6855</span></span>
-                </a>
-                <a class="talk" href="{{ route('marketing.contact') }}#contact-form">
-                    <span class="ic" aria-hidden="true">
-                        <svg width="22" height="22" viewBox="0 0 24 24"><path d="M4 4h16v16H4zM4 4l8 8 8-8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    </span>
-                    <span><b>{{ __('Email us') }}</b><span>sales@kairocore.co.zw</span></span>
-                </a>
+        <header class="kfaq-header">
+            <div class="ey">{{ marketing_content('home_faq_badge') ?: __('FAQ') }}</div>
+            <h2 id="faq-title">{{ marketing_content('home_faq_title') ?: __('Questions school leaders ask us') }}</h2>
+            <p class="lead">{{ marketing_content('home_faq_subtitle') ?: __('Tap a question or type your own. Can’t find your answer? Talk to a person.') }}</p>
+        </header>
+
+        <div class="kfaq-grid">
+            <div class="kfaq-chat-region">
+                <section class="kfaq-chat" aria-label="{{ __('Kairo assistant') }}">
+                    <div class="head">
+                        <div class="brand" aria-label="{{ platform_name() }}">
+                            <img class="logo-light" src="{{ asset('img/kairo-core-logo.svg') }}" alt="{{ platform_name() }}" width="90" height="30">
+                            <img class="logo-dark" src="{{ asset('images/kairocore-logo-white.webp') }}" alt="{{ platform_name() }}" width="90" height="30">
+                        </div>
+                        <div class="who">
+                            <b>{{ __('Kairo assistant') }}</b>
+                            <small>{{ __('Online · answers instantly') }}</small>
+                        </div>
+                        <button class="reset" id="kfaq-reset" type="button">
+                            <svg width="14" height="14" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            <span>{{ __('Start over') }}</span>
+                        </button>
+                    </div>
+
+                    <div class="stage">
+                        <div class="msgs" id="kfaq-msgs" aria-live="polite"></div>
+                        <button class="jump" id="kfaq-jump" type="button" aria-label="{{ __('Jump to latest message') }}">
+                            <svg width="18" height="18" viewBox="0 0 24 24"><path d="M12 5v14M5 12l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </button>
+                    </div>
+
+                    <div class="quick" id="kfaq-quick"></div>
+
+                    <form class="form" id="kfaq-form" autocomplete="off">
+                        <input id="kfaq-input" class="kfaq-input" type="text" maxlength="200" placeholder="{{ __('Type your question…') }}" aria-label="{{ __('Type your question') }}">
+                        <button class="send" id="kfaq-send" type="submit" aria-label="{{ __('Send question') }}" disabled>
+                            <svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </button>
+                    </form>
+                </section>
             </div>
 
-            <section class="chat" aria-label="{{ __('Kairo assistant') }}">
-                <div class="head">
-                    <div class="brand" aria-label="{{ platform_name() }}">
-                        <img class="logo-light" src="{{ asset('img/kairo-core-logo.svg') }}" alt="{{ platform_name() }}" width="90" height="30">
-                        <img class="logo-dark" src="{{ asset('images/kairocore-logo-white.webp') }}" alt="{{ platform_name() }}" width="90" height="30">
-                    </div>
-                    <div class="who">
-                        <b>{{ __('Kairo assistant') }}</b>
-                        <small>{{ __('Online · answers instantly') }}</small>
-                    </div>
-                    <button class="reset" id="kfaq-reset" type="button">
-                        <svg width="14" height="14" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        <span>{{ __('Start over') }}</span>
-                    </button>
-                </div>
-
-                <div class="stage">
-                    <div class="msgs" id="kfaq-msgs" aria-live="polite"></div>
-                    <button class="jump" id="kfaq-jump" type="button" aria-label="{{ __('Jump to latest message') }}">
-                        <svg width="18" height="18" viewBox="0 0 24 24"><path d="M12 5v14M5 12l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    </button>
-                </div>
-
-                <div class="quick" id="kfaq-quick"></div>
-
-                <form class="form" id="kfaq-form" autocomplete="off">
-                    <input id="kfaq-input" class="kfaq-input" type="text" maxlength="200" placeholder="{{ __('Type your question…') }}" aria-label="{{ __('Type your question') }}">
-                    <button class="send" id="kfaq-send" type="submit" aria-label="{{ __('Send question') }}" disabled>
-                        <svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    </button>
-                </form>
-                <div class="note">
-                    <span id="kfaq-count"></span>
-                </div>
-            </section>
+            <aside class="kfaq-aside" aria-label="{{ __('Contact options') }}">
+                <a class="kfaq-card kfaq-card--whatsapp" href="https://wa.me/263786366855" target="_blank" rel="noopener">
+                    <span class="kfaq-icon" style="background:#25d366;color:#06361a;">
+                        <svg width="22" height="22" viewBox="0 0 24 24"><path d="M4 20l1.4-4.2A8 8 0 1 1 8.3 18.7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </span>
+                    <span>
+                        <span class="kfaq-card-title">{{ __('Chat on WhatsApp') }}</span>
+                        <span class="kfaq-card-sub">+263 78 636 6855</span>
+                    </span>
+                </a>
+                <a class="kfaq-card" href="mailto:sales@kairocore.co.zw">
+                    <span class="kfaq-icon" style="background:#3b82f6;color:#fff;">
+                        <svg width="22" height="22" viewBox="0 0 24 24"><path d="M4 4h16v16H4zM4 4l8 8 8-8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </span>
+                    <span>
+                        <span class="kfaq-card-title">{{ __('Email us') }}</span>
+                        <span class="kfaq-card-sub">sales@kairocore.co.zw</span>
+                    </span>
+                </a>
+                <a class="kfaq-card" href="{{ route('help.index') }}">
+                    <span class="kfaq-icon" style="background:var(--coral-strong);color:#fff;">
+                        <svg width="22" height="22" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </span>
+                    <span>
+                        <span class="kfaq-card-title">{{ __('Help Centre') }}</span>
+                        <span class="kfaq-card-sub">{{ __('Step-by-step guides for every module') }}</span>
+                    </span>
+                </a>
+            </aside>
         </div>
     </div>
 </section>
@@ -206,7 +232,6 @@ const input = document.getElementById('kfaq-input');
 const send = document.getElementById('kfaq-send');
 const reset = document.getElementById('kfaq-reset');
 const jump = document.getElementById('kfaq-jump');
-const count = document.getElementById('kfaq-count');
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const suggestions = {!! json_encode($kfaqSuggestionQuestions) !!};
 const asked = new Set();
@@ -483,7 +508,6 @@ function ask(text) {
 
 function sync() {
     send.disabled = !input.value.trim();
-    count.textContent = input.value.length >= 150 ? input.value.length + '/200' : '';
 }
 input.addEventListener('input', sync);
 
