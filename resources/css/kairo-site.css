@@ -367,7 +367,7 @@ details[open] > .kf-menu-panel {
     height: 52px;
 }
 
-.kf-tagline { white-space: nowrap;
+.kf-tagline {
     color: #fff;
     font-family: var(--kf-heading);
     font-size: 20px;
@@ -964,7 +964,7 @@ body.kairo-v2 .kf-menu > summary::after { content: "⌄"; }
 
 .kf-fgrid > div { width: auto; align-items: flex-start; text-align: left; }
 .kf-footer .kf-logo img { height: 54px; }
-.kf-tagline { white-space: nowrap; margin: 20px 0 8px; }
+.kf-tagline { margin: 20px 0 8px; }
 .kf-footer-text { max-width: 340px; text-align: left; }
 .kf-status { justify-content: flex-start; margin-top: 22px; }
 .kf-footer ul { display: block; justify-items: initial; }
@@ -1670,7 +1670,7 @@ html.dark .kf-icon-btn[data-kf-theme], [data-t="d"] .kf-icon-btn[data-kf-theme] 
 }
 .kf-fcol { text-align: left; }
 .kf-fcol-brand .kf-logo img { height: 40px; width: auto; }
-.kf-footer .kf-tagline { white-space: nowrap; font-size: 16px; font-weight: 600; color: #fff; margin: 16px 0 8px; line-height: 1.55; }
+.kf-footer .kf-tagline { font-size: 16px; font-weight: 600; color: #fff; margin: 16px 0 8px; line-height: 1.55; max-width: 100%; overflow-wrap: break-word; }
 .kf-footer .kf-footer-text { font-size: 14px; color: #94a3b8; max-width: 320px; line-height: 1.6; margin: 0; }
 .kf-footer .kf-status { display: inline-flex; align-items: center; gap: 8px; margin-top: 16px; font-size: 13px; color: #94a3b8; }
 .kf-time { font-variant-numeric: tabular-nums; }

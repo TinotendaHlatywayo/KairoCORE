@@ -46,7 +46,8 @@
                 <a href="{{ route('marketing.home') }}" class="kf-logo" aria-label="{{ platform_name() }} home">
                     <img src="{{ $logo }}" alt="{{ platform_name() }} logo" width="480" height="268" loading="lazy">
                 </a>
-                <p class="kf-tagline">{{ __('Smarter Schools. Brighter Futures.') }}</p>
+                @php($kfTaglineParts = preg_split('/(?<=\.)\s+/u', __('Smarter Schools. Brighter Futures.'), 2))
+                <p class="kf-tagline"><span style="white-space:nowrap;">{{ $kfTaglineParts[0] ?? '' }}</span>@if(!empty($kfTaglineParts[1])) <span style="white-space:nowrap;">{{ $kfTaglineParts[1] }}</span>@endif</p>
                 <p class="kf-footer-text">{{ __('Cloud-based school management platform built for schools.') }}</p>
                 <div class="kf-clock" id="kfClock" data-locale="{{ app()->getLocale() }}">
                     <div class="kf-clock-top">
