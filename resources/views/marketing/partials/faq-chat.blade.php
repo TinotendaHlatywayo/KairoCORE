@@ -335,7 +335,7 @@ function renderAnswer(bubble, entry, secondIntent) {
         link.className = 'kfaq-wa-pill';
         link.href = 'https://wa.me/263786366855';
         link.target = '_blank';
-        link.kfaq-rel = 'noopener';
+        link.rel = 'noopener';
         link.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24"><path d="M4 20l1.4-4.2A8 8 0 1 1 8.3 18.7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Message us on WhatsApp';
         bubble.appendChild(document.createElement('br'));
         bubble.appendChild(link);
@@ -495,7 +495,7 @@ function ask(text) {
             waLink.className = 'kfaq-wa-pill';
             waLink.href = 'https://wa.me/263786366855';
             waLink.target = '_blank';
-            waLink.kfaq-rel = 'noopener';
+            waLink.rel = 'noopener';
             waLink.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24"><path d="M4 20l1.4-4.2A8 8 0 1 1 8.3 18.7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Message us on WhatsApp';
             bubble.appendChild(waLink);
             if (isPricing) {
@@ -520,7 +520,7 @@ function ask(text) {
                 link.className = 'kfaq-wa-pill';
                 link.href = 'https://wa.me/263786366855';
                 link.target = '_blank';
-                link.kfaq-rel = 'noopener';
+                link.rel = 'noopener';
                 link.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24"><path d="M4 20l1.4-4.2A8 8 0 1 1 8.3 18.7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Message us on WhatsApp';
                 bubble.appendChild(document.createElement('br'));
                 bubble.appendChild(link);
@@ -585,7 +585,7 @@ async function loadKb() {
         link.className = 'kfaq-wa-pill';
         link.href = 'https://wa.me/263786366855';
         link.target = '_blank';
-        link.kfaq-rel = 'noopener';
+        link.rel = 'noopener';
         link.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24"><path d="M4 20l1.4-4.2A8 8 0 1 1 8.3 18.7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Message us on WhatsApp';
         bubble.appendChild(document.createElement('br'));
         bubble.appendChild(link);

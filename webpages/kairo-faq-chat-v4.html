@@ -3,78 +3,92 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Kairo CORE FAQ: chat v3</title>
+<title>Kairo CORE FAQ: chat v4</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#f8f9fd;--surface:#ffffff;--chat:#f3f5fb;--dot:rgba(27,42,68,.07);--ink:#1c2a44;--muted:#6b7691;--line:#e6eaf4;
-  --accent:#ea5a41;--accent2:#f2804f;--soft:#fff1ed;--soft-line:rgba(234,90,65,.28);--shadow:rgba(28,42,68,.32);--user:#dfe5f3;
+  --bg:#f8f9fd;--surface:#ffffff;--foot:#f7f8fc;--bubble:#f1f4fb;--ink:#1c2a44;--muted:#6b7691;--line:#e6eaf4;
+  --accent:#ea5a41;--accent2:#f2804f;--soft:#fff1ed;--soft-line:rgba(234,90,65,.28);--ring:rgba(234,90,65,.16);
+  --user:#dfe5f3;--tick:#3aa0ff;--shadow:rgba(28,42,68,.32);--ok:#2fbf71;
   color-scheme:light;box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#0e1325;--surface:#161d35;--chat:#111830;--dot:rgba(255,255,255,.06);--ink:#eef1fb;--muted:#9ba5c6;--line:#27304d;
-    --accent:#ff6a52;--accent2:#ff8d5c;--soft:#2e2338;--soft-line:rgba(255,106,82,.35);--shadow:rgba(0,0,0,.7);--user:#2a3458;color-scheme:dark;
+    --bg:#0e1325;--surface:#161d35;--foot:#121931;--bubble:#202947;--ink:#eef1fb;--muted:#9ba5c6;--line:#27304d;
+    --accent:#ff6a52;--accent2:#ff8d5c;--soft:#2e2338;--soft-line:rgba(255,106,82,.35);--ring:rgba(255,106,82,.22);
+    --user:#2a3458;--shadow:rgba(0,0,0,.7);color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#0e1325;--surface:#161d35;--chat:#111830;--dot:rgba(255,255,255,.06);--ink:#eef1fb;--muted:#9ba5c6;--line:#27304d;
-  --accent:#ff6a52;--accent2:#ff8d5c;--soft:#2e2338;--soft-line:rgba(255,106,82,.35);--shadow:rgba(0,0,0,.7);--user:#2a3458;color-scheme:dark;
+  --bg:#0e1325;--surface:#161d35;--foot:#121931;--bubble:#202947;--ink:#eef1fb;--muted:#9ba5c6;--line:#27304d;
+  --accent:#ff6a52;--accent2:#ff8d5c;--soft:#2e2338;--soft-line:rgba(255,106,82,.35);--ring:rgba(255,106,82,.22);
+  --user:#2a3458;--shadow:rgba(0,0,0,.7);color-scheme:dark;
 }
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *,*::before,*::after{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.5}
 button,input{font:inherit;color:inherit}
 svg{display:block}
-.wrap{max-width:1040px;margin:0 auto;padding:72px 24px;display:grid;grid-template-columns:5fr 7fr;gap:56px;align-items:center}
+:is(.card,.chip,.reset,.send,.wa-pill,.src,.jump,.opt,.fb button):focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 
-.eyebrow{display:flex;align-items:center;gap:12px;color:var(--accent);font-weight:700;font-size:13px;margin-bottom:14px}
+/* section layout */
+.wrap{max-width:1184px;margin:0 auto;padding:72px 24px}
+.eyebrow{display:flex;align-items:center;gap:12px;color:var(--accent);font-weight:700;font-size:13px;margin-bottom:12px}
 .eyebrow::before{content:"";width:32px;height:2px;background:var(--accent)}
-h2{margin:0 0 16px;font-size:clamp(32px,4.4vw,46px);line-height:1.06;letter-spacing:-.03em;font-weight:800}
-.lead{margin:0 0 28px;color:var(--muted);font-size:16.5px;max-width:34ch}
-.talk{display:flex;align-items:center;gap:14px;padding:14px 16px;max-width:340px;background:var(--surface);border:1px solid var(--line);border-radius:20px;color:inherit;text-decoration:none;transition:border-color .2s,transform .2s}
-.talk:hover{border-color:#25d366;transform:translateY(-2px)}
-.talk .ic{width:44px;height:44px;flex:none;border-radius:14px;background:#25d366;color:#06361a;display:grid;place-items:center}
-.talk b{display:block;font-size:15px;line-height:1.25}
-.talk span{font-size:13.5px;color:var(--muted)}
-:is(.talk,.chip,.reset,.send,.wa-pill,.src,.jump,.opt,.fb button):focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+h2{margin:0 0 12px;font-size:clamp(28px,3.6vw,44px);line-height:1.1;letter-spacing:-.03em;font-weight:800;text-wrap:balance}
+.lead{margin:0;color:var(--muted);font-size:16.5px;max-width:60ch}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:32px;align-items:start;margin-top:40px}
+.aside{position:sticky;top:24px;display:grid;gap:12px}
+.card{display:flex;align-items:center;gap:14px;padding:16px;background:var(--surface);border:1px solid var(--line);border-radius:20px;color:inherit;text-decoration:none;transition:border-color .2s,transform .2s}
+.card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.card.wa:hover{border-color:#25d366}
+.card .ic{width:44px;height:44px;flex:none;border-radius:14px;display:grid;place-items:center;color:#fff}
+.card .ic svg{width:22px;height:22px}
+.card .t b{display:block;font-size:15px;line-height:1.3}
+.card .t small{display:block;font-size:13.5px;color:var(--muted);line-height:1.35}
 
 /* chat card */
-.chat{display:flex;flex-direction:column;height:min(680px,calc(100dvh - 48px));min-height:560px;background:var(--surface);border:1px solid var(--line);border-radius:28px;box-shadow:0 44px 80px -48px var(--shadow);overflow:hidden}
-.head{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.chat{display:flex;flex-direction:column;height:min(640px,calc(100dvh - 48px));min-height:520px;background:var(--surface);border:1px solid var(--line);border-radius:26px;box-shadow:0 44px 80px -48px var(--shadow);overflow:hidden}
+.head{flex:none;display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,var(--surface),var(--foot))}
 .brand{display:flex;align-items:center;gap:9px;padding:6px 12px 6px 7px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
 .brand svg{width:30px;height:30px}
 .brand b{font-size:17px;font-weight:800;letter-spacing:-.02em;line-height:1}
 .brand b i{font-style:normal;display:block;font-size:9.5px;letter-spacing:.2em;color:var(--accent);margin-top:2px}
-.who{min-width:0}
 .who b{display:block;font-size:14.5px;line-height:1.2}
-.who small{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12.5px}
-.who small::before{content:"";width:7px;height:7px;border-radius:50%;background:#2fbf71}
-.reset{margin-left:auto;display:flex;align-items:center;gap:6px;background:none;border:1px solid var(--line);border-radius:999px;padding:7px 13px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;transition:color .15s,border-color .15s}
+.who small{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12.5px}
+.live{position:relative;width:8px;height:8px;border-radius:50%;background:var(--ok)}
+.live::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--ok);opacity:0;animation:pulse 2s ease-out infinite}
+.reset{margin-left:auto;display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:7px 13px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;transition:color .15s,border-color .15s}
 .reset svg{width:14px;height:14px}
 .reset:hover{color:var(--ink);border-color:var(--ink)}
 
-.stage{position:relative;flex:1;min-height:0}
-.msgs{height:100%;overflow-y:auto;padding:18px 18px 22px;display:flex;flex-direction:column;gap:16px;background:var(--chat);background-image:radial-gradient(var(--dot) 1px,transparent 1px);background-size:18px 18px;scroll-behavior:smooth}
-.day{align-self:center;padding:4px 12px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:11.5px;font-weight:600;color:var(--muted)}
-.jump{position:absolute;right:16px;bottom:14px;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);display:none;place-items:center;cursor:pointer;box-shadow:0 8px 20px -8px var(--shadow)}
+.stage{position:relative;flex:1 1 auto;min-height:0}
+.msgs{height:100%;overflow-y:auto;padding:18px 14px 20px 18px;display:flex;flex-direction:column;gap:14px;background:var(--surface);scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.msgs::-webkit-scrollbar{width:8px}
+.msgs::-webkit-scrollbar-thumb{background:var(--line);border-radius:999px}
+.msgs::-webkit-scrollbar-track{background:transparent}
+.day{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:11.5px;font-weight:600}
+.day::before,.day::after{content:"";flex:1;height:1px;background:var(--line)}
+.jump{position:absolute;right:18px;bottom:14px;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--surface);display:none;place-items:center;cursor:pointer;box-shadow:0 8px 20px -8px var(--shadow)}
 .jump.on{display:grid}
 .jump svg{width:18px;height:18px}
 
-.row{display:flex;align-items:flex-end;gap:10px;animation:in .3s ease both}
-.row.me{flex-direction:row-reverse}
-.pic{width:34px;height:34px;flex:none;border-radius:12px;overflow:hidden;display:grid;place-items:center}
+.row{display:flex;align-items:flex-start;gap:10px;animation:in .3s ease both}
+.row.me{justify-content:flex-end}
+.pic{width:34px;height:34px;flex:0 0 34px;margin-top:2px;border-radius:12px;overflow:hidden;display:grid;place-items:center;box-shadow:0 0 0 1px var(--line)}
 .pic svg{width:100%;height:100%}
-.pic.u{background:var(--user);color:var(--muted);border-radius:50%}
+.pic.u{background:var(--user);color:var(--muted);border-radius:50%;box-shadow:none}
 .pic.u svg{width:20px;height:20px}
-.col{max-width:78%;min-width:0}
-.me .col{display:flex;flex-direction:column;align-items:flex-end}
-.bub{padding:12px 16px;font-size:15px;border-radius:18px;overflow-wrap:anywhere}
+.col{display:flex;flex-direction:column;min-width:0;max-width:min(78%,520px)}
+.bot .col{align-items:flex-start}
+.me .col{align-items:flex-end}
+.bub{width:fit-content;max-width:100%;padding:12px 16px;font-size:15px;line-height:1.5;overflow-wrap:anywhere}
 .bub p{margin:0}
-.bot .bub{background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:6px}
-.me .bub{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-weight:600;border-bottom-right-radius:6px}
-.meta{margin:5px 6px 0;font-size:11.5px;color:var(--muted)}
+.bot .bub{background:var(--bubble);border-radius:6px 18px 18px 18px}
+.me .bub{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-weight:600;border-radius:18px 6px 18px 18px;box-shadow:0 10px 20px -12px var(--accent)}
+.meta{display:flex;align-items:center;gap:4px;margin:5px 4px 0;font-size:11.5px;color:var(--muted)}
+.meta svg{width:15px;height:15px;color:var(--tick)}
 .caret{display:inline-block;width:2px;height:1em;margin-left:2px;vertical-align:-.15em;background:var(--accent);animation:blink .8s steps(1) infinite}
 .dots{display:flex;gap:5px;padding:16px 18px}
 .dots i{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:bob 1s infinite}
@@ -83,7 +97,7 @@ h2{margin:0 0 16px;font-size:clamp(32px,4.4vw,46px);line-height:1.06;letter-spac
 
 .tags{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0;padding:0;list-style:none}
 .tags li{padding:5px 11px;border-radius:999px;background:var(--soft);border:1px solid var(--soft-line);font-size:12.5px;font-weight:600}
-.src{display:flex;align-items:center;gap:10px;margin-top:12px;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:var(--chat);color:inherit;text-decoration:none;font-size:13px;transition:border-color .15s}
+.src{display:flex;align-items:center;gap:10px;margin-top:12px;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:inherit;text-decoration:none;font-size:13px;transition:border-color .15s}
 .src:hover{border-color:var(--accent)}
 .src svg{width:18px;height:18px;flex:none;color:var(--accent)}
 .src small{display:block;color:var(--muted);font-size:11.5px;line-height:1.2}
@@ -97,34 +111,45 @@ h2{margin:0 0 16px;font-size:clamp(32px,4.4vw,46px);line-height:1.06;letter-spac
 .fb button:hover{color:var(--accent);border-color:var(--accent)}
 .fb svg{width:15px;height:15px}
 .follow{display:flex;flex-wrap:wrap;gap:8px;margin:-4px 0 0 44px;animation:in .3s ease both}
-.follow .chip{font-size:13px;padding:7px 13px}
 
-.quick{border-top:1px solid var(--line);padding:12px 0 10px}
-.label{margin:0 18px 8px;font-size:12.5px;font-weight:600;color:var(--muted)}
-.rail{display:grid;grid-auto-flow:column;grid-template-rows:repeat(2,auto);grid-auto-columns:max-content;justify-items:start;gap:8px;overflow-x:auto;padding:0 18px 4px;scrollbar-width:none;scroll-snap-type:x proximity;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent)}
+/* footer: suggestions + composer */
+.foot{flex:none;border-top:1px solid var(--line);background:var(--foot)}
+.quick{padding:12px 0 4px}
+.label{margin:0 18px 8px;font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.02em}
+.rail{overflow-x:auto;padding:0 0 4px 18px;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent)}
 .rail::-webkit-scrollbar{display:none}
-.chip{scroll-snap-align:start;white-space:nowrap;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:13.5px;font-weight:600;cursor:pointer;transition:border-color .15s,background-color .15s,transform .15s}
+.rows{display:flex;flex-direction:column;gap:8px;width:max-content;min-width:100%}
+.r{display:flex;gap:8px;flex-wrap:nowrap}
+.r::after{content:"";flex:0 0 28px}
+.chip{white-space:nowrap;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:13.5px;font-weight:600;cursor:pointer;transition:border-color .15s,background-color .15s,transform .15s}
 .chip:hover{border-color:var(--accent);background:var(--soft);transform:translateY(-1px)}
-
-.form{display:flex;gap:10px;padding:4px 18px 8px}
-.form input{flex:1;min-width:0;padding:12px 18px;border-radius:999px;border:1px solid var(--line);background:var(--chat);font-size:14.5px}
-.form input::placeholder{color:var(--muted)}
-.form input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
-.send{width:46px;height:46px;flex:none;border:0;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;display:grid;place-items:center;cursor:pointer;transition:transform .15s,opacity .15s}
+.follow .chip{font-size:13px;padding:7px 13px}
+.composer{padding:10px 18px 0}
+.field{display:flex;align-items:center;gap:8px;padding:6px 6px 6px 20px;background:var(--surface);border:1px solid var(--line);border-radius:999px;box-shadow:0 1px 2px rgba(28,42,68,.06);transition:border-color .15s,box-shadow .15s}
+.field:focus-within{border-color:var(--accent);box-shadow:0 0 0 4px var(--ring)}
+.field input{flex:1 1 auto;min-width:0;padding:10px 0;border:0;outline:0;background:transparent;font-size:15px}
+.field input::placeholder{color:var(--muted)}
+.send{width:42px;height:42px;flex:none;border:0;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;display:grid;place-items:center;cursor:pointer;transition:transform .15s,opacity .15s}
 .send svg{width:20px;height:20px}
-.send:hover:not(:disabled){transform:scale(1.06)}
+.send:hover:not(:disabled){transform:scale(1.07)}
 .send:disabled{opacity:.4;cursor:default}
-.note{display:flex;justify-content:space-between;gap:12px;padding:0 22px 14px;font-size:11.5px;color:var(--muted)}
+.note{display:flex;justify-content:space-between;gap:12px;padding:8px 24px 14px;font-size:11.5px;color:var(--muted)}
 
 @keyframes in{from{opacity:0;transform:translateY(8px)}}
 @keyframes bob{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-4px);opacity:1}}
 @keyframes blink{50%{opacity:0}}
-@media (max-width:860px){
-  .wrap{grid-template-columns:1fr;gap:32px;padding:48px 16px}
-  .chat{height:640px;max-height:calc(100dvh - 24px)}
+@keyframes pulse{0%{transform:scale(.6);opacity:.7}100%{transform:scale(1.4);opacity:0}}
+
+@media (max-width:1023px){
+  .grid{grid-template-columns:1fr}
+  .aside{position:static;grid-template-columns:repeat(3,1fr)}
+}
+@media (max-width:767px){
+  .wrap{padding:48px 16px}
+  .aside{grid-template-columns:1fr}
+  .chat{height:min(640px,calc(100dvh - 24px))}
   .col{max-width:86%}
-  .brand b i{display:none}
-  .reset span{display:none}
+  .brand b i,.reset span{display:none}
   .follow{margin-left:0}
 }
 @media (prefers-reduced-motion: reduce){
@@ -136,7 +161,7 @@ h2{margin:0 0 16px;font-size:clamp(32px,4.4vw,46px);line-height:1.06;letter-spac
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs><linearGradient id="kg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ea5a41"/><stop offset="1" stop-color="#f2804f"/></linearGradient></defs>
-  <!-- REPLACE kmark with the real Kairo CORE favicon and the brand block with the real logo -->
+  <!-- REPLACE kmark with the real Kairo CORE favicon and the .brand block with the real logo -->
   <symbol id="kmark" viewBox="0 0 32 32"><rect width="32" height="32" rx="9" fill="url(#kg)"/><path d="M11 8v16M12 16.5l8.5-8.5M14 15l7 9" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="user" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="4" fill="currentColor"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z" fill="currentColor"/></symbol>
   <symbol id="up" viewBox="0 0 24 24"><path d="M7 11v9H4v-9zM7 11l4-8c1.7 0 2.5 1.2 2.2 2.8L12.8 9H19a2 2 0 0 1 2 2.3l-1.2 7A2 2 0 0 1 17.8 20H7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></symbol>
@@ -146,37 +171,47 @@ h2{margin:0 0 16px;font-size:clamp(32px,4.4vw,46px);line-height:1.06;letter-spac
   <symbol id="arrow" viewBox="0 0 24 24"><path d="M12 5v14M5 12l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="doc" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="wa" viewBox="0 0 24 24"><path d="M4 20l1.4-4.2A8 8 0 1 1 8.3 18.7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3 7l9 6 9-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="ticks" viewBox="0 0 24 24"><path d="M2 13l4 4 9-10M10 15l2 2 9-10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 </svg>
 
-<main class="wrap">
-  <div>
+<section class="wrap" aria-labelledby="faq-title">
+  <header>
     <div class="eyebrow">FAQ</div>
-    <h2>Questions school leaders ask us</h2>
+    <h2 id="faq-title">Questions school leaders ask us</h2>
     <p class="lead">Tap a question or type your own. Can’t find your answer? Talk to a person.</p>
-    <a class="talk" href="https://wa.me/263786366855" target="_blank" rel="noopener">
-      <span class="ic" aria-hidden="true"><svg width="22" height="22"><use href="#wa"/></svg></span>
-      <span><b>Chat on WhatsApp</b><span>+263 78 636 6855</span></span>
-    </a>
-  </div>
+  </header>
 
-  <section class="chat" aria-label="Kairo assistant">
-    <div class="head">
-      <div class="brand" aria-label="Kairo CORE"><svg aria-hidden="true"><use href="#kmark"/></svg><b>Kairo<i>CORE</i></b></div>
-      <div class="who"><b>Kairo assistant</b><small>Online · answers instantly</small></div>
-      <button class="reset" id="reset" type="button"><svg aria-hidden="true"><use href="#refresh"/></svg><span>Start over</span></button>
+  <div class="grid">
+    <div class="chat" role="region" aria-label="Kairo assistant">
+      <div class="head">
+        <div class="brand" aria-label="Kairo CORE"><svg aria-hidden="true"><use href="#kmark"/></svg><b>Kairo<i>CORE</i></b></div>
+        <div class="who"><b>Kairo assistant</b><small><span class="live"></span>Online · answers instantly</small></div>
+        <button class="reset" id="reset" type="button"><svg aria-hidden="true"><use href="#refresh"/></svg><span>Start over</span></button>
+      </div>
+      <div class="stage">
+        <div class="msgs" id="msgs" aria-live="polite"></div>
+        <button class="jump" id="jump" type="button" aria-label="Jump to latest message"><svg aria-hidden="true"><use href="#arrow"/></svg></button>
+      </div>
+      <div class="foot">
+        <div class="quick" id="quick"></div>
+        <form class="composer" id="form" autocomplete="off">
+          <div class="field">
+            <input id="input" type="text" maxlength="200" placeholder="Type your question…" aria-label="Type your question">
+            <button class="send" id="send" type="submit" aria-label="Send question" disabled><svg aria-hidden="true"><use href="#send"/></svg></button>
+          </div>
+          <div class="note"><span>Automated assistant. Answers come from Kairo CORE guides.</span><span id="count"></span></div>
+        </form>
+      </div>
     </div>
-    <div class="stage">
-      <div class="msgs" id="msgs" aria-live="polite"></div>
-      <button class="jump" id="jump" type="button" aria-label="Jump to latest message"><svg aria-hidden="true"><use href="#arrow"/></svg></button>
-    </div>
-    <div class="quick" id="quick"></div>
-    <form class="form" id="form" autocomplete="off">
-      <input id="input" type="text" maxlength="200" placeholder="Type your question…" aria-label="Type your question">
-      <button class="send" id="send" type="submit" aria-label="Send question" disabled><svg aria-hidden="true"><use href="#send"/></svg></button>
-    </form>
-    <div class="note"><span>Automated assistant. Answers come from Kairo CORE guides.</span><span id="count"></span></div>
-  </section>
-</main>
+
+    <aside class="aside" aria-label="Contact options">
+      <a class="card wa" href="https://wa.me/263786366855" target="_blank" rel="noopener"><span class="ic" style="background:#25d366;color:#06361a"><svg aria-hidden="true"><use href="#wa"/></svg></span><span class="t"><b>Chat on WhatsApp</b><small>+263 78 636 6855</small></span></a>
+      <a class="card" href="mailto:sales@kairocore.co.zw"><span class="ic" style="background:#3b82f6"><svg aria-hidden="true"><use href="#mail"/></svg></span><span class="t"><b>Email us</b><small>sales@kairocore.co.zw</small></span></a>
+      <a class="card" href="#"><span class="ic" style="background:var(--accent)"><svg aria-hidden="true"><use href="#doc"/></svg></span><span class="t"><b>Help Centre</b><small>Step-by-step guides for every module</small></span></a>
+    </aside>
+  </div>
+</section>
 
 <script>
 const WA = "https://wa.me/263786366855";
@@ -208,7 +243,7 @@ function addRow(kind){
   msgs.querySelectorAll(".follow").forEach(n => n.remove());
   const r = document.createElement("div");
   r.className = "row " + kind;
-  r.innerHTML = `<span class="pic ${kind === "me" ? "u" : "k"}">${ico(kind === "me" ? "user" : "kmark")}</span><div class="col"><div class="bub"></div><div class="meta">${kind === "me" ? "You" : "Kairo assistant"} · ${clock()}</div></div>`;
+  r.innerHTML = `<span class="pic ${kind === "me" ? "u" : "k"}">${ico(kind === "me" ? "user" : "kmark")}</span><div class="col"><div class="bub"></div><div class="meta">${kind === "me" ? "You" : "Kairo assistant"} · ${clock()}${kind === "me" ? ico("ticks") : ""}</div></div>`;
   msgs.appendChild(r);
   return r.querySelector(".bub");
 }
@@ -266,9 +301,14 @@ function chips(){
   label.textContent = left.length ? "Suggested questions" : "That’s every suggested question. Type your own below.";
   quick.appendChild(label);
   if (!left.length) return;
-  const rail = el("div", "rail");
-  left.forEach(i => { const c = el("button", "chip"); c.type = "button"; c.textContent = FAQ[i].q; c.onclick = () => ask(i); rail.appendChild(c); });
-  quick.appendChild(rail);
+  const rail = el("div", "rail"), rows = el("div", "rows"), r1 = el("div", "r"), r2 = el("div", "r");
+  let w1 = 0, w2 = 0;
+  left.forEach(i => {
+    const c = el("button", "chip");
+    c.type = "button"; c.textContent = FAQ[i].q; c.onclick = () => ask(i);
+    if (w1 <= w2){ r1.appendChild(c); w1 += FAQ[i].q.length; } else { r2.appendChild(c); w2 += FAQ[i].q.length; }
+  });
+  rows.append(r1, r2); rail.appendChild(rows); quick.appendChild(rail);
 }
 
 function say(userText, build){
@@ -316,6 +356,7 @@ function start(){
 }
 $("reset").onclick = start;
 start();
+
 </script>
 </body>
 </html>
