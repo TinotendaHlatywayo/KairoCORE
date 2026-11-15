@@ -270,14 +270,14 @@ function clearFollowups() { msgs.querySelectorAll('.kfaq-follow').forEach(node =
 function row(kind) {
     clearFollowups();
     const rowEl = document.createElement('div');
-    rowEl.className = 'row ' + kind;
+    rowEl.className = 'kfaq-row ' + kind;
     const avatar = document.createElement('span');
     avatar.className = 'kfaq-pic ' + (kind === 'me' ? 'kfaq-user' : '');
     if (kind === 'me') {
         avatar.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="4" fill="currentColor"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z" fill="currentColor"/></svg>';
     } else {
         const img = document.createElement('img');
-        img.kfaq-src = @json(platform_favicon_url());
+        img.src = @json(platform_favicon_url());
         img.alt = '';
         img.addEventListener('load', () => scrollToBottom(true), { once: true });
         avatar.appendChild(img);
