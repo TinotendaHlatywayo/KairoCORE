@@ -1,11 +1,5 @@
 <x-filament-panels::page>
     <div class="space-y-6">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-            <p class="text-sm text-gray-600 dark:text-gray-400 max-w-3xl">
-                {{ __('Browse all website templates, preview their design, then choose one to manage content or open in Visual Studio. This works for every tenant/school.') }}
-            </p>
-        </div>
-
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             @foreach($premadeTemplates as $key => $template)
                 @php

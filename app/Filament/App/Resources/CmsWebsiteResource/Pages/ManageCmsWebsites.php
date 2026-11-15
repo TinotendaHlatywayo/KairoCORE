@@ -38,7 +38,7 @@ class ManageCmsWebsites extends Page
 
     public function getSubheading(): ?string
     {
-        return __('Choose a template, preview its design, then manage content or open Visual Studio. Works for every school/tenant.');
+        return null;
     }
 
     protected function getHeaderActions(): array
