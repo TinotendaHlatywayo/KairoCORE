@@ -76,6 +76,92 @@ Route::get('/language/{locale}', function (Request $request, string $locale) {
     return redirect()->to('/');
 })->name('marketing.language');
 
+/*
+|----------------------------------------------------------------------
+| School login by short code, or by name
+|----------------------------------------------------------------------
+| Every school gets a memorable login code (e.g. TINWAY-PRI). The visitor
+| types it in, or follows /go/{code}, and lands on that school's own
+| staff login page on its subdomain.
+|
+| A visitor who does not know the code can search for the school by name
+| instead — an ordered run of letters is enough ("chwarira" finds
+| "Chiwarira Primary School"), because nobody types a school's name
+| exactly.
+*/
+Route::get('/school-login', function () {
+    $term = trim((string) request('q', request('code')));
+    $error = null;
+    $school = null;
+    $results = collect();
+
+    if ($term !== '') {
+        // An exact short code still goes straight through to the school.
+        $school = School::findByLoginCode($term);
+
+        if ($school && $school->subdomain && $school->status === 'active') {
+            return redirect()->away($school->loginUrl());
+        }
+
+        $results = School::findForLoginSearch($term);
+
+        if ($results->isEmpty()) {
+            $error = $school
+                ? __('That school cannot be signed in to at the moment. Please contact your school administrator.')
+                : __('No school matches that code or name. Check the spelling and try again.');
+        }
+    }
+
+    return view('marketing.school-login', [
+        'term' => $term,
+        'results' => $results,
+        'error' => $error,
+        'seoJsonLd' => [
+            platform_breadcrumb_list([
+                ['name' => __('Home'), 'url' => route('marketing.home')],
+                ['name' => __('School Login'), 'url' => route('school.login')],
+            ]),
+        ],
+    ]);
+})->name('school.login');
+
+/*
+ * The live results behind the search box. A JSON list of the schools
+ * that match, each with the address its login page lives on.
+ */
+Route::get('/school-login/suggest', function () {
+    $term = trim((string) request('q'));
+
+    $results = School::findForLoginSearch($term)->map(fn (School $school): array => [
+        'name' => $school->name,
+        'code' => $school->login_code,
+        'region' => $school->region ? ucfirst($school->region) : null,
+        'url' => route('school.go', ['code' => $school->login_code]),
+    ])->values();
+
+    $exact = $term === '' ? null : School::findByLoginCode($term);
+
+    return response()->json([
+        'results' => $results,
+        'exact' => $exact && $exact->subdomain ? $exact->loginUrl() : null,
+    ]);
+})->name('school.login.suggest');
+
+Route::get('/go/{code}', function (string $code) {
+    $school = School::findByLoginCode($code);
+
+    abort_unless($school !== null && $school->subdomain !== null, 404);
+
+    // A suspended school cannot be signed in to, so the visitor is sent
+    // back to the search with an explanation rather than to a page that
+    // would only refuse them.
+    if ($school->status !== 'active') {
+        return redirect()->route('school.login', ['code' => $code]);
+    }
+
+    return redirect()->away($school->loginUrl());
+})->where('code', '[A-Za-z0-9\-]+')->name('school.go');
+
 // 1. Root / Central Marketing & Registration Routing (central domains)
 $__baseHost = parse_url(config('app.url'), PHP_URL_HOST) ?: 'lvh.me';
 $__centralHosts = array_values(array_unique(array_filter([$__baseHost, 'lvh.me', 'localhost', '127.0.0.1'])));
@@ -446,92 +532,6 @@ Route::domain('{__centralHost}')
             ],
         ]);
     })->name('marketing.contact');
-
-    /*
-    |----------------------------------------------------------------------
-    | School login by short code, or by name
-    |----------------------------------------------------------------------
-    | Every school gets a memorable login code (e.g. TINWAY-PRI). The visitor
-    | types it in, or follows /go/{code}, and lands on that school's own
-    | staff login page on its subdomain.
-    |
-    | A visitor who does not know the code can search for the school by name
-    | instead — an ordered run of letters is enough ("chwarira" finds
-    | "Chiwarira Primary School"), because nobody types a school's name
-    | exactly.
-    */
-    Route::get('/school-login', function () {
-        $term = trim((string) request('q', request('code')));
-        $error = null;
-        $school = null;
-        $results = collect();
-
-        if ($term !== '') {
-            // An exact short code still goes straight through to the school.
-            $school = School::findByLoginCode($term);
-
-            if ($school && $school->subdomain && $school->status === 'active') {
-                return redirect()->away($school->loginUrl());
-            }
-
-            $results = School::findForLoginSearch($term);
-
-            if ($results->isEmpty()) {
-                $error = $school
-                    ? __('That school cannot be signed in to at the moment. Please contact your school administrator.')
-                    : __('No school matches that code or name. Check the spelling and try again.');
-            }
-        }
-
-        return view('marketing.school-login', [
-            'term' => $term,
-            'results' => $results,
-            'error' => $error,
-            'seoJsonLd' => [
-                platform_breadcrumb_list([
-                    ['name' => __('Home'), 'url' => route('marketing.home')],
-                    ['name' => __('School Login'), 'url' => route('school.login')],
-                ]),
-            ],
-        ]);
-    })->name('school.login');
-
-    /*
-     * The live results behind the search box. A JSON list of the schools
-     * that match, each with the address its login page lives on.
-     */
-    Route::get('/school-login/suggest', function () {
-        $term = trim((string) request('q'));
-
-        $results = School::findForLoginSearch($term)->map(fn (School $school): array => [
-            'name' => $school->name,
-            'code' => $school->login_code,
-            'region' => $school->region ? ucfirst($school->region) : null,
-            'url' => route('school.go', ['code' => $school->login_code]),
-        ])->values();
-
-        $exact = $term === '' ? null : School::findByLoginCode($term);
-
-        return response()->json([
-            'results' => $results,
-            'exact' => $exact && $exact->subdomain ? $exact->loginUrl() : null,
-        ]);
-    })->name('school.login.suggest');
-
-    Route::get('/go/{code}', function (string $code) {
-        $school = School::findByLoginCode($code);
-
-        abort_unless($school !== null && $school->subdomain !== null, 404);
-
-        // A suspended school cannot be signed in to, so the visitor is sent
-        // back to the search with an explanation rather than to a page that
-        // would only refuse them.
-        if ($school->status !== 'active') {
-            return redirect()->route('school.login', ['code' => $code]);
-        }
-
-        return redirect()->away($school->loginUrl());
-    })->where('code', '[A-Za-z0-9\-]+')->name('school.go');
 
     Route::get('/features', function () {
         return view('marketing.features', [
