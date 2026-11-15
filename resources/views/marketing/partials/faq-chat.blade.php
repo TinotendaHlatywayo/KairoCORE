@@ -258,7 +258,7 @@ let busy = false;
 const clock = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
 const scrollToBottom = (instant = false) => {
-    msgs.style.scrollBehavior = instant || reduce ? 'auto' : 'smooth';
+    msgs.style.scrollBehavior = (instant || reduce) ? 'auto' : 'smooth';
     requestAnimationFrame(() => requestAnimationFrame(() => { msgs.scrollTop = msgs.scrollHeight; }));
 };
 const down = () => scrollToBottom(false);
