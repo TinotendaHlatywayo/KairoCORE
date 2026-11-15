@@ -239,6 +239,7 @@ body.kairo-v2 #faq .kfaq-card .kfaq-card-sub { display: block; font-size: 13.5px
 
 <script type="module">
 import { matchQuestion, logUnmatched, logFeedback } from '/kfaq-engine.js';
+console.log('FAQ_MODULE_START');
 
 const msgs = document.getElementById('kfaq-msgs');
 const quick = document.getElementById('kfaq-quick');
