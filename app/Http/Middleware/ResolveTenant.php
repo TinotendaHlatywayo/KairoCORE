@@ -110,7 +110,17 @@ class ResolveTenant
         view()->share('school', $school);
         view()->share('features', TenantFeatureService::all());
 
-        URL::defaults(['tenant' => $school->subdomain]);
+        $__baseHost = parse_url($baseDomain, PHP_URL_HOST) ?: 'lvh.me';
+        $__host = $request->getHost();
+        $__baseHosts = array_values(array_unique(array_filter([$__baseHost, 'lvh.me', 'localhost', '127.0.0.1'])));
+        $__centralHost = $__baseHost;
+        foreach ($__baseHosts as $__bh) {
+            if ($__host === $__bh || str_ends_with($__host, '.'.$__bh)) {
+                $__centralHost = $__bh;
+                break;
+            }
+        }
+        URL::defaults(['tenant' => $school->subdomain, '__baseHost' => $__centralHost, '__centralHost' => $__centralHost]);
 
         $this->applyFilamentTheme();
 
