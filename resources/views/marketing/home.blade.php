@@ -2,8 +2,8 @@
 
 @section('body_class', 'kairo-v2')
 
-@section('title', marketing_content('meta_title') ?: platform_name().' - School Management System')
-@section('meta_description', marketing_content('meta_description') ?: __('Modern school management system for admissions, academics, fees, attendance, HR, communications and more.'))
+@section('title', marketing_content('meta_title') ?: platform_name().' - Best School Management Software in Zimbabwe')
+@section('meta_description', marketing_content('meta_description') ?: platform_seo_description())
 @section('seo_image', asset('images/KairoCORE_Home_thumbnail.png'))
 
 @push('styles')

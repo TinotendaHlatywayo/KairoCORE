@@ -1,0 +1,52 @@
+{
+  "fr": [
+    {
+      "match": "^(bonjour|salut|coucou|bonsoir)\\b",
+      "reply": "Bonjour ! Je suis l’assistant Kairo. Posez-moi vos questions sur la gestion de votre école avec Kairo CORE."
+    },
+    {
+      "match": "^(merci|thanks)\\b",
+      "reply": "Avec plaisir. Si vous avez besoin d’aide supplémentaire, contactez l’équipe sur WhatsApp."
+    }
+  ],
+  "es": [
+    {
+      "match": "^(hola|buenos dias|buenas tardes|buenas noches)\\b",
+      "reply": "¡Hola! Soy el asistente de Kairo. Pregúntame lo que necesites sobre Kairo CORE."
+    },
+    {
+      "match": "^(gracias|muchas gracias)\\b",
+      "reply": "De nada. Si necesitas más ayuda, escribe al equipo por WhatsApp."
+    }
+  ],
+  "pt": [
+    {
+      "match": "^(olá|ola|bom dia|boa tarde|boa noite)\\b",
+      "reply": "Olá! Sou o assistente Kairo. Pergunte-me sobre a gestão da sua escola com o Kairo CORE."
+    },
+    {
+      "match": "^(obrigado|obrigada)\\b",
+      "reply": "De nada. Se precisar de mais ajuda, contacte a equipa no WhatsApp."
+    }
+  ],
+  "sw": [
+    {
+      "match": "^(habari|hujambo|salamu|shikamoo|mambo)\\b",
+      "reply": "Habari! Mimi ni msaidizi wa Kairo. Niulize chochote kuhusu Kairo CORE."
+    },
+    {
+      "match": "^(asante|shukran)\\b",
+      "reply": "Karibu. Ukihitaji msaada zaidi, wasiliana na timu kupitia WhatsApp."
+    }
+  ],
+  "sn": [
+    {
+      "match": "^(mhoro|makadii|maswera sei|mangwanani)\\b",
+      "reply": "Mhoro! Ndiri mubatsiri weKairo. Ndibvunzei nezveKairo CORE."
+    },
+    {
+      "match": "^(mazvita|tatenda|ndatenda)\\b",
+      "reply": "Mauya. Kana muchida rumwe rubatsiro, bata chikwata paWhatsApp."
+    }
+  ]
+}

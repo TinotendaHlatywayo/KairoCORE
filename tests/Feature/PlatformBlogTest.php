@@ -241,11 +241,11 @@ class PlatformBlogTest extends TestCase
 
         $seeded = BlogPost::query()->first();
 
-        $list = $this->get('https://lvh.me/platform/blog-posts')->assertOk();
+        $list = $this->get('https://'.parse_url(config('app.url'), PHP_URL_HOST).'/platform/blog-posts')->assertOk();
         if ($seeded) {
             $list->assertSee($seeded->title);
         }
 
-        $this->get('https://lvh.me/platform/blog-posts/create')->assertOk();
+        $this->get('https://'.parse_url(config('app.url'), PHP_URL_HOST).'/platform/blog-posts/create')->assertOk();
     }
 }

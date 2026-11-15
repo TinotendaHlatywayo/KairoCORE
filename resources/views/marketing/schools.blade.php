@@ -6,12 +6,20 @@
 
 @section('content')
 @php
+    use Illuminate\Support\Facades\Schema;
     use Modules\CMS\Models\CmsWebsite;
-    $websites = CmsWebsite::with('school')
-        ->where('is_template_site', false)
-        ->get()
-        ->filter(fn ($website) => $website->school && filled($website->school->subdomain))
-        ->sortBy(fn ($website) => $website->school->name);
+    $websites = collect();
+    if (Schema::hasTable('cms_websites')) {
+        try {
+            $websites = CmsWebsite::with('school')
+                ->where('is_template_site', false)
+                ->get()
+                ->filter(fn ($website) => $website->school && filled($website->school->subdomain))
+                ->sortBy(fn ($website) => $website->school->name);
+        } catch (\Throwable $e) {
+            $websites = collect();
+        }
+    }
     $host = parse_url(config('app.url'), PHP_URL_HOST);
 @endphp
 <section class="w" style="padding:40px 0">

@@ -2,9 +2,9 @@
 
 @section('body_class', 'kairo-v2')
 
-@section('title', marketing_content('about_title') ?: __('About').' - '.platform_name())
+@section('title', marketing_content('about_title') ?: __('About').' - '.platform_name().' | School Management Software Zimbabwe')
 @section('seo_image', asset('images/KairoCORE_About_thumbnail.png'))
-@section('meta_description', marketing_content('about_intro') ?: __('About Kairo CORE.'))
+@section('meta_description', marketing_content('about_intro') ?: __('Learn about Kairo CORE, the best school management system for schools in Zimbabwe and Southern Africa: admissions, academics, fees, attendance, HR, communication and more.'))
 
 @push('styles')
 @vite('resources/css/kairo-v2/about.css')

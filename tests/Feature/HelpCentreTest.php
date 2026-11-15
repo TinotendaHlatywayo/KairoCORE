@@ -184,7 +184,7 @@ class HelpCentreTest extends TestCase
         $this->get('/docs')->assertOk(); // warms the file cache
 
         // Raw entry must be arrays, not serialized objects.
-        $cached = Cache::store('file')->get('help-centre.articles');
+        $cached = Cache::store('file')->get('help-centre.articles.'.app()->getLocale());
         $this->assertIsArray($cached);
         $this->assertIsArray($cached[0] ?? null);
 

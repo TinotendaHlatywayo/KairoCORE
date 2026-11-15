@@ -1,0 +1,2045 @@
+[
+  {
+    "id": "fit-school-type",
+    "category": "general",
+    "question": "Kairo CORE est-il adapté à mon type d’école ?",
+    "answer": "Oui. Kairo CORE est conçu pour les établissements primaires, secondaires et supérieurs, y compris les internats. Les admissions, la scolarité, les frais, les présences, la communication et les rapports utilisent le même dossier élève, afin que la plateforme accompagne votre école au lieu d’imposer un nouveau système à chaque service. Découvrez toutes les fonctionnalités ou réservez une démo pour voir les modules adaptés à votre établissement.",
+    "tags": [
+      "Adaptation",
+      "Écoles"
+    ],
+    "phrasings": [
+      "Kairo CORE est-il adapté à mon type d’école ?",
+      "Kairo CORE est-il adapté à mon type d’école",
+      "comment kairo core est-il adapté à mon type d’école ?",
+      "aide pour kairo core est-il adapté à mon type d’école ?",
+      "kairo core convient-il à mon école",
+      "est-ce adapté à mon école",
+      "pour quel type d école",
+      "école primaire secondaire supérieure internat"
+    ],
+    "keywords": [
+      "primaire",
+      "secondaire",
+      "supérieur",
+      "internat",
+      "école",
+      "type"
+    ],
+    "related": [],
+    "source": {
+      "title": "Kairo CORE website",
+      "url": "https://kairo.co.zw/"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "what-cover",
+    "category": "general",
+    "question": "Que couvre-t-il ?",
+    "answer": "Kairo CORE couvre toute la journée scolaire dans un système connecté, et non un ensemble d’outils séparés.\n\nModules principaux :\n\n• Admissions : candidatures en ligne, inscriptions, dossiers élèves et cartes d’identité.\n• Scolarité : années scolaires, classes, filières, matières, emplois du temps et bulletins.\n• Examens : évaluations, saisie des notes, barèmes, résultats et impression des bulletins.\n• Finance : structures de frais, factures, paiements en espèces/EcoCash/banque, soldes et reçus.\n• Présences et communication : registres quotidiens, annonces, alertes par e-mail et WhatsApp.\n• Opérations : RH et paie, bibliothèque, internat, santé, inventaire et achats.\n• Pilotage et croissance : rapports, analyses, portails parents/élèves et site web public de l’école.\n\nComme chaque module utilise le même dossier élève, admissions, frais, présences, scolarité et communication restent synchronisés. Explorez l’ensemble des fonctionnalités ou réservez une démo.",
+    "tags": [
+      "Modules",
+      "Aperçu"
+    ],
+    "phrasings": [
+      "Que couvre-t-il ?",
+      "Que couvre-t-il",
+      "comment que couvre-t-il ?",
+      "aide pour que couvre-t-il ?",
+      "que couvre kairo core",
+      "quelles fonctionnalités",
+      "quels modules",
+      "que fait le logiciel"
+    ],
+    "keywords": [
+      "admissions",
+      "frais",
+      "scolarité",
+      "communication",
+      "modules",
+      "couvre"
+    ],
+    "related": [],
+    "source": {
+      "title": "Kairo CORE website",
+      "url": "https://kairo.co.zw/"
+    },
+    "needsOwnerAnswer": false,
+    "links": [
+      {
+        "label": "Explore all features",
+        "url": "/features"
+      },
+      {
+        "label": "Admissions & enrolment",
+        "url": "/features#admissions"
+      },
+      {
+        "label": "Academics & report cards",
+        "url": "/features#academics"
+      },
+      {
+        "label": "Finance & fees",
+        "url": "/features#finance"
+      }
+    ]
+  },
+  {
+    "id": "data-safe",
+    "category": "general",
+    "question": "Nos données sont-elles en sécurité ?",
+    "answer": "Oui. Chaque école dispose de son propre espace de travail privé. Les comptes du personnel sont basés sur les rôles, chacun ne voit que les données autorisées. Les sauvegardes et contrôles d’accès protègent les données, et les élèves comme les parents ne voient que leurs propres informations.\n\nDécouvrez la sécurité et la protection des données ou contactez-nous pour vos besoins spécifiques.",
+    "tags": [
+      "Sécurité",
+      "Confidentialité"
+    ],
+    "phrasings": [
+      "Nos données sont-elles en sécurité ?",
+      "Nos données sont-elles en sécurité",
+      "comment nos données sont-elles en sécurité ?",
+      "aide pour nos données sont-elles en sécurité ?",
+      "données sécurisées",
+      "sécurité des données",
+      "confidentialité des données"
+    ],
+    "keywords": [
+      "données",
+      "sécurité",
+      "confidentialité",
+      "dossiers",
+      "rôles"
+    ],
+    "related": [
+      "staff-permissions",
+      "parents-portal",
+      "any-device"
+    ],
+    "source": {
+      "title": "Kairo CORE website",
+      "url": "https://kairo.co.zw/"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "team-trained",
+    "category": "general",
+    "question": "Mon équipe sera-t-elle formée ?",
+    "answer": "Oui. Votre équipe est formée grâce à des sessions pratiques, des tutoriels vidéo et un centre d’aide toujours disponible. Des formations supplémentaires peuvent être organisées pour les nouveaux membres ou nouveaux modules, et l’accès par rôle permet à chacun d’apprendre uniquement ce dont il a besoin. Explorez la plateforme ou visitez le centre d’aide.",
+    "tags": [
+      "Formation",
+      "Assistance"
+    ],
+    "phrasings": [
+      "Mon équipe sera-t-elle formée ?",
+      "Mon équipe sera-t-elle formée",
+      "comment mon équipe sera-t-elle formée ?",
+      "aide pour mon équipe sera-t-elle formée ?",
+      "formation équipe",
+      "allez-vous former",
+      "formation du personnel"
+    ],
+    "keywords": [
+      "formée",
+      "formation",
+      "équipe",
+      "sessions",
+      "tutoriels"
+    ],
+    "related": [],
+    "source": {
+      "title": "Kairo CORE website",
+      "url": "https://kairo.co.zw/"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "any-device",
+    "category": "general",
+    "question": "Pouvons-nous y accéder depuis n’importe quel appareil ?",
+    "answer": "Oui. Utilisez Kairo CORE sur un téléphone, une tablette ou un ordinateur avec une connexion Internet. Le personnel, les élèves et les parents disposent chacun de la vue adaptée, afin que le bureau, la classe et la maison restent connectés sans applications séparées. Explorez les fonctionnalités ou demandez une démo.",
+    "tags": [
+      "Accès",
+      "Appareils"
+    ],
+    "phrasings": [
+      "Pouvons-nous y accéder depuis n’importe quel appareil ?",
+      "Pouvons-nous y accéder depuis n’importe quel appareil",
+      "comment pouvons-nous y accéder depuis n’importe quel appareil ?",
+      "aide pour pouvons-nous y accéder depuis n’importe quel appareil ?",
+      "sur téléphone",
+      "sur tablette",
+      "depuis mobile",
+      "accès appareil"
+    ],
+    "keywords": [
+      "appareil",
+      "téléphone",
+      "tablette",
+      "ordinateur",
+      "accès"
+    ],
+    "related": [],
+    "source": {
+      "title": "Kairo CORE website",
+      "url": "https://kairo.co.zw/"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "setup-time",
+    "category": "general",
+    "question": "Combien de temps prend la mise en place ?",
+    "answer": "Les écoles sont opérationnelles en quelques jours, pas en plusieurs mois. Inscrivez l’école, configurez la structure scolaire, le personnel, les frais et l’image de marque avec notre équipe, puis lancez-vous. L’inscription prend quelques minutes, tandis que la configuration académique et les autres modules peuvent prendre de quelques heures à quelques jours selon la taille de l’école. Découvrez comment démarrer ou réservez une démo.",
+    "tags": [
+      "Configuration",
+      "Intégration"
+    ],
+    "phrasings": [
+      "Combien de temps prend la mise en place ?",
+      "Combien de temps prend la mise en place",
+      "comment combien de temps prend la mise en place ?",
+      "aide pour combien de temps prend la mise en place ?",
+      "combien de temps installation",
+      "délai de mise en place",
+      "temps de configuration"
+    ],
+    "keywords": [
+      "mise en place",
+      "intégration",
+      "jours",
+      "classes",
+      "personnel",
+      "frais"
+    ],
+    "related": [],
+    "source": {
+      "title": "Kairo CORE website",
+      "url": "https://kairo.co.zw/"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "parents-portal",
+    "category": "general",
+    "question": "Les parents peuvent-ils voir les frais, les présences et les résultats ?",
+    "answer": "Oui. Les parents disposent de leur propre accès au portail et voient les informations publiées par votre école : frais et soldes, présences, résultats et bulletins, ainsi que les annonces. Le portail est lié au dossier élève, les mises à jour apparaissent donc sans ressaisie.\n\nLors de l’inscription d’un élève, saisissez une adresse e-mail pour créer le compte portail ; Kairo CORE envoie un lien d’activation. Explorez les fonctionnalités du portail ou demandez une démo.",
+    "tags": [
+      "Parents",
+      "Portail"
+    ],
+    "phrasings": [
+      "Les parents peuvent-ils voir les frais, les présences et les résultats ?",
+      "Les parents peuvent-ils voir les frais, les présences et les résultats",
+      "comment les parents peuvent-ils voir les frais, les présences et les résultats ?",
+      "aide pour les parents peuvent-ils voir les frais, les présences et les résultats ?",
+      "portail parents",
+      "parents voir frais présences résultats"
+    ],
+    "keywords": [
+      "parents",
+      "frais",
+      "présences",
+      "résultats",
+      "annonces"
+    ],
+    "related": [],
+    "source": {
+      "title": "Kairo CORE website",
+      "url": "https://kairo.co.zw/"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "payments-record",
+    "category": "general",
+    "question": "Quels paiements pouvons-nous enregistrer ?",
+    "answer": "Kairo CORE enregistre les paiements en espèces, virements bancaires, EcoCash/mobile money et Paynow en ligne sur la facture de l’élève. Vous pouvez aussi approuver les justificatifs téléchargés. Chaque paiement met à jour le solde, et vous pouvez imprimer reçus et relevés familiaux.\n\nLes paiements étant liés au même dossier élève que les admissions et la facturation, votre équipe voit toujours la situation actuelle. Explorez Finance & Frais ou consultez le guide des paiements.",
+    "tags": [
+      "Finance",
+      "Paiements"
+    ],
+    "phrasings": [
+      "Quels paiements pouvons-nous enregistrer ?",
+      "Quels paiements pouvons-nous enregistrer",
+      "comment quels paiements pouvons-nous enregistrer ?",
+      "aide pour quels paiements pouvons-nous enregistrer ?",
+      "enregistrer paiements",
+      "moyens de paiement",
+      "ecocash espèces virement"
+    ],
+    "keywords": [
+      "paiements",
+      "espèces",
+      "virement",
+      "ecocash",
+      "reçus",
+      "devises"
+    ],
+    "related": [],
+    "source": {
+      "title": "Kairo CORE website",
+      "url": "https://kairo.co.zw/"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "book-demo",
+    "category": "general",
+    "question": "Comment réserver une démo ?",
+    "answer": "Utilisez le formulaire « Réserver une démo personnalisée » plus bas sur cette page. Elle est adaptée à votre école, sans engagement. Vous pouvez aussi contacter par WhatsApp ou appeler le +263 78 636 6855, ou écrire à sales@kairocore.co.zw. L’équipe vous présentera les modules les plus importants pour votre établissement. Explorez les fonctionnalités ou contactez-nous.",
+    "tags": [
+      "Démo",
+      "Contact"
+    ],
+    "phrasings": [
+      "Comment réserver une démo ?",
+      "Comment réserver une démo",
+      "comment comment réserver une démo ?",
+      "aide pour comment réserver une démo ?",
+      "réserver une démo",
+      "demander une démonstration",
+      "prendre rendez-vous"
+    ],
+    "keywords": [
+      "démo",
+      "réserver",
+      "contact",
+      "whatsapp",
+      "email"
+    ],
+    "related": [
+      "pricing",
+      "free-trial",
+      "team-trained"
+    ],
+    "source": {
+      "title": "Kairo CORE website",
+      "url": "https://kairo.co.zw/#contact"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "languages",
+    "category": "general",
+    "question": "Quelles langues Kairo CORE prend-il en charge ?",
+    "answer": "La plateforme et le centre d’aide sont disponibles en anglais, shona, swahili, français, portugais et espagnol. Les familles et le personnel peuvent travailler dans la langue qui leur convient, tandis que les dossiers restent connectés dans toute l’école. Explorez les fonctionnalités ou demandez une démo.",
+    "tags": [
+      "Langues"
+    ],
+    "phrasings": [
+      "Quelles langues Kairo CORE prend-il en charge ?",
+      "Quelles langues Kairo CORE prend-il en charge",
+      "comment quelles langues kairo core prend-il en charge ?",
+      "aide pour quelles langues kairo core prend-il en charge ?"
+    ],
+    "keywords": [
+      "langues",
+      "anglais",
+      "shona",
+      "swahili",
+      "français",
+      "portugais",
+      "espagnol"
+    ],
+    "related": [],
+    "source": {
+      "title": "Kairo CORE website",
+      "url": "https://kairo.co.zw/"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "pricing",
+    "category": "general",
+    "question": "Combien coûte Kairo CORE ?",
+    "answer": "La tarification de Kairo CORE est adaptée à la taille de votre école, aux modules dont vous avez besoin et au niveau d’accompagnement souhaité. Réservez une démo et l’équipe vous recommandera une offre adaptée, incluant l’intégration et la formation. Explorez les fonctionnalités ou contactez-nous.",
+    "tags": [
+      "Tarifs"
+    ],
+    "phrasings": [
+      "Combien coûte Kairo CORE ?",
+      "Combien coûte Kairo CORE",
+      "comment combien coûte kairo core ?",
+      "aide pour combien coûte kairo core ?"
+    ],
+    "keywords": [
+      "prix",
+      "coût",
+      "tarification",
+      "abonnement",
+      "offre"
+    ],
+    "related": [],
+    "source": {
+      "title": "Kairo CORE website",
+      "url": "https://kairo.co.zw/"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "contract-length",
+    "category": "general",
+    "question": "Y a-t-il un contrat ou une durée minimale ?",
+    "answer": "Kairo CORE est conçu pour accompagner votre école sur le long terme, avec intégration et formation incluses. Contactez l’équipe pour connaître les conditions actuelles, les détails de renouvellement et la meilleure option pour votre établissement. Explorez les fonctionnalités ou contactez-nous.",
+    "tags": [
+      "Tarifs"
+    ],
+    "phrasings": [
+      "Y a-t-il un contrat ou une durée minimale ?",
+      "Y a-t-il un contrat ou une durée minimale",
+      "comment y a-t-il un contrat ou une durée minimale ?",
+      "aide pour y a-t-il un contrat ou une durée minimale ?"
+    ],
+    "keywords": [
+      "contrat",
+      "durée",
+      "minimum",
+      "engagement"
+    ],
+    "related": [],
+    "source": {
+      "title": "Kairo CORE website",
+      "url": "https://kairo.co.zw/"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "free-trial",
+    "category": "general",
+    "question": "Y a-t-il un essai gratuit ?",
+    "answer": "L’équipe peut organiser une démo guidée ou un environnement d’essai adapté au type, à la taille et aux priorités de votre école. Réservez une démo et nous vous montrerons les modules les plus importants avant de vous engager. Explorez les fonctionnalités ou contactez-nous.",
+    "tags": [
+      "Tarifs"
+    ],
+    "phrasings": [
+      "Y a-t-il un essai gratuit ?",
+      "Y a-t-il un essai gratuit",
+      "comment y a-t-il un essai gratuit ?",
+      "aide pour y a-t-il un essai gratuit ?"
+    ],
+    "keywords": [
+      "gratuit",
+      "essai",
+      "tester"
+    ],
+    "related": [],
+    "source": {
+      "title": "Kairo CORE website",
+      "url": "https://kairo.co.zw/"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "data-hosting",
+    "category": "general",
+    "question": "Où sont hébergées les données scolaires ?",
+    "answer": "Les données scolaires sont conservées dans des espaces de travail sécurisés et propres à chaque école, avec accès par rôle et sauvegardes. Demandez à l’équipe les détails d’hébergement, de sauvegarde et de protection des données applicables à votre région et à votre établissement. Consultez la sécurité ou contactez-nous.",
+    "tags": [
+      "Sécurité"
+    ],
+    "phrasings": [
+      "Où sont hébergées les données scolaires ?",
+      "Où sont hébergées les données scolaires",
+      "comment où sont hébergées les données scolaires ?",
+      "aide pour où sont hébergées les données scolaires ?"
+    ],
+    "keywords": [
+      "hébergement",
+      "hébergées",
+      "données",
+      "serveur"
+    ],
+    "related": [],
+    "source": {
+      "title": "Kairo CORE website",
+      "url": "https://kairo.co.zw/"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "uptime",
+    "category": "general",
+    "question": "Quelle disponibilité ou niveau de service est garanti ?",
+    "answer": "Kairo CORE est conçu pour les opérations quotidiennes des écoles et est accessible sur téléphones, tablettes et ordinateurs. Demandez à l’équipe les engagements actuels de niveau de service et de disponibilité pour votre école. Consultez la sécurité ou contactez-nous.",
+    "tags": [
+      "Fiabilité"
+    ],
+    "phrasings": [
+      "Quelle disponibilité ou niveau de service est garanti ?",
+      "Quelle disponibilité ou niveau de service est garanti",
+      "comment quelle disponibilité ou niveau de service est garanti ?",
+      "aide pour quelle disponibilité ou niveau de service est garanti ?"
+    ],
+    "keywords": [
+      "disponibilité",
+      "sla",
+      "service",
+      "panne"
+    ],
+    "related": [],
+    "source": {
+      "title": "Kairo CORE website",
+      "url": "https://kairo.co.zw/"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "data-migration",
+    "category": "general",
+    "question": "Pouvez-vous migrer nos données scolaires existantes ?",
+    "answer": "Oui. Les données scolaires existantes peuvent généralement être migrées lors de l’intégration, y compris élèves, personnel, frais et structure académique. L’équipe examinera vos dossiers actuels et planifiera l’importation afin que l’historique reste lié. Découvrez comment démarrer ou contactez-nous.",
+    "tags": [
+      "Migration"
+    ],
+    "phrasings": [
+      "Pouvez-vous migrer nos données scolaires existantes ?",
+      "Pouvez-vous migrer nos données scolaires existantes",
+      "comment pouvez-vous migrer nos données scolaires existantes ?",
+      "aide pour pouvez-vous migrer nos données scolaires existantes ?"
+    ],
+    "keywords": [
+      "migration",
+      "import",
+      "données",
+      "transfert"
+    ],
+    "related": [],
+    "source": {
+      "title": "Kairo CORE website",
+      "url": "https://kairo.co.zw/"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "offline-use",
+    "category": "general",
+    "question": "Kairo CORE fonctionne-t-il hors ligne ?",
+    "answer": "Kairo CORE est conçu pour un accès en ligne depuis les téléphones, tablettes et ordinateurs, avec des dossiers mis à jour en un seul endroit. Demandez à l’équipe les options hors ligne ou pour faible connectivité adaptées à votre école. Explorez les fonctionnalités ou contactez-nous.",
+    "tags": [
+      "Accès"
+    ],
+    "phrasings": [
+      "Kairo CORE fonctionne-t-il hors ligne ?",
+      "Kairo CORE fonctionne-t-il hors ligne",
+      "comment kairo core fonctionne-t-il hors ligne ?",
+      "aide pour kairo core fonctionne-t-il hors ligne ?"
+    ],
+    "keywords": [
+      "hors ligne",
+      "internet",
+      "connexion"
+    ],
+    "related": [],
+    "source": {
+      "title": "Kairo CORE website",
+      "url": "https://kairo.co.zw/"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "integrations",
+    "category": "general",
+    "question": "S’intègre-t-il à un logiciel comptable ou autre ?",
+    "answer": "Kairo CORE connecte admissions, scolarité, frais, présences, communication et rapports sur une seule plateforme. L’équipe peut vous conseiller sur les options d’intégration comptable, de paiement et autres pour votre école. Explorez les fonctionnalités ou contactez-nous.",
+    "tags": [
+      "Intégrations"
+    ],
+    "phrasings": [
+      "S’intègre-t-il à un logiciel comptable ou autre ?",
+      "S’intègre-t-il à un logiciel comptable ou autre",
+      "comment s’intègre-t-il à un logiciel comptable ou autre ?",
+      "aide pour s’intègre-t-il à un logiciel comptable ou autre ?"
+    ],
+    "keywords": [
+      "intégration",
+      "comptabilité",
+      "logiciel",
+      "api"
+    ],
+    "related": [],
+    "source": {
+      "title": "Kairo CORE website",
+      "url": "https://kairo.co.zw/"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "school-website",
+    "category": "general",
+    "question": "Chaque école peut-elle avoir son propre site web public ?",
+    "answer": "Oui. Chaque école peut publier un site public à son image avec admissions, actualités, événements, personnel, coordonnées et pages optimisées pour le référencement. Le site est géré depuis le même espace que le reste de l’école, sans développeur. Explorez le module site web ou lisez le guide.",
+    "tags": [
+      "Site web"
+    ],
+    "phrasings": [
+      "Chaque école peut-elle avoir son propre site web public ?",
+      "Chaque école peut-elle avoir son propre site web public",
+      "comment chaque école peut-elle avoir son propre site web public ?",
+      "aide pour chaque école peut-elle avoir son propre site web public ?"
+    ],
+    "keywords": [
+      "site web",
+      "public",
+      "école",
+      "image de marque"
+    ],
+    "related": [],
+    "source": {
+      "title": "Build and publish your school website",
+      "url": "/docs/website/school-website-cms"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "academic-structure",
+    "category": "academics",
+    "question": "Set up your academic structure",
+    "answer": "Set up the academic structure before enrolments, timetables or marks. In the workspace, open Academics → Setup & Structure and work in this order:\n\n1. Academic Years: create the current year and its terms.\n2. Level (Forms/Grades): create each form or grade and add its class streams, for example A and B.\n3. Subjects: add every subject your school offers.\n4. Classrooms: add the physical rooms used by timetables.\n\nEach record references the one before it, so creating them in this order avoids gaps later. Once they exist you can enrol students, build timetables, capture assessments and generate report cards. Explore the Academics module or read the full setup guide.",
+    "tags": [
+      "Scolarité",
+      "Configuration"
+    ],
+    "phrasings": [
+      "Set up your academic structure",
+      "comment set up your academic structure",
+      "aide pour set up your academic structure"
+    ],
+    "keywords": [
+      "academic",
+      "year",
+      "forms",
+      "grades",
+      "streams",
+      "subjects",
+      "classrooms",
+      "setup"
+    ],
+    "related": [],
+    "source": {
+      "title": "Set up your academic structure",
+      "url": "/docs/academics/academic-structure"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "online-applications",
+    "category": "admissions",
+    "question": "Receive and process online applications",
+    "answer": "Every school website includes a public Apply Online page at /apply-online. Families submit applications and upload the documents you require.\n\n1. Open Admissions → Applications to see new submissions.\n2. Open an application to review the full form and uploaded documents.\n3. Admit the candidate to create the student record and carry over the academic year, form and stream where applicable.\n4. Switch to Finance → Invoices to raise the first invoice.\n\nYou can customise the form and required documents under Admissions → Admission Settings. Explore the Admissions module or read the full applications guide.",
+    "tags": [
+      "Admissions"
+    ],
+    "phrasings": [
+      "Receive and process online applications",
+      "comment receive and process online applications",
+      "aide pour receive and process online applications"
+    ],
+    "keywords": [
+      "admissions",
+      "applications",
+      "apply",
+      "admit",
+      "students"
+    ],
+    "related": [],
+    "source": {
+      "title": "Receive and process online applications",
+      "url": "/docs/admissions/online-applications"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "boarding-and-welfare",
+    "category": "boarding",
+    "question": "Manage boarding and student welfare",
+    "answer": "Kairo CORE manages hostels, rooms, bed allocations, out passes, boarding attendance and inspections. Out passes use a two-step parent OTP approval, so every absence is verifiable. Explore boarding management or read the boarding guide.",
+    "tags": [
+      "Internat"
+    ],
+    "phrasings": [
+      "Manage boarding and student welfare",
+      "comment manage boarding and student welfare",
+      "aide pour manage boarding and student welfare"
+    ],
+    "keywords": [
+      "boarding",
+      "hostels",
+      "rooms",
+      "allocations",
+      "out",
+      "passes",
+      "attendance",
+      "inspections"
+    ],
+    "related": [],
+    "source": {
+      "title": "Manage boarding and student welfare",
+      "url": "/docs/boarding/boarding-and-welfare"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "announcements",
+    "category": "communication",
+    "question": "Send announcements to staff and families",
+    "answer": "Create a notice with title, rich content and the right audience, then choose System only, Email only or both. Set priority, display style, acknowledgement requirements and scheduling so important notices land clearly without inbox overload. Explore communications or read the announcements guide.",
+    "tags": [
+      "Communication"
+    ],
+    "phrasings": [
+      "Send announcements to staff and families",
+      "comment send announcements to staff and families",
+      "aide pour send announcements to staff and families"
+    ],
+    "keywords": [
+      "announcements",
+      "notices",
+      "email",
+      "roles",
+      "audience"
+    ],
+    "related": [],
+    "source": {
+      "title": "Send announcements to staff and families",
+      "url": "/docs/communication/announcements"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "assessments-and-marks",
+    "category": "exams",
+    "question": "Set up assessments and capture marks",
+    "answer": "Assessments and marks live under Exams & Grading.\n\n1. Open Exams & Grading → Assessment Center → Digital Assessments.\n2. Click Create, then choose the subject, class stream, academic year, term and assessment type.\n3. Set total marks, pass mark and whether it contributes to the grade.\n4. Optionally add instructions, duration, attempt limits and question randomisation, then save.\n5. Open Grading & Marks Management → Marks Entry to capture marks.\n6. Review class averages and outliers in Performance Analytics before publishing.\n\nMarks stay editable until the report they feed is published. Explore the Exams module or read the full guide.",
+    "tags": [
+      "Examens"
+    ],
+    "phrasings": [
+      "Set up assessments and capture marks",
+      "comment set up assessments and capture marks",
+      "aide pour set up assessments and capture marks"
+    ],
+    "keywords": [
+      "assessments",
+      "marks",
+      "tests",
+      "assignments",
+      "grading"
+    ],
+    "related": [],
+    "source": {
+      "title": "Set up assessments and capture marks",
+      "url": "/docs/exams/assessments-and-marks"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "report-cards",
+    "category": "exams",
+    "question": "Produce and publish report cards",
+    "answer": "Report cards are generated from captured marks, then reviewed, published and printed.\n\n1. Open Exams & Grading → Reports & Academic Publishing → Report Cards. Set up Report Templates first if you want a custom layout.\n2. Click Generate Reports and choose the academic year, term, class stream(s) and template.\n3. Add class teacher, headmaster and per-subject remarks as needed.\n4. Review each Draft report, then click Publish to Portal or publish several in bulk.\n5. Print a single report, Print Selected, or Bulk Print Reports as one PDF or a ZIP of individual PDFs.\n\nAlways spot-check one report before a bulk print. Explore the Exams module or read the full report card guide.",
+    "tags": [
+      "Examens",
+      "Rapports"
+    ],
+    "phrasings": [
+      "Produce and publish report cards",
+      "comment produce and publish report cards",
+      "aide pour produce and publish report cards"
+    ],
+    "keywords": [
+      "report",
+      "cards",
+      "marks",
+      "remarks",
+      "publish",
+      "print"
+    ],
+    "related": [],
+    "source": {
+      "title": "Produce and publish report cards",
+      "url": "/docs/exams/report-cards"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "expenses",
+    "category": "finance",
+    "question": "Record and categorise school expenses",
+    "answer": "Record expenses by category and type, with amount, bank account, date and reference. Categories and types can be created inline, making reports clearer over time. Explore finance or read the expenses guide.",
+    "tags": [
+      "Finance"
+    ],
+    "phrasings": [
+      "Record and categorise school expenses",
+      "comment record and categorise school expenses",
+      "aide pour record and categorise school expenses"
+    ],
+    "keywords": [
+      "expenses",
+      "costs",
+      "categories",
+      "suppliers"
+    ],
+    "related": [],
+    "source": {
+      "title": "Record and categorise school expenses",
+      "url": "/docs/finance/expenses"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "fee-balances",
+    "category": "finance",
+    "question": "Track student fee balances",
+    "answer": "Every invoice carries a live balance showing what is still due. Filter invoices, check the financial dashboard and print family statements for clear collection follow-up. Explore finance or read the fee balances guide.",
+    "tags": [
+      "Finance"
+    ],
+    "phrasings": [
+      "Track student fee balances",
+      "comment track student fee balances",
+      "aide pour track student fee balances"
+    ],
+    "keywords": [
+      "balances",
+      "fees",
+      "owed",
+      "statements",
+      "arrears"
+    ],
+    "related": [],
+    "source": {
+      "title": "Track student fee balances",
+      "url": "/docs/finance/fee-balances"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "fee-structures-and-invoicing",
+    "category": "finance",
+    "question": "Create fee structures and issue invoices",
+    "answer": "Fees have two parts: the structure, which is what each form pays, and the invoice, which is what each student is billed.\n\n1. Open Finance → Student Billing & Revenue → Fee Structures and create a structure for the academic year, form/grade and amount. Add fee categories if you itemise charges.\n2. To bill one student, open Invoices → Create, choose the student, year and term, then select the fee structures to include.\n3. To bill a cohort, click Run Auto-Billing Engine, choose the forms/grades and term, and let it create invoices for eligible students.\n4. Print invoices from the row; record payments to update balances and print receipts.\n\nInvoice and receipt branding is controlled under Finance → Core Accounting & Setup → Document Templates. Explore the Finance module or read the full billing guide.",
+    "tags": [
+      "Finance"
+    ],
+    "phrasings": [
+      "Create fee structures and issue invoices",
+      "comment create fee structures and issue invoices",
+      "aide pour create fee structures and issue invoices"
+    ],
+    "keywords": [
+      "fee",
+      "structures",
+      "invoices",
+      "billing",
+      "auto-billing"
+    ],
+    "related": [],
+    "source": {
+      "title": "Create fee structures and issue invoices",
+      "url": "/docs/finance/fee-structures-and-invoicing"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "purchasing",
+    "category": "finance",
+    "question": "Purchasing, suppliers and stock",
+    "answer": "Manage suppliers, procurement requests, purchase orders, goods received and stock from Inventory & Procurement. Receiving updates stock automatically, and fixed assets are tracked separately. Explore finance and inventory or read the purchasing guide.",
+    "tags": [
+      "Finance",
+      "Inventaire"
+    ],
+    "phrasings": [
+      "Purchasing, suppliers and stock",
+      "comment purchasing, suppliers and stock",
+      "aide pour purchasing, suppliers and stock"
+    ],
+    "keywords": [
+      "purchasing",
+      "suppliers",
+      "procurement",
+      "stock",
+      "assets"
+    ],
+    "related": [],
+    "source": {
+      "title": "Purchasing, suppliers and stock",
+      "url": "/docs/finance/purchasing"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "recording-payments",
+    "category": "finance",
+    "question": "Record payments against invoices",
+    "answer": "Record every payment against the student's invoice so balances update immediately.\n\n1. Open Finance → Student Billing & Revenue → Invoices and find the invoice.\n2. Click Record Payment.\n3. Enter the amount, method (cash, bank transfer or EcoCash), date and reference.\n4. Choose the deposit bank account and save.\n5. Click Print Receipt or Print Selected Receipts for proof of payment.\n\nThe invoice balance recalculates as total minus payments. Families can also pay via Paynow, and uploaded payment proofs wait for your approval. Explore the Finance module or read the payments guide.",
+    "tags": [
+      "Finance"
+    ],
+    "phrasings": [
+      "Record payments against invoices",
+      "comment record payments against invoices",
+      "aide pour record payments against invoices"
+    ],
+    "keywords": [
+      "payments",
+      "cash",
+      "transfer",
+      "ecocash",
+      "receipts",
+      "balances"
+    ],
+    "related": [],
+    "source": {
+      "title": "Record payments against invoices",
+      "url": "/docs/finance/recording-payments"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "create-account-and-sign-in",
+    "category": "getting-started",
+    "question": "Create your school account and sign in",
+    "answer": "Every school gets its own secure workspace and public website.\n\n1. Go to /register and enter the school name, your email and a password.\n2. Open the activation email and click the activation link, or enter the code at /activate-account.\n3. Go to /login and sign in. You land on the school Dashboard.\n4. From there, set up the academic structure, add students and configure finance.\n\nYour team uses the same workspace URL; students and parents use the public website and their own portal login. Explore the getting-started guide or visit the Help Centre.",
+    "tags": [
+      "Premiers pas"
+    ],
+    "phrasings": [
+      "Create your school account and sign in",
+      "comment create your school account and sign in",
+      "aide pour create your school account and sign in"
+    ],
+    "keywords": [
+      "register",
+      "account",
+      "activate",
+      "sign",
+      "login",
+      "workspace"
+    ],
+    "related": [],
+    "source": {
+      "title": "Create your school account and sign in",
+      "url": "/docs/getting-started/create-account-and-sign-in"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "health-records-and-clinic",
+    "category": "health",
+    "question": "Keep student health records and clinic visits",
+    "answer": "Keep a medical profile with blood group, allergies, chronic conditions and immunisations, then log clinic visits with vitals, treatment and status. Prescriptions can link to inventory stock. Explore health records or read the health guide.",
+    "tags": [
+      "Santé"
+    ],
+    "phrasings": [
+      "Keep student health records and clinic visits",
+      "comment keep student health records and clinic visits",
+      "aide pour keep student health records and clinic visits"
+    ],
+    "keywords": [
+      "health",
+      "medical",
+      "clinic",
+      "allergies",
+      "immunisations",
+      "visits"
+    ],
+    "related": [],
+    "source": {
+      "title": "Keep student health records and clinic visits",
+      "url": "/docs/health/health-records-and-clinic"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "attendance-and-leave",
+    "category": "hr",
+    "question": "Track staff attendance and leave",
+    "answer": "Record daily staff attendance with status, times and method, and manage leave requests with approval. Leave types carry maximum days per year, keeping payroll and absence records accurate. Explore HR and payroll or read the attendance guide.",
+    "tags": [
+      "RH"
+    ],
+    "phrasings": [
+      "Track staff attendance and leave",
+      "comment track staff attendance and leave",
+      "aide pour track staff attendance and leave"
+    ],
+    "keywords": [
+      "attendance",
+      "leave",
+      "staff",
+      "absence",
+      "requests"
+    ],
+    "related": [],
+    "source": {
+      "title": "Track staff attendance and leave",
+      "url": "/docs/hr/attendance-and-leave"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "employees-and-directory",
+    "category": "hr",
+    "question": "Add and manage staff records",
+    "answer": "Add staff through a six-step wizard covering personal, employment, salary, family, health and custom fields. Search, filter, change status, promote and assign assets without losing history. Explore HR or read the staff directory guide.",
+    "tags": [
+      "RH"
+    ],
+    "phrasings": [
+      "Add and manage staff records",
+      "comment add and manage staff records",
+      "aide pour add and manage staff records"
+    ],
+    "keywords": [
+      "employees",
+      "staff",
+      "directory",
+      "roles",
+      "assets"
+    ],
+    "related": [],
+    "source": {
+      "title": "Add and manage staff records",
+      "url": "/docs/hr/employees-and-directory"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "importing-staff-from-spreadsheet",
+    "category": "hr",
+    "question": "Import staff from a spreadsheet",
+    "answer": "Download the employee template, fill the required columns and upload it. Staff are matched by National ID, so re-uploading updates existing records instead of creating duplicates. Explore HR or read the import guide.",
+    "tags": [
+      "RH"
+    ],
+    "phrasings": [
+      "Import staff from a spreadsheet",
+      "comment import staff from a spreadsheet",
+      "aide pour import staff from a spreadsheet"
+    ],
+    "keywords": [
+      "import",
+      "staff",
+      "spreadsheet",
+      "csv",
+      "excel",
+      "employees"
+    ],
+    "related": [],
+    "source": {
+      "title": "Import staff from a spreadsheet",
+      "url": "/docs/hr/importing-staff-from-spreadsheet"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "payroll-and-compensation",
+    "category": "hr",
+    "question": "Run payroll and manage compensation",
+    "answer": "Define salary grades, create a payroll period, calculate and populate salaries, review the ledger, then approve and deduct. Staff loans are deducted automatically until cleared. Explore HR or read the payroll guide.",
+    "tags": [
+      "RH",
+      "Finance"
+    ],
+    "phrasings": [
+      "Run payroll and manage compensation",
+      "comment run payroll and manage compensation",
+      "aide pour run payroll and manage compensation"
+    ],
+    "keywords": [
+      "payroll",
+      "salary",
+      "grades",
+      "deductions",
+      "loans"
+    ],
+    "related": [],
+    "source": {
+      "title": "Run payroll and manage compensation",
+      "url": "/docs/hr/payroll-and-compensation"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "stock-and-procurement",
+    "category": "inventory",
+    "question": "Stock, procurement and fixed assets",
+    "answer": "Manage inventory items, locations, issuance and stock adjustments, then move procurement requests to purchase orders and goods received. Fixed assets are tracked separately for audits and maintenance. Explore inventory or read the stock guide.",
+    "tags": [
+      "Inventaire"
+    ],
+    "phrasings": [
+      "Stock, procurement and fixed assets",
+      "comment stock, procurement and fixed assets",
+      "aide pour stock, procurement and fixed assets"
+    ],
+    "keywords": [
+      "stock",
+      "inventory",
+      "procurement",
+      "assets",
+      "suppliers"
+    ],
+    "related": [],
+    "source": {
+      "title": "Stock, procurement and fixed assets",
+      "url": "/docs/inventory/stock-and-procurement"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "library-catalogue-and-circulation",
+    "category": "library",
+    "question": "Run the library catalogue and circulation",
+    "answer": "Catalogue books and eResources, issue available copies to students or staff, and track returns and overdue loans. Barcodes make issuing and returning faster and more accurate. Explore the library module or read the library guide.",
+    "tags": [
+      "Library"
+    ],
+    "phrasings": [
+      "Run the library catalogue and circulation",
+      "comment run the library catalogue and circulation",
+      "aide pour run the library catalogue and circulation"
+    ],
+    "keywords": [
+      "library",
+      "books",
+      "catalogue",
+      "issue",
+      "returns",
+      "overdue"
+    ],
+    "related": [],
+    "source": {
+      "title": "Run the library catalogue and circulation",
+      "url": "/docs/library/library-catalogue-and-circulation"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "homework-and-lessons",
+    "category": "lms",
+    "question": "Set homework and run online lessons",
+    "answer": "Post homework with title, description, due date, files and YouTube links for a class stream and subject. Learners see it in their portal and teachers track submissions. Explore the LMS or read the homework guide.",
+    "tags": [
+      "LMS"
+    ],
+    "phrasings": [
+      "Set homework and run online lessons",
+      "comment set homework and run online lessons",
+      "aide pour set homework and run online lessons"
+    ],
+    "keywords": [
+      "homework",
+      "lessons",
+      "lms",
+      "submissions",
+      "students"
+    ],
+    "related": [],
+    "source": {
+      "title": "Set homework and run online lessons",
+      "url": "/docs/lms/homework-and-lessons"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "reporting-and-analytics",
+    "category": "reports",
+    "question": "Build reports and explore analytics",
+    "answer": "Use the dashboard for daily headline figures, the report generator for reusable reports in PDF, CSV, Excel or JSON, and the analytics explorer for one-off questions. Save templates for recurring term reports. Explore reports or read the reporting guide.",
+    "tags": [
+      "Rapports"
+    ],
+    "phrasings": [
+      "Build reports and explore analytics",
+      "comment build reports and explore analytics",
+      "aide pour build reports and explore analytics"
+    ],
+    "keywords": [
+      "reports",
+      "analytics",
+      "dashboard",
+      "charts",
+      "export"
+    ],
+    "related": [],
+    "source": {
+      "title": "Build reports and explore analytics",
+      "url": "/docs/reports/reporting-and-analytics"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "enrol-a-student",
+    "category": "students",
+    "question": "Enrol a student directly",
+    "answer": "You can enrol a walk-in or transfer student directly without an online application. Before you start, make sure the academic year and form/grade already exist.\n\n1. Open Students → Students.\n2. Click Create.\n3. Enter the student's names, gender, date of birth and contact details.\n4. In the enrolment section, choose the Academic Year, Form/Grade and Stream/Class.\n5. Save. The student appears in the students table with the current placement.\n\nIf you enter an email address, Kairo CORE creates a parent/student portal account and sends an activation link. If you leave it blank, no portal account is created; you can add the email later by editing the student. Next, you can design an ID card or create the fee invoice. Explore the Students module or read the full enrolment guide.",
+    "tags": [
+      "Students"
+    ],
+    "phrasings": [
+      "Enrol a student directly",
+      "comment enrol a student directly",
+      "aide pour enrol a student directly"
+    ],
+    "keywords": [
+      "enrol",
+      "student",
+      "admission",
+      "form",
+      "stream",
+      "portal"
+    ],
+    "related": [],
+    "source": {
+      "title": "Enrol a student directly",
+      "url": "/docs/students/enrol-a-student"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "id-cards",
+    "category": "students",
+    "question": "Design and print student ID cards",
+    "answer": "Kairo CORE can design and print student ID cards for one learner or a whole class.\n\n1. Open Students → ID Card Templates and click Create.\n2. Choose the target cohort and theme, then toggle the elements you want: school header, logo, photo, name, class, student ID, expiry date, QR code and barcode.\n3. Save the template.\n4. To print one card, open Students → Students and click Print ID on the student's row.\n5. To print a batch, open ID Card Templates → Bulk Print ID Cards, choose the template and cohort, then print.\n\nPrint at 100% scale on card stock so the layout matches the designer. Explore the Students module or read the ID card guide.",
+    "tags": [
+      "Students"
+    ],
+    "phrasings": [
+      "Design and print student ID cards",
+      "comment design and print student id cards",
+      "aide pour design and print student id cards"
+    ],
+    "keywords": [
+      "id",
+      "cards",
+      "template",
+      "print",
+      "students"
+    ],
+    "related": [],
+    "source": {
+      "title": "Design and print student ID cards",
+      "url": "/docs/students/id-cards"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "student-records",
+    "category": "students",
+    "question": "Manage student records",
+    "answer": "Use Students as the single source of truth for every learner.\n\n1. Open Students and search by name, admission number or student ID, or filter by Form/Grade.\n2. Click a student row to open their profile.\n3. Review personal details and current enrolment: academic year, form and stream.\n4. Click Edit to update contact details, photo or placement.\n\nTo move a student to another form or stream, edit the enrolment fields rather than creating a new record. Keep historical students instead of deleting them so their fees, attendance and report cards stay linked. Explore the Students module or read the full records guide.",
+    "tags": [
+      "Students"
+    ],
+    "phrasings": [
+      "Manage student records",
+      "comment manage student records",
+      "aide pour manage student records"
+    ],
+    "keywords": [
+      "student",
+      "records",
+      "search",
+      "enrolment",
+      "edit"
+    ],
+    "related": [],
+    "source": {
+      "title": "Manage student records",
+      "url": "/docs/students/student-records"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "common-issues",
+    "category": "troubleshooting",
+    "question": "Troubleshooting common issues",
+    "answer": "Check sign-in URL, filters, enrolment, marks, announcement delivery and payment records first. If the issue remains, contact support through the platform website. Visit the Help Centre or read the troubleshooting guide.",
+    "tags": [
+      "Assistance"
+    ],
+    "phrasings": [
+      "Troubleshooting common issues",
+      "comment troubleshooting common issues",
+      "aide pour troubleshooting common issues"
+    ],
+    "keywords": [
+      "troubleshooting",
+      "login",
+      "students",
+      "reports",
+      "email",
+      "import"
+    ],
+    "related": [],
+    "source": {
+      "title": "Troubleshooting common issues",
+      "url": "/docs/troubleshooting/common-issues"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "school-website-cms",
+    "category": "website",
+    "question": "Build and publish your school website",
+    "answer": "Every school on Kairo CORE gets a public website managed from the same workspace.\n\n1. Open Website → Templates & Design → Templates & Design and choose or duplicate a template.\n2. Set the active template, fonts and brand colours.\n3. Open Pages to create or edit pages, set the slug, mark the homepage and publish.\n4. Use the Visual Editor or Content Manager to update headings, text, images and calls to action without breaking the layout.\n5. Check the site on desktop and phone, then publish.\n\nYour admissions page at /apply-online, contact details and announcements all live on this website. Explore the Website module or read the full website guide.",
+    "tags": [
+      "Site web"
+    ],
+    "phrasings": [
+      "Build and publish your school website",
+      "comment build and publish your school website",
+      "aide pour build and publish your school website"
+    ],
+    "keywords": [
+      "website",
+      "cms",
+      "template",
+      "pages",
+      "publish"
+    ],
+    "related": [],
+    "source": {
+      "title": "Build and publish your school website",
+      "url": "/docs/website/school-website-cms"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "staff-permissions",
+    "category": "administration",
+    "question": "Manage staff accounts and permissions",
+    "answer": "Create staff accounts, assign built-in roles or build custom roles with only the access each job needs. Review access when staff leave and use the audit log for accountability. Explore administration or read the permissions guide.",
+    "tags": [
+      "Administration"
+    ],
+    "phrasings": [
+      "Manage staff accounts and permissions",
+      "comment manage staff accounts and permissions",
+      "aide pour manage staff accounts and permissions"
+    ],
+    "keywords": [
+      "staff",
+      "permissions",
+      "roles",
+      "accounts",
+      "departments"
+    ],
+    "related": [],
+    "source": {
+      "title": "Manage staff accounts and permissions",
+      "url": "/docs/administration/staff-permissions"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "system-settings-and-subscription",
+    "category": "administration",
+    "question": "System settings and subscription",
+    "answer": "Brand the workspace, switch modules on or off, configure email, manage users and audit changes, and review plan, credits, invoices and renewal options. Explore administration or read the settings guide.",
+    "tags": [
+      "Administration"
+    ],
+    "phrasings": [
+      "System settings and subscription",
+      "comment system settings and subscription",
+      "aide pour system settings and subscription"
+    ],
+    "keywords": [
+      "settings",
+      "branding",
+      "modules",
+      "email",
+      "subscription",
+      "billing"
+    ],
+    "related": [],
+    "source": {
+      "title": "System settings and subscription",
+      "url": "/docs/administration/system-settings-and-subscription"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "cash-payments",
+    "category": "finance",
+    "question": "Can we record cash payments?",
+    "answer": "Yes. Open the invoice and use Record Payment, then choose cash as the method with amount, date and reference. The balance updates immediately and you can print a receipt. Explore finance or read the payments guide.",
+    "tags": [
+      "Finance",
+      "Paiements"
+    ],
+    "phrasings": [
+      "Can we record cash payments?",
+      "Can we record cash payments",
+      "comment can we record cash payments?",
+      "aide pour can we record cash payments?"
+    ],
+    "keywords": [
+      "cash",
+      "payment",
+      "record",
+      "invoice"
+    ],
+    "related": [
+      "recording-payments"
+    ],
+    "source": {
+      "title": "Record payments against invoices",
+      "url": "/docs/finance/recording-payments"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "ecocash-payments",
+    "category": "finance",
+    "question": "Can we record EcoCash payments?",
+    "answer": "Yes. Record EcoCash or mobile money payments against the invoice with the transaction ID and deposit account. Balances and receipts update immediately. Explore finance or read the payments guide.",
+    "tags": [
+      "Finance",
+      "Paiements"
+    ],
+    "phrasings": [
+      "Can we record EcoCash payments?",
+      "Can we record EcoCash payments",
+      "comment can we record ecocash payments?",
+      "aide pour can we record ecocash payments?"
+    ],
+    "keywords": [
+      "ecocash",
+      "mobile",
+      "money",
+      "payment",
+      "reference"
+    ],
+    "related": [
+      "recording-payments"
+    ],
+    "source": {
+      "title": "Record payments against invoices",
+      "url": "/docs/finance/recording-payments"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "bank-transfers",
+    "category": "finance",
+    "question": "Can we record bank transfer payments?",
+    "answer": "Yes. Record bank transfers against the invoice with the reference and deposit account. The balance updates and you can print a receipt or family statement. Explore finance or read the payments guide.",
+    "tags": [
+      "Finance",
+      "Paiements"
+    ],
+    "phrasings": [
+      "Can we record bank transfer payments?",
+      "Can we record bank transfer payments",
+      "comment can we record bank transfer payments?",
+      "aide pour can we record bank transfer payments?"
+    ],
+    "keywords": [
+      "bank",
+      "transfer",
+      "payment",
+      "reference"
+    ],
+    "related": [
+      "recording-payments"
+    ],
+    "source": {
+      "title": "Record payments against invoices",
+      "url": "/docs/finance/recording-payments"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "print-receipts",
+    "category": "finance",
+    "question": "Can we print payment receipts?",
+    "answer": "Yes. After recording a payment, click Print Receipt on the invoice row, or use Print Selected Receipts for a batch. Receipts carry your branding and a security checksum. Explore finance or read the payments guide.",
+    "tags": [
+      "Finance",
+      "Paiements"
+    ],
+    "phrasings": [
+      "Can we print payment receipts?",
+      "Can we print payment receipts",
+      "comment can we print payment receipts?",
+      "aide pour can we print payment receipts?"
+    ],
+    "keywords": [
+      "receipt",
+      "print",
+      "payment",
+      "proof"
+    ],
+    "related": [
+      "recording-payments"
+    ],
+    "source": {
+      "title": "Record payments against invoices",
+      "url": "/docs/finance/recording-payments"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "multi-currency",
+    "category": "finance",
+    "question": "Does billing support multiple currencies?",
+    "answer": "Yes. Kairo CORE supports multiple currencies for billing, payments and balances, so schools can bill in the currencies they use. Explore finance or read the billing guide.",
+    "tags": [
+      "Finance"
+    ],
+    "phrasings": [
+      "Does billing support multiple currencies?",
+      "Does billing support multiple currencies",
+      "comment does billing support multiple currencies?",
+      "aide pour does billing support multiple currencies?"
+    ],
+    "keywords": [
+      "currency",
+      "currencies",
+      "billing",
+      "fees"
+    ],
+    "related": [
+      "fee-structures-and-invoicing"
+    ],
+    "source": {
+      "title": "Record payments against invoices",
+      "url": "/docs/finance/recording-payments"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "parent-portal",
+    "category": "students",
+    "question": "Do parents get a portal?",
+    "answer": "Yes. When you enrol a student and enter an email address, Kairo CORE automatically creates a parent/student portal account and emails an activation link.\n\nIf no email was entered, the portal account is not created; edit the student later and add the email to trigger it. Families use the school's public website and their own login; staff use the workspace.\n\nFrom the portal, parents can see the information you publish, such as fees, attendance and results. Explore the parent and student portal features or read the enrolment guide.",
+    "tags": [
+      "Students",
+      "Parents"
+    ],
+    "phrasings": [
+      "Do parents get a portal?",
+      "Do parents get a portal",
+      "comment do parents get a portal?",
+      "aide pour do parents get a portal?"
+    ],
+    "keywords": [
+      "parent",
+      "portal",
+      "account",
+      "email",
+      "activation"
+    ],
+    "related": [
+      "enrol-a-student"
+    ],
+    "source": {
+      "title": "Enrol a student directly",
+      "url": "/docs/students/enrol-a-student"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "admit-student",
+    "category": "admissions",
+    "question": "How do I admit an applicant?",
+    "answer": "Review first, then admit from the application so the student record is created automatically.\n\n1. Open Admissions → Applications.\n2. Open the application and check the submission and uploaded documents.\n3. Use the admit action on the application.\n4. Confirm the academic year, form and stream carried over to the new student record.\n5. Raise the fee invoice under Finance → Invoices.\n\nApplications move through submitted, under review and admitted, or rejected, so always open the full record rather than relying on the list colour. Explore the Admissions module or read the full guide.",
+    "tags": [
+      "Admissions"
+    ],
+    "phrasings": [
+      "How do I admit an applicant?",
+      "How do I admit an applicant",
+      "comment how do i admit an applicant?",
+      "aide pour how do i admit an applicant?"
+    ],
+    "keywords": [
+      "admit",
+      "applicant",
+      "application",
+      "student",
+      "record"
+    ],
+    "related": [
+      "online-applications"
+    ],
+    "source": {
+      "title": "Receive and process online applications",
+      "url": "/docs/admissions/online-applications"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "marks-entry",
+    "category": "exams",
+    "question": "How do I capture marks?",
+    "answer": "Capture marks from one table, or load a whole class at once.\n\n1. Open Exams & Grading → Grading & Marks Management → Marks Entry.\n2. Choose the class and subject.\n3. Type marks directly in the table, or use Populate to load every learner in that class and subject.\n4. Save as you go; marks remain editable until the related report is published.\n5. Use Performance Analytics to check averages and outliers before generating reports.\n\nDigital assessments created in Kairo CORE can feed marks in without retyping. Explore the Exams module or read the full marks guide.",
+    "tags": [
+      "Examens"
+    ],
+    "phrasings": [
+      "How do I capture marks?",
+      "How do I capture marks",
+      "comment how do i capture marks?",
+      "aide pour how do i capture marks?"
+    ],
+    "keywords": [
+      "marks",
+      "entry",
+      "capture",
+      "populate",
+      "assessment"
+    ],
+    "related": [
+      "assessments-and-marks"
+    ],
+    "source": {
+      "title": "Set up assessments and capture marks",
+      "url": "/docs/exams/assessments-and-marks"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "report-remarks",
+    "category": "exams",
+    "question": "Can I add remarks to report cards?",
+    "answer": "Yes. Kairo CORE supports remarks at several levels.\n\n1. Open Exams & Grading → Reports & Academic Publishing → Report Cards.\n2. Use Add Class Teacher Remarks to apply one observation across a class stream.\n3. Add Headmaster Remarks per report.\n4. Add per-subject remarks to comment on individual subject lines.\n5. Record outstanding achievements or competency ratings where your school uses them.\n\nRemarks can be edited while a report is still in Draft. Explore the Exams module or read the full report card guide.",
+    "tags": [
+      "Examens",
+      "Rapports"
+    ],
+    "phrasings": [
+      "Can I add remarks to report cards?",
+      "Can I add remarks to report cards",
+      "comment can i add remarks to report cards?",
+      "aide pour can i add remarks to report cards?"
+    ],
+    "keywords": [
+      "remarks",
+      "report",
+      "card",
+      "comment"
+    ],
+    "related": [
+      "report-cards"
+    ],
+    "source": {
+      "title": "Produce and publish report cards",
+      "url": "/docs/exams/report-cards"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "bulk-print-reports",
+    "category": "exams",
+    "question": "Can I print report cards in bulk?",
+    "answer": "Yes. Open Exams & Grading → Reports & Academic Publishing → Report Cards and set the table filters to the class, term or stream you need.\n\n• Bulk Print Reports prints every report matching the filters as a single combined PDF, best for a whole class.\n• Choose the ZIP option to download individual PDFs instead.\n• Print Selected prints only the ticked rows.\n\nPublish the reports before printing so families and the printed copies use the approved version. Explore the Exams module or read the full guide.",
+    "tags": [
+      "Examens",
+      "Rapports"
+    ],
+    "phrasings": [
+      "Can I print report cards in bulk?",
+      "Can I print report cards in bulk",
+      "comment can i print report cards in bulk?",
+      "aide pour can i print report cards in bulk?"
+    ],
+    "keywords": [
+      "bulk",
+      "print",
+      "report",
+      "cards",
+      "pdf"
+    ],
+    "related": [
+      "report-cards"
+    ],
+    "source": {
+      "title": "Produce and publish report cards",
+      "url": "/docs/exams/report-cards"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "out-pass",
+    "category": "boarding",
+    "question": "How do I approve a boarding out pass?",
+    "answer": "Open Boarding & Welfare -> Welfare & Care -> Out Passes and create a pass with the student, hostel, type, expected departure and return times and reason. Dispatch an OTP to the parent, then verify the six-digit code they read back; only then is the pass approved for the scanner checkpoint. Explore boarding management or read the boarding guide.",
+    "tags": [
+      "Internat"
+    ],
+    "phrasings": [
+      "How do I approve a boarding out pass?",
+      "How do I approve a boarding out pass",
+      "comment how do i approve a boarding out pass?",
+      "aide pour how do i approve a boarding out pass?"
+    ],
+    "keywords": [
+      "out",
+      "pass",
+      "boarding",
+      "otp",
+      "approve"
+    ],
+    "related": [
+      "boarding-and-welfare"
+    ],
+    "source": {
+      "title": "Manage boarding and student welfare",
+      "url": "/docs/boarding/boarding-and-welfare"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "clinic-visit",
+    "category": "health",
+    "question": "How do I log a clinic visit?",
+    "answer": "Open Health & Safety -> Health Records -> Clinic Visits, choose the student, record complaint, vitals, symptoms, diagnosis and treatment, then set status from checked in to discharged or referred. Explore health records or read the health guide.",
+    "tags": [
+      "Santé"
+    ],
+    "phrasings": [
+      "How do I log a clinic visit?",
+      "How do I log a clinic visit",
+      "comment how do i log a clinic visit?",
+      "aide pour how do i log a clinic visit?"
+    ],
+    "keywords": [
+      "clinic",
+      "visit",
+      "vitals",
+      "treatment",
+      "status"
+    ],
+    "related": [
+      "health-records-and-clinic"
+    ],
+    "source": {
+      "title": "Keep student health records and clinic visits",
+      "url": "/docs/health/health-records-and-clinic"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "announcement-email",
+    "category": "communication",
+    "question": "Can announcements be sent by email?",
+    "answer": "Yes. Choose Email only or System and Email as the delivery channel when creating the announcement. Check that the audience includes the recipients and that the school email settings are configured. Explore communications or read the announcements guide.",
+    "tags": [
+      "Communication"
+    ],
+    "phrasings": [
+      "Can announcements be sent by email?",
+      "Can announcements be sent by email",
+      "comment can announcements be sent by email?",
+      "aide pour can announcements be sent by email?"
+    ],
+    "keywords": [
+      "announcement",
+      "email",
+      "delivery",
+      "channel"
+    ],
+    "related": [
+      "announcements"
+    ],
+    "source": {
+      "title": "Send announcements to staff and families",
+      "url": "/docs/communication/announcements"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "homework-due-date",
+    "category": "lms",
+    "question": "Can homework have a due date?",
+    "answer": "Yes. Set a due date when creating homework so overdue work is easy to spot in the list. Explore the LMS or read the homework guide.",
+    "tags": [
+      "LMS"
+    ],
+    "phrasings": [
+      "Can homework have a due date?",
+      "Can homework have a due date",
+      "comment can homework have a due date?",
+      "aide pour can homework have a due date?"
+    ],
+    "keywords": [
+      "homework",
+      "due",
+      "date",
+      "lms"
+    ],
+    "related": [
+      "homework-and-lessons"
+    ],
+    "source": {
+      "title": "Set homework and run online lessons",
+      "url": "/docs/lms/homework-and-lessons"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "report-generator",
+    "category": "reports",
+    "question": "Can I build custom reports?",
+    "answer": "Yes. Build custom reports from one or more datasets, choose columns, joins, filters, calculations, sorting and charts, then generate in PDF, CSV, Excel, JSON, print or clipboard formats. Explore reports or read the reporting guide.",
+    "tags": [
+      "Rapports"
+    ],
+    "phrasings": [
+      "Can I build custom reports?",
+      "Can I build custom reports",
+      "comment can i build custom reports?",
+      "aide pour can i build custom reports?"
+    ],
+    "keywords": [
+      "report",
+      "generator",
+      "custom",
+      "analytics",
+      "export"
+    ],
+    "related": [
+      "reporting-and-analytics"
+    ],
+    "source": {
+      "title": "Build reports and explore analytics",
+      "url": "/docs/reports/reporting-and-analytics"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "reset-password",
+    "category": "troubleshooting",
+    "question": "How do I reset my password?",
+    "answer": "Use Forgot password on the login page to reset. If the activation email never arrived, check spam and ask an administrator to resend it from User Accounts. Visit the Help Centre or read the troubleshooting guide.",
+    "tags": [
+      "Assistance",
+      "Login"
+    ],
+    "phrasings": [
+      "How do I reset my password?",
+      "How do I reset my password",
+      "comment how do i reset my password?",
+      "aide pour how do i reset my password?"
+    ],
+    "keywords": [
+      "password",
+      "reset",
+      "forgot",
+      "login",
+      "activation",
+      "email"
+    ],
+    "related": [
+      "common-issues"
+    ],
+    "source": {
+      "title": "Troubleshooting common issues",
+      "url": "/docs/troubleshooting/common-issues"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "create-academic-year",
+    "category": "academics",
+    "question": "How do I create an academic year?",
+    "answer": "Academic years are the first thing to create because students, fees and assessments are all enrolled or captured into a year.\n\n1. Open Academics → Setup & Structure → Academic Years.\n2. Click Create.\n3. Enter the year name, for example 2026, and add its terms or semesters.\n4. Save.\n\nRepeat for each year you need. Set the current one as active before enrolling students, then move on to forms/grades and streams. Explore the Academics module or see the full academic setup guide.",
+    "tags": [
+      "Scolarité",
+      "Configuration"
+    ],
+    "phrasings": [
+      "How do I create an academic year?",
+      "How do I create an academic year",
+      "comment how do i create an academic year?",
+      "aide pour how do i create an academic year?"
+    ],
+    "keywords": [
+      "academic",
+      "year",
+      "create",
+      "terms",
+      "setup"
+    ],
+    "related": [
+      "academic-structure"
+    ],
+    "source": {
+      "title": "Set up your academic structure",
+      "url": "/docs/academics/academic-structure"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "sign-in",
+    "category": "getting-started",
+    "question": "How do I sign in?",
+    "answer": "Go to /login, enter your email and password, and you will land on your school Dashboard.\n\nIf you have not activated your account yet, open the activation email or go to /activate-account and enter the code. If the link expired, request a fresh code on the same page.\n\nUse the workspace URL for staff; students and parents use their own portal login. Visit the Help Centre if you need help.",
+    "tags": [
+      "Premiers pas"
+    ],
+    "phrasings": [
+      "How do I sign in?",
+      "How do I sign in",
+      "comment how do i sign in?",
+      "aide pour how do i sign in?"
+    ],
+    "keywords": [
+      "sign",
+      "in",
+      "login",
+      "workspace",
+      "password"
+    ],
+    "related": [
+      "create-account-and-sign-in"
+    ],
+    "source": {
+      "title": "Create your school account and sign in",
+      "url": "/docs/getting-started/create-account-and-sign-in"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "find-help",
+    "category": "troubleshooting",
+    "question": "Where can I find help?",
+    "answer": "Use the Help Centre for step-by-step guides, the in-app assistant for quick answers, or contact the team through the platform website. Visit the Help Centre or contact us.",
+    "tags": [
+      "Assistance"
+    ],
+    "phrasings": [
+      "Where can I find help?",
+      "Where can I find help",
+      "comment where can i find help?",
+      "aide pour where can i find help?"
+    ],
+    "keywords": [
+      "help",
+      "support",
+      "docs",
+      "guide",
+      "contact"
+    ],
+    "related": [
+      "common-issues"
+    ],
+    "source": {
+      "title": "Troubleshooting common issues",
+      "url": "/docs/troubleshooting/common-issues"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "smalltalk-greeting",
+    "category": "smalltalk",
+    "question": "Hello",
+    "answer": "Hi! I can help with enrolment, academics, fees, reports, attendance, staff, boarding, health, library, website and more. Ask a question or explore the features page.",
+    "tags": [
+      "Discussion"
+    ],
+    "phrasings": [
+      "Hello",
+      "comment hello",
+      "aide pour hello"
+    ],
+    "keywords": [
+      "hello",
+      "hi",
+      "hey",
+      "greetings"
+    ],
+    "related": [],
+    "source": {
+      "title": "Kairo CORE website",
+      "url": "https://kairo.co.zw/"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "smalltalk-thanks",
+    "category": "smalltalk",
+    "question": "Thank you",
+    "answer": "You're welcome. Ask another question any time, or explore the features page to see what Kairo CORE can do for your school.",
+    "tags": [
+      "Discussion"
+    ],
+    "phrasings": [
+      "Thank you",
+      "comment thank you",
+      "aide pour thank you"
+    ],
+    "keywords": [
+      "thanks",
+      "thank",
+      "appreciate"
+    ],
+    "related": [],
+    "source": {
+      "title": "Kairo CORE website",
+      "url": "https://kairo.co.zw/"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "smalltalk-goodbye",
+    "category": "smalltalk",
+    "question": "Goodbye",
+    "answer": "Goodbye! Come back any time you need help, or book a demo to see Kairo CORE in action.",
+    "tags": [
+      "Discussion"
+    ],
+    "phrasings": [
+      "Goodbye",
+      "comment goodbye",
+      "aide pour goodbye"
+    ],
+    "keywords": [
+      "bye",
+      "goodbye",
+      "see",
+      "later"
+    ],
+    "related": [],
+    "source": {
+      "title": "Kairo CORE website",
+      "url": "https://kairo.co.zw/"
+    },
+    "needsOwnerAnswer": false
+  },
+  {
+    "id": "smalltalk-bot",
+    "category": "smalltalk",
+    "question": "Êtes-vous un bot ou une IA ?",
+    "answer": "Je suis l’assistant Kairo, une aide automatisée pour Kairo CORE. Je peux répondre aux questions courantes et vous orienter vers des guides détaillés ; contactez l’équipe pour toute question spécifique à votre école.",
+    "tags": [
+      "Discussion"
+    ],
+    "phrasings": [
+      "Êtes-vous un bot ou une IA ?",
+      "Êtes-vous un bot ou une IA",
+      "comment êtes-vous un bot ou une ia ?",
+      "aide pour êtes-vous un bot ou une ia ?"
+    ],
+    "keywords": [
+      "bot",
+      "ia",
+      "humain",
+      "assistant"
+    ],
+    "related": [],
+    "source": {
+      "title": "Kairo CORE website",
+      "url": "https://kairo.co.zw/"
+    },
+    "needsOwnerAnswer": false
+  }
+]

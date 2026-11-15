@@ -551,6 +551,17 @@ if (! function_exists('marketing_list_defaults')) {
                 ['question' => __('Will my team be trained?'), 'answer' => __('Yes. We set up your school, train your staff, and provide video tutorials, a help centre and dedicated support.')],
                 ['question' => __('Can we access it from any device?'), 'answer' => __('Yes. Kairo CORE is cloud-based, so you can use it from any device, anywhere.')],
             ],
+            'faq_suggestions' => [
+                ['question' => __('Is Kairo CORE built for my type of school?')],
+                ['question' => __('What does it cover?')],
+                ['question' => __('Is our data safe?')],
+                ['question' => __('Will my team be trained?')],
+                ['question' => __('Can we access it from any device?')],
+                ['question' => __('How long does setup take?')],
+                ['question' => __('Can parents see fees, attendance and results?')],
+                ['question' => __('Which payments can we record?')],
+                ['question' => __('How do I book a demo?')],
+            ],
             'contact_steps' => [
                 ['title' => __('Tell us about your school'), 'desc' => __('Share your school’s size and what you want to fix, whether that is fees, reports, your website or something else.')],
                 ['title' => __('We reply within 24 hours'), 'desc' => __('A school specialist answers your questions and suggests the modules that fit.')],
@@ -1698,7 +1709,8 @@ if (! function_exists('resolve_app_locale')) {
 
         $baseHost = parse_url(config('app.url'), PHP_URL_HOST);
         $currentHost = request()->getHost();
-        $isCentralDomain = $currentHost === $baseHost;
+        $centralHosts = array_values(array_unique(array_filter([$baseHost, 'lvh.me', 'localhost', '127.0.0.1'])));
+        $isCentralDomain = in_array($currentHost, $centralHosts, true);
 
         $isPlatform = str_starts_with(request()->path(), 'platform');
         $sessionKey = $isPlatform ? 'locale_admin' : 'locale';

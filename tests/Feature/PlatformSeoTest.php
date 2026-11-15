@@ -52,11 +52,11 @@ class PlatformSeoTest extends TestCase
         $response->assertSee(route('marketing.contact'), false);
     }
 
-    public function test_public_school_directory_is_not_available(): void
+    public function test_public_school_directory_is_available(): void
     {
-        $this->assertFalse(Route::has('marketing.schools'));
+        $this->assertTrue(Route::has('marketing.schools'));
 
-        $this->get('/schools')->assertNotFound();
+        $this->get('/schools')->assertOk();
     }
 
     public function test_robots_references_sitemap_and_blocks_private_areas(): void

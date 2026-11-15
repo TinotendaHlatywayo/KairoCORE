@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admissions · Kairo CORE</title>
+<style>
+:root{
+  --ink:#1e1b4b;--muted:#64668a;--line:#e6e7f5;--bg:#f6f7fd;--card:#fff;
+  --primary:#4338ca;--primary-2:#6366f1;--tint:#eef0ff;
+  --cyan:#06b6d4;--cyan-2:#0891b2;
+  --ok:#059669;--ok-bg:#d1fae5;--warn:#b45309;--warn-bg:#fef3c7;--info:#0369a1;--info-bg:#e0f2fe;--bad:#be123c;--bad-bg:#ffe4e6;
+  --r:16px;--shadow:0 1px 2px rgba(30,27,75,.05),0 8px 24px -12px rgba(67,56,202,.18);
+  --font:"Inter","Segoe UI",system-ui,-apple-system,Roboto,sans-serif;
+}
+*{box-sizing:border-box;margin:0}
+html{scroll-padding-top:90px}
+body{font-family:var(--font);background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5;min-height:100vh}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+:focus-visible{outline:2px solid var(--primary-2);outline-offset:2px}
+svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* layout */
+.app{display:grid;grid-template-columns:264px 1fr;min-height:100vh}
+.side{background:#fff;border-right:1px solid var(--line);padding:18px 14px;position:sticky;top:0;height:100vh;overflow:auto}
+.brand{display:flex;align-items:center;gap:10px;padding:4px 8px 16px}
+.logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--cyan));color:#fff;display:grid;place-items:center;font-weight:800}
+.brand b{display:block;line-height:1.2}.brand small{color:var(--muted);font-size:11px}
+.search{display:flex;align-items:center;gap:8px;border:1.5px solid #c7c9f5;border-radius:12px;padding:9px 12px;color:var(--muted);margin-bottom:14px;background:#fff}
+.search input{border:0;outline:0;flex:1;min-width:0;background:none}
+.grp{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:16px 10px 6px}
+.nav a{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;color:var(--ink);text-decoration:none;font-weight:500;margin-bottom:3px}
+.nav a:hover{background:var(--tint)}
+.nav a.on{background:var(--tint);color:var(--primary);box-shadow:inset 0 0 0 1px #c7c9f5;font-weight:600}
+.scrim{display:none}
+
+.main{min-width:0;display:flex;flex-direction:column}
+.top{position:sticky;top:0;z-index:20;background:rgba(246,247,253,.85);backdrop-filter:blur(10px);display:flex;align-items:center;gap:10px;padding:12px 28px;border-bottom:1px solid var(--line)}
+.ib{width:38px;height:38px;border-radius:12px;background:#fff;border:1px solid var(--line);display:grid;place-items:center;color:var(--primary)}
+.ib:hover{background:var(--tint)}
+.menu{display:none}
+.pill{margin:0 auto;display:flex;gap:8px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-weight:600;font-size:13px}
+.pill i{font-style:normal;background:var(--tint);color:var(--primary);border-radius:999px;padding:1px 8px;font-size:12px}
+.pill em{font-style:normal;background:#e11d48;color:#fff;border-radius:50%;width:20px;height:20px;display:grid;place-items:center;font-size:11px}
+.av{width:36px;height:36px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;font-weight:700;font-size:12px}
+.helpg{display:flex;gap:6px;align-items:center;border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 12px;font-weight:600;font-size:13px}
+
+.page{padding:28px;max-width:1280px;width:100%;margin:0 auto;flex:1}
+.hd{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.hico{width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,var(--primary),var(--primary-2));color:#fff;display:grid;place-items:center;box-shadow:0 10px 20px -8px rgba(67,56,202,.6)}
+.hico svg{width:26px;height:26px}
+h1{font-size:clamp(24px,3.4vw,32px);color:var(--primary);letter-spacing:-.02em;line-height:1.15}
+.hd p{color:var(--muted)}
+.hd .acts{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+
+.btn{display:inline-flex;align-items:center;gap:8px;border-radius:12px;padding:10px 16px;font-weight:600;transition:transform .15s,box-shadow .15s,background .15s}
+.btn:active{transform:translateY(1px)}
+.b-cyan{background:var(--cyan);color:#fff;box-shadow:0 8px 16px -8px var(--cyan-2)}.b-cyan:hover{background:var(--cyan-2)}
+.b-pri{background:var(--primary);color:#fff;box-shadow:0 8px 16px -8px var(--primary)}.b-pri:hover{background:#3730a3}
+.b-ghost{background:#fff;border:1px solid var(--line);color:var(--ink)}.b-ghost:hover{background:var(--tint)}
+
+.tabs{display:inline-flex;gap:4px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px;margin:22px 0}
+.tab{display:flex;gap:8px;align-items:center;padding:9px 18px;border-radius:999px;font-weight:600;color:var(--muted)}
+.tab[aria-selected=true]{background:var(--cyan);color:#fff;box-shadow:0 6px 14px -6px var(--cyan-2)}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.stat{padding:16px 18px;display:flex;gap:14px;align-items:center;cursor:pointer;text-align:left;transition:box-shadow .15s,border-color .15s}
+.stat:hover,.stat.on{border-color:#a5a8f3}
+.stat.on{box-shadow:0 0 0 3px var(--tint),var(--shadow)}
+.sico{width:44px;height:44px;border-radius:12px;display:grid;place-items:center}
+.stat b{display:block;font-size:26px;line-height:1.1}.stat span{color:var(--muted);font-size:13px}
+
+/* toolbar */
+.bar{display:flex;gap:10px;flex-wrap:wrap;padding:12px;align-items:center;margin-bottom:16px}
+.field{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:12px;padding:0 12px;background:#fff;flex:1;min-width:200px}
+.field:focus-within{border-color:var(--primary-2);box-shadow:0 0 0 3px var(--tint)}
+.field input{border:0;outline:0;flex:1;padding:10px 0;background:none;min-width:0}
+.sel{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 14px;font-weight:600;font-size:13px;color:var(--muted)}
+.chip[aria-pressed=true]{background:var(--tint);color:var(--primary);border-color:#a5a8f3}
+.seg{display:flex;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.seg button{padding:9px 12px;color:var(--muted);display:flex;gap:6px;align-items:center;font-weight:600}
+.seg button[aria-pressed=true]{background:var(--primary);color:#fff}
+
+/* applicants */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.app-card{padding:18px;position:relative;display:flex;flex-direction:column;gap:12px;overflow:hidden}
+.app-card:before{content:"";position:absolute;inset:0 0 auto;height:4px;background:var(--c,var(--primary-2))}
+.top-r{display:flex;justify-content:space-between;align-items:center}
+.badge{border-radius:999px;padding:3px 10px;font-size:11px;font-weight:700;letter-spacing:.03em}
+.s-enrolled{background:var(--ok-bg);color:var(--ok)}.s-pending{background:var(--warn-bg);color:var(--warn)}
+.s-review{background:var(--info-bg);color:var(--info)}.s-rejected{background:var(--bad-bg);color:var(--bad)}
+.ava{width:68px;height:68px;border-radius:50%;margin:0 auto;display:grid;place-items:center;font-weight:800;font-size:20px;color:var(--primary);background:var(--tint);box-shadow:0 0 0 3px #fff,0 0 0 5px var(--c,var(--primary-2))}
+.nm{text-align:center;font-weight:700;font-size:16px}
+.sub{text-align:center;color:var(--muted);font-size:12px;margin-top:-6px}
+.meta{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px;border-top:1px dashed var(--line);padding-top:12px}
+.meta small{display:block;color:var(--muted);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.meta span{font-weight:600;font-size:13px;word-break:break-word}
+.row-a{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:auto}
+.row-a button{border-radius:10px;padding:8px;font-weight:600;font-size:13px}
+.a1{background:var(--tint);color:var(--primary)}.a2{background:#fff;border:1px solid var(--line)!important}.a3{background:var(--info-bg);color:var(--info)}
+.row-a button:hover{filter:brightness(.96)}
+.list .grid{grid-template-columns:1fr}
+.list .app-card{flex-direction:row;align-items:center;flex-wrap:wrap;gap:16px}
+.list .app-card:before{inset:0 auto 0 0;width:4px;height:auto}
+.list .ava{margin:0;width:48px;height:48px;font-size:15px}
+.list .nm,.list .sub{text-align:left;margin:0}
+.list .meta{border:0;padding:0;grid-template-columns:repeat(4,auto);flex:1;gap:24px}
+.list .row-a{margin:0;width:260px}
+.list .top-r{order:9}
+.empty{padding:48px 20px;text-align:center;color:var(--muted)}
+.empty b{display:block;color:var(--ink);font-size:16px;margin-bottom:4px}
+.foot{display:flex;justify-content:space-between;align-items:center;padding:14px 4px;color:var(--muted)}
+
+/* settings */
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.sec{padding:0;overflow:hidden}
+.sec.full{grid-column:1/-1}
+.sh{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;gap:12px;align-items:flex-start}
+.sh .ico{width:36px;height:36px;border-radius:10px;background:var(--tint);color:var(--primary);display:grid;place-items:center}
+.sh h2{font-size:15px}.sh p{color:var(--muted);font-size:13px}
+.sb{padding:18px 20px;display:grid;gap:16px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+label.l{display:block;font-weight:600;font-size:13px;margin-bottom:6px}
+label.l i{color:#e11d48;font-style:normal}
+.in{width:100%;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff;transition:border-color .15s,box-shadow .15s}
+.in:focus{outline:0;border-color:var(--primary-2);box-shadow:0 0 0 3px var(--tint)}
+.in[aria-invalid=true]{border-color:#e11d48;box-shadow:0 0 0 3px var(--bad-bg)}
+textarea.in{resize:vertical;min-height:96px;line-height:1.55}
+.hint{color:var(--muted);font-size:12px;margin-top:6px;display:flex;justify-content:space-between;gap:8px}
+.err{color:#be123c;font-size:12px;margin-top:6px;display:none}
+.tg{display:flex;gap:14px;align-items:flex-start;justify-content:space-between}
+.tg b{display:block}.tg span{color:var(--muted);font-size:13px}
+.sw{position:relative;width:46px;height:26px;flex:none}
+.sw input{position:absolute;inset:0;opacity:0;cursor:pointer;margin:0;z-index:1}
+.sw i{position:absolute;inset:0;background:#cfd2ea;border-radius:999px;transition:background .2s}
+.sw i:after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;background:#fff;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s}
+.sw input:checked+i{background:var(--primary)}.sw input:checked+i:after{transform:translateX(20px)}
+.sw input:focus-visible+i{outline:2px solid var(--primary-2);outline-offset:2px}
+.ph{display:flex;gap:6px;flex-wrap:wrap}
+.ph button{background:var(--tint);color:var(--primary);border-radius:8px;padding:4px 10px;font:600 12px ui-monospace,Consolas,monospace}
+.ph button:hover{background:#dfe2ff}
+.prev{background:var(--bg);border:1px dashed #c7c9f5;border-radius:12px;padding:14px;white-space:pre-wrap;font-size:13px}
+.coll>summary{list-style:none;cursor:pointer}.coll>summary::-webkit-details-marker{display:none}
+.coll[open] .chev{transform:rotate(180deg)}.chev{margin-left:auto;transition:transform .2s;color:var(--muted)}
+.status{display:inline-flex;gap:6px;align-items:center;background:var(--warn-bg);color:var(--warn);border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700}
+
+.savebar{position:sticky;bottom:0;margin:22px -28px -28px;padding:14px 28px;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-top:1px solid var(--line);display:flex;gap:12px;align-items:center;justify-content:flex-end;z-index:10}
+.savebar .dirty{margin-right:auto;color:var(--muted);display:flex;gap:8px;align-items:center}
+.dot{width:8px;height:8px;border-radius:50%;background:#cbd0e6}.dirty.on .dot{background:#f59e0b}
+
+/* drawer + toast */
+.drawer{position:fixed;inset:0 0 0 auto;width:min(440px,100%);background:#fff;z-index:60;box-shadow:-20px 0 50px -20px rgba(30,27,75,.35);transform:translateX(105%);transition:transform .25s;display:flex;flex-direction:column}
+.drawer.open{transform:none}
+.drawer header{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.drawer .body{padding:20px;overflow:auto;display:grid;gap:18px}
+.dl{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.dl small{display:block;color:var(--muted);font-size:11px;font-weight:600;text-transform:uppercase}
+.steps{display:flex;gap:6px}.steps i{flex:1;height:6px;border-radius:99px;background:var(--line)}.steps i.d{background:var(--primary-2)}
+.overlay{position:fixed;inset:0;background:rgba(30,27,75,.35);z-index:50;opacity:0;pointer-events:none;transition:opacity .2s}
+.overlay.on{opacity:1;pointer-events:auto}
+.toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,30px);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;opacity:0;transition:.25s;z-index:80;pointer-events:none}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+[hidden]{display:none!important}
+
+@media(max-width:1100px){.stats{grid-template-columns:repeat(2,1fr)}.sgrid{grid-template-columns:1fr}}
+@media(max-width:860px){
+  .app{grid-template-columns:1fr}
+  .side{position:fixed;z-index:70;width:280px;transform:translateX(-105%);transition:transform .25s}
+  .side.open{transform:none}
+  .scrim{display:block;position:fixed;inset:0;background:rgba(30,27,75,.4);z-index:65;opacity:0;pointer-events:none;transition:.2s}
+  .scrim.on{opacity:1;pointer-events:auto}
+  .menu{display:grid}.pill{display:none}.helpg span{display:none}.top{padding:10px 16px}
+  .top .sp{margin-left:auto}
+  .page{padding:18px 16px}.savebar{margin:18px -16px -18px;padding:12px 16px}
+  .hd .acts{margin-left:0;width:100%}
+  .list .meta{grid-template-columns:1fr 1fr}.list .row-a{width:100%}
+}
+@media(max-width:560px){.stats{gap:10px}.stat{padding:12px;gap:10px}.stat b{font-size:22px}.sico{width:36px;height:36px}.two{grid-template-columns:1fr}.tabs{display:flex}.tab{flex:1;justify-content:center;padding:9px 8px}.savebar .btn{flex:1;justify-content:center}.savebar .dirty{display:none}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs>
+<symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h10M4 17h16"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+<symbol id="i-home" viewBox="0 0 24 24"><path d="m3 11 9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
+<symbol id="i-doc" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></symbol>
+<symbol id="i-id" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M6 16c.7-1.5 4.3-1.5 6 0M15 10h3M15 14h3"/></symbol>
+<symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.5 3.3-5.5 6.5-5.5s5.9 2 6.5 5.5M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c1.8.7 3 2.5 3.5 5.2"/></symbol>
+<symbol id="i-cap" viewBox="0 0 24 24"><path d="m2 9 10-5 10 5-10 5zM6 11.5V16c0 1.5 3 3 6 3s6-1.5 6-3v-4.5"/></symbol>
+<symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+<symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></symbol>
+<symbol id="i-trend" viewBox="0 0 24 24"><path d="m3 17 6-6 4 4 8-8M15 7h6v6"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+<symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+<symbol id="i-grid2" viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6"/><rect x="14" y="4" width="6" height="6"/><rect x="4" y="14" width="6" height="6"/><rect x="14" y="14" width="6" height="6"/></symbol>
+<symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+<symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+<symbol id="i-send" viewBox="0 0 24 24"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></symbol>
+</defs></svg>
+
+<div class="app">
+  <aside class="side" id="side" aria-label="Main navigation">
+    <div class="brand"><div class="logo">K</div><div><b>Tinway Academy</b><small>TINWAY-PRI</small></div></div>
+    <label class="search"><svg><use href="#i-search"/></svg><input placeholder="Search workspace…" aria-label="Search workspace"></label>
+    <nav class="nav">
+      <a href="#"><svg><use href="#i-home"/></svg>Dashboard</a>
+      <div class="grp">Admissions</div>
+      <a href="#" class="on" aria-current="page"><svg><use href="#i-doc"/></svg>Online Admissions</a>
+      <div class="grp">Students</div>
+      <a href="#"><svg><use href="#i-id"/></svg>ID Card Designer</a>
+      <a href="#"><svg><use href="#i-users"/></svg>Student Directory</a>
+      <div class="grp">Academics</div>
+      <a href="#"><svg><use href="#i-cap"/></svg>Academic Operations</a>
+      <a href="#"><svg><use href="#i-grid"/></svg>Setup &amp; Structure</a>
+      <a href="#"><svg><use href="#i-cal"/></svg>Timetables &amp; Teaching</a>
+      <a href="#"><svg><use href="#i-trend"/></svg>Progression</a>
+    </nav>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+
+  <div class="main">
+    <header class="top">
+      <button class="ib menu" id="menu" aria-label="Open menu"><svg><use href="#i-menu"/></svg></button>
+      <div class="pill"><svg><use href="#i-cal"/></svg>Nov 15 <i>07:37</i><em>5</em></div>
+      <span class="sp"></span>
+      <div class="av">PH</div>
+      <button class="helpg"><svg><use href="#i-doc"/></svg><span>Help Guide</span></button>
+    </header>
+
+    <main class="page">
+      <div class="hd">
+        <div class="hico"><svg><use href="#i-doc"/></svg></div>
+        <div><h1>Admissions</h1><p>Process applications and configure the admission pipeline.</p></div>
+        <div class="acts" id="acts"><button class="btn b-cyan" id="newApp"><svg><use href="#i-plus"/></svg>New application</button></div>
+      </div>
+
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" id="t-apps" aria-selected="true"><svg><use href="#i-file"/></svg>Applications</button>
+        <button class="tab" role="tab" id="t-set" aria-selected="false"><svg><use href="#i-gear"/></svg>Admission settings</button>
+      </div>
+
+      <!-- APPLICATIONS -->
+      <section id="apps">
+        <div class="stats" id="stats"></div>
+        <div class="card bar">
+          <label class="field"><svg><use href="#i-search"/></svg><input id="q" placeholder="Search by name, application no. or phone" aria-label="Search applications"></label>
+          <select class="sel" id="grade" aria-label="Grade"><option value="">All grades</option></select>
+          <div class="seg" role="group" aria-label="View">
+            <button id="vGrid" aria-pressed="true"><svg><use href="#i-grid2"/></svg>Grid</button>
+            <button id="vList" aria-pressed="false"><svg><use href="#i-list"/></svg>List</button>
+          </div>
+        </div>
+        <div class="chips" id="chips" style="margin-bottom:16px"></div>
+        <div id="results"></div>
+        <div class="foot"><span id="count"></span></div>
+      </section>
+
+      <!-- SETTINGS -->
+      <section id="settings" hidden>
+        <div class="sgrid">
+          <div class="card sec">
+            <div class="sh"><div class="ico"><svg><use href="#i-mail"/></svg></div><div><h2>Admission contact details</h2><p>Shown on the public school contact page.</p></div></div>
+            <div class="sb">
+              <div class="two">
+                <div><label class="l" for="email">Email address <i>*</i></label><input class="in" id="email" type="email" value="contact@fixture.test" data-req>
+                  <div class="err" id="e-email">Enter a valid email address.</div></div>
+                <div><label class="l" for="phone">Phone number <i>*</i></label><input class="in" id="phone" type="tel" value="+263771234567" data-req></div>
+              </div>
+              <p class="hint">Both are public. Confirmation emails go to the applicant’s registered email.</p>
+            </div>
+          </div>
+
+          <div class="card sec">
+            <div class="sh"><div class="ico"><svg><use href="#i-send"/></svg></div><div><h2>New application alerts</h2><p>Let your team act on applications quickly.</p></div></div>
+            <div class="sb"><div class="tg"><div><b>Email the contact address</b><span>Send an email for every new online application.</span></div>
+              <label class="sw"><input type="checkbox" checked aria-label="Email on new applications"><i></i></label></div></div>
+          </div>
+
+          <div class="card sec">
+            <div class="sh"><div class="ico"><svg><use href="#i-check"/></svg></div><div><h2>Application success popup</h2><p>Shown after an applicant submits, with their tracking reference.</p></div></div>
+            <div class="sb">
+              <div><label class="l" for="ptitle">Popup title <i>*</i></label><input class="in" id="ptitle" value="Application submitted!" maxlength="60" data-req></div>
+              <div><label class="l" for="pmsg">Popup message <i>*</i></label><textarea class="in" id="pmsg" maxlength="240" data-req>Your online application has been submitted successfully! Save your tracking reference below to monitor your application status.</textarea>
+                <div class="hint"><span>The tracking reference always appears below.</span><span id="pcount"></span></div></div>
+            </div>
+          </div>
+
+          <div style="display:grid;gap:18px">
+            <div class="card sec">
+              <div class="sh"><div class="ico"><svg><use href="#i-file"/></svg></div><div><h2>Supporting documents guidelines</h2><p>Shown above the upload area on the public form.</p></div></div>
+              <div class="sb"><textarea class="in" id="docs" aria-label="Supporting documents description" maxlength="300">Upload scanned copies (PDF, JPG or PNG, max 10MB each). Birth certificate is required; certificates or result slips are highly recommended for secondary level applications.</textarea>
+                <div class="hint"><span>Tell applicants what size, format and documents you need.</span><span id="dcount"></span></div></div>
+            </div>
+            <div class="card sec">
+              <div class="sh"><div class="ico"><svg><use href="#i-cap"/></svg></div><div><h2>Transfer letter</h2><p>For applicants joining outside entry levels (Grade 1, Form 1, Form 5).</p></div></div>
+              <div class="sb"><div class="tg"><div><b>Require a transfer letter for mid-level applicants</b><span>When off, the letter stays optional.</span></div>
+                <label class="sw"><input type="checkbox" checked aria-label="Require transfer letter"><i></i></label></div></div>
+            </div>
+          </div>
+
+          <div class="card sec full">
+            <div class="sh"><div class="ico"><svg><use href="#i-mail"/></svg></div><div><h2>Admission confirmation email</h2><p>Sent to the parent/guardian and student on enrolment, with their IDs and a password activation link.</p></div></div>
+            <div class="sb">
+              <div><label class="l" for="subj">Subject <i>*</i></label><input class="in" id="subj" value="Admission Confirmation — {school_name}" data-req></div>
+              <div><label class="l" for="body">Body <i>*</i></label>
+                <textarea class="in" id="body" style="min-height:200px" data-req>Dear Parent/Guardian,
+
+We are pleased to confirm that {student_name} has been offered admission to {school_name} for the {academic_year} academic year in {level}.
+
+Student ID Number: {student_id}
+Admission/Student Number: {admission_number}
+
+Welcome to our school community!
+
+Kind regards,</textarea></div>
+              <div><div class="hint" style="justify-content:flex-start;margin:0 0 8px">Click a placeholder to insert it at the cursor.</div>
+                <div class="ph" id="ph"></div></div>
+              <details class="coll"><summary class="btn b-ghost" style="width:fit-content"><svg><use href="#i-eye"/></svg>Preview with sample data<svg class="chev"><use href="#i-chev"/></svg></summary>
+                <div class="prev" id="prev" style="margin-top:12px"></div></details>
+            </div>
+          </div>
+
+          <details class="card sec full coll">
+            <summary class="sh"><div class="ico"><svg><use href="#i-send"/></svg></div><div><h2>Email configuration</h2><p>Sender used for confirmation emails and new-application alerts.</p></div><svg class="chev"><use href="#i-chev"/></svg></summary>
+            <div class="sb">
+              <div class="two" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
+                <div><label class="l" for="fn">From name</label><input class="in" id="fn" placeholder="Admissions Office"></div>
+                <div><label class="l" for="fe">From email address</label><input class="in" id="fe" type="email" placeholder="admissions@yourschool.edu"><div class="hint">The visible sender.</div></div>
+                <div><label class="l" for="mailer">Mailer</label><select class="in" id="mailer"><option>Platform transport</option><option>SMTP</option></select></div>
+                <div><label class="l" for="rn">Reply-to name</label><input class="in" id="rn" placeholder="Admissions Office"></div>
+                <div><label class="l" for="re">Reply-to email</label><input class="in" id="re" type="email"><div class="hint">Optional. Use when replies go to a different address.</div></div>
+                <div><label class="l">Sending</label><div class="tg" style="align-items:center"><span>Must be on to send email</span><label class="sw"><input type="checkbox" aria-label="Enable sending"><i></i></label></div></div>
+              </div>
+              <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><span class="status">Not configured</span>
+                <button class="btn b-cyan" type="button" id="testMail"><svg><use href="#i-send"/></svg>Send test email</button></div>
+            </div>
+          </details>
+        </div>
+        <div class="savebar"><span class="dirty" id="dirty"><i class="dot"></i><span id="dtxt">All changes saved</span></span>
+          <button class="btn b-ghost" id="reset">Discard</button><button class="btn b-cyan" id="save"><svg><use href="#i-check"/></svg>Save admission settings</button></div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<div class="overlay" id="ov"></div>
+<aside class="drawer" id="drawer" aria-label="Application details" aria-hidden="true">
+  <header><b id="dTitle">Application</b><button class="ib" id="dClose" aria-label="Close"><svg><use href="#i-x"/></svg></button></header>
+  <div class="body" id="dBody"></div>
+</aside>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const apps=[
+ {id:"APP-2026-SJFYNP",name:"Tatenda Sithole",g:"F",grade:"Grade 3",age:10,phone:"+263786366855",date:"2026-09-17",st:"enrolled",docs:3},
+ {id:"APP-2026-K4M2QX",name:"Rudo Moyo",g:"F",grade:"Grade 1",age:6,phone:"+263772001144",date:"2026-10-02",st:"pending",docs:1},
+ {id:"APP-2026-B9T7LC",name:"Tinotenda Ncube",g:"M",grade:"Grade 5",age:11,phone:"+263713998877",date:"2026-10-09",st:"review",docs:2},
+ {id:"APP-2026-Z3WD8R",name:"Farai Chikore",g:"M",grade:"Grade 3",age:9,phone:"+263782554433",date:"2026-10-21",st:"pending",docs:0},
+ {id:"APP-2026-H6PQ1V",name:"Nyasha Dube",g:"F",grade:"Grade 7",age:13,phone:"+263773110022",date:"2026-11-01",st:"rejected",docs:2},
+ {id:"APP-2026-M2XK5A",name:"Tapiwa Mutasa",g:"M",grade:"Grade 1",age:6,phone:"+263719445566",date:"2026-11-10",st:"review",docs:3}];
+const L={enrolled:"Enrolled",pending:"Pending",review:"In review",rejected:"Declined"};
+const C={enrolled:"#10b981",pending:"#f59e0b",review:"#0ea5e9",rejected:"#e11d48"};
+const fmt=d=>new Date(d).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});
+const ini=n=>n.split(" ").map(w=>w[0]).join("").slice(0,2);
+let f="all",view="grid";
+
+function stats(){
+  const n=k=>apps.filter(a=>a.st===k).length;
+  const d=[["all","Total applications",apps.length,"#eef0ff","#4338ca","i-users"],["pending","Pending",n("pending"),"#fef3c7","#b45309","i-clock"],["review","In review",n("review"),"#e0f2fe","#0369a1","i-eye"],["enrolled","Enrolled",n("enrolled"),"#d1fae5","#059669","i-check"]];
+  $("#stats").innerHTML=d.map(([k,l,v,bg,fg,ic])=>`<button class="card stat ${f===k?"on":""}" data-f="${k}"><span class="sico" style="background:${bg};color:${fg}"><svg><use href="#${ic}"/></svg></span><div><b>${v}</b><span>${l}</span></div></button>`).join("");
+  $("#chips").innerHTML=["all","pending","review","enrolled","rejected"].map(k=>`<button class="chip" data-f="${k}" aria-pressed="${f===k}">${k==="all"?"All statuses":L[k]}</button>`).join("");
+}
+function render(){
+  const q=$("#q").value.trim().toLowerCase(),g=$("#grade").value;
+  const r=apps.filter(a=>(f==="all"||a.st===f)&&(!g||a.grade===g)&&(!q||(a.name+a.id+a.phone).toLowerCase().includes(q)));
+  $("#results").className=view==="list"?"list":"";
+  $("#results").innerHTML=r.length?`<div class="grid">${r.map(a=>`<article class="card app-card" style="--c:${C[a.st]}">
+    <div class="top-r"><span class="badge s-${a.st}">${L[a.st]}</span><span class="badge" style="background:var(--tint);color:var(--primary)">${a.g==="F"?"Female":"Male"}</span></div>
+    <div class="ava">${ini(a.name)}</div><div><div class="nm">${a.name}</div><div class="sub">${a.grade}</div></div>
+    <div class="meta"><div><small>App no.</small><span>${a.id}</span></div><div><small>Applied</small><span>${fmt(a.date)}</span></div><div><small>Phone</small><span>${a.phone}</span></div><div><small>Age</small><span>${a.age} years</span></div></div>
+    <div class="row-a"><button class="a1" data-act="edit" data-id="${a.id}">Edit</button><button class="a2" data-act="view" data-id="${a.id}">View</button><button class="a3" data-act="view" data-id="${a.id}">Docs</button></div></article>`).join("")}</div>`
+  :`<div class="card empty"><b>No applications match</b>Try a different search, or clear the status and grade filters.</div>`;
+  $("#count").textContent=`Showing ${r.length} of ${apps.length} applications`;
+  stats();
+}
+$("#grade").innerHTML+=[...new Set(apps.map(a=>a.grade))].sort().map(g=>`<option>${g}</option>`).join("");
+document.addEventListener("click",e=>{
+  const fb=e.target.closest("[data-f]");if(fb){f=fb.dataset.f;render();}
+  const ab=e.target.closest("[data-act]");if(ab){openDrawer(apps.find(a=>a.id===ab.dataset.id),ab.dataset.act);}
+});
+$("#q").oninput=render;$("#grade").onchange=render;
+[["vGrid","grid"],["vList","list"]].forEach(([id,v])=>$("#"+id).onclick=()=>{view=v;$("#vGrid").setAttribute("aria-pressed",v==="grid");$("#vList").setAttribute("aria-pressed",v==="list");render();});
+
+function openDrawer(a,mode){
+  $("#dTitle").textContent=mode==="edit"?"Edit application":"Application details";
+  const dn=a.docs,steps=["Submitted","Documents","Review","Enrolled"],idx={pending:1,review:2,enrolled:4,rejected:2}[a.st];
+  $("#dBody").innerHTML=`<div style="display:flex;gap:14px;align-items:center"><div class="ava" style="margin:0;--c:${C[a.st]}">${ini(a.name)}</div><div><div class="nm" style="text-align:left">${a.name}</div><span class="badge s-${a.st}">${L[a.st]}</span></div></div>
+  <div><small style="color:var(--muted)">Progress</small><div class="steps" style="margin-top:6px">${steps.map((s,i)=>`<i class="${i<idx?"d":""}" title="${s}"></i>`).join("")}</div></div>
+  <div class="dl"><div><small>App no.</small>${a.id}</div><div><small>Applied</small>${fmt(a.date)}</div><div><small>Grade</small>${a.grade}</div><div><small>Age</small>${a.age} years</div><div><small>Phone</small>${a.phone}</div><div><small>Documents</small>${dn} uploaded</div></div>
+  ${mode==="edit"?`<div><label class="l">Applicant name</label><input class="in" value="${a.name}"></div><div><label class="l">Phone</label><input class="in" value="${a.phone}"></div>`:""}
+  <div style="display:flex;gap:8px;flex-wrap:wrap">${a.st==="enrolled"?"":`<button class="btn b-cyan" onclick="toast('${a.name} approved')"><svg><use href="#i-check"/></svg>Approve</button>`}${mode==="edit"?`<button class="btn b-pri" onclick="toast('Changes saved');closeDrawer()">Save changes</button>`:""}<button class="btn b-ghost" onclick="closeDrawer()">Close</button></div>`;
+  $("#drawer").classList.add("open");$("#ov").classList.add("on");$("#drawer").setAttribute("aria-hidden","false");
+}
+function closeDrawer(){$("#drawer").classList.remove("open");$("#ov").classList.remove("on");$("#drawer").setAttribute("aria-hidden","true");}
+$("#dClose").onclick=$("#ov").onclick=closeDrawer;
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeDrawer();nav(false);}});
+
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("on");clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("on"),2400);}
+$("#newApp").onclick=()=>toast("New application form would open here");
+
+/* tabs */
+function tab(s){
+  $("#apps").hidden=s;$("#settings").hidden=!s;$("#acts").hidden=s;
+  $("#t-apps").setAttribute("aria-selected",!s);$("#t-set").setAttribute("aria-selected",s);
+  location.hash=s?"settings":"applications";
+}
+$("#t-apps").onclick=()=>tab(false);$("#t-set").onclick=()=>tab(true);
+if(location.hash==="#settings")tab(true);
+
+/* mobile nav */
+function nav(o){$("#side").classList.toggle("open",o);$("#scrim").classList.toggle("on",o);}
+$("#menu").onclick=()=>nav(true);$("#scrim").onclick=()=>nav(false);
+
+/* settings */
+const fields=$$("#settings .in,#settings .sw input");
+const snap=()=>JSON.stringify(fields.map(x=>x.type==="checkbox"?x.checked:x.value));
+let base=snap();
+const marks=["{student_name}","{student_id}","{admission_number}","{school_name}","{academic_year}","{activation_url}","{hours}"];
+$("#ph").innerHTML=marks.map(m=>`<button type="button">${m}</button>`).join("");
+$("#ph").onclick=e=>{const b=e.target.closest("button");if(!b)return;const t=$("#body"),s=t.selectionStart??t.value.length;
+  t.setRangeText(b.textContent,s,t.selectionEnd??s,"end");t.focus();dirty();prev();};
+function prev(){
+  const d={student_name:"Tatenda Sithole",student_id:"R264284X",admission_number:"ADM-2026-014",school_name:"Tinway Academy",academic_year:"2027",level:"Grade 3",activation_url:"https://…/activate",hours:"48"};
+  const sub=s=>s.replace(/\{(\w+)\}/g,(m,k)=>d[k]??m);
+  $("#prev").textContent="Subject: "+sub($("#subj").value)+"\n\n"+sub($("#body").value);
+}
+function counts(){$("#pcount").textContent=$("#pmsg").value.length+" / 240";$("#dcount").textContent=$("#docs").value.length+" / 300";}
+function dirty(){
+  const d=snap()!==base;$("#dirty").classList.toggle("on",d);
+  $("#dtxt").textContent=d?"Unsaved changes":"All changes saved";counts();
+}
+fields.forEach(x=>x.addEventListener("input",()=>{dirty();prev();}));
+function valid(){
+  let ok=true;
+  $$("[data-req]").forEach(x=>{const bad=!x.value.trim()||(x.type==="email"&&!/^\S+@\S+\.\S+$/.test(x.value));x.setAttribute("aria-invalid",bad);if(bad){ok=false;}});
+  $("#e-email").style.display=$("#email").getAttribute("aria-invalid")==="true"?"block":"none";
+  return ok;
+}
+$("#save").onclick=()=>{if(!valid()){toast("Fix the highlighted fields to save");return;}base=snap();dirty();toast("Admission settings saved");};
+$("#reset").onclick=()=>{const v=JSON.parse(base);fields.forEach((x,i)=>x.type==="checkbox"?x.checked=v[i]:x.value=v[i]);$$("[aria-invalid]").forEach(x=>x.removeAttribute("aria-invalid"));dirty();prev();};
+$("#testMail").onclick=()=>toast($("#fe").value?"Test email sent to "+$("#fe").value:"Add a From email address first");
+counts();prev();render();
+</script>
+</body>
+</html>

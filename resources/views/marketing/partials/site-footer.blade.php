@@ -115,7 +115,6 @@
                 <div class="kf-faccent"></div>
                 <ul class="kf-flist">
                     <li><a href="{{ route('help.index') }}">{{ __('Help Centre') }}</a></li>
-                    <li><a href="{{ route('marketing.schools') }}">{{ __('School websites') }}</a></li>
                     <li><a href="{{ route('marketing.home') }}#start">{{ __('How it works') }}</a></li>
                     <li><a href="{{ route('help.index') }}">{{ __('Documentation') }}</a></li>
                     <li><a href="{{ route('marketing.home') }}#faq">{{ __('FAQ') }}</a></li>

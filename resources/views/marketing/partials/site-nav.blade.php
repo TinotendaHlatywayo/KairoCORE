@@ -49,7 +49,7 @@
                 </summary>
                 <div class="kf-menu-panel kf-lang-panel">
                     @foreach (supported_locales() as $code => $label)
-                        <a href="{{ route('marketing.language', $code) }}" @if(app()->getLocale() === $code) aria-current="true" @endif>
+                        <a href="{{ route('marketing.language', ['locale' => $code]) }}" data-switch-locale="{{ $code }}" @if(app()->getLocale() === $code) aria-current="true" @endif>
                             <span class="kf-lang-flag">{{ $code === 'en' ? '🇬🇧' : ($code === 'sn' ? '🇿🇼' : ($code === 'sw' ? '🇹🇿' : ($code === 'fr' ? '🇫🇷' : ($code === 'pt' ? '🇵🇹' : '🇪🇸')))) }}</span>
                             <span class="kf-lang-label">{{ $label }}</span>
                             <span class="kf-lang-code">{{ strtoupper($code) }}</span>
@@ -90,7 +90,7 @@
 
             <span class="kf-mobile-label">{{ __('Language') }}</span>
             @foreach (supported_locales() as $code => $label)
-                <a href="{{ route('marketing.language', $code) }}"><span>{{ $label }}</span><span>{{ strtoupper($code) }}</span></a>
+                <a href="{{ route('marketing.language', ['locale' => $code]) }}" data-switch-locale="{{ $code }}"><span>{{ $label }}</span><span>{{ strtoupper($code) }}</span></a>
             @endforeach
 
             <span class="kf-mobile-label">{{ __('Account') }}</span>
@@ -140,3 +140,24 @@
         <a href="{{ route('marketing.contact') }}#contact-form">{{ __('Book a demo') }} <span aria-hidden="true">→</span></a>
     </div>
 </div>
+
+<script>
+document.addEventListener('click', function (e) {
+    var link = e.target.closest('[data-switch-locale]');
+    if (!link) return;
+    e.preventDefault();
+    var url = link.getAttribute('href');
+    fetch(url, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        },
+        credentials: 'same-origin'
+    }).then(function () {
+        window.location.reload();
+    }).catch(function () {
+        window.location.reload();
+    });
+});
+</script>

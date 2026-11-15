@@ -46,8 +46,46 @@ use Modules\Timetables\Models\TimeSlot;
 use Modules\Timetables\Models\TimetableLesson;
 use Modules\Timetables\Models\TimetableTemplate;
 
-// 1. Root / Central Marketing & Registration Routing (lvh.me)
-Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
+// Language switcher: host-agnostic so it works on any central/local domain
+Route::get('/language/{locale}', function (Request $request, string $locale) {
+    $supported = ['en', 'sn', 'sw', 'fr', 'pt', 'es'];
+
+    if (! in_array($locale, $supported, true)) {
+        abort(404);
+    }
+
+    session(['locale' => $locale]);
+    session()->save();
+    app()->setLocale($locale);
+
+    if (auth()->check()) {
+        auth()->user()->forceFill(['locale' => $locale])->saveQuietly();
+    }
+
+    if ($request->expectsJson() || $request->ajax() || $request->wantsJson()) {
+        return response()->json(['ok' => true, 'locale' => $locale]);
+    }
+
+    $previous = url()->previous();
+    $host = parse_url($previous, PHP_URL_HOST);
+
+    if ($previous && $host === $request->getHost()) {
+        return redirect()->to($previous);
+    }
+
+    return redirect()->to('/');
+})->name('marketing.language');
+
+// 1. Root / Central Marketing & Registration Routing (central domains)
+$__baseHost = parse_url(config('app.url'), PHP_URL_HOST) ?: 'lvh.me';
+$__centralHosts = array_values(array_unique(array_filter([$__baseHost, 'lvh.me', 'localhost', '127.0.0.1'])));
+$__centralHostPattern = '^('.implode('|', array_map(static fn (string $h) => preg_quote($h, '#'), $__centralHosts)).')$';
+
+\Illuminate\Support\Facades\URL::defaults(array_merge(\Illuminate\Support\Facades\URL::getDefaultParameters(), ['__centralHost' => $__baseHost]));
+Route::domain('{__centralHost}')
+    ->where(['__centralHost' => $__centralHostPattern])
+    ->middleware([\App\Http\Middleware\SetRouteHostDefaults::class])
+    ->group(function () {
     Route::get('/', function () {
         return view('marketing.home', [
             'seoJsonLd' => [
@@ -56,21 +94,7 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
         ]);
     })->name('marketing.home');
 
-    Route::get('/language/{locale}', function (string $locale) {
-        $supported = ['en', 'sn', 'sw', 'fr', 'pt', 'es'];
-
-        if (! in_array($locale, $supported, true)) {
-            abort(404);
-        }
-
-        session(['locale' => $locale]);
-
-        if (auth()->check()) {
-            auth()->user()->forceFill(['locale' => $locale])->saveQuietly();
-        }
-
-        return redirect()->back();
-    })->name('marketing.language');
+    // moved below to be host-agnostic
 
     Route::get('/{key}.txt', function (string $key) {
         $indexNowKey = env('INDEXNOW_KEY', '5fa5d286335b4dd08128683307e2c0b0');
@@ -130,7 +154,7 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
             ."- Who it is for: School owners, administrators, teachers, parents, and students.\n"
             ."- Where it operates: Zimbabwe, Southern Africa, and globally.\n"
             ."- Key features: Admissions & enrolment, student information system, fees & billing (including Paynow where enabled), attendance, academics & grading, ZIMSEC & Cambridge-ready report cards, staff permissions, parent communication, and a custom public website per school.\n"
-            ."- How to register: [Register a school](".route('marketing.help.register').") or [Get started](".route('marketing.register').").\n\n"
+            ."- How to register: [Register a school](".route('marketing.help.register').").\n\n"
             ."## Public pages (crawlable)\n\n"
             ."- [Home]({$base})\n"
             .'- [Features]('.route('marketing.features').")\n"
@@ -227,17 +251,25 @@ Route::domain(parse_url(config('app.url'), PHP_URL_HOST))->group(function () {
             'changefreq' => 'weekly',
             'priority' => '0.7',
         ];
-        foreach (\Modules\CMS\Models\CmsWebsite::with('school')->where('is_template_site', false)->get() as $tenantWebsite) {
-            if (! $tenantWebsite->school || ! filled($tenantWebsite->school->subdomain)) {
-                continue;
+        // Tenant websites are optional for the central sitemap; an empty or
+        // unavailable CMS table must never break indexing of the platform.
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('cms_websites')) {
+                foreach (\Modules\CMS\Models\CmsWebsite::with('school')->where('is_template_site', false)->get() as $tenantWebsite) {
+                    if (! $tenantWebsite->school || ! filled($tenantWebsite->school->subdomain)) {
+                        continue;
+                    }
+                    $tenantHost = parse_url(config('app.url'), PHP_URL_HOST);
+                    $urls[] = [
+                        'loc' => 'https://'.$tenantWebsite->school->subdomain.'.'.$tenantHost.'/',
+                        'lastmod' => $tenantWebsite->updated_at?->toAtomString() ?? date('c'),
+                        'changefreq' => 'weekly',
+                        'priority' => '0.8',
+                    ];
+                }
             }
-            $tenantHost = parse_url(config('app.url'), PHP_URL_HOST);
-            $urls[] = [
-                'loc' => 'https://'.$tenantWebsite->school->subdomain.'.'.$tenantHost.'/',
-                'lastmod' => $tenantWebsite->updated_at?->toAtomString() ?? date('c'),
-                'changefreq' => 'weekly',
-                'priority' => '0.8',
-            ];
+        } catch (\Throwable $e) {
+            // Keep the sitemap available even if the CMS tables are absent.
         }
 
         // Every published Help Centre article gets its own sitemap entry.
@@ -771,7 +803,15 @@ Route::get('/locale/{locale}', function (string $locale) {
 // 2. Tenant Routing Group (Subdomains and Custom Domains like rujeko.lvh.me)
 // SetUserLocale runs after ResolveTenant here so the school's locale is applied
 // (it already ran in the web group with session/user context).
-Route::domain('{tenant}.'.parse_url(config('app.url'), PHP_URL_HOST))->middleware(['tenant', SetUserLocale::class])->group(function () {
+$__tenantBaseHost = parse_url(config('app.url'), PHP_URL_HOST) ?: 'lvh.me';
+$__tenantHosts = array_values(array_unique(array_filter([$__tenantBaseHost, 'lvh.me', 'localhost', '127.0.0.1'])));
+$__tenantHostPattern = '^('.implode('|', array_map(static fn (string $h) => preg_quote($h, '#'), $__tenantHosts)).')$';
+
+\Illuminate\Support\Facades\URL::defaults(array_merge(\Illuminate\Support\Facades\URL::getDefaultParameters(), ['__baseHost' => $__tenantBaseHost]));
+Route::domain('{tenant}.{__baseHost}')
+    ->where(['__baseHost' => $__tenantHostPattern])
+    ->middleware([\App\Http\Middleware\SetRouteHostDefaults::class, 'tenant', SetUserLocale::class])
+    ->group(function () {
 
     // Completes Google SSO on the TENANT subdomain (single-use ticket from the
     // central callback) so the session is created inside this tenant's scope.
@@ -819,6 +859,10 @@ Route::domain('{tenant}.'.parse_url(config('app.url'), PHP_URL_HOST))->middlewar
     Route::get('/apply', function (Request $request) {
         return app(CmsRenderController::class)->render($request, 'apply-online');
     })->name('tenant.apply');
+
+    Route::get('/admissions', function (Request $request) {
+        return app(CmsRenderController::class)->render($request, null, 'apply-online');
+    })->name('tenant.admissions');
 
     // Single Student ID Card Print compilation
     Route::get('/students/{student}/print-id', function (Student $student) {

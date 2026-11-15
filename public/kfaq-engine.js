@@ -78,12 +78,44 @@ const CATEGORY_PRIMARY = {
   troubleshooting: 'common-issues',
 };
 
-const SMALL_TALK = [
-  { match: /^(hi|hello|hey|hiya|howdy|good (morning|afternoon|evening)|greetings)\b/, reply: 'Hello! I’m the Kairo assistant. Ask me anything about running your school with Kairo CORE.' },
-  { match: /^(thanks|thank you|thx|cheers|appreciate)\b/, reply: 'You’re welcome. If you need more help, message the team on WhatsApp.' },
-  { match: /^(bye|goodbye|see you|ciao)\b/, reply: 'Goodbye. Have a great day running your school.' },
-  { match: /(are you (a )?(bot|ai|human|person|real)|are you (an )?ai|is this (a )?bot|who are you)/, reply: 'I’m an automated assistant that answers from Kairo CORE’s guides. A person is one WhatsApp message away if you need human help.' },
-];
+const SMALL_TALK = {
+  en: [
+    { match: /^(hi|hello|hey|hiya|howdy|good (morning|afternoon|evening)|greetings)\b/i, reply: 'Hello! I’m the Kairo assistant. Ask me anything about running your school with Kairo CORE.' },
+    { match: /^(thanks|thank you|thx|cheers|appreciate)\b/i, reply: 'You’re welcome. If you need more help, message the team on WhatsApp.' },
+    { match: /^(bye|goodbye|see you|ciao)\b/i, reply: 'Goodbye. Have a great day running your school.' },
+    { match: /(are you (a )?(bot|ai|human|person|real)|are you (an )?ai|is this (a )?bot|who are you)/i, reply: 'I’m an automated assistant that answers from Kairo CORE’s guides. A person is one WhatsApp message away if you need human help.' },
+  ],
+  fr: [
+    { match: /^(bonjour|salut|coucou|bonsoir|bjr)\b/i, reply: "Bonjour ! Je suis l’assistant Kairo. Posez-moi vos questions sur la gestion de votre école avec Kairo CORE." },
+    { match: /^(merci|thanks)\b/i, reply: "Avec plaisir. Si vous avez besoin d’aide supplémentaire, contactez l’équipe sur WhatsApp." },
+    { match: /^(au revoir|bye|a bientot|à bientôt)\b/i, reply: "Au revoir. Bonne journée avec votre école." },
+    { match: /(etes[- ]vous (un )?(bot|robot|ia|humain)|es[- ]tu (un )?(bot|robot|ia)|qui etes[- ]vous|qui es[- ]tu)/i, reply: "Je suis l’assistant Kairo, une aide automatisée. Une personne est disponible sur WhatsApp si vous avez besoin d’aide humaine." },
+  ],
+  es: [
+    { match: /^(hola|buenos dias|buenos días|buenas tardes|buenas noches)\b/i, reply: "¡Hola! Soy el asistente de Kairo. Pregúntame lo que necesites sobre Kairo CORE." },
+    { match: /^(gracias|muchas gracias)\b/i, reply: "De nada. Si necesitas más ayuda, escribe al equipo por WhatsApp." },
+    { match: /^(adios|adiós|hasta luego|chao)\b/i, reply: "Adiós. Que tengas un buen día." },
+    { match: /(eres (un )?(bot|robot|ia|humano)|quien eres|quién eres)/i, reply: "Soy el asistente de Kairo, una ayuda automatizada. Una persona está disponible por WhatsApp si necesitas ayuda humana." },
+  ],
+  pt: [
+    { match: /^(olá|ola|bom dia|boa tarde|boa noite)\b/i, reply: "Olá! Sou o assistente Kairo. Pergunte-me sobre a gestão da sua escola com o Kairo CORE." },
+    { match: /^(obrigado|obrigada)\b/i, reply: "De nada. Se precisar de mais ajuda, contacte a equipa no WhatsApp." },
+    { match: /^(adeus|tchau|ate logo|até logo)\b/i, reply: "Adeus. Tenha um ótimo dia." },
+    { match: /(es (um )?(bot|robô|ia|humano)|quem es|quem és)/i, reply: "Sou o assistente Kairo, uma ajuda automatizada. Uma pessoa está disponível no WhatsApp se precisar de ajuda humana." },
+  ],
+  sw: [
+    { match: /^(habari|hujambo|salamu|shikamoo|mambo|jambo)\b/i, reply: "Habari! Mimi ni msaidizi wa Kairo. Niulize chochote kuhusu Kairo CORE." },
+    { match: /^(asante|shukran)\b/i, reply: "Karibu. Ukihitaji msaada zaidi, wasiliana na timu kupitia WhatsApp." },
+    { match: /^(kwa heri|baadaye)\b/i, reply: "Kwa heri. Uwe na siku njema." },
+    { match: /(wewe ni (roboti|bot|ai|binadamu)|nani wewe)/i, reply: "Mimi ni msaidizi wa Kairo, msaada wa kiotomatiki. Mtu yupo WhatsApp ikiwa unahitaji msaada wa kibinadamu." },
+  ],
+  sn: [
+    { match: /^(mhoro|makadii|maswera sei|mangwanani|masikati|manheru)\b/i, reply: "Mhoro! Ndiri mubatsiri weKairo. Ndibvunzei nezveKairo CORE." },
+    { match: /^(mazvita|tatenda|ndatenda)\b/i, reply: "Mauya. Kana muchida rumwe rubatsiro, bata chikwata paWhatsApp." },
+    { match: /^(sara zvakanaka|toonana)\b/i, reply: "Sara zvakanaka. Ivai nezuva rakanaka." },
+    { match: /(uri (bot|roboti|ai|munhu)|ndiwe ani)/i, reply: "Ndiri mubatsiri weKairo, rubatsiro rweotomatiki. Munhu aripo paWhatsApp kana muchida rubatsiro." },
+  ],
+};
 
 const ABUSE = ['fuck','shit','bitch','asshole','idiot','stupid'];
 
@@ -209,14 +241,16 @@ export function scoreEntry(query, entry, weights, previousTopic) {
   return score;
 }
 
-export function matchQuestion(query, kb, previousTopic = null) {
+export function matchQuestion(query, kb, previousTopic = null, locale = 'en') {
   const q = normalize(query);
   if (!q) return { type: 'fallback', entry: null, candidates: [], smallTalk: null };
   if (q.length > 200) return { type: 'fallback', entry: null, candidates: [], smallTalk: null };
   if (isGibberish(q)) return { type: 'fallback', entry: null, candidates: [], smallTalk: null };
 
   // small talk
-  for (const st of SMALL_TALK) {
+  const stLocale = locale || 'en';
+  const stList = (SMALL_TALK[stLocale] || []).concat(SMALL_TALK.en || []);
+  for (const st of stList) {
     if (st.match.test(q)) return { type: 'smalltalk', entry: null, candidates: [], smallTalk: st.reply };
   }
 

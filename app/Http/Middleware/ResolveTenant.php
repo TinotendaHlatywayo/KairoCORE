@@ -63,9 +63,10 @@ class ResolveTenant
         // ── Multi-tenant mode (original logic) ────────────────────────────
         $host = $request->getHost();
         $baseDomain = config('app.url');
-        $baseHost = parse_url($baseDomain, PHP_URL_HOST) ?? $baseDomain;
+        $configuredBaseHost = parse_url($baseDomain, PHP_URL_HOST) ?? $baseDomain;
+        $baseHosts = array_values(array_unique(array_filter([$configuredBaseHost, 'lvh.me', 'localhost', '127.0.0.1'])));
 
-        if ($host === $baseHost) {
+        if (in_array($host, $baseHosts, true)) {
             // Platform super-admin console routes must never bind a tenant:
             // IP-based school resolution would otherwise hijack /platform/*
             // requests (and their Livewire updates), corrupting the session
@@ -88,7 +89,7 @@ class ResolveTenant
                 return $next($request);
             }
         } else {
-            $school = $this->resolveSchool($host, $baseHost);
+            $school = $this->resolveSchool($host, $baseHosts);
             if (! $school) {
                 abort(404, 'School platform domain not registered.');
             }
@@ -171,14 +172,19 @@ class ResolveTenant
      * mapping for a short window so page loads AND every Livewire update
      * avoid repeating the same lookup.
      */
-    protected function resolveSchool(string $host, string $baseHost): ?School
+    protected function resolveSchool(string $host, array|string $baseHosts): ?School
     {
-        if ($host !== $baseHost && str_ends_with($host, '.'.$baseHost)) {
-            $subdomain = str_replace('.'.$baseHost, '', $host);
+        $baseHosts = array_values(array_unique(array_filter((array) $baseHosts)));
 
-            return Cache::remember("tenant.subdomain:{$subdomain}", self::TENANT_CACHE_TTL_SECONDS, function () use ($subdomain) {
-                return School::query()->where('subdomain', $subdomain)->first();
-            });
+        foreach ($baseHosts as $baseHost) {
+            $suffix = '.'.$baseHost;
+            if ($host !== $baseHost && str_ends_with($host, $suffix)) {
+                $subdomain = substr($host, 0, -strlen($suffix));
+
+                return Cache::remember("tenant.subdomain:{$subdomain}", self::TENANT_CACHE_TTL_SECONDS, function () use ($subdomain) {
+                    return School::query()->where('subdomain', $subdomain)->first();
+                });
+            }
         }
 
         return Cache::remember("tenant.domain:{$host}", self::TENANT_CACHE_TTL_SECONDS, function () use ($host) {

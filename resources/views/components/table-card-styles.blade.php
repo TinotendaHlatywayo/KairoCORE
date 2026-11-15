@@ -306,6 +306,19 @@
         color: #ffffff;
     }
 
+    .sc-card::after { content: ""; position: absolute; inset: 0; z-index: 0; opacity: 0; background: radial-gradient(180px circle at var(--mx, 50%) var(--my, 50%), color-mix(in srgb, var(--sc-card-color, #14b8a6) 20%, transparent), transparent 70%); transition: opacity .2s ease; pointer-events: none; }
+    .sc-card:hover::after { opacity: 1; }
+    .sc-card > * { position: relative; z-index: 1; }
+
+    .sc-card-actions .sc-btn-decline {
+        background: #ffe4e6;
+        color: #be123c;
+    }
+    .sc-card-actions .sc-btn-decline:hover {
+        background: #be123c;
+        color: #ffffff;
+    }
+
     .dark .sc-card {
         background: linear-gradient(160deg, #1e293b 0%, #0f172a 100%);
         border-color: rgba(45, 212, 191, 0.18);

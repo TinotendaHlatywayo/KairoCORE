@@ -74,9 +74,10 @@ class DatasetRegistry
             return;
         }
 
-        $path = base_path('Modules/Reports/DataSources/Providers');
+        $path = dirname(__DIR__, 3).'/Modules/Reports/DataSources/Providers';
 
-        foreach (File::files($path) as $file) {
+        foreach (glob($path.'/*.php') ?: [] as $filePath) {
+            $file = new \SplFileInfo($filePath);
             if ($file->getExtension() !== 'php') {
                 continue;
             }
@@ -88,7 +89,7 @@ class DatasetRegistry
             }
 
             /** @var ReportDatasetProvider $provider */
-            $provider = app($class);
+            $provider = new $class();
 
             foreach ($provider->datasets() as $dataset) {
                 if (empty($dataset['key']) || empty($dataset['fields'])) {

@@ -337,6 +337,32 @@ class ApplicationResource extends Resource
                     ]))
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel(__('Close')),
+                Tables\Actions\Action::make('decline')
+                    ->label(__('Decline'))
+                    ->color('danger')
+                    ->icon('heroicon-o-x-circle')
+                    ->visible(fn (Application $record): bool => !in_array($record->status, ['enrolled', 'rejected', 'declined'], true))
+                    ->requiresConfirmation()
+                    ->form([
+                        Forms\Components\Textarea::make('decision_notes')
+                            ->label(__('Decline / Rejection Reason'))
+                            ->required(),
+                    ])
+                    ->action(function (Application $record, array $data) {
+                        $record->update([
+                            'status' => 'rejected',
+                            'decision_notes' => $data['decision_notes'] ?? __('Declined by admissions office.'),
+                        ]);
+
+                        Notification::make()
+                            ->title(__('Application Declined'))
+                            ->body(__('Application :number for :name has been declined.', [
+                                'number' => $record->application_number,
+                                'name' => $record->full_name,
+                            ]))
+                            ->danger()
+                            ->send();
+                    }),
                 Tables\Actions\Action::make('enroll')
                     ->label(__('Enroll Student'))
                     ->color('success')
@@ -560,7 +586,12 @@ class ApplicationResource extends Resource
                         }),
                 ]),
             ])
-            ->content(fn () => view('filament.app.resources.application.application-cards'))
+            ->content(fn ($livewire) => view('filament.app.resources.application.application-cards', [
+                'records' => $livewire->getTableRecords(),
+            ]))
+            ->emptyState(fn ($livewire) => view('filament.app.resources.application.application-cards', [
+                'records' => $livewire->getTableRecords(),
+            ]))
             ->modifyQueryUsing(fn (Builder $query) => $query->with(['course']))
             ->paginated([8, 16, 24, 48, 'all'])
             ->defaultPaginationPageOption(8)

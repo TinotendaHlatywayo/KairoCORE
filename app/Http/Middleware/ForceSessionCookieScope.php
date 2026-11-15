@@ -36,25 +36,34 @@ class ForceSessionCookieScope
         $sessionName = config('session.cookie');
         $sessionDomain = config('session.domain');
 
-        // Capture the base domain BEFORE the request is handled: tenant
-        // resolvers (ResolveTenant) reassign config('app.url') to the current
-        // subdomain host, which would make us target the wrong cookie scope.
-        $legacyDomain = null;
+        $legacyDomains = [];
         if (blank($sessionDomain)) {
-            $baseHost = parse_url(config('app.url'), PHP_URL_HOST);
-            if ($baseHost) {
-                $legacyDomain = '.'.$baseHost;
+            $hosts = array_filter([
+                parse_url((string) config('app.url'), PHP_URL_HOST),
+                $request->getHost(),
+            ]);
+
+            // Also cover base hosts for subdomains (e.g. rujeko.lvh.me -> lvh.me)
+            $knownBases = ['lvh.me', 'localhost'];
+            foreach ($hosts as $host) {
+                foreach ($knownBases as $base) {
+                    if ($host === $base || str_ends_with($host, '.'.$base)) {
+                        $hosts[] = $base;
+                    }
+                }
+            }
+
+            foreach (array_unique($hosts) as $host) {
+                $legacyDomains[] = '.'.$host;
             }
         }
 
         $response = $next($request);
 
-        // Only the blank (host-only) scope is valid for this multi-panel,
-        // multi-subdomain architecture. If a domain was configured the server
-        // is already setting the cookie at the right scope and there is
-        // nothing to clean up.
-        if ($legacyDomain !== null) {
-            $this->expireLegacyDomainCookie($response, $sessionName, $legacyDomain);
+        if (blank($sessionDomain)) {
+            foreach (array_unique($legacyDomains) as $legacyDomain) {
+                $this->expireLegacyDomainCookie($response, $sessionName, $legacyDomain);
+            }
         }
 
         return $response;
