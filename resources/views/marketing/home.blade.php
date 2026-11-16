@@ -42,7 +42,7 @@
             <small><span class="dt"></span> {{ __('Dedicated support') }}</small>
         </div>
     </div>
-    <div class="hc">
+    <div class="hc" style="margin-left:120px">
             <span class="pill"><i>{{ __('NEW') }}</i> {{ marketing_content('hero_badge') }}</span>
             @php
     $heroTitleWords = preg_split('/\s+/', (string) marketing_content('hero_title'));
