@@ -52,7 +52,7 @@ class HelpCentreController extends Controller
         ]);
     }
 
-    public function category(string $category)
+    public function category(string $__centralHost, string $category)
     {
         $articles = $this->repository->inCategory($category);
         abort_if($articles === [], 404);
@@ -75,7 +75,7 @@ class HelpCentreController extends Controller
         ]);
     }
 
-    public function article(string $category, string $slug)
+    public function article(string $__centralHost, string $category, string $slug)
     {
         /** @var HelpArticle|null $article */
         $article = $this->repository->find($category, $slug);
