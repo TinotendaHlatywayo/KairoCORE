@@ -13,7 +13,7 @@ a{color:inherit;text-decoration:none}button{font:inherit;color:inherit;cursor:po
 .logo small{display:block;font:700 10px/1 var(--b);letter-spacing:.2em;color:var(--brand)}
 .btn{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:999px;font-weight:700;font-size:14px;border:1.5px solid var(--ink);background:transparent}
 #menu{display:none}
-.hero{text-align:center;padding:84px 0 36px}
+.hero{text-align:center;padding:0 0 36px}
 .pill{display:inline-block;padding:5px 14px;border-radius:999px;background:var(--brand-soft);color:var(--brand);font-weight:700;font-size:13px}
 h1,h2,h3{font-family:var(--h);line-height:1.12;margin:0;letter-spacing:-.02em}
 .hero h1{font-size:clamp(36px,6vw,58px);margin:16px 0 12px}

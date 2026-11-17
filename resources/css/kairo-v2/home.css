@@ -73,4 +73,4 @@ body.kairo-v2 .wy{padding:clamp(72px,9vw,140px) 0 clamp(64px,8vw,120px)}
   body.kairo-v2 .mq span{padding:8px 16px;font-size:13px}
 }
 
-body.kairo-v2 .hero>.w{padding-left:120px !important;}body.kairo-v2 .hc{margin-left:120px !important;}
+@media(min-width:1021px){body.kairo-v2 .hero>.w{padding-left:clamp(24px,8vw,120px)}body.kairo-v2 .hc{margin-left:clamp(24px,8vw,120px)}}

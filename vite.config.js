@@ -18,6 +18,7 @@ export default defineConfig({
                 'resources/css/kairo-v2/about.css',
                 'resources/css/kairo-v2/contact.css',
                 'resources/css/kairo-v2/blog.css',
+                'resources/css/kairo-v2/responsive.css',
                 'resources/js/app.js',
                 'resources/js/kairo-site.js',
             ],

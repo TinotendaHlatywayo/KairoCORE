@@ -9,7 +9,7 @@
 @vite('resources/css/kairo-v2/blog.css')
 @endpush
 @push('styles')
-<style>body.kairo-v2 section { padding-top: 24px; }</style>
+<style>body.kairo-v2 section { padding-top: 0px !important; }</style>
 @endpush
 
 @section('content')

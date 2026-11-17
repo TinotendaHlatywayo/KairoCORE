@@ -27,7 +27,7 @@
 
 <header class="hero" style="--hero:url('{{ marketing_image('hero_image') }}')">
     <div class="pic sh" id="ps"></div>
-    <div class="gs" id="gs" style="bottom: 70px;">
+    <div class="gs" id="gs">
         <div class="fk">
             <b data-n="{{ marketing_live_stats()['modules'] ?? 0 }}">0</b>
             <small><span class="dt"></span> {{ __('Connected modules') }}</small>
@@ -45,7 +45,7 @@
             <small><span class="dt"></span> {{ __('Dedicated support') }}</small>
         </div>
     </div>
-    <div class="hc" style="margin-left:120px">
+    <div class="hc">
             <span class="pill"><i>{{ __('NEW') }}</i> {{ marketing_content('hero_badge') }}</span>
             @php
     $heroTitleWords = preg_split('/\s+/', (string) marketing_content('hero_title'));

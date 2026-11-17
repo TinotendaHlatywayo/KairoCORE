@@ -1,0 +1,484 @@
+/*
+ * Marketing site responsive tuning.
+ * Loaded after the page styles so it only adjusts layout, spacing and type
+ * across screen sizes (small phones -> tablets -> laptops -> large TVs).
+ */
+
+/* ---------------------------------------------------------------- base */
+
+body.kairo-v2 {
+    --kf-gutter: clamp(16px, 3.2vw, 48px);
+}
+
+body.kairo-v2 h1,
+body.kairo-v2 h2,
+body.kairo-v2 h3,
+body.kairo-v2 .hero p,
+.kf-footer a,
+.kf-footer p {
+    overflow-wrap: break-word;
+}
+
+body.kairo-v2 iframe,
+body.kairo-v2 video,
+.kf-footer img,
+.kf-nav img {
+    max-width: 100%;
+}
+
+/* Home hero: fluid left offset instead of a fixed 120px push. */
+@media (min-width: 1021px) {
+    body.kairo-v2 header.hero .hc {
+        margin-left: clamp(24px, 8vw, 140px);
+        max-width: min(640px, calc(100% - clamp(48px, 16vw, 280px)));
+    }
+
+    body.kairo-v2 header.hero .gs {
+        bottom: clamp(40px, 6.5vh, 90px);
+    }
+}
+
+/* Stacked hero on phones, tablets and small laptops. */
+@media (max-width: 1240px) {
+    body.kairo-v2 header.hero {
+        min-height: auto;
+        flex-direction: column;
+        justify-content: center;
+        gap: clamp(24px, 4vw, 40px);
+        padding-top: clamp(88px, 12vw, 120px);
+        padding-bottom: clamp(40px, 7vw, 72px);
+    }
+
+    body.kairo-v2 header.hero .pic {
+        width: 100%;
+        opacity: .4;
+    }
+
+    body.kairo-v2 header.hero .hc {
+        margin-left: 0;
+        width: 100%;
+        max-width: none;
+        padding-inline: var(--kf-gutter);
+    }
+
+    body.kairo-v2 header.hero .gs {
+        position: relative;
+        inset: auto;
+        right: auto;
+        left: auto;
+        top: auto;
+        bottom: auto;
+        order: 2;
+        align-self: flex-start;
+        margin-inline: var(--kf-gutter);
+        width: min(520px, calc(100% - (var(--kf-gutter) + var(--kf-gutter))));
+    }
+}
+
+/* -------------------------------------------------- phones and phablets */
+
+@media (max-width: 640px) {
+    body.kairo-v2 input,
+    body.kairo-v2 select,
+    body.kairo-v2 textarea,
+    .kf-footer input,
+    .kf-footer select,
+    .kf-footer textarea {
+        font-size: 16px; /* prevents iOS zoom-on-focus */
+        max-width: 100%;
+    }
+
+    body.kairo-v2 .cta {
+        width: 100%;
+    }
+
+    body.kairo-v2 .cta .btn,
+    body.kairo-v2 .mact .btn,
+    body.kairo-v2 .kmh .btn {
+        width: 100%;
+        justify-content: center;
+        margin-left: 0;
+    }
+
+    body.kairo-v2 .kr {
+        grid-template-columns: 1fr;
+    }
+
+    body.kairo-v2 .fol {
+        grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+    }
+
+    body.kairo-v2 .kmp iframe {
+        height: min(52vh, 320px);
+    }
+
+    /* Blog list tools stack and fill the width. */
+    body.kairo-v2 .tools {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    body.kairo-v2 .search-wrap,
+    body.kairo-v2 .search {
+        width: 100%;
+    }
+
+    .kf-footer .kf-fcol-contact a,
+    .kf-footer a[href^="mailto:"],
+    .kf-footer a[href^="tel:"] {
+        overflow-wrap: anywhere;
+    }
+}
+
+@media (max-width: 480px) {
+    body.kairo-v2 header.hero .hc {
+        padding-inline: var(--kf-gutter);
+    }
+
+    body.kairo-v2 .pill {
+        max-width: 100%;
+    }
+
+    body.kairo-v2 header.hero .gs {
+        margin-inline: var(--kf-gutter);
+        width: calc(100% - (var(--kf-gutter) + var(--kf-gutter)));
+    }
+
+    body.kairo-v2 .fk {
+        padding: 12px 14px;
+    }
+
+    body.kairo-v2 .fk b {
+        font-size: 24px;
+    }
+
+    body.kairo-v2 section {
+        padding-block: 48px;
+    }
+
+    body.kairo-v2 .mq {
+        margin-top: 32px;
+    }
+
+    body.kairo-v2 .mq span {
+        font-size: 13px;
+    }
+
+    body.kairo-v2 .ct {
+        margin-inline: 10px;
+        border-radius: 22px;
+    }
+
+    body.kairo-v2 .bc {
+        padding: 20px 16px;
+    }
+
+    body.kairo-v2 #faq details {
+        padding: 0 14px;
+    }
+
+    /* Feature chips: wrap instead of shrinking to unreadable text. */
+    body.kairo-v2 .tc {
+        flex-wrap: wrap;
+        margin: 0;
+        gap: 8px;
+    }
+
+    body.kairo-v2 .tc span {
+        white-space: normal;
+        font-size: clamp(11px, 3.2vw, 13px);
+    }
+
+    body.kairo-v2 .chips {
+        gap: 6px;
+    }
+
+    body.kairo-v2 .chip {
+        padding: 7px 12px;
+        font-size: 13px;
+    }
+
+    body.kairo-v2 .sp {
+        width: min(236px, calc(100vw - 24px));
+    }
+
+    body.kairo-v2 .fc {
+        padding: 8px 11px;
+        font-size: 13px;
+    }
+
+    body.kairo-v2 .mp .mb {
+        padding: 20px 18px 22px;
+    }
+
+    body.kairo-v2 .kl {
+        padding: 14px 16px;
+    }
+
+    body.kairo-v2 .kh {
+        padding-top: 96px;
+    }
+}
+
+/* ------------------------------------------------------- tiny handsets */
+
+@media (max-width: 380px) {
+    body.kairo-v2 {
+        --kf-gutter: 14px;
+    }
+
+    body.kairo-v2 h1 {
+        font-size: clamp(1.9rem, 10vw, 2.4rem);
+    }
+
+    body.kairo-v2 h2 {
+        font-size: clamp(1.65rem, 7.5vw, 2.1rem);
+    }
+
+    body.kairo-v2 .btn {
+        padding: 13px 18px;
+        font-size: 14.5px;
+    }
+
+    body.kairo-v2 header.hero .gs {
+        margin-inline: 14px;
+        width: calc(100% - 28px);
+    }
+
+    body.kairo-v2 .fk b {
+        font-size: 22px;
+    }
+
+    body.kairo-v2 .ey {
+        font-size: 12px;
+    }
+
+    body.kairo-v2 .tr {
+        padding: 16px 12px;
+    }
+
+    body.kairo-v2 .tg {
+        font-size: 18px;
+    }
+
+    body.kairo-v2 .kc {
+        padding: 18px 14px;
+    }
+
+    body.kairo-v2 .mp .mv {
+        height: 110px;
+    }
+
+    body.kairo-v2 .kmp iframe {
+        height: 240px;
+    }
+
+    .kf-nav .kf-logo img {
+        height: 34px;
+    }
+
+    .kf-links a {
+        padding: 8px 9px;
+        font-size: 13px;
+    }
+}
+
+/* ---------------------------------------------- short landscape phones */
+
+@media (max-width: 1020px) and (max-height: 540px) and (orientation: landscape) {
+    body.kairo-v2 header.hero {
+        padding-top: 88px;
+        padding-bottom: 36px;
+    }
+
+    body.kairo-v2 header.hero .gs {
+        position: relative;
+        margin-top: 8px;
+    }
+
+    body.kairo-v2 .kf-nav,
+    .kf-nav {
+        padding-block: 6px;
+    }
+}
+
+/* ------------------------------------------------------------ touch UX */
+
+@media (hover: none) {
+    body.kairo-v2 .btn,
+    body.kairo-v2 .more,
+    body.kairo-v2 .chip,
+    .kf-links a,
+    .kf-icon-btn,
+    .kf-burger {
+        min-height: 44px;
+    }
+
+    body.kairo-v2 .sk:after {
+        display: none;
+    }
+}
+
+/* ------------------------------------------------ large desktop screens */
+
+@media (min-width: 1440px) {
+    .kf-nav .kf-logo img {
+        height: 58px;
+    }
+
+    body.kairo-v2 header.hero .hc {
+        max-width: 700px;
+    }
+}
+
+@media (min-width: 1680px) {
+    body.kairo-v2 header.hero .hc {
+        max-width: 760px;
+    }
+}
+
+@media (min-width: 1920px) {
+    body.kairo-v2 .w {
+        max-width: 1480px;
+    }
+
+    body.kairo-v2 header.hero .hc {
+        max-width: 820px;
+    }
+
+    body.kairo-v2 header.hero .gs {
+        grid-template-columns: repeat(2, minmax(0, 250px));
+    }
+
+    body.kairo-v2 .bt {
+        gap: 28px;
+    }
+}
+
+/* --------------------------------------------------------- TVs / 4K */
+
+@media (min-width: 2200px) {
+    :root {
+        --kf-container-max: 1700px;
+    }
+
+    body {
+        font-size: 18.5px;
+    }
+
+    .kf-nav .kf-logo img {
+        height: 60px;
+    }
+}
+
+@media (min-width: 2560px) {
+    :root {
+        --kf-container-max: 1840px;
+    }
+
+    body {
+        font-size: 19px;
+    }
+
+    main {
+        padding-top: 96px;
+    }
+
+    .kf-nav {
+        padding-block: 14px;
+    }
+
+    .kf-nav .kf-logo img {
+        height: 64px;
+    }
+
+    .kf-links a {
+        font-size: 18px;
+        padding: 12px 18px;
+    }
+
+    body.kairo-v2 .w {
+        max-width: 1760px;
+    }
+
+    body.kairo-v2 section {
+        padding-block: clamp(110px, 7vw, 170px);
+    }
+
+    body.kairo-v2 header.hero {
+        min-height: min(78vh, 1080px);
+        padding-block: clamp(120px, 9vw, 200px);
+    }
+
+    body.kairo-v2 header.hero .hc {
+        max-width: 920px;
+        margin-left: clamp(120px, 7vw, 220px);
+    }
+
+    body.kairo-v2 header.hero .gs {
+        right: clamp(80px, 7vw, 240px);
+        grid-template-columns: repeat(2, minmax(0, 300px));
+        gap: 20px;
+    }
+
+    body.kairo-v2 h1 {
+        font-size: clamp(4rem, 4.4vw, 6.8rem);
+    }
+
+    body.kairo-v2 h2 {
+        font-size: clamp(2.6rem, 2.8vw, 4.4rem);
+    }
+
+    body.kairo-v2 .bt {
+        gap: 32px;
+    }
+
+    body.kairo-v2 .bc {
+        min-height: 300px;
+        padding: 34px 30px 30px;
+    }
+
+    body.kairo-v2 .bc h3 {
+        font-size: 26px;
+    }
+
+    body.kairo-v2 .bc p {
+        font-size: 16.5px;
+    }
+
+    body.kairo-v2 .hd p,
+    body.kairo-v2 .hc p {
+        font-size: 1.2rem;
+    }
+}
+
+@media (min-width: 3200px) {
+    :root {
+        --kf-container-max: 2200px;
+    }
+
+    body {
+        font-size: 21px;
+    }
+
+    body.kairo-v2 .w {
+        max-width: 2080px;
+    }
+
+    body.kairo-v2 header.hero .hc {
+        max-width: 1040px;
+    }
+
+    body.kairo-v2 header.hero .gs {
+        grid-template-columns: repeat(2, minmax(0, 340px));
+    }
+}
+
+/* ------------------------------------------------------ reduced motion */
+
+@media (prefers-reduced-motion: reduce) {
+    body.kairo-v2 header.hero .gs,
+    body.kairo-v2 .fk {
+        animation: none !important;
+    }
+}

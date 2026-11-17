@@ -3,7 +3,7 @@
 <head>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     @php
         // Google ownership is already proven by the DNS TXT record. Keeping
         // the same token in the head as well makes URL-prefix properties
@@ -245,6 +245,7 @@
         }
     </style>
     @stack('styles')
+    @vite('resources/css/kairo-v2/responsive.css')
 </head>
 @php($v2Page = trim((string) $__env->yieldContent('body_class')) !== '')
 <body class="antialiased bg-white text-slate-800 flex flex-col min-h-screen selection:bg-[#D94B39] selection:text-white @yield('body_class')">
