@@ -323,7 +323,7 @@ Route::domain('{__centralHost}')
          */
         $previewFiles = [
             'images/KairoCORE_link_preview.png',
-            'images/KairoCORE_Home_thumbnail.png',
+            'images/KairoCORE_Home_final_thumbnail.png',
             'images/KairoCORE_About_thumbnail.png',
             'images/KairoCORE_Features_thumbnail.png',
         ];
@@ -350,7 +350,7 @@ Route::domain('{__centralHost}')
         };
 
         $urls = [
-            ['loc' => route('marketing.home'), 'lastmod' => $lastmod('marketing/home'), 'changefreq' => 'weekly', 'priority' => '1.0', 'image' => platform_public_asset_url('images/KairoCORE_Home_thumbnail.png'), 'image_title' => __('Kairo CORE school management system')],
+            ['loc' => route('marketing.home'), 'lastmod' => $lastmod('marketing/home'), 'changefreq' => 'weekly', 'priority' => '1.0', 'image' => platform_public_asset_url('images/KairoCORE_Home_final_thumbnail.png'), 'image_title' => __('Kairo CORE school management system')],
             ['loc' => route('marketing.features'), 'lastmod' => $lastmod('marketing/features'), 'changefreq' => 'monthly', 'priority' => '0.8', 'image' => platform_public_asset_url('images/KairoCORE_Features_thumbnail.png'), 'image_title' => __('Kairo CORE features')],
             ['loc' => route('marketing.school-fees'), 'lastmod' => $lastmod('marketing/school-fees'), 'changefreq' => 'monthly', 'priority' => '0.8', 'image' => platform_og_image_url()],
             ['loc' => route('marketing.students'), 'lastmod' => $lastmod('marketing/students'), 'changefreq' => 'monthly', 'priority' => '0.8', 'image' => platform_og_image_url()],

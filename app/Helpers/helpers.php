@@ -252,7 +252,7 @@ if (! function_exists('platform_seo_description')) {
      */
     function platform_seo_description(): string
     {
-        return (string) __(platform_name().' is the best school management software for schools in Zimbabwe, Southern Africa and worldwide: admissions, student records, fees invoicing and payments, attendance, assessments, report cards, staff permissions, announcements and a customizable school website — all in one secure cloud platform.');
+        return (string) __(platform_name().' is one of the best school management software for schools in Zimbabwe, Southern Africa and worldwide: admissions, student records, fees invoicing and payments, attendance, assessments, report cards, staff permissions, announcements and a customizable school website — all in one secure cloud platform.');
     }
 }
 
@@ -1124,8 +1124,8 @@ if (! function_exists('platform_software_schema')) {
             'applicationSubCategory' => 'School Management System',
             'operatingSystem' => 'Web browser',
             'description' => platform_seo_description(),
-            'image' => platform_public_asset_url('images/KairoCORE_Home_thumbnail.png'),
-            'screenshot' => platform_public_asset_url('images/KairoCORE_Home_thumbnail.png'),
+            'image' => platform_public_asset_url('images/KairoCORE_Home_final_thumbnail.png'),
+            'screenshot' => platform_public_asset_url('images/KairoCORE_Home_final_thumbnail.png'),
             'featureList' => [
                 'Admissions and enrolment',
                 'Student information system',

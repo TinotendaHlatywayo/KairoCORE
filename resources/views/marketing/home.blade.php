@@ -2,11 +2,11 @@
 
 @section('body_class', 'kairo-v2')
 
-@section('title', platform_name().' | Best School Management System in Zimbabwe')
+@section('title', platform_name().' | A Modern School Management System')
 @section('meta_description', marketing_content('meta_description') ?: platform_seo_description())
 @section('seo_image', platform_public_asset_url('images/KairoCORE_link_preview.png'))
-@section('seo_image_secondary', platform_public_asset_url('images/KairoCORE_Home_thumbnail.png'))
-@section('seo_schema_image', platform_public_asset_url('images/KairoCORE_Home_thumbnail.png'))
+@section('seo_image_secondary', platform_public_asset_url('images/KairoCORE_Home_final_thumbnail.png'))
+@section('seo_schema_image', platform_public_asset_url('images/KairoCORE_Home_final_thumbnail.png'))
 @section('seo_image_alt', __('Kairo CORE school management system — smarter school management for a brighter future'))
 
 @push('styles')
