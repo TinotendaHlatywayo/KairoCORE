@@ -4,8 +4,14 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    @if (config('services.google.site_verification') || env('GOOGLE_SITE_VERIFICATION'))
-        <meta name="google-site-verification" content="{{ config('services.google.site_verification') ?: env('GOOGLE_SITE_VERIFICATION') }}">
+    @php
+        // Google ownership is already proven by the DNS TXT record. Keeping
+        // the same token in the head as well makes URL-prefix properties
+        // verify too, so Search Console never drops the property.
+        $googleVerification = config('services.google.site_verification') ?: env('GOOGLE_SITE_VERIFICATION', 'vWazvLJpCIkzWl6XgC037RcvgEMng_Y5b9QOyQuV6yY');
+    @endphp
+    @if ($googleVerification)
+        <meta name="google-site-verification" content="{{ $googleVerification }}">
     @endif
     @if (config('services.bing.site_verification') || env('BING_SITE_VERIFICATION'))
         <meta name="msvalidate.01" content="{{ config('services.bing.site_verification') ?: env('BING_SITE_VERIFICATION') }}">
@@ -13,25 +19,34 @@
         <meta name="msvalidate.01" content="73BA1442529B66591DF90CB78368BC43">
     @endif
     @php
+        // Page-specific titles are what make each URL rank for its own
+        // intent. The global marketing title is only a fallback for pages
+        // that do not declare one; it must never overwrite /about or /features.
         $metaTitle = trim((string) $__env->yieldContent('meta_title'));
         if ($metaTitle === '') {
-            $metaTitle = trim((string) $__env->yieldContent('title', platform_name().' - School Management System'));
-            $seoTitleOverride = marketing_content('meta_title');
-            if ($seoTitleOverride !== '') {
-                $metaTitle = $seoTitleOverride;
-            }
+            $metaTitle = trim((string) $__env->yieldContent('title'));
         }
-        $metaDescription = trim((string) $__env->yieldContent('meta_description', platform_seo_description()));
-        $seoDescriptionOverride = marketing_content('meta_description');
-        if ($seoDescriptionOverride !== '') {
-            $metaDescription = $seoDescriptionOverride;
+        if ($metaTitle === '') {
+            $metaTitle = marketing_content('meta_title') ?: platform_name().' - School Management System';
         }
+
+        $metaDescription = trim((string) $__env->yieldContent('meta_description'));
+        if ($metaDescription === '') {
+            $metaDescription = marketing_content('meta_description') ?: platform_seo_description();
+        }
+
         $canonicalUrl = url()->current();
         $seoImageOverride = trim((string) $__env->yieldContent('seo_image'));
+        $seoImageAlt = trim((string) $__env->yieldContent('seo_image_alt')) ?: platform_name().' school management system';
+        $seoSchemaImage = trim((string) $__env->yieldContent('seo_schema_image'))
+            ?: $seoImageOverride
+            ?: platform_og_image_url();
+        $seoImageSecondary = trim((string) $__env->yieldContent('seo_image_secondary'));
+
         $schemas = [
             platform_website_schema(),
             platform_organization_schema(),
-            platform_webpage_schema($canonicalUrl, $metaTitle, $metaDescription),
+            platform_webpage_schema($canonicalUrl, $metaTitle, $metaDescription, $seoSchemaImage),
         ];
         if (isset($seoJsonLd) && is_array($seoJsonLd)) {
             $schemas = array_merge($schemas, $seoJsonLd);
@@ -48,12 +63,17 @@
         'seoDescription' => $metaDescription,
         'seoCanonical' => $canonicalUrl,
         'seoImage' => $seoImageOverride !== '' ? $seoImageOverride : platform_og_image_url(),
+        'seoImageAlt' => $seoImageAlt,
+        'seoImageSecondary' => $seoImageSecondary,
         'seoRobots' => $seoRobots,
         'seoType' => 'website',
         'seoJsonLd' => $schemas,
     ])
     @stack('seo_jsonld')
     <link rel="icon" href="{{ platform_favicon_url() }}">
+    <meta name="theme-color" content="#EF5F4D">
+    <link rel="alternate" type="text/plain" href="{{ url('/llms.txt') }}" title="Kairo CORE information for AI assistants">
+    <link rel="alternate" type="text/plain" href="{{ url('/llms-full.txt') }}" title="Kairo CORE help guides for AI assistants">
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=bricolage-grotesque:600,700,800&family=inter:400,500,600,700,800&family=plus-jakarta-sans:400,600,700,800&display=swap" rel="stylesheet">
     @vite(['resources/css/marketing.css', 'resources/css/kairo-site.css', 'resources/js/kairo-site.js'])

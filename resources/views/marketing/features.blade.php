@@ -2,15 +2,17 @@
 
 @section('body_class', 'kairo-v2')
 
-@section('title', marketing_content('features_title') ?: __('Features').' - '.platform_name().' | School Management System Zimbabwe')
-@section('seo_image', asset('images/og-features.png'))
+@section('title', marketing_content('features_title') ?: __('Kairo CORE Features').' | School Management System Zimbabwe')
+@section('seo_image', platform_public_asset_url('images/KairoCORE_Features_thumbnail.png'))
+@section('seo_schema_image', platform_public_asset_url('images/KairoCORE_Features_thumbnail.png'))
+@section('seo_image_alt', __('Kairo CORE features — admissions, academics, fees, attendance and report cards'))
 @section('meta_description', marketing_content('features_subtitle') ?: __('Explore Kairo CORE features for admissions, academics, fees, attendance, HR and report cards — the best school management software for schools in Zimbabwe.'))
 
 @push('styles')
 @vite('resources/css/kairo-v2/features.css')
 @endpush
 @push('styles')
-<style>body.kairo-v2 section { padding-top: 24px; }</style>
+<style>body.kairo-v2 section { padding-top: 0px !important; }</style>
 @endpush
 
 @section('content')

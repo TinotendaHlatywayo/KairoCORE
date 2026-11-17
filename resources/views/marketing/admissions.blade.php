@@ -1,7 +1,7 @@
 @extends('marketing.layout')
 
-@section('title', marketing_content('meta_title') ?: __('School Admissions & Enrolment Software - Kairo CORE'))
-@section('meta_description', marketing_content('meta_description') ?: __('Run admissions end to end: online applications, document uploads, review, placement and enrolment that creates the student record on Kairo CORE.'))
+@section('title', __('School Admissions & Enrolment Software').' | '.platform_name())
+@section('meta_description', __('Run admissions end to end: online applications, document uploads, review, placement and enrolment that creates the student record on Kairo CORE.'))
 
 @section('content')
 <section class="relative overflow-hidden bg-white pb-10 pt-14 lg:pt-20">

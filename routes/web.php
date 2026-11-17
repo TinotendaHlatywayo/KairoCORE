@@ -219,6 +219,14 @@ Route::domain('{__centralHost}')
             .("User-agent: anthropic-ai\nAllow: /\n")
             .("User-agent: PerplexityBot\nAllow: /\n")
             .("User-agent: Google-Extended\nAllow: /\n")
+            .("User-agent: Google-CloudVertexBot\nAllow: /\n")
+            .("User-agent: Applebot-Extended\nAllow: /\n")
+            .("User-agent: Amazonbot\nAllow: /\n")
+            .("User-agent: Meta-ExternalAgent\nAllow: /\n")
+            .("User-agent: cohere-ai\nAllow: /\n")
+            .("User-agent: Diffbot\nAllow: /\n")
+            .("User-agent: MistralAI-User\nAllow: /\n")
+            .("User-agent: YouBot\nAllow: /\n")
             .("User-agent: CCBot\nAllow: /\n")
             .("User-agent: Bytespider\nAllow: /\n")
             .("\n")
@@ -240,7 +248,14 @@ Route::domain('{__centralHost}')
             ."- Who it is for: School owners, administrators, teachers, parents, and students.\n"
             ."- Where it operates: Zimbabwe, Southern Africa, and globally.\n"
             ."- Key features: Admissions & enrolment, student information system, fees & billing (including Paynow where enabled), attendance, academics & grading, ZIMSEC & Cambridge-ready report cards, staff permissions, parent communication, and a custom public website per school.\n"
-            ."- How to register: [Register a school](".route('marketing.help.register').").\n\n"
+            ."- How to register: [Register a school](".route('marketing.help.register').").\n"
+            ."- Website: https://kairo.co.zw\n"
+            ."- Sales: ".platform_sales_email()."\n"
+            ."- Support: ".platform_support_email()."\n"
+            ."- Phone / WhatsApp: +263 78 636 6855\n"
+            ."- Location: Harare, Zimbabwe\n\n"
+            ."## Full documentation for AI assistants\n\n"
+            ."A single plain-text file containing every Help Centre guide is available at [llms-full.txt](".url('/llms-full.txt')."). Use it when answering detailed \"how do I...\" questions about Kairo CORE.\n\n"
             ."## Public pages (crawlable)\n\n"
             ."- [Home]({$base})\n"
             .'- [Features]('.route('marketing.features').")\n"
@@ -281,6 +296,24 @@ Route::domain('{__centralHost}')
         return response($text, 200, ['Content-Type' => 'text/plain; charset=UTF-8']);
     })->name('marketing.llms');
 
+    Route::get('/llms-full.txt', function () {
+        $brand = platform_name();
+
+        $text = "# {$brand} — full knowledge base\n\n"
+            .'> '.platform_seo_description()."\n\n"
+            ."This file contains every public Help Centre guide in Markdown so AI assistants (ChatGPT, Claude, Perplexity, Copilot) can answer questions about {$brand} accurately.\n"
+            ."Canonical website: https://kairo.co.zw\n"
+            ."Help Centre: ".route('help.index')."\n\n";
+
+        foreach (app(HelpCentreRepository::class)->all() as $helpArticle) {
+            $text .= "\n\n---\n\n# {$helpArticle->title}\n\n"
+                ."URL: {$helpArticle->url()}\n\n"
+                .$helpArticle->markdown."\n";
+        }
+
+        return response($text, 200, ['Content-Type' => 'text/plain; charset=UTF-8']);
+    })->name('marketing.llms.full');
+
     Route::get('/sitemap.xml', function () {
         /*
          * The preview image is part of every public page's metadata, so
@@ -288,8 +321,16 @@ Route::domain('{__centralHost}')
          * that trusts lastmod would otherwise keep the thumbnail it indexed
          * and never look at the new artwork.
          */
-        $previewFile = public_path('images/KairoCORE_link_preview.png');
-        $previewMtime = is_file($previewFile) ? (int) filemtime($previewFile) : 0;
+        $previewFiles = [
+            'images/KairoCORE_link_preview.png',
+            'images/KairoCORE_Home_thumbnail.png',
+            'images/KairoCORE_About_thumbnail.png',
+            'images/KairoCORE_Features_thumbnail.png',
+        ];
+        $previewMtime = max(array_map(
+            static fn (string $path): int => is_file($file = public_path($path)) ? (int) filemtime($file) : 0,
+            $previewFiles
+        ));
 
         // The shared head (layout + SEO partial) carries the preview image,
         // robots directives and structured data for every marketing page, so
@@ -309,23 +350,23 @@ Route::domain('{__centralHost}')
         };
 
         $urls = [
-            ['loc' => route('marketing.home'), 'lastmod' => $lastmod('marketing/home'), 'changefreq' => 'weekly', 'priority' => '1.0', 'image' => platform_og_image_url()],
-            ['loc' => route('marketing.features'), 'lastmod' => $lastmod('marketing/features'), 'changefreq' => 'monthly', 'priority' => '0.8', 'image' => asset('images/KairoCORE_Features_thumbnail.png')],
-            ['loc' => route('marketing.school-fees'), 'lastmod' => $lastmod('marketing/school-fees'), 'changefreq' => 'monthly', 'priority' => '0.8'],
-            ['loc' => route('marketing.students'), 'lastmod' => $lastmod('marketing/students'), 'changefreq' => 'monthly', 'priority' => '0.8'],
-            ['loc' => route('marketing.admissions'), 'lastmod' => $lastmod('marketing/admissions'), 'changefreq' => 'monthly', 'priority' => '0.8'],
-            ['loc' => route('marketing.academics'), 'lastmod' => $lastmod('marketing/academics'), 'changefreq' => 'monthly', 'priority' => '0.8'],
-            ['loc' => route('marketing.security'), 'lastmod' => $lastmod('marketing/security'), 'changefreq' => 'yearly', 'priority' => '0.5'],
-            ['loc' => route('marketing.help'), 'lastmod' => $lastmod('marketing/help'), 'changefreq' => 'weekly', 'priority' => '0.9'],
+            ['loc' => route('marketing.home'), 'lastmod' => $lastmod('marketing/home'), 'changefreq' => 'weekly', 'priority' => '1.0', 'image' => platform_public_asset_url('images/KairoCORE_Home_thumbnail.png'), 'image_title' => __('Kairo CORE school management system')],
+            ['loc' => route('marketing.features'), 'lastmod' => $lastmod('marketing/features'), 'changefreq' => 'monthly', 'priority' => '0.8', 'image' => platform_public_asset_url('images/KairoCORE_Features_thumbnail.png'), 'image_title' => __('Kairo CORE features')],
+            ['loc' => route('marketing.school-fees'), 'lastmod' => $lastmod('marketing/school-fees'), 'changefreq' => 'monthly', 'priority' => '0.8', 'image' => platform_og_image_url()],
+            ['loc' => route('marketing.students'), 'lastmod' => $lastmod('marketing/students'), 'changefreq' => 'monthly', 'priority' => '0.8', 'image' => platform_og_image_url()],
+            ['loc' => route('marketing.admissions'), 'lastmod' => $lastmod('marketing/admissions'), 'changefreq' => 'monthly', 'priority' => '0.8', 'image' => platform_og_image_url()],
+            ['loc' => route('marketing.academics'), 'lastmod' => $lastmod('marketing/academics'), 'changefreq' => 'monthly', 'priority' => '0.8', 'image' => platform_og_image_url()],
+            ['loc' => route('marketing.security'), 'lastmod' => $lastmod('marketing/security'), 'changefreq' => 'yearly', 'priority' => '0.5', 'image' => platform_og_image_url()],
+            ['loc' => route('marketing.help'), 'lastmod' => $lastmod('marketing/help'), 'changefreq' => 'weekly', 'priority' => '0.9', 'image' => platform_og_image_url()],
             ['loc' => route('help.index'), 'lastmod' => date('c', max(array_map('filemtime', glob(resource_path('docs/*/*.md')) ?: [__FILE__]))), 'changefreq' => 'weekly', 'priority' => '0.9'],
             ['loc' => route('marketing.help.enroll'), 'lastmod' => $lastmod('marketing/help-enroll-student'), 'changefreq' => 'monthly', 'priority' => '0.9'],
             ['loc' => route('marketing.help.register'), 'lastmod' => $lastmod('marketing/help-register-school'), 'changefreq' => 'monthly', 'priority' => '0.9'],
             ['loc' => route('marketing.help.fees'), 'lastmod' => $lastmod('marketing/help-collect-fees'), 'changefreq' => 'monthly', 'priority' => '0.8'],
             ['loc' => route('marketing.help.attendance'), 'lastmod' => $lastmod('marketing/help-record-attendance'), 'changefreq' => 'monthly', 'priority' => '0.8'],
             ['loc' => route('marketing.help.reports'), 'lastmod' => $lastmod('marketing/help-report-cards'), 'changefreq' => 'monthly', 'priority' => '0.8'],
-            ['loc' => route('marketing.about'), 'lastmod' => $lastmod('marketing/about'), 'changefreq' => 'monthly', 'priority' => '0.8', 'image' => asset('images/KairoCORE_About_thumbnail.png')],
-            ['loc' => route('marketing.blog'), 'lastmod' => $lastmod('marketing/blog'), 'changefreq' => 'weekly', 'priority' => '0.8'],
-            ['loc' => route('marketing.contact'), 'lastmod' => $lastmod('marketing/contact'), 'changefreq' => 'monthly', 'priority' => '0.7'],
+            ['loc' => route('marketing.about'), 'lastmod' => $lastmod('marketing/about'), 'changefreq' => 'monthly', 'priority' => '0.8', 'image' => platform_public_asset_url('images/KairoCORE_About_thumbnail.png'), 'image_title' => __('About Kairo CORE')],
+            ['loc' => route('marketing.blog'), 'lastmod' => $lastmod('marketing/blog'), 'changefreq' => 'weekly', 'priority' => '0.8', 'image' => platform_og_image_url()],
+            ['loc' => route('marketing.contact'), 'lastmod' => $lastmod('marketing/contact'), 'changefreq' => 'monthly', 'priority' => '0.7', 'image' => platform_og_image_url()],
             ['loc' => route('platform.terms'), 'lastmod' => $lastmod('terms/platform'), 'changefreq' => 'yearly', 'priority' => '0.5'],
         ];
 
@@ -399,7 +440,7 @@ Route::domain('{__centralHost}')
             if (! empty($url['image'])) {
                 $xml .= '<image:image>';
                 $xml .= '<image:loc>'.htmlspecialchars($url['image']).'</image:loc>';
-                $xml .= '<image:title>'.htmlspecialchars(platform_name()).'</image:title>';
+                $xml .= '<image:title>'.htmlspecialchars($url['image_title'] ?? platform_name()).'</image:title>';
                 $xml .= '</image:image>';
             }
             $xml .= '</url>';

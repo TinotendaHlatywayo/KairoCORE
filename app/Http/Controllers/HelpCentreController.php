@@ -107,6 +107,10 @@ class HelpCentreController extends Controller
                     'headline' => $article->title,
                     'description' => $article->summary,
                     'url' => $article->url(),
+                    'mainEntityOfPage' => $article->url(),
+                    'image' => platform_og_image_url(),
+                    'datePublished' => date('c', $article->updatedAt ? strtotime($article->updatedAt) : filemtime($article->filePath)),
+                    'dateModified' => date('c', $article->updatedAt ? strtotime($article->updatedAt) : filemtime($article->filePath)),
                     'author' => [
                         '@type' => 'Organization',
                         'name' => platform_name(),

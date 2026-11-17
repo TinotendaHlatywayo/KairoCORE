@@ -1,7 +1,7 @@
 @extends('marketing.layout')
 
-@section('title', marketing_content('meta_title') ?: __('School Fees & Finance Management Software - Kairo CORE'))
-@section('meta_description', marketing_content('meta_description') ?: __('Manage school fees end to end: fee structures, bulk invoicing, multi-currency payments, receipts, statements and financial reports on Kairo CORE.'))
+@section('title', __('School Fees & Finance Management Software').' | '.platform_name())
+@section('meta_description', __('Manage school fees end to end: fee structures, bulk invoicing, multi-currency payments, receipts, statements and financial reports on Kairo CORE.'))
 
 @section('content')
 <section class="relative overflow-hidden bg-white pb-10 pt-14 lg:pt-20">

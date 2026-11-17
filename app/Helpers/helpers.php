@@ -867,14 +867,61 @@ if (! function_exists('marketing_image')) {
     }
 }
 
+if (! function_exists('platform_public_asset_url')) {
+    /**
+     * Cache-busted URL for a file bundled under public/. The content hash in
+     * the query string makes browsers, Google and chat apps fetch the new
+     * artwork immediately after a thumbnail is replaced.
+     */
+    function platform_public_asset_url(string $path): string
+    {
+        $url = asset($path);
+        $file = public_path($path);
+
+        if (is_file($file)) {
+            $url .= '?v='.substr(sha1_file($file), 0, 10);
+        }
+
+        return $url;
+    }
+}
+
 if (! function_exists('platform_og_image_url')) {
     /**
-     * Social share (Open Graph / Twitter) image for the platform pages.
-     * Prefers an uploaded OG image, then the bundled 1200x630 social card.
+     * Default social share (Open Graph / Twitter) image for the platform
+     * pages. The link-preview artwork is the image WhatsApp, Facebook,
+     * LinkedIn and X show when someone pastes https://kairo.co.zw.
      */
     function platform_og_image_url(): string
     {
-        return platform_branding_asset_url('platform_og_image', 'images/og-default.png');
+        return platform_public_asset_url('images/KairoCORE_link_preview.png');
+    }
+}
+
+if (! function_exists('platform_social_profiles')) {
+    /**
+     * Public brand profiles for Organization.sameAs. Only real, configured
+     * URLs are emitted — no guessed handles.
+     *
+     * @return array<int, string>
+     */
+    function platform_social_profiles(): array
+    {
+        $urls = [];
+
+        try {
+            foreach (['facebook', 'instagram', 'tiktok', 'linkedin', 'x', 'youtube'] as $network) {
+                $value = trim((string) PlatformSetting::get('contact', $network));
+
+                if ($value !== '' && filter_var($value, FILTER_VALIDATE_URL)) {
+                    $urls[] = $value;
+                }
+            }
+        } catch (Throwable $e) {
+            // Settings unavailable — emit no sameAs rather than guessed links.
+        }
+
+        return array_values(array_unique($urls));
     }
 }
 
@@ -900,7 +947,7 @@ if (! function_exists('platform_og_image_dimensions')) {
                 $candidates[] = public_path(ltrim($path, '/'));
             }
         } else {
-            $candidates[] = public_path('images/og-default.png');
+            $candidates[] = public_path('images/KairoCORE_link_preview.png');
         }
 
         foreach ($candidates as $candidate) {
@@ -934,8 +981,17 @@ if (! function_exists('platform_website_schema')) {
         return [
             '@context' => 'https://schema.org',
             '@type' => 'WebSite',
+            '@id' => url('/').'#website',
             'name' => platform_name(),
+            'alternateName' => platform_name().' School Management System',
             'url' => url('/'),
+            'description' => platform_seo_description(),
+            'inLanguage' => str_replace('_', '-', app()->getLocale() ?: 'en'),
+            'publisher' => [
+                '@type' => 'Organization',
+                'name' => platform_name(),
+                'url' => url('/'),
+            ],
         ];
     }
 }
@@ -946,20 +1002,35 @@ if (! function_exists('platform_organization_schema')) {
      */
     function platform_organization_schema(): array
     {
-        return [
+        $schema = [
             '@context' => 'https://schema.org',
             '@type' => 'Organization',
+            '@id' => url('/').'#organization',
             'name' => platform_name(),
             'legalName' => platform_name(),
             'url' => url('/'),
             'logo' => platform_logo_url(),
             'image' => platform_og_image_url() ?: null,
+            'description' => platform_seo_description(),
+            'foundingLocation' => [
+                '@type' => 'Place',
+                'name' => 'Harare, Zimbabwe',
+            ],
             'areaServed' => [
                 [
                     '@type' => 'Country',
                     'name' => 'Zimbabwe',
                 ],
                 'Africa',
+            ],
+            'knowsAbout' => [
+                'School management systems',
+                'School management software',
+                'Student information systems',
+                'School fees and billing',
+                'ZIMSEC report cards',
+                'Cambridge report cards',
+                'School admissions and enrolment',
             ],
             'contactPoint' => [
                 [
@@ -970,6 +1041,13 @@ if (! function_exists('platform_organization_schema')) {
                 ],
             ],
         ];
+
+        $sameAs = platform_social_profiles();
+        if ($sameAs !== []) {
+            $schema['sameAs'] = $sameAs;
+        }
+
+        return $schema;
     }
 }
 
@@ -981,10 +1059,10 @@ if (! function_exists('platform_webpage_schema')) {
      * the Open Graph / WhatsApp preview, so rich results and Discover can use
      * that image instead of guessing from the page body.
      */
-    function platform_webpage_schema(?string $url = null, ?string $title = null, ?string $description = null): array
+    function platform_webpage_schema(?string $url = null, ?string $title = null, ?string $description = null, ?string $imageUrl = null): array
     {
         $url = $url ?: url()->current();
-        $imageUrl = platform_og_image_url();
+        $imageUrl = $imageUrl ?: platform_og_image_url();
         $dimensions = platform_og_image_dimensions($imageUrl);
 
         $image = null;
@@ -1037,7 +1115,8 @@ if (! function_exists('platform_software_schema')) {
             'applicationSubCategory' => 'School Management System',
             'operatingSystem' => 'Web browser',
             'description' => platform_seo_description(),
-            'image' => platform_og_image_url() ?: null,
+            'image' => platform_public_asset_url('images/KairoCORE_Home_thumbnail.png'),
+            'screenshot' => platform_public_asset_url('images/KairoCORE_Home_thumbnail.png'),
             'featureList' => [
                 'Admissions and enrolment',
                 'Student information system',

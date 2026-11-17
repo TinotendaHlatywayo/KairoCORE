@@ -1,6 +1,6 @@
 @extends('marketing.layout')
 
-@section('title', marketing_content('meta_title') ?: platform_name().' - School Login')
+@section('title', platform_name().' School Login')
 @section('meta_description', __('Find your school and sign in to your school workspace.'))
 
 @push('styles')

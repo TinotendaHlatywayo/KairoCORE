@@ -1,7 +1,7 @@
 @extends('marketing.layout')
 
-@section('title', marketing_content('meta_title') ?: __('Academic Management, Exams & Report Cards - Kairo CORE'))
-@section('meta_description', marketing_content('meta_description') ?: __('Manage classes, timetables, assessments, examinations, grading and report cards — academic management built for how schools run.'))
+@section('title', __('Academic Management, Exams & Report Cards').' | '.platform_name())
+@section('meta_description', __('Manage classes, timetables, assessments, examinations, grading and report cards — academic management built for how schools run.'))
 
 @section('content')
 <section class="relative overflow-hidden bg-white pb-10 pt-14 lg:pt-20">

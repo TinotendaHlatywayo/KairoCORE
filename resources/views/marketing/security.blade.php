@@ -1,7 +1,7 @@
 @extends('marketing.layout')
 
-@section('title', marketing_content('meta_title') ?: __('Security & Data Protection - Kairo CORE'))
-@section('meta_description', marketing_content('meta_description') ?: __('How Kairo CORE protects school data: tenant isolation, role-based access, encrypted sessions, backups and least-privilege administration.'))
+@section('title', __('Security & Data Protection').' | '.platform_name())
+@section('meta_description', __('How Kairo CORE protects school data: tenant isolation, role-based access, encrypted sessions, backups and least-privilege administration.'))
 
 @section('content')
 <section class="relative overflow-hidden bg-white pb-10 pt-14 lg:pt-20">

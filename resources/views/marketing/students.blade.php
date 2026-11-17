@@ -1,7 +1,7 @@
 @extends('marketing.layout')
 
-@section('title', marketing_content('meta_title') ?: __('Student Information System for Schools - Kairo CORE'))
-@section('meta_description', marketing_content('meta_description') ?: __('Central student records: profiles, guardians, enrolment history, attendance, fees and results in one student information system for schools.'))
+@section('title', __('Student Information System for Schools').' | '.platform_name())
+@section('meta_description', __('Central student records: profiles, guardians, enrolment history, attendance, fees and results in one student information system for schools.'))
 
 @section('content')
 <section class="relative overflow-hidden bg-white pb-10 pt-14 lg:pt-20">
