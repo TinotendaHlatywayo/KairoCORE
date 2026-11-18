@@ -10,6 +10,7 @@
         body.dataset.theme = dark ? 'dark' : 'light';
         document.querySelectorAll('[data-kf-theme]').forEach((button) => {
             button.setAttribute('aria-pressed', dark ? 'true' : 'false');
+            button.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
             button.title = dark ? 'Switch to light mode' : 'Switch to dark mode';
             const moon = button.querySelector('.kf-moon');
             const sun = button.querySelector('.kf-sun');
@@ -62,18 +63,37 @@
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 
-    burger?.addEventListener('click', () => {
-        const open = mobile?.classList.toggle('is-open');
+    const scrim = document.getElementById('kfMobileScrim');
+    const mobileOpen = () => Boolean(mobile?.classList.contains('is-open'));
+
+    const setMobileMenu = (open, restoreFocus = false) => {
+        if (!mobile || !burger) return;
+        mobile.classList.toggle('is-open', open);
         burger.setAttribute('aria-expanded', open ? 'true' : 'false');
-        body.classList.toggle('kf-mobile-open', Boolean(open));
-    });
+        burger.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+        body.classList.toggle('kf-mobile-open', open);
+        if (scrim) scrim.hidden = !open;
+        if (open) {
+            const first = mobile.querySelector('a');
+            window.setTimeout(() => first?.focus({ preventScroll: true }), 80);
+        } else if (restoreFocus) {
+            burger.focus({ preventScroll: true });
+        }
+    };
+
+    burger?.addEventListener('click', () => setMobileMenu(!mobileOpen()));
+    scrim?.addEventListener('click', () => setMobileMenu(false, true));
 
     mobile?.querySelectorAll('a').forEach((link) => {
-        link.addEventListener('click', () => {
-            mobile.classList.remove('is-open');
-            burger?.setAttribute('aria-expanded', 'false');
-            body.classList.remove('kf-mobile-open');
-        });
+        link.addEventListener('click', () => setMobileMenu(false));
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && mobileOpen()) setMobileMenu(false, true);
+    });
+
+    window.matchMedia('(min-width: 981px)').addEventListener?.('change', (event) => {
+        if (event.matches) setMobileMenu(false);
     });
 
     document.querySelectorAll('.kf-logo, .logo').forEach((logo) => {

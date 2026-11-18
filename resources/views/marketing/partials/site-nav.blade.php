@@ -8,6 +8,7 @@
     ];
     $logo = marketing_image('nav_logo', 'images/kairo-core-logo.webp');
     $logoDark = marketing_image('footer_logo', 'images/kairocore-logo-white.webp');
+    $localeFlags = ['en' => '🇬🇧', 'sn' => '🇿🇼', 'sw' => '🇹🇿', 'fr' => '🇫🇷', 'pt' => '🇵🇹', 'es' => '🇪🇸'];
 @endphp
 
 <header class="kf-nav" id="kfNav">
@@ -50,7 +51,7 @@
                 <div class="kf-menu-panel kf-lang-panel">
                     @foreach (supported_locales() as $code => $label)
                         <a href="{{ route('marketing.language', ['locale' => $code]) }}" data-switch-locale="{{ $code }}" @if(app()->getLocale() === $code) aria-current="true" @endif>
-                            <span class="kf-lang-flag">{{ $code === 'en' ? '🇬🇧' : ($code === 'sn' ? '🇿🇼' : ($code === 'sw' ? '🇹🇿' : ($code === 'fr' ? '🇫🇷' : ($code === 'pt' ? '🇵🇹' : '🇪🇸')))) }}</span>
+                            <span class="kf-lang-flag">{{ $localeFlags[$code] ?? '🌐' }}</span>
                             <span class="kf-lang-label">{{ $label }}</span>
                             <span class="kf-lang-code">{{ strtoupper($code) }}</span>
                         </a>
@@ -77,29 +78,48 @@
             <a href="{{ route('register') }}" class="kf-btn kf-btn-primary">{{ __('Register School') }}</a>
 
             <button type="button" class="kf-icon-btn kf-burger" id="kfBurger" aria-label="{{ __('Open menu') }}" aria-controls="kfMobile" aria-expanded="false">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+                <svg class="kf-burger-open" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+                <svg class="kf-burger-close" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
             </button>
+        </div>
         </div>
     </div>
 
-    <div class="kf-mobile" id="kfMobile">
+    <div class="kf-mobile" id="kfMobile" aria-label="{{ __('Mobile navigation') }}">
         <div class="kf-mobile-inner">
-            @foreach ($navLinks as $link)
-                <a href="{{ $link['url'] }}">{{ $link['label'] }} <span aria-hidden="true">→</span></a>
-            @endforeach
+            <nav class="kf-mobile-links" aria-label="{{ __('Mobile navigation') }}">
+                @foreach ($navLinks as $link)
+                    <a href="{{ $link['url'] }}" @class(['is-active' => $link['active']]) @if($link['active']) aria-current="page" @endif>
+                        <span>{{ $link['label'] }}</span>
+                        <span class="kf-mobile-arrow" aria-hidden="true">→</span>
+                    </a>
+                @endforeach
+            </nav>
 
-            <span class="kf-mobile-label">{{ __('Language') }}</span>
-            @foreach (supported_locales() as $code => $label)
-                <a href="{{ route('marketing.language', ['locale' => $code]) }}" data-switch-locale="{{ $code }}"><span>{{ $label }}</span><span>{{ strtoupper($code) }}</span></a>
-            @endforeach
+            <div class="kf-mobile-section">
+                <span class="kf-mobile-label">{{ __('Language') }}</span>
+                <div class="kf-mobile-langs">
+                    @foreach (supported_locales() as $code => $label)
+                        <a href="{{ route('marketing.language', ['locale' => $code]) }}" data-switch-locale="{{ $code }}" @if(app()->getLocale() === $code) aria-current="true" @endif>
+                            <span class="kf-mobile-lang-name"><span aria-hidden="true">{{ $localeFlags[$code] ?? '🌐' }}</span>{{ $label }}</span>
+                            <span class="kf-mobile-code">{{ strtoupper($code) }}</span>
+                        </a>
+                    @endforeach
+                </div>
+            </div>
 
-            <span class="kf-mobile-label">{{ __('Account') }}</span>
-            <a href="{{ route('school.login') }}">{{ __('School Login') }}</a>
-            <a href="{{ url('/platform/login') }}">{{ __('Platform Login') }}</a>
-            <a href="{{ route('register') }}" class="kf-mobile-cta">{{ __('Register School') }}</a>
+            <div class="kf-mobile-section">
+                <span class="kf-mobile-label">{{ __('Account') }}</span>
+                <div class="kf-mobile-links">
+                    <a href="{{ route('school.login') }}"><span>{{ __('School Login') }}</span><span class="kf-mobile-arrow" aria-hidden="true">→</span></a>
+                    <a href="{{ url('/platform/login') }}"><span>{{ __('Platform Login') }}</span><span class="kf-mobile-arrow" aria-hidden="true">→</span></a>
+                </div>
+                <a href="{{ route('register') }}" class="kf-mobile-cta">{{ __('Register School') }} <span aria-hidden="true">→</span></a>
+            </div>
         </div>
     </div>
 </header>
+<div class="kf-mobile-scrim" id="kfMobileScrim" aria-hidden="true" hidden></div>
 @php
     $ecosystem = [
         ['admissions', __('Core'), __('Admissions, Students, Academics'), '#3b82f6', 'M4.26 10.147a60.436 60.436 0 0 0-.491 6.347A48.627 48.627 0 0 1 12 20.904a48.627 48.627 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.57 50.57 0 0 0-2.658-.813A59.905 59.905 0 0 1 12 3.493a59.902 59.902 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5'],

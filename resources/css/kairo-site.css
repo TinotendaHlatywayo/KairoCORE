@@ -1891,7 +1891,7 @@ html.dark .kf-footer, [data-t="d"] .kf-footer {
 }
 
 /* === Logo at left corner, nav links centered, actions at right corner === */
-.kf-nav { position: relative; }
+.kf-nav { position: fixed; }
 .kf-nav-bar { position: relative; width: 100%; }
 .kf-nav-bar .kf-logo {
     position: absolute;
@@ -2090,4 +2090,241 @@ img, svg, video, canvas {
 @media (max-width: 420px) {
     .kf-links a { padding: 8px 10px; font-size: 13px; }
     .kf-actions { flex-wrap: wrap; justify-content: flex-end; }
+}
+
+/* ==========================================================================
+   Mobile navigation
+   Fixed top bar (logo + theme toggle + close) with a scrollable menu sheet
+   that opens directly beneath it. The page behind is dimmed and locked.
+   ========================================================================== */
+.kf-mobile-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 59;
+    background: rgba(15, 26, 46, .48);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+}
+.kf-mobile-scrim[hidden] { display: none; }
+
+.kf-burger .kf-burger-close { display: none; }
+.kf-burger[aria-expanded="true"] .kf-burger-open { display: none; }
+.kf-burger[aria-expanded="true"] .kf-burger-close { display: block; }
+.kf-burger[aria-expanded="true"] {
+    background: var(--kf-coral);
+    border-color: transparent;
+    color: #fff;
+}
+.kf-theme-toggle { min-height: 44px; }
+
+@media (max-width: 980px) {
+    body.kf-mobile-open {
+        overflow: hidden;
+        overscroll-behavior: none;
+    }
+
+    .kf-nav {
+        --kf-nav-h: 64px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 60;
+        padding: 0;
+    }
+    .kf-nav.is-scrolled,
+    .kf-nav:focus-within { padding: 0; }
+    body.kf-mobile-open .kf-nav { background: var(--kf-bg); }
+
+    .kf-nav-bar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        height: var(--kf-nav-h);
+        padding-inline: var(--kf-gutter, 18px);
+        z-index: 3;
+    }
+    .kf-nav-bar .kf-logo {
+        position: static;
+        transform: none;
+        flex: none;
+        z-index: auto;
+    }
+    .kf-nav-bar .kf-wrap.kf-nav-inner {
+        flex: 1;
+        min-width: 0;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+    }
+    .kf-nav-bar .kf-actions {
+        position: static;
+        transform: none;
+        margin-left: auto;
+        padding: 0;
+        gap: 8px;
+        z-index: 3;
+    }
+    .kf-actions .kf-lang-desktop,
+    .kf-actions .kf-login-desktop,
+    .kf-actions .kf-btn-primary {
+        display: none;
+    }
+    .kf-burger {
+        display: inline-grid;
+        width: 44px;
+        height: 44px;
+    }
+
+    .kf-mobile {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 2;
+        max-height: calc(100vh - var(--kf-nav-h) - 1px);
+        max-height: calc(100dvh - var(--kf-nav-h) - 1px);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+        border-top: 1px solid var(--kf-line);
+        background: var(--kf-card);
+        box-shadow: 0 30px 60px -24px rgba(15, 26, 46, .5);
+    }
+    .kf-mobile.is-open {
+        display: block;
+        animation: kf-mobile-in .22s cubic-bezier(.2, .7, .2, 1);
+    }
+
+    .kf-mobile-inner {
+        display: block;
+        padding: 10px var(--kf-gutter, 18px) calc(22px + env(safe-area-inset-bottom));
+    }
+
+    .kf-mobile-links,
+    .kf-mobile-langs {
+        display: grid;
+        gap: 4px;
+    }
+
+    .kf-mobile a {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        min-height: 48px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        color: var(--kf-ink);
+        font-size: 15.5px;
+        font-weight: 600;
+        line-height: 1.35;
+        text-decoration: none;
+        transition: background .2s, color .2s;
+    }
+    .kf-mobile a:hover,
+    .kf-mobile a:focus-visible,
+    .kf-mobile a.is-active {
+        background: color-mix(in srgb, var(--kf-coral) 10%, transparent);
+        color: var(--kf-coral);
+    }
+    .kf-mobile a.is-active {
+        font-weight: 800;
+        box-shadow: inset 3px 0 0 var(--kf-coral);
+    }
+
+    .kf-mobile-arrow {
+        flex: none;
+        font-size: 16px;
+        opacity: .5;
+        transition: transform .2s, opacity .2s;
+    }
+    .kf-mobile a:hover .kf-mobile-arrow,
+    .kf-mobile a:focus-visible .kf-mobile-arrow {
+        opacity: 1;
+        transform: translateX(3px);
+    }
+
+    .kf-mobile-section {
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid var(--kf-line);
+    }
+    .kf-mobile .kf-mobile-label {
+        display: block;
+        margin: 0 0 8px;
+        padding: 0 6px;
+        color: var(--kf-muted);
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+    }
+
+    .kf-mobile-langs {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px;
+    }
+    .kf-mobile-langs a {
+        min-height: 46px;
+        padding: 10px 12px;
+        font-size: 14px;
+    }
+    .kf-mobile-lang-name {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+    }
+    .kf-mobile-code {
+        flex: none;
+        padding: 3px 7px;
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--kf-ink) 8%, transparent);
+        color: var(--kf-muted);
+        font-size: 10.5px;
+        font-weight: 800;
+        letter-spacing: .08em;
+    }
+    .kf-mobile-langs a[aria-current="true"] {
+        background: color-mix(in srgb, var(--kf-coral) 10%, transparent);
+        color: var(--kf-coral);
+    }
+    .kf-mobile-langs a[aria-current="true"] .kf-mobile-code {
+        background: var(--kf-coral);
+        color: #fff;
+    }
+
+    .kf-mobile .kf-mobile-cta {
+        margin-top: 10px;
+        min-height: 50px;
+        justify-content: center;
+        border-radius: 999px;
+        background: linear-gradient(135deg, var(--kf-coral), #f2784f);
+        color: #fff;
+        font-size: 15.5px;
+        font-weight: 800;
+        box-shadow: 0 12px 26px -10px rgba(239, 96, 80, .8);
+    }
+    .kf-mobile .kf-mobile-cta:hover,
+    .kf-mobile .kf-mobile-cta:focus-visible {
+        background: #d94b39;
+        color: #fff;
+    }
+}
+
+@keyframes kf-mobile-in {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .kf-mobile.is-open { animation: none; }
+}
+
+@media (max-width: 359px) {
+    .kf-mobile-langs a { padding: 10px; font-size: 13.5px; }
+    .kf-mobile-code { display: none; }
 }
