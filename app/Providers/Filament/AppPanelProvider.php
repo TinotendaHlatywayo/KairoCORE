@@ -241,6 +241,13 @@ class AppPanelProvider extends PanelProvider
                 fn () => view('components.back-button')
             )
 
+            // Phone-only workspace label gives the compact app bar context.
+            // Hidden on tablet/desktop by CSS.
+            ->renderHook(
+                PanelsRenderHook::TOPBAR_START,
+                fn () => view('components.topbar-mobile-title')
+            )
+
             // Render sidebar position switcher in top header bar end
             ->renderHook(
                 PanelsRenderHook::TOPBAR_END,
@@ -257,6 +264,14 @@ class AppPanelProvider extends PanelProvider
             ->renderHook(
                 PanelsRenderHook::TOPBAR_END,
                 fn () => view('components.global-help-button')
+            )
+
+            // Phone-only overflow menu. On narrow screens the settings, help
+            // and back actions above would overflow the header, so they are
+            // collapsed into this single bottom sheet (hidden on desktop).
+            ->renderHook(
+                PanelsRenderHook::TOPBAR_END,
+                fn () => view('components.topbar-more-menu')
             )
 
             // ──────────────────────────────────────────────────────────────

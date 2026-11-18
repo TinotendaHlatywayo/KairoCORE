@@ -1,5 +1,6 @@
 <div
     class="sc-cc-root"
+    x-on:keydown.escape.window="if (open) { if (selectedDate) { selectedDate = null; $wire.closeAddTask(); } else { open = false; $wire.close(); } }"
     x-data="{
         open: @entangle('isOpen'),
         now: new Date(),
@@ -10,6 +11,7 @@
         rangeEnd: @entangle('rangeEnd'),
         dnd: @entangle('dnd'),
         addTab: @entangle('addTab'),
+        mobileTab: 'tasks',
         baseRange: @js($this->activeRange),
         init() {
             setInterval(() => { this.now = new Date(); }, 1000);
@@ -68,7 +70,10 @@
         type="button"
         class="sc-cc-trigger"
         x-on:click="open = !open"
-        :title="'Command Center'"
+        x-bind:aria-expanded="open.toString()"
+        aria-haspopup="dialog"
+        title="{{ __('Command Center') }}"
+        aria-label="{{ __('Command Center') }}"
     >
         <svg class="sc-cc-trigger-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
             <path fill-rule="evenodd" d="M5.75 2a.75.75 0 0 1 .75.75V4h7V2.75a.75.75 0 0 1 1.5 0V4h.25A2.75 2.75 0 0 1 18 6.75v8.5A2.75 2.75 0 0 1 15.25 18H4.75A2.75 2.75 0 0 1 2 15.25v-8.5A2.75 2.75 0 0 1 4.75 4H5V2.75A.75.75 0 0 1 5.75 2ZM4.5 6.75a1.25 1.25 0 0 1 1.25-1.25h8.5a1.25 1.25 0 0 1 1.25 1.25v8.5a1.25 1.25 0 0 1-1.25 1.25h-8.5a1.25 1.25 0 0 1-1.25-1.25v-8.5Z" clip-rule="evenodd"/>
@@ -109,8 +114,51 @@
                 x-transition:leave-start="sc-cc-leave-start"
                 x-transition:leave-end="sc-cc-leave-end"
                 class="sc-cc-panel w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-6"
+                x-bind:class="mobileTab === 'tasks' ? 'sc-cc-mobile-tasks' : 'sc-cc-mobile-cal'"
                 @click.outside="open = false; $wire.close()"
             >
+        {{-- Phone-only sheet handle, close button and Tasks/Calendar tab
+             switcher. Hidden at >=768px where both panes sit side by side. --}}
+        <div class="sc-cc-mobile-head">
+            <span class="sc-cc-mobile-grabber" aria-hidden="true"></span>
+            <div class="sc-cc-mobile-tabs" role="tablist" aria-label="{{ __('Command center sections') }}">
+                <button
+                    type="button"
+                    role="tab"
+                    class="sc-cc-mobile-tab"
+                    :class="{ 'sc-cc-mobile-tab-active': mobileTab === 'tasks' }"
+                    :aria-selected="(mobileTab === 'tasks').toString()"
+                    x-on:click="mobileTab = 'tasks'"
+                >
+                    <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd"/></svg>
+                    {{ __('Tasks') }}
+                    @if (! $this->dnd && $this->badgeCount > 0)
+                        <span class="sc-cc-mobile-tab-badge">{{ $this->badgeCount }}</span>
+                    @endif
+                </button>
+                <button
+                    type="button"
+                    role="tab"
+                    class="sc-cc-mobile-tab"
+                    :class="{ 'sc-cc-mobile-tab-active': mobileTab === 'cal' }"
+                    :aria-selected="(mobileTab === 'cal').toString()"
+                    x-on:click="mobileTab = 'cal'"
+                >
+                    <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.75 2a.75.75 0 0 1 .75.75V4h7V2.75a.75.75 0 0 1 1.5 0V4h.25A2.75 2.75 0 0 1 18 6.75v8.5A2.75 2.75 0 0 1 15.25 18H4.75A2.75 2.75 0 0 1 2 15.25v-8.5A2.75 2.75 0 0 1 4.75 4H5V2.75A.75.75 0 0 1 5.75 2ZM4.5 6.75a1.25 1.25 0 0 1 1.25-1.25h8.5a1.25 1.25 0 0 1 1.25 1.25v8.5a1.25 1.25 0 0 1-1.25 1.25h-8.5a1.25 1.25 0 0 1-1.25-1.25v-8.5Z" clip-rule="evenodd"/></svg>
+                    {{ __('Calendar') }}
+                </button>
+            </div>
+            <button
+                type="button"
+                class="sc-cc-mobile-close"
+                x-on:click="open = false; $wire.close()"
+                aria-label="{{ __('Close') }}"
+                title="{{ __('Close') }}"
+            >
+                <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z"/></svg>
+            </button>
+        </div>
+
         <div class="sc-cc-pane sc-cc-pane-tasks lg:col-span-7 max-h-[70vh] overflow-y-auto">
             {{-- Task Manager header --}}
             <div class="sc-cc-pane-head">

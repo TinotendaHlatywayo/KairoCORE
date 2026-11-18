@@ -4100,3 +4100,753 @@ select.sc-input {
     }
 }
 
+
+/* ═══════════════════════════════════════════════════════════════════
+ * 28. RESPONSIVE TOPBAR — PHONE APP BAR
+ *
+ * The workspace header used to overflow on phones: the wrapper added
+ * 1.5rem of padding, Filament's built-in hamburger duplicated the custom
+ * one, and the settings/help/position actions spilled past the viewport,
+ * cutting the account avatar in half. Below 1024px the bar is now a tidy
+ * single row — menu, back, command center, account and a "More" button —
+ * with the secondary actions moved into a native-feeling bottom sheet.
+ *
+ * Desktop (>=1024px) is untouched by every rule in this section.
+ * ═══════════════════════════════════════════════════════════════════ */
+
+/* The overflow trigger only exists on phones/tablets. */
+.sc-topbar-more {
+    display: none;
+}
+
+@media (max-width: 1023px) {
+    /* 1. The wrapper no longer adds its own gutter; the nav owns spacing. */
+    .fi-topbar {
+        padding-inline: 0 !important;
+    }
+
+    .fi-topbar nav {
+        height: 3.5rem !important;
+        min-height: 3.5rem !important;
+        gap: 0.375rem !important;
+        padding-inline: 0.5rem !important;
+        flex-wrap: nowrap !important;
+    }
+
+    /* 2. One menu button only. Our styled trigger replaces Filament's
+          built-in open/close pair, which rendered beside it. The drawer is
+          dismissed by tapping the backdrop, as on every native app. */
+    .fi-topbar .fi-topbar-open-sidebar-btn,
+    .fi-topbar .fi-topbar-close-sidebar-btn {
+        display: none !important;
+    }
+
+    /* 3. Left cluster keeps a comfortable, stable tap target. */
+    .sc-topbar-menu-btn,
+    .sc-topbar-back-btn {
+        flex: 0 0 auto !important;
+        width: 2.75rem !important;
+        min-width: 2.75rem !important;
+        height: 2.75rem !important;
+        min-height: 2.75rem !important;
+        padding: 0 !important;
+        border-radius: 0.8rem !important;
+    }
+
+    .sc-topbar-menu-btn svg,
+    .sc-topbar-back-btn svg {
+        width: 1.1rem;
+        height: 1.1rem;
+    }
+
+    .sc-topbar-back-btn span {
+        display: none !important;
+    }
+
+    /* 4. Right cluster: command center + notifications + account. */
+    .fi-topbar nav > .ms-auto {
+        margin-inline-start: auto !important;
+        gap: 0.375rem !important;
+        flex: 0 0 auto;
+        min-width: 0;
+    }
+
+    /* 5. Secondary actions are reachable from the More sheet instead. */
+    .sc-topbar-secondary {
+        display: none !important;
+    }
+
+    /* 6. More trigger — same visual language as the other round buttons. */
+    .sc-topbar-more {
+        display: inline-flex;
+        flex: 0 0 auto;
+        align-items: center;
+    }
+
+    .sc-topbar-more-btn {
+        width: 2.75rem;
+        height: 2.75rem;
+        min-width: 2.75rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.8rem;
+        border: 1px solid #e2e8f0;
+        background: linear-gradient(180deg, #f8fafc, #f1f5f9);
+        color: #475569;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+        transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+    }
+
+    .sc-topbar-more-btn svg {
+        width: 1.15rem;
+        height: 1.15rem;
+    }
+
+    .sc-topbar-more-btn:hover {
+        border-color: var(--sc-primary-200);
+        color: var(--sc-primary-600);
+    }
+
+    .sc-topbar-more-btn:active {
+        transform: scale(0.95);
+    }
+
+    .dark .sc-topbar-more-btn {
+        background: #1e293b;
+        border-color: #334155;
+        color: #cbd5e1;
+        box-shadow: none;
+    }
+
+    .dark .sc-topbar-more-btn:hover {
+        border-color: var(--sc-primary-500);
+        color: var(--sc-primary-300);
+    }
+
+    /* 7. Command-center chip: compact but still readable. */
+    .sc-cc-trigger {
+        flex: 0 0 auto;
+        height: 2.5rem;
+        gap: 0.35rem;
+        padding: 0 0.55rem;
+        font-size: 0.75rem;
+    }
+
+    .sc-cc-trigger-icon {
+        width: 0.95rem;
+        height: 0.95rem;
+    }
+
+    .sc-cc-trigger-time {
+        padding: 0.18rem 0.4rem;
+        font-size: 0.68rem;
+    }
+
+    .sc-cc-trigger-badge {
+        min-width: 16px;
+        height: 16px;
+        font-size: 0.58rem;
+    }
+
+    /* 8. Account avatar is a real 40px tap target, never clipped. */
+    .fi-topbar .fi-user-menu button[aria-label="User menu"] {
+        width: 2.5rem;
+        height: 2.5rem;
+        min-width: 2.5rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .fi-topbar .fi-user-menu .fi-avatar {
+        width: 2rem;
+        height: 2rem;
+    }
+}
+
+/* Tablets have room for the original secondary actions, so keep them in the
+   bar and hide the phone overflow trigger. */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .sc-topbar-secondary {
+        display: inline-flex !important;
+    }
+
+    .sc-topbar-more {
+        display: none !important;
+    }
+}
+
+/* Very narrow phones: drop the back affordance (still in More) and then the
+   clock, so the bar never needs horizontal scrolling. */
+@media (max-width: 359px) {
+    .sc-topbar-back-btn {
+        display: none !important;
+    }
+}
+
+@media (max-width: 330px) {
+    .sc-cc-trigger-time {
+        display: none;
+    }
+}
+
+/* ── Phone overflow bottom sheet ─────────────────────────────── */
+.sc-more-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.sc-more-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.42);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+}
+
+.sc-more-sheet {
+    position: relative;
+    width: 100%;
+    max-width: 32rem;
+    max-height: 85dvh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    background: #ffffff;
+    border-radius: 1.5rem 1.5rem 0 0;
+    padding: 0.65rem 0.85rem calc(0.9rem + env(safe-area-inset-bottom, 0px));
+    box-shadow: 0 -24px 60px rgba(15, 23, 42, 0.28);
+}
+
+.dark .sc-more-sheet {
+    background: #0f172a;
+    box-shadow: 0 -24px 60px rgba(0, 0, 0, 0.55);
+}
+
+.sc-more-grabber {
+    display: block;
+    width: 2.4rem;
+    height: 4px;
+    margin: 0 auto 0.65rem;
+    border-radius: 9999px;
+    background: #e2e8f0;
+}
+
+.dark .sc-more-grabber {
+    background: #334155;
+}
+
+.sc-more-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.15rem 0.5rem 0.7rem;
+}
+
+.sc-more-eyebrow {
+    display: block;
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--sc-primary-500);
+}
+
+.sc-more-title {
+    margin: 0.1rem 0 0;
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: #0f172a;
+}
+
+.dark .sc-more-title {
+    color: #f1f5f9;
+}
+
+.sc-more-close {
+    width: 2.25rem;
+    height: 2.25rem;
+    min-width: 2.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #64748b;
+}
+
+.sc-more-close svg {
+    width: 1rem;
+    height: 1rem;
+}
+
+.dark .sc-more-close {
+    background: #1e293b;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+.sc-more-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding-bottom: 0.35rem;
+}
+
+.sc-more-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.7rem 0.75rem;
+    border: 1px solid transparent;
+    border-radius: 1rem;
+    background: transparent;
+    color: #0f172a;
+    text-align: left;
+    text-decoration: none;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.sc-more-item:hover,
+.sc-more-item:focus-visible {
+    background: rgba(var(--primary-500), 0.06);
+    border-color: rgba(var(--primary-500), 0.12);
+    outline: none;
+}
+
+.dark .sc-more-item {
+    color: #e2e8f0;
+}
+
+.dark .sc-more-item:hover,
+.dark .sc-more-item:focus-visible {
+    background: rgba(var(--primary-500), 0.14);
+    border-color: rgba(var(--primary-500), 0.24);
+}
+
+.sc-more-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.8rem;
+    background: rgba(var(--primary-500), 0.1);
+    color: var(--sc-primary-600);
+}
+
+.sc-more-icon svg {
+    width: 1.2rem;
+    height: 1.2rem;
+}
+
+.dark .sc-more-icon {
+    background: rgba(var(--primary-500), 0.18);
+    color: var(--sc-primary-300);
+}
+
+.sc-more-text {
+    min-width: 0;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.sc-more-label {
+    font-size: 0.86rem;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.sc-more-desc {
+    font-size: 0.68rem;
+    color: #94a3b8;
+    line-height: 1.3;
+}
+
+.sc-more-chevron {
+    width: 1rem;
+    height: 1rem;
+    flex: none;
+    color: #cbd5e1;
+}
+
+/* Sheet motion */
+.sc-more-enter { transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease; }
+.sc-more-enter-start { transform: translateY(100%); opacity: 0; }
+.sc-more-enter-end { transform: translateY(0); opacity: 1; }
+.sc-more-leave { transition: transform 0.2s ease-in, opacity 0.15s ease; }
+.sc-more-leave-start { transform: translateY(0); opacity: 1; }
+.sc-more-leave-end { transform: translateY(100%); opacity: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+    .sc-more-enter,
+    .sc-more-leave {
+        transition: none !important;
+    }
+}
+
+/* ── Command Center on phones: a true bottom sheet with tabs ─────
+ * Two full-height panes stacked in one grid used to become a very long
+ * document. Phones now get one pane at a time, switched by a segmented
+ * control, inside a scrollable sheet anchored to the bottom of the screen.
+ * At >=768px both panes stay visible exactly as before. */
+.sc-cc-mobile-head {
+    display: none;
+}
+
+@media (max-width: 1023px) {
+    .sc-cc-trigger-date {
+        display: none;
+    }
+}
+
+@media (max-width: 767px) {
+    .sc-cc-panel,
+    .sc-cc-panel.sc-cc-panel {
+        position: fixed !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        top: auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        transform: none !important;
+        display: flex !important;
+        flex-direction: column !important;
+        grid-template-columns: none !important;
+        gap: 0 !important;
+        max-height: 92dvh !important;
+        border-radius: 1.35rem 1.35rem 0 0 !important;
+        border-bottom-left-radius: 0 !important;
+        border-bottom-right-radius: 0 !important;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        overflow: hidden !important;
+        box-shadow: 0 -24px 60px rgba(15, 23, 42, 0.32);
+    }
+
+    .sc-cc-mobile-head {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        position: relative;
+        flex: none;
+        padding: 0.9rem 0.7rem 0.45rem;
+        border-bottom: 1px solid #f1f5f9;
+        background: #ffffff;
+    }
+
+    .dark .sc-cc-mobile-head {
+        background: #0f172a;
+        border-bottom-color: #1e293b;
+    }
+
+    .sc-cc-mobile-grabber {
+        position: absolute;
+        top: 0.4rem;
+        left: 50%;
+        width: 2.4rem;
+        height: 4px;
+        transform: translateX(-50%);
+        border-radius: 9999px;
+        background: #e2e8f0;
+    }
+
+    .dark .sc-cc-mobile-grabber {
+        background: #334155;
+    }
+
+    .sc-cc-mobile-tabs {
+        display: inline-flex;
+        flex: 1 1 auto;
+        gap: 0.18rem;
+        padding: 0.2rem;
+        border-radius: 0.9rem;
+        background: #f1f5f9;
+    }
+
+    .dark .sc-cc-mobile-tabs {
+        background: #0b1220;
+    }
+
+    .sc-cc-mobile-tab {
+        flex: 1 1 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.3rem;
+        min-height: 2.25rem;
+        padding: 0.3rem 0.5rem;
+        border: 1px solid transparent;
+        border-radius: 0.7rem;
+        background: transparent;
+        color: #64748b;
+        font-size: 0.74rem;
+        font-weight: 800;
+        transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .sc-cc-mobile-tab svg {
+        width: 0.9rem;
+        height: 0.9rem;
+    }
+
+    .sc-cc-mobile-tab-active {
+        background: #ffffff;
+        color: var(--sc-primary-600);
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+    }
+
+    .dark .sc-cc-mobile-tab-active {
+        background: #1e293b;
+        color: var(--sc-primary-300);
+        box-shadow: none;
+    }
+
+    .sc-cc-mobile-tab-badge {
+        min-width: 16px;
+        height: 16px;
+        padding: 0 4px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 9999px;
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: #fff;
+        font-size: 0.56rem;
+        font-weight: 800;
+    }
+
+    .sc-cc-mobile-close {
+        width: 2.25rem;
+        height: 2.25rem;
+        min-width: 2.25rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.7rem;
+        background: #f8fafc;
+        color: #64748b;
+    }
+
+    .sc-cc-mobile-close svg {
+        width: 1rem;
+        height: 1rem;
+    }
+
+    .dark .sc-cc-mobile-close {
+        background: #1e293b;
+        border-color: #334155;
+        color: #cbd5e1;
+    }
+
+    .sc-cc-pane,
+    .sc-cc-pane-tasks,
+    .sc-cc-pane-cal {
+        max-height: none !important;
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .sc-cc-pane-tasks {
+        border-right: none !important;
+    }
+
+    /* Keep the 7-day grid inside narrow sheets. aspect-ratio + min-height
+     * used to force each cell to at least 38px, overflowing at <320px. */
+    .sc-cc-cal-grid .sc-cc-day {
+        aspect-ratio: auto;
+        min-width: 0;
+        min-height: 0;
+        height: clamp(30px, 9.5vw, 44px);
+    }
+
+    .sc-cc-mobile-tasks .sc-cc-pane-cal,
+    .sc-cc-mobile-cal .sc-cc-pane-tasks {
+        display: none !important;
+    }
+
+    /* Slide up from the bottom instead of scaling down from the top. */
+    .sc-cc-enter-start { opacity: 0; transform: translateY(100%) !important; }
+    .sc-cc-enter-end { opacity: 1; transform: translateY(0) !important; }
+    .sc-cc-leave-start { opacity: 1; transform: translateY(0) !important; }
+    .sc-cc-leave-end { opacity: 0; transform: translateY(100%) !important; }
+
+    /* The nested quick-add becomes a full-bleed sheet inside the panel. */
+    .sc-cc-add {
+        border-radius: 0 !important;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+ * 29. PHONE TOP BAR — CLEAN APP-BAR PATTERN
+ *
+ * Phones get a single, predictable row: menu on the left, a compact
+ * notification/calendar icon, account avatar and overflow on the right.
+ * The duplicate back arrow and the live clock are hidden because both are
+ * reachable from the More sheet; this removes the crowded, mismatched
+ * pill/square cluster the old bar had. Tablet and desktop are unchanged.
+ * ═══════════════════════════════════════════════════════════════════ */
+
+.sc-topbar-title {
+    display: none;
+}
+
+@media (max-width: 767px) {
+    /* Eight-pixel rhythm between tap targets (matches native app bars). */
+    .fi-topbar nav {
+        gap: 0.5rem !important;
+        padding-inline: 0.5rem !important;
+    }
+
+    .fi-topbar nav > .ms-auto {
+        gap: 0.5rem !important;
+    }
+
+    .sc-topbar-title {
+        display: none;
+    }
+
+    @media (min-width: 341px) {
+        .sc-topbar-title {
+            display: flex;
+            flex: 1 1 auto;
+            min-width: 0;
+            align-items: center;
+            padding-inline: 0.25rem;
+        }
+
+        .sc-topbar-title-text {
+            display: block;
+            max-width: 100%;
+            overflow: hidden;
+            color: #0f172a;
+            font-size: 0.8rem;
+            font-weight: 800;
+            letter-spacing: -0.01em;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .dark .sc-topbar-title-text {
+            color: #f1f5f9;
+        }
+    }
+
+    /* Back belongs to the More sheet on phones. */
+    .sc-topbar-back-btn {
+        display: none !important;
+    }
+
+    .sc-topbar-menu-btn,
+    .sc-topbar-more-btn,
+    .sc-cc-trigger,
+    .fi-topbar .fi-user-menu button[aria-label="User menu"] {
+        width: 2.75rem !important;
+        min-width: 2.75rem !important;
+        height: 2.75rem !important;
+        min-height: 2.75rem !important;
+        padding: 0 !important;
+        border-radius: 9999px !important;
+        background: transparent !important;
+        border: 1px solid transparent !important;
+        box-shadow: none !important;
+        color: #475569 !important;
+        touch-action: manipulation;
+        transition: background-color 0.12s ease, color 0.12s ease, transform 0.12s ease;
+    }
+
+    .sc-topbar-menu-btn svg,
+    .sc-topbar-more-btn svg,
+    .sc-cc-trigger-icon {
+        width: 1.25rem !important;
+        height: 1.25rem !important;
+        color: inherit !important;
+    }
+
+    .sc-topbar-menu-btn:active,
+    .sc-topbar-more-btn:active,
+    .sc-cc-trigger:active,
+    .fi-topbar .fi-user-menu button[aria-label="User menu"]:active {
+        background-color: rgba(15, 23, 42, 0.08) !important;
+        transform: scale(0.96);
+    }
+
+    .sc-topbar-menu-btn:focus-visible,
+    .sc-topbar-more-btn:focus-visible,
+    .sc-cc-trigger:focus-visible,
+    .fi-topbar .fi-user-menu button[aria-label="User menu"]:focus-visible {
+        outline: 2px solid var(--sc-primary-500);
+        outline-offset: 2px;
+    }
+
+    /* The clock is redundant once the icon and badge are visible. */
+    .sc-cc-trigger-date,
+    .sc-cc-trigger-time {
+        display: none !important;
+    }
+
+    /* Notification badge becomes a true top-right badge on the icon. */
+    .sc-cc-trigger {
+        position: relative;
+    }
+
+    .sc-cc-trigger-badge,
+    .sc-cc-dnd-dot {
+        position: absolute !important;
+        top: 0.1rem !important;
+        right: 0.1rem !important;
+        min-width: 1rem !important;
+        height: 1rem !important;
+        padding: 0 0.25rem !important;
+        font-size: 0.56rem !important;
+        box-shadow: 0 0 0 2px #ffffff !important;
+    }
+
+    .fi-topbar .fi-user-menu .fi-avatar {
+        width: 2rem;
+        height: 2rem;
+        flex: none;
+    }
+
+    .dark .sc-topbar-menu-btn,
+    .dark .sc-topbar-more-btn,
+    .dark .sc-cc-trigger,
+    .dark .fi-topbar .fi-user-menu button[aria-label="User menu"] {
+        color: #cbd5e1 !important;
+    }
+
+    .dark .sc-topbar-menu-btn:active,
+    .dark .sc-topbar-more-btn:active,
+    .dark .sc-cc-trigger:active,
+    .dark .fi-topbar .fi-user-menu button[aria-label="User menu"]:active {
+        background-color: rgba(148, 163, 184, 0.18) !important;
+    }
+
+    .dark .sc-cc-trigger-badge,
+    .dark .sc-cc-dnd-dot {
+        box-shadow: 0 0 0 2px #0f172a !important;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .sc-topbar-menu-btn,
+        .sc-topbar-more-btn,
+        .sc-cc-trigger,
+        .fi-topbar .fi-user-menu button[aria-label="User menu"] {
+            transition: none !important;
+        }
+    }
+}

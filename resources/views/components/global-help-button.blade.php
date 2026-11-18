@@ -8,7 +8,7 @@
     $help = \App\Support\HelpContent::for($pageClass ?? '');
 @endphp
 
-<div x-data="{ open: false }" class="relative inline-flex items-center">
+<div x-data="{ open: false }" x-on:sc-open-help.window="open = true" class="sc-topbar-secondary relative inline-flex items-center">
     <button
         @click="open = true"
         type="button"
