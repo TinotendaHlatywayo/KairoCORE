@@ -1565,6 +1565,8 @@ html.dark .kf-logo img,
 [data-t="d"] .kf-logo img {
     background: transparent !important;
     padding: 0;
+    filter: none;
+    animation: none;
 }
 
 /* Active page underline */
@@ -2196,6 +2198,10 @@ img, svg, video, canvas {
     .kf-mobile.is-open {
         display: block;
         animation: kf-mobile-in .22s cubic-bezier(.2, .7, .2, 1);
+    }
+    .kf-mobile nav.kf-mobile-links {
+        background: transparent !important;
+        border-color: transparent !important;
     }
 
     .kf-mobile-inner {
