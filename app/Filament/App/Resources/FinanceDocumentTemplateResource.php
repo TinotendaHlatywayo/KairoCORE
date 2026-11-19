@@ -481,7 +481,7 @@ class FinanceDocumentTemplateResource extends Resource
 
         // Route URLs inside the preview (e.g. the QR verification link) need
         // the {tenant} default parameter for this render cycle.
-        URL::defaults(['tenant' => $school->subdomain]);
+        URL::defaults(array_merge(URL::getDefaultParameters(), ['tenant' => $school->subdomain]));
 
         $documentType = $get('document_type') ?? 'invoice';
 

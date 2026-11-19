@@ -91,6 +91,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $centralHost = parse_url((string) config('app.url'), PHP_URL_HOST) ?: 'localhost';
+        URL::defaults(array_merge(URL::getDefaultParameters(), [
+            '__centralHost' => $centralHost,
+            '__baseHost' => $centralHost,
+        ]));
+
         // 0. Surface lazy-loading and silent-discard bugs early during local
         // development so N+1 query regressions are caught before they ship.
         // Deliberately scoped to local so production stays lean.

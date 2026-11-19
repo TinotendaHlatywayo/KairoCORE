@@ -90,6 +90,6 @@ class EnsureWorkspaceTenantContext
         view()->share('school', $school);
         view()->share('features', TenantFeatureService::all());
 
-        URL::defaults(['tenant' => $school->subdomain]);
+        URL::defaults(array_merge(URL::getDefaultParameters(), ['tenant' => $school->subdomain]));
     }
 }

@@ -120,7 +120,7 @@ class ResolveTenant
                 break;
             }
         }
-        URL::defaults(['tenant' => $school->subdomain, '__baseHost' => $__centralHost, '__centralHost' => $__centralHost]);
+        URL::defaults(array_merge(URL::getDefaultParameters(), ['tenant' => $school->subdomain, '__baseHost' => $__centralHost, '__centralHost' => $__centralHost]));
 
         $this->applyFilamentTheme();
 
