@@ -409,7 +409,8 @@ if (! function_exists('marketing_content_defaults')) {
             'meta_description' => '',
 
             // ── Home · hero ─────────────────────────────────────────
-            'hero_badge' => __('Built for schools globally with multi-language support'),
+            'hero_badge_label' => __('KAIRO CORE'),
+            'hero_badge' => __('All-in-one school management platform'),
             'hero_title' => __('Run your whole school from one platform'),
             'hero_subtitle' => __('KairoCORE brings admissions, academics, fees, attendance, HR, communication and more together in one secure, cloud-based system, so your team spends less time on paperwork and more time on students.'),
             'hero_image' => 'https://images.pexels.com/photos/34211744/pexels-photo-34211744.jpeg?auto=compress&cs=tinysrgb&w=1600',
@@ -423,9 +424,9 @@ if (! function_exists('marketing_content_defaults')) {
             'hero_trust_2' => __('Secure & reliable'),
             'hero_trust_3' => __('Multi-currency billing'),
             'hero_stat_1_label' => __('Connected modules'),
-            'hero_stat_1_value' => marketing_live_stats()['modules'],
+            'hero_stat_1_value' => marketing_live_stats()['modules'].'+',
             'hero_stat_2_label' => __('Languages supported'),
-            'hero_stat_2_value' => marketing_live_stats()['languages'],
+            'hero_stat_2_value' => marketing_live_stats()['languages'].'+',
             'hero_stat_3_label' => __('Uptime, cloud-hosted'),
             'hero_stat_3_value' => '99.9%',
             'hero_stat_4_label' => __('Dedicated support'),

@@ -29,30 +29,36 @@
     <div class="pic sh" id="ps"></div>
     <div class="gs" id="gs">
         @php
-            $uptimeStat = [];
-            preg_match('/^([0-9.]+)(.*)$/u', marketing_content('hero_stat_3_value'), $uptimeStat);
-            $supportStat = [];
-            preg_match('/^([0-9.]+)(.*)$/u', marketing_content('hero_stat_4_value'), $supportStat);
+            $parseStat = static function (string $value): array {
+                preg_match('/^([0-9.]+)(.*)$/u', $value, $parts);
+                return ['number' => $parts[1] ?? '0', 'suffix' => $parts[2] ?? ''];
+            };
+            $heroStats = [
+                1 => $parseStat((string) marketing_content('hero_stat_1_value')),
+                2 => $parseStat((string) marketing_content('hero_stat_2_value')),
+                3 => $parseStat((string) marketing_content('hero_stat_3_value')),
+                4 => $parseStat((string) marketing_content('hero_stat_4_value')),
+            ];
         @endphp
         <div class="fk">
-            <b data-n="{{ marketing_content('hero_stat_1_value') }}">0</b>
+            <b data-n="{{ $heroStats[1]['number'] }}" data-s="{{ $heroStats[1]['suffix'] }}">0</b>
             <small><span class="dt"></span> {{ marketing_content('hero_stat_1_label') }}</small>
         </div>
         <div class="fk">
-            <b data-n="{{ $uptimeStat[1] ?? '99.9' }}" data-s="{{ $uptimeStat[2] ?? '%' }}">0</b>
+            <b data-n="{{ $heroStats[3]['number'] }}" data-s="{{ $heroStats[3]['suffix'] }}">0</b>
             <small><span class="dt"></span> {{ marketing_content('hero_stat_3_label') }}</small>
         </div>
         <div class="fk">
-            <b data-n="{{ marketing_content('hero_stat_2_value') }}">0</b>
+            <b data-n="{{ $heroStats[2]['number'] }}" data-s="{{ $heroStats[2]['suffix'] }}">0</b>
             <small><span class="dt"></span> {{ marketing_content('hero_stat_2_label') }}</small>
         </div>
         <div class="fk">
-            <b data-n="{{ $supportStat[1] ?? '24' }}" data-s="{{ $supportStat[2] ?? '/7' }}">0</b>
+            <b data-n="{{ $heroStats[4]['number'] }}" data-s="{{ $heroStats[4]['suffix'] }}">0</b>
             <small><span class="dt"></span> {{ marketing_content('hero_stat_4_label') }}</small>
         </div>
     </div>
     <div class="hc">
-            <span class="pill"><i>{{ marketing_text('NEW') }}</i> {{ marketing_content('hero_badge') }}</span>
+            <span class="pill"><i>{{ marketing_content('hero_badge_label') ?: marketing_text('KAIRO CORE') }}</i> {{ marketing_content('hero_badge') }}</span>
             @php
     $heroTitleWords = preg_split('/\s+/', (string) marketing_content('hero_title'));
 @endphp

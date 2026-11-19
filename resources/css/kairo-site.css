@@ -2348,13 +2348,13 @@ img, svg, video, canvas {
         padding-bottom: 32px;
         border-bottom: 0;
     }
-    .kf-footer .kf-fcol-brand,
-    .kf-footer .kf-fcol-contact {
+    .kf-footer .kf-fcol-brand {
         grid-column: 1 / -1;
     }
     .kf-footer nav.kf-fcol:not(.kf-fcol-brand),
     .kf-footer .kf-fcol-contact {
         width: 100%;
+        align-self: stretch;
         min-width: 0;
         padding: 14px;
         border: 1px solid rgba(255, 255, 255, .08);
@@ -2424,6 +2424,9 @@ img, svg, video, canvas {
         row-gap: 28px;
         padding-top: 48px;
     }
+    .kf-footer .kf-fgrid > .kf-fcol { width: 100%; }
+    .kf-footer nav.kf-fcol:not(.kf-fcol-brand),
+    .kf-footer .kf-fcol-contact { align-self: stretch; }
 }
 
 @media (max-width: 767px) and (max-height: 480px) {
@@ -2432,8 +2435,4 @@ img, svg, video, canvas {
         max-height: 100dvh;
         overflow-y: auto;
     }
-}
-
-@media (max-width: 359px) {
-    .kf-footer .kf-fgrid { grid-template-columns: 1fr; }
 }

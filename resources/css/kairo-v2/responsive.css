@@ -570,3 +570,124 @@ body.kairo-v2 video,
         padding-top: 44px;
     }
 }
+
+body.kairo-v2 .gs .fk {
+    background: rgba(255, 255, 255, .58);
+    border-color: rgba(255, 255, 255, .45);
+}
+
+body.kairo-v2[data-t="d"] .gs .fk {
+    background: rgba(18, 29, 51, .56);
+    border-color: rgba(120, 140, 175, .35);
+}
+
+body.kairo-v2 #bt .bc h3,
+body.kairo-v2 #ckg .bc h3 {
+    font-size: clamp(19px, 1.15vw, 28px);
+}
+
+body.kairo-v2 #bt .bc p,
+body.kairo-v2 #ckg .bc p {
+    font-size: clamp(13.5px, .72vw, 17px);
+}
+
+@media (max-width: 620px) {
+    body.kairo-v2 header.hero .gs {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    body.kairo-v2 #bt,
+    body.kairo-v2 #ckg {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    body.kairo-v2 #bt .bc:last-child,
+    body.kairo-v2 #ckg .bc:last-child {
+        grid-column: auto;
+    }
+
+    body.kairo-v2 #bt .bc,
+    body.kairo-v2 #ckg .bc {
+        min-height: 0;
+        padding: 16px 14px 18px;
+        border-radius: 18px;
+    }
+
+    body.kairo-v2 #bt .bc .ic,
+    body.kairo-v2 #ckg .bc .ic {
+        width: 40px;
+        height: 40px;
+        margin-bottom: 12px;
+        border-radius: 12px;
+    }
+
+    body.kairo-v2 #bt .bc .ic svg,
+    body.kairo-v2 #ckg .bc .ic svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    body.kairo-v2 #bt .bc h3,
+    body.kairo-v2 #ckg .bc h3 {
+        font-size: clamp(14px, 3.7vw, 17px);
+        line-height: 1.2;
+        margin-bottom: 8px;
+        overflow-wrap: anywhere;
+    }
+
+    body.kairo-v2 #bt .bc p,
+    body.kairo-v2 #ckg .bc p {
+        font-size: clamp(11.5px, 3vw, 13px);
+        line-height: 1.4;
+        overflow-wrap: anywhere;
+    }
+
+    body.kairo-v2 #bt .bc .wm,
+    body.kairo-v2 #ckg .bc .wm {
+        width: 110px;
+        height: 110px;
+        opacity: .28;
+    }
+}
+
+@media (max-width: 380px) {
+    body.kairo-v2 header.hero .gs {
+        gap: 8px;
+    }
+
+    body.kairo-v2 .gs .fk {
+        padding: 10px;
+    }
+
+    body.kairo-v2 .fk b {
+        font-size: 22px;
+    }
+
+    body.kairo-v2 .fk small {
+        font-size: 10.5px;
+        line-height: 1.25;
+    }
+}
+
+@media (min-width: 1920px) {
+    body.kairo-v2 #bt {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    body.kairo-v2 #bt .bc:last-child {
+        grid-column: auto;
+    }
+}
+
+@media (min-width: 2560px) {
+    body.kairo-v2 #bt {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 3200px) {
+    body.kairo-v2 #bt {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+}

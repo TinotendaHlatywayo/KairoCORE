@@ -472,6 +472,7 @@ class PlatformSettingsPage extends Page implements HasForms
                         ->helperText(__('Videos only: the animated clip is 8 seconds long, starting at this point. Ignored for photos.'))
                         ->columnSpanFull(),
 
+                    $this->mText('hero_badge_label', __('Hero badge label')),
                     $this->mText('hero_badge', __('Hero badge'), null, true),
                     $this->mText('hero_title', __('Hero title'), null, true),
                     $this->mText('hero_subtitle', __('Hero subtitle'), null, true),
