@@ -153,31 +153,31 @@ body.kairo-v2 #faq .kfaq-card .kfaq-card-sub { display: block; font-size: 13.5px
 <section id="faq" class="kfaq-section" aria-labelledby="faq-title">
     <div class="w">
         <header class="kfaq-header">
-            <div class="kfaq-eyebrow">{{ marketing_content('home_faq_badge') ?: __('FAQ') }}</div>
-            <h2 id="faq-title">{{ marketing_content('home_faq_title') ?: __('Questions school leaders ask us') }}</h2>
-            <p class="lead">{{ marketing_content('home_faq_subtitle') ?: __('Tap a question or type your own. Can’t find your answer? Talk to a person.') }}</p>
+            <div class="kfaq-eyebrow">{{ marketing_content('home_faq_badge') ?: marketing_text('FAQ') }}</div>
+            <h2 id="faq-title">{{ marketing_content('home_faq_title') ?: marketing_text('Questions school leaders ask us') }}</h2>
+            <p class="lead">{{ marketing_content('home_faq_subtitle') ?: marketing_text('Tap a question or type your own. Can’t find your answer? Talk to a person.') }}</p>
         </header>
 
         <div class="kfaq-grid">
-            <section class="kfaq-chat" aria-label="{{ __('Kairo assistant') }}">
+            <section class="kfaq-chat" aria-label="{{ marketing_text('Kairo assistant') }}">
                 <div class="kfaq-head">
                     <div class="kfaq-brand" aria-label="{{ platform_name() }}">
                         <img class="kfaq-logo-light" src="{{ asset('img/kairo-core-logo.svg') }}" alt="{{ platform_name() }}" width="90" height="30">
                         <img class="kfaq-logo-dark" src="{{ asset('images/kairocore-logo-white.webp') }}" alt="{{ platform_name() }}" width="90" height="30">
                     </div>
                     <div class="kfaq-who">
-                        <b>{{ __('Kairo assistant') }}</b>
-                        <small><span class="kfaq-live" aria-hidden="true"></span>{{ __('Online · answers instantly') }}</small>
+                        <b>{{ marketing_text('Kairo assistant') }}</b>
+                        <small><span class="kfaq-live" aria-hidden="true"></span>{{ marketing_text('Online · answers instantly') }}</small>
                     </div>
                     <button class="kfaq-reset" id="kfaq-reset" type="button">
                         <svg width="14" height="14" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        <span>{{ __('Start over') }}</span>
+                        <span>{{ marketing_text('Start over') }}</span>
                     </button>
                 </div>
 
                 <div class="kfaq-stage">
                     <div class="kfaq-msgs" id="kfaq-msgs" aria-live="polite"></div>
-                    <button class="kfaq-jump" id="kfaq-jump" type="button" aria-label="{{ __('Jump to latest message') }}">
+                    <button class="kfaq-jump" id="kfaq-jump" type="button" aria-label="{{ marketing_text('Jump to latest message') }}">
                         <svg width="18" height="18" viewBox="0 0 24 24"><path d="M12 5v14M5 12l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </button>
                 </div>
@@ -186,26 +186,26 @@ body.kairo-v2 #faq .kfaq-card .kfaq-card-sub { display: block; font-size: 13.5px
                     <div class="kfaq-quick" id="kfaq-quick"></div>
                     <form class="kfaq-composer" id="kfaq-form" autocomplete="off">
                         <div class="kfaq-field">
-                            <input id="kfaq-input" class="kfaq-input" type="text" maxlength="200" placeholder="{{ __('Type your question…') }}" aria-label="{{ __('Type your question') }}">
-                            <button class="kfaq-send" id="kfaq-send" type="submit" aria-label="{{ __('Send question') }}" disabled>
+                            <input id="kfaq-input" class="kfaq-input" type="text" maxlength="200" placeholder="{{ marketing_text('Type your question…') }}" aria-label="{{ marketing_text('Type your question') }}">
+                            <button class="kfaq-send" id="kfaq-send" type="submit" aria-label="{{ marketing_text('Send question') }}" disabled>
                                 <svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                             </button>
                         </div>
                         <div class="kfaq-note">
-                            <span>{{ __('Automated assistant. Ask about any module or workflow.') }}</span>
+                            <span>{{ marketing_text('Automated assistant. Ask about any module or workflow.') }}</span>
                             <span id="kfaq-count"></span>
                         </div>
                     </form>
                 </div>
             </section>
 
-            <aside class="kfaq-aside" aria-label="{{ __('Contact options') }}">
+            <aside class="kfaq-aside" aria-label="{{ marketing_text('Contact options') }}">
                 <a class="kfaq-card kfaq-card--whatsapp" href="https://wa.me/263786366855" target="_blank" rel="noopener">
                     <span class="kfaq-icon" style="background:#25d366;color:#06361a;">
                         <svg width="22" height="22" viewBox="0 0 24 24"><path d="M4 20l1.4-4.2A8 8 0 1 1 8.3 18.7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </span>
                     <span>
-                        <span class="kfaq-card-title">{{ __('Chat on WhatsApp') }}</span>
+                        <span class="kfaq-card-title">{{ marketing_text('Chat on WhatsApp') }}</span>
                         <span class="kfaq-card-sub">+263 78 636 6855</span>
                     </span>
                 </a>
@@ -214,7 +214,7 @@ body.kairo-v2 #faq .kfaq-card .kfaq-card-sub { display: block; font-size: 13.5px
                         <svg width="22" height="22" viewBox="0 0 24 24"><path d="M4 4h16v16H4zM4 4l8 8 8-8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </span>
                     <span>
-                        <span class="kfaq-card-title">{{ __('Email us') }}</span>
+                        <span class="kfaq-card-title">{{ marketing_text('Email us') }}</span>
                         <span class="kfaq-card-sub">sales@kairocore.co.zw</span>
                     </span>
                 </a>
@@ -223,8 +223,8 @@ body.kairo-v2 #faq .kfaq-card .kfaq-card-sub { display: block; font-size: 13.5px
                         <svg width="22" height="22" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </span>
                     <span>
-                        <span class="kfaq-card-title">{{ __('Help Centre') }}</span>
-                        <span class="kfaq-card-sub">{{ __('Step-by-step guides for every module') }}</span>
+                        <span class="kfaq-card-title">{{ marketing_text('Help Centre') }}</span>
+                        <span class="kfaq-card-sub">{{ marketing_text('Step-by-step guides for every module') }}</span>
                     </span>
                 </a>
             </aside>
@@ -236,15 +236,15 @@ body.kairo-v2 #faq .kfaq-card .kfaq-card-sub { display: block; font-size: 13.5px
     $kfaqSuggestions = marketing_merged_list('faq_suggestions');
     if (empty($kfaqSuggestions)) {
         $kfaqSuggestions = [
-            ['question' => __('Is Kairo CORE built for my type of school?')],
-            ['question' => __('What does it cover?')],
-            ['question' => __('Is our data safe?')],
-            ['question' => __('Will my team be trained?')],
-            ['question' => __('Can we access it from any device?')],
-            ['question' => __('How long does setup take?')],
-            ['question' => __('Can parents see fees, attendance and results?')],
-            ['question' => __('Which payments can we record?')],
-            ['question' => __('How do I book a demo?')],
+            ['question' => marketing_text('Is Kairo CORE built for my type of school?')],
+            ['question' => marketing_text('What does it cover?')],
+            ['question' => marketing_text('Is our data safe?')],
+            ['question' => marketing_text('Will my team be trained?')],
+            ['question' => marketing_text('Can we access it from any device?')],
+            ['question' => marketing_text('How long does setup take?')],
+            ['question' => marketing_text('Can parents see fees, attendance and results?')],
+            ['question' => marketing_text('Which payments can we record?')],
+            ['question' => marketing_text('How do I book a demo?')],
         ];
     }
     $kfaqSuggestionQuestions = array_values(array_filter(array_map(function ($item) {
@@ -252,23 +252,23 @@ body.kairo-v2 #faq .kfaq-card .kfaq-card-sub { display: block; font-size: 13.5px
     }, $kfaqSuggestions)));
     $kfaqUi = [
         'locale' => app()->getLocale(),
-        'you' => __('You'),
-        'assistant' => __('Kairo assistant'),
-        'suggested' => __('Suggested questions'),
-        'allSuggested' => __('That’s every suggested question. Type your own below.'),
-        'didYouMean' => __('Did you mean…?'),
-        'greeting' => __('Hi, I’m the Kairo assistant. Tap a question below or type your own.'),
-        'noAnswerYet' => __('I don’t have that one yet. Message the team on WhatsApp and a person will help.'),
-        'notExact' => __('I do not have that exact answer yet, but the team can help with school-specific questions. Message us on WhatsApp and we will point you to the right module or guide.'),
-        'pricingFallback' => __('I do not have exact pricing details here, but Kairo CORE plans are tailored to your school size, modules and support needs. Message the team on WhatsApp or use the contact form and we will recommend the right fit.'),
-        'thanks' => __('Thanks for the feedback'),
-        'helpful' => __('Helpful'),
-        'notHelpful' => __('Not helpful'),
-        'fromHelp' => __('From the Help Centre'),
-        'messageWhatsApp' => __('Message us on WhatsApp'),
-        'emailUs' => __('Email us'),
-        'learnMore' => __('Learn more'),
-        'today' => __('Today'),
+        'you' => marketing_text('You'),
+        'assistant' => marketing_text('Kairo assistant'),
+        'suggested' => marketing_text('Suggested questions'),
+        'allSuggested' => marketing_text('That’s every suggested question. Type your own below.'),
+        'didYouMean' => marketing_text('Did you mean…?'),
+        'greeting' => marketing_text('Hi, I’m the Kairo assistant. Tap a question below or type your own.'),
+        'noAnswerYet' => marketing_text('I don’t have that one yet. Message the team on WhatsApp and a person will help.'),
+        'notExact' => marketing_text('I do not have that exact answer yet, but the team can help with school-specific questions. Message us on WhatsApp and we will point you to the right module or guide.'),
+        'pricingFallback' => marketing_text('I do not have exact pricing details here, but Kairo CORE plans are tailored to your school size, modules and support needs. Message the team on WhatsApp or use the contact form and we will recommend the right fit.'),
+        'thanks' => marketing_text('Thanks for the feedback'),
+        'helpful' => marketing_text('Helpful'),
+        'notHelpful' => marketing_text('Not helpful'),
+        'fromHelp' => marketing_text('From the Help Centre'),
+        'messageWhatsApp' => marketing_text('Message us on WhatsApp'),
+        'emailUs' => marketing_text('Email us'),
+        'learnMore' => marketing_text('Learn more'),
+        'today' => marketing_text('Today'),
     ];
 @endphp
 
@@ -289,54 +289,54 @@ const suggestions = {!! json_encode($kfaqSuggestionQuestions) !!};
 const ui = {!! json_encode($kfaqUi) !!};
 const currentLocale = ui.locale || document.documentElement.lang || 'en';
 const tagLinks = {
-    Security: { url: @json(route('marketing.security')), label: @js(__('Read about security and data protection')) },
-    Privacy: { url: @json(route('marketing.security')), label: @js(__('Read about security and data protection')) },
-    Demo: { url: @json(rtrim(route('marketing.home'), '/').'/#contact'), label: @js(__('Book a demo')) },
-    Contact: { url: @json(route('marketing.contact')), label: @js(__('Contact us')) },
-    Pricing: { url: @json(route('marketing.contact').'#contact-form'), label: @js(__('Ask for pricing')) },
-    Support: { url: @json(route('help.index')), label: @js(__('Visit the Help Centre')) },
+    Security: { url: @json(route('marketing.security')), label: @js(marketing_text('Read about security and data protection')) },
+    Privacy: { url: @json(route('marketing.security')), label: @js(marketing_text('Read about security and data protection')) },
+    Demo: { url: @json(rtrim(route('marketing.home'), '/').'/#contact'), label: @js(marketing_text('Book a demo')) },
+    Contact: { url: @json(route('marketing.contact')), label: @js(marketing_text('Contact us')) },
+    Pricing: { url: @json(route('marketing.contact').'#contact-form'), label: @js(marketing_text('Ask for pricing')) },
+    Support: { url: @json(route('help.index')), label: @js(marketing_text('Visit the Help Centre')) },
 };
 const featuresUrl = @json(route('marketing.features'));
 const helpUrl = @json(route('help.index'));
 const categoryLinks = {
-    general: { label: @js(__('Explore all features')), url: featuresUrl },
-    admissions: { label: @js(__('Explore admissions')), url: featuresUrl + '#admissions' },
-    academics: { label: @js(__('Explore academics')), url: featuresUrl + '#academics' },
-    students: { label: @js(__('Explore student management')), url: featuresUrl + '#students' },
-    exams: { label: @js(__('Explore exams and results')), url: featuresUrl + '#exams' },
-    finance: { label: @js(__('Explore finance and fees')), url: featuresUrl + '#finance' },
-    hr: { label: @js(__('Explore HR and payroll')), url: featuresUrl + '#hr' },
-    communication: { label: @js(__('Explore communications')), url: featuresUrl + '#communications' },
-    library: { label: @js(__('Explore the library module')), url: featuresUrl + '#library' },
-    health: { label: @js(__('Explore health records')), url: featuresUrl + '#health' },
-    inventory: { label: @js(__('Explore inventory and procurement')), url: featuresUrl + '#inventory' },
-    lms: { label: @js(__('Explore the LMS')), url: featuresUrl + '#lms' },
-    boarding: { label: @js(__('Explore boarding management')), url: featuresUrl + '#boarding' },
-    reports: { label: @js(__('Explore reports and analytics')), url: featuresUrl + '#reports' },
-    website: { label: @js(__('Explore the website CMS')), url: featuresUrl + '#cms' },
-    administration: { label: @js(__('Explore the platform')), url: featuresUrl },
-    'getting-started': { label: @js(__('Visit the Help Centre')), url: helpUrl },
-    troubleshooting: { label: @js(__('Visit the Help Centre')), url: helpUrl },
+    general: { label: @js(marketing_text('Explore all features')), url: featuresUrl },
+    admissions: { label: @js(marketing_text('Explore admissions')), url: featuresUrl + '#admissions' },
+    academics: { label: @js(marketing_text('Explore academics')), url: featuresUrl + '#academics' },
+    students: { label: @js(marketing_text('Explore student management')), url: featuresUrl + '#students' },
+    exams: { label: @js(marketing_text('Explore exams and results')), url: featuresUrl + '#exams' },
+    finance: { label: @js(marketing_text('Explore finance and fees')), url: featuresUrl + '#finance' },
+    hr: { label: @js(marketing_text('Explore HR and payroll')), url: featuresUrl + '#hr' },
+    communication: { label: @js(marketing_text('Explore communications')), url: featuresUrl + '#communications' },
+    library: { label: @js(marketing_text('Explore the library module')), url: featuresUrl + '#library' },
+    health: { label: @js(marketing_text('Explore health records')), url: featuresUrl + '#health' },
+    inventory: { label: @js(marketing_text('Explore inventory and procurement')), url: featuresUrl + '#inventory' },
+    lms: { label: @js(marketing_text('Explore the LMS')), url: featuresUrl + '#lms' },
+    boarding: { label: @js(marketing_text('Explore boarding management')), url: featuresUrl + '#boarding' },
+    reports: { label: @js(marketing_text('Explore reports and analytics')), url: featuresUrl + '#reports' },
+    website: { label: @js(marketing_text('Explore the website CMS')), url: featuresUrl + '#cms' },
+    administration: { label: @js(marketing_text('Explore the platform')), url: featuresUrl },
+    'getting-started': { label: @js(marketing_text('Visit the Help Centre')), url: helpUrl },
+    troubleshooting: { label: @js(marketing_text('Visit the Help Centre')), url: helpUrl },
 };
 const categoryNotes = {
-    general: @js(__('One connected platform means admissions, fees, attendance, academics and communication all use the same student record.')),
-    admissions: @js(__('Applications, placements, student records and first invoices stay connected, so there is no re-typing between admissions and finance.')),
-    academics: @js(__('Academic setup feeds timetables, assessments and report cards, so one change flows through the whole term.')),
-    students: @js(__('A single student profile connects guardians, attendance, fees, health notes and results.')),
-    exams: @js(__('Marks flow from assessment to report card, so teachers capture once and reports update automatically.')),
-    finance: @js(__('Fees, invoices and payments share the same student record as admissions and academics.')),
-    hr: @js(__('Staff records, leave and payroll sit together, giving administrators one view of the team.')),
-    communication: @js(__('Messages go to the right guardians or staff from the same system that holds class and fee data.')),
-    library: @js(__('Library records connect to the student profile, so issuing, returns and fines follow the learner.')),
-    health: @js(__('Health notes sit on the student record and can be flagged for trips or activities.')),
-    inventory: @js(__('Requisitions, purchasing and assets stay traceable from request to delivery.')),
-    lms: @js(__('Lesson materials, homework and marks sit alongside the student\'s academic record.')),
-    boarding: @js(__('Boarding allocations and fees stay connected to the same student record used by admissions and finance.')),
-    reports: @js(__('Because data is captured once across modules, reports reflect the latest enrolment, fee and academic position.')),
-    website: @js(__('Your public website draws on the same content system your admin team already uses.')),
-    administration: @js(__('Role-based access keeps each team focused on the records they need, without exposing the rest of the school.')),
-    'getting-started': @js(__('Setup is guided, and the Help Centre has step-by-step guides for every module.')),
-    troubleshooting: @js(__('The Help Centre has fixes for common issues, and the team is one message away.')),
+    general: @js(marketing_text('One connected platform means admissions, fees, attendance, academics and communication all use the same student record.')),
+    admissions: @js(marketing_text('Applications, placements, student records and first invoices stay connected, so there is no re-typing between admissions and finance.')),
+    academics: @js(marketing_text('Academic setup feeds timetables, assessments and report cards, so one change flows through the whole term.')),
+    students: @js(marketing_text('A single student profile connects guardians, attendance, fees, health notes and results.')),
+    exams: @js(marketing_text('Marks flow from assessment to report card, so teachers capture once and reports update automatically.')),
+    finance: @js(marketing_text('Fees, invoices and payments share the same student record as admissions and academics.')),
+    hr: @js(marketing_text('Staff records, leave and payroll sit together, giving administrators one view of the team.')),
+    communication: @js(marketing_text('Messages go to the right guardians or staff from the same system that holds class and fee data.')),
+    library: @js(marketing_text('Library records connect to the student profile, so issuing, returns and fines follow the learner.')),
+    health: @js(marketing_text('Health notes sit on the student record and can be flagged for trips or activities.')),
+    inventory: @js(marketing_text('Requisitions, purchasing and assets stay traceable from request to delivery.')),
+    lms: @js(marketing_text('Lesson materials, homework and marks sit alongside the student\'s academic record.')),
+    boarding: @js(marketing_text('Boarding allocations and fees stay connected to the same student record used by admissions and finance.')),
+    reports: @js(marketing_text('Because data is captured once across modules, reports reflect the latest enrolment, fee and academic position.')),
+    website: @js(marketing_text('Your public website draws on the same content system your admin team already uses.')),
+    administration: @js(marketing_text('Role-based access keeps each team focused on the records they need, without exposing the rest of the school.')),
+    'getting-started': @js(marketing_text('Setup is guided, and the Help Centre has step-by-step guides for every module.')),
+    troubleshooting: @js(marketing_text('The Help Centre has fixes for common issues, and the team is one message away.')),
 };
 
 const asked = new Set();
@@ -563,7 +563,7 @@ function renderAnswer(bubble, entry, secondIntent) {
         link.className = 'kfaq-src';
         link.href = entry.source.url;
         link.innerHTML = '<svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg><span><small></small><b></b></span>';
-        link.querySelector('small').textContent = 'From the Help Centre · ' + (entry.source.category || entry.category || '');
+        link.querySelector('small').textContent = ui.fromHelp + ' · ' + (entry.source.category || entry.category || '');
         link.querySelector('b').textContent = entry.source.title;
         bubble.appendChild(link);
     }
@@ -572,13 +572,13 @@ function renderAnswer(bubble, entry, secondIntent) {
     feedback.className = 'kfaq-fb';
     const up = document.createElement('button');
     up.type = 'button';
-    up.setAttribute('aria-label', 'Helpful');
+    up.setAttribute('aria-label', ui.helpful);
     up.innerHTML = '<svg viewBox="0 0 24 24"><path d="M7 11v9H4v-9zM7 11l4-8c1.7 0 2.5 1.2 2.2 2.8L12.8 9H19a2 2 0 0 1 2 2.3l-1.2 7A2 2 0 0 1 17.8 20H7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg>';
     const downBtn = document.createElement('button');
     downBtn.type = 'button';
-    downBtn.setAttribute('aria-label', 'Not helpful');
+    downBtn.setAttribute('aria-label', ui.notHelpful);
     downBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M17 13V4h3v9zM17 13l-4 8c-1.7 0-2.5-1.2-2.2-2.8L11.2 15H5a2 2 0 0 1-2-2.3l1.2-7A2 2 0 0 1 6.2 4H17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg>';
-    const thanks = () => { feedback.textContent = 'Thanks for the feedback'; };
+    const thanks = () => { feedback.textContent = ui.thanks; };
     up.addEventListener('click', () => { logFeedback(entry.question, true); thanks(); });
     downBtn.addEventListener('click', () => { logFeedback(entry.question, false); logUnmatched(input.value || entry.question); thanks(); });
     feedback.append(up, downBtn);
@@ -616,7 +616,7 @@ function renderChips() {
     quick.innerHTML = '';
     const label = document.createElement('p');
     label.className = 'kfaq-label';
-    label.textContent = suggestions.some(q => !asked.has(q)) ? 'Suggested questions' : 'That’s every suggested question. Type your own below.';
+    label.textContent = suggestions.some(q => !asked.has(q)) ? ui.suggested : ui.allSuggested;
     quick.appendChild(label);
     const remaining = suggestions.filter(q => !asked.has(q));
     if (!remaining.length) return;
@@ -658,7 +658,7 @@ function ask(text) {
         }
         if (result.type === 'medium') {
             const bubble = row('bot');
-            bubble.textContent = 'Did you mean…?';
+            bubble.textContent = ui.didYouMean;
             const opts = document.createElement('div');
             opts.className = 'kfaq-opts';
             (result.candidates || []).slice(0, 3).forEach(candidate => {
@@ -679,9 +679,7 @@ function ask(text) {
             const isPricing = /price|pricing|cost|quote/i.test(value) || (result.entry && result.entry.id === 'pricing');
             const bubble = row('bot');
             const p = document.createElement('p');
-            p.textContent = isPricing
-                ? 'I do not have exact pricing details here, but Kairo CORE plans are tailored to your school size, modules and support needs. Message the team on WhatsApp or use the contact form and we will recommend the right fit.'
-                : 'I do not have that exact answer yet, but the team can help with school-specific questions. Message us on WhatsApp and we will point you to the right module or guide.';
+            p.textContent = isPricing ? ui.pricingFallback : ui.notExact;
             bubble.appendChild(p);
             const candidates = (result.candidates || [])
                 .filter(candidate => !result.entry || candidate.id !== result.entry.id)
@@ -705,7 +703,7 @@ function ask(text) {
             waLink.href = 'https://wa.me/263786366855';
             waLink.target = '_blank';
             waLink.rel = 'noopener';
-            waLink.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24"><path d="M4 20l1.4-4.2A8 8 0 1 1 8.3 18.7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Message us on WhatsApp';
+            waLink.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24"><path d="M4 20l1.4-4.2A8 8 0 1 1 8.3 18.7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> ' + ui.messageWhatsApp;
             bubble.appendChild(waLink);
             if (isPricing) {
                 const emailLink = document.createElement('a');
@@ -713,7 +711,7 @@ function ask(text) {
                 emailLink.href = '/contact#contact-form';
                 emailLink.style.background = '#3b82f6';
                 emailLink.style.color = '#fff';
-                emailLink.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24"><path d="M4 4h16v16H4zM4 4l8 8 8-8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Email us';
+                emailLink.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24"><path d="M4 4h16v16H4zM4 4l8 8 8-8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> ' + ui.emailUs;
                 bubble.appendChild(emailLink);
             }
             busy = false;
@@ -723,7 +721,7 @@ function ask(text) {
 
         previousTopic = result.entry.category;
         const bubble = row('bot');
-        streamText(bubble, result.entry.needsOwnerAnswer ? 'I don’t have that one yet. Message the team on WhatsApp and a person will help.' : result.entry.answer, () => {
+        streamText(bubble, result.entry.needsOwnerAnswer ? ui.noAnswerYet : result.entry.answer, () => {
             if (result.entry.needsOwnerAnswer) {
                 const link = document.createElement('a');
                 link.className = 'kfaq-wa-pill';
@@ -748,17 +746,17 @@ function sync() {
 input.addEventListener('input', sync);
 
 function start() {
-    msgs.innerHTML = '<div class="kfaq-day">Today</div>';
+    msgs.innerHTML = '<div class="kfaq-day">' + ui.today + '</div>';
     asked.clear();
     previousTopic = null;
     const greeting = row('bot');
-    greeting.textContent = 'Hi, I’m the Kairo assistant. Tap a question below or type your own.';
+    greeting.textContent = ui.greeting;
     const first = kb && kb.length ? (kb.find(item => item.id === 'fit-school-type') || kb[0]) : null;
     if (first) {
         const questionRow = row('me');
         questionRow.textContent = first.question;
         const answerRow = row('bot');
-        streamText(answerRow, first.needsOwnerAnswer ? 'I don’t have that one yet. Message the team on WhatsApp and a person will help.' : first.answer, () => {
+        streamText(answerRow, first.needsOwnerAnswer ? ui.noAnswerYet : first.answer, () => {
             if (!first.needsOwnerAnswer) renderAnswer(answerRow, first, null);
         });
         previousTopic = first.category;

@@ -35,7 +35,7 @@
             $metaDescription = marketing_content('meta_description') ?: platform_seo_description();
         }
 
-        $canonicalUrl = url()->current();
+        $canonicalUrl = platform_canonical_url();
         $seoImageOverride = trim((string) $__env->yieldContent('seo_image'));
         $seoImageAlt = trim((string) $__env->yieldContent('seo_image_alt')) ?: platform_name().' school management system';
         $seoSchemaImage = trim((string) $__env->yieldContent('seo_schema_image'))

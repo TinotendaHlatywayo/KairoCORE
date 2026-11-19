@@ -403,7 +403,8 @@ if (! function_exists('marketing_content_defaults')) {
             'announcement' => '',
             'nav_logo' => '',
             'footer_logo' => '',
-            'footer_tagline' => __('Cloud-based school management platform built for schools.'),
+            'footer_tagline' => __('Smarter Schools. Brighter Futures.'),
+            'footer_description' => __('Cloud-based school management platform built for schools.'),
             'meta_title' => '',
             'meta_description' => '',
 
@@ -421,10 +422,14 @@ if (! function_exists('marketing_content_defaults')) {
             'hero_trust_1' => __('Easy to set up'),
             'hero_trust_2' => __('Secure & reliable'),
             'hero_trust_3' => __('Multi-currency billing'),
-            'hero_stat_1_label' => __('Modules included'),
+            'hero_stat_1_label' => __('Connected modules'),
             'hero_stat_1_value' => marketing_live_stats()['modules'],
-            'hero_stat_2_label' => __('Schools running KairoCORE'),
-            'hero_stat_2_value' => marketing_live_stats()['schools'],
+            'hero_stat_2_label' => __('Languages supported'),
+            'hero_stat_2_value' => marketing_live_stats()['languages'],
+            'hero_stat_3_label' => __('Uptime, cloud-hosted'),
+            'hero_stat_3_value' => '99.9%',
+            'hero_stat_4_label' => __('Dedicated support'),
+            'hero_stat_4_value' => '24/7',
 
             // ── Home · sections ─────────────────────────────────────
             'modules_title' => __('Everything your school runs on, in one place'),
@@ -436,6 +441,7 @@ if (! function_exists('marketing_content_defaults')) {
             'benefits_subtitle' => __('A trusted, reliable and innovative school operating system for primary, secondary and tertiary institutions.'),
             'steps_title' => __('Up and running in days, not months'),
             'steps_subtitle' => __('Getting your school onto KairoCORE is straightforward.'),
+            'home_steps_badge' => __('How it works'),
             'home_training_badge' => __('Optional'),
             'home_faq_badge' => __('FAQ'),
             'home_faq_title' => __('Questions school leaders ask us'),
@@ -471,6 +477,13 @@ if (! function_exists('marketing_content_defaults')) {
             'about_story_title' => __('Built in Zimbabwe, for schools everywhere'),
             'about_story_p1' => __('KairoCORE started with a simple observation: school administrators were drowning in paperwork, duplicate records and disconnected spreadsheets. We built one system that mirrors how schools really work, term by term, class by class, fee by fee, and made it affordable and simple enough for any school to adopt.'),
             'about_story_p2' => __('Today, primary and secondary schools run admissions, exams, fees and parent communication on KairoCORE every day.'),
+            'about_problems_badge' => __('The challenge'),
+            'about_problems_title' => __('School admin held together by spreadsheets and repeated entry'),
+            'about_problems_subtitle' => __('Disconnected tools create duplicate work, blind spots and slow decisions for busy school teams.'),
+            'about_make_yours_title' => __('Make KairoCORE yours'),
+            'about_make_yours_text' => __('Switch modules on, configure them and brand the platform to match the way your school works.'),
+            'about_platform_badge' => __('The platform'),
+            'about_platform_subtitle' => __('One student record connects every department, so the whole school works from the same information.'),
             'about_cta_title' => __('Want to see how KairoCORE fits your school?'),
             'about_cta_subtitle' => __('Book a personal demo and we will walk you through it, module by module.'),
 
@@ -479,6 +492,7 @@ if (! function_exists('marketing_content_defaults')) {
             'contact_title' => __('Reach out to us'),
             'contact_intro' => __('Have questions about KairoCORE or want to schedule a personalized demo? Reach out to us through any of the channels below.'),
             'contact_form_title' => __('Send us a message'),
+            'contact_form_subtitle' => __('We respond to all school inquiries within 24 hours.'),
             'contact_form_name_label' => __('Your name'),
             'contact_form_email_label' => __('Your email'),
             'contact_form_message_label' => __('Message'),
@@ -496,6 +510,14 @@ if (! function_exists('marketing_content_defaults')) {
             'contact_image' => 'https://images.pexels.com/photos/3894376/pexels-photo-3894376.jpeg?auto=compress&cs=tinysrgb&w=1440',
             'contact_card_title' => __('Talk to a school specialist'),
             'contact_card_text' => __('We understand school terms, fee cycles and exam seasons, and we speak your language.'),
+
+            'blog_badge' => __('News & insights'),
+            'blog_title' => __('Stories from the KairoCORE team'),
+            'blog_intro' => __('Practical ideas, product updates and school operations guidance from the people building KairoCORE.'),
+            'blog_cta_title' => __('Ready to see KairoCORE in action?'),
+            'blog_cta_subtitle' => __('Book a personal demo tailored to your school, no obligation.'),
+            'blog_cta_primary_label' => __('Register School'),
+            'blog_cta_secondary_label' => __('Explore Features'),
         ];
     }
 }
@@ -654,6 +676,71 @@ if (! function_exists('marketing_key_is_shared')) {
     {
         return $key === 'contact_office_location'
             || (bool) preg_match('/(?:_url|_image|_logo|_value)$/', $key);
+    }
+}
+
+if (! function_exists('marketing_text_keys')) {
+    function marketing_text_keys(): array
+    {
+        static $keys = null;
+
+        if ($keys !== null) {
+            return $keys;
+        }
+
+        $files = array_merge(
+            glob(resource_path('views/marketing/*.blade.php')) ?: [],
+            glob(resource_path('views/marketing/*/*.blade.php')) ?: [],
+            [resource_path('views/partials/seo.blade.php')]
+        );
+
+        $found = [];
+        foreach ($files as $file) {
+            if (! is_file($file)) {
+                continue;
+            }
+
+            $contents = (string) file_get_contents($file);
+            preg_match_all('/(?:__|marketing_text)\(\s*([\'"])((?:(?:\\\\.)|(?!\1).)*)\1/s', $contents, $matches);
+            foreach ($matches[2] ?? [] as $key) {
+                $key = str_replace(["\\'", '\\"'], ["'", '"'], $key);
+                if ($key !== '') {
+                    $found[$key] = $key;
+                }
+            }
+        }
+
+        $keys = array_values($found);
+        sort($keys);
+
+        return $keys;
+    }
+}
+
+if (! function_exists('marketing_text')) {
+    function marketing_text(string $key, array $replace = []): string
+    {
+        $overrides = marketing_settings_map()['text_overrides'] ?? [];
+        $locale = app()->getLocale();
+
+        $value = null;
+        if (is_array($overrides)) {
+            $value = $overrides[$locale][$key] ?? $overrides['en'][$key] ?? null;
+        }
+
+        if (! is_string($value) || $value === '') {
+            return __($key, $replace);
+        }
+
+        foreach ($replace as $name => $replacement) {
+            $value = str_replace(
+                [':'.$name, ':'.Str::ucfirst((string) $name), ':'.Str::upper((string) $name)],
+                (string) $replacement,
+                $value
+            );
+        }
+
+        return $value;
     }
 }
 
@@ -902,6 +989,20 @@ if (! function_exists('platform_og_image_url')) {
     function platform_og_image_url(): string
     {
         return platform_public_asset_url('images/KairoCORE_link_preview.png');
+    }
+}
+
+if (! function_exists('platform_canonical_url')) {
+    function platform_canonical_url(): string
+    {
+        $base = rtrim((string) config('app.url'), '/');
+        $path = parse_url(url()->current(), PHP_URL_PATH);
+
+        if ($path === false || $path === null || $path === '') {
+            return $base;
+        }
+
+        return $base.'/'.ltrim($path, '/');
     }
 }
 

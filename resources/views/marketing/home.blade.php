@@ -7,7 +7,7 @@
 @section('seo_image', platform_public_asset_url('images/KairoCORE_link_preview.png'))
 @section('seo_image_secondary', platform_public_asset_url('images/KairoCORE_Home_final_thumbnail.png'))
 @section('seo_schema_image', platform_public_asset_url('images/KairoCORE_Home_final_thumbnail.png'))
-@section('seo_image_alt', __('Kairo CORE school management system — smarter school management for a brighter future'))
+@section('seo_image_alt', marketing_text('Kairo CORE school management system — smarter school management for a brighter future'))
 
 @push('styles')
 @vite('resources/css/kairo-v2/home.css')
@@ -28,25 +28,31 @@
 <header class="hero" style="--hero:url('{{ marketing_image('hero_image') }}')">
     <div class="pic sh" id="ps"></div>
     <div class="gs" id="gs">
+        @php
+            $uptimeStat = [];
+            preg_match('/^([0-9.]+)(.*)$/u', marketing_content('hero_stat_3_value'), $uptimeStat);
+            $supportStat = [];
+            preg_match('/^([0-9.]+)(.*)$/u', marketing_content('hero_stat_4_value'), $supportStat);
+        @endphp
         <div class="fk">
-            <b data-n="{{ marketing_live_stats()['modules'] ?? 0 }}">0</b>
-            <small><span class="dt"></span> {{ __('Connected modules') }}</small>
+            <b data-n="{{ marketing_content('hero_stat_1_value') }}">0</b>
+            <small><span class="dt"></span> {{ marketing_content('hero_stat_1_label') }}</small>
         </div>
         <div class="fk">
-            <b data-n="99.9" data-s="%">0</b>
-            <small><span class="dt"></span> {{ __('Uptime, cloud-hosted') }}</small>
+            <b data-n="{{ $uptimeStat[1] ?? '99.9' }}" data-s="{{ $uptimeStat[2] ?? '%' }}">0</b>
+            <small><span class="dt"></span> {{ marketing_content('hero_stat_3_label') }}</small>
         </div>
         <div class="fk">
-            <b data-n="{{ marketing_live_stats()['languages'] ?? 0 }}">0</b>
-            <small><span class="dt"></span> {{ __('Languages supported') }}</small>
+            <b data-n="{{ marketing_content('hero_stat_2_value') }}">0</b>
+            <small><span class="dt"></span> {{ marketing_content('hero_stat_2_label') }}</small>
         </div>
         <div class="fk">
-            <b data-n="24" data-s="/7">0</b>
-            <small><span class="dt"></span> {{ __('Dedicated support') }}</small>
+            <b data-n="{{ $supportStat[1] ?? '24' }}" data-s="{{ $supportStat[2] ?? '/7' }}">0</b>
+            <small><span class="dt"></span> {{ marketing_content('hero_stat_4_label') }}</small>
         </div>
     </div>
     <div class="hc">
-            <span class="pill"><i>{{ __('NEW') }}</i> {{ marketing_content('hero_badge') }}</span>
+            <span class="pill"><i>{{ marketing_text('NEW') }}</i> {{ marketing_content('hero_badge') }}</span>
             @php
     $heroTitleWords = preg_split('/\s+/', (string) marketing_content('hero_title'));
 @endphp
@@ -54,11 +60,11 @@
             <p>{{ str_replace('—', ',', marketing_content('hero_subtitle')) }}</p>
             <div class="cta">
                 <a class="btn o beg" href="{{ marketing_content('hero_primary_url') ?: route('marketing.contact').'#contact-form' }}">
-                    {{ marketing_content('hero_primary_label') ?: __('Book a demo') }}
+                    {{ marketing_content('hero_primary_label') ?: marketing_text('Book a demo') }}
                     <i class="ar">→</i>
                 </a>
-                <a class="btn g" href="{{ route('marketing.features') }}">
-                    {{ marketing_content('hero_secondary_label') ?: __('Explore features') }}
+                <a class="btn g" href="{{ marketing_content('hero_secondary_url') ?: route('marketing.features') }}">
+                    {{ marketing_content('hero_secondary_label') ?: marketing_text('Explore features') }}
                 </a>
             </div>
         </div>
@@ -97,7 +103,7 @@
             @endforeach
         </div>
         <div class="reveal mt-12 text-center">
-            <a href="{{ route('marketing.features') }}" class="btn o beg">{{ marketing_content('modules_cta_label') ?: __('See every feature') }} <i class="ar">→</i></a>
+            <a href="{{ route('marketing.features') }}" class="btn o beg">{{ marketing_content('modules_cta_label') ?: marketing_text('See every feature') }} <i class="ar">→</i></a>
         </div>
     </div>
 </section>
@@ -109,7 +115,7 @@
             <h2>{{ marketing_content('benefits_title') }}</h2>
             <p>{{ marketing_content('benefits_subtitle') }}</p>
             <a class="btn o beg" href="#contact">
-                {{ marketing_content('hero_primary_label') ?: __('Book a Demo') }}
+                {{ marketing_content('hero_primary_label') ?: marketing_text('Book a Demo') }}
                 <i class="ar">→</i>
             </a>
         </div>
@@ -154,9 +160,9 @@
                 <p>{{ marketing_content('home_training_desc') }}</p>
             </div>
             <div class="tc">
-                <span>{{ __('Hands-on sessions') }}</span>
-                <span>{{ __('Video tutorials') }}</span>
-                <span>{{ __('Help centre') }}</span>
+                <span>{{ marketing_text('Hands-on sessions') }}</span>
+                <span>{{ marketing_text('Video tutorials') }}</span>
+                <span>{{ marketing_text('Help centre') }}</span>
             </div>
         </div>
     </div>
@@ -169,22 +175,22 @@
     <p>{{ marketing_content('cta_subtitle') }}</p>
         <form class="fm" method="POST" action="{{ route('marketing.contact.submit') }}" data-contact-form>
             @csrf
-            <input type="hidden" name="topic" value="{{ __('Booking a demo') }}">
-            <input type="hidden" name="message" value="{{ __('Please contact me to arrange a Kairo CORE demo.') }}">
+            <input type="hidden" name="topic" value="{{ marketing_text('Booking a demo') }}">
+            <input type="hidden" name="message" value="{{ marketing_text('Please contact me to arrange a Kairo CORE demo.') }}">
         <div class="fl">
-            <label for="f-name">{{ __('Your name') }}</label>
-            <input autocomplete="name" id="f-name" name="name" placeholder="{{ __('Your name') }}" required>
+            <label for="f-name">{{ marketing_text('Your name') }}</label>
+            <input autocomplete="name" id="f-name" name="name" placeholder="{{ marketing_text('Your name') }}" required>
         </div>
         <div class="fl">
-            <label for="f-school">{{ __('School name') }}</label>
-            <input id="f-school" name="school" placeholder="{{ __('School name') }}" required>
+            <label for="f-school">{{ marketing_text('School name') }}</label>
+            <input id="f-school" name="school" placeholder="{{ marketing_text('School name') }}" required>
         </div>
         <div class="fl" style="grid-column:1/-1">
-            <label for="f-email">{{ __('Work email') }}</label>
-            <input autocomplete="email" id="f-email" name="email" placeholder="{{ __('Work email') }}" required type="email">
+            <label for="f-email">{{ marketing_text('Work email') }}</label>
+            <input autocomplete="email" id="f-email" name="email" placeholder="{{ marketing_text('Work email') }}" required type="email">
         </div>
         <button class="btn o" style="grid-column:1/-1;justify-content:center" type="submit">
-            {{ __('Book a demo') }} →
+            {{ marketing_text('Book a demo') }} →
         </button>
         @if($errors->any())
             <p class="kerr" role="alert">{{ $errors->first() }}</p>

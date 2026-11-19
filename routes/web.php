@@ -205,6 +205,9 @@ Route::domain('{__centralHost}')
             ."Disallow: /language/\n"
             ."Disallow: /locale/\n"
             ."Disallow: /api/\n"
+            ."Disallow: /faq-knowledge*.json\n"
+            ."Disallow: /kfaq-smalltalk-i18n.json\n"
+            ."Disallow: /login-splash.html\n"
             ."\n"
             .("# Search engines\n")
             .("User-agent: Googlebot\nAllow: /\n")
@@ -368,6 +371,7 @@ Route::domain('{__centralHost}')
             ['loc' => route('marketing.blog'), 'lastmod' => $lastmod('marketing/blog'), 'changefreq' => 'weekly', 'priority' => '0.8', 'image' => platform_og_image_url()],
             ['loc' => route('marketing.contact'), 'lastmod' => $lastmod('marketing/contact'), 'changefreq' => 'monthly', 'priority' => '0.7', 'image' => platform_og_image_url()],
             ['loc' => route('platform.terms'), 'lastmod' => $lastmod('terms/platform'), 'changefreq' => 'yearly', 'priority' => '0.5'],
+            ['loc' => route('platform.privacy'), 'lastmod' => $lastmod('privacy/platform'), 'changefreq' => 'yearly', 'priority' => '0.5'],
         ];
 
         // Public school websites are listed here so search engines can discover

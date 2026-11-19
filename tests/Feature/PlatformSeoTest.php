@@ -16,7 +16,8 @@ class PlatformSeoTest extends TestCase
         $response = $this->get(route('marketing.home'));
 
         $response->assertOk();
-        $response->assertSee('<link rel="canonical"', false);
+        $response->assertSee('<link rel="canonical" href="'.route('marketing.home').'">', false);
+        $response->assertSee('Terms &amp; Conditions', false);
         $response->assertSee('application/ld+json', false);
         $response->assertSee('"@type":"WebSite"', false);
         $response->assertSee('"@type":"Organization"', false);
@@ -50,6 +51,7 @@ class PlatformSeoTest extends TestCase
         $response->assertSee(route('marketing.home'), false);
         $response->assertSee(route('marketing.about'), false);
         $response->assertSee(route('marketing.contact'), false);
+        $response->assertSee(route('platform.privacy'), false);
     }
 
     public function test_public_school_directory_is_available(): void
@@ -67,6 +69,8 @@ class PlatformSeoTest extends TestCase
         $response->assertSee('Sitemap: '.url('/sitemap.xml'), false);
         $response->assertSee('Disallow: /platform', false);
         $response->assertSee('Disallow: /workspace', false);
+        $response->assertSee('Disallow: /faq-knowledge*.json', false);
+        $response->assertSee('Disallow: /login-splash.html', false);
     }
 
     public function test_missing_page_returns_noindex_error_view(): void

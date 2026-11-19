@@ -2,11 +2,11 @@
 
 @section('body_class', 'kairo-v2')
 
-@section('title', __('Kairo CORE Features').' | School Management System in Zimbabwe')
+@section('title', marketing_text('Kairo CORE Features').' | School Management System in Zimbabwe')
 @section('seo_image', platform_public_asset_url('images/KairoCORE_Features_thumbnail.png'))
 @section('seo_schema_image', platform_public_asset_url('images/KairoCORE_Features_thumbnail.png'))
-@section('seo_image_alt', __('Kairo CORE features — admissions, academics, fees, attendance and report cards'))
-@section('meta_description', __('Explore Kairo CORE features: admissions, student records, school fees and invoicing, attendance, exams, ZIMSEC and Cambridge report cards, HR, communication and a school website — one school management system for Zimbabwe.'))
+@section('seo_image_alt', marketing_text('Kairo CORE features — admissions, academics, fees, attendance and report cards'))
+@section('meta_description', marketing_text('Explore Kairo CORE features: admissions, student records, school fees and invoicing, attendance, exams, ZIMSEC and Cambridge report cards, HR, communication and a school website — one school management system for Zimbabwe.'))
 
 @push('styles')
 @vite('resources/css/kairo-v2/features.css')
@@ -35,9 +35,9 @@
         'cms' => 'M4 5h16M4 10h16M4 15h10M4 20h10',
     ];
     $categoryMeta = [
-        'admin' => [__('Administration'), '#ef6050'],
-        'academic' => [__('Academic'), '#16a34a'],
-        'campus' => [__('Campus life'), '#10b981'],
+        'admin' => [marketing_text('Administration'), '#ef6050'],
+        'academic' => [marketing_text('Academic'), '#16a34a'],
+        'campus' => [marketing_text('Campus life'), '#10b981'],
     ];
     $features = marketing_merged_list('features_list');
     $featureCounts = ['all' => count($features)];
@@ -51,16 +51,16 @@
     <div class="fiw" id="fi"></div>
     <div class="w">
         <div class="fhc">
-            <span class="pill"><i>{{ marketing_live_stats()['modules'] }}+</i> {{ __('modules in one connected platform') }}</span>
+            <span class="pill"><i>{{ marketing_live_stats()['modules'] }}+</i> {{ marketing_text('modules in one connected platform') }}</span>
             <h1>{{ marketing_content('features_title') }}</h1>
             <p>{{ marketing_content('features_subtitle') }}</p>
             <div class="cta">
                 <a class="btn o beg" href="{{ route('marketing.contact') }}#contact-form">
-                    {{ marketing_content('features_cta_primary_label') ?: __('Book a demo') }}
+                    {{ marketing_content('features_cta_primary_label') ?: marketing_text('Book a demo') }}
                     <i class="ar">→</i>
                 </a>
                 <a class="btn g" href="#grid">
-                    {{ __('Explore modules') }}
+                    {{ marketing_text('Explore modules') }}
                     <i class="ar">↓</i>
                 </a>
             </div>
@@ -81,19 +81,19 @@
 <section class="fs" id="grid">
     <div class="w">
         <div class="fbar" role="search">
-            <div class="fch" aria-label="{{ __('Filter features by category') }}">
+            <div class="fch" aria-label="{{ marketing_text('Filter features by category') }}">
                 <span class="ind" aria-hidden="true"></span>
-                <button class="fc on" type="button" data-feature-filter="all">{{ __('All features') }} <small>{{ $featureCounts['all'] }}</small></button>
+                <button class="fc on" type="button" data-feature-filter="all">{{ marketing_text('All features') }} <small>{{ $featureCounts['all'] }}</small></button>
                 @foreach ($categoryMeta as $key => [$label])
                     <button class="fc" type="button" data-feature-filter="{{ $key }}">{{ $label }} <small>{{ $featureCounts[$key] ?? 0 }}</small></button>
                 @endforeach
             </div>
             <label class="sr">
-                <span class="sr-only">{{ __('Search features') }}</span>
-                <input type="search" id="featureSearch" placeholder="{{ __('Search features') }}">
+                <span class="sr-only">{{ marketing_text('Search features') }}</span>
+                <input type="search" id="featureSearch" placeholder="{{ marketing_text('Search features') }}">
             </label>
         </div>
-        <p class="fcount" id="cnt" aria-live="polite" data-all-label="{{ __('Showing all :count modules') }}" data-filtered-label="{{ __('Showing :shown of :total modules') }}">{{ __('Showing all :count modules', ['count' => count($features)]) }}</p>
+        <p class="fcount" id="cnt" aria-live="polite" data-all-label="{{ marketing_text('Showing all :count modules') }}" data-filtered-label="{{ marketing_text('Showing :shown of :total modules') }}">{{ marketing_text('Showing all :count modules', ['count' => count($features)]) }}</p>
         <div class="mgrid" id="mgrid">
             @foreach ($features as $feature)
                 @php
@@ -122,40 +122,40 @@
                                 @endforeach
                             </ul>
                         @endif
-                        <button class="btn g sm" type="button" data-open-feature>{{ __('Explore feature') }} <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></button>
+                        <button class="btn g sm" type="button" data-open-feature>{{ marketing_text('Explore feature') }} <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></button>
                     </div>
                 </article>
             @endforeach
         </div>
         <div class="em" hidden id="em">
-            <p>{{ __('No module matches that search. Try a word like fees, library or attendance.') }}</p>
-            <button class="btn g sm" type="button" data-feature-reset>{{ __('Show all features') }}</button>
+            <p>{{ marketing_text('No module matches that search. Try a word like fees, library or attendance.') }}</p>
+            <button class="btn g sm" type="button" data-feature-reset>{{ marketing_text('Show all features') }}</button>
         </div>
     </div>
 </section>
 
 <div class="md" id="featureModal" aria-hidden="true">
     <div class="mp" role="dialog" aria-modal="true" aria-labelledby="featureModalTitle">
-        <button class="ib mx" type="button" data-close-feature aria-label="{{ __('Close') }}">✕</button>
+        <button class="ib mx" type="button" data-close-feature aria-label="{{ marketing_text('Close') }}">✕</button>
         <div class="mv" aria-hidden="true"></div>
         <div class="mb">
             <h3 id="featureModalTitle"></h3>
             <p id="featureModalDetail"></p>
             <ul id="featureModalPoints"></ul>
             <div class="mact">
-                <a class="btn o" href="{{ route('marketing.contact') }}#contact-form">{{ __('Book a demo for this module') }}</a>
-                <button class="btn g" type="button" data-close-feature>{{ __('Close') }}</button>
+                <a class="btn o" href="{{ route('marketing.contact') }}#contact-form">{{ marketing_text('Book a demo for this module') }}</a>
+                <button class="btn g" type="button" data-close-feature>{{ marketing_text('Close') }}</button>
             </div>
         </div>
     </div>
 </div>
 
 <div class="ct rv" id="start">
-    <h2>{{ marketing_content('features_cta_title') ?: __('Not sure where to start?') }}</h2>
-    <p>{{ marketing_content('features_cta_subtitle') ?: __('Book a personal demo and we will show you the modules that matter most to your school.') }}</p>
+    <h2>{{ marketing_content('features_cta_title') ?: marketing_text('Not sure where to start?') }}</h2>
+    <p>{{ marketing_content('features_cta_subtitle') ?: marketing_text('Book a personal demo and we will show you the modules that matter most to your school.') }}</p>
     <div class="cta">
-        <a class="btn o" href="{{ route('marketing.contact') }}#contact-form">{{ marketing_content('features_cta_primary_label') ?: __('Book a demo') }} →</a>
-        <a class="btn g" href="{{ route('marketing.contact') }}">{{ marketing_content('features_cta_secondary_label') ?: __('Contact us') }}</a>
+        <a class="btn o" href="{{ route('marketing.contact') }}#contact-form">{{ marketing_content('features_cta_primary_label') ?: marketing_text('Book a demo') }} →</a>
+        <a class="btn g" href="{{ route('marketing.contact') }}">{{ marketing_content('features_cta_secondary_label') ?: marketing_text('Contact us') }}</a>
     </div>
 </div>
 @endsection

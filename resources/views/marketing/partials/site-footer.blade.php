@@ -13,7 +13,7 @@
     if ($contactWhatsapp) {
         $socials[] = [
             'key' => 'whatsapp',
-            'label' => __('Chat on WhatsApp'),
+            'label' => marketing_text('Chat on WhatsApp'),
             'url' => 'https://wa.me/'.$contactPhoneDigits,
             'color' => '#25D366',
             'bg' => '#25D366'
@@ -30,7 +30,7 @@
         $url = is_string($url) && filter_var($url, FILTER_VALIDATE_URL) ? $url : $fallback;
         $socials[] = [
             'key' => $key,
-            'label' => __($label),
+            'label' => marketing_text($label),
             'url' => $url,
             'color' => $color,
             'bg' => $bg
@@ -46,18 +46,18 @@
                 <a href="{{ route('marketing.home') }}" class="kf-logo" aria-label="{{ platform_name() }} home">
                     <img src="{{ $logo }}" alt="{{ platform_name() }} logo" width="480" height="268" loading="lazy">
                 </a>
-                @php($kfTaglineParts = preg_split('/(?<=\.)\s+/u', __('Smarter Schools. Brighter Futures.'), 2))
+                @php($kfTaglineParts = preg_split('/(?<=\.)\s+/u', marketing_content('footer_tagline'), 2))
                 <p class="kf-tagline"><span style="white-space:nowrap;">{{ $kfTaglineParts[0] ?? '' }}</span>@if(!empty($kfTaglineParts[1])) <span style="white-space:nowrap;">{{ $kfTaglineParts[1] }}</span>@endif</p>
-                <p class="kf-footer-text">{{ __('Cloud-based school management platform built for schools.') }}</p>
+                <p class="kf-footer-text">{{ marketing_content('footer_description') }}</p>
                 <div class="kf-clock" id="kfClock" data-locale="{{ app()->getLocale() }}">
                     <div class="kf-clock-top">
-                        <time class="kf-clock-time" datetime="" aria-label="{{ __('Local time in Harare') }}">
+                        <time class="kf-clock-time" datetime="" aria-label="{{ marketing_text('Local time in Harare') }}">
                             <span class="kf-clock-hm">--:--</span><span class="kf-clock-sec">:--</span>
                         </time>
                         <span class="kf-clock-zone">CAT · UTC+2</span>
                     </div>
                     <div class="kf-clock-date">&nbsp;</div>
-                    <div class="kf-clock-place">{{ __('Harare, Zimbabwe') }}</div>
+                    <div class="kf-clock-place">{{ marketing_text('Harare, Zimbabwe') }}</div>
                 </div>
                 <script>
                 (function(){
@@ -88,43 +88,43 @@
                 </script>
             </div>
 
-            <nav class="kf-fcol" aria-label="{{ __('Product') }}">
-                <h3 class="kf-fh">{{ __('Product') }}</h3>
+            <nav class="kf-fcol" aria-label="{{ marketing_text('Product') }}">
+                <h3 class="kf-fh">{{ marketing_text('Product') }}</h3>
                 <div class="kf-faccent"></div>
                 <ul class="kf-flist">
-                    <li><a href="{{ route('marketing.features') }}">{{ __('Features') }}</a></li>
-                    <li><a href="{{ route('marketing.school-fees') }}">{{ __('Fees & Finance') }}</a></li>
-                    <li><a href="{{ route('marketing.admissions') }}">{{ __('Admissions') }}</a></li>
-                    <li><a href="{{ route('marketing.security') }}">{{ __('Security') }}</a></li>
-                    <li><a href="{{ route('marketing.features') }}#reports">{{ __('Reports & Analytics') }}</a></li>
+                    <li><a href="{{ route('marketing.features') }}">{{ marketing_text('Features') }}</a></li>
+                    <li><a href="{{ route('marketing.school-fees') }}">{{ marketing_text('Fees & Finance') }}</a></li>
+                    <li><a href="{{ route('marketing.admissions') }}">{{ marketing_text('Admissions') }}</a></li>
+                    <li><a href="{{ route('marketing.security') }}">{{ marketing_text('Security') }}</a></li>
+                    <li><a href="{{ route('marketing.features') }}#reports">{{ marketing_text('Reports & Analytics') }}</a></li>
                 </ul>
             </nav>
 
-            <nav class="kf-fcol" aria-label="{{ __('Company') }}">
-                <h3 class="kf-fh">{{ __('Company') }}</h3>
+            <nav class="kf-fcol" aria-label="{{ marketing_text('Company') }}">
+                <h3 class="kf-fh">{{ marketing_text('Company') }}</h3>
                 <div class="kf-faccent"></div>
                 <ul class="kf-flist">
-                    <li><a href="{{ route('marketing.about') }}">{{ __('About') }}</a></li>
-                    <li><a href="{{ route('marketing.blog') }}">{{ __('Blog') }}</a></li>
-                    <li><a href="{{ route('marketing.contact') }}">{{ __('Contact') }}</a></li>
-                    <li><a href="{{ route('marketing.home') }}#why">{{ __('Why Kairo') }}</a></li>
+                    <li><a href="{{ route('marketing.about') }}">{{ marketing_text('About') }}</a></li>
+                    <li><a href="{{ route('marketing.blog') }}">{{ marketing_text('Blog') }}</a></li>
+                    <li><a href="{{ route('marketing.contact') }}">{{ marketing_text('Contact') }}</a></li>
+                    <li><a href="{{ route('marketing.home') }}#why">{{ marketing_text('Why Kairo') }}</a></li>
                 </ul>
             </nav>
 
-            <nav class="kf-fcol" aria-label="{{ __('Resources') }}">
-                <h3 class="kf-fh">{{ __('Resources') }}</h3>
+            <nav class="kf-fcol" aria-label="{{ marketing_text('Resources') }}">
+                <h3 class="kf-fh">{{ marketing_text('Resources') }}</h3>
                 <div class="kf-faccent"></div>
                 <ul class="kf-flist">
-                    <li><a href="{{ route('help.index') }}">{{ __('Help Centre') }}</a></li>
-                    <li><a href="{{ route('marketing.home') }}#start">{{ __('How it works') }}</a></li>
-                    <li><a href="{{ route('help.index') }}">{{ __('Documentation') }}</a></li>
-                    <li><a href="{{ route('marketing.home') }}#faq">{{ __('FAQ') }}</a></li>
-                    <li><a href="{{ route('marketing.contact') }}#contact-form">{{ __('Book a demo') }}</a></li>
+                    <li><a href="{{ route('help.index') }}">{{ marketing_text('Help Centre') }}</a></li>
+                    <li><a href="{{ route('marketing.home') }}#start">{{ marketing_text('How it works') }}</a></li>
+                    <li><a href="{{ route('help.index') }}">{{ marketing_text('Documentation') }}</a></li>
+                    <li><a href="{{ route('marketing.home') }}#faq">{{ marketing_text('FAQ') }}</a></li>
+                    <li><a href="{{ route('marketing.contact') }}#contact-form">{{ marketing_text('Book a demo') }}</a></li>
                 </ul>
             </nav>
 
             <div class="kf-fcol kf-fcol-contact">
-                <h3 class="kf-fh">{{ __('Reach out to us') }}</h3>
+                <h3 class="kf-fh">{{ marketing_text('Reach out to us') }}</h3>
                 <div class="kf-faccent"></div>
                 <div class="kf-contact-list">
                     @if($contactWhatsapp)
@@ -141,7 +141,7 @@
                     @endif
                     <a href="{{ $contactWhatsapp ? 'https://wa.me/'.$contactPhoneDigits : route('marketing.contact') }}" class="kf-contact-row" @if($contactWhatsapp) target="_blank" rel="noopener noreferrer" @endif>
                         <span class="kf-ci" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.5 7.2L4 20l1-4.5A8 8 0 0 1 21 12z"/></svg></span>
-                        <span>{{ __('Chat on WhatsApp') }}</span>
+                        <span>{{ marketing_text('Chat on WhatsApp') }}</span>
                     </a>
                 </div>
             </div>
@@ -151,11 +151,11 @@
 
         <div class="kf-fbottom">
             <div class="kf-fbottom-left">
-                <span>&copy; {{ date('Y') }} {{ platform_name() }}. {{ __('All rights reserved.') }}</span>
+                <span>&copy; {{ date('Y') }} {{ platform_name() }}. {{ marketing_text('All rights reserved.') }}</span>
                 <span class="kf-flegal">
-                    <a href="{{ route('platform.privacy') }}">{{ __('Privacy Policy') }}</a>
+                    <a href="{{ route('platform.privacy') }}">{{ marketing_text('Privacy Policy') }}</a>
                     <span class="kf-dotsep" aria-hidden="true">·</span>
-                    <a href="{{ route('platform.terms') }}">{{ __('Terms') }}</a>
+                    <a href="{{ route('platform.terms') }}">{{ marketing_text('Terms & Conditions') }}</a>
                 </span>
             </div>
             <div class="kf-fbottom-right">
@@ -172,7 +172,7 @@
                         </a>
                     @endforeach
                 </div>
-                <a href="#" class="kf-backtotop">↑ {{ __('Back to top') }}</a>
+                <a href="#" class="kf-backtotop">↑ {{ marketing_text('Back to top') }}</a>
             </div>
         </div>
     </div>
@@ -180,7 +180,7 @@
 
 <!-- Modern Floating Social Bar (Pill on desktop, expandable bottom-right on mobile/tablet) -->
 @if(count($socials) > 0)
-<div class="kf-dock" aria-label="{{ __('Quick contact links') }}" x-data="{ open: false, active: 0 }" x-init="setInterval(() => active = (active + 1) % {{ count($socials) }}, 2600)" @click.outside="open = false" @keydown.escape.window="open = false">
+<div class="kf-dock" aria-label="{{ marketing_text('Quick contact links') }}" x-data="{ open: false, active: 0 }" x-init="setInterval(() => active = (active + 1) % {{ count($socials) }}, 2600)" @click.outside="open = false" @keydown.escape.window="open = false">
     <div class="kf-dock-list" :class="{ 'is-open': open }" id="kf-dock-list">
         @foreach($socials as $index => $social)
             <a href="{{ $social['url'] }}"
@@ -202,7 +202,7 @@
             @click="open = !open"
             :aria-expanded="open"
             aria-controls="kf-dock-list"
-            aria-label="{{ __('Toggle social links') }}">
+            aria-label="{{ marketing_text('Toggle social links') }}">
         <svg x-show="!open" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
         </svg>

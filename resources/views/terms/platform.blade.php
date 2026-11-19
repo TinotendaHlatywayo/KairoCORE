@@ -5,13 +5,13 @@
     <link rel="icon" href="{{ platform_favicon_url() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="{{ __('Platform Terms of Service and Terms of Use for :company.', ['company' => platform_name()]) }}">
-    <link rel="canonical" href="{{ url()->current() }}">
+    <link rel="canonical" href="{{ platform_canonical_url() }}">
     <meta name="robots" content="index, follow">
     <meta property="og:type" content="article">
     <meta property="og:site_name" content="{{ platform_name() }}">
     <meta property="og:title" content="{{ __('Terms of Service & Terms of Use') }} - {{ platform_name() }}">
     <meta property="og:description" content="{{ __('Platform Terms of Service and Terms of Use for :company.', ['company' => platform_name()]) }}">
-    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:url" content="{{ platform_canonical_url() }}">
     <meta property="og:image" content="{{ platform_og_image_url() }}">
     <meta name="twitter:card" content="summary_large_image">
     <title>{{ __('Terms of Service & Terms of Use') }} - {{ platform_name() }}</title>

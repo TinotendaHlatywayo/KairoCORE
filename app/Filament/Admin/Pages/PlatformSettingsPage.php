@@ -127,6 +127,9 @@ class PlatformSettingsPage extends Page implements HasForms
         foreach ($this->marketingListKeys() as $key) {
             $state['marketing_'.$key] = $this->marketingDisplayList($key, 'en');
         }
+        $textKeys = marketing_text_keys();
+        $state['marketing_text_key'] = $textKeys[0] ?? '';
+        $state['marketing_text_value'] = $this->marketingTextOverrideValue((string) ($textKeys[0] ?? ''), 'en');
         $state['marketing_language'] = 'en';
 
         // Slots whose video is still converting show the pending upload
@@ -481,6 +484,10 @@ class PlatformSettingsPage extends Page implements HasForms
                     $this->mText('hero_stat_1_value', __('Hero floating card 1 value')),
                     $this->mText('hero_stat_2_label', __('Hero floating card 2 label')),
                     $this->mText('hero_stat_2_value', __('Hero floating card 2 value')),
+                    $this->mText('hero_stat_3_label', __('Hero floating card 3 label')),
+                    $this->mText('hero_stat_3_value', __('Hero floating card 3 value')),
+                    $this->mText('hero_stat_4_label', __('Hero floating card 4 label')),
+                    $this->mText('hero_stat_4_value', __('Hero floating card 4 value')),
 
                     Repeater::make('marketing_home_stats')
                         ->label(__('Stats marquee'))
@@ -762,6 +769,31 @@ class PlatformSettingsPage extends Page implements HasForms
                     $this->mText('blog_intro', __('Page intro paragraph'), null, true),
                     $this->mText('blog_cta_title', __('Bottom CTA title'), null, true),
                     $this->mText('blog_cta_subtitle', __('Bottom CTA subtitle'), null, true),
+                    $this->mText('blog_cta_primary_label', __('Bottom CTA primary button')),
+                    $this->mText('blog_cta_secondary_label', __('Bottom CTA secondary button')),
+                ]),
+
+            Tab::make('Site text')
+                ->label(__('Site text'))
+                ->icon('heroicon-o-language')
+                ->columns(1)
+                ->schema([
+                    Placeholder::make('site_text_intro')
+                        ->label(__('Translate and edit any public-site wording'))
+                        ->content(new HtmlString(__('Pick a text key, then type its wording for the selected language. Leave the box empty to restore the shipped translation. The key list covers every string rendered by the public Home, Features, About, Contact, Blog, FAQ and navigation surfaces.')))
+                        ->columnSpanFull(),
+                    Select::make('marketing_text_key')
+                        ->label(__('Text key'))
+                        ->searchable()
+                        ->options($this->marketingTextKeyOptions())
+                        ->live()
+                        ->afterStateUpdated(fn ($state, \Filament\Forms\Set $set) => $set('marketing_text_value', $this->marketingTextOverrideValue((string) $state, $this->marketingLocale)))
+                        ->columnSpanFull(),
+                    Textarea::make('marketing_text_value')
+                        ->label(__('Text override'))
+                        ->rows(5)
+                        ->helperText(fn (Get $get) => $this->marketingTextFallback((string) ($get('marketing_text_key') ?? '')))
+                        ->columnSpanFull(),
                 ]),
 
             Tab::make('Global & SEO')
@@ -819,6 +851,45 @@ class PlatformSettingsPage extends Page implements HasForms
                 if ($key === 'language' || str_ends_with($key, '_upload')) {
                     continue;
                 }
+
+                if ($key === 'text_key') {
+                    continue;
+                }
+
+                if ($key === 'text_value') {
+                    if (! $this->marketingValueIsDirty($compoundKey, $value)) {
+                        continue;
+                    }
+
+                    $textKey = (string) ($state['marketing_text_key'] ?? $this->data['marketing_text_key'] ?? '');
+                    if ($textKey === '') {
+                        continue;
+                    }
+
+                    $stored = PlatformSetting::where('group', 'marketing')->where('key', 'text_overrides')->value('value');
+                    $overrides = [];
+                    if (is_string($stored) && $stored !== '') {
+                        $decoded = json_decode($stored, true);
+                        if (is_array($decoded)) {
+                            $overrides = $decoded;
+                        }
+                    }
+
+                    $wording = (string) ($value ?? '');
+                    if (trim($wording) === '') {
+                        unset($overrides[$locale][$textKey]);
+                    } else {
+                        $overrides[$locale][$textKey] = $wording;
+                    }
+
+                    PlatformSetting::updateOrCreate(
+                        ['group' => 'marketing', 'key' => 'text_overrides'],
+                        ['value' => json_encode($overrides, JSON_UNESCAPED_UNICODE)]
+                    );
+
+                    continue;
+                }
+
                 // Only persist website-content fields the admin actually
                 // changed for the selected language; untouched fields keep
                 // following the shipped translated copy.
@@ -1306,6 +1377,9 @@ class PlatformSettingsPage extends Page implements HasForms
             $updates['marketing_'.$key] = $this->marketingDisplayList($key, $locale);
         }
 
+        $textKey = (string) ($this->data['marketing_text_key'] ?? '');
+        $updates['marketing_text_value'] = $this->marketingTextOverrideValue($textKey, $locale);
+
         foreach ($updates as $compoundKey => $value) {
             $this->data[$compoundKey] = $value;
         }
@@ -1501,12 +1575,43 @@ class PlatformSettingsPage extends Page implements HasForms
         return parent::getFormUploadedFiles($statePath);
     }
 
+    protected function marketingTextKeyOptions(): array
+    {
+        $options = [];
+        foreach (marketing_text_keys() as $key) {
+            $options[$key] = Str::limit($key, 120);
+        }
+
+        return $options;
+    }
+
+    protected function marketingTextOverrideValue(string $key, string $locale): string
+    {
+        if ($key === '') {
+            return '';
+        }
+
+        $overrides = marketing_settings_map()['text_overrides'] ?? [];
+
+        return is_array($overrides) ? (string) ($overrides[$locale][$key] ?? '') : '';
+    }
+
+    protected function marketingTextFallback(string $key): string
+    {
+        if ($key === '') {
+            return __('Choose a text key to see the current wording.');
+        }
+
+        return (string) __($key, [], $this->marketingLocale);
+    }
+
     /**
      * Fold every "*_upload" field into its target field (top level and inside
      * repeaters): an upload replaces the URL/path value being edited.
      *
      * @param  array<string, mixed>  $data
      */
+
     /**
      * Standard single-line website-content text field.
      */
