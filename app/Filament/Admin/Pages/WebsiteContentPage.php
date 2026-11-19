@@ -89,7 +89,8 @@ class WebsiteContentPage extends PlatformSettingsPage
 
     protected function blogTab(): Tab
     {
-        return Tab::make('Blog')
+        return Tab::make('Blog posts')
+            ->label(__('Blog posts'))
             ->icon('heroicon-o-newspaper')
             ->schema($this->blogTabSchema());
     }

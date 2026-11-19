@@ -5022,3 +5022,59 @@ select.sc-input {
             top: 5rem;
         }
     }
+
+    .fi-page nav.fi-tabs {
+        flex-wrap: wrap !important;
+        overflow: visible !important;
+    }
+
+    .fi-page nav.fi-tabs .fi-tabs-item {
+        flex: 1 1 auto;
+        min-width: max-content;
+    }
+
+    @media (max-width: 1279px) {
+        .fi-page nav.fi-tabs {
+            display: grid !important;
+            grid-template-columns: repeat(auto-fit, minmax(5.25rem, 1fr)) !important;
+            gap: 0.5rem !important;
+            overflow: visible !important;
+            padding: 0.75rem !important;
+        }
+
+        .fi-page nav.fi-tabs .fi-tabs-item {
+            width: 100%;
+            min-width: 0;
+            justify-content: center;
+            padding: 0.625rem 0.5rem;
+            font-size: 0.8125rem;
+            line-height: 1.2;
+            text-align: center;
+        }
+
+        .fi-page nav.fi-tabs .fi-tabs-item-label {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .fi-page button:not([disabled]),
+        .fi-page [role="button"]:not([disabled]),
+        .fi-page .fi-icon-btn {
+            min-width: 2.75rem;
+            min-height: 2.75rem;
+        }
+
+        .fi-page input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+        .fi-page select,
+        .fi-page textarea,
+        .fi-page input[type="file"] {
+            min-height: 2.75rem;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .fi-page nav.fi-tabs .fi-tabs-item-icon {
+            display: none;
+        }
+    }

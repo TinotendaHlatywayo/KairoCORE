@@ -753,6 +753,7 @@ class PlatformSettingsPage extends Page implements HasForms
                 ]),
 
             Tab::make('Blog')
+                ->label(__('Blog page'))
                 ->icon('heroicon-o-newspaper')
                 ->columns(2)
                 ->schema([
