@@ -19,7 +19,7 @@
     })->values();
 @endphp
 
-<div class="flex flex-col h-[540px] bg-white dark:bg-slate-950 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-xl">
+<div class="flex flex-col h-[70dvh] max-h-[540px] min-h-[320px] bg-white dark:bg-slate-950 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-xl">
 
     <!-- Chat Header Bar -->
     <div class="px-5 py-3.5 bg-slate-900 text-white dark:bg-slate-900 border-b border-slate-800 flex items-center justify-between shadow-md">

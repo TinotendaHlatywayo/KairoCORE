@@ -25,7 +25,7 @@ class TempCourseTemplateDownloadTest extends TestCase
 
     public function test_courses_download_excel_template_action_streams_xlsx(): void
     {
-        $school = School::where('subdomain', 'rujeko')->first() ?? School::first();
+        $school = School::where('subdomain', 'enrollmentdisplayfixture')->firstOrFail();
         $this->assertNotNull($school);
         app()->instance('current_tenant', $school);
 
@@ -35,7 +35,7 @@ class TempCourseTemplateDownloadTest extends TestCase
         $user = $adminRoleId
             ? User::where('school_id', $school->id)->where('custom_role_id', $adminRoleId)->first()
             : null;
-        $this->actingAs($user ?? User::findOrFail(13));
+        $this->actingAs($user ?? User::where('school_id', $school->id)->where('requested_role', 'administrator')->firstOrFail());
 
         $component = Livewire::test(ListCourses::class);
 

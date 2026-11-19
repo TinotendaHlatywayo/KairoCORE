@@ -108,8 +108,9 @@ class SchoolLoginCodeTest extends TestCase
         $home = $this->get('/');
 
         $home->assertOk();
-        // The header Login dropdown (Alpine) with both options.
-        $home->assertSee('loginOpen', false);
+        // The header Login dropdown with both options.
+        $home->assertSee('kf-login-desktop', false);
+        $home->assertSee('kf-login-panel', false);
         $home->assertSee('School Login', false);
         $home->assertSee('Platform Login', false);
         $home->assertSee('/school-login', false);

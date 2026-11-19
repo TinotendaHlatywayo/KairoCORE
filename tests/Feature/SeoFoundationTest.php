@@ -58,21 +58,21 @@ class SeoFoundationTest extends TestCase
     public function test_key_marketing_pages_use_their_own_preview_artwork(): void
     {
         foreach ([
-            'marketing.home' => 'images/KairoCORE_Home_thumbnail.png',
-            'marketing.about' => 'images/KairoCORE_About_thumbnail.png',
-            'marketing.features' => 'images/KairoCORE_Features_thumbnail.png',
-        ] as $routeName => $artwork) {
-            $image = asset($artwork);
+            'marketing.home' => ['images/KairoCORE_link_preview.png', 900, 1200],
+            'marketing.about' => ['images/KairoCORE_About_thumbnail.png', 1200, 900],
+            'marketing.features' => ['images/KairoCORE_Features_thumbnail.png', 1200, 900],
+        ] as $routeName => [$artwork, $width, $height]) {
+            $image = platform_public_asset_url($artwork);
             $meta = platform_og_image_dimensions($image);
 
-            $this->assertSame(1448, $meta['width'], "Wrong width for {$artwork}");
-            $this->assertSame(1086, $meta['height'], "Wrong height for {$artwork}");
+            $this->assertSame($width, $meta['width'], "Wrong width for {$artwork}");
+            $this->assertSame($height, $meta['height'], "Wrong height for {$artwork}");
             $this->assertSame('image/png', $meta['type'], "Wrong type for {$artwork}");
 
             $page = $this->get(route($routeName))->assertOk();
             $page->assertSee('<meta property="og:image" content="'.$image.'"', false);
-            $page->assertSee('<meta property="og:image:width" content="1448">', false);
-            $page->assertSee('<meta property="og:image:height" content="1086">', false);
+            $page->assertSee('<meta property="og:image:width" content="'.$width.'">', false);
+            $page->assertSee('<meta property="og:image:height" content="'.$height.'">', false);
             $page->assertSee('<meta property="og:image:type" content="image/png">', false);
         }
     }
@@ -85,13 +85,13 @@ class SeoFoundationTest extends TestCase
     {
         $meta = platform_og_image_dimensions(platform_og_image_url());
 
-        $this->assertSame(1086, $meta['width']);
-        $this->assertSame(1448, $meta['height']);
+        $this->assertSame(900, $meta['width']);
+        $this->assertSame(1200, $meta['height']);
         $this->assertSame('image/png', $meta['type']);
 
         $page = $this->get(route('marketing.contact'))->assertOk();
-        $page->assertSee('<meta property="og:image:width" content="1086">', false);
-        $page->assertSee('<meta property="og:image:height" content="1448">', false);
+        $page->assertSee('<meta property="og:image:width" content="900">', false);
+        $page->assertSee('<meta property="og:image:height" content="1200">', false);
         $page->assertSee('<meta property="og:image:type" content="image/png">', false);
     }
 

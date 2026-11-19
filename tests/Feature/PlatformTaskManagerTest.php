@@ -37,7 +37,7 @@ class PlatformTaskManagerTest extends TestCase
 
     private function school(): School
     {
-        return School::findOrFail(config('tenancy.single_tenant_id'));
+        return School::find(config('tenancy.single_tenant_id')) ?? School::firstOrFail();
     }
 
     private function schoolAdmin(School $school): User

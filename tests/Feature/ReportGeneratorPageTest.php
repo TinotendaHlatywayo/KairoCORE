@@ -21,7 +21,8 @@ class ReportGeneratorPageTest extends TestCase
         config(['database.default' => 'mysql']);
         config(['database.connections.mysql.database' => 'schoolcore']);
 
-        $this->school = School::find(5);
+        $this->school = School::where('subdomain', 'enrollmentdisplayfixture')->first() ?? School::first();
+        $this->assertNotNull($this->school, 'A school record is required.');
         app()->instance('current_tenant', $this->school);
         URL::defaults(['tenant' => $this->school->subdomain]);
         $this->withSession(['locale' => 'en']);

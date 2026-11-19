@@ -24,8 +24,11 @@ class PanelRenderTest extends TestCase
 
     public function test_panel_renders_notification_bell()
     {
-        $school = School::where('subdomain', 'rujeko')->first();
-        $user = User::withoutTenantScope()->where('school_id', $school->id)->where('email', 'admin@rujeko.edu')->first();
+        $school = School::where('subdomain', 'rujeko')->first() ?? School::firstOrFail();
+        $user = User::withoutTenantScope()
+            ->where('school_id', $school->id)
+            ->where('requested_role', 'administrator')
+            ->firstOrFail();
 
         $this->actingAs($user);
         app()->instance('current_tenant', $school);
@@ -34,6 +37,6 @@ class PanelRenderTest extends TestCase
 
         $html = $response->getContent();
         $this->assertEquals(200, $response->getStatusCode());
-        $this->assertStringContainsString('admission-notification-center', $html);
+        $this->assertStringContainsString('sc-cc-notif-bell', $html);
     }
 }

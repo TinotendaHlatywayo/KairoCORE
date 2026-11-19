@@ -49,7 +49,7 @@ class NavigablePagesHelpTest extends TestCase
      */
     private function actAsSchoolAdmin(): void
     {
-        $school = School::where('subdomain', 'rujeko')->where('status', 'active')->first()
+        $school = School::where('subdomain', 'enrollmentdisplayfixture')->where('status', 'active')->first()
             ?? School::where('status', 'active')->first()
             ?? School::first();
 
@@ -66,7 +66,7 @@ class NavigablePagesHelpTest extends TestCase
             ? User::where('school_id', $school->id)->where('custom_role_id', $adminRoleId)->first()
             : null;
 
-        $this->actingAs($admin ?? User::findOrFail(13));
+        $this->actingAs($admin ?? User::where('school_id', $school->id)->where('requested_role', 'administrator')->firstOrFail());
     }
 
     /**

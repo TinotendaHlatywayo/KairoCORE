@@ -176,7 +176,7 @@ class TempFinancialHistoryImportTest extends TestCase
             $this->assertSame(2, $result['total']);
             $this->assertCount(2, $result['failures']);
             $this->assertStringContainsString('No student was found', $result['failures'][0]['errors'][0]);
-            $this->assertStringContainsString('Transaction Type must be one of', $result['failures'][1]['errors'][0]);
+            $this->assertStringContainsString('Transaction Type [weird] must be one of', $result['failures'][1]['errors'][0]);
         } finally {
             DB::rollBack();
         }

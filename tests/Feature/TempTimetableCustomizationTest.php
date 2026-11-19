@@ -41,7 +41,8 @@ class TempTimetableCustomizationTest extends BaseTestCase
     {
         $sid = $this->schoolId;
 
-        $teacherId = (int) CourseSubject::where('school_id', $sid)->whereNotNull('teacher_id')->value('teacher_id');
+        $teacherId = (int) (User::where('school_id', $sid)->where('requested_role', 'teaching_staff')->orderBy('id')->value('id')
+            ?? User::where('school_id', $sid)->orderBy('id')->value('id'));
         $this->assertGreaterThan(0, $teacherId, 'expected an existing teacher for the fixture');
 
         $subjectId = (int) Subject::where('school_id', $sid)->value('id');

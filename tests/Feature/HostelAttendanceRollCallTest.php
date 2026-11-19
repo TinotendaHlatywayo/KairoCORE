@@ -15,23 +15,25 @@ use Modules\Students\Models\Student;
 
 class HostelAttendanceRollCallTest extends TestCase
 {
+    private ?School $school = null;
+
     protected function setUp(): void
     {
         parent::setUp();
         config(['database.default' => 'mysql']);
         config(['database.connections.mysql.database' => 'schoolcore']);
 
-        $school = School::find(5);
-        app()->instance('current_tenant', $school);
-        URL::defaults(['tenant' => $school->subdomain]);
+        $this->school = School::where('subdomain', 'enrollmentdisplayfixture')->firstOrFail();
+        app()->instance('current_tenant', $this->school);
+        URL::defaults(['tenant' => $this->school->subdomain]);
         $this->withSession(['locale' => 'en']);
     }
 
     public function test_create_page_renders_with_roll_call_section(): void
     {
-        $user = User::find(15);
+        $user = User::where('school_id', $this->school->id)->where('requested_role', 'administrator')->firstOrFail();
         $this->actingAs($user)
-            ->withServerVariables(['HTTP_HOST' => 'chiwariraprimary.lvh.me:8000']);
+            ->withServerVariables(['HTTP_HOST' => $this->school->subdomain.'.lvh.me:8000']);
 
         $r = $this->get('/workspace/hostel-attendances/create');
         $r->assertOk();
@@ -42,9 +44,9 @@ class HostelAttendanceRollCallTest extends TestCase
 
     public function test_save_creates_attendance_and_student_rows_with_statuses(): void
     {
-        $user = User::find(15);
+        $user = User::where('school_id', $this->school->id)->where('requested_role', 'administrator')->firstOrFail();
         $this->actingAs($user)
-            ->withServerVariables(['HTTP_HOST' => 'chiwariraprimary.lvh.me:8000']);
+            ->withServerVariables(['HTTP_HOST' => $this->school->subdomain.'.lvh.me:8000']);
 
         $hostel = Hostel::create([
             'name' => 'Roll Call Smoke '.uniqid(),

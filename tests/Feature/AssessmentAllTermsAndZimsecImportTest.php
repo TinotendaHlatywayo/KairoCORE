@@ -39,8 +39,8 @@ class AssessmentAllTermsAndZimsecImportTest extends TestCase
         Config::set('database.connections.mysql.username', env('DB_USERNAME', 'root'));
         Config::set('database.connections.mysql.password', env('DB_PASSWORD', ''));
 
-        $this->school = School::where('subdomain', 'chiwariraprimary')->first();
-        $this->assertTrue($this->school->id > 0, 'School chiwariraprimary must exist');
+        $this->school = School::where('subdomain', 'rujeko')->first() ?? School::firstOrFail();
+        $this->assertTrue($this->school->id > 0, 'A tenant school must exist');
 
         $this->actingAsTenant($this->school);
     }

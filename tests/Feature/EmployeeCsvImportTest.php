@@ -6,7 +6,7 @@ use App\Models\School;
 use App\Models\User;
 use App\Security\RoleCatalogue;
 use App\Services\Csv\EmployeeCsvService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Modules\Admin\Models\Department;
 use Modules\HR\Models\Employee;
@@ -22,8 +22,6 @@ use Tests\TestCase;
  */
 class EmployeeCsvImportTest extends TestCase
 {
-    use RefreshDatabase;
-
     private School $school;
 
     private SalaryGrade $grade;
@@ -31,6 +29,17 @@ class EmployeeCsvImportTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        config([
+            'database.default' => 'mysql',
+            'database.connections.mysql.database' => 'schoolcore',
+            'database.connections.mysql.host' => '127.0.0.1',
+            'database.connections.mysql.port' => '3306',
+            'database.connections.mysql.username' => env('DB_USERNAME', 'root'),
+            'database.connections.mysql.password' => env('DB_PASSWORD', ''),
+        ]);
+        DB::purge('mysql');
+        DB::connection('mysql')->beginTransaction();
 
         $this->school = School::create([
             'name' => 'Employee CSV School',
@@ -44,6 +53,13 @@ class EmployeeCsvImportTest extends TestCase
             'school_id' => $this->school->id,
             'name' => 'Educator Scale B',
         ]);
+    }
+
+    protected function tearDown(): void
+    {
+        DB::connection('mysql')->rollBack();
+
+        parent::tearDown();
     }
 
     // ── Template ↔ wizard parity ────────────────────────────────────────────

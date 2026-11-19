@@ -666,7 +666,7 @@ class CapabilityCatalogueTest extends TestCase
         // them. If a page is renamed, those tests should fail loudly rather than
         // quietly stop asserting anything.
         $this->assertSame('Leave Requests', CapabilityCatalog::pageLabel('hr', 'Leave Requests'));
-        $this->assertSame('Schedule & Tasks', CapabilityCatalog::pageLabel('communication', 'Schedule & Tasks'));
+        $this->assertSame('Schedule', CapabilityCatalog::pageLabel('universal', 'Schedule'));
         $this->assertSame('Payroll Periods', CapabilityCatalog::pageLabel('hr', 'Payroll Periods'));
         $this->assertSame('Kairo CORE Messages', CapabilityCatalog::pageLabel('communication', 'Kairo CORE Messages'));
     }

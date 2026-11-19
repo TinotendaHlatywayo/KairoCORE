@@ -38,6 +38,7 @@ use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Assets\Css;
 use Filament\Support\Colors\Color;
+use Filament\Support\Enums\MaxWidth;
 use Filament\View\PanelsRenderHook;
 use Filament\Widgets;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -69,6 +70,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('platform')
             ->domain(parse_url(config('app.url'), PHP_URL_HOST))
+            ->maxContentWidth(MaxWidth::Full)
             ->login(Login::class)
             ->passwordReset()
             ->profile()
@@ -145,20 +147,10 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->renderHook(
                 PanelsRenderHook::TOPBAR_START,
-                fn () => Blade::render('@livewire(\'admin-language-switcher\')')
+                fn () => view('components.sidebar-toggle-btn')
+                    .Blade::render('@livewire(\'admin-language-switcher\')')
                     .view('components.sidebar-fixed-toggle')
-                    .'<div class="platform-command-center-slot">'.Blade::render('@livewire(\'platform-command-center\')').'</div>'
-                    .'<style>'
-                    .'.fi-topbar > nav{position:relative}'
-                    // Centre the trigger with flex, NOT a transform: a transformed
-                    // ancestor becomes the containing block for position:fixed, so
-                    // the dropdown's full-screen overlay was being squeezed into the
-                    // trigger's own box. pointer-events lets clicks through the empty
-                    // middle of the topbar while keeping the trigger interactive.
-                    .'.platform-command-center-slot{position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;pointer-events:none}'
-                    .'.platform-command-center-slot > *{pointer-events:auto}'
-                    .'@media (max-width:640px){.platform-command-center-slot{display:none}}'
-                    .'</style>'
+                    .'<div class="admin-command-center-slot">'.Blade::render('@livewire(\'platform-command-center\')').'</div>'
             )
             // Mobile drawer foundation (scroll lock, Escape, aria, focus).
             ->renderHook(

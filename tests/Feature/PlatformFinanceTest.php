@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 use Modules\SaaS\Models\PlatformExpense;
+use Modules\SaaS\Models\PlatformSetting;
 use Modules\SaaS\Models\SaaSInvoice;
 use Modules\SaaS\Models\SaaSPlan;
 use Modules\SaaS\Models\SaaSReceipt;
@@ -57,6 +58,8 @@ class PlatformFinanceTest extends TestCase
         DB::beginTransaction();
 
         try {
+            PlatformSetting::set('automation', 'auto_generate_recurring_expenses', '1');
+
             $today = now()->startOfDay();
 
             $template = PlatformExpense::create([

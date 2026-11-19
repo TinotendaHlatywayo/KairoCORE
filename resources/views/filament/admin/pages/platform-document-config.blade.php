@@ -1,6 +1,6 @@
 <x-filament-panels::page>
     <div class="mb-6 flex flex-wrap items-end gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
-        <div class="min-w-[260px]">
+        <div class="w-full min-w-0 sm:min-w-[260px]">
             <label class="mb-1 block text-xs font-semibold uppercase tracking-wider text-gray-500">{{ __('Apply changes to') }}</label>
             <x-filament::input.wrapper>
                 <x-filament::input.select wire:model.live="docScope">

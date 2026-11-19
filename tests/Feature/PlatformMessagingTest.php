@@ -87,7 +87,7 @@ class PlatformMessagingTest extends TestCase
         $admin = $this->platformAdmin();
 
         $this->actingAs($admin)
-            ->get('http://lvh.me/platform/platform-messages')
+            ->get('http://'.parse_url(config('app.url'), PHP_URL_HOST).'/platform/platform-messages')
             ->assertOk();
     }
 

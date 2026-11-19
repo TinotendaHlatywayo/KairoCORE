@@ -42,6 +42,8 @@ class PromotionScreeningUiTest extends TestCase
 
     private ?string $screeningSaved = null;
 
+    private ?User $createdAdmin = null;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -53,8 +55,8 @@ class PromotionScreeningUiTest extends TestCase
         Config::set('database.connections.mysql.username', env('DB_USERNAME', 'root'));
         Config::set('database.connections.mysql.password', env('DB_PASSWORD', ''));
 
-        $this->school = School::where('subdomain', 'chiwariraprimary')->first();
-        $this->assertTrue($this->school->id > 0, 'School chiwariraprimary must exist');
+        $this->school = School::where('subdomain', 'rujeko')->first() ?? School::firstOrFail();
+        $this->assertTrue($this->school->id > 0, 'A tenant school must exist');
 
         $this->actingAsTenant($this->school);
 
@@ -74,6 +76,11 @@ class PromotionScreeningUiTest extends TestCase
 
     protected function tearDown(): void
     {
+        if ($this->createdAdmin !== null) {
+            $this->createdAdmin->forceDelete();
+            $this->createdAdmin = null;
+        }
+
         if ($this->academicsSaved !== null) {
             SystemSetting::set('modules', 'academics', $this->academicsSaved);
         }
@@ -159,8 +166,19 @@ class PromotionScreeningUiTest extends TestCase
             ? User::where('school_id', $this->school->id)->where('custom_role_id', $adminRoleId)->first()
             : null;
 
-        // Tinotenda Wayne Hlatywayo is the canonical tenant owner.
-        return $admin ?? User::findOrFail(15);
+        if ($admin !== null) {
+            return $admin;
+        }
+
+        return $this->createdAdmin = User::create([
+            'school_id' => $this->school->id,
+            'name' => 'PRUI Administrator',
+            'email' => 'prui.admin.'.uniqid('', true).'@fixture.schoolcore.test',
+            'password' => bcrypt(\Illuminate\Support\Str::random(64)),
+            'account_status' => 'active',
+            'custom_role_id' => $adminRoleId,
+            'requested_role' => 'administrator',
+        ]);
     }
 
     private function makeYear(string $suffix): AcademicYear
@@ -406,6 +424,7 @@ class PromotionScreeningUiTest extends TestCase
         $this->assertSame(__('Progression'), $screeningTab['group'] ?? null);
 
         // The navigation service must actually resolve real URLs for both.
+        $this->actingAs($this->user);
         App::instance('current_tenant', $this->school);
         URL::defaults(['tenant' => $this->school->subdomain]);
 

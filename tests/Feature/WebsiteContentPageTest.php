@@ -76,7 +76,7 @@ class WebsiteContentPageTest extends TestCase
     {
         $this->actingAsPlatformAdmin();
 
-        $response = $this->get('https://lvh.me/platform/website-content');
+        $response = $this->get('https://'.parse_url(config('app.url'), PHP_URL_HOST).'/platform/website-content');
         $response->assertOk();
 
         // assertSee escapes the needle, so "Global & SEO" matches its &amp; form.
@@ -92,7 +92,7 @@ class WebsiteContentPageTest extends TestCase
     {
         $this->actingAsPlatformAdmin();
 
-        $content = $this->get('https://lvh.me/platform/platform-settings-page')
+        $content = $this->get('https://'.parse_url(config('app.url'), PHP_URL_HOST).'/platform/platform-settings-page')
             ->assertOk()
             ->getContent();
 

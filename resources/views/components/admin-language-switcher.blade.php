@@ -16,7 +16,7 @@
     x-data="{ open: false }"
     x-on:click.away="open = false"
     x-on:keydown.escape.window="open = false"
-    class="relative"
+    class="admin-language-switcher relative"
 >
     <button
         type="button"

@@ -29,7 +29,7 @@ class ModuleVisibilityTest extends TestCase
 
         $this->useMysql();
 
-        $school = School::where('subdomain', 'rujeko')->first();
+        $school = School::where('subdomain', 'enrollmentdisplayfixture')->first() ?? School::firstOrFail();
         if (! $school) {
             $school = School::create(['name' => 'Rujeko High', 'subdomain' => 'rujeko', 'status' => 'active']);
         }
@@ -81,8 +81,10 @@ class ModuleVisibilityTest extends TestCase
 
     private function tenant(): array
     {
-        $school = School::where('subdomain', 'rujeko')->first() ?? School::first();
-        $user = User::where('school_id', $school->id)->first();
+        $school = School::where('subdomain', 'enrollmentdisplayfixture')->first() ?? School::first();
+        $user = User::where('school_id', $school->id)
+            ->where('requested_role', 'administrator')
+            ->first();
 
         $this->assertNotNull($school);
         $this->assertNotNull($user);

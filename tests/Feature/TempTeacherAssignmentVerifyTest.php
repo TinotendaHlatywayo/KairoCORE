@@ -12,6 +12,8 @@ class TempTeacherAssignmentVerifyTest extends BaseTestCase
 {
     protected int $schoolId;
 
+    private ?\Modules\DigitalAssessment\Models\DigitalAssessment $createdAssessment = null;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -25,6 +27,15 @@ class TempTeacherAssignmentVerifyTest extends BaseTestCase
         $this->withSession(['locale' => 'en']);
     }
 
+    protected function tearDown(): void
+    {
+        if ($this->createdAssessment !== null) {
+            $this->createdAssessment->forceDelete();
+        }
+
+        parent::tearDown();
+    }
+
     protected function adminUser(): User
     {
         return User::where('school_id', $this->schoolId)->where('requested_role', 'administrator')->firstOrFail();
@@ -35,6 +46,42 @@ class TempTeacherAssignmentVerifyTest extends BaseTestCase
         $school = School::findOrFail($this->schoolId);
 
         return $school->subdomain.'.'.parse_url(config('app.url'), PHP_URL_HOST).':8000';
+    }
+
+    protected function demoAssessment(): \Modules\DigitalAssessment\Models\DigitalAssessment
+    {
+        $assessment = \Modules\DigitalAssessment\Models\DigitalAssessment::withoutGlobalScopes()
+            ->where('school_id', $this->schoolId)
+            ->active()
+            ->whereNotNull('section_id')
+            ->where('total_marks', '>', 0)
+            ->first();
+
+        if ($assessment !== null) {
+            return $assessment;
+        }
+
+        $section = \Modules\Academics\Models\Section::withoutGlobalScopes()
+            ->where('school_id', $this->schoolId)
+            ->whereNotNull('course_id')
+            ->firstOrFail();
+        $subject = \Modules\Academics\Models\Subject::withoutGlobalScopes()
+            ->where('school_id', $this->schoolId)
+            ->firstOrFail();
+
+        $assessment = \Modules\DigitalAssessment\Models\DigitalAssessment::withoutGlobalScopes()->create([
+            'school_id' => $this->schoolId,
+            'subject_id' => $subject->id,
+            'section_id' => $section->id,
+            'created_by_id' => $this->adminUser()->id,
+            'title' => 'Verify DA '.uniqid(),
+            'status' => \Modules\DigitalAssessment\Enums\AssessmentStatus::Published,
+            'total_marks' => 100,
+        ]);
+        $assessment->refresh();
+        $this->createdAssessment = $assessment;
+
+        return $assessment;
     }
 
     public function test_teacher_assignments_index_renders(): void
@@ -90,15 +137,12 @@ class TempTeacherAssignmentVerifyTest extends BaseTestCase
         $list = $this->get('/workspace/digital-assessments');
         $list->assertOk();
 
-        $assessment = \Modules\DigitalAssessment\Models\DigitalAssessment::withoutGlobalScopes()
-            ->where('school_id', $this->schoolId)
-            ->where('title', 'TEST-DA-Grade 2 Mathematics')
-            ->firstOrFail();
+        $assessment = $this->demoAssessment();
 
         $edit = $this->get('/workspace/digital-assessments/'.$assessment->id.'/edit');
         $edit->assertOk();
-        $this->assertStringContainsString('TEST-DA-Grade 2 Mathematics', $edit->getContent());
+        $this->assertStringContainsString($assessment->title, $edit->getContent());
         $this->assertStringContainsString('data.section_id', $edit->getContent());
-        $this->assertStringContainsString('Grade 2 A', $edit->getContent());
+        $this->assertStringContainsString($assessment->section->name, $edit->getContent());
     }
 }

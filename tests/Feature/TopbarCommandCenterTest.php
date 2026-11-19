@@ -285,6 +285,8 @@ class TopbarCommandCenterTest extends TestCase
     public function test_clear_notifications_removes_tracked_notifications(): void
     {
         $me = $this->user();
+        $me->custom_role_id = $this->adminRole()->id;
+        $me->save();
 
         $me->notifications()->create([
             'id' => (string) Str::uuid(),
@@ -302,6 +304,8 @@ class TopbarCommandCenterTest extends TestCase
     public function test_clear_notifications_dismisses_all_from_interface_but_keeps_history_rows(): void
     {
         $me = $this->user();
+        $me->custom_role_id = $this->adminRole()->id;
+        $me->save();
 
         // A tracked type and a non-tracked (arbitrary) type.
         $me->notifications()->create([
@@ -336,6 +340,8 @@ class TopbarCommandCenterTest extends TestCase
     public function test_student_portal_clear_notifications_clears_interface(): void
     {
         $me = $this->user();
+        $me->custom_role_id = $this->adminRole()->id;
+        $me->save();
         Filament::setCurrentPanel(Filament::getPanel('student'));
 
         $me->notifications()->create([

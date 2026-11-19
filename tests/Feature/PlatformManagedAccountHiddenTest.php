@@ -38,7 +38,7 @@ class PlatformManagedAccountHiddenTest extends TestCase
         DB::beginTransaction();
 
         try {
-            $school = School::findOrFail((int) config('tenancy.single_tenant_id'));
+            $school = School::find((int) config('tenancy.single_tenant_id')) ?? School::firstOrFail();
             App::instance('current_tenant', $school);
 
             $shadow = User::create([

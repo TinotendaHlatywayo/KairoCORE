@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
+use Modules\Admin\Models\CustomRole;
 use Modules\Admin\Services\PermissionRegistry;
 use Modules\Communication\Models\EventCalendar;
 use Modules\Students\Models\Student;
@@ -58,6 +59,9 @@ class TaskAssignmentTest extends TestCase
         // The canonical tenant only has one Administrator, but fan-out tests
         // need a distinct assignee, so mint a stable staff user for it.
         $schoolId = $this->schoolId ?? (int) config('tenancy.single_tenant_id');
+        $adminRoleId = CustomRole::where('school_id', $schoolId)
+            ->where('role_key', 'administrator')
+            ->value('id');
 
         return User::firstOrCreate(
             ['email' => 'colleague@fixture.schoolcore.test'],
@@ -66,7 +70,7 @@ class TaskAssignmentTest extends TestCase
                 'name' => 'Colleague Fixture',
                 'password' => bcrypt(\Illuminate\Support\Str::random(64)),
                 'account_status' => 'active',
-                'custom_role_id' => 2,
+                'custom_role_id' => $adminRoleId,
                 'requested_role' => 'administrator',
             ]
         );
@@ -74,7 +78,18 @@ class TaskAssignmentTest extends TestCase
 
     protected function student(): Student
     {
-        return Student::where('school_id', $this->schoolId)->whereNotNull('user_id')->with('user')->first();
+        return Student::where('school_id', $this->schoolId)
+            ->whereNotNull('user_id')
+            ->whereHas('user', fn ($q) => $q->where('requested_role', 'student'))
+            ->with('user')
+            ->first();
+    }
+
+    protected function tenantHost(): string
+    {
+        $school = School::findOrFail($this->schoolId);
+
+        return $school->subdomain.'.'.parse_url(config('app.url'), PHP_URL_HOST).':8000';
     }
 
     public function test_myday_renders_new_assignee_picker(): void
@@ -128,6 +143,9 @@ class TaskAssignmentTest extends TestCase
     public function test_assign_to_everyone_in_role_fans_out_to_members(): void
     {
         $user = $this->admin();
+        $roleId = CustomRole::where('school_id', $this->schoolId)
+            ->where('role_key', 'administrator')
+            ->value('id');
         $member = User::where('school_id', $this->schoolId)
             ->where('requested_role', 'administrator')
             ->where('account_status', 'active')
@@ -139,7 +157,7 @@ class TaskAssignmentTest extends TestCase
         Livewire::test(MyDay::class)
             ->call('openTaskModal', now()->toDateString())
             ->set('taskForm.title', 'Role task')
-            ->set('taskForm.assignee_spec', json_encode(['mode' => 'role', 'role_id' => 2, 'all' => true]))
+            ->set('taskForm.assignee_spec', json_encode(['mode' => 'role', 'role_id' => $roleId, 'all' => true]))
             ->call('saveTask');
 
         foreach ($member as $id) {
@@ -328,6 +346,7 @@ class TaskAssignmentTest extends TestCase
             ->call('openEventModal', now()->toDateString())
             ->assertSet('eventForm.category', 'academic')
             ->set('eventForm.title', 'Student study group')
+            ->set('ignoreConflicts', true)
             ->call('saveEvent');
 
         $this->assertDatabaseHas('communication_events', [
@@ -363,10 +382,10 @@ class TaskAssignmentTest extends TestCase
         // …links to the student schedule…
         $this->assertStringContainsString('my-schedule', $html);
 
-        // …and no assignee picker for students, nor the permission-gated
-        // "Clear All" action.
+        // …and no assignee picker for students, but the self-service
+        // "Clear All" action stays available.
         $this->assertStringNotContainsString('assignee', $html);
-        $this->assertStringNotContainsString('Clear All', $html);
+        $this->assertStringContainsString('Clear All', $html);
     }
 
     public function test_command_center_links_point_at_schedule_with_deep_link_params(): void
@@ -441,7 +460,9 @@ class TaskAssignmentTest extends TestCase
         $this->admin();
         $student = $this->student();
         $this->assertNotNull($student);
-        $this->actingAs($student->user);
+        $student->user->forceFill(['account_status' => 'active'])->save();
+        $this->actingAs($student->user, Filament::getPanel('student')->getAuthGuard())
+            ->withServerVariables(['HTTP_HOST' => $this->tenantHost()]);
         Filament::setCurrentPanel(Filament::getPanel('student'));
 
         $task = UserTask::create([
@@ -453,7 +474,8 @@ class TaskAssignmentTest extends TestCase
             'due_date' => now()->toDateString(),
         ]);
 
-        $response = $this->get(StudentSchedule::getUrl().'?task='.$task->id);
+        $url = 'http://'.$this->tenantHost().parse_url(StudentSchedule::getUrl(), PHP_URL_PATH).'?task='.$task->id;
+        $response = $this->get($url);
         $response->assertStatus(200);
         $this->assertStringContainsString('sc-modal-title">Edit Task', $response->getContent());
         $this->assertStringContainsString('Student deep link task', $response->getContent());
@@ -464,7 +486,9 @@ class TaskAssignmentTest extends TestCase
         $admin = $this->admin();
         $student = $this->student();
         $this->assertNotNull($student);
-        $this->actingAs($student->user);
+        $student->user->forceFill(['account_status' => 'active'])->save();
+        $this->actingAs($student->user, Filament::getPanel('student')->getAuthGuard())
+            ->withServerVariables(['HTTP_HOST' => $this->tenantHost()]);
         Filament::setCurrentPanel(Filament::getPanel('student'));
 
         $event = EventCalendar::create([
@@ -478,7 +502,8 @@ class TaskAssignmentTest extends TestCase
             'color' => '#4f46e5',
         ]);
 
-        $response = $this->get(StudentSchedule::getUrl().'?event='.$event->id);
+        $url = 'http://'.$this->tenantHost().parse_url(StudentSchedule::getUrl(), PHP_URL_PATH).'?event='.$event->id;
+        $response = $this->get($url);
         $response->assertStatus(200);
         // The event modal must NOT open for a school event the student didn't create.
         $this->assertStringNotContainsString('sc-modal-title">Edit Event', $response->getContent());

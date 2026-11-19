@@ -5,7 +5,7 @@ namespace Tests\Feature;
 use App\Filament\App\Pages\Finance\FinancialStatementPage;
 use App\Models\School;
 use App\Security\CapabilityCatalog;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Modules\Finance\Models\FinancialStatementEntry;
 use Modules\Finance\Models\SchoolBankAccount;
 use Modules\Finance\Services\FinancialAnalyticsEngine;
@@ -15,13 +15,22 @@ use Tests\TestCase;
 
 class FinancialStatementImportTest extends TestCase
 {
-    use RefreshDatabase;
-
     private School $school;
 
     protected function setUp(): void
     {
         parent::setUp();
+
+        config([
+            'database.default' => 'mysql',
+            'database.connections.mysql.database' => 'schoolcore',
+            'database.connections.mysql.host' => '127.0.0.1',
+            'database.connections.mysql.port' => '3306',
+            'database.connections.mysql.username' => env('DB_USERNAME', 'root'),
+            'database.connections.mysql.password' => env('DB_PASSWORD', ''),
+        ]);
+        DB::purge('mysql');
+        DB::connection('mysql')->beginTransaction();
 
         $this->school = School::create([
             'name' => 'Historic Statement School',
@@ -30,6 +39,13 @@ class FinancialStatementImportTest extends TestCase
         ]);
 
         $this->actingAsTenant($this->school);
+    }
+
+    protected function tearDown(): void
+    {
+        DB::connection('mysql')->rollBack();
+
+        parent::tearDown();
     }
 
     private function columnMap(): array

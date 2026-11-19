@@ -79,7 +79,7 @@ class ApplicationEnrollActionTest extends TestCase
     public function test_enroll_with_auto_assigned_class_creates_student_enrollment_and_email(): void
     {
         Queue::fake();
-        $notificationWatermark = (int) DB::connection('mysql')->table('notifications')->max('id');
+        $notificationIdsBefore = DB::connection('mysql')->table('notifications')->pluck('id')->all();
         $fx = $this->fixtures();
 
         $component = Livewire::test(ListApplications::class);
@@ -117,7 +117,7 @@ class ApplicationEnrollActionTest extends TestCase
 
         Notification::assertNotified('Student Enrolled Successfully!');
 
-        $this->cleanup($fx, $notificationWatermark);
+        $this->cleanup($fx, $notificationIdsBefore);
     }
 
     /**
@@ -239,7 +239,7 @@ class ApplicationEnrollActionTest extends TestCase
     /**
      * @param  array<string, mixed>  $fx
      */
-    private function cleanup(array $fx, int $notificationWatermark): void
+    private function cleanup(array $fx, array $notificationIdsBefore): void
     {
         $email = $fx['email'];
 
@@ -271,7 +271,7 @@ class ApplicationEnrollActionTest extends TestCase
         }
 
         DB::connection('mysql')->table('notifications')
-            ->where('id', '>', $notificationWatermark)
+            ->whereNotIn('id', $notificationIdsBefore)
             ->delete();
     }
 

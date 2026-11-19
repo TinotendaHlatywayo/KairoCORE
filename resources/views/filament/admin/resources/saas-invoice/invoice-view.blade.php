@@ -3,7 +3,7 @@
         <iframe
             src="{{ route('saas.invoice.view', $this->getRecord()->uuid) }}"
             title="{{ __('Invoice') }} {{ $this->getRecord()->invoice_number }}"
-            style="width: 100%; height: 78vh; border: 0; display: block;"
+            style="width: 100%; height: min(78vh, 720px); min-height: 360px; border: 0; display: block;"
         ></iframe>
     </div>
 </x-filament-panels::page>

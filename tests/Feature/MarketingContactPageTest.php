@@ -27,7 +27,7 @@ class MarketingContactPageTest extends TestCase
 
         $response->assertOk();
         // Map iframe below the form (Google Maps embed, no API key needed).
-        $response->assertSee('maps.google.com/maps?q=', false);
+        $response->assertSee('www.google.com/maps?q=', false);
         $response->assertSee('output=embed', false);
         // Address links out to a Google Maps search (& is HTML-escaped in attributes).
         $response->assertSee('google.com/maps/search/?api=1&amp;query=', false);
@@ -40,10 +40,10 @@ class MarketingContactPageTest extends TestCase
         $response = $this->get('/contact');
 
         $response->assertOk();
-        $response->assertSee('id="name-counter"', false);
-        $response->assertSee('id="message-char-limit"', false);
-        // Counters initialise from pre-filled old() values.
-        $response->assertSee("nameCounter.textContent = (nameInput.value || '').trim().length + '/100 letters'", false);
+        $response->assertSee('id="contactNameCount"', false);
+        $response->assertSee('id="contactMessageCount"', false);
+        $response->assertSee('0 / 100', false);
+        $response->assertSee('0 / 2000', false);
     }
 
     public function test_contact_page_form_and_channels_render(): void

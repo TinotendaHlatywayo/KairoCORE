@@ -203,8 +203,8 @@ class TaskOverdueNotificationTest extends TestCase
             $method = new \ReflectionMethod($component, 'isOwnHostUrl');
             $method->setAccessible(true);
 
-            $this->assertFalse($method->invoke($component, 'https://kairo.co.zw/platform/my-day'));
-            $this->assertFalse($method->invoke($component, 'https://another-school.kairo.co.zw/workspace'));
+            $this->assertFalse($method->invoke($component, 'https://evil.example.test/platform/my-day'));
+            $this->assertFalse($method->invoke($component, 'https://other.example.test/workspace'));
             $this->assertTrue($method->invoke($component, request()->getHost() === '' ? '/workspace' : 'http://'.request()->getHost().'/workspace/my-day'));
             $this->assertFalse($method->invoke($component, null));
         } finally {

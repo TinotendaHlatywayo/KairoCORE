@@ -58,7 +58,7 @@ class ModuleHeaderSurvivesModalTest extends TestCase
      */
     private function actAsSchoolAdmin(): void
     {
-        $school = School::where('subdomain', 'rujeko')->first() ?? School::first();
+        $school = School::where('subdomain', 'enrollmentdisplayfixture')->first() ?? School::first();
 
         $this->assertNotNull($school, 'A school record is required.');
 
@@ -77,7 +77,7 @@ class ModuleHeaderSurvivesModalTest extends TestCase
             ? User::where('school_id', $school->id)->where('custom_role_id', $adminRoleId)->first()
             : null;
 
-        $this->actingAs($admin ?? User::findOrFail(13));
+        $this->actingAs($admin ?? User::where('school_id', $school->id)->where('requested_role', 'administrator')->firstOrFail());
     }
 
     private function open(string $path): TestResponse
@@ -236,7 +236,7 @@ class ModuleHeaderSurvivesModalTest extends TestCase
 
         $html = $component->html();
 
-        $this->assertStringContainsString('fi-header-actions', $html);
+        $this->assertStringContainsString('adm-actions', $html);
         $this->assertStringContainsString('New Application', $html);
         $this->assertStringContainsString('Help', $html);
 

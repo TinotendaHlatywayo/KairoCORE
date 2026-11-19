@@ -40,7 +40,7 @@ class AcademicWorkflowStepRoutesTest extends TestCase
 
     private function actAsSchoolAdmin(): void
     {
-        $school = School::where('subdomain', 'rujeko')->first() ?? School::first();
+        $school = School::where('subdomain', 'enrollmentdisplayfixture')->first() ?? School::first();
 
         $this->assertNotNull($school, 'A school record is required.');
 
@@ -55,7 +55,7 @@ class AcademicWorkflowStepRoutesTest extends TestCase
             ? User::where('school_id', $school->id)->where('custom_role_id', $adminRoleId)->first()
             : null;
 
-        $this->actingAs($admin ?? User::findOrFail(13));
+        $this->actingAs($admin ?? User::where('school_id', $school->id)->where('requested_role', 'administrator')->firstOrFail());
     }
 
     /**

@@ -205,7 +205,7 @@ class ProfilePhotoUploaderTest extends TestCase
         $student->refresh();
         $this->assertNotNull($student->photo_path);
 
-        $admin = User::find(13);
+        $admin = User::where('school_id', $school->id)->where('requested_role', 'administrator')->firstOrFail();
         $this->actingAs($admin);
         App::instance('current_tenant', $school);
         URL::defaults(['panel' => 'app']);

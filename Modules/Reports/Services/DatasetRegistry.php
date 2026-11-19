@@ -110,7 +110,7 @@ class DatasetRegistry
     protected function resolveClass($file): ?string
     {
         $relative = str_replace(
-            [base_path('Modules'), '.php', DIRECTORY_SEPARATOR],
+            [dirname(__DIR__, 3).'/Modules', '.php', DIRECTORY_SEPARATOR],
             ['Modules', '', '\\'],
             $file->getPathname()
         );

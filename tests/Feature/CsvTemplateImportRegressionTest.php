@@ -4,6 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\School;
 use App\Services\Csv\DepartmentCsvService;
+use Modules\Academics\Models\AcademicYear;
+use Modules\Academics\Models\Term;
+use Modules\Finance\Models\FeeCategory;
 use App\Services\Csv\EmployeeCsvService;
 use App\Services\Csv\FeeStructureCsvService;
 use App\Services\Csv\FixedAssetCsvService;
@@ -119,26 +122,42 @@ class CsvTemplateImportRegressionTest extends TestCase
 
     public function test_every_template_imports_into_a_real_tenant(): void
     {
-        foreach ($this->templates() as $service => $expectedRows) {
-            $result = $this->importOwnTemplate($service);
+        DB::beginTransaction();
 
-            $this->assertSame(
-                $expectedRows,
-                $result['total'],
-                class_basename($service).' must generate '.$expectedRows.' example rows.',
+        try {
+            $year = AcademicYear::firstOrCreate(
+                ['school_id' => $this->school->id, 'name' => 'CSV Import '.date('Y')],
+                ['start_date' => date('Y').'-01-01', 'end_date' => date('Y').'-12-31', 'is_active' => true],
+            );
+            FeeCategory::firstOrCreate(['school_id' => $this->school->id, 'name' => 'Tuition']);
+            Term::firstOrCreate(
+                ['school_id' => $this->school->id, 'academic_year_id' => $year->id, 'name' => 'Term 1'],
+                ['start_date' => date('Y').'-01-01', 'end_date' => date('Y').'-04-30', 'is_active' => true],
             );
 
-            $this->assertSame(
-                [],
-                $result['failures'],
-                class_basename($service).' template rows were rejected: '.implode(', ', $this->failureMessages($result)),
-            );
+            foreach ($this->templates() as $service => $expectedRows) {
+                $result = $this->importOwnTemplate($service);
 
-            $this->assertSame(
-                $result['total'],
-                $result['success'],
-                class_basename($service).' imported only '.$result['success'].' of '.$result['total'].' rows.',
-            );
+                $this->assertSame(
+                    $expectedRows,
+                    $result['total'],
+                    class_basename($service).' must generate '.$expectedRows.' example rows.',
+                );
+
+                $this->assertSame(
+                    [],
+                    $result['failures'],
+                    class_basename($service).' template rows were rejected: '.implode(', ', $this->failureMessages($result)),
+                );
+
+                $this->assertSame(
+                    $result['total'],
+                    $result['success'],
+                    class_basename($service).' imported only '.$result['success'].' of '.$result['total'].' rows.',
+                );
+            }
+        } finally {
+            DB::rollBack();
         }
     }
 

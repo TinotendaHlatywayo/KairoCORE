@@ -16,7 +16,7 @@
             $margin = $report['margin'] ?? null;
         @endphp
 
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-4">
             <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                 <div>
                     <span class="text-xs font-bold uppercase tracking-wider text-slate-400">{{ __('Revenue') }}</span>

@@ -10,7 +10,7 @@
         </div>
     </div>
 
-    <iframe src="{{ route('saas.invoice.view', $invoice->uuid) }}" class="h-[520px] w-full rounded-lg border border-slate-200 dark:border-slate-700"></iframe>
+    <iframe src="{{ route('saas.invoice.view', $invoice->uuid) }}" class="h-[60vh] min-h-[360px] max-h-[720px] w-full rounded-lg border border-slate-200 dark:border-slate-700"></iframe>
 
     <div class="flex items-center justify-end gap-2">
         <a href="{{ route('saas.invoice.download', $invoice->uuid) }}" target="_blank" rel="noopener"

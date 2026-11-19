@@ -30,7 +30,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-3">
                 <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                     <span class="text-xs font-bold uppercase tracking-wider text-slate-400">{{ __('Invoiced') }}</span>
                     <h3 class="mt-2 text-2xl font-extrabold text-slate-950 dark:text-white">${{ number_format($statement['invoiced_total'] ?? 0, 2) }}</h3>

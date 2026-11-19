@@ -27,7 +27,7 @@
                 <div class="space-y-4">
                     <div>
                         <label class="mb-1 block text-xs font-semibold uppercase tracking-wider text-gray-500">{{ __('Backup scope') }}</label>
-                        <div class="grid grid-cols-3 gap-2">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                             <x-filament::button
                                 size="sm"
                                 :color="$backupScope === 'system' ? 'primary' : 'gray'"

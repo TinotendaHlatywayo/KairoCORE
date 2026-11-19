@@ -59,7 +59,7 @@ class TempPlatformSettingsRenderTest extends TestCase
     {
         $this->actingAsPlatformAdmin();
 
-        $response = $this->get('https://lvh.me/platform/platform-settings-page');
+        $response = $this->get('https://'.parse_url(config('app.url'), PHP_URL_HOST).'/platform/platform-settings-page');
 
         if ($response->getStatusCode() !== 200) {
             $content = $response->getContent();
@@ -147,6 +147,7 @@ class TempPlatformSettingsRenderTest extends TestCase
         $disk = Storage::disk('public');
 
         Livewire::test(PlatformSettingsPage::class)
+            ->set('data.branding_platform_name', platform_name())
             ->set('data.branding_platform_favicon', [UploadedFile::fake()->image('favicon.png', 64, 64)])
             ->call('save');
 
@@ -167,13 +168,13 @@ class TempPlatformSettingsRenderTest extends TestCase
 
     public function test_system_settings_favicon_upload_persists(): void
     {
-        $school = School::find(3);
+        $school = School::firstOrFail();
         $this->actingAsPlatformAdmin();
         $this->actingAsTenant($school);
         $this->withSession(['current_tenant' => $school]);
 
         $favicon = \Modules\Admin\Models\SystemSetting::firstOrCreate(
-            ['school_id' => 3, 'group' => 'branding', 'key' => 'favicon_path'],
+            ['school_id' => $school->id, 'group' => 'branding', 'key' => 'favicon_path'],
             ['value' => '']
         );
         $original = $favicon->value;

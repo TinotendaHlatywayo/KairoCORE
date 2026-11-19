@@ -3626,6 +3626,12 @@ select.sc-input {
  * 9000, sticky sidebar 30, app footer 20) so no page control — table
  * toolbar, Export All, Bulk Actions — can ever paint over a dialog.
  * ───────────────────────────────────────────────────────────── */
+.fi-modal-close-overlay {
+    z-index: 99998 !important;
+}
+.fi-modal-close-overlay + div {
+    z-index: 99999 !important;
+}
 .fi-sidebar-close-overlay {
     z-index: 40 !important;
 }
@@ -4850,3 +4856,169 @@ select.sc-input {
         }
     }
 }
+
+:root {
+        --sc-content-max: 2200px;
+        --sc-page-gutter: clamp(0.75rem, 1.5vw, 2rem);
+        --sc-touch-target: 44px;
+    }
+
+    .fi-page .grid,
+    .fi-page [class*="grid-cols-"],
+    .fi-page .flex,
+    .fi-page [class*="flex"] {
+        min-width: 0;
+    }
+
+    .fi-page .grid > *,
+    .fi-page [class*="grid-cols-"] > *,
+    .fi-page .flex > *,
+    .fi-page [class*="flex"] > * {
+        min-width: 0;
+    }
+
+    .fi-page .overflow-x-auto,
+    .fi-page .sc-module-tabs,
+    .fi-page nav.fi-tabs,
+    .fi-page .acad-tabs {
+        max-width: 100%;
+        overscroll-behavior-inline: contain;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(100, 116, 139, 0.55) transparent;
+    }
+
+    .fi-page .sc-module-tabs,
+    .fi-page nav.fi-tabs,
+    .fi-page .acad-tabs {
+        scroll-snap-type: x proximity;
+        scroll-padding-inline: 0.25rem;
+    }
+
+    .fi-page .sc-tab,
+    .fi-page .fi-tabs-item,
+    .fi-page .acad-tab {
+        scroll-snap-align: start;
+    }
+
+    .fi-page canvas {
+        max-width: 100%;
+    }
+
+    .fi-modal,
+    .fi-modal-window,
+    .fi-sheet,
+    .sc-topbar-more-panel {
+        max-width: calc(100vw - 1.5rem) !important;
+        max-height: calc(100dvh - 2rem) !important;
+    }
+
+    @media (pointer: coarse) {
+        .fi-page button:not([disabled]),
+        .fi-page [role="button"]:not([disabled]),
+        .fi-page .sc-tab,
+        .fi-page .acad-tab,
+        .fi-page .fi-tabs-item {
+            min-height: var(--sc-touch-target);
+        }
+    }
+
+    @media (max-width: 767px) {
+        .fi-main {
+            padding-inline: 1rem !important;
+        }
+
+        .fi-main > .fi-page {
+            padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+        }
+
+        .fi-page .fi-section-content,
+        .fi-page .fi-section-content-ctn {
+            padding-inline: 1rem !important;
+        }
+    }
+
+    @media (min-width: 2560px) {
+        .fi-main {
+            padding-inline: clamp(2rem, 2.5vw, 4rem) !important;
+        }
+
+        .fi-main > .fi-page {
+            max-width: var(--sc-content-max);
+            margin-inline: auto;
+        }
+
+        .fi-page .grid {
+            gap: clamp(1rem, 1.2vw, 1.75rem);
+        }
+    }
+
+    .dark .fi-page .overflow-x-auto,
+    .dark .fi-page .sc-module-tabs,
+    .dark .fi-page nav.fi-tabs,
+    .dark .fi-page .acad-tabs {
+        scrollbar-color: rgba(148, 163, 184, 0.5) transparent;
+    }
+
+    .fi-panel-admin .fi-topbar > nav {
+        position: relative;
+    }
+
+    .fi-panel-admin .admin-command-center-slot {
+        display: flex;
+        align-items: center;
+        min-width: 0;
+    }
+
+    .fi-panel-admin .admin-command-center-slot .pcc-panel {
+        position: fixed;
+        top: 4.25rem;
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(26rem, calc(100vw - 1.5rem));
+        max-height: calc(100dvh - 5rem);
+    }
+
+    @media (max-width: 1023px) {
+        .fi-panel-admin .admin-language-switcher,
+        .fi-panel-admin .sc-sidebar-fixed-toggle {
+            display: none !important;
+        }
+    }
+
+    @media (max-width: 767px) {
+        .fi-panel-admin .admin-command-center-slot .pcc-trigger {
+            width: 2.75rem;
+            height: 2.75rem;
+            padding: 0;
+            justify-content: center;
+            border-radius: 0.75rem;
+        }
+
+        .fi-panel-admin .admin-command-center-slot .pcc-trigger-text {
+            display: none;
+        }
+
+        .fi-panel-admin .admin-command-center-slot .pcc-trigger-icon {
+            width: 1.25rem;
+            height: 1.25rem;
+        }
+
+        .fi-panel-admin .admin-command-center-slot .pcc-badge {
+            top: 0;
+            right: 0;
+            min-width: 1rem;
+            height: 1rem;
+            font-size: 0.55rem;
+        }
+    }
+
+    @media (min-width: 2560px) {
+        .fi-panel-admin .fi-topbar {
+            min-height: 4.5rem;
+        }
+
+        .fi-panel-admin .admin-command-center-slot .pcc-panel {
+            top: 5rem;
+        }
+    }

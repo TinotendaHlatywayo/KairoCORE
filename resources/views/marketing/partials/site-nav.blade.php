@@ -13,11 +13,11 @@
 
 <header class="kf-nav" id="kfNav">
     <div class="kf-nav-bar">
-        <a href="{{ route('marketing.home') }}" class="kf-logo" aria-label="{{ platform_name() }} home">
-            <img src="{{ $logo }}" alt="{{ platform_name() }} logo" class="kf-logo-light" width="480" height="268">
-            <img src="{{ $logoDark }}" alt="{{ platform_name() }} logo" class="kf-logo-dark" width="480" height="268">
-        </a>
         <div class="kf-wrap kf-nav-inner">
+            <a href="{{ route('marketing.home') }}" class="kf-logo" aria-label="{{ platform_name() }} home">
+                <img src="{{ $logo }}" alt="{{ platform_name() }} logo" class="kf-logo-light" width="480" height="268">
+                <img src="{{ $logoDark }}" alt="{{ platform_name() }} logo" class="kf-logo-dark" width="480" height="268">
+            </a>
             <div class="kf-links" role="navigation" aria-label="{{ __('Primary navigation') }}">
             @foreach ($navLinks as $link)
                 @if($link['label'] === __('Features'))
@@ -30,8 +30,6 @@
                 @endif
             @endforeach
         </div>
-
-        <span class="kf-spacer"></span>
 
         <div class="kf-actions">
             <button type="button" class="kf-theme-toggle" data-kf-theme aria-label="{{ __('Toggle dark mode') }}" title="{{ __('Toggle dark mode') }}">

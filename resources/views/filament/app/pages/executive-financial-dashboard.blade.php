@@ -432,8 +432,8 @@
         <!-- Detail Tables Section with Tabs -->
         <div x-data="{ activeDetailTab: @entangle('activeDetailTab') }" class="rounded-xl border border-slate-200/60 bg-white shadow-sm dark:border-slate-800 dark:bg-gray-900 overflow-hidden">
             <!-- Tab Headers -->
-            <div class="px-4 py-3 border-b border-slate-200/60 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
-                <div class="flex items-center gap-1.5">
+            <div class="px-4 py-3 border-b border-slate-200/60 dark:border-slate-800 flex flex-wrap items-start justify-between gap-3">
+                <div class="flex min-w-0 flex-wrap items-center gap-1.5">
                     @foreach($this->getDetailTabs() as $tabKey => $tabLabel)
                         <button
                             wire:click="$set('activeDetailTab', '{{ $tabKey }}')"

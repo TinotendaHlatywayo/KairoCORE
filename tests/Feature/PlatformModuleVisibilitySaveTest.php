@@ -43,7 +43,7 @@ class PlatformModuleVisibilitySaveTest extends TestCase
                 ->where('account_status', User::STATUS_ACTIVE)
                 ->firstOrFail();
 
-            $school = School::findOrFail((int) config('tenancy.single_tenant_id'));
+            $school = School::find((int) config('tenancy.single_tenant_id')) ?? School::firstOrFail();
 
             foreach (['inventory' => '1', 'reports' => '1'] as $key => $value) {
                 SystemSetting::withoutTenantScope()->updateOrCreate(

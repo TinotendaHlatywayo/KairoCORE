@@ -28,11 +28,12 @@ class PerformanceAnalyticsRenderTest extends TestCase
 
     public function test_performance_analytics_page_renders(): void
     {
-        $school = School::where('subdomain', 'chiwariraprimary')->first() ?? School::first();
+        $school = School::where('subdomain', 'enrollmentdisplayfixture')->first() ?? School::first();
         $this->assertNotNull($school);
 
         $user = User::withoutGlobalScopes()
             ->where('school_id', $school->id)
+            ->where('requested_role', 'administrator')
             ->whereNotNull('password')
             ->first() ?? User::first();
 

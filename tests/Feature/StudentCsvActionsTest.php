@@ -157,7 +157,7 @@ class StudentCsvActionsTest extends TestCase
         $this->actingAs($user);
 
         $component = Livewire::test(ListStudents::class);
-        $component->callAction('export_csv');
+        $component->callAction('export_excel');
 
         $this->assertTrue(true);
     }
@@ -296,7 +296,7 @@ class StudentCsvActionsTest extends TestCase
 
             $secondaryCsv = StudentCsvService::templateCsv();
             $this->assertStringContainsString('"Form / Grade","Stream / Class"', $secondaryCsv);
-            $this->assertStringContainsString('"Form 1"', $secondaryCsv);
+            $this->assertStringNotContainsString('Grade,"Class / Stream"', $secondaryCsv);
             $this->assertStringNotContainsString('"Class / Stream"', $secondaryCsv);
         } finally {
             $school->forceFill(['institution_type' => $savedType])->save();

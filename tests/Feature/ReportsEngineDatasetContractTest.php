@@ -6,7 +6,6 @@ use Illuminate\Foundation\Testing\TestCase;
 use Modules\Reports\Services\DatasetRegistry;
 use Modules\Reports\Services\ReportQueryBuilder;
 use Modules\Reports\Support\ReportPresetCatalogue;
-use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 
 /**
@@ -391,37 +390,23 @@ class ReportsEngineDatasetContractTest extends TestCase
     }
 
     /**
-     * @return array<string, array{string}>
-     */
-    public static function datasetProvider(): array
-    {
-        $keys = app(DatasetRegistry::class)->keys();
-        $cases = [];
-
-        foreach ($keys as $key) {
-            $cases[$key] = [$key];
-        }
-
-        return $cases;
-    }
-
-    /**
      * Every single dataset must build a runnable query with all of its fields.
      */
     #[Test]
-    #[DataProvider('datasetProvider')]
-    public function a_single_dataset_config_plans_successfully(string $datasetKey): void
+    public function a_single_dataset_config_plans_successfully(): void
     {
         $builder = $this->builder();
 
-        $normalized = $builder->normalize([
-            'datasets' => [$datasetKey],
-            'joins' => [],
-            'selected_fields' => $builder->defaultFieldsFor($datasetKey),
-        ]);
+        foreach ($this->registry()->keys() as $datasetKey) {
+            $normalized = $builder->normalize([
+                'datasets' => [$datasetKey],
+                'joins' => [],
+                'selected_fields' => $builder->defaultFieldsFor($datasetKey),
+            ]);
 
-        $this->assertSame([$datasetKey], $normalized['datasets']);
-        $this->assertNotEmpty($normalized['selected_fields'], "Dataset [{$datasetKey}] planned no columns.");
+            $this->assertSame([$datasetKey], $normalized['datasets']);
+            $this->assertNotEmpty($normalized['selected_fields'], "Dataset [{$datasetKey}] planned no columns.");
+        }
     }
 
     /**

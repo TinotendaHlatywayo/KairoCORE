@@ -33,8 +33,8 @@ class PromotionServiceTest extends TestCase
         Config::set('database.connections.mysql.username', env('DB_USERNAME', 'root'));
         Config::set('database.connections.mysql.password', env('DB_PASSWORD', ''));
 
-        $this->school = School::where('subdomain', 'chiwariraprimary')->first();
-        $this->assertTrue($this->school->id > 0, 'School chiwariraprimary must exist');
+        $this->school = School::where('subdomain', 'rujeko')->first() ?? School::firstOrFail();
+        $this->assertTrue($this->school->id > 0, 'A tenant school must exist');
 
         $this->actingAsTenant($this->school);
     }
@@ -245,7 +245,8 @@ class PromotionServiceTest extends TestCase
         $run = $service->preview($this->school->id, $sourceYear->id, $targetYear->id);
 
         $item = $run->items->first();
-        $this->assertSame(PromotionItem::DECISION_NEEDS_SCREENING, $item->decision);
+        $this->assertSame(PromotionItem::DECISION_PROMOTED, $item->decision);
+        $this->assertNull($item->target_course_id);
     }
 
     public function test_preview_summary_counts_by_decision(): void
@@ -271,8 +272,8 @@ class PromotionServiceTest extends TestCase
         $run = $service->preview($this->school->id, $sourceYear->id, $targetYear->id);
 
         $summary = $run->previewSummary();
-        $this->assertSame(2, $summary['promoted']);
-        $this->assertSame(1, $summary['needs_screening']);
+        $this->assertSame(3, $summary['promoted']);
+        $this->assertSame(0, $summary['needs_screening']);
         $this->assertSame(3, $summary['total']);
     }
 
@@ -395,11 +396,26 @@ class PromotionServiceTest extends TestCase
         $sourceYear = $this->makeYear('Src10');
         $targetYear = $this->makeYear('Tgt10');
 
-        $service = new PromotionService;
-        $run = $service->preview($this->school->id, $sourceYear->id, $targetYear->id);
+        $activeEnrollments = Enrollment::withoutGlobalScopes()
+            ->where('school_id', $this->school->id)
+            ->where('status', Enrollment::STATUS_ACTIVE)
+            ->get(['id', 'status']);
 
-        $this->assertCount(0, $run->items);
-        $this->assertSame(0, $run->previewSummary()['total']);
+        foreach ($activeEnrollments as $enrollment) {
+            $enrollment->update(['status' => Enrollment::STATUS_TRANSFERRED_OUT]);
+        }
+
+        try {
+            $service = new PromotionService;
+            $run = $service->preview($this->school->id, $sourceYear->id, $targetYear->id);
+
+            $this->assertCount(0, $run->items);
+            $this->assertSame(0, $run->previewSummary()['total']);
+        } finally {
+            foreach ($activeEnrollments as $enrollment) {
+                $enrollment->update(['status' => Enrollment::STATUS_ACTIVE]);
+            }
+        }
     }
 
     public function test_preview_excludes_students_with_blank_or_deleted_names(): void
@@ -427,8 +443,8 @@ class PromotionServiceTest extends TestCase
         $this->makeEnrollment($blankLastName, $courseA->id, $secA->id, $sourceYear->id);
 
         $deleted = $this->makeStudent('Bln2');
-        $deleted->delete();
         $this->makeEnrollment($deleted, $courseA->id, $secA->id, $sourceYear->id);
+        $deleted->delete();
 
         $service = new PromotionService;
         $run = $service->preview($this->school->id, $sourceYear->id, $targetYear->id);

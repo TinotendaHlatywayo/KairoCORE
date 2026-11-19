@@ -11,6 +11,10 @@ use Tests\TestCase;
 
 class TempSchoolTypeTemplatesTest extends TestCase
 {
+    private ?School $typeSchool = null;
+
+    private ?string $originalInstitutionType = null;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -36,9 +40,29 @@ class TempSchoolTypeTemplatesTest extends TestCase
         return array_values(array_filter($rows, fn (array $row): bool => implode('', $row) !== ''));
     }
 
+    protected function tearDown(): void
+    {
+        if ($this->typeSchool && $this->originalInstitutionType !== null) {
+            $this->typeSchool->institution_type = $this->originalInstitutionType;
+            $this->typeSchool->save();
+        }
+
+        parent::tearDown();
+    }
+
     private function schoolOfType(string $type): School
     {
-        return School::where('institution_type', $type)->withTrashed()->first() ?? School::withTrashed()->first();
+        $school = School::where('institution_type', $type)->withTrashed()->first()
+            ?? School::withTrashed()->firstOrFail();
+
+        if ($school->institution_type !== $type) {
+            $this->typeSchool = $school;
+            $this->originalInstitutionType = $school->institution_type;
+            $school->institution_type = $type;
+            $school->save();
+        }
+
+        return $school;
     }
 
     public function test_primary_course_template_has_ecd_and_grade_streams(): void

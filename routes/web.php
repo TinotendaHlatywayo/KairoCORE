@@ -123,7 +123,7 @@ Route::get('/school-login', function () {
             ]),
         ],
     ]);
-})->name('school.login');
+})->middleware([\App\Http\Middleware\SetRouteHostDefaults::class])->name('school.login');
 
 /*
  * The live results behind the search box. A JSON list of the schools
@@ -182,7 +182,7 @@ Route::domain('{__centralHost}')
 
     // moved below to be host-agnostic
 
-    Route::get('/{key}.txt', function (string $key) {
+    Route::get('/{key}.txt', function (string $__centralHost, string $key) {
         $indexNowKey = env('INDEXNOW_KEY', '5fa5d286335b4dd08128683307e2c0b0');
         if ($key !== $indexNowKey) {
             abort(404);
@@ -488,7 +488,7 @@ Route::domain('{__centralHost}')
         ]);
     })->name('marketing.blog');
 
-    Route::get('/blog/{slug}', function (string $slug) {
+    Route::get('/blog/{slug}', function (string $__centralHost, string $slug) {
         $post = BlogPost::published()->where('slug', $slug)->firstOrFail();
 
         return view('marketing.blog-post', [
@@ -502,7 +502,7 @@ Route::domain('{__centralHost}')
         ]);
     })->where('slug', '[a-z0-9\-]+')->name('marketing.blog.show');
 
-    Route::post('/blog/{slug}/like', function (string $slug, \Illuminate\Http\Request $request) {
+    Route::post('/blog/{slug}/like', function (string $__centralHost, string $slug, \Illuminate\Http\Request $request) {
         $post = \App\Models\BlogPost::published()->where('slug', $slug)->firstOrFail();
 
         $token = $request->cookie('kairo_browser');
@@ -527,7 +527,7 @@ Route::domain('{__centralHost}')
         ])->withCookie(cookie('kairo_browser', $token, 60 * 24 * 365));
     })->name('marketing.blog.like');
 
-    Route::post('/blog/{slug}/share', function (string $slug, \Illuminate\Http\Request $request) {
+    Route::post('/blog/{slug}/share', function (string $__centralHost, string $slug, \Illuminate\Http\Request $request) {
         $post = \App\Models\BlogPost::published()->where('slug', $slug)->firstOrFail();
 
         $target = $request->validate([
