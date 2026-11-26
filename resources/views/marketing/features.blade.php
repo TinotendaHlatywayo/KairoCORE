@@ -55,8 +55,8 @@
             <h1>{{ marketing_content('features_title') }}</h1>
             <p>{{ marketing_content('features_subtitle') }}</p>
             <div class="cta">
-                <a class="btn o beg" href="{{ route('marketing.contact') }}#contact-form">
-                    {{ marketing_content('features_cta_primary_label') ?: marketing_text('Book a demo') }}
+                <a class="btn o beg" href="{{ route('demo.login') }}">
+                    {{ marketing_text('Try the live demo') }}
                     <i class="ar">→</i>
                 </a>
                 <a class="btn g" href="#grid">
@@ -143,7 +143,7 @@
             <p id="featureModalDetail"></p>
             <ul id="featureModalPoints"></ul>
             <div class="mact">
-                <a class="btn o" href="{{ route('marketing.contact') }}#contact-form">{{ marketing_text('Book a demo for this module') }}</a>
+                <a class="btn o" href="{{ route('demo.login') }}">{{ marketing_text('Try the live demo') }}</a>
                 <button class="btn g" type="button" data-close-feature>{{ marketing_text('Close') }}</button>
             </div>
         </div>
@@ -152,9 +152,9 @@
 
 <div class="ct rv" id="start">
     <h2>{{ marketing_content('features_cta_title') ?: marketing_text('Not sure where to start?') }}</h2>
-    <p>{{ marketing_content('features_cta_subtitle') ?: marketing_text('Book a personal demo and we will show you the modules that matter most to your school.') }}</p>
+    <p>{{ marketing_content('features_cta_subtitle') ?: marketing_text('Open the live demo and explore the modules that matter most to your school.') }}</p>
     <div class="cta">
-        <a class="btn o" href="{{ route('marketing.contact') }}#contact-form">{{ marketing_content('features_cta_primary_label') ?: marketing_text('Book a demo') }} →</a>
+        <a class="btn o" href="{{ route('demo.login') }}">{{ marketing_text('Try the live demo') }} →</a>
         <a class="btn g" href="{{ route('marketing.contact') }}">{{ marketing_content('features_cta_secondary_label') ?: marketing_text('Contact us') }}</a>
     </div>
 </div>

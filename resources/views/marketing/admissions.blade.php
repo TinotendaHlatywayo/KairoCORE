@@ -14,7 +14,7 @@
             <h1 class="mt-4 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl leading-[1.08]">{{ marketing_text('Admissions that end in an enrolled student, not a pile of forms') }}</h1>
             <p class="mt-5 text-lg leading-8 text-slate-600">{{ marketing_text('Families apply online on your school’s website. Your team reviews, places and admits applicants in the workspace. Admission creates the student record and feeds fees — one connected admissions and enrolment process on Kairo CORE.') }}</p>
             <div class="mt-8 flex flex-wrap justify-center gap-3">
-                <a href="{{ route('register') }}" class="btn-magnetic inline-flex items-center gap-2 rounded-xl bg-[#D94B39] px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-[#D94B39]/25 hover:bg-[#c14332]">{{ marketing_text('Book a personal demo') }}</a>
+                <a href="{{ route('demo.login') }}" class="btn-magnetic inline-flex items-center gap-2 rounded-xl bg-[#D94B39] px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-[#D94B39]/25 hover:bg-[#c14332]">{{ marketing_text('Try the live demo') }}</a>
                 <a href="{{ route('marketing.help.enroll') }}" class="inline-flex items-center gap-2 rounded-xl border-2 border-slate-300 px-6 py-3.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors">{{ marketing_text('How enrollment works guide') }}</a>
             </div>
         </div>
@@ -113,9 +113,9 @@
 <section class="bg-[#1F2E43] py-16">
     <div class="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
         <h2 class="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">{{ marketing_text('Run your next intake on Kairo CORE') }}</h2>
-        <p class="mt-4 text-lg text-slate-200">{{ marketing_text('Book a demo and we will show the admissions flow end to end, from your public application page to the enrolled student record.') }}</p>
+        <p class="mt-4 text-lg text-slate-200">{{ marketing_text('Explore the live demo to see the admissions flow end to end, from the public application page to the enrolled student record.') }}</p>
         <div class="mt-8 flex flex-wrap justify-center gap-3">
-            <a href="{{ route('register') }}" class="btn-magnetic inline-flex items-center gap-2 rounded-xl bg-[#EF5F4D] px-6 py-3.5 text-sm font-bold text-white shadow-lg hover:bg-[#D94B39]">{{ marketing_text('Book a personal demo') }}</a>
+            <a href="{{ route('demo.login') }}" class="btn-magnetic inline-flex items-center gap-2 rounded-xl bg-[#EF5F4D] px-6 py-3.5 text-sm font-bold text-white shadow-lg hover:bg-[#D94B39]">{{ marketing_text('Try the live demo') }}</a>
             <a href="{{ route('marketing.contact') }}" class="inline-flex items-center gap-2 rounded-xl border-2 border-white/30 px-6 py-3.5 text-sm font-bold text-white hover:bg-white/10 transition-colors">{{ marketing_text('Contact us') }}</a>
         </div>
     </div>

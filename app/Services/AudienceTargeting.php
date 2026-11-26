@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\School;
 use App\Models\User;
+use App\Security\DemoPersona;
 use App\Security\RoleCatalogue;
 use Illuminate\Database\Eloquent\Builder;
 use Modules\Admin\Models\CustomRole;
@@ -154,6 +155,12 @@ class AudienceTargeting
     {
         if ($user->school_id === null) {
             return false;
+        }
+
+        $persona = DemoPersona::active($user);
+
+        if ($persona !== null) {
+            return RoleCatalogue::isFullAccess($persona);
         }
 
         if ((string) $user->requested_role === self::SYSTEM_ADMINISTRATOR) {

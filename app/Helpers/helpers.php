@@ -416,7 +416,7 @@ if (! function_exists('marketing_content_defaults')) {
             'hero_image' => 'https://images.pexels.com/photos/34211744/pexels-photo-34211744.jpeg?auto=compress&cs=tinysrgb&w=1600',
             'why_image' => 'https://images.pexels.com/photos/34211744/pexels-photo-34211744.jpeg?auto=compress&cs=tinysrgb&w=1600',
             'cta_image' => 'https://images.pexels.com/photos/34211744/pexels-photo-34211744.jpeg?auto=compress&cs=tinysrgb&w=1600',
-            'hero_primary_label' => __('Book a personal demo'),
+            'hero_primary_label' => __('Try the live demo'),
             'hero_primary_url' => '',
             'hero_secondary_label' => __('Explore features'),
             'hero_secondary_url' => '',
@@ -450,8 +450,8 @@ if (! function_exists('marketing_content_defaults')) {
             'home_training_title' => __('Special training can be arranged'),
             'home_training_desc' => __('Your team is trained — hands-on sessions, video tutorials and a help centre on call.'),
             'cta_title' => __('Ready to see KairoCORE in action?'),
-            'cta_subtitle' => __('Book a personal demo tailored to your school, no obligation.'),
-            'cta_primary_label' => __('Book a personal demo'),
+            'cta_subtitle' => __('Explore the live demo with sample data — no school registration needed.'),
+            'cta_primary_label' => __('Try the live demo'),
             'cta_primary_url' => '',
             'cta_secondary_label' => __('Explore features'),
             'cta_secondary_url' => '',
@@ -461,8 +461,8 @@ if (! function_exists('marketing_content_defaults')) {
             'features_title' => __('Every tool your school needs'),
             'features_subtitle' => __('From admissions to analytics, KairoCORE brings the day-to-day running of your school into one connected platform.'),
             'features_cta_title' => __('Not sure where to start?'),
-            'features_cta_subtitle' => __('Book a personal demo and we will show you the modules that matter most to your school.'),
-            'features_cta_primary_label' => __('Book a personal demo'),
+            'features_cta_subtitle' => __('Open the live demo and explore the modules that matter most to your school.'),
+            'features_cta_primary_label' => __('Try the live demo'),
             'features_cta_secondary_label' => __('Contact us'),
 
             // ── About page ──────────────────────────────────────────
@@ -486,12 +486,12 @@ if (! function_exists('marketing_content_defaults')) {
             'about_platform_badge' => __('The platform'),
             'about_platform_subtitle' => __('One student record connects every department, so the whole school works from the same information.'),
             'about_cta_title' => __('Want to see how KairoCORE fits your school?'),
-            'about_cta_subtitle' => __('Book a personal demo and we will walk you through it, module by module.'),
+            'about_cta_subtitle' => __('Open the live demo and walk through it, module by module.'),
 
             // ── Contact page ────────────────────────────────────────
             'contact_badge' => __('Contact'),
             'contact_title' => __('Reach out to us'),
-            'contact_intro' => __('Have questions about KairoCORE or want to schedule a personalized demo? Reach out to us through any of the channels below.'),
+            'contact_intro' => __('Have questions about Kairo CORE? Try the live demo, or reach us through any of the channels below.'),
             'contact_form_title' => __('Send us a message'),
             'contact_form_subtitle' => __('We respond to all school inquiries within 24 hours.'),
             'contact_form_name_label' => __('Your name'),
@@ -503,7 +503,7 @@ if (! function_exists('marketing_content_defaults')) {
             'contact_whatsapp_title' => __('WhatsApp us'),
             'contact_whatsapp_note' => __('Fastest replies during office hours'),
             'contact_email_title' => __('Email support'),
-            'contact_email_note' => __('For quotes, demos and support'),
+            'contact_email_note' => __('For quotes and support'),
             'contact_office_title' => __('Office hours'),
             'contact_office_hours' => __('Monday – Friday, 08:00 – 17:00 (CAT)'),
             'contact_office_location' => __('Harare, Zimbabwe'),
@@ -516,7 +516,7 @@ if (! function_exists('marketing_content_defaults')) {
             'blog_title' => __('Stories from the KairoCORE team'),
             'blog_intro' => __('Practical ideas, product updates and school operations guidance from the people building KairoCORE.'),
             'blog_cta_title' => __('Ready to see KairoCORE in action?'),
-            'blog_cta_subtitle' => __('Book a personal demo tailored to your school, no obligation.'),
+            'blog_cta_subtitle' => __('Explore the live demo with sample data — no school registration needed.'),
             'blog_cta_primary_label' => __('Register School'),
             'blog_cta_secondary_label' => __('Explore Features'),
         ];
@@ -595,7 +595,7 @@ if (! function_exists('marketing_list_defaults')) {
             'contact_steps' => [
                 ['title' => __('Tell us about your school'), 'desc' => __('Share your school’s size and what you want to fix, whether that is fees, reports, your website or something else.')],
                 ['title' => __('We reply within 24 hours'), 'desc' => __('A school specialist answers your questions and suggests the modules that fit.')],
-                ['title' => __('See Kairo CORE in action'), 'desc' => __('Book a personal demo and we will walk you through the system, module by module.')],
+                ['title' => __('See Kairo CORE in action'), 'desc' => __('Open the live demo and explore the system, module by module.')],
             ],
             'features_list' => [
                 ['key' => 'admissions', 'cat' => 'admin', 'name' => __('Admissions'), 'desc' => __('Manage student enrolment, applications and admission workflow.'), 'detail' => __('Run your whole admissions season from one place. Families apply online, your team reviews applications, places learners and issues offer letters, while every document, sibling link and placement stays attached to a single student record that follows the child through every grade.'), 'sub1' => __('Online applications'), 'sub2' => __('Student registration'), 'sub3' => __('Admission approval'), 'image' => $px(35305047)],

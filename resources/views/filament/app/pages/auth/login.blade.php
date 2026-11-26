@@ -25,7 +25,7 @@
     }
 
     // Tenant accent colors parsed safely
-    $accentKey = 'emerald_heritage';
+    $accentKey = 'digital_cobalt';
     if ($school) {
         $themeRaw = SystemSetting::get('branding', 'theme');
         if (is_string($themeRaw) && $themeRaw !== '') {
@@ -49,7 +49,7 @@
         'dev_choice_3' => '#0891b2',
         'dev_choice_4' => '#f05438',
     ];
-    $accent = $accents[$accentKey] ?? '#0f766e';
+    $accent = $accents[$accentKey] ?? '#2563eb';
     $accentStrong = $accent === '#0f766e' ? '#0d5f56' : $accent;
     $accentRgb = implode(',', [hexdec(substr($accent, 1, 2)), hexdec(substr($accent, 3, 2)), hexdec(substr($accent, 5, 2))]);
 

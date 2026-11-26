@@ -29,6 +29,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\HtmlString;
 use Modules\Admin\Models\SystemSetting;
 use Modules\Admin\Services\AuditLogger;
+use Modules\Admin\Services\PermissionRegistry;
 use Modules\Finance\Models\SchoolBankAccount;
 
 class SystemSettingsPage extends Page implements HasForms
@@ -83,7 +84,7 @@ class SystemSettingsPage extends Page implements HasForms
             // The theme field reflects the user's effective theme: their
             // personal override if set, otherwise the school-wide default.
             $state['branding_theme'] = $user?->theme
-                ?: ($state['branding_theme'] ?? 'emerald_heritage');
+                ?: ($state['branding_theme'] ?? 'digital_cobalt');
             $state['branding_theme_scope'] = 'me';
             if (empty($state['banking_banks']) && ! empty($state['banking_bank_name'])) {
                 $state['banking_banks'] = [[
@@ -137,7 +138,7 @@ class SystemSettingsPage extends Page implements HasForms
             return true;
         }
 
-        return $user->customRole?->role_key === 'administrator';
+        return PermissionRegistry::userHasRole($user, 'administrator');
     }
 
     /**
@@ -214,6 +215,46 @@ class SystemSettingsPage extends Page implements HasForms
         return $options;
     }
 
+    public function getThemeOptions(): array
+    {
+        return [
+            'digital_cobalt' => __('Digital Cobalt (Sleek Modern Digital / Blue)'),
+            'emerald_heritage' => __('MoPSE Emerald Heritage (Standard / Classic)'),
+            'obsidian_gold' => __('Obsidian Charcoal (Premium Academic / Black)'),
+            'crimson_academy' => __('Crimson Academy (Ivy Crimson & Slate)'),
+            'ocean_breeze' => __('Ocean Breeze (Calming Teal & Cyan)'),
+            'forest_pine' => __('Forest Pine (Pine Green & Soft Mint)'),
+            'sunset_amber' => __('Sunset Amber (Deep Coral & Amber Orange)'),
+            'royal_purple' => __('Royal Purple (Regal Purple & Lavender)'),
+            'steel_slate' => __('Steel Slate (High-tech Steel & Cool Blue)'),
+            'rosewood' => __('Rosewood Mahogany (Warm Rosewood & Peach)'),
+            'dev_choice_1' => __('Developer\'s Choice 1 (Indigo + Cyan Blend)'),
+            'dev_choice_2' => __('Developer\'s Choice 2 (Fuchsia + Violet Blend)'),
+            'dev_choice_3' => __('Developer\'s Choice 3 (Cyan + Emerald Blend)'),
+            'dev_choice_4' => __('Developer\'s Choice 4 (Midnight Navy + Flame Blend)'),
+        ];
+    }
+
+    public function getThemePalettes(): array
+    {
+        return [
+            'digital_cobalt' => ['primary' => '#3b82f6', 'accent' => '#8b5cf6', 'glow' => 'rgba(59, 130, 246, 0.16)'],
+            'emerald_heritage' => ['primary' => '#15803d', 'accent' => '#eab308', 'glow' => 'rgba(21, 128, 61, 0.16)'],
+            'obsidian_gold' => ['primary' => '#18181b', 'accent' => '#d4af37', 'glow' => 'rgba(24, 24, 27, 0.16)'],
+            'crimson_academy' => ['primary' => '#991b1b', 'accent' => '#475569', 'glow' => 'rgba(153, 27, 27, 0.16)'],
+            'ocean_breeze' => ['primary' => '#0d9488', 'accent' => '#06b6d4', 'glow' => 'rgba(13, 148, 136, 0.16)'],
+            'forest_pine' => ['primary' => '#166534', 'accent' => '#22c55e', 'glow' => 'rgba(22, 101, 52, 0.16)'],
+            'sunset_amber' => ['primary' => '#ea580c', 'accent' => '#f97316', 'glow' => 'rgba(234, 88, 12, 0.16)'],
+            'royal_purple' => ['primary' => '#6b21a8', 'accent' => '#a855f7', 'glow' => 'rgba(107, 33, 168, 0.16)'],
+            'steel_slate' => ['primary' => '#475569', 'accent' => '#3b82f6', 'glow' => 'rgba(71, 85, 105, 0.16)'],
+            'rosewood' => ['primary' => '#9f1239', 'accent' => '#f43f5e', 'glow' => 'rgba(159, 18, 57, 0.16)'],
+            'dev_choice_1' => ['primary' => '#4f46e5', 'accent' => '#06b6d4', 'glow' => 'rgba(79, 70, 229, 0.16)'],
+            'dev_choice_2' => ['primary' => '#c026d3', 'accent' => '#a855f7', 'glow' => 'rgba(192, 38, 211, 0.16)'],
+            'dev_choice_3' => ['primary' => '#0891b2', 'accent' => '#10b981', 'glow' => 'rgba(8, 145, 178, 0.16)'],
+            'dev_choice_4' => ['primary' => '#1b263b', 'accent' => '#f05438', 'glow' => 'rgba(27, 38, 59, 0.16)'],
+        ];
+    }
+
     public function form(Form $form): Form
     {
         $fontsJson = json_encode($this->getFontCatalog());
@@ -229,22 +270,9 @@ class SystemSettingsPage extends Page implements HasForms
                                     ->schema([
                                         Select::make('branding_theme')
                                             ->label(__('Visual Theme Design'))
-                                            ->options([
-                                                'emerald_heritage' => __('MoPSE Emerald Heritage (Standard / Classic)'),
-                                                'digital_cobalt' => __('Digital Cobalt (Sleek Modern Digital / Blue)'),
-                                                'obsidian_gold' => __('Obsidian Charcoal (Premium Academic / Black)'),
-                                                'crimson_academy' => __('Crimson Academy (Ivy Crimson & Slate)'),
-                                                'ocean_breeze' => __('Ocean Breeze (Calming Teal & Cyan)'),
-                                                'forest_pine' => __('Forest Pine (Pine Green & Soft Mint)'),
-                                                'sunset_amber' => __('Sunset Amber (Deep Coral & Amber Orange)'),
-                                                'royal_purple' => __('Royal Purple (Regal Purple & Lavender)'),
-                                                'steel_slate' => __('Steel Slate (High-tech Steel & Cool Blue)'),
-                                                'rosewood' => __('Rosewood Mahogany (Warm Rosewood & Peach)'),
-                                                'dev_choice_1' => __('Developer\'s Choice 1 (Indigo + Cyan Blend)'),
-                                                'dev_choice_2' => __('Developer\'s Choice 2 (Fuchsia + Violet Blend)'),
-                                                'dev_choice_3' => __('Developer\'s Choice 3 (Cyan + Emerald Blend)'),
-                                                'dev_choice_4' => __('Developer\'s Choice 4 (Midnight Navy + Flame Blend)'),
-                                            ])->default('emerald_heritage')
+                                            ->options($this->getThemeOptions())
+                                            ->default('digital_cobalt')
+                                            ->live()
                                             ->native(true),
                                         Select::make('branding_theme_scope')
                                             ->label(__('Apply theme change to'))
@@ -256,6 +284,46 @@ class SystemSettingsPage extends Page implements HasForms
                                             ->native(true)
                                             ->visible(fn () => $this->canApplyThemeToAll())
                                             ->helperText(__('Administrators can apply a theme to everyone. This only applies to you otherwise.')),
+                                        Placeholder::make('branding_theme_preview')
+                                            ->label(__('Theme Preview'))
+                                            ->content(function ($get) {
+                                                $theme = $get('branding_theme') ?? 'digital_cobalt';
+                                                $palettes = $this->getThemePalettes();
+                                                $palette = $palettes[$theme] ?? $palettes['digital_cobalt'];
+                                                $label = $this->getThemeOptions()[$theme] ?? $theme;
+                                                $primary = $palette['primary'];
+                                                $accent = $palette['accent'];
+                                                $glow = $palette['glow'];
+
+                                                return new HtmlString(
+                                                    '<div style="border:1px solid rgba(148,163,184,.35);border-radius:12px;padding:14px;background:linear-gradient(135deg,#ffffff,#f8fafc);">'
+                                                    .'<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;">'
+                                                    .'<div style="display:flex;align-items:center;gap:8px;">'
+                                                    .'<span style="height:14px;width:14px;border-radius:4px;background:'.$primary.';"></span>'
+                                                    .'<strong style="font-size:13px;color:#0f172a;">'.e($label).'</strong>'
+                                                    .'</div>'
+                                                    .'<span style="font-size:11px;color:#64748b;">'.e($primary).' / '.e($accent).'</span>'
+                                                    .'</div>'
+                                                    .'<div style="display:grid;grid-template-columns:34px 1fr;gap:10px;">'
+                                                    .'<div style="border-radius:8px;background:'.$primary.';padding:10px 6px;display:flex;flex-direction:column;gap:6px;">'
+                                                    .'<span style="height:6px;border-radius:3px;background:rgba(255,255,255,.75);"></span>'
+                                                    .'<span style="height:6px;width:70%;border-radius:3px;background:rgba(255,255,255,.45);"></span>'
+                                                    .'<span style="height:6px;border-radius:3px;background:rgba(255,255,255,.75);"></span>'
+                                                    .'</div>'
+                                                    .'<div style="border:1px solid #e2e8f0;border-radius:8px;padding:10px;background:#ffffff;">'
+                                                    .'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">'
+                                                    .'<span style="height:8px;width:46%;border-radius:4px;background:#e2e8f0;"></span>'
+                                                    .'<span style="height:20px;width:64px;border-radius:6px;background:'.$accent.';"></span>'
+                                                    .'</div>'
+                                                    .'<div style="margin-top:10px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">'
+                                                    .'<span style="height:34px;border-radius:6px;background:'.$glow.';border:1px solid '.$primary.';"></span>'
+                                                    .'<span style="height:34px;border-radius:6px;background:'.$glow.';border:1px solid '.$accent.';"></span>'
+                                                    .'<span style="height:34px;border-radius:6px;background:linear-gradient(135deg,'.$primary.','.$accent.');"></span>'
+                                                    .'</div>'
+                                                    .'</div></div></div>'
+                                                );
+                                            })
+                                            ->columnSpanFull(),
                                         Select::make('branding_font_family')
                                             ->label(__('System Typography Font'))
                                             ->options($this->getFontDropdownOptions())
@@ -1455,7 +1523,7 @@ class SystemSettingsPage extends Page implements HasForms
         }
 
         $this->dispatch('theme-updated', [
-            'theme' => $state['branding_theme'] ?? 'emerald_heritage',
+            'theme' => $state['branding_theme'] ?? 'digital_cobalt',
             'font_family' => $state['branding_font_family'] ?? 'inter',
             'logo_height' => $state['branding_logo_height'] ?? '32px',
             'logo_opacity' => $state['branding_logo_opacity'] ?? '1.0',

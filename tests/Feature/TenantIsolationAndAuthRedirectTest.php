@@ -116,8 +116,8 @@ class TenantIsolationAndAuthRedirectTest extends TestCase
         $this->withoutTenant();
 
         $this->assertSame(
-            'emerald_heritage',
-            SystemSetting::get('branding', 'theme', 'emerald_heritage'),
+            'digital_cobalt',
+            SystemSetting::get('branding', 'theme', 'digital_cobalt'),
             'The platform site must never read another tenant\'s setting.'
         );
 

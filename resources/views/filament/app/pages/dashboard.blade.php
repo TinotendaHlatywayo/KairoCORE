@@ -297,7 +297,6 @@
 
             <div class="wrap" id="tw-content">
                 <h1>{{ $greeting }}</h1>
-                <p class="sub">{{ __('Here’s how :school is doing today.', ['school' => $school?->name]) }}</p>
 
                 {{-- KPI strip --}}
                 <div class="kpis" id="tw-kpis">

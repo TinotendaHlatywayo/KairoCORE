@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Security\CapabilityCatalog;
+use App\Security\DemoPersona;
 use App\Security\RoleCatalogue;
 use Illuminate\Support\Facades\Auth;
 use Modules\Admin\Models\CustomRole;
@@ -54,6 +55,12 @@ class ModuleVisibilityManager
         // Platform super-admins are also school admins.
         if (self::isSuperAdmin()) {
             return true;
+        }
+
+        $persona = DemoPersona::roleKey($user);
+
+        if ($persona !== null) {
+            return RoleCatalogue::isFullAccess($persona);
         }
 
         // School-level Administrator role holders.

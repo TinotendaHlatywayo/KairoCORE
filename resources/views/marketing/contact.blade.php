@@ -39,7 +39,7 @@
     if ($contactBadge === 'Contact') $contactBadge = marketing_text('Contact us');
     if ($contactTitle === 'Reach out to us') $contactTitle = marketing_text('Let’s talk about your school');
     if ($contactIntro === 'Have questions about KairoCORE or want a personalized demo? Reach out to us through any of the channels below.') {
-        $contactIntro = marketing_text('Have questions about Kairo CORE, or want a personalized demo? Reach us through any channel below.');
+        $contactIntro = marketing_text('Have questions about Kairo CORE? Try the live demo, or reach us through any channel below.');
     }
 @endphp
 
@@ -48,7 +48,8 @@
         <div>
             <div class="ey">{{ $contactBadge ?: marketing_text('Contact us') }}</div>
             <h1>{{ $contactTitle ?: marketing_text('Let’s talk about your school') }}</h1>
-            <p>{{ $contactIntro ?: marketing_text('Have questions about Kairo CORE, or want a personalized demo? Reach us through any channel below.') }}</p>
+            <p>{{ $contactIntro ?: marketing_text('Have questions about Kairo CORE? Try the live demo, or reach us through any channel below.') }}</p>
+            <p class="cta"><a class="btn o beg" href="{{ route('demo.login') }}">{{ marketing_text('Try the live demo') }} <i class="ar">→</i></a></p>
         </div>
     </div>
 </header>
@@ -85,8 +86,8 @@
                     <div class="fl2">
                         <label for="topic">{{ marketing_text('I’m interested in') }}</label>
                         <select id="topic" name="topic">
-                            @foreach ([marketing_text('Booking a demo'), marketing_text('A price quote'), marketing_text('Product questions'), marketing_text('Support')] as $topic)
-                                <option value="{{ $topic }}" @selected(old('topic', marketing_text('Booking a demo')) === $topic)>{{ marketing_text($topic) }}</option>
+                            @foreach ([marketing_text('A price quote'), marketing_text('Product questions'), marketing_text('Support')] as $topic)
+                                <option value="{{ $topic }}" @selected(old('topic', marketing_text('Product questions')) === $topic)>{{ marketing_text($topic) }}</option>
                             @endforeach
                         </select>
                     </div>

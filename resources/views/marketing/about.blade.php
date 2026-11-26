@@ -23,8 +23,8 @@
             <h1>{{ marketing_content('about_title') }}</h1>
             <p>{{ marketing_content('about_intro') }}</p>
             <div class="cta">
-                <a class="btn o beg" href="{{ route('marketing.contact') }}#contact-form">
-                    {{ marketing_text('Book a demo') }}
+                <a class="btn o beg" href="{{ route('demo.login') }}">
+                    {{ marketing_text('Try the live demo') }}
                     <i class="ar">→</i>
                 </a>
                 <a class="btn g" href="{{ route('marketing.contact') }}">
@@ -209,9 +209,9 @@
 
 <div class="ct rv" id="contact">
     <h2>{{ marketing_content('about_cta_title') ?: marketing_text('Want to see how Kairo CORE fits your school?') }}</h2>
-    <p>{{ marketing_content('about_cta_subtitle') ?: marketing_text('Book a personal demo and we will walk you through it, module by module.') }}</p>
+    <p>{{ marketing_content('about_cta_subtitle') ?: marketing_text('Open the live demo and walk through it, module by module.') }}</p>
     <div class="cta">
-        <a class="btn o" href="{{ route('marketing.contact') }}#contact-form">{{ marketing_text('Book a demo') }} →</a>
+        <a class="btn o" href="{{ route('demo.login') }}">{{ marketing_text('Try the live demo') }} →</a>
     </div>
 </div>
 @endsection

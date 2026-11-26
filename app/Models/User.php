@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Security\DemoPersona;
 use App\Traits\BelongsToTenant;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
@@ -219,6 +220,10 @@ class User extends Authenticatable implements FilamentUser
     {
         if ($this->school_id === null) {
             return false;
+        }
+
+        if (DemoPersona::isDemoUser($this)) {
+            return DemoPersona::isPortal($this);
         }
 
         if (Student::where('user_id', $this->id)->exists()) {

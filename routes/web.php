@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AcademicReportPdfController;
 use App\Http\Controllers\Auth\ActivationController;
+use App\Http\Controllers\Auth\DemoLoginController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Communication\CommunicationAttachmentController;
 use App\Http\Controllers\DocumentDownloadController;
@@ -129,6 +130,14 @@ Route::get('/school-login', function () {
  * The live results behind the search box. A JSON list of the schools
  * that match, each with the address its login page lives on.
  */
+Route::get('/demo-login', [DemoLoginController::class, 'show'])
+    ->middleware([\App\Http\Middleware\SetRouteHostDefaults::class])
+    ->name('demo.login');
+
+Route::post('/demo-login', [DemoLoginController::class, 'login'])
+    ->middleware(['throttle:5,1'])
+    ->name('demo.login.submit');
+
 Route::get('/school-login/suggest', function () {
     $term = trim((string) request('q'));
 
@@ -858,6 +867,9 @@ Route::domain('{tenant}.{__baseHost}')
     ->middleware([\App\Http\Middleware\SetRouteHostDefaults::class, 'tenant', SetUserLocale::class])
     ->group(function () {
 
+    Route::post('/livewire/update', \Livewire\Mechanisms\HandleRequests\HandleRequests::class.'@handleUpdate')
+        ->name('tenant.livewire.update');
+
     // Completes Google SSO on the TENANT subdomain (single-use ticket from the
     // central callback) so the session is created inside this tenant's scope.
     //
@@ -866,6 +878,8 @@ Route::domain('{tenant}.{__baseHost}')
     // subdomain. Registered on the central host it could never match the
     // redirect target, so every tenant Google sign-in 404'd.
     Route::get('/auth/sso/consume', [GoogleAuthController::class, 'consume'])->name('auth.sso.consume');
+
+    Route::get('/demo/consume', [DemoLoginController::class, 'consume'])->name('demo.consume');
 
     // ── Platform -> school hand-off ─────────────────────────────────────
     // MUST stay inside this {tenant}. domain group: the entry route resolves

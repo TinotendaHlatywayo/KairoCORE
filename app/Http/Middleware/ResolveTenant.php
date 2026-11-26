@@ -142,7 +142,7 @@ class ResolveTenant
     protected function applyFilamentTheme(): void
     {
         try {
-            $theme = SystemSetting::get('branding', 'theme', 'emerald_heritage');
+            $theme = SystemSetting::get('branding', 'theme', 'digital_cobalt');
 
             FilamentColor::register([
                 'primary' => self::primaryColorFor($theme),

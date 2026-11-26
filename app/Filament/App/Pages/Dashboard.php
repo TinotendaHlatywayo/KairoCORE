@@ -3,11 +3,12 @@
 namespace App\Filament\App\Pages;
 
 use App\Models\School;
+use App\Models\User;
+use App\Security\DemoPersona;
 use App\Services\DashboardMetricsService;
 use App\Services\DummyDataSeeder;
 use Filament\Notifications\Notification;
 use Filament\Pages\Dashboard as BaseDashboard;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Modules\Academics\Models\AcademicReport;
 use Modules\Students\Models\Student;
@@ -48,19 +49,13 @@ class Dashboard extends BaseDashboard
     {
         $user = auth()->user();
 
-        $hour = Carbon::now()->hour;
-        $salutation = $hour < 12
-            ? __('Good morning')
-            : ($hour < 18 ? __('Good afternoon') : __('Good evening'));
-
-        $role = $user?->customRole?->name
+        $role = DemoPersona::roleLabel($user instanceof User ? $user : null)
+            ?? $user?->customRole?->name
             ?? ($user?->requested_role !== null ? str($user->requested_role)->replace('_', ' ')->title() : null);
 
         return [
             'metrics' => app(DashboardMetricsService::class)->all(),
-            'greeting' => $user
-                ? __(':salutation, :name', ['salutation' => $salutation, 'name' => $user->name])
-                : $salutation,
+            'greeting' => __('User'),
             'roleLabel' => $role,
         ];
     }

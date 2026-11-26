@@ -2,9 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Livewire\RegistrationWizard;
 use App\Models\School;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Queue;
+use Livewire\Livewire;
+use Modules\Admin\Models\SystemSetting;
 use Tests\TestCase;
 
 /**
@@ -25,6 +29,49 @@ class SchoolLoginCodeTest extends TestCase
         Config::set('database.connections.mysql.username', env('DB_USERNAME', 'root'));
         Config::set('database.connections.mysql.password', env('DB_PASSWORD', ''));
         DB::purge('mysql');
+    }
+
+    public function test_new_registrations_start_with_the_digital_cobalt_theme(): void
+    {
+        Queue::fake();
+        Config::set('tenancy.mode', 'multi');
+        $subdomain = 'theme-'.substr(uniqid(), -8);
+
+        DB::beginTransaction();
+
+        try {
+            Livewire::test(RegistrationWizard::class)
+                ->set([
+                    'currentStep' => 3,
+                    'termsAccepted' => true,
+                    'schoolName' => 'Theme Default Academy',
+                    'country' => 'Zimbabwe',
+                    'physicalAddress' => '12 Sample Street',
+                    'language' => 'english',
+                    'institutionType' => 'secondary',
+                    'phone' => '+263771234567',
+                    'adminName' => 'Theme Admin',
+                    'adminEmail' => 'theme-'.uniqid().'@gmail.com',
+                    'institutionEmail' => 'office-'.uniqid().'@gmail.com',
+                    'subdomain' => $subdomain,
+                    'selectedModules' => ['administration', 'saas'],
+                ])
+                ->call('submit')
+                ->assertHasNoErrors();
+
+            $school = School::where('subdomain', $subdomain)->firstOrFail();
+
+            $this->assertSame(
+                'digital_cobalt',
+                SystemSetting::withoutTenantScope()
+                    ->where('school_id', $school->id)
+                    ->where('group', 'branding')
+                    ->where('key', 'theme')
+                    ->value('value')
+            );
+        } finally {
+            DB::rollBack();
+        }
     }
 
     public function test_new_schools_get_a_login_code_automatically(): void

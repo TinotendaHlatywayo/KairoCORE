@@ -4,7 +4,7 @@
     $schoolId = current_tenant()?->id;
     
     // Core Defaults
-    $theme = 'emerald_heritage';
+    $theme = 'digital_cobalt';
     $fontFamily = 'inter';
     $logoHeight = '32px';
     $logoOpacity = '1.0';
@@ -20,7 +20,7 @@
         // overrides the school-wide default for that account only.
         $userTheme = auth()->user()?->theme;
         $themeSetting = $userTheme ?: SystemSetting::get('branding', 'theme');
-        $theme = !empty($themeSetting) ? $themeSetting : 'emerald_heritage';
+        $theme = !empty($themeSetting) ? $themeSetting : 'digital_cobalt';
 
         $fontSetting = SystemSetting::get('branding', 'font_family');
         $fontFamily = !empty($fontSetting) ? $fontSetting : 'inter';
@@ -71,7 +71,7 @@
         'dev_choice_4' => ['primary' => '#1b263b', 'accent' => '#f05438', 'glow' => 'rgba(27, 38, 59, 0.12)']
     ];
 
-    $colors = $themes[$theme] ?? $themes['emerald_heritage'];
+    $colors = $themes[$theme] ?? $themes['digital_cobalt'];
     $primaryColor = $colors['primary'];
     $accentColor = $colors['accent'];
     $shadowColor = $colors['glow'];
@@ -345,7 +345,7 @@
             return Math.min(Math.max(n, 24), 40) + 'px';
         };
 
-        const colors = themeMap[data.theme] || themeMap.emerald_heritage;
+        const colors = themeMap[data.theme] || themeMap.digital_cobalt;
         document.documentElement.style.setProperty('--theme-primary', colors.primary);
         document.documentElement.style.setProperty('--theme-accent', colors.accent);
         document.documentElement.style.setProperty('--theme-glow', colors.glow);

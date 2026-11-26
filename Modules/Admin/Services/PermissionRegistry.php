@@ -4,6 +4,7 @@ namespace Modules\Admin\Services;
 
 use App\Models\User;
 use App\Security\CapabilityCatalog;
+use App\Security\DemoPersona;
 use App\Security\RoleCatalogue;
 use Illuminate\Support\Facades\Auth;
 use Modules\Admin\Models\CustomRole;
@@ -464,6 +465,12 @@ class PermissionRegistry
      */
     public static function permissionsFor(User $user): array
     {
+        $demoPermissions = DemoPersona::permissions($user);
+
+        if ($demoPermissions !== null) {
+            return self::normalizePermissionList($demoPermissions);
+        }
+
         return self::normalizePermissionList(array_merge(
             self::rolePermissionsFor($user),
             self::personalPermissionsFor($user),
@@ -714,6 +721,13 @@ class PermissionRegistry
         }
 
         $roleKeys = (array) $roleKeys;
+        $persona = DemoPersona::roleKey($user);
+
+        if ($persona !== null) {
+            return RoleCatalogue::isFullAccess($persona)
+                || in_array($persona, $roleKeys, true);
+        }
+
         $role = $user->custom_role_id ? CustomRole::find($user->custom_role_id) : null;
 
         if (! $role) {

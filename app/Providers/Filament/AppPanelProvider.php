@@ -215,7 +215,7 @@ class AppPanelProvider extends PanelProvider
                     try {
                         $userTheme = Auth::user()?->theme;
                         $theme = $userTheme
-                            ?: SystemSetting::get('branding', 'theme', 'emerald_heritage');
+                            ?: SystemSetting::get('branding', 'theme', 'digital_cobalt');
 
                         FilamentColor::register([
                             'primary' => ResolveTenant::primaryColorFor($theme),
@@ -246,6 +246,12 @@ class AppPanelProvider extends PanelProvider
             ->renderHook(
                 PanelsRenderHook::TOPBAR_START,
                 fn () => view('components.topbar-mobile-title')
+            )
+
+            // Demo-only role switcher. Renders nothing for real accounts.
+            ->renderHook(
+                PanelsRenderHook::TOPBAR_START,
+                fn () => Blade::render('@livewire(\'demo-persona-switcher\')')
             )
 
             // Render sidebar position switcher in top header bar end

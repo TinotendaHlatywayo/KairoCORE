@@ -291,7 +291,7 @@ const currentLocale = ui.locale || document.documentElement.lang || 'en';
 const tagLinks = {
     Security: { url: @json(route('marketing.security')), label: @js(marketing_text('Read about security and data protection')) },
     Privacy: { url: @json(route('marketing.security')), label: @js(marketing_text('Read about security and data protection')) },
-    Demo: { url: @json(rtrim(route('marketing.home'), '/').'/#contact'), label: @js(marketing_text('Book a demo')) },
+    Demo: { url: @json(route('demo.login')), label: @js(marketing_text('Try the live demo')) },
     Contact: { url: @json(route('marketing.contact')), label: @js(marketing_text('Contact us')) },
     Pricing: { url: @json(route('marketing.contact').'#contact-form'), label: @js(marketing_text('Ask for pricing')) },
     Support: { url: @json(route('help.index')), label: @js(marketing_text('Visit the Help Centre')) },

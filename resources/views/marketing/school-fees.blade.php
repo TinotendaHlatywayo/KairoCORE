@@ -14,7 +14,7 @@
             <h1 class="mt-4 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl leading-[1.08]">{{ marketing_text('School fees management, from structure to statement') }}</h1>
             <p class="mt-5 text-lg leading-8 text-slate-600">{{ marketing_text('Kairo CORE brings fee structures, invoicing, payments, receipts and reporting into one finance module, so bursars always know what is owed, what has been paid and what is overdue.') }}</p>
             <div class="mt-8 flex flex-wrap justify-center gap-3">
-                <a href="{{ route('register') }}" class="btn-magnetic inline-flex items-center gap-2 rounded-xl bg-[#D94B39] px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-[#D94B39]/25 hover:bg-[#c14332]">{{ marketing_text('Book a personal demo') }}</a>
+                <a href="{{ route('demo.login') }}" class="btn-magnetic inline-flex items-center gap-2 rounded-xl bg-[#D94B39] px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-[#D94B39]/25 hover:bg-[#c14332]">{{ marketing_text('Try the live demo') }}</a>
                 <a href="{{ route('marketing.help.fees') }}" class="inline-flex items-center gap-2 rounded-xl border-2 border-slate-300 px-6 py-3.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors">{{ marketing_text('How to collect fees guide') }}</a>
             </div>
         </div>
@@ -117,9 +117,9 @@
 <section class="bg-[#1F2E43] py-16">
     <div class="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
         <h2 class="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">{{ marketing_text('See your fee cycle on Kairo CORE') }}</h2>
-        <p class="mt-4 text-lg text-slate-200">{{ marketing_text('Book a personal demo and we will walk through structures, invoicing and reporting with your school’s numbers in mind — no obligation.') }}</p>
+        <p class="mt-4 text-lg text-slate-200">{{ marketing_text('Explore the live demo to see fee structures, invoicing and reporting with sample school numbers.') }}</p>
         <div class="mt-8 flex flex-wrap justify-center gap-3">
-            <a href="{{ route('register') }}" class="btn-magnetic inline-flex items-center gap-2 rounded-xl bg-[#EF5F4D] px-6 py-3.5 text-sm font-bold text-white shadow-lg hover:bg-[#D94B39]">{{ marketing_text('Book a personal demo') }}</a>
+            <a href="{{ route('demo.login') }}" class="btn-magnetic inline-flex items-center gap-2 rounded-xl bg-[#EF5F4D] px-6 py-3.5 text-sm font-bold text-white shadow-lg hover:bg-[#D94B39]">{{ marketing_text('Try the live demo') }}</a>
             <a href="{{ route('marketing.contact') }}" class="inline-flex items-center gap-2 rounded-xl border-2 border-white/30 px-6 py-3.5 text-sm font-bold text-white hover:bg-white/10 transition-colors">{{ marketing_text('Contact us') }}</a>
         </div>
     </div>

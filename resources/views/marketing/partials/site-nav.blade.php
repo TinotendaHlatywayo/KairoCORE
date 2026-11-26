@@ -155,7 +155,7 @@
     </div>
     <div class="kf-mm-foot">
         <span>{{ marketing_text('Cloud-based, multi-language system built for modern schools.') }}</span>
-        <a href="{{ route('marketing.contact') }}#contact-form">{{ marketing_text('Book a demo') }} <span aria-hidden="true">→</span></a>
+        <a href="{{ route('demo.login') }}">{{ marketing_text('Try the live demo') }} <span aria-hidden="true">→</span></a>
     </div>
 </div>
 

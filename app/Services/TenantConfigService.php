@@ -17,7 +17,7 @@ class TenantConfigService
     protected static array $baseConfig = [
         // Branding
         'branding' => [
-            'theme' => 'dev_choice_1',
+            'theme' => 'digital_cobalt',
             'typography' => 'inter',
             'header_opacity' => '100',
             'watermark_opacity' => '30',

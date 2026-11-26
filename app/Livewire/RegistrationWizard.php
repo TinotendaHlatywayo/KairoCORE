@@ -395,6 +395,17 @@ class RegistrationWizard extends Component
                 );
             }
 
+            SystemSetting::withoutTenantScope()->updateOrCreate(
+                [
+                    'school_id' => $school->id,
+                    'group' => 'branding',
+                    'key' => 'theme',
+                ],
+                [
+                    'value' => 'digital_cobalt',
+                ]
+            );
+
             User::create([
                 'school_id' => $school->id,
                 'name' => $this->adminName,

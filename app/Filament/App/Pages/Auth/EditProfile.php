@@ -2,6 +2,8 @@
 
 namespace App\Filament\App\Pages\Auth;
 
+use App\Models\User;
+use App\Security\DemoPersona;
 use App\Services\ProfilePhotoService;
 use Filament\Forms\Components\Component;
 use Filament\Forms\Components\Select;
@@ -148,7 +150,8 @@ class EditProfile extends BaseEditProfile
             return 'Platform Administrator';
         }
 
-        return $user?->customRole?->name
+        return DemoPersona::roleLabel($user instanceof User ? $user : null)
+            ?? $user?->customRole?->name
             ?? $user?->requestedRoleLabel()
             ?? 'Active Account';
     }

@@ -36,18 +36,7 @@ class ReportTemplateResource extends Resource
             return false;
         }
 
-        try {
-            if (class_exists('\Modules\Admin\Services\PermissionRegistry')) {
-                $permissionRegistry = app(PermissionRegistry::class);
-                if (method_exists($permissionRegistry, 'checkAcademicPermission')) {
-                    return $permissionRegistry->checkAcademicPermission('academic_ops.manage_reports');
-                }
-            }
-        } catch (\Exception $e) {
-            \Log::warning('Permission check failed in ReportTemplateResource: '.$e->getMessage());
-        }
-
-        return true;
+        return PermissionRegistry::checkPermission('academic_ops.manage_reports');
     }
 
     protected static ?string $navigationGroup = 'Exams & Grading';

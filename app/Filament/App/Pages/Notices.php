@@ -2,6 +2,8 @@
 
 namespace App\Filament\App\Pages;
 
+use App\Models\User;
+use App\Security\DemoPersona;
 use Filament\Pages\Page;
 use Modules\Communication\Models\Announcement;
 use Modules\Communication\Models\EventCalendar;
@@ -37,12 +39,15 @@ class Notices extends Page
     {
         $user = auth()->user();
 
-        $roleKeys = collect([$user?->requested_role])
-            ->merge($user?->customRole?->role_key ? [$user->customRole->role_key] : [])
-            ->filter()
-            ->unique()
-            ->values()
-            ->all();
+        $demoRoleKeys = DemoPersona::roleKeys($user instanceof User ? $user : null);
+        $roleKeys = $demoRoleKeys !== []
+            ? $demoRoleKeys
+            : collect([$user?->requested_role])
+                ->merge($user?->customRole?->role_key ? [$user->customRole->role_key] : [])
+                ->filter()
+                ->unique()
+                ->values()
+                ->all();
 
         $announcements = Announcement::query()
             ->active()

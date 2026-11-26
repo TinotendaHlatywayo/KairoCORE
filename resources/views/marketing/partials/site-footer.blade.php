@@ -119,7 +119,7 @@
                     <li><a href="{{ route('marketing.home') }}#start">{{ marketing_text('How it works') }}</a></li>
                     <li><a href="{{ route('help.index') }}">{{ marketing_text('Documentation') }}</a></li>
                     <li><a href="{{ route('marketing.home') }}#faq">{{ marketing_text('FAQ') }}</a></li>
-                    <li><a href="{{ route('marketing.contact') }}#contact-form">{{ marketing_text('Book a demo') }}</a></li>
+                    <li><a href="{{ route('demo.login') }}">{{ marketing_text('Try the live demo') }}</a></li>
                 </ul>
             </nav>
 

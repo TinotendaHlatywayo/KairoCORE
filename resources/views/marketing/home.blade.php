@@ -65,8 +65,8 @@
 <h1>@foreach($heroTitleWords as $wi => $w)@if(strcasecmp($w, 'powerful') === 0)<span class="wd gr" style="--i:{{ $wi }}">{{ e($w) }}</span>@else<span class="wd" style="--i:{{ $wi }}">{{ e($w) }}</span>@endif @endforeach</h1>
             <p>{{ str_replace('—', ',', marketing_content('hero_subtitle')) }}</p>
             <div class="cta">
-                <a class="btn o beg" href="{{ marketing_content('hero_primary_url') ?: route('marketing.contact').'#contact-form' }}">
-                    {{ marketing_content('hero_primary_label') ?: marketing_text('Book a demo') }}
+                <a class="btn o beg" href="{{ route('demo.login') }}">
+                    {{ marketing_text('Try the live demo') }}
                     <i class="ar">→</i>
                 </a>
                 <a class="btn g" href="{{ marketing_content('hero_secondary_url') ?: route('marketing.features') }}">
@@ -120,8 +120,8 @@
             <div class="ey">{{ marketing_content('home_why_badge') }}</div>
             <h2>{{ marketing_content('benefits_title') }}</h2>
             <p>{{ marketing_content('benefits_subtitle') }}</p>
-            <a class="btn o beg" href="#contact">
-                {{ marketing_content('hero_primary_label') ?: marketing_text('Book a Demo') }}
+            <a class="btn o beg" href="{{ route('demo.login') }}">
+                {{ marketing_text('Try the live demo') }}
                 <i class="ar">→</i>
             </a>
         </div>
@@ -179,31 +179,14 @@
 <div class="ct rv" id="contact" style="--bld:url('{{ marketing_image('cta_image', marketing_image('hero_image')) }}')">
     <h2>{{ marketing_content('cta_title') }}</h2>
     <p>{{ marketing_content('cta_subtitle') }}</p>
-        <form class="fm" method="POST" action="{{ route('marketing.contact.submit') }}" data-contact-form>
-            @csrf
-            <input type="hidden" name="topic" value="{{ marketing_text('Booking a demo') }}">
-            <input type="hidden" name="message" value="{{ marketing_text('Please contact me to arrange a Kairo CORE demo.') }}">
-        <div class="fl">
-            <label for="f-name">{{ marketing_text('Your name') }}</label>
-            <input autocomplete="name" id="f-name" name="name" placeholder="{{ marketing_text('Your name') }}" required>
+        <div class="cta">
+            <a class="btn o beg" href="{{ route('demo.login') }}">
+                {{ marketing_text('Try the live demo') }} <i class="ar">→</i>
+            </a>
+            <a class="btn g" href="{{ marketing_content('cta_secondary_url') ?: route('marketing.contact') }}">
+                {{ marketing_content('cta_secondary_label') ?: marketing_text('Contact us') }}
+            </a>
         </div>
-        <div class="fl">
-            <label for="f-school">{{ marketing_text('School name') }}</label>
-            <input id="f-school" name="school" placeholder="{{ marketing_text('School name') }}" required>
-        </div>
-        <div class="fl" style="grid-column:1/-1">
-            <label for="f-email">{{ marketing_text('Work email') }}</label>
-            <input autocomplete="email" id="f-email" name="email" placeholder="{{ marketing_text('Work email') }}" required type="email">
-        </div>
-        <button class="btn o" style="grid-column:1/-1;justify-content:center" type="submit">
-            {{ marketing_text('Book a demo') }} →
-        </button>
-        @if($errors->any())
-            <p class="kerr" role="alert">{{ $errors->first() }}</p>
-        @elseif(session('success_message'))
-            <p class="ok" role="status">{{ session('success_message') }}</p>
-        @endif
-    </form>
 </div>
 
 @endsection

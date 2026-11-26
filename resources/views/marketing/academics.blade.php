@@ -14,7 +14,7 @@
             <h1 class="mt-4 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl leading-[1.08]">{{ marketing_text('From class timetable to report card, in one academic system') }}</h1>
             <p class="mt-5 text-lg leading-8 text-slate-600">{{ marketing_text('Set up classes, streams and subjects once. Schedule timetables, capture assessments against your own grading scheme, run examinations and publish report cards — academic management on Kairo CORE mirrors the school year you already work in.') }}</p>
             <div class="mt-8 flex flex-wrap justify-center gap-3">
-                <a href="{{ route('register') }}" class="btn-magnetic inline-flex items-center gap-2 rounded-xl bg-[#D94B39] px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-[#D94B39]/25 hover:bg-[#c14332]">{{ marketing_text('Book a personal demo') }}</a>
+                <a href="{{ route('demo.login') }}" class="btn-magnetic inline-flex items-center gap-2 rounded-xl bg-[#D94B39] px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-[#D94B39]/25 hover:bg-[#c14332]">{{ marketing_text('Try the live demo') }}</a>
                 <a href="{{ route('marketing.features', ['category' => 'academics']) }}" class="inline-flex items-center gap-2 rounded-xl border-2 border-slate-300 px-6 py-3.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors">{{ marketing_text('Explore academic features') }}</a>
             </div>
         </div>
@@ -112,9 +112,9 @@
 <section class="bg-[#1F2E43] py-16">
     <div class="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
         <h2 class="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">{{ marketing_text('See an academic term start to report card') }}</h2>
-        <p class="mt-4 text-lg text-slate-200">{{ marketing_text('Book a personal demo and we will walk through setup, assessment and report generation with your school’s academic structure.') }}</p>
+        <p class="mt-4 text-lg text-slate-200">{{ marketing_text('Explore the live demo to see setup, assessment and report generation with a sample academic structure.') }}</p>
         <div class="mt-8 flex flex-wrap justify-center gap-3">
-            <a href="{{ route('register') }}" class="btn-magnetic inline-flex items-center gap-2 rounded-xl bg-[#EF5F4D] px-6 py-3.5 text-sm font-bold text-white shadow-lg hover:bg-[#D94B39]">{{ marketing_text('Book a personal demo') }}</a>
+            <a href="{{ route('demo.login') }}" class="btn-magnetic inline-flex items-center gap-2 rounded-xl bg-[#EF5F4D] px-6 py-3.5 text-sm font-bold text-white shadow-lg hover:bg-[#D94B39]">{{ marketing_text('Try the live demo') }}</a>
             <a href="{{ route('marketing.contact') }}" class="inline-flex items-center gap-2 rounded-xl border-2 border-white/30 px-6 py-3.5 text-sm font-bold text-white hover:bg-white/10 transition-colors">{{ marketing_text('Contact us') }}</a>
         </div>
     </div>

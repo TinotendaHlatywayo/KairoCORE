@@ -72,9 +72,9 @@ class AdministrationDashboard extends Page
         // Extract color variables matching the active design theme. A user's
         // personal theme takes precedence over the school-wide default.
         $theme = auth()->user()?->theme
-            ?: SystemSetting::get('branding', 'theme', 'emerald_heritage');
-        $chartPrimary = '#15803d';
-        $chartAccent = '#eab308';
+            ?: SystemSetting::get('branding', 'theme', 'digital_cobalt');
+        $chartPrimary = '#3b82f6';
+        $chartAccent = '#8b5cf6';
         if ($theme === 'digital_cobalt') {
             $chartPrimary = '#3b82f6';
             $chartAccent = '#8b5cf6';

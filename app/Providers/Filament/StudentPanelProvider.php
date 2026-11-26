@@ -125,6 +125,12 @@ class StudentPanelProvider extends PanelProvider
                 fn () => Blade::render('@livewire(\'admin-language-switcher\')')
             )
 
+            // Demo-only role switcher. Renders nothing for real accounts.
+            ->renderHook(
+                PanelsRenderHook::TOPBAR_START,
+                fn () => Blade::render('@livewire(\'demo-persona-switcher\')')
+            )
+
             // Pin/fix the sidebar (tablet & up) so it never auto-hides.
             ->renderHook(
                 PanelsRenderHook::TOPBAR_START,
