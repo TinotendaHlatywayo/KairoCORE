@@ -360,12 +360,12 @@ class AppPanelProvider extends PanelProvider
 
             ->renderHook(
                 PanelsRenderHook::BODY_END,
-                fn () => view('components.assistant-storage-guard')
+                fn () => auth()->check() ? view('components.assistant-storage-guard') : ''
             )
 
             ->renderHook(
                 PanelsRenderHook::BODY_END,
-                fn () => Blade::render('@livewire(\'floating-help-assistant\')')
+                fn () => auth()->check() ? Blade::render('@livewire(\'floating-help-assistant\')') : ''
             )
 
             // ──────────────────────────────────────────────────────────────

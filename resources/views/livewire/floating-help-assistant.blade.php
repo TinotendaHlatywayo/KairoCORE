@@ -2,10 +2,30 @@
     $formatGuideText = static function ($text): string {
         return (string) preg_replace('/\*\*(.+?)\*\*/u', '<strong>$1</strong>', e((string) $text));
     };
+
+    $formatStep = static function ($step): array {
+        $plain = trim(strip_tags((string) $step));
+        $text = (string) preg_replace('/^\s*\d+\.\s*(?:Step\s*\d+\s*-\s*)?/i', '', $plain);
+        $parts = explode(':', $text, 2);
+
+        if (count($parts) === 2 && mb_strlen($parts[0]) < 90) {
+            return ['title' => trim($parts[0]), 'body' => trim($parts[1])];
+        }
+
+        return ['title' => 'Step', 'body' => $text];
+    };
+
+    $stepQuestion = static function ($step): string {
+        $text = (string) preg_replace('/^\s*\d+\.\s*(?:Step\s*\d+\s*-\s*)?/i', '', strip_tags((string) $step));
+        $text = str_replace('**', '', $text);
+
+        return trim($text);
+    };
 @endphp
 
 <div
     id="kh"
+    @if(!$visible) hidden @endif
     wire:ignore.self
     :class="open ? 'open' : ''"
     x-data="{ open: false, tab: 'guide' }"
@@ -18,6 +38,7 @@
         });
     "
 >
+@if($visible)
     <style>
         #kh *{box-sizing:border-box}
         #kh{
@@ -45,7 +66,7 @@
 
         #kh-panel{
             position:fixed; right:20px; bottom:calc(84px + env(safe-area-inset-bottom,0px)); z-index:9999;
-            width:390px; max-width:calc(100vw - 24px); height:620px; max-height:calc(100dvh - 110px);
+            width:420px; max-width:calc(100vw - 24px); height:640px; max-height:calc(100dvh - 110px);
             display:flex; flex-direction:column; overflow:hidden;
             background:var(--kh-surface); color:var(--kh-text);
             border:1px solid var(--kh-line); border-radius:20px;
@@ -69,6 +90,26 @@
         .kh-tab[aria-selected="true"]{background:var(--kh-bot);color:#2563eb;box-shadow:inset 0 0 0 1px rgba(37,99,235,.18)}
         .kh-view{flex:1;min-height:0;display:none;flex-direction:column}
         .kh-view.on{display:flex}
+
+        #kh-guide{overflow-y:auto;padding:16px}
+        .kh-kicker{display:inline-block;margin-bottom:6px;padding:4px 9px;border-radius:999px;background:rgba(37,99,235,.1);color:#2563eb;font:800 10px/1 inherit;letter-spacing:.08em}
+        #kh-guide h3{margin:0 0 6px;font-size:17px;line-height:1.3}
+        #kh-guide .lead{margin:0 0 16px;color:var(--kh-muted);font-size:13px;line-height:1.5}
+        .kh-section-title{margin:14px 0 6px;font-size:13px;font-weight:800;color:var(--kh-text)}
+        #kh-guide ol{list-style:none;margin:0;padding:0;counter-reset:kh-step}
+        #kh-guide li{counter-increment:kh-step;position:relative;display:flex;gap:10px;padding:11px 0 11px 34px;border-top:1px solid var(--kh-line);font-size:13px;line-height:1.5}
+        #kh-guide li::before{content:counter(kh-step);position:absolute;left:0;top:12px;width:24px;height:24px;border-radius:50%;border:1.5px solid #2563eb;color:#2563eb;display:grid;place-items:center;font-size:12px;font-weight:800}
+        #kh-guide li b{display:block;margin-bottom:2px;font-size:13px}
+        #kh-guide li span{display:block;color:var(--kh-muted)}
+        .kh-step-ask{margin-top:6px;padding:0;border:0;background:none;color:#2563eb;font:700 11.5px/1 inherit;text-decoration:underline}
+        #kh-guide .kh-detail{padding:9px 0;border-top:1px solid var(--kh-line);font-size:12.5px;line-height:1.5}
+        #kh-guide .kh-detail strong{color:var(--kh-text)}
+        #kh-guide .kh-detail span{color:var(--kh-muted)}
+        #kh-guide .link{margin-top:14px;padding:10px 12px;border-radius:12px;background:var(--kh-bot);font-size:12px;line-height:1.5}
+        #kh-guide .kh-doc{display:inline-flex;margin-top:12px;padding:10px 14px;border-radius:999px;background:#2563eb;color:#fff;font-size:12.5px;font-weight:700;text-decoration:none}
+        #kh-guide .kh-doc:hover{background:#1d4ed8}
+        #kh-guide .ask{margin-top:10px;margin-left:8px;border-color:#ef5b3c;color:#ef5b3c;font-weight:800}
+
         #kh-log{
             flex:1;min-height:0;overflow-y:auto;padding:14px 14px 6px;display:flex;flex-direction:column;gap:6px;
             background:var(--kh-wall);
@@ -80,22 +121,29 @@
         .kh-row.me{justify-content:flex-end}
         .kh-av{width:28px;height:28px;border-radius:50%;background:#2563eb;color:#fff;font-weight:800;font-size:13px;display:grid;place-items:center;flex:none;overflow:hidden}
         .kh-av img{width:100%;height:100%;object-fit:contain;background:#fff}
-        .kh-msg{max-width:84%;padding:9px 12px 6px;border-radius:16px;font-size:13.5px;line-height:1.45;overflow-wrap:anywhere}
+        .kh-msg{max-width:88%;padding:9px 12px 6px;border-radius:16px;font-size:13.5px;line-height:1.5;overflow-wrap:anywhere}
         .kh-row.bot .kh-msg{background:var(--kh-bot);color:var(--kh-text);border-bottom-left-radius:4px}
         .kh-row.me .kh-msg{background:linear-gradient(135deg,#ef5b3c,#f58a4c);color:#fff;border-bottom-right-radius:4px}
         .kh-msg p{margin:0 0 6px}
         .kh-msg ul,.kh-msg ol{margin:0 0 6px;padding-left:18px}
-        .kh-msg li{margin:2px 0}
+        .kh-msg li{margin:3px 0}
         .kh-msg a{color:#2563eb;font-weight:700;text-decoration:underline}
         .kh-row.me .kh-msg a{color:#fff}
         .kh-msg button{display:block;margin:4px 0;padding:0;border:0;background:none;color:#2563eb;font:700 inherit;text-align:left;text-decoration:underline}
+        .kh-answer-title{display:block;margin-bottom:4px;font-size:13px;font-weight:800}
+        .kh-answer-intro{margin-bottom:6px}
+        .kh-answer-note{padding:6px 0;border-top:1px solid rgba(100,116,139,.22);font-size:12.5px}
+        .kh-page-links{margin-top:8px;padding-top:8px;border-top:1px solid rgba(100,116,139,.22);font-size:12px}
+        .kh-page-links a{display:inline-block;margin:3px 6px 0 0;padding:4px 8px;border-radius:999px;background:rgba(37,99,235,.1);color:#2563eb;text-decoration:none}
         .kh-meta{display:flex;justify-content:flex-end;align-items:center;gap:4px;font-size:10.5px;opacity:.7;margin-top:2px}
         .kh-tick{width:16px;height:10px}
         .kh-tick path{fill:none;stroke:#cfe6ff;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
         .kh-typing .kh-msg{padding:12px 14px}
         .kh-typing span{display:inline-block;width:7px;height:7px;margin:0 2px;border-radius:50%;background:var(--kh-muted);animation:kh-bounce 1.1s infinite ease-in-out}
         .kh-typing span:nth-child(2){animation-delay:.15s}.kh-typing span:nth-child(3){animation-delay:.3s}
+        .kh-typing-inline::after{content:'▌';color:#2563eb;animation:kh-caret .7s steps(2,start) infinite}
         @keyframes kh-bounce{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-4px);opacity:1}}
+        @keyframes kh-caret{0%,100%{opacity:.2}50%{opacity:1}}
         .kh-sugg{padding:8px 12px 4px;border-top:1px solid var(--kh-line);background:var(--kh-surface)}
         .kh-sugg small{display:block;font-size:12px;font-weight:700;color:var(--kh-muted);margin-bottom:6px}
         .kh-chips{display:flex;gap:7px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin}
@@ -111,27 +159,14 @@
         .kh-send svg{width:18px;height:18px}
         .kh-foot{padding:0 14px 10px;font-size:11px;color:var(--kh-muted);background:var(--kh-surface)}
         .kh-foot a{color:#2563eb;font-weight:700;text-decoration:underline}
-        #kh-guide{overflow-y:auto;padding:16px}
-        #kh-guide h3{margin:0 0 4px;font-size:16px}
-        #kh-guide .lead{margin:0 0 14px;color:var(--kh-muted);font-size:13px}
-        #kh-guide ol{list-style:none;margin:0;padding:0;counter-reset:kh-step}
-        #kh-guide li{counter-increment:kh-step;display:flex;gap:10px;padding:10px 0;border-top:1px solid var(--kh-line);font-size:13.5px}
-        #kh-guide li::before{content:counter(kh-step);flex:none;width:24px;height:24px;border-radius:50%;border:1.5px solid #2563eb;color:#2563eb;display:grid;place-items:center;font-size:12px;font-weight:700}
-        #kh-guide li b,#kh-guide li strong{display:block}
-        #kh-guide .kh-detail{padding:8px 0;border-top:1px solid var(--kh-line);font-size:12.5px}
-        #kh-guide .kh-detail strong{color:var(--kh-text)}
-        #kh-guide .link{margin-top:14px;padding:10px 12px;border-radius:12px;background:var(--kh-bot);font-size:12.5px}
-        #kh-guide .kh-doc{display:inline-flex;margin-top:12px;padding:10px 14px;border-radius:999px;background:#2563eb;color:#fff;font-size:12.5px;font-weight:700;text-decoration:none}
-        #kh-guide .kh-doc:hover{background:#1d4ed8}
-        #kh-guide .ask{margin-top:12px;border-color:#ef5b3c;color:#ef5b3c;font-weight:800}
-        .kh-page-links{margin-top:8px;padding-top:8px;border-top:1px solid rgba(100,116,139,.22);font-size:12px}
-        .kh-page-links a{display:inline-block;margin:3px 6px 0 0;padding:4px 8px;border-radius:999px;background:rgba(37,99,235,.1);text-decoration:none}
+
         @media (max-width:520px){
             #kh-panel{right:0;bottom:0;width:100vw;max-width:100vw;height:100dvh;max-height:100dvh;border-radius:0;border:0}
             #kh.open #kh-fab{display:none}
         }
         @media (prefers-reduced-motion:reduce){
             #kh *{animation:none!important;transition:none!important}
+            .kh-typing-inline::after{content:''}
         }
     </style>
 
@@ -159,27 +194,36 @@
 
         <div class="kh-view on" id="v-guide" :class="tab === 'guide' ? 'on' : ''" role="tabpanel">
             <div id="kh-guide">
+                <span class="kh-kicker">{{ __('Current page') }}</span>
                 <h3>{{ $help['title'] ?? __('System Guidance') }}</h3>
                 <p class="lead">{{ $help['summary'] ?? '' }}</p>
 
+                <h4 class="kh-section-title">{{ __('Step-by-step workflow') }}</h4>
                 @if(!empty($help['workflow']))
                     <ol>
                         @foreach($help['workflow'] as $step)
-                            <li><div>{!! $formatGuideText($step) !!}</div></li>
+                            @php $formattedStep = $formatStep($step); @endphp
+                            <li>
+                                <div>
+                                    <b>{{ $formattedStep['title'] }}</b>
+                                    <span>{!! $formatGuideText($formattedStep['body']) !!}</span>
+                                    <button class="kh-step-ask" type="button" data-question="{{ $stepQuestion($step) }}">{{ __('Ask about this step') }}</button>
+                                </div>
+                            </li>
                         @endforeach
                     </ol>
                 @endif
 
                 @if(!empty($help['details']))
+                    <h4 class="kh-section-title">{{ __('Good to know') }}</h4>
                     @foreach($help['details'] as $label => $text)
-                        <div class="kh-detail"><strong>{{ $label }}:</strong> {{ $text }}</div>
+                        <div class="kh-detail"><strong>{{ $label }}:</strong> <span>{{ $text }}</span></div>
                     @endforeach
                 @endif
 
-                <div class="link"><b>{{ __('This guide is page-specific:') }}</b> {{ __('it changes automatically when you open another page while this window stays open.') }}</div>
+                <div class="link"><b>{{ __('Page-aware help:') }}</b> {{ __('This guide and the assistant suggestions change as you move around the workspace.') }}</div>
 
                 <a class="kh-doc" href="{{ $docsUrl }}" target="_blank" rel="noopener">{{ __('Full Documentation') }}</a>
-
                 <button class="kh-btn ask" type="button" @click="tab = 'chat'; window.kairoAssistantFocus && window.kairoAssistantFocus()">{{ __('Still stuck? Ask the assistant') }}</button>
             </div>
         </div>
@@ -187,23 +231,26 @@
         <div class="kh-view" id="v-chat" :class="tab === 'chat' ? 'on' : ''" role="tabpanel">
             <div id="kh-log" aria-live="polite"></div>
             <div class="kh-sugg">
-                <small>{{ __('Suggested questions') }}</small>
+                <small>{{ __('Suggested questions for this page') }}</small>
                 <div class="kh-chips" id="kh-chips"></div>
             </div>
             <form class="kh-form" id="kh-form" autocomplete="off">
-                <input id="kh-input" type="text" placeholder="{{ __('Ask anything about Kairo CORE…') }}" aria-label="{{ __('Type your question') }}">
+                <input id="kh-input" type="text" placeholder="{{ __('Ask about any page or workflow…') }}" aria-label="{{ __('Type your question') }}">
                 <button class="kh-send" id="kh-send" type="submit" aria-label="{{ __('Send') }}" disabled>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
                 </button>
             </form>
-            <div class="kh-foot">{{ __('Answers use Kairo CORE page guides and the Help Centre.') }} <a href="{{ $helpCentreUrl }}" target="_blank" rel="noopener">{{ __('Help Centre') }}</a></div>
+            <div class="kh-foot">{{ __('Answers use the Kairo CORE workflow engine and Help Centre.') }} <a href="{{ $helpCentreUrl }}" target="_blank" rel="noopener">{{ __('Help Centre') }}</a></div>
         </div>
     </section>
+@endif
 </div>
 
+@if($visible)
 @script
 <script type="module">
-import { matchQuestion, normalize, logUnmatched } from '/kfaq-engine.js';
+import { matchQuestion, logUnmatched } from '/kfaq-engine.js';
+import { assistantAnswer } from '/kairo-assistant-engine.js';
 
 const state = window.__kairoAssistant || (window.__kairoAssistant = {
     booted: false,
@@ -213,8 +260,10 @@ const state = window.__kairoAssistant || (window.__kairoAssistant = {
     messages: [],
     previousTopic: null,
     guide: {},
+    workflows: [],
     pages: [],
     suggestions: [],
+    currentTitle: '',
     userId: 'guest',
     docsUrl: '',
     helpCentreUrl: '',
@@ -225,118 +274,62 @@ const el = (id) => document.getElementById(id);
 const clock = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[c]));
 const tickSvg = '<svg class="kh-tick" viewBox="0 0 16 10" aria-label="Read"><path d="M1 5.5 4 8.5 10 1.5M6 8.5 12 1.5"/></svg>';
+const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function linkify(text) {
     return escapeHtml(text)
+        .replace(/\n/g, '<br>')
         .replace(/\bhttps?:\/\/[^\s<]+/gi, (url) => `<a href="${url}" target="_blank" rel="noopener">${url}</a>`)
         .replace(/\b([a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,})\b/gi, '<a href="mailto:$1">$1</a>');
 }
 
-function guideEntry() {
-    const guide = state.guide || {};
-    const steps = (guide.workflow || []).map((step) => String(step).replace(/^\d+\.\s*/, '').replace(/\*\*/g, ''));
-    const details = Object.entries(guide.details || {}).map(([label, text]) => `${label}: ${text}`);
-    const source = [guide.title, guide.summary, ...steps, ...details].filter(Boolean).join(' ');
-    const keywords = [...new Set(normalize(source).split(/\s+/).filter((word) => word.length > 3))].slice(0, 60);
+function safeHref(url) {
+    const value = String(url || '');
+    if (value.startsWith('/')) return value;
 
-    return {
-        id: 'current-page-guide',
-        category: 'workspace',
-        question: `How do I use ${guide.title || 'this page'}?`,
-        answer: [guide.summary, ...steps.map((step) => `Step: ${step}`), ...details].filter(Boolean).join(' '),
-        tags: [guide.title || 'this page', 'current page', 'page guide', 'workflow'],
-        phrasings: [
-            'how do i use this page',
-            'what does this page do',
-            'help with this page',
-            'page guide',
-            'how do i get started here'
-        ],
-        keywords,
-        related: [],
-        source: { title: guide.title || 'Current page guide', url: window.location.href },
-        needsOwnerAnswer: false
-    };
+    try {
+        const parsed = new URL(value, window.location.href);
+        if (parsed.origin === window.location.origin) return parsed.pathname + parsed.search + parsed.hash;
+    } catch (error) {}
+
+    return state.docsUrl || state.helpCentreUrl || '#';
 }
 
-function pageLinks(entry, query) {
-    const hints = {
-        finance: ['finance', 'fee', 'invoice', 'payment', 'billing'],
-        students: ['student', 'admission', 'enrollment', 'register'],
-        academics: ['academic', 'class', 'subject', 'timetable', 'level'],
-        exams: ['exam', 'mark', 'assessment', 'report card'],
-        hr: ['staff', 'employee', 'hr', 'payroll', 'leave'],
-        communication: ['message', 'announcement', 'communication', 'notice'],
-        library: ['library', 'book', 'issue'],
-        health: ['clinic', 'health', 'medical'],
-        inventory: ['inventory', 'asset', 'purchase', 'requisition'],
-        boarding: ['hostel', 'boarding', 'accommodation'],
-        reports: ['report', 'analytics', 'export'],
-        website: ['website', 'cms', 'page', 'content']
-    };
+function renderAnswer(result) {
+    const data = result || {};
+    let html = `<span class="kh-answer-title">${escapeHtml(data.title || 'Kairo assistant')}</span>`;
+    html += `<p class="kh-answer-intro">${linkify(data.intro || '')}</p>`;
 
-    const haystack = normalize(`${query || ''} ${entry?.question || ''} ${entry?.category || ''} ${(entry?.tags || []).join(' ')}`);
-    const wanted = [...new Set([...(hints[entry?.category] || []), ...haystack.split(/\s+/).filter((word) => word.length > 3)])];
-    const scored = (state.pages || []).map((page) => {
-        const text = normalize(`${page.label || ''} ${page.group || ''}`);
-        let score = 0;
-        wanted.forEach((word) => {
-            if (text.includes(word)) score += word.length;
-        });
-        if (entry?.category && text.includes(entry.category)) score += 12;
-        return { page, score };
-    }).filter((item) => item.score > 0).sort((a, b) => b.score - a.score);
-
-    const chosen = scored.slice(0, 3).map((item) => item.page);
-    if (chosen.length === 0 && (state.pages || []).length > 0) {
-        chosen.push(...state.pages.slice(0, 2));
-    }
-    return chosen;
-}
-
-function pageLinksHtml(entry, query) {
-    const links = pageLinks(entry, query);
-    if (links.length === 0) return '';
-    return `<div class="kh-page-links"><b>{{ __('Open in workspace:') }}</b> ${links.map((page) => `<a href="${escapeHtml(page.url)}">${escapeHtml(page.label)}</a>`).join('')}</div>`;
-}
-
-function footerLinks() {
-    return `<div class="kh-page-links"><a href="${escapeHtml(state.docsUrl)}" target="_blank" rel="noopener">{{ __('Full documentation') }}</a><a href="${escapeHtml(state.helpCentreUrl)}" target="_blank" rel="noopener">{{ __('Help Centre') }}</a></div>`;
-}
-
-function buildAnswer(entry, result, query) {
-    if (result?.type === 'smalltalk') {
-        return `<p>${escapeHtml(result.smallTalk)}</p>${footerLinks()}`;
+    if ((data.steps || []).length) {
+        html += '<ol>' + data.steps.map((step) => `<li>${escapeHtml(step)}</li>`).join('') + '</ol>';
     }
 
-    if (!entry) {
-        const candidates = result?.candidates || [];
-        if (candidates.length > 0) {
-            return `<p>{{ __('I could not find an exact answer, but these guides are closest:') }}</p>${candidates.map((candidate) => `<button type="button" data-question="${escapeHtml(candidate.question)}">${escapeHtml(candidate.question)}</button>`).join('')}${footerLinks()}`;
-        }
-        return `<p>{{ __('I could not find an exact guide for that. Try a shorter question, or open the Help Centre for the full library.') }}</p>${footerLinks()}`;
+    (data.notes || []).forEach((note) => {
+        const label = note?.label ? `<b>${escapeHtml(note.label)}:</b> ` : '';
+        html += `<div class="kh-answer-note">${label}${escapeHtml(note?.text || '')}</div>`;
+    });
+
+    const links = data.links || [];
+    if (links.length) {
+        html += `<div class="kh-page-links"><b>{{ __('Open next:') }}</b> `;
+        html += links.map((link) => {
+            if (link.question) return `<button type="button" data-question="${escapeHtml(link.question)}">${escapeHtml(link.label)}</button>`;
+            return `<a href="${escapeHtml(safeHref(link.url))}" target="_blank" rel="noopener">${escapeHtml(link.label || link.url)}</a>`;
+        }).join('');
+        html += '</div>';
     }
 
-    if (entry.id === 'current-page-guide') {
-        const guide = state.guide || {};
-        const steps = (guide.workflow || []).map((step) => `<li>${escapeHtml(String(step).replace(/^\d+\.\s*/, '').replace(/\*\*/g, ''))}</li>`).join('');
-        const details = Object.entries(guide.details || {}).map(([label, text]) => `<p><b>${escapeHtml(label)}:</b> ${escapeHtml(text)}</p>`).join('');
-        return `<p><b>${escapeHtml(guide.title || '{{ __('This page') }}')}</b></p><p>${escapeHtml(guide.summary || '')}</p>${steps ? `<ol>${steps}</ol>` : ''}${details}${pageLinksHtml(entry, query)}${footerLinks()}`;
-    }
+    html += `<div class="kh-page-links"><a href="${escapeHtml(state.docsUrl)}" target="_blank" rel="noopener">{{ __('Full documentation') }}</a><a href="${escapeHtml(state.helpCentreUrl)}" target="_blank" rel="noopener">{{ __('Help Centre') }}</a></div>`;
 
-    return `<p>${linkify(entry.answer)}</p>${pageLinksHtml(entry, query)}${footerLinks()}`;
+    return html;
 }
 
-function followUps(entry, result) {
-    const related = (entry?.related || []).map((id) => (state.kb || []).find((item) => item.id === id)?.question).filter(Boolean);
-    const defaults = [
-        'How do I use this page?',
-        'What does this page connect to?',
-        'How do I find related pages?',
-        'Where can I read the full guide?'
-    ];
-    const candidates = (result?.candidates || []).map((item) => item.question);
-    return [...new Set([...related, ...candidates, ...defaults, ...(state.suggestions || [])])].slice(0, 4);
+function htmlToText(html) {
+    const holder = document.createElement('div');
+    holder.innerHTML = String(html || '');
+    holder.querySelectorAll('li').forEach((item) => item.prepend(document.createTextNode('• ')));
+    holder.querySelectorAll('button, a').forEach((item) => item.prepend(document.createTextNode(' ')));
+    return (holder.textContent || '').replace(/\s+/g, ' ').trim();
 }
 
 function persist() {
@@ -345,21 +338,71 @@ function persist() {
     } catch (error) {}
 }
 
+function avatarHtml() {
+    return `<div class="kh-av" aria-hidden="true"><img src="${escapeHtml(state.faviconUrl || '/images/kairocore-icon.png')}" alt=""></div>`;
+}
+
 function appendRow(who, html, at = null, persistMessage = true) {
     const row = document.createElement('div');
     row.className = `kh-row ${who}`;
-    const avatar = who === 'bot'
-        ? `<div class="kh-av" aria-hidden="true"><img src="${escapeHtml(state.faviconUrl || '/images/kairocore-icon.png')}" alt=""></div>`
-        : '';
-    row.innerHTML = avatar + `<div class="kh-msg">${html}<div class="kh-meta">${escapeHtml(at || clock())}${who === 'me' ? tickSvg : ''}</div></div>`;
+    const time = at || clock();
+    const avatar = who === 'bot' ? avatarHtml() : '';
+    row.innerHTML = avatar + `<div class="kh-msg">${html}<div class="kh-meta">${escapeHtml(time)}${who === 'me' ? tickSvg : ''}</div></div>`;
     el('kh-log')?.appendChild(row);
-    const log = el('kh-log');
-    if (log) log.scrollTop = log.scrollHeight;
+    scrollLog();
     if (persistMessage) {
-        state.messages.push({ who, html, at: at || clock() });
+        state.messages.push({ who, html, at: time });
         persist();
     }
     return row;
+}
+
+function scrollLog() {
+    const log = el('kh-log');
+    if (log) log.scrollTop = log.scrollHeight;
+}
+
+function appendAnswer(html) {
+    const at = clock();
+    state.messages.push({ who: 'bot', html, at });
+    persist();
+
+    const row = document.createElement('div');
+    row.className = 'kh-row bot';
+    const meta = `<div class="kh-meta">${escapeHtml(at)}</div>`;
+    row.innerHTML = avatarHtml() + `<div class="kh-msg">${html}${meta}</div>`;
+    el('kh-log')?.appendChild(row);
+
+    if (reducedMotion()) {
+        scrollLog();
+        return;
+    }
+
+    const bubble = row.querySelector('.kh-msg');
+    const cursor = document.createElement('span');
+    cursor.className = 'kh-typing-inline';
+    cursor.setAttribute('aria-hidden', 'true');
+    bubble.innerHTML = cursor.outerHTML + meta;
+
+    const target = bubble.querySelector('.kh-typing-inline');
+    const text = htmlToText(html);
+    let index = 0;
+    const chunk = Math.max(2, Math.ceil(text.length / 150));
+
+    const tick = () => {
+        index = Math.min(text.length, index + chunk);
+        target.textContent = text.slice(0, index);
+        scrollLog();
+
+        if (index < text.length) {
+            requestAnimationFrame(tick);
+        } else {
+            bubble.innerHTML = html + meta;
+            scrollLog();
+        }
+    };
+
+    requestAnimationFrame(tick);
 }
 
 function renderMessages() {
@@ -405,10 +448,9 @@ async function ensureKb() {
 function typingRow() {
     const row = document.createElement('div');
     row.className = 'kh-row bot kh-typing';
-    row.innerHTML = '<div class="kh-av" aria-hidden="true">K</div><div class="kh-msg" aria-label="{{ __('Assistant is typing') }}"><span></span><span></span><span></span></div>';
+    row.innerHTML = avatarHtml() + '<div class="kh-msg" aria-label="{{ __('Assistant is typing') }}"><span></span><span></span><span></span></div>';
     el('kh-log')?.appendChild(row);
-    const log = el('kh-log');
-    if (log) log.scrollTop = log.scrollHeight;
+    scrollLog();
     return row;
 }
 
@@ -425,17 +467,34 @@ async function ask(question) {
 
     const typing = typingRow();
     await ensureKb();
+    if (!reducedMotion()) await new Promise((resolve) => setTimeout(resolve, 180));
 
     try {
-        const result = matchQuestion(text, [guideEntry(), ...state.kb], state.previousTopic, @js(app()->getLocale()));
-        if (result.entry) state.previousTopic = result.entry.category || state.previousTopic;
-        const answer = buildAnswer(result.entry, result, text);
-        typing.remove();
-        appendRow('bot', answer);
-        setChips(followUps(result.entry, result));
+        const small = matchQuestion(text, state.kb || [], state.previousTopic, @js(app()->getLocale()));
+
+        if (small.type === 'smalltalk') {
+            typing.remove();
+            appendAnswer(`<p>${escapeHtml(small.smallTalk)}</p><div class="kh-page-links"><a href="${escapeHtml(state.docsUrl)}" target="_blank" rel="noopener">{{ __('Full documentation') }}</a></div>`);
+            setChips(state.suggestions);
+        } else {
+            const result = assistantAnswer(text, {
+                kb: state.kb || [],
+                workflows: state.workflows || [],
+                pages: state.pages || [],
+                suggestions: state.suggestions || [],
+                currentTitle: state.currentTitle,
+                locale: @js(app()->getLocale()),
+            });
+
+            typing.remove();
+            appendAnswer(renderAnswer(result));
+            setChips((result.followUps || []).length ? result.followUps : state.suggestions);
+
+            if (result.kind === 'fallback') logUnmatched(text);
+        }
     } catch (error) {
         typing.remove();
-        appendRow('bot', `<p>{{ __('Something interrupted that answer. Please try again.') }}</p>${footerLinks()}`);
+        appendAnswer(`<p>{{ __('That answer was interrupted. Please try again.') }}</p><div class="kh-page-links"><a href="${escapeHtml(state.docsUrl)}" target="_blank" rel="noopener">{{ __('Full documentation') }}</a></div>`);
         logUnmatched(text);
     } finally {
         state.busy = false;
@@ -447,27 +506,35 @@ function resetConversation() {
     state.previousTopic = null;
     const log = el('kh-log');
     if (log) log.innerHTML = '<div class="kh-day">{{ __('Today') }}</div>';
-    const title = state.guide?.title || '{{ __('Kairo CORE') }}';
-    appendRow('bot', `<p>{{ __('Hi, I am the Kairo assistant. I can guide you through') }} <b>${escapeHtml(title)}</b> {{ __('or answer questions from the Help Centre.') }}</p>`);
+    const title = state.currentTitle || '{{ __('Kairo CORE') }}';
+    appendRow('bot', `<p>{{ __('Hi, I am the Kairo assistant. I can walk you through') }} <b>${escapeHtml(title)}</b> {{ __('and answer questions about any Kairo CORE workflow.') }}</p>`);
     setChips(state.suggestions);
 }
 
 window.kairoAssistantFocus = () => el('kh-input')?.focus();
 window.kairoAssistantReset = resetConversation;
-window.kairoAssistantSetGuide = (guide, pages, suggestions, faviconUrl, docsUrl, helpCentreUrl) => {
+window.kairoAssistantSetGuide = (guide, workflows, pages, suggestions, currentTitle, faviconUrl, docsUrl, helpCentreUrl) => {
     state.guide = guide || {};
+    state.workflows = workflows || [];
     state.pages = pages || [];
     state.suggestions = suggestions || [];
+    state.currentTitle = currentTitle || state.currentTitle;
     state.faviconUrl = faviconUrl || state.faviconUrl;
     state.docsUrl = docsUrl || state.docsUrl;
     state.helpCentreUrl = helpCentreUrl || state.helpCentreUrl;
-    if (state.booted) renderMessages();
+
+    if (state.booted) {
+        renderMessages();
+        setChips(state.suggestions);
+    }
 };
 
 window.kairoAssistantSetGuide(
     @js($help),
+    @js($workflows),
     @js($pages),
     @js($suggestions),
+    @js($currentTitle),
     @js($faviconUrl),
     @js($docsUrl),
     @js($helpCentreUrl)
@@ -477,9 +544,6 @@ if (!state.booted) {
     state.booted = true;
     state.userId = @js(auth()->id() ?? 'guest');
     state.storageKey = `kairo_assistant_chat_${state.userId}`;
-    state.docsUrl = @js($docsUrl);
-    state.helpCentreUrl = @js($helpCentreUrl);
-    state.faviconUrl = @js($faviconUrl);
 
     try {
         state.messages = JSON.parse(localStorage.getItem(state.storageKey) || '[]');
@@ -489,11 +553,8 @@ if (!state.booted) {
     }
 
     renderMessages();
-    if (state.messages.length === 0) {
-        resetConversation();
-    } else {
-        setChips(state.suggestions);
-    }
+    if (state.messages.length === 0) resetConversation();
+    else setChips(state.suggestions);
     ensureKb();
 
     document.addEventListener('submit', (event) => {
@@ -510,14 +571,23 @@ if (!state.booted) {
     });
 
     document.addEventListener('click', (event) => {
+        const guideStep = event.target.closest('#kh-guide button[data-question]');
+        if (guideStep) {
+            document.querySelector('#kh .kh-tabs .kh-tab:nth-child(2)')?.click();
+            ask(guideStep.dataset.question);
+            return;
+        }
+
         const chip = event.target.closest('#kh-chips .kh-chip');
         if (chip) {
             ask(chip.dataset.question);
             return;
         }
+
         const followUp = event.target.closest('#kh-log button[data-question]');
         if (followUp) ask(followUp.dataset.question);
     });
 }
 </script>
 @endscript
+@endif
