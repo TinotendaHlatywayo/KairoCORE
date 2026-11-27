@@ -62,6 +62,7 @@ use App\Http\Middleware\EnsureImpersonationSessionIsValid;
 use App\Http\Middleware\EnsureTenantNotSuspended;
 use App\Http\Middleware\EnsureUserActive;
 use App\Http\Middleware\EnsureWorkspaceTenantContext;
+use App\Http\Middleware\EnsureDemoSandboxAccess;
 use App\Http\Middleware\ResolveTenant;
 use App\Http\Middleware\SchoolPanelAuthenticate;
 use App\Http\Middleware\SetUserLocale;
@@ -552,6 +553,7 @@ class AppPanelProvider extends PanelProvider
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,
+                EnsureDemoSandboxAccess::class,
                 AuthenticateSession::class,
                 ShareErrorsFromSession::class,
                 VerifyCsrfToken::class,

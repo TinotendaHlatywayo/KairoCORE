@@ -8,6 +8,7 @@ use App\Filament\App\Pages\Auth\Login;
 use App\Filament\Student\Pages\StudentDashboard;
 use App\Http\Middleware\EnsureTenantNotSuspended;
 use App\Http\Middleware\EnsureUserActive;
+use App\Http\Middleware\EnsureDemoSandboxAccess;
 use App\Http\Middleware\ResolveTenant;
 use App\Http\Middleware\SchoolPanelAuthenticate;
 use App\Http\Middleware\SetUserLocale;
@@ -210,6 +211,7 @@ class StudentPanelProvider extends PanelProvider
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,
+                EnsureDemoSandboxAccess::class,
                 AuthenticateSession::class,
                 ShareErrorsFromSession::class,
                 VerifyCsrfToken::class,

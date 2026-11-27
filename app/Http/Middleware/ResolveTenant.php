@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Models\Domain;
 use App\Models\School;
 use App\Services\TenantFeatureService;
+use App\Support\DemoSandbox;
 use Closure;
 use Filament\Support\Colors\Color;
 use Filament\Support\Facades\FilamentColor;
@@ -91,6 +92,10 @@ class ResolveTenant
         } else {
             $school = $this->resolveSchool($host, $baseHosts);
             if (! $school) {
+                if (Str::startsWith($host, DemoSandbox::prefix())) {
+                    return response()->view('errors.demo-ended', [], 410);
+                }
+
                 abort(404, 'School platform domain not registered.');
             }
         }
@@ -192,7 +197,7 @@ class ResolveTenant
                 $subdomain = substr($host, 0, -strlen($suffix));
 
                 return Cache::remember("tenant.subdomain:{$subdomain}", self::TENANT_CACHE_TTL_SECONDS, function () use ($subdomain) {
-                    return School::query()->where('subdomain', $subdomain)->first();
+                    return School::withoutGlobalScopes()->where('subdomain', $subdomain)->first();
                 });
             }
         }

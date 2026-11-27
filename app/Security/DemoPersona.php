@@ -3,6 +3,7 @@
 namespace App\Security;
 
 use App\Models\User;
+use App\Support\DemoSandbox;
 
 final class DemoPersona
 {
@@ -14,7 +15,10 @@ final class DemoPersona
             return false;
         }
 
-        return mb_strtolower((string) $user->email) === mb_strtolower((string) config('demo.email'));
+        $email = mb_strtolower((string) $user->email);
+
+        return $email === mb_strtolower((string) config('demo.email'))
+            || DemoSandbox::isSandboxEmail($email);
     }
 
     public static function personas(): array

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Http\Middleware\ResolveTenant;
+use App\Http\Responses\DemoLogoutResponse;
 use App\Livewire\Assessment\MarkingQueue;
 use App\Livewire\Assessment\TakeAssessment;
 use App\Livewire\Exams\PortalReportsPublisher;
@@ -17,21 +18,32 @@ use App\Policies\CmsPagePolicy;
 use App\Policies\CmsWebsitePolicy;
 use App\Policies\SchoolPolicy;
 use App\Services\ImageConverter;
+use App\Support\DemoSessionGuard;
 use App\Support\PdfFonts;
 use App\Support\UploadReason;
 use Barryvdh\DomPDF\PDF;
+use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\BaseFileUpload;
+use Filament\Http\Responses\Auth\Contracts\LogoutResponse as FilamentLogoutResponse;
 use Filament\Navigation\NavigationManager;
+use Filament\Support\Enums\MaxWidth;
+use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Table;
 use Illuminate\Auth\Events\Authenticated;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Events\ConnectionEstablished;
 use Illuminate\Database\LazyLoadingViolationException;
+use Illuminate\Http\Client\Events\RequestSending;
 use Illuminate\Mail\Events\MessageSending;
+use Illuminate\Queue\Events\JobProcessing;
+use Illuminate\Queue\Events\JobQueueing;
 use Illuminate\Session\DatabaseSessionHandler;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\URL;
@@ -91,6 +103,66 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $this->app->bind(FilamentLogoutResponse::class, DemoLogoutResponse::class);
+
+        Event::listen(MessageSending::class, function (MessageSending $event) {
+            return DemoSessionGuard::active() ? false : null;
+        });
+
+        Event::listen(RequestSending::class, function (RequestSending $event): void {
+            DemoSessionGuard::assertWriteAllowed('send outbound HTTP requests');
+        });
+
+        Event::listen(JobQueueing::class, function (JobQueueing $event): void {
+            DemoSessionGuard::assertJobAllowed(DemoSessionGuard::schoolIdFromJob($event->job));
+        });
+
+        Queue::createPayloadUsing(function (?string $connection, string $queue, array $payload): array {
+            if (DemoSessionGuard::active() && ! DemoSessionGuard::writesAllowed()) {
+                $payload['demo_sandbox_school_id'] = DemoSessionGuard::schoolId();
+            }
+
+            return $payload;
+        });
+
+        Event::listen(JobProcessing::class, function (JobProcessing $event): void {
+            $schoolId = $event->job->payload()['demo_sandbox_school_id'] ?? null;
+
+            if (! is_numeric($schoolId)) {
+                return;
+            }
+
+            $school = School::withoutGlobalScopes()->withTrashed()->find((int) $schoolId);
+
+            if (! $school
+                || ! $school->is_demo_sandbox
+                || $school->trashed()
+                || ($school->expires_at?->isPast() ?? false)
+                || ($school->hard_expires_at?->isPast() ?? false)) {
+                $event->job->delete();
+            }
+        });
+
+        $assertQueryAllowed = function (string $query, array $bindings, $connection): void {
+            DemoSessionGuard::assertWriteQueryAllowed($query, $connection->prepareBindings($bindings));
+        };
+
+        foreach (DB::getConnections() as $connection) {
+            $connection->beforeExecuting($assertQueryAllowed);
+        }
+
+        DB::connection()->beforeExecuting($assertQueryAllowed);
+
+        Event::listen(ConnectionEstablished::class, function (ConnectionEstablished $event) use ($assertQueryAllowed): void {
+            $event->connection->beforeExecuting($assertQueryAllowed);
+        });
+
+        foreach (['eloquent.saving: '.User::class, 'eloquent.deleting: '.User::class] as $event) {
+            Event::listen($event, function () use ($event): void {
+                DemoSessionGuard::assertWriteAllowed(str_contains($event, 'saving') ? 'create or update user accounts' : 'delete user accounts');
+            });
+        }
+
         $centralHost = parse_url((string) config('app.url'), PHP_URL_HOST) ?: 'localhost';
         URL::defaults(array_merge(URL::getDefaultParameters(), [
             '__centralHost' => $centralHost,
@@ -205,6 +277,16 @@ class AppServiceProvider extends ServiceProvider
             Table::configureUsing(function (Table $table): void {
                 $table->recordUrl(null);
             });
+        }
+
+        foreach ([
+            DeleteAction::class,
+            \Filament\Tables\Actions\DeleteAction::class,
+            DeleteBulkAction::class,
+        ] as $deleteActionClass) {
+            $deleteActionClass::configureUsing(
+                fn ($action) => $action->modalWidth(MaxWidth::Medium),
+            );
         }
 
         // Convert freshly uploaded images to WebP server-side (PHP GD) before they are persisted.
