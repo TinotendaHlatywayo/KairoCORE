@@ -21,7 +21,7 @@ class DemoDataWidgetTest extends TestCase
     {
         parent::setUp();
         config(['database.default' => 'mysql']);
-        config(['database.connections.mysql.database' => 'schoolcore']);
+        config(['database.connections.mysql.database' => 'schoolcore_testing']);
 
         // The widget seeds and wipes the school it is signed in to, so the test
         // uses a school of its own rather than a live tenant.
@@ -31,6 +31,8 @@ class DemoDataWidgetTest extends TestCase
             'name' => 'Demo Widget School '.$suffix,
             'subdomain' => 'demo-widget-'.$suffix,
             'status' => 'active',
+            'is_demo_sandbox' => true,
+            'allow_demo_seed_wipe' => false,
         ]);
 
         $this->schoolId = (int) $this->school->id;
