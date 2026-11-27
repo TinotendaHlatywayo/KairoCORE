@@ -15,13 +15,13 @@ return new class extends Migration
     {
         $provisioner = app(SubscriptionProvisioner::class);
 
-        School::query()
+        School::withoutGlobalScopes()
             ->doesntHave('saasSubscription')
             ->chunkById(100, function ($schools) use ($provisioner) {
                 foreach ($schools as $school) {
                     try {
                         $provisioner->ensureForSchool($school);
-                    } catch (\Throwable $e) {
+                    } catch (Throwable $e) {
                         report($e);
                     }
                 }
