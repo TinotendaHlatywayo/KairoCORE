@@ -64,11 +64,12 @@ services:
       start_period: 300s   # first boot runs ~120 migrations before Apache starts
 
   # ── Queue worker (QUEUE_CONNECTION=database) ───────────────────────────────
-  # Reports, emails, backups and school registration run as queued jobs.
+  # Reports, emails, backups and school registration run on the default queue;
+  # demo sandbox provisioning/refilling uses the demo-pool queue.
   kairocore-queue:
     <<: *app
     container_name: kairocore-queue
-    command: ["php", "artisan", "queue:work", "--sleep=3", "--tries=3", "--timeout=3600", "--max-time=3600"]
+    command: ["php", "artisan", "queue:work", "--queue=default,demo-pool", "--sleep=3", "--tries=3", "--timeout=3600", "--max-time=3600"]
     depends_on:
       kairocore-web:
         condition: service_healthy     # web runs migrations first

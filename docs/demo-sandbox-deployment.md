@@ -35,13 +35,14 @@
 
 ## Queue and scheduler
 
-- [ ] Run at least two workers on the dedicated queue:
+- [ ] Ensure a worker consumes the dedicated queue (the bundled Docker worker consumes `default,demo-pool`):
 
   ```bash
   php artisan queue:work --queue=demo-pool --tries=3 --timeout=600
   ```
 
-- [ ] Supervisor keeps both workers alive.
+- [ ] Run at least two dedicated workers when the login rate is high.
+- [ ] Supervisor (or the container restart policy) keeps workers alive.
 - [ ] Scheduler is installed:
 
   ```bash
