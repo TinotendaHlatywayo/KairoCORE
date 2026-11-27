@@ -79,13 +79,14 @@ class DemoAccountService
     public function issueTicket(User $user): string
     {
         $ticket = bin2hex(random_bytes(32));
+        $school = School::withoutGlobalScopes()->find((int) $user->school_id);
 
         Cache::put(
             $this->ticketKey($ticket),
             [
                 'user_id' => $user->id,
                 'school_id' => (int) $user->school_id,
-                'host' => request()->getHost(),
+                'host' => $school ? DemoSandbox::sandboxHost($school) : request()->getHost(),
             ],
             now()->addSeconds((int) config('demo.ticket_ttl_seconds', 60))
         );
@@ -103,7 +104,15 @@ class DemoAccountService
 
         $tenant = app()->bound('current_tenant') ? app('current_tenant') : null;
 
-        if (! $tenant || (int) ($payload['school_id'] ?? 0) !== (int) $tenant->id) {
+        if (! $tenant instanceof School || (int) ($payload['school_id'] ?? 0) !== (int) $tenant->id) {
+            return null;
+        }
+
+        if (! $tenant->is_demo_sandbox) {
+            return null;
+        }
+
+        if (($tenant->hard_expires_at?->isPast() ?? false) || ($tenant->expires_at?->isPast() ?? false)) {
             return null;
         }
 
@@ -115,7 +124,7 @@ class DemoAccountService
 
         $user = User::withoutGlobalScopes()->find($payload['user_id'] ?? null);
 
-        if (! $user || ! DemoPersona::isDemoUser($user) || (int) $user->school_id !== (int) $tenant->id) {
+        if (! $user || ! DemoSandbox::isSandboxEmail($user->email) || (int) $user->school_id !== (int) $tenant->id) {
             return null;
         }
 
@@ -158,11 +167,11 @@ class DemoAccountService
                 'name' => (string) config('demo.school.name'),
                 'subdomain' => $subdomain,
                 'login_code' => (string) config('demo.school.login_code'),
-                 'institution_type' => 'secondary',
-                 'status' => 'active',
-                 'has_dummy_data' => false,
-                 'allow_demo_seed_wipe' => true,
-             ]);
+                'institution_type' => 'secondary',
+                'status' => 'active',
+                'has_dummy_data' => false,
+                'allow_demo_seed_wipe' => true,
+            ]);
         } else {
             if ($school->trashed()) {
                 $school->restore();

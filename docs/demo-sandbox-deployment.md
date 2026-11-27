@@ -27,6 +27,7 @@
 - [ ] Take a database backup before release.
 - [ ] Deploy code.
 - [ ] Run `php artisan migrate` (adds sandbox columns and index to `schools`).
+- [ ] Use a cache store writable by the web SAPI (e.g. `CACHE_STORE=database`); demo tickets are short-lived cache entries and fail if file-cache directories are root-owned.
 - [ ] Run `php artisan config:cache`.
 - [ ] Run `php artisan route:cache` (new `demo.preparing` routes must be cached).
 - [ ] Run `php artisan view:cache` if the deployment normally caches Blade views.

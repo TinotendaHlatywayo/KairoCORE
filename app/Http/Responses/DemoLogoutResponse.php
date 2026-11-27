@@ -2,6 +2,7 @@
 
 namespace App\Http\Responses;
 
+use App\Security\DemoPersona;
 use App\Services\DemoSandboxService;
 use App\Support\DemoSandbox;
 use Filament\Http\Responses\Auth\Contracts\LogoutResponse as Responsable;
@@ -20,6 +21,12 @@ final class DemoLogoutResponse implements Responsable
                 app(DemoSandboxService::class)->delete($schoolId);
             });
 
+            return redirect()->to(DemoSandbox::centralUrl('demo/ended'));
+        }
+
+        $isDemoSession = filter_var($request->session()->get('is_demo_session'), FILTER_VALIDATE_BOOLEAN);
+
+        if ($isDemoSession || DemoPersona::isDemoUser(auth()->user())) {
             return redirect()->to(DemoSandbox::centralUrl('demo/ended'));
         }
 

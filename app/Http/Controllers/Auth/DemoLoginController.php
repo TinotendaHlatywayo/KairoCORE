@@ -40,19 +40,15 @@ class DemoLoginController extends Controller
             ]);
         }
 
-        if (config('demo.auto_provision', true)) {
-            try {
-                $demo->ensureAccount();
-            } catch (Throwable $e) {
-                report($e);
-
-                throw ValidationException::withMessages([
-                    'email' => __('The demo environment is not ready yet. Please try again shortly.'),
-                ]);
-            }
-        }
-
         try {
+            if (! config('demo.sandbox.pool_enabled', false)) {
+                $sandbox = $sandboxes->claim();
+
+                return redirect()->away(
+                    $demo->entryUrl($sandbox['school'], $demo->issueTicket($sandbox['user']))
+                );
+            }
+
             if ($sandboxes->hasReadyPool()) {
                 $sandbox = $sandboxes->claim(false);
 

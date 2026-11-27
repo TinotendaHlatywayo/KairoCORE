@@ -80,6 +80,18 @@ class DemoSandboxTicketTest extends TestCase
         $this->assertNull($service->redeemTicket($ticket));
     }
 
+    public function test_ticket_issued_from_central_host_is_accepted_on_sandbox_host(): void
+    {
+        request()->headers->set('Host', parse_url((string) config('app.url'), PHP_URL_HOST) ?: 'lvh.me');
+
+        $service = app(DemoAccountService::class);
+        $ticket = $service->issueTicket($this->user);
+
+        request()->headers->set('Host', DemoSandbox::sandboxHost($this->school));
+
+        $this->assertSame($this->user->id, $service->redeemTicket($ticket)?->id);
+    }
+
     public function test_ticket_from_another_host_is_rejected(): void
     {
         $service = app(DemoAccountService::class);
@@ -110,5 +122,48 @@ class DemoSandboxTicketTest extends TestCase
 
         $this->assertSame(302, $response->getStatusCode());
         $this->assertSame(DemoSandbox::centralUrl('demo/ended'), $response->headers->get('Location'));
+    }
+
+    public function test_ticket_for_expired_sandbox_is_rejected(): void
+    {
+        $service = app(DemoAccountService::class);
+        $this->school->forceFill(['expires_at' => now()->subMinute()])->saveQuietly();
+
+        $ticket = $service->issueTicket($this->user);
+
+        $this->assertNull($service->redeemTicket($ticket));
+    }
+
+    public function test_ticket_for_master_demo_tenant_is_rejected(): void
+    {
+        $master = School::withoutGlobalScopes()->firstOrCreate(
+            ['subdomain' => (string) config('demo.school.subdomain')],
+            [
+                'name' => 'Master Demo',
+                'login_code' => 'MASTER-DEMO',
+                'status' => 'active',
+                'institution_type' => 'secondary',
+                'is_demo_sandbox' => false,
+            ]
+        );
+
+        $user = User::withoutGlobalScopes()->firstOrNew([
+            'email' => mb_strtolower((string) config('demo.email')),
+        ]);
+        $user->forceFill([
+            'school_id' => $master->id,
+            'name' => 'Master Demo User',
+            'username' => (string) config('demo.email'),
+            'password' => Hash::make(Str::password(32)),
+            'account_status' => User::STATUS_ACTIVE,
+            'is_platform_managed' => false,
+        ])->save();
+
+        app()->instance('current_tenant', $master);
+        request()->headers->set('Host', DemoSandbox::sandboxHost($master));
+
+        $service = app(DemoAccountService::class);
+
+        $this->assertNull($service->redeemTicket($service->issueTicket($user)));
     }
 }

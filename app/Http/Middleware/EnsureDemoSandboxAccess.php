@@ -8,6 +8,7 @@ use App\Services\DemoSandboxService;
 use App\Support\DemoSandbox;
 use App\Support\DemoSessionGuard;
 use Closure;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -22,13 +23,23 @@ final class EnsureDemoSandboxAccess
 
         $tenant = app()->bound('current_tenant') ? app('current_tenant') : null;
 
-        if (! $tenant instanceof School || ! $tenant->is_demo_sandbox) {
+        if (! $tenant instanceof School) {
             return $next($request);
         }
 
         $user = auth()->user();
+        $isDemoSession = filter_var($request->session()->get('is_demo_session'), FILTER_VALIDATE_BOOLEAN);
+
+        if (! $tenant->is_demo_sandbox) {
+            if ($isDemoSession || DemoPersona::isDemoUser($user)) {
+                return $this->endDemoSession($request);
+            }
+
+            return $next($request);
+        }
+
         $sessionId = (int) $request->session()->get('demo_sandbox_id', 0);
-        $authorized = filter_var($request->session()->get('is_demo_session'), FILTER_VALIDATE_BOOLEAN)
+        $authorized = $isDemoSession
             && $sessionId === (int) $tenant->id
             && $user !== null
             && DemoSandbox::isSandboxEmail($user->email);
@@ -37,12 +48,7 @@ final class EnsureDemoSandboxAccess
             || ($tenant->expires_at?->isPast() ?? false);
 
         if (! $authorized || $expired) {
-            Auth::guard('web')->logout();
-            DemoPersona::clear();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-
-            return redirect()->to(DemoSandbox::centralUrl('demo/ended'));
+            return $this->endDemoSession($request);
         }
 
         DemoSessionGuard::begin((int) $tenant->id);
@@ -57,6 +63,16 @@ final class EnsureDemoSandboxAccess
     public function terminate(Request $request, mixed $response): void
     {
         DemoSessionGuard::end();
+    }
+
+    private function endDemoSession(Request $request): RedirectResponse
+    {
+        Auth::guard('web')->logout();
+        DemoPersona::clear();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->to(DemoSandbox::centralUrl('demo/ended'));
     }
 
     private function assertUploadLimits(Request $request): void
