@@ -37,3 +37,12 @@ Schedule::command('finance:generate-recurring-expenses')
     ->dailyAt('07:30')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/platform-recurring-expenses.log'));
+
+Schedule::command('demo:sandbox:refill-pool')
+    ->everyMinute()
+    ->withoutOverlapping();
+
+Schedule::command('demo:cleanup-sandboxes')
+    ->hourly()
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/demo-sandbox-cleanup.log'));

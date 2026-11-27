@@ -2,9 +2,12 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\ExcludeDemoSandboxScope;
+use App\Support\DemoSandbox;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
+use InvalidArgumentException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Modules\SaaS\Models\SaaSSubscription;
@@ -35,6 +38,13 @@ class School extends Model
         'trial_ends_at',
         'settings',
         'has_dummy_data',
+        'is_demo_sandbox',
+        'allow_demo_seed_wipe',
+        'demo_session_id',
+        'expires_at',
+        'demo_last_activity_at',
+        'hard_expires_at',
+        'pool_status',
         'seed_status',
         'seeded_at',
         'seed_error',
@@ -45,18 +55,31 @@ class School extends Model
         'settings' => 'array',
         'trial_ends_at' => 'datetime',
         'has_dummy_data' => 'boolean',
+        'is_demo_sandbox' => 'boolean',
+        'allow_demo_seed_wipe' => 'boolean',
+        'expires_at' => 'datetime',
+        'demo_last_activity_at' => 'datetime',
+        'hard_expires_at' => 'datetime',
         'seeded_at' => 'datetime',
     ];
 
     protected static function booted(): void
     {
+        static::addGlobalScope(new ExcludeDemoSandboxScope);
+
         static::creating(function (self $school): void {
+            self::assertSubdomainAllowed($school);
+
             if (! $school->login_code) {
                 $school->login_code = static::generateLoginCode(
                     $school->name,
                     $school->institution_type
                 );
             }
+        });
+
+        static::updating(function (self $school): void {
+            self::assertSubdomainAllowed($school);
         });
 
         static::deleting(function (self $school) {
@@ -115,6 +138,19 @@ class School extends Model
         });
     }
 
+    protected static function assertSubdomainAllowed(self $school): void
+    {
+        $subdomain = (string) $school->subdomain;
+
+        if ($subdomain === '' || $school->is_demo_sandbox || DemoSandbox::isInternalSubdomain($subdomain)) {
+            return;
+        }
+
+        if (DemoSandbox::isReservedSubdomain($subdomain)) {
+            throw new InvalidArgumentException('This subdomain is reserved.');
+        }
+    }
+
     /**
      * A short, memorable login code derived from the school's name and
      * institution type — e.g. "TINWAY-SEC". Unique across all schools;
@@ -154,7 +190,7 @@ class School extends Model
 
     protected static function isLoginCodeFree(string $code, ?int $excludeId = null): bool
     {
-        $query = static::withTrashed()->where('login_code', $code);
+        $query = static::withoutGlobalScopes()->withTrashed()->where('login_code', $code);
 
         if ($excludeId !== null) {
             $query->where('id', '!=', $excludeId);

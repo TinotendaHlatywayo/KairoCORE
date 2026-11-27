@@ -40,4 +40,22 @@ return [
     */
     'auto_provision' => env('DEMO_AUTO_PROVISION', true),
 
+    'sandbox' => [
+        'prefix' => env('DEMO_SANDBOX_PREFIX', 'demo-'),
+        'token_length' => (int) env('DEMO_SANDBOX_TOKEN_LENGTH', 12),
+        'idle_minutes' => (int) env('DEMO_SANDBOX_IDLE_MINUTES', 120),
+        'hard_lifetime_hours' => (int) env('DEMO_SANDBOX_HARD_LIFETIME_HOURS', 8),
+        'max_concurrent' => (int) env('DEMO_MAX_CONCURRENT', 50),
+        'pool_enabled' => env('DEMO_SANDBOX_POOL_ENABLED', true),
+        'pool_size' => (int) env('DEMO_SANDBOX_POOL_SIZE', 5),
+        'refill_queue' => env('DEMO_SANDBOX_REFILL_QUEUE', 'demo-pool'),
+        'refill_interval_seconds' => (int) env('DEMO_SANDBOX_REFILL_INTERVAL_SECONDS', 60),
+        'refill_workers' => (int) env('DEMO_SANDBOX_REFILL_WORKERS', 2),
+        'last_seed_ms' => (int) env('DEMO_SANDBOX_LAST_SEED_MS', 7000),
+        'logins_per_minute' => (int) env('DEMO_SANDBOX_LOGINS_PER_MINUTE', 10),
+        'upload_cap_mb' => (int) env('DEMO_SANDBOX_UPLOAD_CAP_MB', 10),
+        'upload_max_files' => (int) env('DEMO_SANDBOX_UPLOAD_MAX_FILES', 20),
+        'profile_seed' => env('DEMO_SANDBOX_PROFILE_SEED', false),
+    ],
+
 ];

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\School;
 use App\Models\User;
 use App\Security\DemoPersona;
+use App\Support\DemoSandbox;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
@@ -81,7 +82,11 @@ class DemoAccountService
 
         Cache::put(
             $this->ticketKey($ticket),
-            ['user_id' => $user->id, 'school_id' => (int) $user->school_id],
+            [
+                'user_id' => $user->id,
+                'school_id' => (int) $user->school_id,
+                'host' => request()->getHost(),
+            ],
             now()->addSeconds((int) config('demo.ticket_ttl_seconds', 60))
         );
 
@@ -102,6 +107,12 @@ class DemoAccountService
             return null;
         }
 
+        $expectedHost = DemoSandbox::sandboxHost($tenant);
+
+        if (($payload['host'] ?? null) !== $expectedHost || request()->getHost() !== $expectedHost) {
+            return null;
+        }
+
         $user = User::withoutGlobalScopes()->find($payload['user_id'] ?? null);
 
         if (! $user || ! DemoPersona::isDemoUser($user) || (int) $user->school_id !== (int) $tenant->id) {
@@ -115,6 +126,10 @@ class DemoAccountService
     {
         Auth::login($user, false);
         DemoPersona::set('administrator');
+        request()->session()->put([
+            'is_demo_session' => true,
+            'demo_sandbox_id' => (int) $user->school_id,
+        ]);
         request()->session()->regenerate();
     }
 
@@ -136,23 +151,24 @@ class DemoAccountService
     {
         $subdomain = (string) config('demo.school.subdomain');
 
-        $school = School::withTrashed()->where('subdomain', $subdomain)->first();
+        $school = School::withoutGlobalScopes()->withTrashed()->where('subdomain', $subdomain)->first();
 
         if (! $school) {
             $school = School::create([
                 'name' => (string) config('demo.school.name'),
                 'subdomain' => $subdomain,
                 'login_code' => (string) config('demo.school.login_code'),
-                'institution_type' => 'secondary',
-                'status' => 'active',
-                'has_dummy_data' => false,
-            ]);
+                 'institution_type' => 'secondary',
+                 'status' => 'active',
+                 'has_dummy_data' => false,
+                 'allow_demo_seed_wipe' => true,
+             ]);
         } else {
             if ($school->trashed()) {
                 $school->restore();
             }
 
-            $school->forceFill(['status' => 'active'])->saveQuietly();
+            $school->forceFill(['status' => 'active', 'allow_demo_seed_wipe' => true])->saveQuietly();
         }
 
         return $school;
@@ -166,7 +182,7 @@ class DemoAccountService
             ->exists();
     }
 
-    protected function ensureStudentProfile(School $school, User $user): void
+    public function ensureStudentProfile(School $school, User $user): void
     {
         $existing = Student::withoutGlobalScopes()
             ->where('school_id', $school->id)

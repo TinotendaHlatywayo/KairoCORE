@@ -5,10 +5,15 @@ namespace App\Services;
 use App\Models\School;
 use App\Models\User;
 use App\Models\UserTask;
+use App\Support\DemoSeedProfiler;
+use App\Support\DemoSessionGuard;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 use Modules\Academics\Models\AcademicReport;
 use Modules\Academics\Models\AcademicYear;
 use Modules\Academics\Models\Assessment;
@@ -118,6 +123,12 @@ use Modules\Timetables\Services\TimetableGeneratorService;
  */
 class DummyDataSeeder
 {
+    protected bool $fastSandbox = false;
+
+    protected ?string $fastDemoPasswordHash = null;
+
+    protected ?int $fastStudentRoleId = null;
+
     /**
      * Tables that may hold manifest-tracked demo rows, in safe deletion
      * order (children before parents).
@@ -227,6 +238,110 @@ class DummyDataSeeder
 
     public function seed(int $schoolId, ?callable $log = null): array
     {
+        $this->assertSeedAllowed($schoolId);
+
+        return DemoSessionGuard::allowingWrites(function () use ($schoolId, $log): array {
+            return $this->seedUnprotected($schoolId, $log);
+        });
+    }
+
+    public function seedForDemoSandbox(int $schoolId, ?callable $log = null): array
+    {
+        $this->assertSeedAllowed($schoolId);
+
+        $previousFast = $this->fastSandbox;
+        $previousStudentRoleId = $this->fastStudentRoleId;
+        $lockAcquired = false;
+
+        try {
+            $lockAcquired = $this->acquireDemoSeedLock();
+
+            if (! $lockAcquired) {
+                throw new \RuntimeException('Unable to acquire demo seed lock.');
+            }
+
+            $this->fastSandbox = true;
+            $this->fastStudentRoleId = null;
+
+            for ($attempt = 1; $attempt <= 4; $attempt++) {
+                try {
+                    return DB::transaction(function () use ($schoolId, $log): array {
+                        return DemoSessionGuard::allowingWrites(function () use ($schoolId, $log): array {
+                            return $this->seedUnprotected($schoolId, $log);
+                        });
+                    });
+                } catch (QueryException $e) {
+                    if ($attempt === 4 || ! $this->isDeadlock($e)) {
+                        throw $e;
+                    }
+
+                    usleep(100000 * $attempt + random_int(0, 75000));
+                }
+            }
+        } finally {
+            if ($lockAcquired) {
+                DB::statement('SELECT RELEASE_LOCK(?)', ['demo-sandbox-seed']);
+            }
+            $this->fastSandbox = $previousFast;
+            $this->fastStudentRoleId = $previousStudentRoleId;
+        }
+    }
+
+    protected function acquireDemoSeedLock(): bool
+    {
+        for ($attempt = 0; $attempt < 4; $attempt++) {
+            $result = DB::selectOne('SELECT GET_LOCK(?, 30) AS acquired', ['demo-sandbox-seed']);
+
+            if ((int) ($result->acquired ?? 0) === 1) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    protected function isDeadlock(QueryException $e): bool
+    {
+        $driverCode = (int) ($e->errorInfo[1] ?? 0);
+
+        return $e->getCode() === '40001' || in_array($driverCode, [1205, 1213], true);
+    }
+
+    protected function fastQuiet(callable $callback): mixed
+    {
+        return $this->fastSandbox ? Model::withoutEvents($callback) : $callback();
+    }
+
+    protected function fastDemoPasswordHash(): string
+    {
+        return $this->fastDemoPasswordHash ??= Hash::make($this->demoStudentPassword, ['rounds' => 4]);
+    }
+
+    protected function bulkInsertTracked(string $table, array $rows, int $schoolId, callable $track, string $stamp, int $minId = 0): void
+    {
+        if ($rows === []) {
+            return;
+        }
+
+        foreach (array_chunk($rows, 500) as $chunk) {
+            DB::table($table)->insert($chunk);
+        }
+
+        $query = DB::table($table)->where('created_at', $stamp);
+
+        if (! in_array($table, self::MANIFEST_NO_SCHOOL_COLUMN, true)) {
+            $query->where('school_id', $schoolId);
+        }
+
+        if ($minId > 0) {
+            $query->where('id', '>', $minId);
+        }
+
+        $track($table, $query->pluck('id')->all());
+    }
+
+    protected function seedUnprotected(int $schoolId, ?callable $log = null): array
+    {
         // Demo seeding (students, reports, marks, payroll, invoices, timetables
         // ...) and its password hashing comfortably exceed the default 30s PHP
         // ceiling when triggered from a synchronous web/Livewire request, so
@@ -238,19 +353,23 @@ class DummyDataSeeder
         // Demo seeding is idempotent: previously-seeded demo rows are removed
         // first (manifest-scoped), then the school is (re)populated. This keeps
         // the class sizes exact even after repeated "Seed" runs.
-        $this->wipe($schoolId);
+        DemoSeedProfiler::measure('seed.wipe', fn () => $this->wipe($schoolId));
 
         $manifest = [];
+
+        DemoSeedProfiler::start('seed.run');
 
         try {
             $this->runSeed($schoolId, $log, $manifest);
         } catch (\Throwable $e) {
+            DemoSeedProfiler::stop('seed.run');
             // Persist whatever was created so far so wipe() can still undo it.
-            $this->saveManifest($schoolId, $manifest);
+            DemoSeedProfiler::measure('seed.manifest', fn () => $this->saveManifest($schoolId, $manifest));
             throw $e;
         }
 
-        $this->saveManifest($schoolId, $manifest);
+        DemoSeedProfiler::stop('seed.run');
+        DemoSeedProfiler::measure('seed.manifest', fn () => $this->saveManifest($schoolId, $manifest));
 
         return [
             'students' => count($manifest['students'] ?? []),
@@ -276,7 +395,7 @@ class DummyDataSeeder
             return $model;
         };
 
-        $school = School::find($schoolId);
+        $school = School::withoutGlobalScopes()->find($schoolId);
         $schoolType = strtolower((string) ($school->institution_type ?? 'secondary'));
         $isPrimary = in_array($schoolType, ['primary', 'both'], true);
         $isSecondary = in_array($schoolType, ['secondary', 'both'], true) && ! $isPrimary;
@@ -289,6 +408,7 @@ class DummyDataSeeder
         // 1. ACADEMICS: year, three terms, courses, sections, subjects,
         //    course-subject links, papers and grading scale
         // ════════════════════════════════════════════════════════════════
+        DemoSeedProfiler::start('stage.academics');
         $year = AcademicYear::where('school_id', $schoolId)->where('is_active', true)->first();
         if (! $year) {
             $year = $created(AcademicYear::create([
@@ -406,9 +526,10 @@ class DummyDataSeeder
             $subjectById[$subject->id] = $subject;
             $created($subject);
         }
+        DemoSeedProfiler::stop('stage.academics');
 
         // Course ⭢ subject syllabus (course_subject pivot).
-        $staffUserIds = $this->seedStaff($schoolId, $actorId, $track, $created);
+        $staffUserIds = DemoSeedProfiler::measure('stage.staff', fn () => $this->seedStaff($schoolId, $actorId, $track, $created));
 
         // ════════════════════════════════════════════════════════════════
         // STAFFING MODELS (teacher assignment + timetable)
@@ -416,6 +537,7 @@ class DummyDataSeeder
         //   Model B — a subject specialist teaches one subject across selected
         //   classes (whole grade via section_id = null, or a single stream).
         // ════════════════════════════════════════════════════════════════
+        DemoSeedProfiler::start('stage.staffing_and_syllabus');
         $teacherUsers = User::where('school_id', $schoolId)->get(['id', 'name']);
         $teacherIdByName = $teacherUsers->pluck('id', 'name')->all();
 
@@ -725,15 +847,17 @@ class DummyDataSeeder
                 ]));
             }
         }
+        DemoSeedProfiler::stop('stage.staffing_and_syllabus');
 
         // ════════════════════════════════════════════════════════════════
         // 2. ADMISSIONS: applications received for the upcoming intake
         // ════════════════════════════════════════════════════════════════
-        $this->seedApplications($schoolId, $courseObjects, $track, $created, $manifest);
+        DemoSeedProfiler::measure('stage.applications', fn () => $this->seedApplications($schoolId, $courseObjects, $track, $created, $manifest));
 
         // ════════════════════════════════════════════════════════════════
         // 3. STUDENTS + ENROLLMENTS + ASSESSMENTS + MARKS + REPORTS
         // ════════════════════════════════════════════════════════════════
+        DemoSeedProfiler::start('stage.students_and_reports');
         $studentOffset = Student::withoutGlobalScopes()
             ->where('school_id', $schoolId)
             ->where('student_id_number', 'LIKE', 'TEST-STU-%')
@@ -953,67 +1077,70 @@ class DummyDataSeeder
         // Demo login accounts: one per seeded student so the student portal
         // (results, continuous assessment, digital assessments, gamification)
         // is immediately demonstrable under the school's subdomain.
+        DemoSeedProfiler::start('stage.demo_student_accounts');
         $this->ensureDemoStudentAccounts($schoolId);
+        DemoSeedProfiler::stop('stage.demo_student_accounts');
+        DemoSeedProfiler::stop('stage.students_and_reports');
 
         // ════════════════════════════════════════════════════════════════
         // 4. FINANCE: fee structures, invoices & items, expenses, suppliers
         // ════════════════════════════════════════════════════════════════
-        $this->seedFinance($schoolId, $year, $term, $studentIdsList, $actorId, $track, $created);
+        DemoSeedProfiler::measure('stage.finance', fn () => $this->seedFinance($schoolId, $year, $term, $studentIdsList, $actorId, $track, $created));
 
         // ════════════════════════════════════════════════════════════════
         // 5. HR & PAYROLL: leave, staff attendance, payroll run & payslips
         // ════════════════════════════════════════════════════════════════
-        $this->seedLeaveAndPayroll($schoolId, $actorId, $staffUserIds, $track, $created);
+        DemoSeedProfiler::measure('stage.leave_and_payroll', fn () => $this->seedLeaveAndPayroll($schoolId, $actorId, $staffUserIds, $track, $created));
 
         // ════════════════════════════════════════════════════════════════
         // 6. INVENTORY & PROCUREMENT, fixed assets
         // ════════════════════════════════════════════════════════════════
-        $this->seedInventoryAndProcurement($schoolId, $actorId, $staffUserIds, $track, $created);
+        DemoSeedProfiler::measure('stage.inventory_and_procurement', fn () => $this->seedInventoryAndProcurement($schoolId, $actorId, $staffUserIds, $track, $created));
 
         // ════════════════════════════════════════════════════════════════
         // 7. LIBRARY + KNOWLEDGE REPOSITORY
         // ════════════════════════════════════════════════════════════════
-        $this->seedLibraryAndKnowledge($schoolId, $actorId, $studentIdsList, $staffUserIds, $track, $created);
+        DemoSeedProfiler::measure('stage.library_and_knowledge', fn () => $this->seedLibraryAndKnowledge($schoolId, $actorId, $studentIdsList, $staffUserIds, $track, $created));
 
         // ════════════════════════════════════════════════════════════════
         // 8. CLINIC: medical records + visits
         // ════════════════════════════════════════════════════════════════
-        $this->seedClinic($schoolId, $studentIdsList, $bloodGroups, $actorId, $track, $created);
+        DemoSeedProfiler::measure('stage.clinic', fn () => $this->seedClinic($schoolId, $studentIdsList, $bloodGroups, $actorId, $track, $created));
 
         // ════════════════════════════════════════════════════════════════
         // 9. HOSTELS: boys + girls houses, floors, wings, rooms, allocations
         // ════════════════════════════════════════════════════════════════
-        $this->seedHostels($schoolId, $year, $studentIdsList, $track, $created);
+        DemoSeedProfiler::measure('stage.hostels', fn () => $this->seedHostels($schoolId, $year, $studentIdsList, $track, $created));
 
         // ════════════════════════════════════════════════════════════════
         // 10. TIMETABLE + STUDENT ATTENDANCE
         // ════════════════════════════════════════════════════════════════
-        $this->seedTimetableAndAttendance($schoolId, $year, $term, $sections, $studentIdsList, $staffUserIds, $actorId, $track, $created);
+        DemoSeedProfiler::measure('stage.timetable_and_attendance', fn () => $this->seedTimetableAndAttendance($schoolId, $year, $term, $sections, $studentIdsList, $staffUserIds, $actorId, $track, $created));
 
         // ════════════════════════════════════════════════════════════════
         // 11. LMS HOMEWORK + SUBMISSIONS
         // ════════════════════════════════════════════════════════════════
-        $this->seedHomework($schoolId, $sections, $studentIdsList, $track, $created);
+        DemoSeedProfiler::measure('stage.homework', fn () => $this->seedHomework($schoolId, $sections, $studentIdsList, $track, $created));
 
         // ════════════════════════════════════════════════════════════════
         // 12. COMMUNICATION: announcements, tasks, polls
         // ════════════════════════════════════════════════════════════════
-        $this->seedCommunication($schoolId, $actorId, $staffUserIds, $track);
+        DemoSeedProfiler::measure('stage.communication', fn () => $this->seedCommunication($schoolId, $actorId, $staffUserIds, $track));
 
         // ════════════════════════════════════════════════════════════════
         // 13. DIGITAL ASSESSMENT (LMS)
         // ════════════════════════════════════════════════════════════════
-        $this->seedDigitalAssessment($schoolId, $year, $term, $sections, $primarySubjects, $secondarySubjects, $subjectObjects, $actorId, $track);
+        DemoSeedProfiler::measure('stage.digital_assessment', fn () => $this->seedDigitalAssessment($schoolId, $year, $term, $sections, $primarySubjects, $secondarySubjects, $subjectObjects, $actorId, $track));
 
         // ════════════════════════════════════════════════════════════════
         // 13b. TRADITIONAL SUBJECT MARKS (4 subjects per course)
         // ════════════════════════════════════════════════════════════════
-        $this->seedSubjectMarks($schoolId, $term, $actorId, $track);
+        DemoSeedProfiler::measure('stage.subject_marks', fn () => $this->seedSubjectMarks($schoolId, $term, $actorId, $track));
 
         // ════════════════════════════════════════════════════════════════
         // 14. ENTERPRISE REPORTING: templates, compiled reports, schedules
         // ════════════════════════════════════════════════════════════════
-        $this->seedEnterpriseReports($schoolId, $term, $actorId, $track);
+        DemoSeedProfiler::measure('stage.enterprise_reports', fn () => $this->seedEnterpriseReports($schoolId, $term, $actorId, $track));
     }
 
     /**
@@ -1161,6 +1288,7 @@ class DummyDataSeeder
         ];
 
         $idsByRole = [];
+        $fastHash = $this->fastSandbox ? $this->fastDemoPasswordHash() : null;
         foreach ($staffSpecs as $n => [$first, $last, $gender, $designation, $department, $role, $gradeName]) {
             $demoEmail = strtolower($first.'.'.$last.'@demo.schoolcore.test');
 
@@ -1172,7 +1300,7 @@ class DummyDataSeeder
                 continue;
             }
 
-            $employee = Employee::create([
+            $employeeData = [
                 'school_id' => $schoolId,
                 'employee_number' => 'TEST-STF-'.$schoolId.'-'.str_pad((string) ($n + 1), 3, '0', STR_PAD_LEFT),
                 'national_id' => 'TEST-'.rand(10, 99).'-'.rand(100000, 999999).'X'.rand(10, 99),
@@ -1191,9 +1319,28 @@ class DummyDataSeeder
                 'employment_type' => 'Permanent',
                 'date_joined' => now()->subYears(rand(1, 10))->subMonths(rand(0, 11)),
                 'current_grade_id' => $gradeIds[$gradeName],
-            ]);
+            ];
+
+            if ($this->fastSandbox) {
+                $now = now();
+                $userId = DB::table('users')->insertGetId([
+                    'school_id' => $schoolId,
+                    'name' => $first.' '.$last,
+                    'email' => $demoEmail,
+                    'password' => $fastHash,
+                    'account_status' => User::STATUS_PENDING,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]);
+                $employeeData['user_id'] = $userId;
+                $employeeData['avatar_path'] = 'images/employee_profile.jpeg';
+                $employee = $this->fastQuiet(fn () => Employee::create($employeeData));
+            } else {
+                $employee = Employee::create($employeeData);
+            }
+
             $track('employees', [$employee->id]);
-            $idsByRole[$role][] = $employee->user_id; // observer gives us the linked user
+            $idsByRole[$role][] = $employee->user_id;
         }
 
         return [
@@ -1429,6 +1576,13 @@ class DummyDataSeeder
 
     protected function seedLeaveAndPayroll(int $schoolId, ?int $actorId, array $staffUserIds, callable $track, callable $created): void
     {
+        $payslipItemStamp = now()->toDateTimeString();
+        $payslipItemMinId = (int) DB::table('payslip_items')->max('id');
+        $payslipItemRows = [];
+        $staffAttendanceStamp = now()->toDateTimeString();
+        $staffAttendanceMinId = (int) DB::table('staff_attendances')->max('id');
+        $staffAttendanceRows = [];
+
         foreach ([
             ['Annual Leave', 'ANL', 21, true],
             ['Sick Leave', 'SCK', 12, false],
@@ -1567,7 +1721,7 @@ class DummyDataSeeder
                 if ($type === 'earning' && $amount <= 0) {
                     continue;
                 }
-                $item = PayslipItem::create([
+                $attributes = [
                     'school_id' => $schoolId,
                     'payslip_id' => $payslip->id,
                     'code' => $code,
@@ -1576,10 +1730,22 @@ class DummyDataSeeder
                     'amount' => round($amount, 2),
                     'is_taxable' => $taxable,
                     'is_recurring' => true,
-                ]);
+                ];
+
+                if ($this->fastSandbox) {
+                    $attributes['created_at'] = $payslipItemStamp;
+                    $attributes['updated_at'] = $payslipItemStamp;
+                    $payslipItemRows[] = $attributes;
+
+                    continue;
+                }
+
+                $item = PayslipItem::create($attributes);
                 $track('payslip_items', [$item->id]);
             }
         }
+
+        $this->bulkInsertTracked('payslip_items', $payslipItemRows, $schoolId, $track, $payslipItemStamp, $payslipItemMinId);
 
         $run->update([
             'gross_total' => round($grossTotal, 2),
@@ -1618,10 +1784,7 @@ class DummyDataSeeder
             }
             foreach ($weekdays as $date) {
                 $status = collect(['present', 'present', 'present', 'present', 'late', 'absent'])->random();
-                if (StaffAttendance::where('school_id', $schoolId)->where('user_id', $employee->user_id)->where('date', $date)->exists()) {
-                    continue;
-                }
-                $att = StaffAttendance::create([
+                $attributes = [
                     'school_id' => $schoolId,
                     'user_id' => $employee->user_id,
                     'date' => $date,
@@ -1630,10 +1793,25 @@ class DummyDataSeeder
                     'check_out_time' => '15:45',
                     'method' => 'manual',
                     'marked_by_id' => $actorId,
-                ]);
+                ];
+
+                if ($this->fastSandbox) {
+                    $attributes['created_at'] = $staffAttendanceStamp;
+                    $attributes['updated_at'] = $staffAttendanceStamp;
+                    $staffAttendanceRows[] = $attributes;
+
+                    continue;
+                }
+
+                if (StaffAttendance::where('school_id', $schoolId)->where('user_id', $employee->user_id)->where('date', $date)->exists()) {
+                    continue;
+                }
+                $att = StaffAttendance::create($attributes);
                 $track('staff_attendances', [$att->id]);
             }
         }
+
+        $this->bulkInsertTracked('staff_attendances', $staffAttendanceRows, $schoolId, $track, $staffAttendanceStamp, $staffAttendanceMinId);
     }
 
     protected function seedInventoryAndProcurement(int $schoolId, ?int $actorId, array $staffUserIds, callable $track, callable $created): void
@@ -2201,7 +2379,7 @@ class DummyDataSeeder
         // Generate Lessons uses app('current_tenant'), so bind it when running
         // from the CLI/artisan or other non-HTTP context.
         if (! app()->bound('current_tenant')) {
-            app()->instance('current_tenant', School::find($schoolId));
+            app()->instance('current_tenant', School::withoutGlobalScopes()->find($schoolId));
         }
 
         // One homeroom per stream plus the two purpose-built labs. The labs
@@ -2283,15 +2461,15 @@ class DummyDataSeeder
         }
 
         $generator = app(TimetableGeneratorService::class);
-        $generator->generate($settings, $template->id);
+        DemoSeedProfiler::measure('stage.timetable.generate', fn () => $generator->generate($settings, $template->id));
 
-        $result = $generator->autoPlaceLessons([
+        $result = DemoSeedProfiler::measure('stage.timetable.auto_place', fn () => $generator->autoPlaceLessons([
             'template_id' => $template->id,
             'academic_year_id' => $year->id,
             'term_id' => $term->id,
             'replace_unlocked' => true,
             'max_per_subject_per_day' => 1,
-        ]);
+        ]));
 
         $sectionLessonIds = [];
         $lessons = TimetableLesson::withoutGlobalScopes()
@@ -2307,6 +2485,9 @@ class DummyDataSeeder
         }
 
         $weekdays = $this->recentWeekdays(10);
+        $attendanceStamp = now()->toDateTimeString();
+        $attendanceMinId = (int) DB::table('student_attendances')->max('id');
+        $attendanceRows = [];
 
         foreach ($sections as $section) {
             $lessonId = $sectionLessonIds[$section->id][0] ?? null;
@@ -2321,6 +2502,25 @@ class DummyDataSeeder
 
             foreach ($sectionStudents as $student) {
                 foreach ($weekdays as $date) {
+                    $status = collect(['present', 'present', 'present', 'present', 'absent', 'late'])->random();
+                    $attributes = [
+                        'school_id' => $schoolId,
+                        'student_id' => $student->id,
+                        'timetable_lesson_id' => $lessonId,
+                        'date' => $date,
+                        'status' => $status,
+                        'remarks' => $status === 'late' ? 'Arrived after assembly' : null,
+                        'marked_by_id' => $actorId,
+                    ];
+
+                    if ($this->fastSandbox) {
+                        $attributes['created_at'] = $attendanceStamp;
+                        $attributes['updated_at'] = $attendanceStamp;
+                        $attendanceRows[] = $attributes;
+
+                        continue;
+                    }
+
                     $exists = StudentAttendance::withoutGlobalScopes()
                         ->where('school_id', $schoolId)
                         ->where('student_id', $student->id)
@@ -2331,21 +2531,14 @@ class DummyDataSeeder
                         continue;
                     }
 
-                    $status = collect(['present', 'present', 'present', 'present', 'absent', 'late'])->random();
-                    $row = new StudentAttendance([
-                        'school_id' => $schoolId,
-                        'student_id' => $student->id,
-                        'timetable_lesson_id' => $lessonId,
-                        'date' => $date,
-                        'status' => $status,
-                        'remarks' => $status === 'late' ? 'Arrived after assembly' : null,
-                        'marked_by_id' => $actorId,
-                    ]);
+                    $row = new StudentAttendance($attributes);
                     $row->save();
                     $track('student_attendances', [$row->id]);
                 }
             }
         }
+
+        $this->bulkInsertTracked('student_attendances', $attendanceRows, $schoolId, $track, $attendanceStamp, $attendanceMinId);
     }
 
     protected function seedHomework(int $schoolId, $sections, array $studentIdsList, callable $track, callable $created): void
@@ -2514,6 +2707,9 @@ class DummyDataSeeder
             ['Option A', 'Option B', 'Option C', 'Option D'],
             ['Statement P', 'Statement Q', 'Statement R', 'Statement S'],
         ];
+        $responseStamp = now()->toDateTimeString();
+        $responseMinId = (int) DB::table('digital_assessment_responses')->max('id');
+        $responseRows = [];
 
         foreach ($sections->groupBy('course_id') as $courseId => $courseSections) {
             $course = Course::withoutGlobalScopes()->find($courseId);
@@ -2623,7 +2819,7 @@ class DummyDataSeeder
                     ->where('course_id', $courseId)
                     ->first();
 
-                if (DigitalAssessmentAttempt::withoutGlobalScopes()
+                if (! $this->fastSandbox && DigitalAssessmentAttempt::withoutGlobalScopes()
                     ->where('school_id', $schoolId)
                     ->where('digital_assessment_id', $assessment->id)
                     ->where('student_id', $student->id)
@@ -2653,22 +2849,36 @@ class DummyDataSeeder
 
                 foreach ($questionIds as $qbId) {
                     $correct = (bool) random_int(0, 1);
-                    $response = DigitalAssessmentResponse::create([
+                    $attributes = [
                         'digital_assessment_attempt_id' => $attempt->id,
                         'question_bank_id' => $qbId,
-                        'learner_answer' => $correct ? ['A'] : ['C'],
-                        'correct_answer' => ['A'],
+                        'learner_answer' => json_encode($correct ? ['A'] : ['C']),
+                        'correct_answer' => json_encode(['A']),
                         'is_correct' => $correct,
                         'marks_awarded' => $correct ? 2.00 : 0.00,
                         'marks_possible' => 2.00,
                         'time_spent_seconds' => rand(10, 90),
                         'answered_at' => $attempt->submitted_at,
                         'confidence_level' => rand(1, 3),
-                    ]);
+                    ];
+
+                    if ($this->fastSandbox) {
+                        $attributes['created_at'] = $responseStamp;
+                        $attributes['updated_at'] = $responseStamp;
+                        $responseRows[] = $attributes;
+
+                        continue;
+                    }
+
+                    $attributes['learner_answer'] = $correct ? ['A'] : ['C'];
+                    $attributes['correct_answer'] = ['A'];
+                    $response = DigitalAssessmentResponse::create($attributes);
                     $track('digital_assessment_responses', [$response->id]);
                 }
             }
         }
+
+        $this->bulkInsertTracked('digital_assessment_responses', $responseRows, $schoolId, $track, $responseStamp, $responseMinId);
 
         // Academic assessment type definitions powering the marks UI.
         // Created globally (not per course/section) so they appear once in the
@@ -2715,44 +2925,85 @@ class DummyDataSeeder
             ->groupBy('course_id')
             ->map(fn ($rows) => $rows->pluck('subject_id')->all());
 
+        if (! $this->fastSandbox) {
+            Enrollment::withoutGlobalScopes()
+                ->where('school_id', $schoolId)
+                ->where('academic_year_id', $term->academic_year_id)
+                ->orderBy('id')
+                ->chunkById(200, function ($enrollments) use ($schoolId, $types, $courseSubjects, $track) {
+                    foreach ($enrollments as $enrollment) {
+                        $subjectIds = $courseSubjects->get($enrollment->course_id) ?? [];
+                        if (empty($subjectIds)) {
+                            continue;
+                        }
+
+                        foreach ($subjectIds as $subjectId) {
+                            foreach ($types as $type) {
+                                if (AssessmentMark::withoutGlobalScopes()
+                                    ->where('school_id', $schoolId)
+                                    ->where('enrollment_id', $enrollment->id)
+                                    ->where('subject_id', $subjectId)
+                                    ->where('assessment_type_id', $type->id)
+                                    ->exists()) {
+                                    continue;
+                                }
+
+                                $max = (float) $type->max_mark;
+                                $mark = $max > 0 ? round($max * (rand(35, 95) / 100), 1) : rand(30, 90);
+
+                                $record = AssessmentMark::create([
+                                    'school_id' => $schoolId,
+                                    'enrollment_id' => $enrollment->id,
+                                    'assessment_type_id' => $type->id,
+                                    'subject_id' => $subjectId,
+                                    'marks_obtained' => $mark,
+                                    'teacher_initials' => 'TR',
+                                ]);
+                                $track('assessment_marks', [$record->id]);
+                            }
+                        }
+                    }
+                });
+
+            return;
+        }
+
+        $stamp = now()->toDateTimeString();
+        $minId = (int) DB::table('assessment_marks')->max('id');
+        $rows = [];
+        $seen = [];
+
         Enrollment::withoutGlobalScopes()
             ->where('school_id', $schoolId)
             ->where('academic_year_id', $term->academic_year_id)
             ->orderBy('id')
-            ->chunkById(200, function ($enrollments) use ($schoolId, $types, $courseSubjects, $track) {
+            ->chunkById(200, function ($enrollments) use ($schoolId, $types, $courseSubjects, &$rows, &$seen, $stamp) {
                 foreach ($enrollments as $enrollment) {
-                    $subjectIds = $courseSubjects->get($enrollment->course_id) ?? [];
-                    if (empty($subjectIds)) {
-                        continue;
-                    }
-
-                    foreach ($subjectIds as $subjectId) {
+                    foreach ($courseSubjects->get($enrollment->course_id) ?? [] as $subjectId) {
                         foreach ($types as $type) {
-                            if (AssessmentMark::withoutGlobalScopes()
-                                ->where('school_id', $schoolId)
-                                ->where('enrollment_id', $enrollment->id)
-                                ->where('subject_id', $subjectId)
-                                ->where('assessment_type_id', $type->id)
-                                ->exists()) {
+                            $key = $enrollment->id.':'.$type->id.':'.$subjectId;
+                            if (isset($seen[$key])) {
                                 continue;
                             }
+                            $seen[$key] = true;
 
                             $max = (float) $type->max_mark;
-                            $mark = $max > 0 ? round($max * (rand(35, 95) / 100), 1) : rand(30, 90);
-
-                            $record = AssessmentMark::create([
+                            $rows[] = [
                                 'school_id' => $schoolId,
                                 'enrollment_id' => $enrollment->id,
                                 'assessment_type_id' => $type->id,
                                 'subject_id' => $subjectId,
-                                'marks_obtained' => $mark,
+                                'marks_obtained' => $max > 0 ? round($max * (rand(35, 95) / 100), 1) : rand(30, 90),
                                 'teacher_initials' => 'TR',
-                            ]);
-                            $track('assessment_marks', [$record->id]);
+                                'created_at' => $stamp,
+                                'updated_at' => $stamp,
+                            ];
                         }
                     }
                 }
             });
+
+        $this->bulkInsertTracked('assessment_marks', $rows, $schoolId, $track, $stamp, $minId);
     }
 
     protected function seedEnterpriseReports(int $schoolId, $term, ?int $actorId, callable $track): void
@@ -2864,7 +3115,7 @@ class DummyDataSeeder
      */
     protected function schoolContactEmail(int $schoolId): string
     {
-        return optional(School::find($schoolId))->email_address
+        return optional(School::withoutGlobalScopes()->find($schoolId))->email_address
             ?? 'admin@demo.schoolcore.test';
     }
 
@@ -2875,6 +3126,13 @@ class DummyDataSeeder
      * @return int number of student rows removed
      */
     public function wipe(int $schoolId): int
+    {
+        $this->assertSeedAllowed($schoolId);
+
+        return DemoSessionGuard::allowingWrites(fn (): int => $this->wipeUnprotected($schoolId));
+    }
+
+    protected function wipeUnprotected(int $schoolId): int
     {
         @set_time_limit(600);
 
@@ -3123,7 +3381,11 @@ class DummyDataSeeder
             }
 
             if ($student->user_id !== $user->id) {
-                $student->forceFill(['user_id' => $user->id])->save();
+                if ($this->fastSandbox) {
+                    DB::table('students')->where('id', $student->id)->where('school_id', $schoolId)->update(['user_id' => $user->id]);
+                } else {
+                    $student->forceFill(['user_id' => $user->id])->save();
+                }
             }
 
             $accounts[] = [
@@ -3138,7 +3400,7 @@ class DummyDataSeeder
 
     protected function findOrCreateDemoStudentUser(int $schoolId, Student $student): ?User
     {
-        $school = School::find($schoolId);
+        $school = School::withoutGlobalScopes()->find($schoolId);
         $slug = $school ? strtolower(preg_replace('/[^a-z0-9]+/', '', (string) $school->subdomain)) : 'school';
         $email = 'student.'.$student->id.'@'.$slug.'.demo';
 
@@ -3151,6 +3413,27 @@ class DummyDataSeeder
             return $user;
         }
 
+        if ($this->fastSandbox) {
+            $roleId = $this->fastStudentRoleId ??= UserRegistrationService::ensureRoleForCategory($schoolId, 'student')->id;
+            $now = now();
+
+            $userId = DB::table('users')->insertGetId([
+                'school_id' => $schoolId,
+                'name' => $student->full_name,
+                'username' => $student->student_id_number,
+                'email' => $email,
+                'phone' => $student->phone,
+                'password' => $this->fastDemoPasswordHash(),
+                'account_status' => User::STATUS_ACTIVE,
+                'requested_role' => 'student',
+                'custom_role_id' => $roleId,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+
+            return User::withoutGlobalScopes()->find($userId);
+        }
+
         $role = UserRegistrationService::ensureRoleForCategory($schoolId, 'student');
 
         return User::withoutGlobalScopes()->create([
@@ -3159,10 +3442,6 @@ class DummyDataSeeder
             'username' => $student->student_id_number,
             'email' => $email,
             'phone' => $student->phone,
-            // Demo-only credentials: a low bcrypt cost keeps the ~90 student
-            // logins cheap to create during seeding while reusing the fresh
-            // Hash facade. The 'hashed' cast stores this value as-is (it is
-            // already a valid bcrypt hash, so no re-hash occurs).
             'password' => Hash::make($this->demoStudentPassword, ['rounds' => 6]),
             'account_status' => User::STATUS_ACTIVE,
             'requested_role' => 'student',
@@ -3172,7 +3451,7 @@ class DummyDataSeeder
 
     public function enforceInstitutionTypeScope(int $schoolId): void
     {
-        $school = School::find($schoolId);
+        $school = School::withoutGlobalScopes()->find($schoolId);
         if (! $school) {
             return;
         }
@@ -3215,6 +3494,15 @@ class DummyDataSeeder
         }
     }
 
+    public function assertSeedAllowed(int $schoolId): void
+    {
+        $school = School::withoutGlobalScopes()->withTrashed()->find($schoolId);
+
+        if (! $school || (! $school->is_demo_sandbox && ! $school->allow_demo_seed_wipe)) {
+            throw new InvalidArgumentException('Demo seeding is only allowed on flagged demo schools.');
+        }
+    }
+
     protected function manifestKey(): string
     {
         return 'seed_manifest';
@@ -3222,6 +3510,8 @@ class DummyDataSeeder
 
     protected function saveManifest(int $schoolId, array $manifest): void
     {
+        $this->assertSeedAllowed($schoolId);
+
         // MERGE with any existing manifest so wiping always removes every row
         // this seeder has EVER created for the school, not just the latest run.
         $merged = $this->loadManifest($schoolId);
@@ -3238,6 +3528,8 @@ class DummyDataSeeder
 
     protected function loadManifest(int $schoolId): array
     {
+        $this->assertSeedAllowed($schoolId);
+
         $raw = SystemSetting::withoutTenantScope()
             ->where('school_id', $schoolId)
             ->where('group', 'demo')
@@ -3255,6 +3547,8 @@ class DummyDataSeeder
 
     protected static function forgetManifestRow(int $schoolId): void
     {
+        app(self::class)->assertSeedAllowed($schoolId);
+
         SystemSetting::withoutTenantScope()
             ->where('school_id', $schoolId)
             ->where('group', 'demo')
