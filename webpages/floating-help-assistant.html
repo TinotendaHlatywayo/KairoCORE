@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Floating Help + Assistant</title>
+<!--
+  HOW TO USE IN YOUR APP
+  1. Delete the "demo page" block (marked below) and the page background styles.
+  2. Copy everything between  <!-- HELP-WIDGET START -->  and  <!-- HELP-WIDGET END -->  (style, markup, script)
+     into your layout. Then remove the old "Help" button from the top toolbar.
+  3. Edit the KB array in the script to add answers for other modules.
+-->
+<style>
+:root{
+  --bg:#f4f6fb; --surface:#fff; --text:#16213a; --muted:#6b7694; --line:#e4e8f2;
+  --brand:#2563eb; --brand-ink:#fff;
+  --bot:#eef1f9; --bot-ink:#16213a;
+  --me-a:#ef5b3c; --me-b:#f58a4c;
+  --wall:#f7f8fc; --ok:#22c55e; --tick:#fff;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1424; --surface:#171d33; --text:#e8ecf8; --muted:#8e99b8; --line:#262e4a;
+    --bot:#222a45; --bot-ink:#e8ecf8; --wall:#121830;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1424; --surface:#171d33; --text:#e8ecf8; --muted:#8e99b8; --line:#262e4a;
+  --bot:#222a45; --bot-ink:#e8ecf8; --wall:#121830;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 "Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+
+/* ===== demo page (delete when integrating) ===== */
+.demo{max-width:720px;margin:0 auto;padding:48px 24px}
+.demo h1{font-size:22px;margin:0 0 6px}
+.demo p{color:var(--muted);margin:0}
+/* ===== end demo page ===== */
+</style>
+</head>
+<body>
+
+<div class="demo">
+  <h1>Student Directory</h1>
+  <p>Manage the student body and identification cards. The Help button now floats at the bottom right of every screen.</p>
+</div>
+
+<!-- HELP-WIDGET START -->
+<style>
+#kh *{box-sizing:border-box}
+#kh{font-family:inherit}
+/* floating button */
+#kh-fab{
+  position:fixed; right:20px; bottom:calc(20px + env(safe-area-inset-bottom,0px)); z-index:9998;
+  display:flex; align-items:center; gap:8px; height:52px; padding:0 20px 0 14px;
+  border:0; border-radius:26px; background:var(--brand); color:var(--brand-ink);
+  font:700 15px/1 inherit; cursor:pointer; box-shadow:0 8px 24px rgba(37,99,235,.38);
+  transition:transform .15s ease, box-shadow .15s ease;
+}
+#kh-fab:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(37,99,235,.45)}
+#kh-fab:focus-visible,#kh button:focus-visible,#kh input:focus-visible{outline:3px solid #f58a4c;outline-offset:2px}
+#kh-fab svg{width:24px;height:24px;flex:none}
+#kh-fab .dot{position:absolute;top:-2px;right:-2px;width:14px;height:14px;border-radius:50%;background:#ef5b3c;border:2px solid var(--bg)}
+#kh.open #kh-fab .dot{display:none}
+
+/* panel */
+#kh-panel{
+  position:fixed; right:20px; bottom:calc(84px + env(safe-area-inset-bottom,0px)); z-index:9999;
+  width:390px; max-width:calc(100vw - 24px); height:620px; max-height:calc(100dvh - 110px);
+  display:flex; flex-direction:column; overflow:hidden;
+  background:var(--surface); color:var(--text); border:1px solid var(--line); border-radius:20px;
+  box-shadow:0 24px 60px rgba(15,25,60,.28);
+  transform-origin:bottom right; transform:scale(.92) translateY(12px); opacity:0; visibility:hidden;
+  transition:transform .2s ease, opacity .2s ease, visibility .2s;
+}
+#kh.open #kh-panel{transform:none;opacity:1;visibility:visible}
+
+.kh-head{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line);background:var(--surface)}
+.kh-logo{width:42px;height:42px;border-radius:12px;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:800;font-size:20px;flex:none}
+.kh-title{flex:1;min-width:0}
+.kh-title b{display:block;font-size:15px;line-height:1.2}
+.kh-title span{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.kh-title span i{width:8px;height:8px;border-radius:50%;background:var(--ok);display:inline-block}
+.kh-btn{border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:999px;font:600 12px/1 inherit;padding:8px 12px;cursor:pointer}
+.kh-btn:hover{background:var(--bot)}
+.kh-x{width:34px;height:34px;padding:0;display:grid;place-items:center;font-size:18px}
+
+.kh-tabs{display:flex;gap:6px;padding:8px 12px;border-bottom:1px solid var(--line)}
+.kh-tab{flex:1;border:0;background:transparent;color:var(--muted);font:700 13px/1 inherit;padding:10px;border-radius:10px;cursor:pointer}
+.kh-tab[aria-selected="true"]{background:var(--bot);color:var(--brand)}
+
+.kh-view{flex:1;min-height:0;display:none;flex-direction:column}
+.kh-view.on{display:flex}
+
+/* chat */
+#kh-log{
+  flex:1;min-height:0;overflow-y:auto;padding:14px 14px 6px;display:flex;flex-direction:column;gap:6px;
+  background:var(--wall);
+  background-image:radial-gradient(circle at 1px 1px,rgba(120,135,180,.14) 1px,transparent 0);
+  background-size:18px 18px;
+}
+.kh-day{align-self:center;font-size:11px;color:var(--muted);background:var(--surface);border:1px solid var(--line);padding:3px 10px;border-radius:999px;margin:2px 0 6px}
+.row{display:flex;gap:8px;align-items:flex-end;max-width:100%}
+.row.me{justify-content:flex-end}
+.av{width:28px;height:28px;border-radius:50%;background:var(--brand);color:#fff;font-weight:800;font-size:13px;display:grid;place-items:center;flex:none}
+.msg{max-width:82%;padding:9px 12px 6px;border-radius:16px;font-size:14px;line-height:1.45;word-wrap:break-word;position:relative}
+.row.bot .msg{background:var(--bot);color:var(--bot-ink);border-bottom-left-radius:4px}
+.row.me .msg{background:linear-gradient(135deg,var(--me-a),var(--me-b));color:#fff;border-bottom-right-radius:4px}
+.msg p{margin:0 0 6px}
+.msg ul{margin:0 0 6px;padding-left:18px}
+.msg li{margin:2px 0}
+.meta{display:flex;justify-content:flex-end;align-items:center;gap:4px;font-size:10.5px;opacity:.7;margin-top:2px}
+.row.me .meta{opacity:.9}
+.tick{width:16px;height:10px}
+.tick path{fill:none;stroke:#cfe6ff;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.typing .msg{padding:12px 14px}
+.typing span{display:inline-block;width:7px;height:7px;margin:0 2px;border-radius:50%;background:var(--muted);animation:kb 1.1s infinite ease-in-out}
+.typing span:nth-child(2){animation-delay:.15s}.typing span:nth-child(3){animation-delay:.3s}
+@keyframes kb{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-4px);opacity:1}}
+@media (prefers-reduced-motion:reduce){.typing span{animation:none}#kh-panel,#kh-fab{transition:none}}
+
+.kh-sugg{padding:8px 12px 4px;border-top:1px solid var(--line);background:var(--surface)}
+.kh-sugg small{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin}
+.chip{flex:none;border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:999px;font:700 12.5px/1 inherit;padding:9px 13px;cursor:pointer;white-space:nowrap}
+.chip:hover{border-color:var(--brand);color:var(--brand)}
+
+.kh-form{display:flex;align-items:center;gap:8px;padding:8px 12px 10px;background:var(--surface)}
+.kh-form input{flex:1;min-width:0;border:1.5px solid var(--line);background:var(--bg);color:var(--text);border-radius:999px;padding:12px 16px;font:14px inherit}
+.kh-form input:focus{border-color:#ef5b3c}
+.kh-send{width:42px;height:42px;border:0;border-radius:50%;background:linear-gradient(135deg,var(--me-a),var(--me-b));color:#fff;display:grid;place-items:center;cursor:pointer;flex:none}
+.kh-send:disabled{opacity:.45;cursor:default}
+.kh-send svg{width:18px;height:18px}
+.kh-foot{padding:0 14px 10px;font-size:11px;color:var(--muted);background:var(--surface)}
+
+/* guide */
+#kh-guide{overflow-y:auto;padding:16px}
+#kh-guide h3{margin:0 0 4px;font-size:16px}
+#kh-guide .lead{margin:0 0 14px;color:var(--muted);font-size:13px}
+#kh-guide ol{list-style:none;margin:0;padding:0;counter-reset:s}
+#kh-guide li{counter-increment:s;display:flex;gap:10px;padding:10px 0;border-top:1px solid var(--line);font-size:13.5px}
+#kh-guide li::before{content:counter(s);flex:none;width:24px;height:24px;border-radius:50%;border:1.5px solid var(--brand);color:var(--brand);display:grid;place-items:center;font-size:12px;font-weight:700}
+#kh-guide li b{display:block}
+#kh-guide .link{margin-top:14px;padding:10px 12px;border-radius:12px;background:var(--bot);font-size:12.5px}
+#kh-guide .ask{margin-top:12px}
+
+@media (max-width:520px){
+  #kh-panel{right:0;bottom:0;width:100vw;max-width:100vw;height:100dvh;max-height:100dvh;border-radius:0;border:0}
+  #kh.open #kh-fab{display:none}
+}
+</style>
+
+<div id="kh">
+  <button id="kh-fab" aria-haspopup="dialog" aria-expanded="false" aria-controls="kh-panel">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.4A8 8 0 1 1 21 12Z"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5"/><circle cx="12" cy="16" r=".6" fill="currentColor"/></svg>
+    Help <span class="dot"></span>
+  </button>
+
+  <section id="kh-panel" role="dialog" aria-label="Help and assistant">
+    <header class="kh-head">
+      <div class="kh-logo" aria-hidden="true">K</div>
+      <div class="kh-title"><b>Kairo assistant</b><span><i></i>Online · answers instantly</span></div>
+      <button class="kh-btn" id="kh-reset" type="button">Start over</button>
+      <button class="kh-btn kh-x" id="kh-close" type="button" aria-label="Close help">✕</button>
+    </header>
+
+    <div class="kh-tabs" role="tablist">
+      <button class="kh-tab" role="tab" id="t-guide" aria-selected="true" data-v="guide">Page guide</button>
+      <button class="kh-tab" role="tab" id="t-chat" aria-selected="false" data-v="chat">Assistant</button>
+    </div>
+
+    <div class="kh-view" id="v-chat">
+      <div id="kh-log" aria-live="polite"></div>
+      <div class="kh-sugg"><small>Suggested questions</small><div class="chips" id="kh-chips"></div></div>
+      <form class="kh-form" id="kh-form" autocomplete="off">
+        <input id="kh-input" type="text" placeholder="Type your question…" aria-label="Type your question">
+        <button class="kh-send" id="kh-send" type="submit" aria-label="Send" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+        </button>
+      </form>
+      <div class="kh-foot">Automated assistant. Ask about any module or workflow.</div>
+    </div>
+
+    <div class="kh-view on" id="v-guide">
+      <div id="kh-guide">
+        <h3>Student Directory &amp; Profiles</h3>
+        <p class="lead">Complete lifecycle manager for all enrolled learners: personal details, enrollment streams, guardians, and bulk tools.</p>
+        <ol>
+          <li><div><b>New Student</b>Register one learner with personal details, guardian contacts, medical notes and class/stream.</div></li>
+          <li><div><b>Import from Excel or CSV</b>Download the Excel template, fill it in (bold fields are required), then import to add many learners with validation and error logs.</div></li>
+          <li><div><b>View &amp; Edit</b>View shows student information, photo and enrollment (year, form, stream). Edit updates the record.</div></li>
+          <li><div><b>Export All</b>Download the full roster as a formatted Excel file or a fit-to-page PDF report.</div></li>
+          <li><div><b>Row actions</b>Duplicate, edit or delete a record, or Print ID for the student's card.</div></li>
+        </ol>
+        <div class="link"><b>Linked modules:</b> students registered here flow into Finance invoicing, Attendance tracking and Exam report cards.</div>
+        <button class="kh-btn ask" id="kh-toask" type="button">Still stuck? Ask the assistant</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+  /* ---------- Knowledge base: add your own entries ---------- */
+  var KB=[
+    {k:["new student","add student","register","create student"],
+     a:"<p>Click <b>New Student</b> at the top of the Student Directory.</p><ul><li>Enter personal details and the guardian's contacts</li><li>Add medical notes</li><li>Choose the class and stream</li></ul><p>Save and the learner appears in the directory straight away.</p>",
+     f:["How do I import many students?","How do I print an ID card?"]},
+    {k:["import","excel","csv","template","bulk add","upload"],
+     a:"<p>To add many learners at once:</p><ul><li>Download the Excel template</li><li>Fill it in. Bold columns are required, regular ones are optional</li><li>Click <b>Import Students (Excel/CSV)</b> and choose the file</li></ul><p>Every row is validated and any problems are listed in an error log, so you can fix them and re-import.</p>",
+     f:["How do I export the student list?","What does it cover?"]},
+    {k:["export","download","pdf","roster","report"],
+     a:"<p>Click <b>Export All</b>, then pick:</p><ul><li><b>Export as Excel</b>: a formatted spreadsheet of the full roster</li><li><b>Export as PDF</b>: a fit-to-page report</li></ul>",
+     f:["How do I import many students?","How do I filter students?"]},
+    {k:["view","edit","update","change","profile","details"],
+     a:"<p>On any student card, click <b>View</b> to see their information, photo and enrollment details (academic year, form and stream). Click <b>Edit</b> to update the record.</p>",
+     f:["How do I print an ID card?","How do I delete a student?"]},
+    {k:["delete","remove","duplicate","copy"],
+     a:"<p>Use the row actions on a student to <b>Duplicate</b>, <b>Edit</b> or <b>Delete</b> a record. To act on many students at once, tick them and use <b>Bulk actions</b>.</p>",
+     f:["How do I filter students?"]},
+    {k:["id card","print id","card","identification"],
+     a:"<p>Click <b>Print ID</b> on a student card. To change how cards look, open <b>ID Card Designer</b> in the sidebar or the <b>ID Card Templates</b> tab.</p>",
+     f:["How do I filter students?","How do I import many students?"]},
+    {k:["filter","search","find","class","gender","status","sort","list","grid"],
+     a:"<p>Use the search box to find a student by name, ID or class. Narrow the list with the <b>Status</b> and <b>Gender</b> filters or the <b>All classes</b> menu, sort by newest enrolled, and switch between <b>Grid</b> and <b>List</b> views.</p>",
+     f:["How do I print an ID card?","How do I export the student list?"]},
+    {k:["bulk action","select all","select"],
+     a:"<p>Tick the boxes on student cards (or <b>Select all shown</b>) and then open <b>Bulk actions</b> to apply an action to all selected students.</p>",
+     f:["How do I delete a student?"]},
+    {k:["pending","approval","admission","online admission"],
+     a:"<p>Applications from <b>Online Admissions</b> wait for approval. Pending students are counted in the <b>Pending approval</b> card and can be filtered with <b>Status: Pending</b>.</p>",
+     f:["How do I filter students?"]},
+    {k:["finance","invoice","fees","attendance","exam","linked","module","cover","what does"],
+     a:"<p>Students registered here are linked automatically to:</p><ul><li><b>Finance</b> for invoicing</li><li><b>Attendance</b> tracking</li><li><b>Exams</b> for report cards</li></ul><p>You only enter a student once.</p>",
+     f:["Can parents see fees, attendance and results?","How do I book a demo?"]},
+    {k:["parent","guardian"],
+     a:"<p>Yes. Guardian contacts are stored on each student's profile, and parents can follow fees, attendance and results from their own view.</p>",
+     f:["How do I book a demo?"]},
+    {k:["data safe","secure","security","safe"],
+     a:"<p>Access is controlled by role, so staff only see what their role allows. Deletions are confirmed first, and exports are limited to users who have permission.</p>",
+     f:["Will my team be trained?"]},
+    {k:["train","training","setup","onboard"],
+     a:"<p>Yes. Your team gets guided onboarding, and this Help panel stays available on every screen if anyone gets stuck.</p>",
+     f:["How do I book a demo?"]},
+    {k:["demo","book"],
+     a:"<p>You are already in the demo sandbox. Use <b>Reset demo</b> at the top to start from clean sample data, or <b>End demo</b> when you are finished.</p>",
+     f:["What does it cover?"]},
+    {k:["hello","hi","hey","help"],
+     a:"<p>Hi! Ask me about adding, importing, exporting, filtering or printing IDs for students.</p>",
+     f:["How do I import many students?","How do I print an ID card?"]}
+  ];
+  var START=["How do I add a new student?","How do I import many students?","How do I export the student list?","How do I print an ID card?","How do I filter students?","What does it cover?"];
+  var FALLBACK="<p>I am not sure about that one yet. Try asking about <b>adding</b>, <b>importing</b>, <b>exporting</b>, <b>filtering</b> students or <b>printing ID cards</b>.</p>";
+
+  /* ---------- UI ---------- */
+  var $=function(id){return document.getElementById(id)};
+  var root=$("kh"),fab=$("kh-fab"),log=$("kh-log"),chips=$("kh-chips"),input=$("kh-input"),send=$("kh-send"),form=$("kh-form");
+  var busy=false;
+
+  function time(){var d=new Date();return ("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2)}
+  function esc(s){return s.replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+  function scroll(){log.scrollTop=log.scrollHeight}
+  var TICKS='<svg class="tick" viewBox="0 0 16 10" aria-label="Read"><path d="M1 5.5 4 8.5 10 1.5M6 8.5 12 1.5"/></svg>';
+
+  function add(who,html){
+    var r=document.createElement("div");r.className="row "+who;
+    r.innerHTML=(who==="bot"?'<div class="av" aria-hidden="true">K</div>':"")+
+      '<div class="msg">'+html+'<div class="meta">'+time()+(who==="me"?TICKS:"")+'</div></div>';
+    log.appendChild(r);scroll();return r;
+  }
+  function typing(){
+    var r=document.createElement("div");r.className="row bot typing";
+    r.innerHTML='<div class="av" aria-hidden="true">K</div><div class="msg" aria-label="Assistant is typing"><span></span><span></span><span></span></div>';
+    log.appendChild(r);scroll();return r;
+  }
+  function setChips(list){
+    chips.innerHTML="";
+    list.forEach(function(q){
+      var b=document.createElement("button");b.type="button";b.className="chip";b.textContent=q;
+      b.onclick=function(){ask(q)};chips.appendChild(b);
+    });
+  }
+  function find(q){
+    q=q.toLowerCase();var best=null,score=0;
+    KB.forEach(function(e){
+      var s=0;e.k.forEach(function(w){if(q.indexOf(w)>-1)s+=w.length});
+      if(s>score){score=s;best=e}
+    });
+    return best;
+  }
+  function ask(q){
+    q=q.trim();if(!q||busy)return;
+    busy=true;add("me",esc(q));input.value="";send.disabled=true;
+    var t=typing(),hit=find(q);
+    setTimeout(function(){
+      t.remove();
+      add("bot",hit?hit.a:FALLBACK);
+      setChips(hit&&hit.f?hit.f.concat(["What does it cover?"]).slice(0,3):START);
+      busy=false;
+    },650+Math.random()*350);
+  }
+  function reset(){
+    log.innerHTML='<div class="kh-day">Today</div>';
+    add("bot","<p>Hi, I am the Kairo assistant. Tap a question below or type your own.</p>");
+    setChips(START);
+  }
+
+  /* ---------- open / close / tabs ---------- */
+  function open(v){
+    root.classList.toggle("open",v);fab.setAttribute("aria-expanded",v);
+    if(v){
+      tab("guide");
+      setTimeout(function(){$("t-guide").focus({preventScroll:true})},220);
+    }else{fab.focus()}
+  }
+  function tab(name){
+    ["chat","guide"].forEach(function(n){
+      $("t-"+n).setAttribute("aria-selected",n===name);
+      $("v-"+n).classList.toggle("on",n===name);
+    });
+    if(name==="chat")scroll();
+  }
+  fab.onclick=function(){open(!root.classList.contains("open"))};
+  $("kh-close").onclick=function(){open(false)};
+  $("kh-reset").onclick=reset;
+  $("kh-toask").onclick=function(){tab("chat");input.focus()};
+  document.querySelectorAll(".kh-tab").forEach(function(b){b.onclick=function(){tab(b.dataset.v)}});
+  document.addEventListener("keydown",function(e){if(e.key==="Escape"&&root.classList.contains("open"))open(false)});
+  input.addEventListener("input",function(){send.disabled=!input.value.trim()});
+  form.addEventListener("submit",function(e){e.preventDefault();ask(input.value)});
+
+  reset();
+})();
+</script>
+<!-- HELP-WIDGET END -->
+
+</body>
+</html>

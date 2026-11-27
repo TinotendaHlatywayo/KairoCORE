@@ -96,7 +96,7 @@
                     <button
                         type="button"
                         class="sc-more-item"
-                        x-on:click="open = false; window.dispatchEvent(new CustomEvent('sc-open-help'))"
+                        x-on:click="open = false; window.dispatchEvent(new CustomEvent('kh-open'))"
                     >
                         <span class="sc-more-icon">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -105,8 +105,8 @@
                             </svg>
                         </span>
                         <span class="sc-more-text">
-                            <span class="sc-more-label">{{ __('Help Guide') }}</span>
-                            <span class="sc-more-desc">{{ __('How this page and its workflow work') }}</span>
+                            <span class="sc-more-label">{{ __('Help & Assistant') }}</span>
+                            <span class="sc-more-desc">{{ __('Page guide and instant Kairo answers') }}</span>
                         </span>
                         <svg class="sc-more-chevron" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 0 1 .02-1.06L11.168 10 7.23 6.29a.75.75 0 1 1 1.04-1.08l4.5 4.25a.75.75 0 0 1 0 1.08l-4.5 4.25a.75.75 0 0 1-1.06-.02Z" clip-rule="evenodd"/></svg>
                     </button>

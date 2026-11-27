@@ -110,6 +110,11 @@ class DemoAccessTest extends TestCase
         $this->assertNotFalse($rootPosition);
         $this->assertNotFalse($roleButtonPosition);
         $this->assertLessThan($roleButtonPosition, $rootPosition);
+        $this->assertStringContainsString('aria-haspopup="menu"', $html);
+        $this->assertStringContainsString('Demo workspace', $html);
+        $this->assertStringContainsString('Switch role', $html);
+        $this->assertStringContainsString('Start again with fresh sample data', $html);
+        $this->assertStringContainsString('Leave the demo and return home', $html);
     }
 
     public function test_a_real_account_is_unaffected_by_a_demo_persona_in_the_session(): void

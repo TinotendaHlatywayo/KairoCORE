@@ -2,20 +2,29 @@
 
 namespace Tests\Feature;
 
+use App\Livewire\FloatingHelpAssistant;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class HelpGuideDocsLinkTest extends TestCase
 {
-    public function test_help_guide_modal_links_to_full_documentation(): void
+    public function test_floating_assistant_has_two_tabs_and_docs_link(): void
     {
-        $html = view('components.global-help-button', [
-            'help' => ['title' => 'x', 'summary' => 'y'],
-        ])->render();
+        Livewire::test(FloatingHelpAssistant::class)
+            ->assertSee('Help')
+            ->assertSee('Assistant')
+            ->assertSee('Full Documentation')
+            ->assertSeeHtml('target="_blank"')
+            ->assertSeeHtml('rel="noopener"')
+            ->assertSeeHtml('id="kh-fab"')
+            ->assertSeeHtml('id="kh-panel"');
+    }
 
-        $docsHost = parse_url(config('app.url'), PHP_URL_HOST);
-        $this->assertStringContainsString('https://'.$docsHost.'/docs', $html);
-        $this->assertStringContainsString('Full Documentation', $html);
-        $this->assertStringContainsString('target="_blank"', $html);
-        $this->assertStringContainsString('rel="noopener"', $html);
+    public function test_mobile_help_action_opens_floating_assistant(): void
+    {
+        $html = view('components.topbar-more-menu')->render();
+
+        $this->assertStringContainsString("CustomEvent('kh-open')", $html);
+        $this->assertStringNotContainsString('sc-open-help', $html);
     }
 }

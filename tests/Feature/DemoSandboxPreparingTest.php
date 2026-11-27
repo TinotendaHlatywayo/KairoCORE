@@ -75,6 +75,13 @@ class DemoSandboxPreparingTest extends TestCase
             ->assertSee('Preparing your demo');
     }
 
+    public function test_demo_ended_page_uses_kairocore_favicon(): void
+    {
+        $this->get('/demo/ended')
+            ->assertOk()
+            ->assertSee('images/kairocore-icon.png', false);
+    }
+
     public function test_public_login_does_not_create_or_mutate_shared_demo_tenant(): void
     {
         Queue::fake();

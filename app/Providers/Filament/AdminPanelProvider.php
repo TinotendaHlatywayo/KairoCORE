@@ -49,6 +49,7 @@ use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Vite;
+use Illuminate\Support\HtmlString;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Modules\SaaS\Models\PlatformSetting;
 
@@ -161,7 +162,15 @@ class AdminPanelProvider extends PanelProvider
             // marketing media, backup archive, content assets).
             ->renderHook(
                 PanelsRenderHook::BODY_END,
-                fn () => new \Illuminate\Support\HtmlString('<x-upload-progress />')
+                fn () => new HtmlString('<x-upload-progress />')
+            )
+            ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn () => view('components.assistant-storage-guard')
+            )
+            ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn () => Blade::render('@livewire(\'floating-help-assistant\')')
             )
             ->middleware([
                 EncryptCookies::class,

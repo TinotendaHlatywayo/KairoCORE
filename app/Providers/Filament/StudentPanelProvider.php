@@ -6,12 +6,13 @@ use App\AvatarProviders\LocalSvgAvatarProvider;
 use App\Filament\App\Pages\Auth\EditProfile;
 use App\Filament\App\Pages\Auth\Login;
 use App\Filament\Student\Pages\StudentDashboard;
+use App\Http\Middleware\EnsureDemoSandboxAccess;
 use App\Http\Middleware\EnsureTenantNotSuspended;
 use App\Http\Middleware\EnsureUserActive;
-use App\Http\Middleware\EnsureDemoSandboxAccess;
 use App\Http\Middleware\ResolveTenant;
 use App\Http\Middleware\SchoolPanelAuthenticate;
 use App\Http\Middleware\SetUserLocale;
+use App\Security\DemoPersona;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\NavigationGroup;
@@ -29,6 +30,7 @@ use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Vite;
+use Illuminate\Support\HtmlString;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class StudentPanelProvider extends PanelProvider
@@ -102,7 +104,7 @@ class StudentPanelProvider extends PanelProvider
             // set, otherwise the platform favicon.
             ->renderHook(
                 'panels::head.start',
-                fn () => '<link rel="icon" href="'.e(school_favicon_url()).'">'
+                fn () => '<link rel="icon" href="'.e(DemoPersona::isDemoUser(auth()->user()) ? platform_favicon_url() : school_favicon_url()).'">'
             )
 
             // Private authenticated panel: keep every page out of search indexes.
@@ -172,7 +174,17 @@ class StudentPanelProvider extends PanelProvider
             // Global upload progress bar for wire:model file inputs.
             ->renderHook(
                 PanelsRenderHook::BODY_END,
-                fn () => new \Illuminate\Support\HtmlString('<x-upload-progress />')
+                fn () => new HtmlString('<x-upload-progress />')
+            )
+
+            ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn () => view('components.assistant-storage-guard')
+            )
+
+            ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn () => Blade::render('@livewire(\'floating-help-assistant\')')
             )
 
             ->homeUrl(fn () => StudentDashboard::getUrl())

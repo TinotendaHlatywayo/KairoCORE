@@ -58,14 +58,15 @@ use App\Filament\App\Resources\TeacherAssignmentResource;
 use App\Filament\App\Resources\TimeSlotResource;
 use App\Filament\App\Widgets\DemoDataWidget;
 use App\Filament\App\Widgets\ReportingDashboardOverview;
+use App\Http\Middleware\EnsureDemoSandboxAccess;
 use App\Http\Middleware\EnsureImpersonationSessionIsValid;
 use App\Http\Middleware\EnsureTenantNotSuspended;
 use App\Http\Middleware\EnsureUserActive;
 use App\Http\Middleware\EnsureWorkspaceTenantContext;
-use App\Http\Middleware\EnsureDemoSandboxAccess;
 use App\Http\Middleware\ResolveTenant;
 use App\Http\Middleware\SchoolPanelAuthenticate;
 use App\Http\Middleware\SetUserLocale;
+use App\Security\DemoPersona;
 use App\Support\WorkspaceSearchIndex;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -197,7 +198,7 @@ class AppPanelProvider extends PanelProvider
             // set, otherwise the platform favicon.
             ->renderHook(
                 'panels::head.start',
-                fn () => '<link rel="icon" href="'.e(school_favicon_url()).'">'
+                fn () => '<link rel="icon" href="'.e(DemoPersona::isDemoUser(Auth::user()) ? platform_favicon_url() : school_favicon_url()).'">'
             )
 
             // Private authenticated panel: keep every page out of search indexes.
@@ -265,12 +266,6 @@ class AppPanelProvider extends PanelProvider
             ->renderHook(
                 PanelsRenderHook::TOPBAR_END,
                 fn () => view('components.settings-shortcut')
-            )
-
-            // Render universal page help guide button in top header bar end
-            ->renderHook(
-                PanelsRenderHook::TOPBAR_END,
-                fn () => view('components.global-help-button')
             )
 
             // Phone-only overflow menu. On narrow screens the settings, help
@@ -361,6 +356,16 @@ class AppPanelProvider extends PanelProvider
             ->renderHook(
                 PanelsRenderHook::BODY_END,
                 fn () => new HtmlString('<x-upload-progress />')
+            )
+
+            ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn () => view('components.assistant-storage-guard')
+            )
+
+            ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn () => Blade::render('@livewire(\'floating-help-assistant\')')
             )
 
             // ──────────────────────────────────────────────────────────────
