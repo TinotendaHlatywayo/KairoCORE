@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Mail\AdmissionConfirmation;
 use App\Models\School;
+use App\Support\DemoSessionGuard;
 use Modules\Admin\Enums\EmailCategory;
 use Modules\Admin\Models\SystemSetting;
 use Modules\Admin\Services\TenantEmailConfigurationService;
@@ -22,6 +23,8 @@ class AdmissionNotificationService
 
     public function send(Student $student, ?string $recipientEmail = null, ?int $schoolId = null): bool
     {
+        DemoSessionGuard::assertWriteAllowed('send admission notifications');
+
         $schoolId = $schoolId ?? ($student->school_id ?? session('current_tenant')?->id);
 
         $school = School::find($schoolId);

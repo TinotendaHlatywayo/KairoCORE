@@ -609,7 +609,9 @@ class StudentResource extends Resource
                                 'ids' => implode(',', $ids),
                             ]);
                         }),
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->modalHeading(__('Delete selected students?'))
+                        ->modalDescription(__('The selected student records will be permanently deleted. This cannot be undone.')),
                 ]),
             ])
             ->content(fn ($livewire) => view('filament.app.resources.student.student-cards', ['records' => $livewire->getTableRecords()]))

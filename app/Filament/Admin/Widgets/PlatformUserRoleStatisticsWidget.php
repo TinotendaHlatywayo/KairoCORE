@@ -3,6 +3,7 @@
 namespace App\Filament\Admin\Widgets;
 
 use App\Models\User;
+use App\Support\PlatformTenantFilter;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
@@ -10,10 +11,13 @@ class PlatformUserRoleStatisticsWidget extends BaseWidget
 {
     protected function getStats(): array
     {
-        $teachingCount = User::notPlatformManaged()->where('requested_role', 'teaching_staff')->count();
-        $nonTeachingCount = User::notPlatformManaged()->where('requested_role', 'non_teaching_staff')->count();
-        $adminCount = User::notPlatformManaged()->whereIn('requested_role', ['administrator', 'admin'])->count();
-        $studentCount = User::notPlatformManaged()->where('requested_role', 'student')->count();
+        $users = User::notPlatformManaged();
+        PlatformTenantFilter::excludeSchoolColumn($users);
+
+        $teachingCount = (clone $users)->where('requested_role', 'teaching_staff')->count();
+        $nonTeachingCount = (clone $users)->where('requested_role', 'non_teaching_staff')->count();
+        $adminCount = (clone $users)->whereIn('requested_role', ['administrator', 'admin'])->count();
+        $studentCount = (clone $users)->where('requested_role', 'student')->count();
 
         return [
             Stat::make(__('Platform Teaching Staff'), $teachingCount)

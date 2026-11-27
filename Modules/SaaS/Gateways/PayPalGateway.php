@@ -2,6 +2,7 @@
 
 namespace Modules\SaaS\Gateways;
 
+use App\Support\DemoSessionGuard;
 use Exception;
 use Illuminate\Support\Facades\Http;
 
@@ -39,6 +40,8 @@ class PayPalGateway implements PaymentGatewayInterface
 
     public function initializePayment(GatewayPayload $payload): GatewayResponse
     {
+        DemoSessionGuard::assertWriteAllowed('initialize payments');
+
         try {
             $token = $this->getAccessToken();
 
@@ -77,6 +80,8 @@ class PayPalGateway implements PaymentGatewayInterface
 
     public function verifyPayment(string $transactionReference, array $requestData): GatewayResponse
     {
+        DemoSessionGuard::assertWriteAllowed('capture payments');
+
         try {
             $token = $this->getAccessToken();
 

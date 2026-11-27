@@ -3,12 +3,14 @@
 namespace App\Filament\Admin\Resources;
 
 use App\Filament\Admin\Resources\SaaSInvoiceResource\Pages;
+use App\Support\PlatformTenantFilter;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Modules\SaaS\Models\SaaSInvoice;
 
@@ -39,6 +41,15 @@ class SaaSInvoiceResource extends Resource
         $user = Auth::user();
 
         return $user && $user->school_id === null;
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        PlatformTenantFilter::excludeSchoolColumn($query);
+
+        return $query;
     }
 
     public static function form(Form $form): Form

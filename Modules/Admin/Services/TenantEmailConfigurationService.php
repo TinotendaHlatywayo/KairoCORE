@@ -6,6 +6,7 @@ use App\Jobs\SendTenantEmailJob;
 use App\Models\School;
 use App\Models\User;
 use App\Security\RoleCatalogue;
+use App\Support\DemoSessionGuard;
 use Illuminate\Contracts\Mail\Mailable;
 use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Message;
@@ -217,6 +218,8 @@ class TenantEmailConfigurationService
      */
     public function send(Mailable $mailable, EmailCategory $category, ?School $school = null): bool
     {
+        DemoSessionGuard::assertWriteAllowed('send email');
+
         $config = $school
             ? $this->forSchool($school, $category)
             : $this->forCurrentTenant($category);
@@ -265,6 +268,8 @@ class TenantEmailConfigurationService
      */
     public function queueSend(Mailable $mailable, EmailCategory $category, ?School $school = null): bool
     {
+        DemoSessionGuard::assertWriteAllowed('queue email');
+
         $config = $school
             ? $this->forSchool($school, $category)
             : $this->forCurrentTenant($category);
@@ -294,6 +299,8 @@ class TenantEmailConfigurationService
      */
     public function sendTestEmail(School $school, EmailCategory $category, array $data, string $to): array
     {
+        DemoSessionGuard::assertWriteAllowed('send test email');
+
         $config = new EmailConfiguration($data);
         $config->school_id = $school->id;
         $config->category = $category->value;

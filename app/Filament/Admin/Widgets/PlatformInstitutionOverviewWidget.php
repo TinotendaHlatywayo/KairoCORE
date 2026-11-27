@@ -3,6 +3,7 @@
 namespace App\Filament\Admin\Widgets;
 
 use App\Models\School;
+use App\Support\PlatformTenantFilter;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
@@ -15,12 +16,15 @@ class PlatformInstitutionOverviewWidget extends BaseWidget
 
     protected function getStats(): array
     {
-        $total = School::query()->count();
-        $active = School::query()->where('status', 'active')->count();
-        $pending = School::query()->where('status', 'pending')->count();
-        $suspended = School::query()->where('status', 'suspended')->count();
-        $trials = School::query()->whereNotNull('trial_ends_at')->where('trial_ends_at', '>', now())->count();
-        $endingSoon = School::query()
+        $schools = School::query();
+        PlatformTenantFilter::excludeSchoolColumn($schools, 'id');
+
+        $total = (clone $schools)->count();
+        $active = (clone $schools)->where('status', 'active')->count();
+        $pending = (clone $schools)->where('status', 'pending')->count();
+        $suspended = (clone $schools)->where('status', 'suspended')->count();
+        $trials = (clone $schools)->whereNotNull('trial_ends_at')->where('trial_ends_at', '>', now())->count();
+        $endingSoon = (clone $schools)
             ->whereNotNull('trial_ends_at')
             ->whereBetween('trial_ends_at', [now(), now()->addDays(7)])
             ->count();

@@ -2,6 +2,7 @@
 
 namespace Modules\SaaS\Gateways;
 
+use App\Support\DemoSessionGuard;
 use Exception;
 use Illuminate\Support\Facades\Http;
 
@@ -16,6 +17,8 @@ class StripeGateway implements PaymentGatewayInterface
 
     public function initializePayment(GatewayPayload $payload): GatewayResponse
     {
+        DemoSessionGuard::assertWriteAllowed('initialize payments');
+
         try {
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer '.$this->secretKey,

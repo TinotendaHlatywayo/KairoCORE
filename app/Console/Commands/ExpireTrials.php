@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\School;
+use App\Support\PlatformTenantFilter;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -28,11 +29,12 @@ class ExpireTrials extends Command
             return self::SUCCESS;
         }
 
-        $expired = School::query()
+        $expiredQuery = School::query()
             ->whereNotNull('trial_ends_at')
             ->where('trial_ends_at', '<', now())
-            ->where('status', 'active')
-            ->get();
+            ->where('status', 'active');
+        PlatformTenantFilter::excludeSchoolColumn($expiredQuery, 'id');
+        $expired = $expiredQuery->get();
 
         $affected = 0;
 

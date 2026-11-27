@@ -6,6 +6,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Schema;
 use App\Models\School as SchoolModel;
 use App\Models\User as UserModel;
+use App\Support\PlatformTenantFilter;
 use Modules\Reports\Models\EnterpriseReportTemplate;
 use Modules\Reports\Models\ReportSchedule;
 use Modules\Reports\Support\ReportPresetCatalogue;
@@ -87,7 +88,9 @@ class ReportScheduleSeeder extends Seeder
             return null;
         }
 
-        $schoolId = SchoolModel::query()->orderBy('id')->value('id');
+        $schoolQuery = SchoolModel::query()->orderBy('id');
+        PlatformTenantFilter::excludeSchoolColumn($schoolQuery, 'id');
+        $schoolId = $schoolQuery->value('id');
 
         return $schoolId ? (int) $schoolId : null;
     }

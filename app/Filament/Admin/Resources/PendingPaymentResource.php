@@ -4,11 +4,13 @@ namespace App\Filament\Admin\Resources;
 
 use App\Filament\Admin\Resources\PendingPaymentResource\Pages;
 use App\Mail\SaaS\SaaSCustomReceiptMail;
+use App\Support\PlatformTenantFilter;
 use Filament\Forms;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -49,10 +51,25 @@ class PendingPaymentResource extends Resource
             && $user->school_id === null;
     }
 
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        PlatformTenantFilter::excludeSchoolColumn($query);
+
+        return $query;
+    }
+
     public static function table(Table $table): Table
     {
         return $table
-            ->query(SaaSManualSubmission::query()->where('status', 'pending'))
+            ->query(function (): Builder {
+                $query = SaaSManualSubmission::query()->where('status', 'pending');
+
+                PlatformTenantFilter::excludeSchoolColumn($query);
+
+                return $query;
+            })
             ->columns([
                 Tables\Columns\TextColumn::make('school.name')->sortable()->searchable(),
                 Tables\Columns\TextColumn::make('reference_number')->searchable(),

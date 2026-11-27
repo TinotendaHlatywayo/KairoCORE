@@ -4,10 +4,12 @@ namespace App\Filament\Admin\Resources;
 
 use App\Filament\Admin\Resources\TenantHealthResource\Pages;
 use App\Models\School;
+use App\Support\PlatformTenantFilter;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Modules\Recovery\Services\TelemetryService;
 
@@ -40,6 +42,15 @@ class TenantHealthResource extends Resource
         $user = Auth::user();
 
         return $user && $user->school_id === null;
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        PlatformTenantFilter::excludeSchoolColumn($query, 'id');
+
+        return $query;
     }
 
     public static function form(Form $form): Form

@@ -5,12 +5,14 @@ namespace App\Filament\Admin\Resources;
 use App\Filament\Admin\Pages\PlatformBillingStatements;
 use App\Filament\Admin\Resources\SchoolSubscriptionResource\Pages;
 use App\Models\School;
+use App\Support\PlatformTenantFilter;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Modules\SaaS\Models\SaaSPlan;
 use Modules\SaaS\Models\SaaSSubscription;
@@ -45,6 +47,15 @@ class SchoolSubscriptionResource extends Resource
         return $user && $user->school_id === null;
     }
 
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        PlatformTenantFilter::excludeSchoolColumn($query);
+
+        return $query;
+    }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -57,16 +68,20 @@ class SchoolSubscriptionResource extends Resource
                             // Only schools without a subscription can be picked,
                             // so a second row can never hit the unique index.
                             // The record's own school stays available on edit.
-                            ->options(fn (?SaaSSubscription $record) => School::query()
-                                ->where(function ($query) use ($record) {
-                                    $query->doesntHave('saasSubscription');
+                            ->options(function (?SaaSSubscription $record) {
+                                $query = School::query()
+                                    ->where(function ($query) use ($record) {
+                                        $query->doesntHave('saasSubscription');
 
-                                    if ($record?->school_id) {
-                                        $query->orWhere('id', $record->school_id);
-                                    }
-                                })
-                                ->orderBy('name')
-                                ->pluck('name', 'id'))
+                                        if ($record?->school_id) {
+                                            $query->orWhere('id', $record->school_id);
+                                        }
+                                    });
+
+                                PlatformTenantFilter::excludeSchoolColumn($query, 'id');
+
+                                return $query->orderBy('name')->pluck('name', 'id');
+                            })
                             ->required()
                             ->searchable(),
                         Forms\Components\Select::make('saas_plan_id')

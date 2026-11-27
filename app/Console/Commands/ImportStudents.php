@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\School;
 use App\Services\StudentCsvService;
+use App\Support\PlatformTenantFilter;
 use Illuminate\Console\Command;
 use Modules\Academics\Models\Course;
 use Modules\Academics\Models\Section;
@@ -31,7 +32,9 @@ class ImportStudents extends Command
             return $this->importAllSchools($folder);
         }
 
-        $schoolId = (int) ($this->option('school') ?? School::query()->orderBy('id')->value('id'));
+        $defaultSchoolQuery = School::query()->orderBy('id');
+        PlatformTenantFilter::excludeSchoolColumn($defaultSchoolQuery, 'id');
+        $schoolId = (int) ($this->option('school') ?? $defaultSchoolQuery->value('id'));
 
         if ($schoolId <= 0) {
             $this->error('No schools found.');
@@ -55,7 +58,9 @@ class ImportStudents extends Command
 
     protected function importAllSchools(string $root): int
     {
-        $schools = School::query()->orderBy('id')->get();
+        $schoolQuery = School::query()->orderBy('id');
+        PlatformTenantFilter::excludeSchoolColumn($schoolQuery, 'id');
+        $schools = $schoolQuery->get();
 
         if ($schools->isEmpty()) {
             $this->error('No schools found.');

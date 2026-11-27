@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Support\PlatformTenantFilter;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Modules\DigitalAssessment\Models\GamificationAchievement;
@@ -11,7 +12,9 @@ class GamificationSeeder extends Seeder
 {
     public function run(): void
     {
-        $schoolIds = DB::table('schools')->pluck('id')->toArray();
+        $schoolsQuery = DB::table('schools');
+        PlatformTenantFilter::excludeSchoolsTable($schoolsQuery);
+        $schoolIds = $schoolsQuery->pluck('id')->toArray();
 
         foreach ($schoolIds as $schoolId) {
             $this->seedBadges($schoolId);

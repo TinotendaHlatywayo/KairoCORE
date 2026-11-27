@@ -2,6 +2,7 @@
 
 namespace Modules\SaaS\Services;
 
+use App\Support\PlatformTenantFilter;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -141,12 +142,12 @@ class BillingService
 
         $summary = ['processed' => 0, 'generated' => 0, 'skipped' => 0, 'failed' => 0];
 
-        $subscriptions = SaaSSubscription::query()
-            ->with('plan')
+        $subscriptionsQuery = SaaSSubscription::query()
             ->whereNotIn('status', ['cancelled'])
             ->whereNotNull('billing_start_date')
-            ->whereDate('billing_start_date', '<=', $today)
-            ->get();
+            ->whereDate('billing_start_date', '<=', $today);
+        PlatformTenantFilter::excludeSchoolColumn($subscriptionsQuery);
+        $subscriptions = $subscriptionsQuery->with('plan')->get();
 
         foreach ($subscriptions as $subscription) {
             $summary['processed']++;

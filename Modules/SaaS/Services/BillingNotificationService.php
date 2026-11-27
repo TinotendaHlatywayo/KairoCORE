@@ -4,6 +4,7 @@ namespace Modules\SaaS\Services;
 
 use App\Mail\SaaS\PlatformBillingMail;
 use App\Models\User;
+use App\Support\PlatformTenantFilter;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -46,11 +47,11 @@ class BillingNotificationService
 
         $summary = ['processed' => 0, 'sent' => 0, 'skipped' => 0, 'suspended' => 0];
 
-        $subscriptions = SaaSSubscription::query()
-            ->with(['school', 'plan'])
+        $subscriptionsQuery = SaaSSubscription::query()
             ->whereNotNull('billing_start_date')
-            ->whereNotIn('status', ['cancelled'])
-            ->get();
+            ->whereNotIn('status', ['cancelled']);
+        PlatformTenantFilter::excludeSchoolColumn($subscriptionsQuery);
+        $subscriptions = $subscriptionsQuery->with(['school', 'plan'])->get();
 
         foreach ($subscriptions as $subscription) {
             $summary['processed']++;

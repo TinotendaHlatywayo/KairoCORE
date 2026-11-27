@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\School;
+use App\Support\PlatformTenantFilter;
 use Illuminate\Console\Command;
 use Modules\Admin\Services\DepartmentPermissionPresets;
 
@@ -19,6 +20,8 @@ class ProvisionDepartments extends Command
         $query = School::query();
         if ($schoolId) {
             $query->where('id', (int) $schoolId);
+        } else {
+            PlatformTenantFilter::excludeSchoolColumn($query, 'id');
         }
 
         $schools = $query->get();

@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\School;
 use App\Security\RoleCatalogue;
+use App\Support\PlatformTenantFilter;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Modules\Admin\Services\SystemRolePresets;
@@ -81,6 +82,8 @@ class SyncCatalogueRoles extends Command
 
         if ($school = $this->argument('school')) {
             $query->where('id', (int) $school);
+        } else {
+            PlatformTenantFilter::excludeSchoolColumn($query, 'id');
         }
 
         return $query->get();

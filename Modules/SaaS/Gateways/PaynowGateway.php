@@ -2,6 +2,7 @@
 
 namespace Modules\SaaS\Gateways;
 
+use App\Support\DemoSessionGuard;
 use Exception;
 use Modules\SaaS\Models\SaaSBillingSetting;
 use Paynow\Payments\Paynow;
@@ -48,6 +49,8 @@ class PaynowGateway implements PaymentGatewayInterface
 
     public function initializePayment(GatewayPayload $payload): GatewayResponse
     {
+        DemoSessionGuard::assertWriteAllowed('initialize payments');
+
         try {
             if (empty($this->integrationId) || empty($this->integrationKey) || ! $this->paynow) {
                 return new GatewayResponse(

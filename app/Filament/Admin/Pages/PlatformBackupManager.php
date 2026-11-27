@@ -3,6 +3,7 @@
 namespace App\Filament\Admin\Pages;
 
 use App\Models\School;
+use App\Support\PlatformTenantFilter;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Auth;
@@ -81,7 +82,15 @@ class PlatformBackupManager extends Page
 
     public function refreshBackupsList(): void
     {
+        $excludedSchoolIds = PlatformTenantFilter::excludedSchoolIds();
         $query = PlatformBackup::with('school')->latest();
+
+        if ($excludedSchoolIds !== []) {
+            $query->where(function ($query) use ($excludedSchoolIds): void {
+                $query->whereNull('school_id')
+                    ->orWhereNotIn('school_id', $excludedSchoolIds);
+            });
+        }
 
         if ($this->vaultStatusFilter !== '') {
             $query->where('status', $this->vaultStatusFilter);
@@ -114,6 +123,17 @@ class PlatformBackupManager extends Page
         $this->selectedBackupIds = array_values(array_intersect($this->selectedBackupIds, $existingIds));
 
         $logsQuery = PlatformRestoreLog::with('backup')->latest();
+
+        if ($excludedSchoolIds !== []) {
+            $logsQuery->where(function ($query) use ($excludedSchoolIds): void {
+                $query->doesntHave('backup')
+                    ->orWhereHas('backup', fn ($query) => $query->where(function ($query) use ($excludedSchoolIds): void {
+                        $query->whereNull('school_id')
+                            ->orWhereNotIn('school_id', $excludedSchoolIds);
+                    }));
+            });
+        }
+
         $this->restoreLogsList = $logsQuery
             ->limit($this->showAllRestoreLogs ? 50 : 3)
             ->get()

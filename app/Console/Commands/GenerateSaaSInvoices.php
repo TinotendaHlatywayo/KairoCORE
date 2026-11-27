@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Support\PlatformTenantFilter;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Modules\SaaS\Models\PlatformSetting;
@@ -29,13 +30,14 @@ class GenerateSaaSInvoices extends Command
 
         // The service has no dry-run mode; report the eligible set instead.
         if ($this->option('dry-run')) {
-            $eligible = SaaSSubscription::query()
+            $eligibleQuery = SaaSSubscription::query()
                 ->with('plan')
                 ->whereNotIn('status', ['cancelled'])
                 ->whereNotNull('billing_start_date')
                 ->whereDate('billing_start_date', '<=', now()->startOfDay())
-                ->whereDoesntHave('invoices', fn ($q) => $q->whereIn('status', ['unpaid', 'partially_paid']))
-                ->count();
+                ->whereDoesntHave('invoices', fn ($q) => $q->whereIn('status', ['unpaid', 'partially_paid']));
+            PlatformTenantFilter::excludeSchoolColumn($eligibleQuery);
+            $eligible = $eligibleQuery->count();
 
             $this->info("Would generate {$eligible} invoice(s).");
 

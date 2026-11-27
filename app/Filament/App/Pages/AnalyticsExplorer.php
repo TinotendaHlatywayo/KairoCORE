@@ -6,6 +6,7 @@ use App\Filament\App\Concerns\HasPageHelp;
 use App\Filament\App\Concerns\ModuleAwareActiveNavigation;
 use App\Filament\App\Concerns\ModulePermissionAccess;
 use App\Models\User;
+use App\Support\PlatformTenantFilter;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -1012,8 +1013,15 @@ class AnalyticsExplorer extends Page
                 ];
 
             case 'saas':
-                $tenants = Schema::hasTable('schools') ? DB::table('schools')->count() : 0;
-                $activeTenants = Schema::hasTable('schools') ? DB::table('schools')->where('status', 'active')->count() : 0;
+                $tenants = 0;
+                $activeTenants = 0;
+
+                if (Schema::hasTable('schools')) {
+                    $schoolsQuery = DB::table('schools');
+                    PlatformTenantFilter::excludeSchoolsTable($schoolsQuery);
+                    $tenants = $schoolsQuery->count();
+                    $activeTenants = (clone $schoolsQuery)->where('status', 'active')->count();
+                }
 
                 return [
                     'traces' => [[

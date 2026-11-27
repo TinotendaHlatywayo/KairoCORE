@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Support\PlatformTenantFilter;
 use Illuminate\Console\Command;
 use Modules\Reports\Models\GeneratedReport;
 use Modules\Reports\Services\ReportAuditService;
@@ -24,6 +25,8 @@ class AuditReports extends Command
 
         if ($schoolId) {
             $query->where('school_id', (int) $schoolId);
+        } else {
+            PlatformTenantFilter::excludeSchoolColumn($query);
         }
 
         $reports = $query->with('template')->orderBy('id')->get();

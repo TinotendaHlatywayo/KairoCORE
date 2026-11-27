@@ -2,6 +2,7 @@
 
 use App\Models\School;
 use App\Services\TerminologyService;
+use App\Support\PlatformTenantFilter;
 use Carbon\CarbonInterface;
 use chillerlan\QRCode\Common\EccLevel;
 use chillerlan\QRCode\Common\Mode;
@@ -348,6 +349,8 @@ if (! function_exists('marketing_live_stats')) {
         try {
             $studentRoleIds = DB::table('custom_roles')->where('name', 'Student')->pluck('id')->all();
 
+            $excludedSchoolIds = PlatformTenantFilter::excludedSchoolIds();
+
             $staff = DB::table('users')
                 ->whereNull('deleted_at')
                 ->whereNotNull('school_id')
@@ -355,17 +358,39 @@ if (! function_exists('marketing_live_stats')) {
                     $query->whereNull('requested_role')->orWhere('requested_role', '<>', 'student');
                 });
 
+            if ($excludedSchoolIds !== []) {
+                $staff->whereNotIn('school_id', $excludedSchoolIds);
+            }
+
             if ($studentRoleIds !== []) {
                 $staff->where(function ($query) use ($studentRoleIds) {
                     $query->whereNull('custom_role_id')->orWhereNotIn('custom_role_id', $studentRoleIds);
                 });
             }
 
+            $schoolsQuery = DB::table('schools')->whereNull('deleted_at');
+            if ($excludedSchoolIds !== []) {
+                $schoolsQuery->whereNotIn('id', $excludedSchoolIds);
+            }
+
+            $studentsQuery = DB::table('students')->whereNull('deleted_at');
+            if ($excludedSchoolIds !== []) {
+                $studentsQuery->whereNotIn('school_id', $excludedSchoolIds);
+            }
+
+            $usersQuery = DB::table('users')->whereNull('deleted_at');
+            if ($excludedSchoolIds !== []) {
+                $usersQuery->where(function ($query) use ($excludedSchoolIds): void {
+                    $query->whereNull('school_id')
+                        ->orWhereNotIn('school_id', $excludedSchoolIds);
+                });
+            }
+
             $stats = [
-                'schools' => (string) DB::table('schools')->whereNull('deleted_at')->count(),
-                'students' => (string) DB::table('students')->whereNull('deleted_at')->count(),
+                'schools' => (string) $schoolsQuery->count(),
+                'students' => (string) $studentsQuery->count(),
                 'staff' => (string) $staff->count(),
-                'users' => (string) DB::table('users')->whereNull('deleted_at')->count(),
+                'users' => (string) $usersQuery->count(),
                 'languages' => (string) count(supported_locales()),
                 'modules' => (string) count(config('modules', [])),
             ];

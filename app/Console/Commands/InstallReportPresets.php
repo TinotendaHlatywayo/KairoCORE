@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\School;
+use App\Support\PlatformTenantFilter;
 use Database\Seeders\ReportScheduleSeeder;
 use Illuminate\Console\Command;
 
@@ -20,6 +21,8 @@ class InstallReportPresets extends Command
         $query = School::query();
         if ($schoolId) {
             $query->where('id', (int) $schoolId);
+        } else {
+            PlatformTenantFilter::excludeSchoolColumn($query, 'id');
         }
 
         $schools = $query->orderBy('id')->get();

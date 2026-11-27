@@ -2,6 +2,7 @@
 
 namespace Modules\Recovery\Services;
 
+use App\Support\PlatformTenantFilter;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -414,12 +415,14 @@ class PlatformBackupService
         fwrite($handle, "SET FOREIGN_KEY_CHECKS=0;\n");
 
         if ($schoolIds === null) {
+            $excludedSchoolIds = PlatformTenantFilter::excludedSchoolIds();
+
             foreach ($this->allTables() as $table) {
                 if (in_array($table, $skipTables, true)) {
                     continue;
                 }
                 $this->dumpStructure($handle, $table);
-                $this->dumpRows($handle, $table, null);
+                $this->dumpRows($handle, $table, null, $excludedSchoolIds);
             }
         } else {
             $tenantTables = $this->tenantTables();
@@ -467,9 +470,20 @@ class PlatformBackupService
     /**
      * @param  string|null  $where  raw WHERE clause for tenant scoping, null = all rows
      */
-    private function dumpRows($handle, string $table, ?string $where): void
+    private function dumpRows($handle, string $table, ?string $where, array $excludedSchoolIds = []): void
     {
         $query = DB::table($table)->when($where !== null, fn ($q) => $q->whereRaw($where));
+
+        if ($excludedSchoolIds !== []) {
+            if ($table === 'schools') {
+                $query->whereNotIn('id', $excludedSchoolIds);
+            } elseif (Schema::hasColumn($table, 'school_id')) {
+                $query->where(function ($query) use ($excludedSchoolIds): void {
+                    $query->whereNull('school_id')
+                        ->orWhereNotIn('school_id', $excludedSchoolIds);
+                });
+            }
+        }
 
         if (Schema::hasColumn($table, 'id')) {
             // Chunked reads release each batch, so memory stays flat even when a

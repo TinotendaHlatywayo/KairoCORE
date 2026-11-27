@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\School;
+use App\Support\PlatformTenantFilter;
 use Illuminate\Console\Command;
 use Modules\Promotion\Models\PromotionItem;
 use Modules\Students\Models\Enrollment;
@@ -19,9 +20,15 @@ class PurgePromotionJunk extends Command
         $schoolId = $this->argument('school');
         $dryRun = (bool) $this->option('dry-run');
 
-        $schools = School::query()
-            ->when($schoolId, fn ($q) => $q->whereKey((int) $schoolId))
-            ->get();
+        $schoolsQuery = School::query();
+
+        if ($schoolId) {
+            $schoolsQuery->whereKey((int) $schoolId);
+        } else {
+            PlatformTenantFilter::excludeSchoolColumn($schoolsQuery, 'id');
+        }
+
+        $schools = $schoolsQuery->get();
 
         if ($schools->isEmpty()) {
             $this->warn('No matching schools found.');

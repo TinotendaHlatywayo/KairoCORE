@@ -3,6 +3,7 @@
 namespace Modules\SaaS\Services;
 
 use App\Models\School;
+use App\Support\PlatformTenantFilter;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -28,9 +29,11 @@ class PlatformFinanceService
         $startDate = $start->toDateString();
         $endDate = $end->toDateString();
 
-        $transactions = SaaSTransaction::with('school')
+        $transactionsQuery = SaaSTransaction::query()
             ->where('status', 'completed')
-            ->whereBetween('processed_at', [$start, $end])
+            ->whereBetween('processed_at', [$start, $end]);
+        PlatformTenantFilter::excludeSchoolColumn($transactionsQuery);
+        $transactions = $transactionsQuery->with('school')
             ->orderBy('processed_at')
             ->get();
 
@@ -46,18 +49,19 @@ class PlatformFinanceService
         $expensesPaid = round((float) $expenseRows->where('is_paid', true)->sum('amount'), 2);
         $expensesUnpaid = round($expenses - $expensesPaid, 2);
 
-        $receiptsTotal = round((float) SaaSReceipt::query()
-            ->whereBetween('issued_at', [$start, $end])
-            ->sum('amount_paid'), 2);
+        $receiptsQuery = SaaSReceipt::query()->whereBetween('issued_at', [$start, $end]);
+        PlatformTenantFilter::excludeSchoolColumn($receiptsQuery);
+        $receiptsTotal = round((float) $receiptsQuery->sum('amount_paid'), 2);
 
-        $invoicedTotal = round((float) SaaSInvoice::query()
+        $invoicesQuery = SaaSInvoice::query()
             ->whereDate('issue_date', '>=', $startDate)
-            ->whereDate('issue_date', '<=', $endDate)
-            ->sum('total'), 2);
+            ->whereDate('issue_date', '<=', $endDate);
+        PlatformTenantFilter::excludeSchoolColumn($invoicesQuery);
+        $invoicedTotal = round((float) $invoicesQuery->sum('total'), 2);
 
-        $outstandingTotal = round((float) SaaSInvoice::query()
-            ->whereIn('status', ['unpaid', 'partially_paid'])
-            ->sum('total'), 2);
+        $outstandingQuery = SaaSInvoice::query()->whereIn('status', ['unpaid', 'partially_paid']);
+        PlatformTenantFilter::excludeSchoolColumn($outstandingQuery);
+        $outstandingTotal = round((float) $outstandingQuery->sum('total'), 2);
 
         $netProfit = round($revenue - $expenses, 2);
         $margin = $revenue > 0 ? round(($netProfit / $revenue) * 100, 1) : null;
@@ -133,8 +137,9 @@ class PlatformFinanceService
      */
     public function availableYears(): array
     {
-        $transactionYears = SaaSTransaction::query()
-            ->whereNotNull('processed_at')
+        $transactionQuery = SaaSTransaction::query()->whereNotNull('processed_at');
+        PlatformTenantFilter::excludeSchoolColumn($transactionQuery);
+        $transactionYears = $transactionQuery
             ->pluck('processed_at')
             ->map(fn ($date) => (int) Carbon::parse($date)->year);
 
@@ -184,10 +189,11 @@ class PlatformFinanceService
             ];
         }
 
-        $transactions = SaaSTransaction::query()
+        $transactionQuery = SaaSTransaction::query()
             ->where('status', 'completed')
-            ->whereYear('processed_at', $year)
-            ->get();
+            ->whereYear('processed_at', $year);
+        PlatformTenantFilter::excludeSchoolColumn($transactionQuery);
+        $transactions = $transactionQuery->get();
 
         foreach ($transactions as $transaction) {
             $key = (int) Carbon::parse($transaction->processed_at)->month;

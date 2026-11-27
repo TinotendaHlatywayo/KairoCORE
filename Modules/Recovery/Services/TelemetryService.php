@@ -3,6 +3,7 @@
 namespace Modules\Recovery\Services;
 
 use App\Models\School;
+use App\Support\PlatformTenantFilter;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -10,9 +11,13 @@ class TelemetryService
 {
     public function gatherPlatformStats(): array
     {
-        $totalSchools = DB::table('schools')->count();
-        $activeSchools = DB::table('schools')->where('status', 'active')->count();
-        $suspendedSchools = DB::table('schools')->where('status', 'suspended')->count();
+        $excludedSchoolIds = PlatformTenantFilter::excludedSchoolIds();
+        $schoolsQuery = DB::table('schools');
+        PlatformTenantFilter::excludeSchoolsTable($schoolsQuery);
+
+        $totalSchools = (clone $schoolsQuery)->count();
+        $activeSchools = (clone $schoolsQuery)->where('status', 'active')->count();
+        $suspendedSchools = (clone $schoolsQuery)->where('status', 'suspended')->count();
 
         // Multi-tier fallback resolver for calculating SaaS platform MRR without column/table crashes
         $mrr = 0;
@@ -24,9 +29,10 @@ class TelemetryService
                     : (in_array('total', $columns) ? 'total' : null);
 
                 if ($amountCol) {
-                    $mrr = DB::table('saas_transactions')
-                        ->where('created_at', '>=', now()->startOfMonth())
-                        ->sum($amountCol);
+                    $transactionsQuery = DB::table('saas_transactions')
+                        ->where('created_at', '>=', now()->startOfMonth());
+                    PlatformTenantFilter::excludeSchoolColumn($transactionsQuery);
+                    $mrr = $transactionsQuery->sum($amountCol);
                 }
             } elseif (Schema::hasTable('invoices')) {
                 // Fallback to student invoices table if platform subscriptions table is not yet migrated
@@ -38,21 +44,36 @@ class TelemetryService
                         : (in_array('amount', $columns) ? 'amount' : null));
 
                 if ($amountCol) {
-                    $mrr = DB::table('invoices')
-                        ->where('created_at', '>=', now()->startOfMonth())
-                        ->sum($amountCol);
+                    $invoicesQuery = DB::table('invoices')
+                        ->where('created_at', '>=', now()->startOfMonth());
+                    PlatformTenantFilter::excludeSchoolColumn($invoicesQuery);
+                    $mrr = $invoicesQuery->sum($amountCol);
                 }
             }
         } catch (\Exception $e) {
             $mrr = 0; // Safe fallback prevents platform-admin 500 error screens
         }
 
-        $totalUsers = DB::table('users')->count();
+        $usersQuery = DB::table('users');
+        if ($excludedSchoolIds !== []) {
+            $usersQuery->where(function ($query) use ($excludedSchoolIds): void {
+                $query->whereNull('school_id')
+                    ->orWhereNotIn('school_id', $excludedSchoolIds);
+            });
+        }
+        $totalUsers = $usersQuery->count();
         $totalStorageBytes = 0;
 
         try {
             if (Schema::hasTable('platform_backups')) {
-                $totalStorageBytes = DB::table('platform_backups')->sum('size_bytes');
+                $backupsQuery = DB::table('platform_backups');
+                if ($excludedSchoolIds !== []) {
+                    $backupsQuery->where(function ($query) use ($excludedSchoolIds): void {
+                        $query->whereNull('school_id')
+                            ->orWhereNotIn('school_id', $excludedSchoolIds);
+                    });
+                }
+                $totalStorageBytes = $backupsQuery->sum('size_bytes');
             }
         } catch (\Exception $e) {
             $totalStorageBytes = 0;

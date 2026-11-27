@@ -8,6 +8,7 @@ use App\Models\School;
 use App\Models\User;
 use App\Services\AccountActivationService;
 use App\Services\SchoolApprovalService;
+use App\Support\DemoSandbox;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -75,6 +76,13 @@ class SchoolResource extends Resource
                             ->required()
                             ->alphaDash()
                             ->unique(ignoreRecord: true)
+                            ->rules([
+                                function (string $attribute, mixed $value, callable $fail): void {
+                                    if (DemoSandbox::isReservedSubdomain((string) $value)) {
+                                        $fail(__('This subdomain is reserved and cannot be used.'));
+                                    }
+                                },
+                            ])
                             ->suffix('.'.parse_url(config('app.url'), PHP_URL_HOST)),
                         Forms\Components\TextInput::make('login_code')
                             ->label(__('Login Code'))

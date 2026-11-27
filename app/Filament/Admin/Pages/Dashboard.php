@@ -3,6 +3,7 @@
 namespace App\Filament\Admin\Pages;
 
 use App\Models\School;
+use App\Support\PlatformTenantFilter;
 use Filament\Pages\Dashboard as BaseDashboard;
 use Modules\SaaS\Models\SaaSInvoice;
 use Modules\SaaS\Models\SaaSManualSubmission;
@@ -25,15 +26,25 @@ class Dashboard extends BaseDashboard
 
     public function getViewData(): array
     {
+        $schools = School::query();
+        $transactions = SaaSTransaction::query();
+        $manualSubmissions = SaaSManualSubmission::query();
+        $invoices = SaaSInvoice::query();
+
+        PlatformTenantFilter::excludeSchoolColumn($schools, 'id');
+        PlatformTenantFilter::excludeSchoolColumn($transactions);
+        PlatformTenantFilter::excludeSchoolColumn($manualSubmissions);
+        PlatformTenantFilter::excludeSchoolColumn($invoices);
+
         return [
-            'totalTenants' => School::count(),
-            'activeTenants' => School::where('status', 'active')->count(),
-            'pendingTenants' => School::where('status', 'pending')->count(),
-            'totalRevenue' => SaaSTransaction::where('status', 'completed')->sum('amount'),
-            'pendingConfirmations' => SaaSManualSubmission::where('status', 'pending')->count(),
-            'unpaidInvoicesCount' => SaaSInvoice::where('status', 'unpaid')->count(),
-            'recentTransactions' => SaaSTransaction::with('school')->latest('processed_at')->limit(5)->get(),
-            'pendingSchools' => School::where('status', 'pending')->latest()->limit(5)->get(),
+            'totalTenants' => (clone $schools)->count(),
+            'activeTenants' => (clone $schools)->where('status', 'active')->count(),
+            'pendingTenants' => (clone $schools)->where('status', 'pending')->count(),
+            'totalRevenue' => (clone $transactions)->where('status', 'completed')->sum('amount'),
+            'pendingConfirmations' => (clone $manualSubmissions)->where('status', 'pending')->count(),
+            'unpaidInvoicesCount' => (clone $invoices)->where('status', 'unpaid')->count(),
+            'recentTransactions' => (clone $transactions)->with('school')->latest('processed_at')->limit(5)->get(),
+            'pendingSchools' => (clone $schools)->where('status', 'pending')->latest()->limit(5)->get(),
         ];
     }
 }

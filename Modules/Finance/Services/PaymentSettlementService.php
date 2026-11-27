@@ -2,6 +2,7 @@
 
 namespace Modules\Finance\Services;
 
+use App\Support\DemoSessionGuard;
 use Illuminate\Support\Facades\DB;
 use Modules\Finance\Models\Invoice;
 use Modules\Finance\Models\Payment;
@@ -33,6 +34,10 @@ class PaymentSettlementService
         $handling = $excess > 0
             ? ($handling === self::MODE_CREDIT ? self::MODE_CREDIT : self::MODE_REFUND)
             : null;
+
+        if ($handling === self::MODE_REFUND) {
+            DemoSessionGuard::assertWriteAllowed('issue payment refunds');
+        }
 
         $refunded = 0.00;
         $credited = 0.00;

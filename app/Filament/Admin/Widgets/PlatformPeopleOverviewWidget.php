@@ -4,6 +4,7 @@ namespace App\Filament\Admin\Widgets;
 
 use App\Models\User;
 use App\Services\UserRegistrationService;
+use App\Support\PlatformTenantFilter;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Modules\HR\Models\Employee;
@@ -21,6 +22,7 @@ class PlatformPeopleOverviewWidget extends BaseWidget
         // Combined totals across every school workspace, excluding the
         // platform-managed operators and accounts that belong to no school.
         $users = User::notPlatformManaged()->whereNotNull('school_id');
+        PlatformTenantFilter::excludeSchoolColumn($users);
         $totalUsers = (clone $users)->count();
         $activeUsers = (clone $users)->where('account_status', User::STATUS_ACTIVE)->count();
         $pendingUsers = (clone $users)->where('account_status', User::STATUS_PENDING)->count();
@@ -31,7 +33,9 @@ class PlatformPeopleOverviewWidget extends BaseWidget
                 ->orWhereHas('customRole', fn ($role) => $role->where('name', UserRegistrationService::roleNameForCategory('administrator')));
         })->count();
 
-        $studentCount = Student::withoutTenantScope()->count();
+        $students = Student::withoutTenantScope();
+        PlatformTenantFilter::excludeSchoolColumn($students);
+        $studentCount = $students->count();
 
         $teachingRoles = array_values(array_unique([
             UserRegistrationService::roleNameForCategory('teaching_staff'),
@@ -42,6 +46,7 @@ class PlatformPeopleOverviewWidget extends BaseWidget
         ]));
 
         $employees = Employee::withoutTenantScope()->whereNull('deleted_at');
+        PlatformTenantFilter::excludeSchoolColumn($employees);
         $totalStaff = (clone $employees)->count();
         $teachingStaff = (clone $employees)->whereIn('role', $teachingRoles)->count();
         $supportStaff = max(0, $totalStaff - $teachingStaff);

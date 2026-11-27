@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Pages;
 
+use App\Support\PlatformTenantFilter;
 use Filament\Pages\Page;
 use Modules\Recovery\Services\TelemetryService;
 use Modules\SaaS\Models\SaaSInvoice;
@@ -41,22 +42,30 @@ class PlatformIntelligenceDashboard extends Page
         $this->telemetry = $service->gatherPlatformStats();
 
         // Comprehensive Financial Analytics
-        $this->totalRevenue = (float) SaaSTransaction::where('status', 'completed')->sum('amount');
-        $this->outstandingInvoicesTotal = (float) SaaSInvoice::whereIn('status', ['unpaid', 'partially_paid'])->sum('total');
-        $this->outstandingInvoicesCount = SaaSInvoice::whereIn('status', ['unpaid', 'partially_paid'])->count();
+        $transactions = SaaSTransaction::query();
+        $invoices = SaaSInvoice::query();
 
-        $this->recentTransactions = SaaSTransaction::with(['school', 'invoice'])
+        PlatformTenantFilter::excludeSchoolColumn($transactions);
+        PlatformTenantFilter::excludeSchoolColumn($invoices);
+
+        $this->totalRevenue = (float) (clone $transactions)->where('status', 'completed')->sum('amount');
+        $this->outstandingInvoicesTotal = (float) (clone $invoices)->whereIn('status', ['unpaid', 'partially_paid'])->sum('total');
+        $this->outstandingInvoicesCount = (clone $invoices)->whereIn('status', ['unpaid', 'partially_paid'])->count();
+
+        $this->recentTransactions = (clone $transactions)->with(['school', 'invoice'])
             ->latest('processed_at')
             ->limit(8)
             ->get();
 
-        $this->outstandingInvoices = SaaSInvoice::with(['school', 'subscription.plan'])
+        $this->outstandingInvoices = (clone $invoices)->with(['school', 'subscription.plan'])
             ->whereIn('status', ['unpaid', 'partially_paid'])
             ->latest('due_date')
             ->limit(8)
             ->get();
 
-        $this->planBreakdown = SaaSPlan::withCount('subscriptions')
+        $this->planBreakdown = SaaSPlan::withCount([
+            'subscriptions' => fn ($query) => PlatformTenantFilter::excludeSchoolColumn($query),
+        ])
             ->get()
             ->map(function ($plan) {
                 $subCount = $plan->subscriptions_count;

@@ -418,7 +418,7 @@ class StudentFinancialHistoryPage extends Page implements HasForms
             ->modalDescription(__('Deletes the invoice and its line items. Only possible when no payments or discount exist on it; recorded payments must be reversed first.'))
             ->requiresConfirmation()
             ->modalSubmitActionLabel(__('Delete Invoice'))
-            ->modalWidth(MaxWidth::Large)
+            ->modalWidth(MaxWidth::Medium)
             ->form(fn (): array => [
                 Textarea::make('notes')->label(__('Reason (audit)'))->rows(2),
             ])
