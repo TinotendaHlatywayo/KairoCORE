@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Jobs\ProcessSchoolRegistrationJob;
 use App\Models\School;
 use App\Models\User;
+use App\Support\DemoSandbox;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -121,8 +122,9 @@ class RegistrationWizard extends Component
 
     public function updatedSubdomain($value)
     {
-        $this->subdomain = strtolower(preg_replace('/[^a-zA-Z0-9-]/', '', $value));
-        $bad = preg_replace('/[a-zA-Z0-9-]/', '', $value ?? '');
+        $value = str_replace('_', '-', (string) $value);
+        $this->subdomain = strtolower(preg_replace('/[^a-z0-9-]/', '-', $value));
+        $bad = preg_replace('/[a-zA-Z0-9_-]/', '', $value);
         $this->subdomainInvalidChars = $bad === '' ? '' : collect(mb_str_split($bad))->unique()->implode('');
 
         if (empty($this->subdomain)) {
@@ -226,9 +228,14 @@ class RegistrationWizard extends Component
             'adminName' => ['required', 'string', 'min:3', 'max:100', 'not_regex:/[<>{}]/', 'regex:/^[A-Za-z\s\.\-\']+$/'],
             'adminEmail' => ['required', 'email:rfc,dns', 'max:255', 'unique:users,email,NULL,id,deleted_at,NULL'],
             'institutionEmail' => ['required', 'email:rfc,dns', 'max:255', 'different:adminEmail'],
-            'subdomain' => ['required', 'alpha_dash', 'min:3', 'max:50', Rule::notIn([
-                'www', 'platform', 'workspace', 'student', 'api', 'mail', 'smtp', 'ftp', 'admin', 'app', 'root', 'ns1', 'ns2', 'cdn', 'static', 'assets', 'localhost', 'saas', 'paynow', 'webhook', 'cms', 'auth', 'sso', 'login', 'logout', 'register', 'activation', 'verify', 'password', 'email', 'profile', 'settings', 'dashboard', 'home', 'about', 'contact', 'terms', 'privacy', 'blog', 'news', 'support', 'help', 'docs', 'documentation', 'status', 'health', 'metrics', 'monitoring',
-            ])],
+            'subdomain' => [
+                'required', 'alpha_dash', 'min:3', 'max:50',
+                function (string $attribute, mixed $value, callable $fail): void {
+                    if (DemoSandbox::isReservedSubdomain((string) $value)) {
+                        $fail(__('This subdomain is reserved and cannot be used.'));
+                    }
+                },
+            ],
             'termsAccepted' => ['accepted'],
         ];
     }

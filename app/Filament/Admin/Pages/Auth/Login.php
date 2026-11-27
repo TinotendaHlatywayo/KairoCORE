@@ -3,6 +3,7 @@
 namespace App\Filament\Admin\Pages\Auth;
 
 use App\Services\LoginSecurityService;
+use App\Support\DemoSandbox;
 use Filament\Facades\Filament;
 use Filament\Http\Responses\Auth\Contracts\LoginResponse;
 use Filament\Models\Contracts\FilamentUser;
@@ -44,6 +45,12 @@ class Login extends BaseLogin
         $data = $this->form->getState();
         $email = $data['email'] ?? $data['username'] ?? '';
         $ip = request()->ip();
+
+        if (DemoSandbox::loginEmailIsBlocked((string) $email)) {
+            throw ValidationException::withMessages([
+                'data.email' => __('Please use the demo sign-in page for this account.'),
+            ]);
+        }
 
         // 3-Tiered login security check
         LoginSecurityService::ensureNotRateLimited($email, $ip);

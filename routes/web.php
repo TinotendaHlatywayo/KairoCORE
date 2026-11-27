@@ -138,6 +138,18 @@ Route::post('/demo-login', [DemoLoginController::class, 'login'])
     ->middleware(['throttle:5,1'])
     ->name('demo.login.submit');
 
+Route::get('/demo/preparing', [DemoLoginController::class, 'showPreparing'])
+    ->middleware([\App\Http\Middleware\SetRouteHostDefaults::class])
+    ->name('demo.preparing');
+
+Route::get('/demo/preparing/status', [DemoLoginController::class, 'preparingStatus'])
+    ->middleware([\App\Http\Middleware\SetRouteHostDefaults::class, 'throttle:60,1'])
+    ->name('demo.preparing.status');
+
+Route::get('/demo/ended', fn () => view('errors.demo-ended'))
+    ->middleware([\App\Http\Middleware\SetRouteHostDefaults::class])
+    ->name('demo.ended');
+
 Route::get('/school-login/suggest', function () {
     $term = trim((string) request('q'));
 
@@ -864,7 +876,7 @@ $__tenantHostPattern = '^('.implode('|', array_map(static fn (string $h) => preg
 \Illuminate\Support\Facades\URL::defaults(array_merge(\Illuminate\Support\Facades\URL::getDefaultParameters(), ['__baseHost' => $__tenantBaseHost]));
 Route::domain('{tenant}.{__baseHost}')
     ->where(['__baseHost' => $__tenantHostPattern])
-    ->middleware([\App\Http\Middleware\SetRouteHostDefaults::class, 'tenant', SetUserLocale::class])
+    ->middleware([\App\Http\Middleware\SetRouteHostDefaults::class, 'tenant', \App\Http\Middleware\EnsureDemoSandboxAccess::class, SetUserLocale::class])
     ->group(function () {
 
     Route::post('/livewire/update', \Livewire\Mechanisms\HandleRequests\HandleRequests::class.'@handleUpdate')

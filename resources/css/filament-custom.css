@@ -4905,11 +4905,13 @@ select.sc-input {
         max-width: 100%;
     }
 
-    .fi-modal,
-    .fi-modal-window,
     .fi-sheet,
     .sc-topbar-more-panel {
         max-width: calc(100vw - 1.5rem) !important;
+        max-height: calc(100dvh - 2rem) !important;
+    }
+
+    .fi-modal {
         max-height: calc(100dvh - 2rem) !important;
     }
 

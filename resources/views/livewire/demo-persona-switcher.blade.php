@@ -39,6 +39,23 @@
                     </button>
                 @endforeach
             </div>
+
+            <div class="mt-2 flex items-center gap-2 border-t border-gray-200 pt-2 dark:border-white/10">
+                <button
+                    type="button"
+                    wire:click="resetDemo"
+                    class="rounded-lg px-2 py-1 text-xs font-semibold text-gray-600 transition hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/10"
+                >
+                    {{ __('Reset demo') }}
+                </button>
+                <button
+                    type="button"
+                    wire:click="leaveDemo"
+                    class="rounded-lg px-2 py-1 text-xs font-semibold text-gray-600 transition hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/10"
+                >
+                    {{ __('End demo') }}
+                </button>
+            </div>
         </div>
     @endif
 </div>
