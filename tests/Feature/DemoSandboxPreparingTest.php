@@ -59,6 +59,22 @@ class DemoSandboxPreparingTest extends TestCase
         }
     }
 
+    public function test_demo_pages_use_kairocore_favicon_and_preparing_showcase(): void
+    {
+        $favicon = '<link rel="icon" href="'.e(asset('images/kairocore-icon.png')).'">';
+
+        $this->get(route('demo.login'))
+            ->assertOk()
+            ->assertSee($favicon, false);
+
+        $this->withSession(['demo_pending_session' => 'preparing-test'])
+            ->get(route('demo.preparing'))
+            ->assertOk()
+            ->assertSee($favicon, false)
+            ->assertSee('Did you know?')
+            ->assertSee('Preparing your demo');
+    }
+
     public function test_public_login_does_not_create_or_mutate_shared_demo_tenant(): void
     {
         Queue::fake();

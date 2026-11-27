@@ -1,5 +1,6 @@
 @extends('marketing.layout')
 
+@section('favicon', asset('images/kairocore-icon.png'))
 @section('title', platform_name().' Live Demo')
 @section('meta_description', marketing_text('Sign in to the shared demo account and explore every module and role without registering your school.'))
 

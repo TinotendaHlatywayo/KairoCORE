@@ -70,7 +70,11 @@
         'seoJsonLd' => $schemas,
     ])
     @stack('seo_jsonld')
-    <link rel="icon" href="{{ platform_favicon_url() }}">
+    @hasSection('favicon')
+        <link rel="icon" href="@yield('favicon')">
+    @else
+        <link rel="icon" href="{{ platform_favicon_url() }}">
+    @endif
     <meta name="theme-color" content="#EF5F4D">
     <link rel="alternate" type="text/plain" href="{{ url('/llms.txt') }}" title="Kairo CORE information for AI assistants">
     <link rel="alternate" type="text/plain" href="{{ url('/llms-full.txt') }}" title="Kairo CORE help guides for AI assistants">
