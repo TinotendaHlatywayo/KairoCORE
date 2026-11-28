@@ -9,6 +9,7 @@
     :root {
         --sc-teal: #14b8a6;
         --sc-teal-soft: rgba(20, 184, 166, 0.22);
+        --sc-card-corner-inset: 12px;
     }
 
     .sc-card-grid {
@@ -124,8 +125,8 @@
 
     .sc-card-select {
         position: absolute;
-        top: 12px;
-        left: 12px;
+        top: var(--sc-card-corner-inset);
+        left: var(--sc-card-corner-inset);
         z-index: 5;
         display: flex;
         align-items: center;
@@ -140,12 +141,13 @@
 
     .sc-card-history {
         position: absolute;
-        top: 12px;
-        left: 12px;
+        top: var(--sc-card-corner-inset);
+        left: var(--sc-card-corner-inset);
         z-index: 5;
         display: inline-flex;
         align-items: center;
         gap: 4px;
+        max-width: calc(100% - (var(--sc-card-corner-inset) * 2));
         font-size: 0.62rem;
         font-weight: 800;
         text-transform: uppercase;
@@ -157,6 +159,9 @@
         box-shadow: 0 4px 12px -4px rgba(71, 85, 105, 0.5);
         text-decoration: none;
         cursor: pointer;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
         transition: background 0.15s ease, color 0.15s ease;
     }
 
@@ -210,8 +215,10 @@
 
     .sc-card-status {
         position: absolute;
-        top: 12px;
-        right: 12px;
+        top: var(--sc-card-corner-inset);
+        right: var(--sc-card-corner-inset);
+        z-index: 5;
+        max-width: calc(100% - (var(--sc-card-corner-inset) * 2));
         font-size: 0.62rem;
         font-weight: 800;
         text-transform: uppercase;
@@ -221,6 +228,7 @@
         border-radius: 9999px;
         padding: 4px 10px;
         box-shadow: 0 4px 12px -4px var(--sc-card-color, var(--sc-teal));
+        white-space: nowrap;
     }
 
     .sc-card-meta {
@@ -309,6 +317,12 @@
     .sc-card::after { content: ""; position: absolute; inset: 0; z-index: 0; opacity: 0; background: radial-gradient(180px circle at var(--mx, 50%) var(--my, 50%), color-mix(in srgb, var(--sc-card-color, #14b8a6) 20%, transparent), transparent 70%); transition: opacity .2s ease; pointer-events: none; }
     .sc-card:hover::after { opacity: 1; }
     .sc-card > * { position: relative; z-index: 1; }
+    .sc-card > .sc-card-select,
+    .sc-card > .sc-card-history,
+    .sc-card > .sc-card-status {
+        position: absolute;
+        z-index: 5;
+    }
 
     .sc-card-actions .sc-btn-decline {
         background: #ffe4e6;

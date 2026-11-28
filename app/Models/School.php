@@ -7,9 +7,9 @@ use App\Support\DemoSandbox;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
-use InvalidArgumentException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 use Modules\SaaS\Models\SaaSSubscription;
 
 class School extends Model
@@ -218,38 +218,56 @@ class School extends Model
     }
 
     /**
-     * The schools a visitor may sign in to.
+     * The schools offered by the school-login search.
      *
-     * A school can be found by its short code, by the start of its name, or
-     * by any ordered run of its letters — nobody types a school's name
-     * exactly, so "chwarira" has to find "Chiwarira Primary School". Only
-     * schools that are open for business are offered: a suspended school
-     * cannot be signed in to, and a school that is still waiting to be
-     * approved has nobody to sign in yet.
+     * A school can be found by its short code or by any ordered run of its
+     * letters — nobody types a name exactly, so "chwarira" must find
+     * "Chiwarira Primary School". Every real school is searchable; the
+     * login route still explains when a school is not open for sign-in.
      *
      * @return Collection<int, self>
      */
-    public static function findForLoginSearch(?string $term, int $limit = 12)
+    public static function findForLoginSearch(?string $term, int $limit = 0)
     {
         $term = trim((string) $term);
 
+        if ($term === '') {
+            return new Collection;
+        }
+
         $query = static::query()
-            ->where('status', 'active')
             ->whereNotNull('subdomain')
             ->where('subdomain', '!=', '');
 
         if ($term !== '') {
-            $pattern = fuzzy_regex($term);
+            $needle = mb_strtoupper($term);
+            $pattern = mb_strtoupper(fuzzy_regex($term));
 
-            $query->where(function ($q) use ($term, $pattern) {
-                $q->where('login_code', 'LIKE', strtoupper($term).'%')
-                    ->orWhere('name', 'LIKE', $term.'%')
-                    ->orWhereRaw('name REGEXP ?', [$pattern])
-                    ->orWhereRaw('login_code REGEXP ?', [$pattern]);
-            });
+            $query->where(function ($q) use ($needle, $pattern) {
+                $q->whereRaw('UPPER(login_code) = ?', [$needle])
+                    ->orWhereRaw('UPPER(login_code) LIKE ?', [$needle.'%'])
+                    ->orWhereRaw('UPPER(name) LIKE ?', [$needle.'%'])
+                    ->orWhereRaw('UPPER(name) REGEXP ?', [$pattern])
+                    ->orWhereRaw('UPPER(login_code) REGEXP ?', [$pattern]);
+            })->orderByRaw(
+                'CASE
+                    WHEN UPPER(login_code) = ? THEN 0
+                    WHEN UPPER(login_code) LIKE ? THEN 1
+                    WHEN UPPER(name) = ? THEN 2
+                    WHEN UPPER(name) LIKE ? THEN 3
+                    ELSE 4
+                END',
+                [$needle, $needle.'%', $needle, $needle.'%']
+            );
         }
 
-        return $query->orderBy('name')->limit($limit)->get();
+        $query->orderBy('name');
+
+        if ($limit > 0) {
+            $query->limit($limit);
+        }
+
+        return $query->get();
     }
 
     public function domains()

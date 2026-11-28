@@ -2,9 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Admin\Pages\Auth\Login as AdminLogin;
 use App\Filament\App\Pages\Auth\Login;
 use App\Models\School;
 use App\Models\User;
+use App\Support\DemoSandbox;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
@@ -237,5 +239,56 @@ class LoginRegistrationTest extends TestCase
             User::withTrashed()->where('school_id', $this->school->id)->where('email', $this->studentEmail)->count(),
             'Exactly one row must exist for the email (no unique-constraint violation).'
         );
+    }
+
+    public function test_demo_credentials_on_school_login_redirect_to_demo_sign_in(): void
+    {
+        $this->bindTenant();
+
+        Livewire::test(Login::class)
+            ->set('data', [
+                'email' => config('demo.email'),
+                'password' => config('demo.password'),
+                'remember' => false,
+            ])
+            ->call('authenticate')
+            ->assertRedirect(DemoSandbox::centralUrl('demo-login'))
+            ->assertHasNoErrors();
+    }
+
+    public function test_demo_credentials_on_admin_login_redirect_to_demo_sign_in(): void
+    {
+        Livewire::test(AdminLogin::class)
+            ->set('data', [
+                'email' => config('demo.email'),
+                'password' => config('demo.password'),
+                'remember' => true,
+            ])
+            ->call('authenticate')
+            ->assertRedirect(DemoSandbox::centralUrl('demo-login'))
+            ->assertHasNoErrors();
+    }
+
+    public function test_demo_sign_in_form_always_shows_the_demo_credentials(): void
+    {
+        $html = $this->get('/demo-login')->assertOk()->getContent();
+
+        $this->assertStringContainsString('value="'.e(config('demo.email')).'"', $html);
+        $this->assertStringContainsString('value="'.e(config('demo.password')).'"', $html);
+    }
+
+    public function test_demo_pages_use_platform_favicon_helper(): void
+    {
+        $pages = [
+            $this->get('/demo-login')->assertOk()->getContent(),
+            view('marketing.demo-preparing')->render(),
+        ];
+
+        foreach ($pages as $html) {
+            $this->assertStringContainsString(
+                '<link rel="icon" href="'.e(platform_favicon_url()).'">',
+                $html
+            );
+        }
     }
 }

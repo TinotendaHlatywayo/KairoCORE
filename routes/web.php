@@ -94,7 +94,7 @@ Route::get('/school-login', function () {
     $term = trim((string) request('q', request('code')));
     $error = null;
     $school = null;
-    $results = collect();
+    $results = School::findForLoginSearch($term);
 
     if ($term !== '') {
         // An exact short code still goes straight through to the school.
@@ -104,9 +104,7 @@ Route::get('/school-login', function () {
             return redirect()->away($school->loginUrl());
         }
 
-        $results = School::findForLoginSearch($term);
-
-        if ($results->isEmpty()) {
+        if ($school || $results->isEmpty()) {
             $error = $school
                 ? __('That school cannot be signed in to at the moment. Please contact your school administrator.')
                 : __('No school matches that code or name. Check the spelling and try again.');
@@ -157,6 +155,7 @@ Route::get('/school-login/suggest', function () {
         'name' => $school->name,
         'code' => $school->login_code,
         'region' => $school->region ? ucfirst($school->region) : null,
+        'status' => $school->status,
         'url' => route('school.go', ['code' => $school->login_code]),
     ])->values();
 
@@ -164,7 +163,7 @@ Route::get('/school-login/suggest', function () {
 
     return response()->json([
         'results' => $results,
-        'exact' => $exact && $exact->subdomain ? $exact->loginUrl() : null,
+        'exact' => $exact && $exact->subdomain && $exact->status === 'active' ? $exact->loginUrl() : null,
     ]);
 })->name('school.login.suggest');
 

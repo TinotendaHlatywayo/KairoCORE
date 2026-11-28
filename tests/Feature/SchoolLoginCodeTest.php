@@ -31,6 +31,26 @@ class SchoolLoginCodeTest extends TestCase
         DB::purge('mysql');
     }
 
+    private function insertSchoolForLoginSearch(string $name, string $status, string $institutionType, string $loginCode): array
+    {
+        $school = [
+            'name' => $name,
+            'subdomain' => strtolower(preg_replace('/[^A-Za-z0-9]+/', '-', $name)).'-'.substr(uniqid(), -6),
+            'login_code' => $loginCode,
+            'status' => $status,
+            'institution_type' => $institutionType,
+        ];
+
+        $school['id'] = DB::table('schools')->insertGetId($school);
+
+        return $school;
+    }
+
+    private function deleteSchoolsForLoginSearch(array $schools): void
+    {
+        DB::table('schools')->whereIn('id', array_column($schools, 'id'))->delete();
+    }
+
     public function test_new_registrations_start_with_the_digital_cobalt_theme(): void
     {
         Queue::fake();
@@ -172,40 +192,25 @@ class SchoolLoginCodeTest extends TestCase
      */
     public function test_a_school_is_found_by_any_ordered_run_of_its_letters(): void
     {
-        DB::beginTransaction();
+        $school = $this->insertSchoolForLoginSearch('Mhofu Christian Academy', 'active', 'secondary', 'MHOFU-SEC');
 
         try {
-            $school = School::create([
-                'name' => 'Mhofu Christian Academy',
-                'subdomain' => 'mhofu-'.substr(uniqid(), -6),
-                'status' => 'active',
-                'institution_type' => 'secondary',
-            ]);
-
             $response = $this->get('/school-login?q='.urlencode('mhofu chrstn'));
 
             $response->assertOk();
             $response->assertSee('Mhofu Christian Academy');
-            $response->assertSee($school->login_code);
-            // The result links to the school's own login page.
-            $response->assertSee(route('school.go', ['code' => $school->login_code]), false);
+            $response->assertSee($school['login_code']);
+            $response->assertSee(route('school.go', ['code' => $school['login_code']]), false);
         } finally {
-            DB::rollBack();
+            $this->deleteSchoolsForLoginSearch([$school]);
         }
     }
 
     public function test_the_suggestions_list_the_matching_schools(): void
     {
-        DB::beginTransaction();
+        $school = $this->insertSchoolForLoginSearch('Mhofu Christian Academy', 'active', 'secondary', 'MHOFU-SUG');
 
         try {
-            $school = School::create([
-                'name' => 'Mhofu Christian Academy',
-                'subdomain' => 'mhofu-'.substr(uniqid(), -6),
-                'status' => 'active',
-                'institution_type' => 'secondary',
-            ]);
-
             $response = $this->getJson('/school-login/suggest?q='.urlencode('mhofu chrstn'));
 
             $response->assertOk();
@@ -214,58 +219,120 @@ class SchoolLoginCodeTest extends TestCase
             $this->assertContains('Mhofu Christian Academy', $names);
 
             $codes = array_column($response->json('results'), 'code');
-            $this->assertContains($school->login_code, $codes);
+            $this->assertContains($school['login_code'], $codes);
         } finally {
-            DB::rollBack();
+            $this->deleteSchoolsForLoginSearch([$school]);
         }
     }
 
-    public function test_a_suspended_school_is_not_offered(): void
+    public function test_a_partial_name_finds_the_school(): void
     {
-        DB::beginTransaction();
+        $school = $this->insertSchoolForLoginSearch('Tinway Primary School', 'active', 'primary', 'TINWAY-PRI');
 
         try {
-            $school = School::create([
-                'name' => 'Mhofu Christian Academy',
-                'subdomain' => 'mhofu-'.substr(uniqid(), -6),
-                'status' => 'suspended',
-                'institution_type' => 'secondary',
-            ]);
+            $response = $this->get('/school-login?q=TIN');
 
+            $response->assertOk();
+            $response->assertSee('Tinway Primary School');
+            $response->assertSee($school['login_code']);
+        } finally {
+            $this->deleteSchoolsForLoginSearch([$school]);
+        }
+    }
+
+    public function test_no_schools_are_listed_without_a_search_term(): void
+    {
+        $schools = [
+            $this->insertSchoolForLoginSearch('Active Test Academy', 'active', 'secondary', 'ACTIVE-SEC'),
+            $this->insertSchoolForLoginSearch('Pending Test Academy', 'pending', 'secondary', 'PENDING-SEC'),
+            $this->insertSchoolForLoginSearch('Suspended Test Academy', 'suspended', 'secondary', 'SUSPEND-SEC'),
+        ];
+
+        try {
+            $response = $this->get('/school-login');
+
+            $response->assertOk();
+            foreach ($schools as $school) {
+                $response->assertDontSee($school['name']);
+                $response->assertDontSee($school['login_code']);
+            }
+        } finally {
+            $this->deleteSchoolsForLoginSearch($schools);
+        }
+    }
+
+    public function test_suggest_returns_no_results_without_a_search_term(): void
+    {
+        $school = $this->insertSchoolForLoginSearch('Tinway Primary School', 'active', 'primary', 'TINWAY-PRI');
+
+        try {
+            $this->getJson('/school-login/suggest')
+                ->assertOk()
+                ->assertJsonPath('results', [])
+                ->assertJsonPath('exact', null);
+        } finally {
+            $this->deleteSchoolsForLoginSearch([$school]);
+        }
+    }
+
+    public function test_missing_characters_find_the_school(): void
+    {
+        $school = $this->insertSchoolForLoginSearch('Tinway Primary School', 'active', 'primary', 'TINWAY-PRI');
+
+        try {
+            $this->get('/school-login?q=tnway')
+                ->assertOk()
+                ->assertSee('Tinway Primary School')
+                ->assertSee($school['login_code']);
+
+            $this->getJson('/school-login/suggest?q=tnway')
+                ->assertOk()
+                ->assertJsonFragment([
+                    'name' => 'Tinway Primary School',
+                    'code' => $school['login_code'],
+                ]);
+        } finally {
+            $this->deleteSchoolsForLoginSearch([$school]);
+        }
+    }
+
+    public function test_a_suspended_school_is_offered_but_cannot_be_signed_in_to(): void
+    {
+        $school = $this->insertSchoolForLoginSearch('Mhofu Christian Academy', 'suspended', 'secondary', 'MHOFU-SUSP');
+
+        try {
             $response = $this->get('/school-login?q='.urlencode('Mhofu Christian Academy'));
 
             $response->assertOk();
-            // The school is not offered as a result.
-            $response->assertDontSee($school->login_code);
-            $response->assertSee('No school matches', false);
+            $response->assertSee('Mhofu Christian Academy');
+            $response->assertSee($school['login_code']);
+            $response->assertSee('Suspended');
+
+            $this->get('/go/'.$school['login_code'])
+                ->assertRedirect(route('school.login', ['code' => $school['login_code']]));
         } finally {
-            DB::rollBack();
+            $this->deleteSchoolsForLoginSearch([$school]);
         }
     }
 
     public function test_a_suspended_school_cannot_be_signed_in_to_by_its_code(): void
     {
-        DB::beginTransaction();
+        $school = $this->insertSchoolForLoginSearch('Mhofu Christian Academy', 'suspended', 'secondary', 'MHOFU-CODE');
 
         try {
-            $school = School::create([
-                'name' => 'Mhofu Christian Academy',
-                'subdomain' => 'mhofu-'.substr(uniqid(), -6),
-                'status' => 'suspended',
-                'institution_type' => 'secondary',
-            ]);
-
-            // The code is recognised, but the school cannot be signed in to,
-            // so the visitor is told why instead of being sent to a page that
-            // would only refuse them.
-            $page = $this->get('/school-login?q='.urlencode($school->login_code));
+            $page = $this->get('/school-login?q='.urlencode($school['login_code']));
 
             $page->assertOk();
             $page->assertSee('cannot be signed in to', false);
 
-            $this->get('/go/'.$school->login_code)->assertRedirect(route('school.login', ['code' => $school->login_code]));
+            $this->getJson('/school-login/suggest?q='.$school['login_code'])
+                ->assertOk()
+                ->assertJsonPath('exact', null);
+
+            $this->get('/go/'.$school['login_code'])
+                ->assertRedirect(route('school.login', ['code' => $school['login_code']]));
         } finally {
-            DB::rollBack();
+            $this->deleteSchoolsForLoginSearch([$school]);
         }
     }
 }

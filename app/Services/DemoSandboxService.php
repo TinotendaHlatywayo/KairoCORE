@@ -299,6 +299,7 @@ final class DemoSandboxService
         }
 
         try {
+            $this->provisionUser($seeding, $this->tokenFor($seeding));
             $this->seed($seeding);
             $seeding->forceFill(['pool_status' => 'ready'])->saveQuietly();
         } catch (\Throwable $e) {

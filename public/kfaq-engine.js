@@ -10,12 +10,23 @@ export const SYNONYMS = {
   payment: ['fees','fee','invoice','receipt','pay'],
   payments: ['fees','fee','invoice','receipt','pay'],
   pay: ['fees','fee','payment','invoice'],
+  price: ['pricing','cost','quote','fees','fee','charge','charges'],
+  pricing: ['price','cost','quote','fees','fee','charge','charges'],
+  cost: ['price','pricing','quote','fees','fee'],
+  quote: ['price','pricing','cost','fees','fee'],
   pupil: ['pupils','student','students','learner','learners'],
   pupils: ['pupil','student','students','learner','learners'],
   student: ['students','pupil','pupils','learner','learners'],
   students: ['student','pupil','pupils','learner','learners'],
   learner: ['learners','student','students','pupil','pupils'],
   learners: ['learner','student','students','pupil','pupils'],
+  id: ['card','cards','identity','badge','badges'],
+  card: ['id','cards','identity','badge','badges','card template'],
+  cards: ['id','card','identity','badge','badges'],
+  identity: ['id','card','cards','badge'],
+  badge: ['id','card','cards','identity'],
+  template: ['templates','layout','design','card template'],
+  templates: ['template','layout','design'],
   teacher: ['teachers','staff','employee','employees'],
   teachers: ['teacher','staff','employee','employees'],
   staff: ['teacher','teachers','employee','employees'],
@@ -25,19 +36,50 @@ export const SYNONYMS = {
   report: ['reports','report card','results','grades','marks'],
   reports: ['report','report card','results','grades','marks'],
   results: ['report','reports','grades','marks','result'],
+  result: ['results','report','reports','grades','marks'],
+  grade: ['grades','report','reports','results','marks'],
   grades: ['grade','report','reports','results','marks'],
-  marks: ['mark','grade','grades','results','report'],
+  mark: ['marks','grade','grades','results','report','assessment'],
+  marks: ['mark','grade','grades','results','report','assessment'],
+  assessment: ['assessments','mark','marks','grade','grades','result'],
+  assessments: ['assessment','mark','marks','grade','grades'],
   enrol: ['enroll','enrolment','enrollment','register','registration'],
   enroll: ['enrol','enrolment','enrollment','register','registration'],
   enrolment: ['enroll','enrol','enrollment','register'],
   enrollment: ['enrol','enroll','enrolment','register'],
   register: ['registration','enrol','enroll','signup','sign'],
   registration: ['register','enrol','enroll','signup'],
+  application: ['apply','applications','admission','admissions','enrol','enroll'],
+  applications: ['application','apply','admission','admissions','enrol'],
+  apply: ['application','applications','admission','admissions','enrol','enroll'],
+  admission: ['admissions','application','apply','enrol'],
+  admissions: ['admission','application','apply','enrol'],
   help: ['support','guide','docs','documentation'],
   docs: ['documentation','help','guide'],
   documentation: ['docs','help','guide'],
   website: ['site','web','cms','page','pages'],
   site: ['website','web','cms','page'],
+  host: ['hosted','hosting','cloud','online','server','servers'],
+  hosted: ['host','hosting','cloud','online','server'],
+  hosting: ['host','hosted','cloud','online','server'],
+  cloud: ['host','hosted','hosting','online'],
+  online: ['host','hosted','hosting','cloud'],
+  data: ['records','information','storage','backup','backups'],
+  records: ['data','information','storage','student'],
+  storage: ['data','records','information','hosting'],
+  secure: ['security','safe','protection','backup'],
+  security: ['secure','safe','protection','backup'],
+  setup: ['onboarding','implementation','installation','live','ready','quick','quickly','fast'],
+  onboarding: ['setup','implementation','installation','live','ready'],
+  quick: ['quickly','fast','speed','rapid','setup'],
+  quickly: ['quick','fast','speed','rapid','setup'],
+  fast: ['quick','quickly','speed','rapid','setup'],
+  live: ['ready','setup','onboarding','launch'],
+  ready: ['live','setup','onboarding','launch'],
+  generate: ['produce','publish','print','create','generation'],
+  generation: ['generate','produce','publish','print'],
+  produce: ['generate','publish','print','create'],
+  publish: ['generate','produce','print','portal'],
 };
 
 const CATEGORY_HINTS = {
@@ -77,6 +119,8 @@ const CATEGORY_PRIMARY = {
   administration: 'staff-permissions',
   troubleshooting: 'common-issues',
 };
+
+const ACTION_TERMS = new Set(['generate','generation','produce','publish','print','record','create','add','set','setup','capture','enrol','admit','pay','invoice','send','track','manage','build','import','export','reset','find','book','migrate','host','design','approve'].map(stem));
 
 const SMALL_TALK = {
   en: [
@@ -167,6 +211,40 @@ function expandedTokens(text) {
   return [...out];
 }
 
+function moduleForQuery(query, context) {
+  const modules = context?.modules;
+  if (!Array.isArray(modules) || !modules.length) return null;
+
+  const q = normalize(query);
+  const qTokens = tokensOf(q).map(stem).filter((token) => !STOP_WORDS.has(token));
+  const qExpanded = new Set(expandedTokens(q));
+  const scored = modules.map((module) => {
+    let score = 0;
+
+    for (const phrase of (module.phrases || []).map(normalize)) {
+      if (!phrase) continue;
+      if (phrase === q) score += 60;
+      else if (q.includes(phrase) || phrase.includes(q)) score += 30;
+      else {
+        const hits = phrase.split(' ').filter((token) => qExpanded.has(stem(token))).length;
+        if (hits >= Math.min(2, phrase.split(' ').length)) score += 12;
+      }
+    }
+
+    const moduleTokens = new Set(expandedTokens([module.name, ...(module.keywords || [])].join(' ')));
+    for (const token of qTokens) {
+      if (moduleTokens.has(token)) score += token.length > 4 ? 6 : 3;
+    }
+
+    if (context?.category && module.category === context.category) score += 3;
+
+    return { module, score };
+  }).sort((a, b) => b.score - a.score);
+
+  const top = scored[0];
+  return top && top.score >= 10 ? { ...top.module, score: top.score } : null;
+}
+
 function isGibberish(text) {
   const t = normalize(text);
   if (!t) return true;
@@ -190,7 +268,7 @@ export function idfWeights(kb) {
   return w;
 }
 
-export function scoreEntry(query, entry, weights, previousTopic) {
+export function scoreEntry(query, entry, weights, previousTopic, context = null) {
   const q = normalize(query);
   const qTokens = tokensOf(q).map(stem).filter(t => !STOP_WORDS.has(t));
   const qExpanded = new Set(expandedTokens(q));
@@ -202,6 +280,7 @@ export function scoreEntry(query, entry, weights, previousTopic) {
   // exact / near phrasing
   for (const p of phrasings) {
     if (p === q) { score += 100; break; }
+    if (p.length > 5 && q.includes(p)) { score += 45; break; }
     const d = levenshtein(p, q);
     if (d <= 2 && q.length >= 8) { score += 70 - d * 10; break; }
   }
@@ -236,12 +315,26 @@ export function scoreEntry(query, entry, weights, previousTopic) {
     if (CATEGORY_HINTS[t] && CATEGORY_HINTS[t] === entry.category) score += 25;
   if (qTokens.length === 1 && CATEGORY_PRIMARY[qTokens[0]] === entry.id) score += 40;
   }
+  // action intent
+  const queryActions = qTokens.filter((token) => ACTION_TERMS.has(token));
+  const entryActions = [...entryTokens].filter((token) => ACTION_TERMS.has(token));
+  if (queryActions.length && entryActions.length && queryActions.some((token) => entryActions.includes(token))) score += 12;
+  else if (queryActions.length && !entryActions.length) score -= 4;
+
+  // system knowledge and page context
+  const module = context?.module;
+  if (module?.entryIds?.includes(entry.id)) score += 20;
+  else if (module?.category && entry.category === module.category) score += 6;
+  if (context?.category && entry.category === context.category) score += 4;
+  const contextTokens = normalize([context?.title, context?.category].filter(Boolean).join(' ')).split(' ').filter(Boolean);
+  if (contextTokens.some((token) => entryTokens.has(stem(token)))) score += 4;
+
   // previous topic
   if (previousTopic && entry.category === previousTopic) score += 3;
   return score;
 }
 
-export function matchQuestion(query, kb, previousTopic = null, locale = 'en') {
+export function matchQuestion(query, kb, previousTopic = null, locale = 'en', context = null) {
   const q = normalize(query);
   if (!q) return { type: 'fallback', entry: null, candidates: [], smallTalk: null };
   if (q.length > 200) return { type: 'fallback', entry: null, candidates: [], smallTalk: null };
@@ -254,8 +347,10 @@ export function matchQuestion(query, kb, previousTopic = null, locale = 'en') {
     if (st.match.test(q)) return { type: 'smalltalk', entry: null, candidates: [], smallTalk: st.reply };
   }
 
+  const module = moduleForQuery(q, context);
+  const matchContext = { ...(context || {}), module };
   const weights = idfWeights(kb);
-  const scored = kb.map(e => ({ entry: e, score: scoreEntry(q, e, weights, previousTopic) }))
+  const scored = kb.map(e => ({ entry: e, score: scoreEntry(q, e, weights, previousTopic, matchContext) }))
     .sort((a, b) => b.score - a.score);
 
   const top = scored[0];
@@ -269,18 +364,18 @@ export function matchQuestion(query, kb, previousTopic = null, locale = 'en') {
   }
 
   if (!top || top.score < 8) {
-    return { type: 'fallback', entry: null, candidates: [], smallTalk: null, secondIntent };
+    return { type: 'fallback', entry: null, candidates: [], smallTalk: null, secondIntent, module };
   }
 
   const confidence = top.score >= 24 ? 'high' : (top.score >= 12 ? 'medium' : 'low');
 
   if (confidence === 'low' || top.entry.needsOwnerAnswer) {
-    return { type: 'fallback', entry: top.entry, candidates: candidates.map(x => x.entry), smallTalk: null, secondIntent };
+    return { type: 'fallback', entry: top.entry, candidates: candidates.map(x => x.entry), smallTalk: null, secondIntent, module };
   }
   if (confidence === 'medium') {
-    return { type: 'medium', entry: top.entry, candidates: candidates.map(x => x.entry), smallTalk: null, secondIntent };
+    return { type: 'medium', entry: top.entry, candidates: candidates.map(x => x.entry), smallTalk: null, secondIntent, module };
   }
-  return { type: 'high', entry: top.entry, candidates: candidates.map(x => x.entry), smallTalk: null, secondIntent };
+  return { type: 'high', entry: top.entry, candidates: candidates.map(x => x.entry), smallTalk: null, secondIntent, module };
 }
 
 export function logUnmatched(text) {

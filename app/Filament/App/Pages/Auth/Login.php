@@ -19,6 +19,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 use Livewire\Features\SupportRedirects\Redirector;
+use Modules\Admin\Models\SystemSetting;
 use Modules\HR\Models\Employee;
 use Modules\Students\Models\Student;
 
@@ -75,9 +76,9 @@ class Login extends BaseLogin
         $ip = request()->ip();
 
         if (DemoSandbox::loginEmailIsBlocked((string) $email)) {
-            throw ValidationException::withMessages([
-                'data.email' => __('Please use the demo sign-in page for this account.'),
-            ]);
+            $this->redirect(DemoSandbox::centralUrl('demo-login'));
+
+            return null;
         }
 
         // 3-Tiered login security check
@@ -146,15 +147,15 @@ class Login extends BaseLogin
 
         if ($user) {
             $school = method_exists($user, 'school') ? $user->school : null;
-            $profileSchoolName = class_exists('\Modules\Admin\Models\SystemSetting') ? \Modules\Admin\Models\SystemSetting::get('profile', 'school_name') : null;
+            $profileSchoolName = class_exists('\Modules\Admin\Models\SystemSetting') ? SystemSetting::get('profile', 'school_name') : null;
             $schoolName = $profileSchoolName ?: ($school?->name ?? 'Kairo CORE');
 
-            $customLogo = $school ? \Modules\Admin\Models\SystemSetting::get('branding', 'logo_path') : null;
+            $customLogo = $school ? SystemSetting::get('branding', 'logo_path') : null;
             $logoUrl = platform_logo_url();
             if (! empty($customLogo)) {
-                $logoUrl = asset('storage/' . $customLogo);
+                $logoUrl = asset('storage/'.$customLogo);
             } elseif ($school && ! empty($school->logo_path)) {
-                $logoUrl = asset('storage/' . $school->logo_path);
+                $logoUrl = asset('storage/'.$school->logo_path);
             }
 
             session(['show_kairo_splash' => true]);
@@ -163,7 +164,7 @@ class Login extends BaseLogin
                     'name' => $user->name,
                     'school' => $schoolName,
                     'logo' => $logoUrl,
-                ]
+                ],
             ]);
 
             session()->flash('login_greeting', [

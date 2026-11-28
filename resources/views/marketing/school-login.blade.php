@@ -145,29 +145,27 @@
                 @endif
 
                 <div id="sl-results" class="space-y-2" role="listbox" aria-label="{{ marketing_text('Matching schools') }}">
-                    {{--
-                        The answer to a submitted search, and the whole list when
-                        JavaScript is unavailable. The live list below takes
-                        over as soon as the visitor starts typing.
-                    --}}
-                    <div x-show="! searched" class="space-y-2">
-                        @forelse($results as $school)
-                            <a href="{{ route('school.go', ['code' => $school->login_code]) }}" class="sl-result" role="option">
-                                <span class="min-w-0 flex-1">
-                                    <span class="block truncate text-sm font-bold text-slate-900 dark:text-white">{{ $school->name }}</span>
-                                    @if($school->region)
-                                        <span class="block text-xs text-slate-500 dark:text-slate-400">{{ ucfirst($school->region) }}</span>
-                                    @endif
-                                </span>
-                                <span class="sl-result-code">{{ $school->login_code }}</span>
-                                <svg class="h-4 w-4 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12l-7.5 7.5M3 12h17.25"/></svg>
-                            </a>
-                        @empty
-                            @if(!empty($term))
+                    @if(($term ?? '') !== '')
+                        <div x-show="! searched" class="space-y-2">
+                            @forelse($results as $school)
+                                <a href="{{ route('school.go', ['code' => $school->login_code]) }}" class="sl-result" role="option">
+                                    <span class="min-w-0 flex-1">
+                                        <span class="block truncate text-sm font-bold text-slate-900 dark:text-white">{{ $school->name }}</span>
+                                        @if($school->region)
+                                            <span class="block text-xs text-slate-500 dark:text-slate-400">{{ ucfirst($school->region) }}</span>
+                                        @endif
+                                        @if($school->status !== 'active')
+                                            <span class="block text-xs font-bold uppercase tracking-wide text-amber-600 dark:text-amber-400">{{ ucfirst($school->status) }}</span>
+                                        @endif
+                                    </span>
+                                    <span class="sl-result-code">{{ $school->login_code }}</span>
+                                    <svg class="h-4 w-4 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12l-7.5 7.5M3 12h17.25"/></svg>
+                                </a>
+                            @empty
                                 <p class="sl-empty">{{ marketing_text('No school matches that yet. Check the spelling, or try the short code.') }}</p>
-                            @endif
-                        @endforelse
-                    </div>
+                            @endforelse
+                        </div>
+                    @endif
 
                     {{-- The live list, filled in as the visitor types. --}}
                     <div x-show="searched" class="space-y-2">
@@ -176,13 +174,16 @@
                                 <span class="min-w-0 flex-1">
                                     <span class="block truncate text-sm font-bold text-slate-900 dark:text-white" x-text="school.name"></span>
                                     <span class="block text-xs text-slate-500 dark:text-slate-400" x-text="school.region || 'School workspace'"></span>
+                                    <template x-if="school.status && school.status !== 'active'">
+                                        <span class="block text-xs font-bold uppercase tracking-wide text-amber-600 dark:text-amber-400" x-text="school.status"></span>
+                                    </template>
                                 </span>
                                 <span class="sl-result-code" x-text="school.code"></span>
                                 <svg class="h-4 w-4 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12l-7.5 7.5M3 12h17.25"/></svg>
                             </a>
                         </template>
 
-                        <template x-if="results.length === 0">
+                        <template x-if="results.length === 0 && query.trim().length >= 2">
                             <p class="sl-empty">{{ marketing_text('No school matches that yet. Check the spelling, or try the short code.') }}</p>
                         </template>
                     </div>
@@ -232,7 +233,7 @@
 
                 if (term.length < 2) {
                     this.results = [];
-                    this.searched = false;
+                    this.searched = true;
                     this.exactUrl = null;
 
                     return;

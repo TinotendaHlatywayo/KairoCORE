@@ -61,7 +61,7 @@ class DemoSandboxPreparingTest extends TestCase
 
     public function test_demo_pages_use_kairocore_favicon_and_preparing_showcase(): void
     {
-        $favicon = '<link rel="icon" href="'.e(asset('images/kairocore-icon.png')).'">';
+        $favicon = '<link rel="icon" href="'.e(platform_favicon_url()).'"';
 
         $this->get(route('demo.login'))
             ->assertOk()

@@ -1,6 +1,6 @@
 @extends('marketing.layout')
 
-@section('favicon', asset('images/kairocore-icon.png'))
+@section('favicon', platform_favicon_url())
 @section('title', platform_name().' Live Demo')
 @section('meta_description', marketing_text('Sign in to the shared demo account and explore every module and role without registering your school.'))
 
@@ -107,7 +107,7 @@
                         {{ marketing_text('Demo email') }} <span class="text-[#D94B39]">*</span>
                     </label>
                     <input id="demo-email" name="email" type="email" required autocomplete="username" spellcheck="false"
-                           placeholder="demo@example.com" value="{{ old('email') }}" class="dm-input mt-2">
+                           placeholder="demo@example.com" value="{{ old('email', config('demo.email')) }}" class="dm-input mt-2">
                 </div>
 
                 <div x-data="{ showPassword: false }">
@@ -116,7 +116,7 @@
                     </label>
                     <div class="relative mt-2">
                         <input id="demo-password" name="password" :type="showPassword ? 'text' : 'password'" required autocomplete="current-password"
-                               placeholder="••••••••" class="dm-input pr-12">
+                               placeholder="••••••••" value="{{ old('password', config('demo.password')) }}" class="dm-input pr-12">
                         <button type="button" @click="showPassword = !showPassword"
                                 class="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-2xl text-slate-400 transition hover:text-[#D94B39] dark:hover:text-[#EF5F4D]"
                                 :aria-label="showPassword ? @js(__('Hide password')) : @js(__('Show password'))"

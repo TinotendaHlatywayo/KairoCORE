@@ -1,0 +1,191 @@
+[
+  {
+    "id": "students",
+    "name": "Student Records",
+    "category": "students",
+    "summary": "Students is the single source of truth for every learner: profiles, guardians, enrolment, class placement, imports and exports.",
+    "keywords": ["student", "students", "pupil", "pupils", "learner", "learners", "guardian", "parent", "admission number", "profile", "directory", "enrol", "enroll", "register", "class", "stream", "form", "grade", "import", "export", "duplicate", "delete"],
+    "phrases": ["student records", "manage students", "student profile", "enrol a student", "register learner", "student directory", "import students", "export student list", "move student class"],
+    "entryIds": ["student-records", "enrol-a-student", "parent-portal", "parents-portal"]
+  },
+  {
+    "id": "admissions",
+    "name": "Admissions",
+    "category": "admissions",
+    "summary": "Admissions captures online applications, reviews documents and converts approved applicants into student records without re-typing.",
+    "keywords": ["application", "applications", "apply", "admission", "admissions", "applicant", "online form", "screening", "documents", "approve", "reject", "admit", "convert"],
+    "phrases": ["online applications", "receive applications", "process application", "admit applicant", "student application form", "application screening", "approve admission"],
+    "entryIds": ["online-applications", "admit-student"]
+  },
+  {
+    "id": "academics",
+    "name": "Academics",
+    "category": "academics",
+    "summary": "Academics defines the school year, terms, forms, streams, subjects, classrooms, timetables and academic operations.",
+    "keywords": ["academic", "academics", "year", "term", "semester", "form", "grade", "stream", "class", "subject", "subjects", "classroom", "timetable", "lesson", "academic structure", "promotion"],
+    "phrases": ["academic structure", "create academic year", "set up terms", "forms and streams", "add subjects", "build timetable", "promote students"],
+    "entryIds": ["academic-structure", "create-academic-year"]
+  },
+  {
+    "id": "exams",
+    "name": "Exams and Grading",
+    "category": "exams",
+    "summary": "Exams and Grading covers assessment setup, marks capture, grading scales, report cards, remarks, publishing and bulk printing.",
+    "keywords": ["exam", "exams", "assessment", "assessments", "marks", "mark", "grade", "grades", "grading", "score", "result", "results", "report card", "report cards", "report", "generate", "produce", "publish", "print", "remarks"],
+    "phrases": ["capture marks", "enter marks", "generate student report", "generate report cards", "produce report cards", "publish reports", "print report cards", "add remarks", "grading scale"],
+    "entryIds": ["assessments-and-marks", "report-cards", "marks-entry", "report-remarks", "bulk-print-reports"]
+  },
+  {
+    "id": "finance",
+    "name": "Finance",
+    "category": "finance",
+    "summary": "Finance manages fee structures, invoices, balances, cash, EcoCash and bank payments, receipts, expenses and refunds.",
+    "keywords": ["fee", "fees", "tuition", "invoice", "invoices", "billing", "bill", "payment", "payments", "cash", "ecocash", "bank", "transfer", "receipt", "balance", "balances", "arrears", "expense", "expenses", "currency", "purchasing"],
+    "phrases": ["fee structures", "issue invoices", "student balances", "record payment", "cash payment", "ecocash payment", "bank transfer", "print receipt", "multiple currencies", "record expenses"],
+    "entryIds": ["fee-structures-and-invoicing", "fee-balances", "recording-payments", "cash-payments", "ecocash-payments", "bank-transfers", "print-receipts", "multi-currency", "expenses", "purchasing"]
+  },
+  {
+    "id": "attendance",
+    "name": "Attendance",
+    "category": "hr",
+    "summary": "Attendance tracks student and staff presence, absences, leave requests and daily registers for accurate follow-up.",
+    "keywords": ["attendance", "register", "present", "absent", "absence", "leave", "late", "daily register", "staff attendance", "student attendance"],
+    "phrases": ["daily attendance", "mark attendance", "attendance register", "staff leave", "approve leave", "absence report"],
+    "entryIds": ["attendance-and-leave"]
+  },
+  {
+    "id": "hr",
+    "name": "HR and Staff",
+    "category": "hr",
+    "summary": "HR holds employee records, contracts, compensation, payroll, leave, assets and staff directory information.",
+    "keywords": ["staff", "employee", "employees", "teacher", "teachers", "hr", "payroll", "salary", "compensation", "leave", "contract", "employment", "directory"],
+    "phrases": ["add staff", "staff records", "employee directory", "run payroll", "staff salary", "staff leave", "import staff"],
+    "entryIds": ["employees-and-directory", "importing-staff-from-spreadsheet", "payroll-and-compensation", "attendance-and-leave"]
+  },
+  {
+    "id": "lms",
+    "name": "Homework and Online Lessons",
+    "category": "lms",
+    "summary": "Homework and lessons let teachers set assignments, add due dates, share materials and run online classes.",
+    "keywords": ["homework", "assignment", "assignments", "due date", "lesson", "lessons", "online class", "teacher", "student work", "submit", "grade homework"],
+    "phrases": ["set homework", "homework due date", "online lessons", "assignment deadline", "submit homework", "grade assignment"],
+    "entryIds": ["homework-and-lessons", "homework-due-date"]
+  },
+  {
+    "id": "communication",
+    "name": "Communication",
+    "category": "communication",
+    "summary": "Communication sends announcements, notices, email and WhatsApp alerts to the right staff, families and students.",
+    "keywords": ["announcement", "announcements", "notice", "notices", "message", "email", "whatsapp", "sms", "alert", "families", "parents", "staff"],
+    "phrases": ["send announcement", "school notice", "email announcement", "whatsapp alert", "message parents", "message staff"],
+    "entryIds": ["announcements", "announcement-email"]
+  },
+  {
+    "id": "reports",
+    "name": "Reports and Analytics",
+    "category": "reports",
+    "summary": "Reports and analytics turn live school data into filters, dashboards, exports and custom report outputs.",
+    "keywords": ["report", "reports", "analytics", "dashboard", "filter", "export", "insight", "statistics", "data", "custom report", "generate"],
+    "phrases": ["build report", "custom report", "generate report", "school analytics", "export report", "data dashboard"],
+    "entryIds": ["reporting-and-analytics", "report-generator"]
+  },
+  {
+    "id": "library",
+    "name": "Library",
+    "category": "library",
+    "summary": "Library manages the catalogue, books, e-resources, issuing, returns, reservations and overdue tracking.",
+    "keywords": ["library", "book", "books", "catalogue", "catalog", "issue", "return", "reserve", "overdue", "e-resource", "borrow"],
+    "phrases": ["library catalogue", "issue book", "return book", "reserve book", "overdue books", "library books"],
+    "entryIds": ["library-catalogue-and-circulation"]
+  },
+  {
+    "id": "boarding",
+    "name": "Boarding",
+    "category": "boarding",
+    "summary": "Boarding manages hostels, rooms, allocations, attendance, inspections, out passes and student welfare.",
+    "keywords": ["boarding", "hostel", "room", "bed", "allocation", "inspection", "out pass", "leave", "welfare", "dormitory"],
+    "phrases": ["hostel allocation", "boarding out pass", "hostel room", "boarding welfare", "approve out pass"],
+    "entryIds": ["boarding-and-welfare", "out-pass"]
+  },
+  {
+    "id": "health",
+    "name": "Health and Clinic",
+    "category": "health",
+    "summary": "Health records keep student medical information, clinic visits, medication notes and consent details in one place.",
+    "keywords": ["health", "medical", "clinic", "visit", "sick", "medicine", "allergy", "record", "student health"],
+    "phrases": ["clinic visit", "student medical record", "log clinic visit", "health record", "medical information"],
+    "entryIds": ["health-records-and-clinic", "clinic-visit"]
+  },
+  {
+    "id": "inventory",
+    "name": "Inventory and Procurement",
+    "category": "inventory",
+    "summary": "Inventory tracks stock, suppliers, purchase orders, goods received, issuing, adjustments and fixed assets.",
+    "keywords": ["inventory", "stock", "supplier", "suppliers", "purchase", "purchase order", "procurement", "goods", "received", "issue", "adjustment", "asset", "assets", "fixed asset"],
+    "phrases": ["stock levels", "procurement request", "purchase order", "supplier record", "goods received", "fixed assets", "stock adjustment"],
+    "entryIds": ["stock-and-procurement", "purchasing"]
+  },
+  {
+    "id": "website",
+    "name": "School Website",
+    "category": "website",
+    "summary": "The website CMS builds and publishes each school's public pages, announcements, galleries and contact information.",
+    "keywords": ["website", "site", "cms", "page", "pages", "publish", "template", "gallery", "public", "contact"],
+    "phrases": ["school website", "public website", "website page", "publish page", "website cms", "website template"],
+    "entryIds": ["school-website", "school-website-cms"]
+  },
+  {
+    "id": "portals",
+    "name": "Parent and Student Portals",
+    "category": "students",
+    "summary": "Parent and student portals give families controlled access to fees, attendance, results, report cards and announcements.",
+    "keywords": ["parent", "parents", "portal", "student portal", "family", "families", "login", "activation", "fees", "attendance", "results", "report cards"],
+    "phrases": ["parent portal", "student portal", "parent login", "portal activation", "parents see results", "parents see fees"],
+    "entryIds": ["parents-portal", "parent-portal"]
+  },
+  {
+    "id": "permissions",
+    "name": "Permissions and Settings",
+    "category": "administration",
+    "summary": "Administration controls staff accounts, roles, permissions, school settings and the subscription state.",
+    "keywords": ["permission", "permissions", "role", "roles", "account", "accounts", "settings", "subscription", "plan", "renewal", "security", "access"],
+    "phrases": ["staff permissions", "user roles", "school settings", "subscription plan", "renew subscription", "manage accounts"],
+    "entryIds": ["staff-permissions", "system-settings-and-subscription"]
+  },
+  {
+    "id": "getting-started",
+    "name": "Getting Started",
+    "category": "getting-started",
+    "summary": "Getting started covers account creation, school sign-in, first navigation and the first setup tasks.",
+    "keywords": ["start", "started", "sign in", "login", "account", "create", "school", "workspace", "first", "setup"],
+    "phrases": ["create school account", "sign in", "first setup", "get started", "open workspace", "school login"],
+    "entryIds": ["create-account-and-sign-in", "sign-in"]
+  },
+  {
+    "id": "troubleshooting",
+    "name": "Troubleshooting",
+    "category": "troubleshooting",
+    "summary": "Troubleshooting helps with sign-in problems, passwords, errors, missing records and where to find help.",
+    "keywords": ["troubleshooting", "problem", "issue", "issues", "error", "errors", "password", "reset", "login", "sign in", "stuck", "help", "support"],
+    "phrases": ["common issues", "troubleshooting", "reset password", "cannot sign in", "login error", "where to find help"],
+    "entryIds": ["common-issues", "reset-password", "find-help"]
+  },
+  {
+    "id": "platform",
+    "name": "Platform and Plans",
+    "category": "general",
+    "summary": "Platform answers cover school fit, modules, pricing, trial, demo booking, hosting, migration, languages, uptime and offline use.",
+    "keywords": ["kairo", "core", "platform", "pricing", "price", "cost", "demo", "trial", "hosting", "hosted", "cloud", "data", "safe", "backup", "migration", "language", "languages", "uptime", "offline", "integration", "integrations", "device"],
+    "phrases": ["what does kairo cover", "book a demo", "free trial", "how much does it cost", "where is data hosted", "migrate school data", "is data safe", "which languages", "work offline", "integrate accounting"],
+    "entryIds": ["fit-school-type", "what-cover", "data-safe", "team-trained", "any-device", "setup-time", "book-demo", "languages", "pricing", "contract-length", "free-trial", "data-hosting", "uptime", "data-migration", "offline-use", "integrations"]
+  },
+  {
+    "id": "id-cards",
+    "name": "ID Cards",
+    "category": "students",
+    "summary": "ID cards uses student and staff records to design templates, preview layouts and print secure identification cards.",
+    "keywords": ["id", "card", "cards", "identity", "badge", "template", "photo", "qr", "print", "student card", "staff card"],
+    "phrases": ["student id card", "design id card", "print id cards", "card template", "id card designer", "qr verification"],
+    "entryIds": ["id-cards"]
+  }
+]

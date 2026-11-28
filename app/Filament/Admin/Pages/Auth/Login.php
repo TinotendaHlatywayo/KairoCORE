@@ -47,9 +47,9 @@ class Login extends BaseLogin
         $ip = request()->ip();
 
         if (DemoSandbox::loginEmailIsBlocked((string) $email)) {
-            throw ValidationException::withMessages([
-                'data.email' => __('Please use the demo sign-in page for this account.'),
-            ]);
+            $this->redirect(DemoSandbox::centralUrl('demo-login'));
+
+            return null;
         }
 
         // 3-Tiered login security check
@@ -100,7 +100,7 @@ class Login extends BaseLogin
                     'name' => $user->name,
                     'school' => 'Kairo CORE Platform Admin',
                     'logo' => platform_logo_url(),
-                ]
+                ],
             ]);
         }
 

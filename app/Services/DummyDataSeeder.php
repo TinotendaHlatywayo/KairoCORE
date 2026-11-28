@@ -401,8 +401,8 @@ class DummyDataSeeder
         $isSecondary = in_array($schoolType, ['secondary', 'both'], true) && ! $isPrimary;
 
         // An acting user for "recorded_by"-style columns (admin if present).
-        $actorId = optional(User::where('school_id', $schoolId)->where('requested_role', 'administrator')->orderBy('id')->first())->id
-            ?? optional(User::where('school_id', $schoolId)->orderBy('id')->first())->id;
+        $actorId = optional(User::withoutGlobalScopes()->where('school_id', $schoolId)->where('requested_role', 'administrator')->orderBy('id')->first())->id
+            ?? optional(User::withoutGlobalScopes()->where('school_id', $schoolId)->orderBy('id')->first())->id;
 
         // ════════════════════════════════════════════════════════════════
         // 1. ACADEMICS: year, three terms, courses, sections, subjects,

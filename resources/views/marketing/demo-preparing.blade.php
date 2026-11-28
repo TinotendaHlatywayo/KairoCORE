@@ -1,6 +1,6 @@
 @extends('marketing.layout')
 
-@section('favicon', asset('images/kairocore-icon.png'))
+@section('favicon', platform_favicon_url())
 @section('title', platform_name().' Preparing Demo')
 @section('meta_description', marketing_text('Your private demo environment is being prepared.'))
 
